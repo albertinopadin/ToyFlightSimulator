@@ -51,6 +51,18 @@
 		CE7F484E28B771550082B197 /* TimeIt.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F484D28B771550082B197 /* TimeIt.swift */; };
 		CE7F484F28B771550082B197 /* TimeIt.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F484D28B771550082B197 /* TimeIt.swift */; };
 		CE7F485028B771550082B197 /* TimeIt.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F484D28B771550082B197 /* TimeIt.swift */; };
+		CE7F48A828BB0BED0082B197 /* FlyCameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48A728BB0BED0082B197 /* FlyCameraController.swift */; };
+		CE7F48A928BB0BED0082B197 /* FlyCameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48A728BB0BED0082B197 /* FlyCameraController.swift */; };
+		CE7F48AA28BB0BED0082B197 /* FlyCameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48A728BB0BED0082B197 /* FlyCameraController.swift */; };
+		CE7F48AC28BB17070082B197 /* GameMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48AB28BB17070082B197 /* GameMesh.swift */; };
+		CE7F48AD28BB17070082B197 /* GameMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48AB28BB17070082B197 /* GameMesh.swift */; };
+		CE7F48AE28BB17070082B197 /* GameMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48AB28BB17070082B197 /* GameMesh.swift */; };
+		CE7F48B028BB1C3F0082B197 /* GameVertexDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48AF28BB1C3F0082B197 /* GameVertexDescriptor.swift */; };
+		CE7F48B128BB1C3F0082B197 /* GameVertexDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48AF28BB1C3F0082B197 /* GameVertexDescriptor.swift */; };
+		CE7F48B228BB1C3F0082B197 /* GameVertexDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48AF28BB1C3F0082B197 /* GameVertexDescriptor.swift */; };
+		CE7F48B428BB26670082B197 /* SimulationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48B328BB26670082B197 /* SimulationController.swift */; };
+		CE7F48B528BB26670082B197 /* SimulationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48B328BB26670082B197 /* SimulationController.swift */; };
+		CE7F48B628BB26670082B197 /* SimulationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48B328BB26670082B197 /* SimulationController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -80,6 +92,10 @@
 		CE7F484528B770EB0082B197 /* MathUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathUtils.swift; sourceTree = "<group>"; };
 		CE7F484928B771390082B197 /* Light.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Light.swift; sourceTree = "<group>"; };
 		CE7F484D28B771550082B197 /* TimeIt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeIt.swift; sourceTree = "<group>"; };
+		CE7F48A728BB0BED0082B197 /* FlyCameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyCameraController.swift; sourceTree = "<group>"; };
+		CE7F48AB28BB17070082B197 /* GameMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMesh.swift; sourceTree = "<group>"; };
+		CE7F48AF28BB1C3F0082B197 /* GameVertexDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameVertexDescriptor.swift; sourceTree = "<group>"; };
+		CE7F48B328BB26670082B197 /* SimulationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulationController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,6 +148,10 @@
 				CE7F484528B770EB0082B197 /* MathUtils.swift */,
 				CE7F484928B771390082B197 /* Light.swift */,
 				CE7F484D28B771550082B197 /* TimeIt.swift */,
+				CE7F48A728BB0BED0082B197 /* FlyCameraController.swift */,
+				CE7F48AB28BB17070082B197 /* GameMesh.swift */,
+				CE7F48AF28BB1C3F0082B197 /* GameVertexDescriptor.swift */,
+				CE7F48B328BB26670082B197 /* SimulationController.swift */,
 			);
 			path = "ToyFlightSimulator Shared";
 			sourceTree = "<group>";
@@ -314,7 +334,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE7F48B028BB1C3F0082B197 /* GameVertexDescriptor.swift in Sources */,
+				CE7F48B428BB26670082B197 /* SimulationController.swift in Sources */,
+				CE7F48A828BB0BED0082B197 /* FlyCameraController.swift in Sources */,
 				CE7F484628B770EB0082B197 /* MathUtils.swift in Sources */,
+				CE7F48AC28BB17070082B197 /* GameMesh.swift in Sources */,
 				CE7F482128B758920082B197 /* Renderer_OG.swift in Sources */,
 				CE7F481E28B758920082B197 /* Shaders_OG.metal in Sources */,
 				CE7F47F928B758920082B197 /* GameViewController.swift in Sources */,
@@ -332,7 +356,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE7F48B128BB1C3F0082B197 /* GameVertexDescriptor.swift in Sources */,
+				CE7F48B528BB26670082B197 /* SimulationController.swift in Sources */,
+				CE7F48A928BB0BED0082B197 /* FlyCameraController.swift in Sources */,
 				CE7F484728B770EB0082B197 /* MathUtils.swift in Sources */,
+				CE7F48AD28BB17070082B197 /* GameMesh.swift in Sources */,
 				CE7F482228B758920082B197 /* Renderer_OG.swift in Sources */,
 				CE7F481F28B758920082B197 /* Shaders_OG.metal in Sources */,
 				CE7F480928B758920082B197 /* GameViewController.swift in Sources */,
@@ -350,7 +378,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE7F48B228BB1C3F0082B197 /* GameVertexDescriptor.swift in Sources */,
+				CE7F48B628BB26670082B197 /* SimulationController.swift in Sources */,
+				CE7F48AA28BB0BED0082B197 /* FlyCameraController.swift in Sources */,
 				CE7F484828B770EB0082B197 /* MathUtils.swift in Sources */,
+				CE7F48AE28BB17070082B197 /* GameMesh.swift in Sources */,
 				CE7F482328B758920082B197 /* Renderer_OG.swift in Sources */,
 				CE7F482028B758920082B197 /* Shaders_OG.metal in Sources */,
 				CE7F481928B758920082B197 /* GameViewController.swift in Sources */,
@@ -651,6 +683,7 @@
 				DEVELOPMENT_TEAM = W6KXUJP8M6;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -681,6 +714,7 @@
 				DEVELOPMENT_TEAM = W6KXUJP8M6;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;

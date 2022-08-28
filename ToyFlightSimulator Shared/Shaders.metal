@@ -11,7 +11,8 @@ using namespace metal;
 
 enum LightType : uint {
     LightTypeAmbient,
-    LightTypeDirectional
+    LightTypeDirectional,
+    LightTypeOmnidirectional
 };
 
 struct Light {
@@ -52,6 +53,17 @@ struct FrameConstants {
     uint lightCount;
 };
 
+float distanceAttenuation(constant Light &light, float3 toLight) {
+    switch(light.type) {
+        case LightTypeOmnidirectional: {
+            float lightDistSq = dot(toLight, toLight);
+            return 1.0f / max(lightDistSq, 1e-4);
+            break;
+        }
+        default:
+            return 1.0;
+    }
+}
 
 vertex VertexOut vertex_main(VertexIn in [[ stage_in ]],
                              constant InstanceConstants *instances [[ buffer(2) ]],
@@ -106,9 +118,21 @@ fragment float4 fragment_main(VertexOut in [[ stage_in ]],
                 specularFactor = powr(saturate(dot(N, H)), specularExponent);
                 break;
             }
+            case LightTypeOmnidirectional: {
+                float3 toLight = light.position - in.viewPosition;
+                float attenuation = distanceAttenuation(light, toLight);
+
+                float3 L = normalize(toLight);
+                float3 H = normalize(L + V);
+                diffuseFactor = attenuation * saturate(dot(N, L));
+                specularFactor = attenuation * powr(saturate(dot(N, H)), specularExponent);
+                break;
+            }
         }
 
-        litColor += (ambientFactor + diffuseFactor + specularFactor) * light.intensity * baseColor.rgb;
+//        litColor += (ambientFactor + diffuseFactor + specularFactor) * light.intensity * baseColor.rgb;
+        litColor += (ambientFactor + diffuseFactor) * light.intensity * baseColor.rgb +
+                     specularFactor * light.intensity;
     }
 
     return float4(litColor * baseColor.a, baseColor.a);

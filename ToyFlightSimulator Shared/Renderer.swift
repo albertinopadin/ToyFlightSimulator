@@ -50,7 +50,8 @@ final class Renderer: NSObject, MTKViewDelegate {
     var nodes: [Node]
     
     private var vertexDescriptor: MTLVertexDescriptor!
-    private var mdlVertexDescriptor: MDLVertexDescriptor!
+//    private var mdlVertexDescriptor: MDLVertexDescriptor!
+//    private var mtkMeshBufferAllocator: MTKMeshBufferAllocator!
     
     private var renderPipelineState: MTLRenderPipelineState!
     
@@ -72,7 +73,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     
     private var constantsBufferSize: Int = 0
     
-    init(device: MTLDevice, view: MTKView, nodes: [Node] = [Node]()) {
+    init(device: MTLDevice, view: MTKView, gameVertexDescriptor: GameVertexDescriptor, nodes: [Node] = [Node]()) {
         view.device = device
         self.device = device
         self.view = view
@@ -86,10 +87,52 @@ final class Renderer: NSObject, MTKViewDelegate {
         view.colorPixelFormat = .bgra8Unorm_srgb
         view.clearColor = MTLClearColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
         
+//        mdlVertexDescriptor = createMDLVertexDescriptor()
+//        vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(mdlVertexDescriptor)!
+//        mtkMeshBufferAllocator = MTKMeshBufferAllocator(device: device)
+        
+        vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(gameVertexDescriptor.mdlVertexDescriptor)!
+        
         makeScene()
         makeResources()
         makePipeline()
     }
+    
+//    func createMDLVertexDescriptor() -> MDLVertexDescriptor {
+//        let mdlVD = MDLVertexDescriptor()
+//        mdlVD.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition,
+//                                                 format: .float3,
+//                                                 offset: 0,
+//                                                 bufferIndex: 0)
+//        mdlVD.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal,
+//                                                 format: .float3,
+//                                                 offset: 12,
+//                                                 bufferIndex: 0)
+//        mdlVD.layouts[0] = MDLVertexBufferLayout(stride: 24)
+//        return mdlVD
+//    }
+//    
+//    func makeCubeMesh(size: Float) -> MTKMesh {
+//        let mdlBoxMesh = MDLMesh(boxWithExtent: SIMD3<Float>(size, size, size),
+//                                 segments: SIMD3<UInt32>(1, 1, 1),
+//                                 inwardNormals: false,
+//                                 geometryType: .triangles,
+//                                 allocator: mtkMeshBufferAllocator)
+//        mdlBoxMesh.vertexDescriptor = mdlVertexDescriptor
+//        let boxMesh = try! MTKMesh(mesh: mdlBoxMesh, device: device)
+//        return boxMesh
+//    }
+//    
+//    func makeSphereMesh(size: Float) -> MTKMesh {
+//        let mdlSphere = MDLMesh(sphereWithExtent: SIMD3<Float>(size, size, size),
+//                                segments: SIMD2<UInt32>(8, 8),
+//                                inwardNormals: false,
+//                                geometryType: .triangles,
+//                                allocator: mtkMeshBufferAllocator)
+//        mdlSphere.vertexDescriptor = mdlVertexDescriptor
+//        let sphereMesh = try! MTKMesh(mesh: mdlSphere, device: device)
+//        return sphereMesh
+//    }
     
     public func setNodes(_ nodes: [Node]) {
         self.nodes = nodes
@@ -104,27 +147,31 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
     
     func makeScene() {
-        mdlVertexDescriptor = MDLVertexDescriptor()
-        mdlVertexDescriptor.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition,
-                                                               format: .float3,
-                                                               offset: 0,
-                                                               bufferIndex: 0)
-        mdlVertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal,
-                                                               format: .float3,
-                                                               offset: 12,
-                                                               bufferIndex: 0)
-        mdlVertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: 24)
+//        let ambientLight = Light()
+//        ambientLight.type = .ambient
+//        ambientLight.intensity = 1.0
+//        lights.append(ambientLight)
         
-        vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(mdlVertexDescriptor)!
-        
-        let mdlAllocator = MTKMeshBufferAllocator(device: device)
-        
-        // TODO: Add nodes to scene: (???)
         
         let ambientLight = Light()
         ambientLight.type = .ambient
-        ambientLight.intensity = 1.0
-        lights.append(ambientLight)
+        ambientLight.intensity = 0.7
+        
+        let localLight = Light()
+        localLight.type = .omni
+        localLight.intensity = 15.0
+        localLight.worldTransform = float4x4(lookAt: SIMD3<Float>(0, 0, -1),
+                                             from: SIMD3<Float>(0, 5, 0),
+                                             up: SIMD3<Float>(0, 1, 0))
+
+        let sunLight = Light()
+        sunLight.type = .directional
+        sunLight.intensity = 0.3
+        sunLight.worldTransform = simd_float4x4(lookAt: SIMD3<Float>(0, 0, 0),
+                                                from: SIMD3<Float>(1, 1, 1),
+                                                up: SIMD3<Float>(0, 1, 0))
+
+        lights = [ambientLight, sunLight, localLight]
     }
     
     func makeResources() {
@@ -283,13 +330,13 @@ final class Renderer: NSObject, MTKViewDelegate {
                 renderCommandEncoder.setFragmentBuffer(constantBuffer, offset: frameConstantsOffset, index: 3)
                 renderCommandEncoder.setFragmentBuffer(constantBuffer, offset: lightConstantsOffset, index: 4)
                 
-                
                 let t_main_loop = timeit {
-                    renderCommandEncoder.setVertexBuffer(constantBuffer, offset: nodeConstantsOffsets[0], index: 2)
-                    
-                    for node in nodes {
-                        
+                    for (nodeIndex, node) in nodes.enumerated() {
                         if let mesh = node.mesh {
+                            renderCommandEncoder.setVertexBuffer(constantBuffer,
+                                                                 offset: nodeConstantsOffsets[nodeIndex],
+                                                                 index: 2)
+                            
                             for (i, meshBuffer) in mesh.vertexBuffers.enumerated() {
                                 renderCommandEncoder.setVertexBuffer(meshBuffer.buffer, offset: meshBuffer.offset, index: i)
                             }
