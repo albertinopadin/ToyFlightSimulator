@@ -10,18 +10,6 @@ import MetalKit
 
 
 func createMDLVertexDescriptor() -> MDLVertexDescriptor {
-//    let mdlVD = MDLVertexDescriptor()
-//    mdlVD.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition,
-//                                             format: .float3,
-//                                             offset: 0,
-//                                             bufferIndex: 0)
-//    mdlVD.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal,
-//                                             format: .float3,
-//                                             offset: 12,
-//                                             bufferIndex: 0)
-//    mdlVD.layouts[0] = MDLVertexBufferLayout(stride: 24)
-//    return mdlVD
-    
     var gameVertexDescriptor = GameVertexDescriptor()
     gameVertexDescriptor.addAttribute(name: MDLVertexAttributePosition, format: .float3)
     gameVertexDescriptor.addAttribute(name: MDLVertexAttributeNormal, format: .float3)

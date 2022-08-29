@@ -63,6 +63,9 @@
 		CE7F48B428BB26670082B197 /* SimulationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48B328BB26670082B197 /* SimulationController.swift */; };
 		CE7F48B528BB26670082B197 /* SimulationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48B328BB26670082B197 /* SimulationController.swift */; };
 		CE7F48B628BB26670082B197 /* SimulationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48B328BB26670082B197 /* SimulationController.swift */; };
+		CE7F48D328BCB4DD0082B197 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48D228BCB4DD0082B197 /* GameView.swift */; };
+		CE7F48D428BCB4DD0082B197 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48D228BCB4DD0082B197 /* GameView.swift */; };
+		CE7F48D528BCB4DD0082B197 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48D228BCB4DD0082B197 /* GameView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -96,6 +99,7 @@
 		CE7F48AB28BB17070082B197 /* GameMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMesh.swift; sourceTree = "<group>"; };
 		CE7F48AF28BB1C3F0082B197 /* GameVertexDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameVertexDescriptor.swift; sourceTree = "<group>"; };
 		CE7F48B328BB26670082B197 /* SimulationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulationController.swift; sourceTree = "<group>"; };
+		CE7F48D228BCB4DD0082B197 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,6 +141,10 @@
 		CE7F47EA28B758900082B197 /* ToyFlightSimulator Shared */ = {
 			isa = PBXGroup;
 			children = (
+				CE7F48BC28BB937F0082B197 /* Display */,
+				CE7F48BB28BB93720082B197 /* Shaders */,
+				CE7F48BA28BB93660082B197 /* Libraries */,
+				CE7F48B928BB93550082B197 /* Core */,
 				CE7F47ED28B758900082B197 /* ShaderTypes.h */,
 				CE7F47EB28B758900082B197 /* Shaders_OG.metal */,
 				CE7F47EC28B758900082B197 /* Renderer_OG.swift */,
@@ -152,6 +160,7 @@
 				CE7F48AB28BB17070082B197 /* GameMesh.swift */,
 				CE7F48AF28BB1C3F0082B197 /* GameVertexDescriptor.swift */,
 				CE7F48B328BB26670082B197 /* SimulationController.swift */,
+				CE7F48D228BCB4DD0082B197 /* GameView.swift */,
 			);
 			path = "ToyFlightSimulator Shared";
 			sourceTree = "<group>";
@@ -197,6 +206,34 @@
 				CE7F481D28B758920082B197 /* ToyFlightSimulator_macOS.entitlements */,
 			);
 			path = "ToyFlightSimulator macOS";
+			sourceTree = "<group>";
+		};
+		CE7F48B928BB93550082B197 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		CE7F48BA28BB93660082B197 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Libraries;
+			sourceTree = "<group>";
+		};
+		CE7F48BB28BB93720082B197 /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Shaders;
+			sourceTree = "<group>";
+		};
+		CE7F48BC28BB937F0082B197 /* Display */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Display;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -348,6 +385,7 @@
 				CE7F484E28B771550082B197 /* TimeIt.swift in Sources */,
 				CE7F47F728B758920082B197 /* AppDelegate.swift in Sources */,
 				CE7F483A28B76FF60082B197 /* Renderer.swift in Sources */,
+				CE7F48D328BCB4DD0082B197 /* GameView.swift in Sources */,
 				CE7F483628B76FE30082B197 /* Shaders.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -370,6 +408,7 @@
 				CE7F484F28B771550082B197 /* TimeIt.swift in Sources */,
 				CE7F480728B758920082B197 /* AppDelegate.swift in Sources */,
 				CE7F483B28B76FF60082B197 /* Renderer.swift in Sources */,
+				CE7F48D428BCB4DD0082B197 /* GameView.swift in Sources */,
 				CE7F483728B76FE30082B197 /* Shaders.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -392,6 +431,7 @@
 				CE7F485028B771550082B197 /* TimeIt.swift in Sources */,
 				CE7F481728B758920082B197 /* AppDelegate.swift in Sources */,
 				CE7F483C28B76FF60082B197 /* Renderer.swift in Sources */,
+				CE7F48D528BCB4DD0082B197 /* GameView.swift in Sources */,
 				CE7F483828B76FE30082B197 /* Shaders.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

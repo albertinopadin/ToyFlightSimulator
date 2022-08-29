@@ -7,8 +7,6 @@
 
 import Cocoa
 import MetalKit
-
-import MetalKit
 import GameController
 
 enum VirtualKey: Int {
@@ -25,8 +23,7 @@ enum VirtualKey: Int {
 
 // Our macOS specific view controller
 class GameViewController: NSViewController {
-
-//    var renderer: Renderer!
+    
     var simController: SimulationController!
     
     var mtkView: MTKView!
@@ -50,11 +47,23 @@ class GameViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { (theEvent) -> NSEvent in
+            self.keyDown(with: theEvent)
+            return theEvent
+        }
+        
+        NSEvent.addLocalMonitorForEvents(matching: .keyUp) { (theEvent) -> NSEvent in
+            self.keyUp(with: theEvent)
+            return theEvent
+        }
 
-        guard let mtkView = self.view as? MTKView else {
+        guard let _mtkView = self.view as? MTKView else {
             print("View attached to GameViewController is not an MTKView")
             return
         }
+        
+        mtkView = _mtkView
 
         // Select the device to render with.  We choose the default device
         guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
@@ -63,10 +72,6 @@ class GameViewController: NSViewController {
         }
 
         mtkView.device = defaultDevice
-
-//        renderer = Renderer(device: defaultDevice, view: mtkView)
-//        renderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
-//        mtkView.delegate = renderer
         
         simController = SimulationController(view: mtkView, device: defaultDevice)
         
@@ -85,7 +90,15 @@ class GameViewController: NSViewController {
         view.window?.makeFirstResponder(self)
     }
     
+    override var acceptsFirstResponder: Bool {
+        return true
+    }
+    
     override func becomeFirstResponder() -> Bool {
+        return true
+    }
+    
+    override func resignFirstResponder() -> Bool {
         return true
     }
 

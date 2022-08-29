@@ -12,6 +12,7 @@ import MetalKit
 let MaxOutstandingFrameCount = 3
 let MaxConstantsSize = 1_024 * 1_024 * 256
 let MinBufferAlignment = 256
+let MaxNodeCount = 1000
 
 struct NodeConstants {
     var modelMatrix: float4x4
@@ -35,7 +36,7 @@ struct FrameConstants {
 
 struct InstanceConstants {
     var modelMatrix: float4x4
-    var color: simd_float4
+    var color: SIMD4<Float>
 }
 
 
@@ -50,9 +51,6 @@ final class Renderer: NSObject, MTKViewDelegate {
     var nodes: [Node]
     
     private var vertexDescriptor: MTLVertexDescriptor!
-//    private var mdlVertexDescriptor: MDLVertexDescriptor!
-//    private var mtkMeshBufferAllocator: MTKMeshBufferAllocator!
-    
     private var renderPipelineState: MTLRenderPipelineState!
     
     private var constantBuffer: MTLBuffer!
@@ -87,52 +85,12 @@ final class Renderer: NSObject, MTKViewDelegate {
         view.colorPixelFormat = .bgra8Unorm_srgb
         view.clearColor = MTLClearColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
         
-//        mdlVertexDescriptor = createMDLVertexDescriptor()
-//        vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(mdlVertexDescriptor)!
-//        mtkMeshBufferAllocator = MTKMeshBufferAllocator(device: device)
-        
         vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(gameVertexDescriptor.mdlVertexDescriptor)!
         
         makeScene()
         makeResources()
         makePipeline()
     }
-    
-//    func createMDLVertexDescriptor() -> MDLVertexDescriptor {
-//        let mdlVD = MDLVertexDescriptor()
-//        mdlVD.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition,
-//                                                 format: .float3,
-//                                                 offset: 0,
-//                                                 bufferIndex: 0)
-//        mdlVD.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal,
-//                                                 format: .float3,
-//                                                 offset: 12,
-//                                                 bufferIndex: 0)
-//        mdlVD.layouts[0] = MDLVertexBufferLayout(stride: 24)
-//        return mdlVD
-//    }
-//    
-//    func makeCubeMesh(size: Float) -> MTKMesh {
-//        let mdlBoxMesh = MDLMesh(boxWithExtent: SIMD3<Float>(size, size, size),
-//                                 segments: SIMD3<UInt32>(1, 1, 1),
-//                                 inwardNormals: false,
-//                                 geometryType: .triangles,
-//                                 allocator: mtkMeshBufferAllocator)
-//        mdlBoxMesh.vertexDescriptor = mdlVertexDescriptor
-//        let boxMesh = try! MTKMesh(mesh: mdlBoxMesh, device: device)
-//        return boxMesh
-//    }
-//    
-//    func makeSphereMesh(size: Float) -> MTKMesh {
-//        let mdlSphere = MDLMesh(sphereWithExtent: SIMD3<Float>(size, size, size),
-//                                segments: SIMD2<UInt32>(8, 8),
-//                                inwardNormals: false,
-//                                geometryType: .triangles,
-//                                allocator: mtkMeshBufferAllocator)
-//        mdlSphere.vertexDescriptor = mdlVertexDescriptor
-//        let sphereMesh = try! MTKMesh(mesh: mdlSphere, device: device)
-//        return sphereMesh
-//    }
     
     public func setNodes(_ nodes: [Node]) {
         self.nodes = nodes
@@ -147,12 +105,6 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
     
     func makeScene() {
-//        let ambientLight = Light()
-//        ambientLight.type = .ambient
-//        ambientLight.intensity = 1.0
-//        lights.append(ambientLight)
-        
-        
         let ambientLight = Light()
         ambientLight.type = .ambient
         ambientLight.intensity = 0.7
@@ -175,14 +127,19 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
     
     func makeResources() {
-        let instanceConstantsSize = nodes.count * MemoryLayout<InstanceConstants>.self.stride
+//        let instanceConstantsSize = nodes.count * MemoryLayout<InstanceConstants>.self.stride
+        // Need MaxNodeCount here otherwise if initial nodes.count is 0, the instanceConstantsSize will also be zero:
+        let instanceConstantsSize = MaxNodeCount * MemoryLayout<InstanceConstants>.self.stride
         let frameConstantsSize = MemoryLayout<FrameConstants>.self.stride
         let lightConstantsSize = lights.count * MemoryLayout<LightConstants>.self.stride
-        constantsBufferSize = (instanceConstantsSize + frameConstantsSize + lightConstantsSize)
+        constantsBufferSize = instanceConstantsSize + frameConstantsSize + lightConstantsSize
         constantsBufferSize *= (MaxOutstandingFrameCount + 1)
+        print("constantsBufferSize: \(constantsBufferSize)")
         print("constantsBufferSize (in MB): \(constantsBufferSize / (1024 * 1024))")
         constantBuffer = device.makeBuffer(length: constantsBufferSize, options: .storageModeShared)
 //        constantBuffer = device.makeBuffer(length: constantBufferLength, options: .storageModeManaged)
+//        print("constantsBufferSize (in MB): \(MaxConstantsSize / (1024 * 1024))")
+//        constantBuffer = device.makeBuffer(length: MaxConstantsSize, options: .storageModeShared)
         constantBuffer.label = "Dynamic Constants Buffer"
     }
     
@@ -277,7 +234,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     
         nodeConstantsOffsets.append(offset)
         
-        print("[updateNodeConstants] Writing instance constants time: \(Double(t_writeBuffer)/1_000_000) ms")
+//        print("[updateNodeConstants] Writing instance constants time: \(Double(t_writeBuffer)/1_000_000) ms")
     }
     
     func renderPassDescriptor(colorTexture: MTLTexture) -> MTLRenderPassDescriptor {
@@ -308,9 +265,9 @@ final class Renderer: NSObject, MTKViewDelegate {
                 let t_nodeConstants = timeit {
                     updateNodeConstants(timestep: Float(timestep))
                 }
-                print("Run time for updating Node constants: \(Double(t_nodeConstants)/1_000_000) ms")
+//                print("Run time for updating Node constants: \(Double(t_nodeConstants)/1_000_000) ms")
             }
-            print("Run time for updating constants: \(Double(t_constants)/1_000_000) ms")
+//            print("Run time for updating constants: \(Double(t_constants)/1_000_000) ms")
             
             guard let commandBuffer = commandQueue.makeCommandBuffer() else { return }
             
@@ -353,12 +310,12 @@ final class Renderer: NSObject, MTKViewDelegate {
                     }
                 }
                 
-                print("Run time for main draw pass loop: \(Double(t_main_loop)/1_000_000) ms")
+//                print("Run time for main draw pass loop: \(Double(t_main_loop)/1_000_000) ms")
                 
                 renderCommandEncoder.endEncoding()
                 // END main pass
             }
-            print("Run time for main draw pass: \(Double(t_main)/1_000_000) ms")
+//            print("Run time for main draw pass: \(Double(t_main)/1_000_000) ms")
             
             commandBuffer.present(drawable)
             commandBuffer.addCompletedHandler { [weak self] _ in
@@ -368,11 +325,12 @@ final class Renderer: NSObject, MTKViewDelegate {
             
             let constantSize = currentConstantBufferOffset - initialConstantOffset
             if (constantSize > constantsBufferSize / MaxOutstandingFrameCount) {
-                print("Insufficient constant storage: frame consumed \(constantSize) bytes of total \(constantsBufferSize) bytes")
+//                print("Insufficient constant storage: frame consumed \(constantSize) " +
+//                      "bytes of total \(constantsBufferSize) bytes")
             }
             
             frameIndex += 1
         }
-        print("Total Draw call Run Time: \(Double(t_totalDraw)/1_000_000) ms")
+//        print("Total Draw call Run Time: \(Double(t_totalDraw)/1_000_000) ms")
     }
 }
