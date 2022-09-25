@@ -77,7 +77,8 @@ class GameViewController: NSViewController {
         
         cameraController = FlyCameraController(pointOfView: simController.renderer.pointOfView)
         cameraController.eye = SIMD3<Float>(0, 0, 4)
-
+        
+        mtkView.preferredFramesPerSecond = 120
         let frameDuration = 1.0 / Double(mtkView.preferredFramesPerSecond)
         Timer.scheduledTimer(withTimeInterval: frameDuration, repeats: true) { [weak self] _ in
             self?.updateCamera(Float(frameDuration))
