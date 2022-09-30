@@ -1,0 +1,47 @@
+//
+//  ShaderLibrary.swift
+//  ToyFlightSimulator
+//
+//  Created by Albertino Padin on 9/26/22.
+//
+
+import MetalKit
+
+enum ShaderType {
+    case BaseVertex
+    case InstancedVertex
+    case SkySphereVertex
+    case FinalVertex
+    
+    case BaseFragment
+    case SkySphereFragment
+    case FinalFragment
+}
+
+
+class ShaderLibrary: Library<ShaderType, MTLFunction> {
+    private var _library: [ShaderType: Shader] = [:]
+    
+    override func makeLibrary() {
+        _library.updateValue(Shader(functionName: "base_vertex_shader"), forKey: .BaseVertex)
+        _library.updateValue(Shader(functionName: "instanced_vertex_shader"), forKey: .InstancedVertex)
+        _library.updateValue(Shader(functionName: "skysphere_vertex_shader"), forKey: .SkySphereVertex)
+        _library.updateValue(Shader(functionName: "final_vertex_shader"), forKey: .FinalVertex)
+        
+        _library.updateValue(Shader(functionName: "base_fragment_shader"), forKey: .BaseFragment)
+        _library.updateValue(Shader(functionName: "skysphere_fragment_shader"), forKey: .SkySphereFragment)
+        _library.updateValue(Shader(functionName: "final_fragment_shader"), forKey: .FinalFragment)
+    }
+    
+    override subscript(_ type: ShaderType) -> MTLFunction {
+        return (_library[type]?.function)!
+    }
+}
+
+class Shader {
+    var function: MTLFunction!
+    init(functionName: String) {
+        self.function = Engine.DefaultLibrary.makeFunction(name: functionName)
+        self.function.label = functionName
+    }
+}
