@@ -31,29 +31,37 @@ class DebugCamera: Camera {
 //                                                        near: 0.1,
 //                                                        far: 1000)
         
-        if (Keyboard.IsKeyPressed(.leftArrow)) {
+        if Keyboard.IsKeyPressed(.leftArrow) || Keyboard.IsKeyPressed(.a) {
             self.moveX(-GameTime.DeltaTime * _moveSpeed)
         }
         
-        if (Keyboard.IsKeyPressed(.rightArrow)) {
+        if Keyboard.IsKeyPressed(.rightArrow) || Keyboard.IsKeyPressed(.d) {
             self.moveX(GameTime.DeltaTime * _moveSpeed)
         }
         
-        if (Keyboard.IsKeyPressed(.upArrow)) {
+        if Keyboard.IsKeyPressed(.upArrow) {
             self.moveY(GameTime.DeltaTime * _moveSpeed)
         }
         
-        if (Keyboard.IsKeyPressed(.downArrow)) {
+        if Keyboard.IsKeyPressed(.downArrow) {
             self.moveY(-GameTime.DeltaTime * _moveSpeed)
         }
         
-        if (Mouse.IsMouseButtonPressed(button: .RIGHT)) {
+        if Keyboard.IsKeyPressed(.w) {
+            self.moveZ(-GameTime.DeltaTime * _moveSpeed)
+        }
+        
+        if Keyboard.IsKeyPressed(.s) {
+            self.moveZ(GameTime.DeltaTime * _moveSpeed)
+        }
+        
+        if Mouse.IsMouseButtonPressed(button: .RIGHT) {
             self.rotate(Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed,
                         Mouse.GetDX() * GameTime.DeltaTime * _turnSpeed,
                         0)
         }
         
-        if (Mouse.IsMouseButtonPressed(button: .CENTER)) {
+        if Mouse.IsMouseButtonPressed(button: .CENTER) {
             self.moveX(-Mouse.GetDX() * GameTime.DeltaTime * _moveSpeed)
             self.moveY(Mouse.GetDY() * GameTime.DeltaTime * _moveSpeed)
         }
