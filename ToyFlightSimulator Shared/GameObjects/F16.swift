@@ -8,6 +8,5 @@
 class F16: GameObject {
     init() {
         super.init(name: "F-16", meshType: .F16)
-        useBaseColorTexture(.F16)
     }
 }

@@ -11,9 +11,9 @@ class Node {
     private var _name: String = "Node"
     private var _id: String!
     
-    private var _position = SIMD3<Float>(repeating: 0)
-    private var _scale = SIMD3<Float>(repeating: 1)
-    private var _rotation = SIMD3<Float>(repeating: 0)
+    private var _position = float3(repeating: 0)
+    private var _scale = float3(repeating: 1)
+    private var _rotation = float3(repeating: 0)
     
     var parentModelMatrix = matrix_identity_float4x4
     
@@ -80,12 +80,12 @@ extension Node {
     func getID()->String { return _id }
     
     //Positioning and Movement
-    func setPosition(_ position: SIMD3<Float>) {
+    func setPosition(_ position: float3) {
         self._position = position
         updateModelMatrix()
         afterTranslation()
     }
-    func setPosition(_ x: Float, _ y: Float, _ z: Float) { setPosition(SIMD3<Float>(x, y, z)) }
+    func setPosition(_ x: Float, _ y: Float, _ z: Float) { setPosition(float3(x, y, z)) }
     func setPositionX(_ xPosition: Float) { setPosition(xPosition, getPositionY(), getPositionZ()) }
     func setPositionY(_ yPosition: Float) { setPosition(getPositionX(), yPosition, getPositionZ()) }
     func setPositionZ(_ zPosition: Float) { setPosition(getPositionX(), getPositionY(), zPosition) }
@@ -93,18 +93,18 @@ extension Node {
     func moveX(_ delta: Float){ move(delta, 0, 0) }
     func moveY(_ delta: Float){ move(0, delta, 0) }
     func moveZ(_ delta: Float){ move(0, 0, delta) }
-    func getPosition()->SIMD3<Float> { return self._position }
-    func getPositionX()->Float { return self._position.x }
-    func getPositionY()->Float { return self._position.y }
-    func getPositionZ()->Float { return self._position.z }
+    func getPosition() -> float3 { return self._position }
+    func getPositionX() -> Float { return self._position.x }
+    func getPositionY() -> Float { return self._position.y }
+    func getPositionZ() -> Float { return self._position.z }
     
     //Rotating
-    func setRotation(_ rotation: SIMD3<Float>) {
+    func setRotation(_ rotation: float3) {
         self._rotation = rotation
         updateModelMatrix()
         afterRotation()
     }
-    func setRotation(_ x: Float, _ y: Float, _ z: Float) { setRotation(SIMD3<Float>(x, y, z)) }
+    func setRotation(_ x: Float, _ y: Float, _ z: Float) { setRotation(float3(x, y, z)) }
     func setRotationX(_ xRotation: Float) { setRotation(xRotation, getRotationY(), getRotationZ()) }
     func setRotationY(_ yRotation: Float) { setRotation(getRotationX(), yRotation, getRotationZ()) }
     func setRotationZ(_ zRotation: Float) { setRotation(getRotationX(), getRotationY(), zRotation) }
@@ -112,29 +112,29 @@ extension Node {
     func rotateX(_ delta: Float){ rotate(delta, 0, 0) }
     func rotateY(_ delta: Float){ rotate(0, delta, 0) }
     func rotateZ(_ delta: Float){ rotate(0, 0, delta) }
-    func getRotation()->SIMD3<Float> { return self._rotation }
-    func getRotationX()->Float { return self._rotation.x }
-    func getRotationY()->Float { return self._rotation.y }
-    func getRotationZ()->Float { return self._rotation.z }
+    func getRotation() -> float3 { return self._rotation }
+    func getRotationX() -> Float { return self._rotation.x }
+    func getRotationY() -> Float { return self._rotation.y }
+    func getRotationZ() -> Float { return self._rotation.z }
     
     //Scaling
-    func setScale(_ scale: SIMD3<Float>) {
+    func setScale(_ scale: float3) {
         self._scale = scale
         updateModelMatrix()
         afterScale()
     }
-    func setScale(_ x: Float, _ y: Float, _ z: Float) { setScale(SIMD3<Float>(x, y, z)) }
-    func setScale(_ scale: Float) { setScale(SIMD3<Float>(scale, scale, scale)) }
+    func setScale(_ x: Float, _ y: Float, _ z: Float) { setScale(float3(x, y, z)) }
+    func setScale(_ scale: Float) { setScale(float3(scale, scale, scale)) }
     func setScaleX(_ scaleX: Float) { setScale(scaleX, getScaleY(), getScaleZ()) }
     func setScaleY(_ scaleY: Float) { setScale(getScaleX(), scaleY, getScaleZ()) }
     func setScaleZ(_ scaleZ: Float) { setScale(getScaleX(), getScaleY(), scaleZ) }
     func scale(_ x: Float, _ y: Float, _ z: Float) { setScale(getScaleX() + x, getScaleY() + y, getScaleZ() + z) }
-    func scaleX(_ delta: Float){ scale(delta, 0, 0) }
-    func scaleY(_ delta: Float){ scale(0, delta, 0) }
-    func scaleZ(_ delta: Float){ scale(0, 0, delta) }
-    func getScale()->SIMD3<Float> { return self._scale }
-    func getScaleX()->Float { return self._scale.x }
-    func getScaleY()->Float { return self._scale.y }
-    func getScaleZ()->Float { return self._scale.z }
+    func scaleX(_ delta: Float) { scale(delta, 0, 0) }
+    func scaleY(_ delta: Float) { scale(0, delta, 0) }
+    func scaleZ(_ delta: Float) { scale(0, 0, delta) }
+    func getScale() -> float3 { return self._scale }
+    func getScaleX() -> Float { return self._scale.x }
+    func getScaleY() -> Float { return self._scale.y }
+    func getScaleZ() -> Float { return self._scale.z }
 }
 

@@ -24,6 +24,9 @@ class SandboxScene: Scene {
         f16.setScale(2)
         addChild(f16)
         
+        let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+        addChild(sky)
+        
         print("Sandbox scene children:")
         for child in children {
             print(child.getName())
