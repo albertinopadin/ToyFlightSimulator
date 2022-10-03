@@ -9,6 +9,7 @@ import simd
 
 enum CameraType {
     case Debug
+    case F16Cam
 }
 
 class Camera: Node {

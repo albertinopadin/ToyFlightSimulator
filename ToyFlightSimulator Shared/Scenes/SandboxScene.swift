@@ -9,7 +9,8 @@ class SandboxScene: Scene {
     var debugCamera = DebugCamera()
     
     var sun = Sun()
-    var f16 = F16()
+//    var f16 = F16()
+    var quad = Quad()
     
     override func buildScene() {
         debugCamera.setPosition(0, 0, 8)
@@ -21,7 +22,16 @@ class SandboxScene: Scene {
         sun.setLightAmbientIntensity(0.04)
         addLight(sun)
         
+        var material = Material()
+        material.color = float4(0, 0.4, 1.0, 1.0)
+        material.shininess = 10
+        quad.useMaterial(material)
+        quad.setPositionZ(1)
+        addChild(quad)
+        
+        let f16 = F16(camera: debugCamera)
         f16.setScale(2)
+        f16.setPositionZ(4)
         addChild(f16)
         
         let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
@@ -34,10 +44,10 @@ class SandboxScene: Scene {
     }
     
     override func doUpdate() {
-        if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
-            f16.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
-            f16.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
-        }
+//        if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
+//            f16.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
+//            f16.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
+//        }
     }
 }
 
