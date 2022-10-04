@@ -13,7 +13,7 @@ class SandboxScene: Scene {
     var quad = Quad()
     
     override func buildScene() {
-        debugCamera.setPosition(0, 0, 8)
+//        debugCamera.setPosition(0, 0, 8)
         addCamera(debugCamera)
         
         sun.setPosition(0, 5, 5)
@@ -22,16 +22,26 @@ class SandboxScene: Scene {
         sun.setLightAmbientIntensity(0.04)
         addLight(sun)
         
+        var groundMaterial = Material()
+        groundMaterial.color = float4(0.7, 0.4, 0.1, 1.0)
+        let ground = Quad()
+        ground.useMaterial(groundMaterial)
+        ground.rotateX(Float(90).toRadians)
+        ground.setScale(float3(100, 100, 100))
+        addChild(ground)
+        
         var material = Material()
         material.color = float4(0, 0.4, 1.0, 1.0)
         material.shininess = 10
         quad.useMaterial(material)
         quad.setPositionZ(1)
+        quad.setPositionY(10)
         addChild(quad)
         
         let f16 = F16(camera: debugCamera)
         f16.setScale(2)
         f16.setPositionZ(4)
+        f16.setPositionY(10)
         addChild(f16)
         
         let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
