@@ -18,8 +18,15 @@ class Node {
     var parentModelMatrix = matrix_identity_float4x4
     
     private var _modelMatrix = matrix_identity_float4x4
+    
     var modelMatrix: matrix_float4x4 {
-        return matrix_multiply(parentModelMatrix, _modelMatrix)
+        set {
+            _modelMatrix = newValue
+        }
+        
+        get {
+            return matrix_multiply(parentModelMatrix, _modelMatrix)
+        }
     }
     
     var children: [Node] = []

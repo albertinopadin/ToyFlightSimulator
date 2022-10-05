@@ -152,6 +152,9 @@
 		CE56921828EA9F7B00F6B42C /* F16Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* F16Camera.swift */; };
 		CE56921928EA9F7B00F6B42C /* F16Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* F16Camera.swift */; };
 		CE56921A28EA9F7B00F6B42C /* F16Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* F16Camera.swift */; };
+		CE56921C28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */; };
+		CE56921D28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */; };
+		CE56921E28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */; };
 		CE7F47F728B758920082B197 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F47F628B758920082B197 /* AppDelegate.swift */; };
 		CE7F47F928B758920082B197 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F47F828B758920082B197 /* GameViewController.swift */; };
 		CE7F47FC28B758920082B197 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CE7F47FA28B758920082B197 /* Main.storyboard */; };
@@ -266,6 +269,7 @@
 		CE3BFFE728E6A0F40014A752 /* F16.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F16.swift; sourceTree = "<group>"; };
 		CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkySphere.swift; sourceTree = "<group>"; };
 		CE56921728EA9F7B00F6B42C /* F16Camera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F16Camera.swift; sourceTree = "<group>"; };
+		CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightboxScene.swift; sourceTree = "<group>"; };
 		CE7F47EB28B758900082B197 /* Shaders_OG.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders_OG.metal; sourceTree = "<group>"; };
 		CE7F47EC28B758900082B197 /* Renderer_OG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer_OG.swift; sourceTree = "<group>"; };
 		CE7F47ED28B758900082B197 /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
@@ -348,6 +352,7 @@
 			children = (
 				CE3BFF7528E2FC0A0014A752 /* Scene.swift */,
 				CE3BFF7928E2FC270014A752 /* SandboxScene.swift */,
+				CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */,
 			);
 			path = Scenes;
 			sourceTree = "<group>";
@@ -817,6 +822,7 @@
 				CE3BFF7228E1B4E10014A752 /* TextureLibrary.swift in Sources */,
 				CE3BFF9628E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6928E1B4C10014A752 /* Assets.swift in Sources */,
+				CE56921C28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
 				CE3BFF3628E058DC0014A752 /* Keyboard.swift in Sources */,
 				CE3BFF6428E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE3BFF7E28E2FCF50014A752 /* Node.swift in Sources */,
@@ -861,6 +867,7 @@
 				CE3BFF8328E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CE3BFF7B28E2FC270014A752 /* SandboxScene.swift in Sources */,
 				CE3BFF5128E1B2230014A752 /* Library.swift in Sources */,
+				CE56921D28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
 				CE7F482228B758920082B197 /* Renderer_OG.swift in Sources */,
 				CE7F481F28B758920082B197 /* Shaders_OG.metal in Sources */,
 				CE7F480928B758920082B197 /* GameViewController.swift in Sources */,
@@ -934,6 +941,7 @@
 				CE3BFF7428E1B4E10014A752 /* TextureLibrary.swift in Sources */,
 				CE3BFF9828E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6B28E1B4C10014A752 /* Assets.swift in Sources */,
+				CE56921E28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
 				CE3BFF3728E059920014A752 /* Keyboard.swift in Sources */,
 				CE3BFF6628E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE3BFF8028E2FCF50014A752 /* Node.swift in Sources */,
