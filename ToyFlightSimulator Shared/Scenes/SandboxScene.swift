@@ -10,6 +10,10 @@ class SandboxScene: Scene {
     
     var sun = Sun()
 //    var quad = Quad()
+    var quad1 = Quad()
+    var quad2 = Quad()
+    var quad3 = Quad()
+    var quad4 = Quad()
     
     override func buildScene() {
         debugCamera.setPosition(0, 0, 0)
@@ -21,12 +25,12 @@ class SandboxScene: Scene {
         sun.setLightAmbientIntensity(0.04)
         addLight(sun)
         
-        let quad1 = createQuad(color: float4(0, 0, 1.0, 1.0), position: float3(0, 0, 5))
-        let quad2 = createQuad(color: float4(0, 1.0, 0, 1.0), position: float3(5, 0, 0))
+        quad1 = createQuad(color: float4(0, 0, 1.0, 1.0), position: float3(0, 0, 5))
+        quad2 = createQuad(color: float4(0, 1.0, 0, 1.0), position: float3(5, 0, 0))
         quad2.rotateY(Float(90).toRadians)
-        let quad3 = createQuad(color: float4(1, 0, 0, 1.0), position: float3(-5, 0, 0))
+        quad3 = createQuad(color: float4(1, 0, 0, 1.0), position: float3(-5, 0, 0))
         quad3.rotateY(Float(90).toRadians)
-        let quad4 = createQuad(color: float4(0, 0.2, 0.8, 1.0), position: float3(0, 0, -5))
+        quad4 = createQuad(color: float4(0, 0.2, 0.8, 1.0), position: float3(0, 0, -5))
         
         addChild(quad1)
         addChild(quad2)
@@ -53,9 +57,26 @@ class SandboxScene: Scene {
     
     override func doUpdate() {
 //        if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
-//            quad.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
-//            quad.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
+//            for quad in [quad1, quad2, quad3, quad4] {
+//                quad.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
+//                quad.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
+//            }
 //        }
+        
+        // TODO: Odd behavior, can only rotate one quad at a time (???)
+        if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
+//            quad1.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
+//            quad1.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
+//
+//            quad2.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
+//            quad2.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
+//
+//            quad3.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
+//            quad3.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
+            
+            quad4.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
+            quad4.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
+        }
     }
 }
 

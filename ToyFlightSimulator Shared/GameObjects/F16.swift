@@ -12,17 +12,16 @@ class F16: GameObject {
     private var _moveSpeed: Float = 4.0
     private var _turnSpeed: Float = 1.0
     
-    
-//    let invertYLook = false
-//    let eyeSpeed: Float = 6
-//    let radiansPerLookPoint: Float = 0.017
-//    let maximumPitchRadians = (Float.pi / 2) * 0.99
-//
+    let invertYLook = false
+    let eyeSpeed: Float = 6
+    let radiansPerLookPoint: Float = 0.017
+    let maximumPitchRadians = (Float.pi / 2) * 0.99
+
 //    let pointOfView: Node
-//
-//    var eye = float3(0, 0, 0)
-//    private var look = float3(0, 0, -1)
-//    private var up = float3(0, 1, 0)
+
+    var eye = float3(0, 0, 0)
+    private var look = float3(0, 0, -1)
+    private var up = float3(0, 1, 0)
     
     init() {
         super.init(name: "F-16", meshType: .F16)
@@ -36,41 +35,16 @@ class F16: GameObject {
         self.setRotationY(Float(90).toRadians)
     }
     
-    func getFwdVector(pointingDelta: float2, moveDelta: float2) -> float3 {
-//        let right = normalize(cross(look, up))
-//        var forward = look
-//
-//        let deltaX = moveDelta[0], deltaZ = moveDelta[1]
-//        let movementDir = SIMD3<Float>(deltaX * right.x + deltaZ * forward.x,
-//                                       deltaX * right.y + deltaZ * forward.y,
-//                                       deltaX * right.z + deltaZ * forward.z)
-//        eye += movementDir * eyeSpeed * timestep
-//
-//        let yaw = -lookDelta.x * radiansPerLookPoint
-//        let yawRotation = simd_quaternion(yaw, up)
-//
-//        let angleToUp: Float = acos(dot(look, up))
-//        let angleToDown: Float = acos(dot(look, -up))
-//        let maxPitch = max(0.0, angleToUp - (.pi / 2 - maximumPitchRadians))
-//        let minPitch = max(0.0, angleToDown - (.pi / 2 - maximumPitchRadians))
-//        var pitch = lookDelta.y * radiansPerLookPoint
-//        if (invertYLook) { pitch *= -1.0 }
-//        pitch = max(-minPitch, min(pitch, maxPitch))
-//        let pitchRotation = simd_quaternion(pitch, right)
-//
-//        let rotation = pitchRotation * yawRotation
-//        forward = rotation.rotate(forward)
-//
-//        look = normalize(forward)
-//
-//        pointOfView.transform = float4x4(lookAt: eye + look,
-//                                         from: eye,
-//                                         up: up)
-        return float3(0, 0, 0)
+    // TODO: Need to get 'z' axis from existing modelMatrix
+    func getFwdVector() -> float3 {
+        let fwd = normalize(self.modelMatrix.upperLeft3x3 * float3(-1, 0, 0))  // WTF ???
+        print("fwd vector: \(fwd)")
+        return fwd
     }
     
     func moveAlongVector(_ vector: float3, distance: Float) {
-        
+        self.move(vector.x * distance, vector.y * distance, vector.z * distance)
+//        self.modelMatrix = float4x4(lookAt: vector + distance, from: eye, up: up)
     }
     
     // TODO: Figure out how to move 'forwards' in direction jet is pointed.
@@ -93,7 +67,9 @@ class F16: GameObject {
             }
             
             if Keyboard.IsKeyPressed(.w) {
-                self.moveZ(-GameTime.DeltaTime * _moveSpeed)
+//                self.moveZ(-GameTime.DeltaTime * _moveSpeed)
+                let pointing = getFwdVector()
+                moveAlongVector(pointing, distance: -GameTime.DeltaTime * _moveSpeed)
             }
             
             if Keyboard.IsKeyPressed(.s) {
