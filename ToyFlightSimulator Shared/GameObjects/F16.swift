@@ -43,8 +43,8 @@ class F16: GameObject {
     }
     
     func moveAlongVector(_ vector: float3, distance: Float) {
-        self.move(vector.x * distance, vector.y * distance, vector.z * distance)
-//        self.modelMatrix = float4x4(lookAt: vector + distance, from: eye, up: up)
+        let to = vector * distance
+        self.move(to)
     }
     
     // TODO: Figure out how to move 'forwards' in direction jet is pointed.
@@ -73,7 +73,9 @@ class F16: GameObject {
             }
             
             if Keyboard.IsKeyPressed(.s) {
-                self.moveZ(GameTime.DeltaTime * _moveSpeed)
+//                self.moveZ(GameTime.DeltaTime * _moveSpeed)
+                let pointing = getFwdVector()
+                moveAlongVector(pointing, distance: GameTime.DeltaTime * _moveSpeed)
             }
             
             if (Mouse.IsMouseButtonPressed(button: .LEFT)) {

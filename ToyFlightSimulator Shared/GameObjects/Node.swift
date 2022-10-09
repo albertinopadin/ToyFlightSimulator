@@ -96,10 +96,11 @@ extension Node {
     func setPositionX(_ xPosition: Float) { setPosition(xPosition, getPositionY(), getPositionZ()) }
     func setPositionY(_ yPosition: Float) { setPosition(getPositionX(), yPosition, getPositionZ()) }
     func setPositionZ(_ zPosition: Float) { setPosition(getPositionX(), getPositionY(), zPosition) }
-    func move(_ x: Float, _ y: Float, _ z: Float){ setPosition(getPositionX() + x, getPositionY() + y, getPositionZ() + z) }
-    func moveX(_ delta: Float){ move(delta, 0, 0) }
-    func moveY(_ delta: Float){ move(0, delta, 0) }
-    func moveZ(_ delta: Float){ move(0, 0, delta) }
+    func move(_ x: Float, _ y: Float, _ z: Float) { setPosition(getPositionX() + x, getPositionY() + y, getPositionZ() + z) }
+    func move(_ deltaPosition: float3) { setPosition(getPosition() + deltaPosition) }
+    func moveX(_ delta: Float) { move(delta, 0, 0) }
+    func moveY(_ delta: Float) { move(0, delta, 0) }
+    func moveZ(_ delta: Float) { move(0, 0, delta) }
     func getPosition() -> float3 { return self._position }
     func getPositionX() -> Float { return self._position.x }
     func getPositionY() -> Float { return self._position.y }
