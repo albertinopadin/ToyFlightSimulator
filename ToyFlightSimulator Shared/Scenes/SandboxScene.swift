@@ -63,6 +63,8 @@ class SandboxScene: Scene {
 //            }
 //        }
         
+        quad4.rotateZ(GameTime.DeltaTime)
+        
         // TODO: Odd behavior, can only rotate one quad at a time (???)
         if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
 //            quad1.rotateX(Mouse.GetDY() * GameTime.DeltaTime)

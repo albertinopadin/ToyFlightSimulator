@@ -9,12 +9,12 @@ class FlightboxScene: Scene {
     var debugCamera = DebugCamera()
     
     var sun = Sun()
-//    var f16 = F16()
+    var f16: F16!
     var quad = Quad()
     
     override func buildScene() {
-//        debugCamera.setPosition(0, 0, 8)
         addCamera(debugCamera)
+        f16 = F16(camera: debugCamera)
         
         sun.setPosition(0, 5, 5)
         sun.setLightBrightness(1.0)
@@ -38,7 +38,6 @@ class FlightboxScene: Scene {
         quad.setPositionY(10)
         addChild(quad)
         
-        let f16 = F16(camera: debugCamera)
         f16.setScale(2)
         f16.setPositionZ(4)
         f16.setPositionY(10)
@@ -58,6 +57,8 @@ class FlightboxScene: Scene {
 //            f16.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
 //            f16.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
 //        }
+        quad.rotateZ(GameTime.DeltaTime)
+//        f16.rotateZ(GameTime.DeltaTime)
     }
 }
 

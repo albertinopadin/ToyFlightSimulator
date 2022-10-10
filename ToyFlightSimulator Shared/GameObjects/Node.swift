@@ -77,7 +77,6 @@ class Node {
         
         renderCommandEncoder.popDebugGroup()
     }
-    
 }
 
 extension Node {

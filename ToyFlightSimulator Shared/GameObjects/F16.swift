@@ -12,17 +12,6 @@ class F16: GameObject {
     private var _moveSpeed: Float = 4.0
     private var _turnSpeed: Float = 1.0
     
-    let invertYLook = false
-    let eyeSpeed: Float = 6
-    let radiansPerLookPoint: Float = 0.017
-    let maximumPitchRadians = (Float.pi / 2) * 0.99
-
-//    let pointOfView: Node
-
-    var eye = float3(0, 0, 0)
-    private var look = float3(0, 0, -1)
-    private var up = float3(0, 1, 0)
-    
     init() {
         super.init(name: "F-16", meshType: .F16)
     }
@@ -32,12 +21,15 @@ class F16: GameObject {
         _camera?.setPosition(_camPositionOffset)
         _camera?.setRotationX(Float(25).toRadians)
         super.init(name: "F-16", meshType: .F16)
-        self.setRotationY(Float(90).toRadians)
+        
+        // Results in gimbal lock and can't rotate on Z axis
+//        self.setRotationY(Float(90).toRadians)
+//        self.rotateY(Float(90).toRadians)
     }
     
     // TODO: Need to get 'z' axis from existing modelMatrix
     func getFwdVector() -> float3 {
-        let fwd = normalize(self.modelMatrix.upperLeft3x3 * float3(-1, 0, 0))  // WTF ???
+        let fwd = normalize(self.modelMatrix.upperLeft3x3 * float3(0, 0, 1))
         print("fwd vector: \(fwd)")
         return fwd
     }
@@ -47,33 +39,38 @@ class F16: GameObject {
         self.move(to)
     }
     
-    // TODO: Figure out how to move 'forwards' in direction jet is pointed.
     override func doUpdate() {
         if let _camera {
-            if Keyboard.IsKeyPressed(.leftArrow) || Keyboard.IsKeyPressed(.a) {
-                self.moveX(-GameTime.DeltaTime * _moveSpeed)
+            if Keyboard.IsKeyPressed(.leftArrow) {
+                self.rotateZ(GameTime.DeltaTime * _moveSpeed)
             }
             
-            if Keyboard.IsKeyPressed(.rightArrow) || Keyboard.IsKeyPressed(.d) {
-                self.moveX(GameTime.DeltaTime * _moveSpeed)
+            if Keyboard.IsKeyPressed(.rightArrow) {
+                self.rotateZ(-GameTime.DeltaTime * _moveSpeed)
             }
             
             if Keyboard.IsKeyPressed(.upArrow) {
-                self.moveY(GameTime.DeltaTime * _moveSpeed)
+                self.rotateX(GameTime.DeltaTime * _moveSpeed)
             }
             
             if Keyboard.IsKeyPressed(.downArrow) {
-                self.moveY(-GameTime.DeltaTime * _moveSpeed)
+                self.rotateX(-GameTime.DeltaTime * _moveSpeed)
+            }
+            
+            if Keyboard.IsKeyPressed(.a) {
+                self.moveX(-GameTime.DeltaTime * _moveSpeed)
+            }
+            
+            if Keyboard.IsKeyPressed(.d) {
+                self.moveX(GameTime.DeltaTime * _moveSpeed)
             }
             
             if Keyboard.IsKeyPressed(.w) {
-//                self.moveZ(-GameTime.DeltaTime * _moveSpeed)
                 let pointing = getFwdVector()
                 moveAlongVector(pointing, distance: -GameTime.DeltaTime * _moveSpeed)
             }
             
             if Keyboard.IsKeyPressed(.s) {
-//                self.moveZ(GameTime.DeltaTime * _moveSpeed)
                 let pointing = getFwdVector()
                 moveAlongVector(pointing, distance: GameTime.DeltaTime * _moveSpeed)
             }
@@ -97,7 +94,7 @@ class F16: GameObject {
             self.moveZ(-Mouse.GetDWheel() * 0.1)
             
             _camera.setPosition(self.getPosition() + _camPositionOffset)
-//            _camera.setRotation(self.getRotation())  <- not rotating correctly
+//            _camera.setRotation(-self.getRotation()) // <- not rotating correctly
         }
     }
 }
