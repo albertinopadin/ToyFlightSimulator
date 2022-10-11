@@ -8,6 +8,7 @@
 import MetalKit
 
 class GameTime {
+    // TODO: Change total game time to use unsinged type
     private static var _totalGameTime: Float = 0.0
     private static var _deltaTime: Float = 0.0
     

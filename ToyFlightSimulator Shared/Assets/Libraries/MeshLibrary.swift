@@ -133,9 +133,9 @@ class Mesh {
         _submeshes.append(submesh)
     }
     
-    func addVertex(position: SIMD3<Float>,
-                   color: SIMD4<Float> = SIMD4<Float>(1, 0, 1, 1),
-                   textureCoordinate: SIMD2<Float> = SIMD2<Float>(0, 0),
+    func addVertex(position: float3,
+                   color: float4 = float4(1, 0, 1, 1),
+                   textureCoordinate: float2 = float2(0, 0),
                    normal: float3 = float3(0, 1, 0),
                    tangent: float3 = float3(1, 0, 0),
                    bitangent: float3 = float3(0, 0, 1)) {

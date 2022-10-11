@@ -42,7 +42,6 @@ class Scene: Node {
         _sceneConstants.skyViewMatrix[3][0] = 0  // Remove x translation
         _sceneConstants.skyViewMatrix[3][1] = 0  // Remove y translation
         _sceneConstants.skyViewMatrix[3][2] = 0  // Remove z translation
-//        print("_cameraManager.currentCamera.projectionMatrix: \(_cameraManager.currentCamera.projectionMatrix)")
         _sceneConstants.projectionMatrix = _cameraManager.currentCamera.projectionMatrix
         _sceneConstants.totalGameTime = GameTime.TotalGameTime
         _sceneConstants.cameraPosition = _cameraManager.currentCamera.getPosition()

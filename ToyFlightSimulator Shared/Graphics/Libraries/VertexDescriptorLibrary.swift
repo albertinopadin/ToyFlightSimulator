@@ -26,57 +26,58 @@ class VertexDescriptorLibrary: Library<VertexDescriptorType, MTLVertexDescriptor
 protocol VertexDescriptor {
     var name: String { get }
     var vertexDescriptor: MTLVertexDescriptor! { get }
+    mutating func addAttribute(format: MTLVertexFormat, bufferIndex: Int)
 }
 
 public struct BaseVertexDescriptor: VertexDescriptor {
     var name: String = "Base Vertex Descriptor"
     
     var vertexDescriptor: MTLVertexDescriptor!
+    var attributeIndex: Int = 0
+    var offset: Int = 0
     
     init() {
         vertexDescriptor = MTLVertexDescriptor()
         
-        // TODO: This can be error prone, if you forget to change the attribute index.
-        //       Maybe refactor into a stateful 'addAttribute(format, index, offset)' method?
-        
-        var offset: Int = 0
-        
         // Position
-        vertexDescriptor.attributes[0].format = .float3
-        vertexDescriptor.attributes[0].bufferIndex = 0
-        vertexDescriptor.attributes[0].offset = offset
-        offset += float3.size
+        addAttribute(format: .float3, bufferIndex: 0)
         
         // Color
-        vertexDescriptor.attributes[1].format = .float4
-        vertexDescriptor.attributes[1].bufferIndex = 0
-        vertexDescriptor.attributes[1].offset = offset
-        offset += float4.size
+        addAttribute(format: .float4, bufferIndex: 0)
         
         // Texture Coordinate
-        vertexDescriptor.attributes[2].format = .float2
-        vertexDescriptor.attributes[2].bufferIndex = 0
-        vertexDescriptor.attributes[2].offset = offset
-        offset += float3.size  // Use float3 because of padding
+        addAttribute(format: .float2, bufferIndex: 0)
         
         // Normal
-        vertexDescriptor.attributes[3].format = .float3
-        vertexDescriptor.attributes[3].bufferIndex = 0
-        vertexDescriptor.attributes[3].offset = offset
-        offset += float3.size
+        addAttribute(format: .float3, bufferIndex: 0)
         
         // Tangent
-        vertexDescriptor.attributes[4].format = .float3
-        vertexDescriptor.attributes[4].bufferIndex = 0
-        vertexDescriptor.attributes[4].offset = offset
-        offset += float3.size
+        addAttribute(format: .float3, bufferIndex: 0)
         
         // Bitangent
-        vertexDescriptor.attributes[5].format = .float3
-        vertexDescriptor.attributes[5].bufferIndex = 0
-        vertexDescriptor.attributes[5].offset = offset
-        offset += float3.size
+        addAttribute(format: .float3, bufferIndex: 0)
         
         vertexDescriptor.layouts[0].stride = Vertex.stride
+    }
+    
+    mutating func addAttribute(format: MTLVertexFormat, bufferIndex: Int) {
+        vertexDescriptor.attributes[attributeIndex].format = format
+        vertexDescriptor.attributes[attributeIndex].bufferIndex = bufferIndex
+        vertexDescriptor.attributes[attributeIndex].offset = offset
+        offset += getOffsetForFormat(format)
+        attributeIndex += 1
+    }
+    
+    func getOffsetForFormat(_ format: MTLVertexFormat) -> Int {
+        switch format {
+        case .float2:
+            return float3.size  // Use float3 because of padding (???)
+        case .float3:
+            return float3.size
+        case .float4:
+            return float4.size
+        default:
+            return float4.size
+        }
     }
 }
