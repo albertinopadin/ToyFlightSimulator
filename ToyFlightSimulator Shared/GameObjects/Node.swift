@@ -11,9 +11,9 @@ class Node {
     private var _name: String = "Node"
     private var _id: String!
     
-    private var _position = float3(repeating: 0)
-    private var _scale = float3(repeating: 1)
-    private var _rotation = float3(repeating: 0)
+    private var _position = float3(0, 0, 0)
+    private var _scale = float3(0, 0, 1)
+    private var _rotation = float3(0, 0, 0)
     
     var parentModelMatrix = matrix_identity_float4x4
     

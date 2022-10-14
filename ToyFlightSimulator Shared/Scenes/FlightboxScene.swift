@@ -36,6 +36,7 @@ class FlightboxScene: Scene {
         quad.useMaterial(material)
         quad.setPositionZ(1)
         quad.setPositionY(10)
+        quad.setScale(1)
         addChild(quad)
         
         f16.setScale(2)

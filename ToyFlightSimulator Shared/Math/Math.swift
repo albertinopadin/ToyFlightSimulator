@@ -68,6 +68,7 @@ extension matrix_float4x4 {
         self = matrix_multiply(self, result)
     }
     
+    // TODO: Better rotation function? Using quaternions perhaps...
     mutating func rotate(angle: Float, axis: float3) {
         var result = matrix_identity_float4x4
         
