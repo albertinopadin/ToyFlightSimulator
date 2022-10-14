@@ -6,15 +6,21 @@
 //
 
 class FlightboxScene: Scene {
-    var debugCamera = DebugCamera()
+//    var debugCamera = DebugCamera()
+    var f16Camera = F16Camera()
     
     var sun = Sun()
     var f16: F16!
     var quad = Quad()
     
     override func buildScene() {
-        addCamera(debugCamera)
-        f16 = F16(camera: debugCamera)
+//        addCamera(debugCamera)
+        
+        f16Camera.setPosition(0, 2, 0)
+        addCamera(f16Camera)
+        
+        f16 = F16()
+//        f16 = F16(camera: f16Camera)
         
         sun.setPosition(0, 5, 5)
         sun.setLightBrightness(1.0)
