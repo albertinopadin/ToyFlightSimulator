@@ -19,8 +19,8 @@ class FlightboxScene: Scene {
         f16Camera.setPosition(0, 2, 0)
         addCamera(f16Camera)
         
-        f16 = F16()
-//        f16 = F16(camera: f16Camera)
+//        f16 = F16()
+        f16 = F16(camera: f16Camera)
         
         sun.setPosition(0, 5, 5)
         sun.setLightBrightness(1.0)
@@ -42,7 +42,6 @@ class FlightboxScene: Scene {
         quad.useMaterial(material)
         quad.setPositionZ(1)
         quad.setPositionY(10)
-        quad.setScale(1)
         addChild(quad)
         
         f16.setScale(2)

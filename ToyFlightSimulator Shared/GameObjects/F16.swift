@@ -24,6 +24,7 @@ class F16: GameObject {
         _camera?.setPosition(_camPositionOffset)
         _camera?.setRotationX(Float(25).toRadians)
         super.init(name: "F-16", meshType: .F16)
+        addChild(_camera!)
         
         // Results in gimbal lock and can't rotate on Z axis
 //        self.setRotationY(Float(90).toRadians)
@@ -138,12 +139,13 @@ class F16: GameObject {
         
         self.moveZ(-Mouse.GetDWheel() * 0.1)
         
-        if let _camera {
+//        if let _camera {
 //            _camera.setPosition(getPosition())
-            _camera.setPosition(self.getPosition() + _camPositionOffset)
+//            _camera.setPosition(_camPositionOffset)
+//            _camera.setPosition(self.getPosition() + _camPositionOffset)
 //            _camera.setPosition(mostRecentTranslation + _camPositionOffset)
             
 //            _camera.setRotation(-self.getRotation()) // <- not rotating correctly
-        }
+//        }
     }
 }
