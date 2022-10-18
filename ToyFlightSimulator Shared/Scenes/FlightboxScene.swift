@@ -17,10 +17,11 @@ class FlightboxScene: Scene {
 //        addCamera(debugCamera)
         
         f16Camera.setPosition(0, 2, 0)
-        addCamera(f16Camera)
         
 //        f16 = F16()
         f16 = F16(camera: f16Camera)
+        
+        addCamera(f16Camera)
         
         sun.setPosition(0, 5, 5)
         sun.setLightBrightness(1.0)

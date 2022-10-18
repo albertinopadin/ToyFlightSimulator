@@ -7,7 +7,7 @@
 
 class SandboxScene: Scene {
     var debugCamera = DebugCamera()
-    
+    var f16Camera = F16Camera()
     var sun = Sun()
 //    var quad = Quad()
     var quad1 = Quad()
@@ -16,8 +16,11 @@ class SandboxScene: Scene {
     var quad4 = Quad()
     
     override func buildScene() {
-        debugCamera.setPosition(0, 0, 0)
-        addCamera(debugCamera)
+//        debugCamera.setPosition(0, 0, 0)
+//        addCamera(debugCamera)
+        
+        f16Camera.setPosition(0, 0, 0)
+        addCamera(f16Camera)
         
         sun.setPosition(0, 5, 5)
         sun.setLightBrightness(1.0)
@@ -31,6 +34,9 @@ class SandboxScene: Scene {
         quad3 = createQuad(color: float4(1, 0, 0, 1.0), position: float3(-5, 0, 0))
         quad3.rotateY(Float(90).toRadians)
         quad4 = createQuad(color: float4(0, 0.2, 0.8, 1.0), position: float3(0, 0, -5))
+//        quad4.addChild(f16Camera)
+        let quad5 = createQuad(color: float4(1.0, 0, 0, 1.0), position: float3(1, 1, -4))
+        quad4.addChild(quad5)
         
         addChild(quad1)
         addChild(quad2)
@@ -63,7 +69,7 @@ class SandboxScene: Scene {
 //            }
 //        }
         
-        quad4.rotateZ(GameTime.DeltaTime)
+//        quad4.rotateZ(GameTime.DeltaTime)
         
         // TODO: Odd behavior, can only rotate one quad at a time (???)
         if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
@@ -78,6 +84,30 @@ class SandboxScene: Scene {
             
             quad4.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
             quad4.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
+        }
+        
+        if Keyboard.IsKeyPressed(.q) {
+            quad4.rotateY(GameTime.DeltaTime * 4)
+        }
+        
+        if Keyboard.IsKeyPressed(.e) {
+            quad4.rotateY(-GameTime.DeltaTime * 4)
+        }
+        
+        if Keyboard.IsKeyPressed(.a) {
+            quad4.moveX(-GameTime.DeltaTime * 4)
+        }
+        
+        if Keyboard.IsKeyPressed(.d) {
+            quad4.moveX(GameTime.DeltaTime * 4)
+        }
+        
+        if Keyboard.IsKeyPressed(.w) {
+            quad4.moveZ(-GameTime.DeltaTime * 4)
+        }
+        
+        if Keyboard.IsKeyPressed(.s) {
+            quad4.moveZ(GameTime.DeltaTime * 4)
         }
     }
 }

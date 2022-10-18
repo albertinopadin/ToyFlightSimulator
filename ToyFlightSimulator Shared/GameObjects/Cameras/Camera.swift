@@ -17,7 +17,13 @@ class Camera: Node {
     
     private var _viewMatrix = matrix_identity_float4x4
     var viewMatrix: matrix_float4x4 {
-        return _viewMatrix
+        get {
+            return _viewMatrix
+        }
+        
+        set {
+            _viewMatrix = newValue
+        }
     }
     
     var projectionMatrix: matrix_float4x4 {
@@ -30,6 +36,7 @@ class Camera: Node {
     }
     
     override func updateModelMatrix() {
+        super.updateModelMatrix()
         _viewMatrix = matrix_identity_float4x4
         _viewMatrix.rotate(angle: self.getRotationX(), axis: X_AXIS)
         _viewMatrix.rotate(angle: self.getRotationY(), axis: Y_AXIS)
