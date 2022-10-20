@@ -45,56 +45,50 @@ class F16Camera: Camera {
                                                         far: 1000)
     }
     
-//    override func updateModelMatrix() {
-//        modelMatrix.translate(direction: getPosition() - _lastPosition)
-//
-//        modelMatrix.rotate(angle: getRotationX() - _lastRotation.x, axis: X_AXIS)
-//        modelMatrix.rotate(angle: getRotationY() - _lastRotation.y, axis: Y_AXIS)
-//        modelMatrix.rotate(angle: getRotationZ() - _lastRotation.z, axis: Z_AXIS)
-//
-//        _lastPosition = getPosition()
-//        _lastRotation = getRotation()
-//    }
-    
+    // Sort of works...
 //    override func updateModelMatrix() {
 //        super.updateModelMatrix()
-////        viewMatrix = matrix_multiply(viewMatrix, modelMatrix)
-//        viewMatrix = matrix_multiply(viewMatrix, parentModelMatrix)
-////        viewMatrix = modelMatrix
-////        viewMatrix.translate(direction: -getPosition()*2)
+//        let cPosition = modelMatrix.columns.3.xyz + positionOffset
+//
+//        print("[F16Cam] cPosition: \(cPosition)")
+//        viewMatrix = matrix_identity_float4x4
+////        viewMatrix.translate(direction: -cPosition)
+//        viewMatrix.rotate(angle: getRotationX(), axis: X_AXIS)
+//        viewMatrix.rotate(angle: getRotationY(), axis: Y_AXIS)
+//        viewMatrix.rotate(angle: getRotationZ(), axis: Z_AXIS)
+//
+//        viewMatrix.translate(direction: -cPosition)
 //    }
-    
+
     override func updateModelMatrix() {
         super.updateModelMatrix()
-//        let cPosition = float3(modelMatrix.columns.0.w,
-//                               modelMatrix.columns.1.w,
-//                               modelMatrix.columns.2.w)
         
+        // Ehhh...
+//        let cPosition = modelMatrix.columns.3.xyz + positionOffset
+//        viewMatrix = matrix_multiply(viewMatrix, modelMatrix)
+//        viewMatrix.translate(direction: -cPosition*2)
         
+        // Mmm...
         let cPosition = modelMatrix.columns.3.xyz + positionOffset
         
-//        print("[F16Cam] modelMatrix col 0: \(modelMatrix.columns.0)")
-//        print("[F16Cam] modelMatrix col 1: \(modelMatrix.columns.1)")
-//        print("[F16Cam] modelMatrix col 2: \(modelMatrix.columns.2)")
-//        print("[F16Cam] modelMatrix col 3: \(modelMatrix.columns.3)")
+//        let cRotations = modelMatrix.upperLeft3x3
+//        let multMatrix = float4x4(columns: (
+//            float4(cRotations.columns.0, 0),
+//            float4(cRotations.columns.1, 0),
+//            float4(cRotations.columns.2, 0),
+//            float4(-cPosition, 1)
+//        ))
         
-        print("[F16Cam] cPosition: \(cPosition)")
-        viewMatrix = matrix_identity_float4x4
+//        let multMatrix = float4x4(columns: (
+//            float4(1, 0, 0, 0),
+//            float4(0, 1, 0, 0),
+//            float4(0, 0, 1, 0),
+//            float4(-cPosition, 1)
+//        ))
+//        viewMatrix = matrix_multiply(viewMatrix, multMatrix)
+        
         viewMatrix.translate(direction: -cPosition)
     }
-    
-//    override func updateModelMatrix() {
-//        viewMatrix.translate(direction: getPosition() - _lastPosition)
-//
-//        viewMatrix.rotate(angle: getRotationX() - _lastRotation.x, axis: X_AXIS)
-//        viewMatrix.rotate(angle: getRotationY() - _lastRotation.y, axis: Y_AXIS)
-//        viewMatrix.rotate(angle: getRotationZ() - _lastRotation.z, axis: Z_AXIS)
-//
-////        modelMatrix.scale(axis: getScale())
-//
-//        _lastPosition = getPosition()
-//        _lastRotation = getRotation()
-//    }
     
     override func doUpdate() {
         if _lastModelMatrix != self.modelMatrix {
@@ -111,31 +105,6 @@ class F16Camera: Camera {
             print("F16Camera projection matrix changed: \(self.projectionMatrix)")
             _lastProjectionMatrix = self.projectionMatrix
         }
-        
-        
-//        if Keyboard.IsKeyPressed(.leftArrow) || Keyboard.IsKeyPressed(.a) {
-//            self.moveX(-GameTime.DeltaTime * _moveSpeed)
-//        }
-//
-//        if Keyboard.IsKeyPressed(.rightArrow) || Keyboard.IsKeyPressed(.d) {
-//            self.moveX(GameTime.DeltaTime * _moveSpeed)
-//        }
-//
-//        if Keyboard.IsKeyPressed(.upArrow) {
-//            self.moveY(GameTime.DeltaTime * _moveSpeed)
-//        }
-//
-//        if Keyboard.IsKeyPressed(.downArrow) {
-//            self.moveY(-GameTime.DeltaTime * _moveSpeed)
-//        }
-//
-//        if Keyboard.IsKeyPressed(.w) {
-//            self.moveZ(-GameTime.DeltaTime * _moveSpeed)
-//        }
-//
-//        if Keyboard.IsKeyPressed(.s) {
-//            self.moveZ(GameTime.DeltaTime * _moveSpeed)
-//        }
         
         if Mouse.IsMouseButtonPressed(button: .RIGHT) {
             self.rotate(Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed,

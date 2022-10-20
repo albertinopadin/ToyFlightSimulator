@@ -122,10 +122,10 @@ class F16: GameObject {
             self.moveZ(GameTime.DeltaTime * _moveSpeed)
         }
         
-        if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
-            self.rotateX(-Mouse.GetDY() * GameTime.DeltaTime)
-            self.rotateY(-Mouse.GetDX() * GameTime.DeltaTime)
-        }
+//        if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
+//            self.rotateX(-Mouse.GetDY() * GameTime.DeltaTime)
+//            self.rotateY(-Mouse.GetDX() * GameTime.DeltaTime)
+//        }
 
 //        if Mouse.IsMouseButtonPressed(button: .RIGHT) {
 //            self.rotate(Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed,
@@ -138,7 +138,7 @@ class F16: GameObject {
 //            self.moveY(Mouse.GetDY() * GameTime.DeltaTime * _moveSpeed)
 //        }
         
-        self.moveZ(-Mouse.GetDWheel() * 0.1)
+//        self.moveZ(-Mouse.GetDWheel() * 0.1)
         
 //        if let _camera {
 ////            _camera.setPosition(getPosition())
