@@ -36,6 +36,12 @@ class Scene: Node {
         _cameraManager.update(deltaTime: deltaTime)
     }
     
+//    override func doUpdate() {
+//        if Keyboard.IsKeyPressed(.p) {
+//            
+//        }
+//    }
+    
     override func update() {
         _sceneConstants.viewMatrix = _cameraManager.currentCamera.viewMatrix
         _sceneConstants.skyViewMatrix = _sceneConstants.viewMatrix

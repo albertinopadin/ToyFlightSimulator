@@ -12,6 +12,7 @@ enum RenderPipelineStateType {
     case Instanced
     case SkySphere
     case Final
+    case DebugDrawing
 }
 
 class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState> {
@@ -22,6 +23,7 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(InstancedRenderPipelineState(), forKey: .Instanced)
         _library.updateValue(SkySphereRenderPipelineState(), forKey: .SkySphere)
         _library.updateValue(FinalRenderPipelineState(), forKey: .Final)
+        _library.updateValue(DebugDrawingRenderPipelineState(), forKey: .DebugDrawing)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {
@@ -52,6 +54,22 @@ class BaseRenderPipelineState: RenderPipelineState {
         
         renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.BaseVertex]
         renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.BaseFragment]
+        
+        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
+    }
+}
+
+class DebugDrawingRenderPipelineState: RenderPipelineState {
+    init() {
+        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        renderPipelineDescriptor.label = "Debug Drawing Render Pipeline Descriptor"
+        renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
+        renderPipelineDescriptor.colorAttachments[1].pixelFormat = Preferences.MainPixelFormat
+        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
+        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+        
+        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.BaseVertex]
+        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.DebugDrawingFragment]
         
         super.init(renderPipelineDescriptor: renderPipelineDescriptor)
     }

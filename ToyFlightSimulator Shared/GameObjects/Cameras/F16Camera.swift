@@ -46,30 +46,32 @@ class F16Camera: Camera {
     }
     
     // Sort of works...
-//    override func updateModelMatrix() {
-//        super.updateModelMatrix()
-//        let cPosition = modelMatrix.columns.3.xyz + positionOffset
-//
-//        print("[F16Cam] cPosition: \(cPosition)")
-//        viewMatrix = matrix_identity_float4x4
-////        viewMatrix.translate(direction: -cPosition)
-//        viewMatrix.rotate(angle: getRotationX(), axis: X_AXIS)
-//        viewMatrix.rotate(angle: getRotationY(), axis: Y_AXIS)
-//        viewMatrix.rotate(angle: getRotationZ(), axis: Z_AXIS)
-//
-//        viewMatrix.translate(direction: -cPosition)
-//    }
-
     override func updateModelMatrix() {
         super.updateModelMatrix()
-        
-        // Ehhh...
-//        let cPosition = modelMatrix.columns.3.xyz + positionOffset
-//        viewMatrix = matrix_multiply(viewMatrix, modelMatrix)
-//        viewMatrix.translate(direction: -cPosition*2)
-        
-        // Mmm...
         let cPosition = modelMatrix.columns.3.xyz + positionOffset
+
+        print("[F16Cam] cPosition: \(cPosition)")
+        viewMatrix = matrix_identity_float4x4
+//        viewMatrix.translate(direction: -cPosition)
+        
+        viewMatrix.rotate(angle: getRotationX(), axis: X_AXIS)
+        viewMatrix.rotate(angle: getRotationY(), axis: Y_AXIS)
+        viewMatrix.rotate(angle: getRotationZ(), axis: Z_AXIS)
+
+        viewMatrix.translate(direction: -cPosition)
+    }
+
+//    override func updateModelMatrix() {
+//        super.updateModelMatrix()
+//        
+//        // Ehhh...
+////        let cPosition = modelMatrix.columns.3.xyz + positionOffset
+////        viewMatrix = matrix_multiply(viewMatrix, modelMatrix)
+////        viewMatrix.translate(direction: -cPosition*2)
+//
+//        // Mmm...
+//        let cPosition = modelMatrix.columns.3.xyz + positionOffset
+//        viewMatrix.translate(direction: -cPosition)
         
 //        let cRotations = modelMatrix.upperLeft3x3
 //        let multMatrix = float4x4(columns: (
@@ -80,15 +82,22 @@ class F16Camera: Camera {
 //        ))
         
 //        let multMatrix = float4x4(columns: (
+//            float4(cRotations.columns.0, 0),
+//            float4(cRotations.columns.1, 0),
+//            float4(cRotations.columns.2, 0),
+//            float4(0, 0, 0, 1)
+//        ))
+        
+//        let multMatrix = float4x4(columns: (
 //            float4(1, 0, 0, 0),
 //            float4(0, 1, 0, 0),
 //            float4(0, 0, 1, 0),
 //            float4(-cPosition, 1)
 //        ))
 //        viewMatrix = matrix_multiply(viewMatrix, multMatrix)
-        
-        viewMatrix.translate(direction: -cPosition)
-    }
+
+//        viewMatrix.translate(direction: -cPosition)
+//    }
     
     override func doUpdate() {
         if _lastModelMatrix != self.modelMatrix {

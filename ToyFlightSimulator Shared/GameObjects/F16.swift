@@ -8,6 +8,7 @@
 class F16: GameObject {
     private var _camera: F16Camera?
     private let _camPositionOffset = float3(0, 2, 4)
+//    private let _camPositionOffset = float3(0, 1, 0)
     
     private var _moveSpeed: Float = 4.0
     private var _turnSpeed: Float = 2.0
@@ -150,8 +151,8 @@ class F16: GameObject {
 //        }
         
 //        if let _camera {
-//            _camera.setPosition(self.getPosition() + _camPositionOffset)
-////            _camera.setRotation(-self.getRotation())
+////            _camera.setPosition(self.getPosition() + _camPositionOffset)
+//            _camera.setRotation(-self.getRotation())
 //        }
     }
 }

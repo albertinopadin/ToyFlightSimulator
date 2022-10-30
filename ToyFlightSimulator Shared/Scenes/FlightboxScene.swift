@@ -13,6 +13,8 @@ class FlightboxScene: Scene {
     var f16: F16!
     var quad = Quad()
     
+    var paused: Bool = false
+    
     override func buildScene() {
 //        addCamera(debugCamera)
         
@@ -53,6 +55,12 @@ class FlightboxScene: Scene {
         let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
         addChild(sky)
         
+        let line = Line(name: "Red Line",
+                        startPoint: float3(0, 0, 0),
+                        endPoint: float3(0, 50, 0),
+                        color: float4(1, 0, 0, 1))
+        addChild(line)
+        
         print("Sandbox scene children:")
         for child in children {
             print(child.getName())
@@ -64,8 +72,14 @@ class FlightboxScene: Scene {
 //            f16.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
 //            f16.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
 //        }
-        quad.rotateZ(GameTime.DeltaTime)
-//        f16.rotateZ(GameTime.DeltaTime)
+        if Keyboard.IsKeyPressed(.p) {
+            paused.toggle()
+        }
+        
+        if !paused {
+            quad.rotateZ(GameTime.DeltaTime)
+//            f16.rotateZ(GameTime.DeltaTime)
+        }
     }
 }
 

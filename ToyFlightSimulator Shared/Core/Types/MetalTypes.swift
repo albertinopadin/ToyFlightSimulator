@@ -68,12 +68,12 @@ extension SIMD3:  sizeable {}
 extension SIMD4:  sizeable {}
 
 struct Vertex: sizeable {
-    var position: float3
-    var color: float4
-    var textureCoordinate: float2
-    var normal: float3
-    var tangent: float3
-    var bitangent: float3
+    var position: float3 = float3(0, 0, 0)
+    var color: float4 = float4(0, 0, 0, 1)
+    var textureCoordinate: float2 = float2(0, 0)
+    var normal: float3 = float3(0, 0, 1)
+    var tangent: float3 = float3(1, 0, 0)
+    var bitangent: float3 = float3(0, 1, 0)
 }
 
 struct ModelConstants: sizeable {
@@ -89,7 +89,7 @@ struct SceneConstants: sizeable {
 }
 
 struct Material: sizeable {
-    var color = float4(0.4, 0.4, 0.4, 1.0)
+    var color = float4(0, 0, 0, 0)
     var isLit: Bool = true
     
     // For GPU bugfix:
