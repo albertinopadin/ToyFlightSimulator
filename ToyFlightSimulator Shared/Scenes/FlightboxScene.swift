@@ -55,11 +55,23 @@ class FlightboxScene: Scene {
         let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
         addChild(sky)
         
-        let line = Line(name: "Red Line",
-                        startPoint: float3(0, 0, 0),
-                        endPoint: float3(0, 50, 0),
-                        color: float4(1, 0, 0, 1))
-        addChild(line)
+        let debugLine = DebugLine(name: "Red Line",
+                                  startPoint: float3(0, 0, 0),
+                                  endPoint: float3(0, 50, 0),
+                                  color: float4(1, 0, 0, 1))
+        addChild(debugLine)
+        
+        let debugSphere = DebugSphere(name: "Red Sphere",
+                                      position: f16.getPosition(),
+                                      radius: 1.0,
+                                      color: float4(1, 0, 0, 0.5))
+        
+//        let debugSphere = DebugSphere(name: "Blue Sphere",
+//                                      position: f16.getPosition(),
+//                                      radius: 1.0,
+//                                      color: float4(0, 0, 1, 0.5))
+        
+        addChild(debugSphere)
         
         print("Sandbox scene children:")
         for child in children {

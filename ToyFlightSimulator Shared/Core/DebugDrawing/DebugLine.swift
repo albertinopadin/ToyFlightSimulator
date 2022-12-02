@@ -7,12 +7,11 @@
 
 import MetalKit
 
-class Line: Node {
-    var renderPipelineStateType: RenderPipelineStateType = .DebugDrawing
+class DebugLine: DebugDrawing {
     var startVertex: Vertex
     var endVertex: Vertex
     
-    private var _modelConstants = ModelConstants()
+    
     private var _vertices: [Vertex]
     private var _vertexBuffer: MTLBuffer!
     
@@ -24,23 +23,9 @@ class Line: Node {
         super.init(name: name)
     }
     
-    override func update() {
-        _modelConstants.modelMatrix = self.modelMatrix
-        super.update()
-    }
-}
-
-extension Line: Renderable {
-    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
-        renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
-        
-        // Vertex Shader
+    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+        super.doRender(renderCommandEncoder)
         renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
-        renderCommandEncoder.setVertexBytes(&_modelConstants, length: ModelConstants.stride, index: 2)
-        
-        renderCommandEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
-        
         renderCommandEncoder.drawPrimitives(type: .lineStrip, vertexStart: 0, vertexCount: _vertices.count)
     }
 }

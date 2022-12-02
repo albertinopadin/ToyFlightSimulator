@@ -21,11 +21,15 @@ class Graphics {
     private static var _samplerStateLibrary: SamplerStateLibrary!
     public static var SamplerStates: SamplerStateLibrary { return _samplerStateLibrary }
     
+    private static var _mdlVertexDescriptorLibrary: MDLVertexDescriptorLibrary!
+    public static var MDLVertexDescriptors: MDLVertexDescriptorLibrary { return _mdlVertexDescriptorLibrary }
+    
     public static func Initialize() {
         _shaderLibrary = ShaderLibrary()
         _vertexDescriptorLibrary = VertexDescriptorLibrary()
         _renderPipelineStateLibrary = RenderPipelineStateLibrary()
         _depthStencilStateLibrary = DepthStencilStateLibrary()
         _samplerStateLibrary = SamplerStateLibrary()
+        _mdlVertexDescriptorLibrary = MDLVertexDescriptorLibrary()
     }
 }
