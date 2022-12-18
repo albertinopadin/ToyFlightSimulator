@@ -24,7 +24,7 @@ class F16: GameObject {
         _camera = camera
         _camera?.setPosition(_camPositionOffset)
         _camera?.positionOffset = _camPositionOffset
-        _camera?.setRotationX(Float(25).toRadians)
+        _camera?.setRotationX(Float(-15).toRadians)
         super.init(name: "F-16", meshType: .F16)
         addChild(camera)
         
@@ -88,11 +88,11 @@ class F16: GameObject {
         }
         
         if Keyboard.IsKeyPressed(.upArrow) {
-            self.rotateX(GameTime.DeltaTime * _turnSpeed)
+            self.rotateX(-GameTime.DeltaTime * _turnSpeed)
         }
         
         if Keyboard.IsKeyPressed(.downArrow) {
-            self.rotateX(-GameTime.DeltaTime * _turnSpeed)
+            self.rotateX(GameTime.DeltaTime * _turnSpeed)
         }
         
         if Keyboard.IsKeyPressed(.q) {
@@ -112,47 +112,11 @@ class F16: GameObject {
         }
         
         if Keyboard.IsKeyPressed(.w) {
-//                let pointing = getFwdVector()
-//                moveAlongVector(pointing, distance: -GameTime.DeltaTime * _moveSpeed)
             self.moveZ(-GameTime.DeltaTime * _moveSpeed)
         }
         
         if Keyboard.IsKeyPressed(.s) {
-//                let pointing = getFwdVector()
-//                moveAlongVector(pointing, distance: GameTime.DeltaTime * _moveSpeed)
             self.moveZ(GameTime.DeltaTime * _moveSpeed)
         }
-        
-//        if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
-//            self.rotateX(-Mouse.GetDY() * GameTime.DeltaTime)
-//            self.rotateY(-Mouse.GetDX() * GameTime.DeltaTime)
-//        }
-
-//        if Mouse.IsMouseButtonPressed(button: .RIGHT) {
-//            self.rotate(Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed,
-//                        Mouse.GetDX() * GameTime.DeltaTime * _turnSpeed,
-//                        0)
-//        }
-//
-//        if Mouse.IsMouseButtonPressed(button: .CENTER) {
-//            self.moveX(-Mouse.GetDX() * GameTime.DeltaTime * _moveSpeed)
-//            self.moveY(Mouse.GetDY() * GameTime.DeltaTime * _moveSpeed)
-//        }
-        
-//        self.moveZ(-Mouse.GetDWheel() * 0.1)
-        
-//        if let _camera {
-////            _camera.setPosition(getPosition())
-////            _camera.setPosition(_camPositionOffset)
-//            _camera.setPosition(self.getPosition() + _camPositionOffset)
-////            _camera.setPosition(mostRecentTranslation + _camPositionOffset)
-////
-////            _camera.setRotation(-self.getRotation()) // <- not rotating correctly
-//        }
-        
-//        if let _camera {
-////            _camera.setPosition(self.getPosition() + _camPositionOffset)
-//            _camera.setRotation(-self.getRotation())
-//        }
     }
 }

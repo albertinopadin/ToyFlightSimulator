@@ -6,7 +6,6 @@
 //
 
 class FlightboxScene: Scene {
-//    var debugCamera = DebugCamera()
     var f16Camera = F16Camera()
     
     var sun = Sun()
@@ -16,11 +15,6 @@ class FlightboxScene: Scene {
     var paused: Bool = false
     
     override func buildScene() {
-//        addCamera(debugCamera)
-        
-        f16Camera.setPosition(0, 2, 0)
-        
-//        f16 = F16()
         f16 = F16(camera: f16Camera)
         
         addCamera(f16Camera)
@@ -61,17 +55,17 @@ class FlightboxScene: Scene {
                                   color: float4(1, 0, 0, 1))
         addChild(debugLine)
         
-        let debugSphere = DebugSphere(name: "Red Sphere",
-                                      position: f16.getPosition(),
-                                      radius: 1.0,
-                                      color: float4(1, 0, 0, 0.5))
+//        let debugSphere = DebugSphere(name: "Red Sphere",
+//                                      position: f16.getPosition(),
+//                                      radius: 1.0,
+//                                      color: float4(1, 0, 0, 0.5))
         
 //        let debugSphere = DebugSphere(name: "Blue Sphere",
 //                                      position: f16.getPosition(),
 //                                      radius: 1.0,
 //                                      color: float4(0, 0, 1, 0.5))
         
-        addChild(debugSphere)
+//        addChild(debugSphere)
         
         print("Sandbox scene children:")
         for child in children {
@@ -84,6 +78,7 @@ class FlightboxScene: Scene {
 //            f16.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
 //            f16.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
 //        }
+        
         if Keyboard.IsKeyPressed(.p) {
             paused.toggle()
         }

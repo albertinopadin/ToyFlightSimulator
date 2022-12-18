@@ -19,7 +19,6 @@ class SandboxScene: Scene {
 //        debugCamera.setPosition(0, 0, 0)
 //        addCamera(debugCamera)
         
-        f16Camera.setPosition(0, 0, 0)
         addCamera(f16Camera)
         
         sun.setPosition(0, 5, 5)
@@ -28,15 +27,16 @@ class SandboxScene: Scene {
         sun.setLightAmbientIntensity(0.04)
         addLight(sun)
         
-        quad1 = createQuad(color: float4(0, 0, 1.0, 1.0), position: float3(0, 0, 5))
-        quad2 = createQuad(color: float4(0, 1.0, 0, 1.0), position: float3(5, 0, 0))
+        quad1 = createQuad(color: BLUE_COLOR, position: float3(0, 0, 5))
+        quad2 = createQuad(color: GREEN_COLOR, position: float3(5, 0, 0))
         quad2.rotateY(Float(90).toRadians)
-        quad3 = createQuad(color: float4(1, 0, 0, 1.0), position: float3(-5, 0, 0))
+        quad3 = createQuad(color: RED_COLOR, position: float3(-5, 0, 0))
         quad3.rotateY(Float(90).toRadians)
         quad4 = createQuad(color: float4(0, 0.2, 0.8, 1.0), position: float3(0, 0, -5))
-//        quad4.addChild(f16Camera)
-        let quad5 = createQuad(color: float4(1.0, 0, 0, 1.0), position: float3(1, 1, -4))
+        let quad5 = createQuad(color: RED_COLOR, position: float3(1, 1, -4))
         quad4.addChild(quad5)
+        quad4.addChild(f16Camera)
+        f16Camera.setPosition(0, 0, 5)
         
         addChild(quad1)
         addChild(quad2)
@@ -69,7 +69,7 @@ class SandboxScene: Scene {
 //            }
 //        }
         
-//        quad4.rotateZ(GameTime.DeltaTime)
+        quad4.rotateY(GameTime.DeltaTime)
         
         // TODO: Odd behavior, can only rotate one quad at a time (???)
         if (Mouse.IsMouseButtonPressed(button: .LEFT)) {

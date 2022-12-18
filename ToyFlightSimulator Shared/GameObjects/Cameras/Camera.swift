@@ -12,7 +12,7 @@ enum CameraType {
     case F16Cam
 }
 
-class Camera: Node {
+class Camera: GameObject {
     var cameraType: CameraType!
     
     private var _viewMatrix = matrix_identity_float4x4
@@ -31,7 +31,7 @@ class Camera: Node {
     }
     
     init(name: String, cameraType: CameraType) {
-        super.init(name: name)
+        super.init(name: name, meshType: .None)
         self.cameraType = cameraType
     }
     
