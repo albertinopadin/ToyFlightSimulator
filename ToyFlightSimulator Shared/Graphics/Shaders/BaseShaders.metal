@@ -45,7 +45,11 @@ fragment FragmentOutput base_fragment_shader(RasterizerData rd [[ stage_in ]],
                                              texture2d<float> baseColorMap [[ texture(0) ]],
                                              texture2d<float> normalMap [[ texture(1) ]]) {
     float2 texCoord = rd.textureCoordinate;
-    float4 color = material.color;
+    float4 color = rd.color;
+    
+    if (material.useMaterialColor) {
+        color = material.color;
+    }
     
     if (material.useBaseTexture) {
         color = baseColorMap.sample(sampler2d, texCoord);

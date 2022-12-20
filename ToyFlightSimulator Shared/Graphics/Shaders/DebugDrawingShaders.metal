@@ -12,5 +12,5 @@
 using namespace metal;
 
 fragment half4 debug_fragment_shader(RasterizerData rd [[ stage_in ]]) {
-    return half4(rd.color);;
+    return half4(rd.color);
 }

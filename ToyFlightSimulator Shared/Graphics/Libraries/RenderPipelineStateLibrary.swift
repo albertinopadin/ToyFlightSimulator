@@ -34,12 +34,26 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
 class RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState!
     
-    init(renderPipelineDescriptor: MTLRenderPipelineDescriptor) {
+    init(renderPipelineDescriptor: MTLRenderPipelineDescriptor, enableAlphaBlending: Bool = true) {
+        if enableAlphaBlending {
+            enableBlending(colorAttachmentDescriptor: renderPipelineDescriptor.colorAttachments[0])
+        }
+        
         do {
             renderPipelineState = try Engine.Device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
         } catch let error as NSError {
             print("ERROR::CREATE::RENDER_PIPELINE_STATE::__::\(error)")
         }
+    }
+    
+    func enableBlending(colorAttachmentDescriptor: MTLRenderPipelineColorAttachmentDescriptor) {
+        colorAttachmentDescriptor.isBlendingEnabled = true
+        colorAttachmentDescriptor.sourceRGBBlendFactor = .one
+        colorAttachmentDescriptor.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        colorAttachmentDescriptor.rgbBlendOperation = .add
+        colorAttachmentDescriptor.sourceAlphaBlendFactor = .one
+        colorAttachmentDescriptor.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+        colorAttachmentDescriptor.alphaBlendOperation = .add
     }
 }
 

@@ -55,17 +55,28 @@ class FlightboxScene: Scene {
                                   color: float4(1, 0, 0, 1))
         addChild(debugLine)
         
-//        let debugSphere = DebugSphere(name: "Red Sphere",
-//                                      position: f16.getPosition(),
-//                                      radius: 1.0,
-//                                      color: float4(1, 0, 0, 0.5))
+        let debugSphere = DebugSphere(name: "Red Sphere",
+                                      position: f16.getPosition(),
+                                      radius: 1.0,
+                                      color: float4(1, 0, 0, 0.4))
         
 //        let debugSphere = DebugSphere(name: "Blue Sphere",
 //                                      position: f16.getPosition(),
 //                                      radius: 1.0,
 //                                      color: float4(0, 0, 1, 0.5))
         
-//        addChild(debugSphere)
+        addChild(debugSphere)
+        
+        let testQuad = Quad()
+        var testMaterial = Material()
+        testMaterial.color = float4(0, 0.4, 1.0, 0.4)
+        testMaterial.shininess = 10
+        testQuad.useMaterial(testMaterial)
+        testQuad.setPositionZ(1)
+        testQuad.setPositionY(10)
+        testQuad.setPositionX(5)
+        addChild(testQuad)
+        
         
         print("Sandbox scene children:")
         for child in children {

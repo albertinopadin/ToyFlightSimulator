@@ -89,7 +89,19 @@ struct SceneConstants: sizeable {
 }
 
 struct Material: sizeable {
-    var color = float4(0, 0, 0, 0)
+    private var _color = float4(0, 0, 0, 0)
+    var color: float4 {
+        get {
+            return _color
+        }
+        
+        set {
+            _color = newValue
+            useMaterialColor = true
+        }
+    }
+    
+    var useMaterialColor: Bool = false
     var isLit: Bool = true
     
     // For GPU bugfix:
