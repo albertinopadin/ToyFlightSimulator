@@ -228,6 +228,12 @@
 		CED6F624290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */; };
 		CED6F625290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */; };
 		CED6F626290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */; };
+		CEFC6E2D2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
+		CEFC6E2E2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
+		CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
+		CEFC6E3129531C0C009B692B /* Triangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E3029531C0C009B692B /* Triangle.swift */; };
+		CEFC6E3229531C0C009B692B /* Triangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E3029531C0C009B692B /* Triangle.swift */; };
+		CEFC6E3329531C0C009B692B /* Triangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E3029531C0C009B692B /* Triangle.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -321,6 +327,8 @@
 		CECEE79A29068D8F00B64AAC /* DebugSphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugSphere.swift; sourceTree = "<group>"; };
 		CECEE79C29068D9B00B64AAC /* DebugBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugBox.swift; sourceTree = "<group>"; };
 		CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DebugDrawingShaders.metal; sourceTree = "<group>"; };
+		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
+		CEFC6E3029531C0C009B692B /* Triangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Triangle.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -390,6 +398,8 @@
 				CE3BFFAA28E453310014A752 /* Quad.swift */,
 				CE3BFFE728E6A0F40014A752 /* F16.swift */,
 				CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */,
+				CEFC6E2C2952EA44009B692B /* Cube.swift */,
+				CEFC6E3029531C0C009B692B /* Triangle.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -858,10 +868,12 @@
 				CE3BFF9B28E4523D0014A752 /* Camera.swift in Sources */,
 				CE3BFF9228E451E50014A752 /* CameraManager.swift in Sources */,
 				CE3BFF5428E1B29C0014A752 /* ShaderLibrary.swift in Sources */,
+				CEFC6E2D2952EA44009B692B /* Cube.swift in Sources */,
 				CE3BFF7228E1B4E10014A752 /* TextureLibrary.swift in Sources */,
 				CE3BFF9628E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6928E1B4C10014A752 /* Assets.swift in Sources */,
 				CE56921C28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
+				CEFC6E3129531C0C009B692B /* Triangle.swift in Sources */,
 				CE3BFF3628E058DC0014A752 /* Keyboard.swift in Sources */,
 				CE3BFF6428E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE3BFF7E28E2FCF50014A752 /* Node.swift in Sources */,
@@ -904,6 +916,7 @@
 				CE3BFF6F28E1B4D70014A752 /* MeshLibrary.swift in Sources */,
 				CE3BFF9C28E4523D0014A752 /* Camera.swift in Sources */,
 				CE7F48AD28BB17070082B197 /* GameMesh.swift in Sources */,
+				CEFC6E3229531C0C009B692B /* Triangle.swift in Sources */,
 				CE3BFFA028E452480014A752 /* DebugCamera.swift in Sources */,
 				CE56921928EA9F7B00F6B42C /* F16Camera.swift in Sources */,
 				CE3BFF8328E2FD6F0014A752 /* Renderable.swift in Sources */,
@@ -919,6 +932,7 @@
 				CE3BFFB028E572EC0014A752 /* SkySphereShaders.metal in Sources */,
 				CE3BFF4E28E1B2150014A752 /* MetalTypes.swift in Sources */,
 				CE3BFF7F28E2FCF50014A752 /* Node.swift in Sources */,
+				CEFC6E2E2952EA44009B692B /* Cube.swift in Sources */,
 				CE7F484328B770C20082B197 /* Node_1.swift in Sources */,
 				CE3BFFB428E572FB0014A752 /* FinalShaders.metal in Sources */,
 				CE7F483F28B770B00082B197 /* Colors.swift in Sources */,
@@ -985,10 +999,12 @@
 				CE3BFF9428E451E50014A752 /* CameraManager.swift in Sources */,
 				CE3BFF5628E1B29C0014A752 /* ShaderLibrary.swift in Sources */,
 				CE3BFF7428E1B4E10014A752 /* TextureLibrary.swift in Sources */,
+				CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */,
 				CE3BFF9828E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6B28E1B4C10014A752 /* Assets.swift in Sources */,
 				CE56921E28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
 				CE3BFF3728E059920014A752 /* Keyboard.swift in Sources */,
+				CEFC6E3329531C0C009B692B /* Triangle.swift in Sources */,
 				CE3BFF6628E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE3BFF8028E2FCF50014A752 /* Node.swift in Sources */,
 				CE3BFF3A28E0599F0014A752 /* MetalTypes.swift in Sources */,

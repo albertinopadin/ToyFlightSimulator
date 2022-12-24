@@ -8,11 +8,12 @@
 import MetalKit
 
 class SkySphere: GameObject {
-    override var renderPipelineStateType: RenderPipelineStateType { return .SkySphere }
+//    var renderPipelineStateType: RenderPipelineStateType = .SkySphere
     private var _skySphereTextureType: TextureType!
     
     init(skySphereTextureType: TextureType) {
         super.init(name: "SkySphere", meshType: .SkySphere)
+        renderPipelineStateType = .SkySphere
         _skySphereTextureType = skySphereTextureType
         
         setScale(1000)

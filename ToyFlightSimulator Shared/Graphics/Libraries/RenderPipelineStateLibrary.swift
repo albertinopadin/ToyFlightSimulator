@@ -9,6 +9,7 @@ import MetalKit
 
 enum RenderPipelineStateType {
     case Base
+    case Material
     case Instanced
     case SkySphere
     case Final
@@ -20,6 +21,7 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
     
     override func makeLibrary() {
         _library.updateValue(BaseRenderPipelineState(), forKey: .Base)
+        _library.updateValue(MaterialRenderPipelineState(), forKey: .Material)
         _library.updateValue(InstancedRenderPipelineState(), forKey: .Instanced)
         _library.updateValue(SkySphereRenderPipelineState(), forKey: .SkySphere)
         _library.updateValue(FinalRenderPipelineState(), forKey: .Final)
@@ -55,68 +57,67 @@ class RenderPipelineState {
         colorAttachmentDescriptor.destinationAlphaBlendFactor = .oneMinusSourceAlpha
         colorAttachmentDescriptor.alphaBlendOperation = .add
     }
+    
+    class func getRenderPipelineDescriptor(vertexDescriptorType: VertexDescriptorType,
+                                           vertexShaderType: ShaderType,
+                                           fragmentShaderType: ShaderType) -> MTLRenderPipelineDescriptor {
+        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
+        renderPipelineDescriptor.colorAttachments[1].pixelFormat = Preferences.MainPixelFormat
+        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
+        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[vertexDescriptorType]
+        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[vertexShaderType]
+        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[fragmentShaderType]
+        return renderPipelineDescriptor
+    }
 }
 
 class BaseRenderPipelineState: RenderPipelineState {
     init() {
-        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        let renderPipelineDescriptor = RenderPipelineState.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+                                                                                       vertexShaderType: .BaseVertex,
+                                                                                       fragmentShaderType: .BaseFragment)
         renderPipelineDescriptor.label = "Base Render Pipeline Descriptor"
-        renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.colorAttachments[1].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
-        
-        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.BaseVertex]
-        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.BaseFragment]
-        
+        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
+    }
+}
+
+class MaterialRenderPipelineState: RenderPipelineState {
+    init() {
+        let renderPipelineDescriptor = RenderPipelineState.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+                                                                                       vertexShaderType: .BaseVertex,
+                                                                                       fragmentShaderType: .MaterialFragment)
+        renderPipelineDescriptor.label = "Material Render Pipeline Descriptor"
         super.init(renderPipelineDescriptor: renderPipelineDescriptor)
     }
 }
 
 class DebugDrawingRenderPipelineState: RenderPipelineState {
     init() {
-        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        let renderPipelineDescriptor = RenderPipelineState.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+                                                                                       vertexShaderType: .BaseVertex,
+                                                                                       fragmentShaderType: .DebugDrawingFragment)
         renderPipelineDescriptor.label = "Debug Drawing Render Pipeline Descriptor"
-        renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.colorAttachments[1].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
-        
-        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.BaseVertex]
-        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.DebugDrawingFragment]
-        
         super.init(renderPipelineDescriptor: renderPipelineDescriptor)
     }
 }
 
 class InstancedRenderPipelineState: RenderPipelineState {
     init() {
-        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        let renderPipelineDescriptor = RenderPipelineState.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+                                                                                       vertexShaderType: .InstancedVertex,
+                                                                                       fragmentShaderType: .BaseFragment)
         renderPipelineDescriptor.label = "Instanced Render Pipeline Descriptor"
-        renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.colorAttachments[1].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
-        
-        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.InstancedVertex]
-        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.BaseFragment]
-        
         super.init(renderPipelineDescriptor: renderPipelineDescriptor)
     }
 }
 
 class SkySphereRenderPipelineState: RenderPipelineState {
     init() {
-        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        let renderPipelineDescriptor = RenderPipelineState.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+                                                                                       vertexShaderType: .SkySphereVertex,
+                                                                                       fragmentShaderType: .SkySphereFragment)
         renderPipelineDescriptor.label = "Sky Sphere Render Pipeline Descriptor"
-        renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.colorAttachments[1].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
-        
-        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.SkySphereVertex]
-        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.SkySphereFragment]
-        
         super.init(renderPipelineDescriptor: renderPipelineDescriptor)
     }
 }
@@ -127,10 +128,8 @@ class FinalRenderPipelineState: RenderPipelineState {
         renderPipelineDescriptor.label = "Final Render Pipeline Descriptor"
         renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
         renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
-        
         renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.FinalVertex]
         renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.FinalFragment]
-        
         super.init(renderPipelineDescriptor: renderPipelineDescriptor)
     }
 }

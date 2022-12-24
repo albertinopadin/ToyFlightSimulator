@@ -14,6 +14,7 @@ enum ShaderType {
     case FinalVertex
     
     case BaseFragment
+    case MaterialFragment
     case SkySphereFragment
     case FinalFragment
     case DebugDrawingFragment
@@ -30,6 +31,7 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "final_vertex_shader"), forKey: .FinalVertex)
         
         _library.updateValue(Shader(functionName: "base_fragment_shader"), forKey: .BaseFragment)
+        _library.updateValue(Shader(functionName: "material_fragment_shader"), forKey: .MaterialFragment)
         _library.updateValue(Shader(functionName: "skysphere_fragment_shader"), forKey: .SkySphereFragment)
         _library.updateValue(Shader(functionName: "final_fragment_shader"), forKey: .FinalFragment)
         _library.updateValue(Shader(functionName: "debug_fragment_shader"), forKey: .DebugDrawingFragment)

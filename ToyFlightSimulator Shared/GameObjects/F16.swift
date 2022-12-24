@@ -8,7 +8,6 @@
 class F16: GameObject {
     private var _camera: F16Camera?
     private let _camPositionOffset = float3(0, 2, 4)
-//    private let _camPositionOffset = float3(0, 1, 0)
     
     private var _moveSpeed: Float = 4.0
     private var _turnSpeed: Float = 2.0
@@ -17,7 +16,7 @@ class F16: GameObject {
     private var _lastRotation = float3(0, 0, 0)
     
     init() {
-        super.init(name: "F-16", meshType: .F16)
+        super.init(name: "F-16", meshType: .F16, renderPipelineStateType: .Material)
     }
     
     init(camera: F16Camera) {
@@ -25,7 +24,7 @@ class F16: GameObject {
         _camera?.setPosition(_camPositionOffset)
         _camera?.positionOffset = _camPositionOffset
         _camera?.setRotationX(Float(-15).toRadians)
-        super.init(name: "F-16", meshType: .F16)
+        super.init(name: "F-16", meshType: .F16, renderPipelineStateType: .Material)
         addChild(camera)
         
         // Results in gimbal lock and can't rotate on Z axis

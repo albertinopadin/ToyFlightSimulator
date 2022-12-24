@@ -8,7 +8,7 @@
 import MetalKit
 
 class GameObject: Node {
-    var renderPipelineStateType: RenderPipelineStateType { return .Base }
+    var renderPipelineStateType: RenderPipelineStateType
     
     private var _modelConstants = ModelConstants()
     private var _mesh: Mesh!
@@ -19,9 +19,11 @@ class GameObject: Node {
     
     var mesh: Mesh!
     
-    init(name: String, meshType: MeshType) {
+    init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .Base) {
+        self.renderPipelineStateType = renderPipelineStateType
         super.init(name: name)
         _mesh = Assets.Meshes[meshType]
+        print("GameObject named \(self.getName()) render pipeline state type: \(self.renderPipelineStateType)")
     }
     
     override func update() {
@@ -57,5 +59,6 @@ extension GameObject {
     
     public func useMaterial(_ material: Material) {
         _material = material
+        renderPipelineStateType = .Material
     }
 }

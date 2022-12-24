@@ -38,12 +38,30 @@ vertex RasterizerData base_vertex_shader(const VertexIn vIn [[ stage_in ]],
 }
 
 fragment FragmentOutput base_fragment_shader(RasterizerData rd [[ stage_in ]],
-                                             constant Material &material [[ buffer(1) ]],
+//                                             constant Material &material [[ buffer(1) ]],
                                              constant int &lightCount [[ buffer(2) ]],
                                              constant LightData *lightDatas [[ buffer(3) ]],
                                              sampler sampler2d [[ sampler(0) ]],
                                              texture2d<float> baseColorMap [[ texture(0) ]],
                                              texture2d<float> normalMap [[ texture(1) ]]) {
+//    float2 texCoord = rd.textureCoordinate;
+    float4 color = rd.color;
+    float3 unitNormal = normalize(rd.surfaceNormal);
+    
+    FragmentOutput out;
+    out.color0 = half4(color.r, color.g, color.b, color.a);
+    out.color1 = half4(unitNormal.x, unitNormal.y, unitNormal.z, 1.0);
+    return out;
+}
+
+
+fragment FragmentOutput material_fragment_shader(RasterizerData rd [[ stage_in ]],
+                                                 constant Material &material [[ buffer(1) ]],
+                                                 constant int &lightCount [[ buffer(2) ]],
+                                                 constant LightData *lightDatas [[ buffer(3) ]],
+                                                 sampler sampler2d [[ sampler(0) ]],
+                                                 texture2d<float> baseColorMap [[ texture(0) ]],
+                                                 texture2d<float> normalMap [[ texture(1) ]]) {
     float2 texCoord = rd.textureCoordinate;
     float4 color = rd.color;
     
