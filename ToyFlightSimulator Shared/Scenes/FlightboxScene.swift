@@ -54,6 +54,14 @@ class FlightboxScene: Scene {
         addChild(debugLine)
         
         let f16Pos = f16.getPosition()
+        
+        let debugSphereBluePos = float3(x: f16Pos.x + 1, y: f16Pos.y, z: f16Pos.z - 2)
+        let debugSphereBlue = DebugSphere(name: "Blue Sphere",
+                                          position: debugSphereBluePos,
+                                          radius: 1.0,
+                                          color: float4(0, 0, 1, 0.5))
+        addChild(debugSphereBlue)
+        
         let debugSphereRedPos = float3(x: f16Pos.x - 1, y: f16Pos.y, z: f16Pos.z - 2)
         let debugSphereRed = DebugSphere(name: "Red Sphere",
                                          position: debugSphereRedPos,
@@ -61,12 +69,12 @@ class FlightboxScene: Scene {
                                          color: float4(1, 0, 0, 0.4))
         addChild(debugSphereRed)
 
-        let debugSphereBluePos = float3(x: f16Pos.x + 1, y: f16Pos.y, z: f16Pos.z - 2)
-        let debugSphereBlue = DebugSphere(name: "Blue Sphere",
-                                          position: debugSphereBluePos,
-                                          radius: 1.0,
-                                          color: float4(0, 0, 1, 0.5))
-        addChild(debugSphereBlue)
+//        let debugSphereBluePos = float3(x: f16Pos.x + 1, y: f16Pos.y, z: f16Pos.z - 2)
+//        let debugSphereBlue = DebugSphere(name: "Blue Sphere",
+//                                          position: debugSphereBluePos,
+//                                          radius: 1.0,
+//                                          color: float4(0, 0, 1, 0.5))
+//        addChild(debugSphereBlue)
         
         
         let testQuad = Quad()

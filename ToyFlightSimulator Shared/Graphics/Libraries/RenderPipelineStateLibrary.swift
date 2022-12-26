@@ -50,10 +50,12 @@ class RenderPipelineState {
     
     func enableBlending(colorAttachmentDescriptor: MTLRenderPipelineColorAttachmentDescriptor) {
         colorAttachmentDescriptor.isBlendingEnabled = true
-        colorAttachmentDescriptor.sourceRGBBlendFactor = .one
+//        colorAttachmentDescriptor.sourceRGBBlendFactor = .one
+        colorAttachmentDescriptor.sourceRGBBlendFactor = .sourceAlpha
         colorAttachmentDescriptor.destinationRGBBlendFactor = .oneMinusSourceAlpha
         colorAttachmentDescriptor.rgbBlendOperation = .add
-        colorAttachmentDescriptor.sourceAlphaBlendFactor = .one
+//        colorAttachmentDescriptor.sourceAlphaBlendFactor = .one
+        colorAttachmentDescriptor.sourceAlphaBlendFactor = .sourceAlpha
         colorAttachmentDescriptor.destinationAlphaBlendFactor = .oneMinusSourceAlpha
         colorAttachmentDescriptor.alphaBlendOperation = .add
     }

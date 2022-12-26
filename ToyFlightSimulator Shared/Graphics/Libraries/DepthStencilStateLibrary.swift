@@ -9,6 +9,7 @@ import MetalKit
 
 enum DepthStencilStateType {
     case Less
+    case LessEqualNoWrite
 }
 
 class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilState> {
@@ -16,6 +17,7 @@ class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilSt
     
     override func makeLibrary() {
         _library.updateValue(Less_DepthStencilState(), forKey: .Less)
+        _library.updateValue(LessEqualNoWrite_DepthStencilState(), forKey: .LessEqualNoWrite)
     }
     
     override subscript(type: DepthStencilStateType) -> MTLDepthStencilState {
@@ -32,8 +34,21 @@ class Less_DepthStencilState: DepthStencilState {
     
     init() {
         let depthStencilDescriptor = MTLDepthStencilDescriptor()
+        depthStencilDescriptor.label = "DepthCompareLessAndWriteDepthStencil"
         depthStencilDescriptor.isDepthWriteEnabled = true
         depthStencilDescriptor.depthCompareFunction = .less
+        depthStencilState = Engine.Device.makeDepthStencilState(descriptor: depthStencilDescriptor)
+    }
+}
+
+class LessEqualNoWrite_DepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState!
+    
+    init() {
+        let depthStencilDescriptor = MTLDepthStencilDescriptor()
+        depthStencilDescriptor.label = "DepthCompareLessEqualAndNoWriteDepthStencil"
+        depthStencilDescriptor.isDepthWriteEnabled = false
+        depthStencilDescriptor.depthCompareFunction = .lessEqual
         depthStencilState = Engine.Device.makeDepthStencilState(descriptor: depthStencilDescriptor)
     }
 }
