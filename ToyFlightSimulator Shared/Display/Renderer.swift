@@ -313,11 +313,14 @@ class Renderer: NSObject, MTKViewDelegate {
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
     
     private var _baseRenderPassDescriptor: MTLRenderPassDescriptor!
+    private var _forwardRenderPassDescriptor: MTLRenderPassDescriptor!
+    private let _optimalTileSize: MTLSize = MTLSize(width: 32, height: 16, depth: 1)
     
     init(_ mtkView: MTKView) {
         super.init()
         updateScreenSize(view: mtkView)
         createBaseRenderPassDescriptor()
+        createForwardRenderPassDescriptor()
         mtkView.delegate = self
     }
     
@@ -365,6 +368,48 @@ class Renderer: NSObject, MTKViewDelegate {
         _baseRenderPassDescriptor.depthAttachment.texture = Assets.Textures[.BaseDepthRender]
         _baseRenderPassDescriptor.depthAttachment.storeAction = .store
         _baseRenderPassDescriptor.depthAttachment.loadAction = .clear
+        
+        // For Order-Independent Blending:
+        _baseRenderPassDescriptor.tileWidth = _optimalTileSize.width
+        _baseRenderPassDescriptor.tileHeight = _optimalTileSize.height
+        _baseRenderPassDescriptor.imageblockSampleLength = Graphics.RenderPipelineStates[.OrderIndependentTransparent].imageblockSampleLength
+    }
+    
+    private func createForwardRenderPassDescriptor() {
+        // --- BASE COLOR 0 TEXTURE ---
+        let base0TextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainPixelFormat,
+                                                                              width: Int(Renderer.ScreenSize.x),
+                                                                              height: Int(Renderer.ScreenSize.y),
+                                                                              mipmapped: false)
+        // Defining render target
+        base0TextureDescriptor.usage = [.renderTarget, .shaderRead]
+        Assets.Textures.setTexture(textureType: .BaseColorRender_0,
+                                   texture: Engine.Device.makeTexture(descriptor: base0TextureDescriptor)!)
+        
+        // --- BASE DEPTH TEXTURE ---
+        let depthTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainDepthPixelFormat,
+                                                                              width: Int(Renderer.ScreenSize.x),
+                                                                              height: Int(Renderer.ScreenSize.y),
+                                                                              mipmapped: false)
+        // Defining render target
+        depthTextureDescriptor.usage = [.renderTarget, .shaderRead]
+        depthTextureDescriptor.storageMode = .private
+        Assets.Textures.setTexture(textureType: .BaseDepthRender,
+                                   texture: Engine.Device.makeTexture(descriptor: depthTextureDescriptor)!)
+        
+        _forwardRenderPassDescriptor = MTLRenderPassDescriptor()
+        _forwardRenderPassDescriptor.colorAttachments[0].texture = Assets.Textures[.BaseColorRender_0]
+        _forwardRenderPassDescriptor.colorAttachments[0].storeAction = .store
+        _forwardRenderPassDescriptor.colorAttachments[0].loadAction = .clear
+        
+        _forwardRenderPassDescriptor.depthAttachment.texture = Assets.Textures[.BaseDepthRender]
+        _forwardRenderPassDescriptor.depthAttachment.storeAction = .store
+        _forwardRenderPassDescriptor.depthAttachment.loadAction = .clear
+        
+        // For Order-Independent Blending:
+        _forwardRenderPassDescriptor.tileWidth = _optimalTileSize.width
+        _forwardRenderPassDescriptor.tileHeight = _optimalTileSize.height
+        _forwardRenderPassDescriptor.imageblockSampleLength = Graphics.RenderPipelineStates[.OrderIndependentTransparent].imageblockSampleLength
     }
     
     
@@ -378,12 +423,63 @@ class Renderer: NSObject, MTKViewDelegate {
         updateScreenSize(view: view)
     }
     
+    func drawOpaqueObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
+        renderCommandEncoder.pushDebugGroup("Opaque Object Rendering")
+        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Opaque])
+        renderCommandEncoder.setCullMode(.none)
+        renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
+        
+        // TODO: Draw opaque objects... somehow!
+        SceneManager.RenderOpaque(renderCommandEncoder: renderCommandEncoder)
+        
+        renderCommandEncoder.popDebugGroup()
+    }
+    
+    func drawTransparentObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
+        renderCommandEncoder.pushDebugGroup("Transparent Object Rendering")
+        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OrderIndependentTransparent])
+        renderCommandEncoder.setCullMode(.none)
+        renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
+        
+        // TODO: Draw transparent objects... somehow!
+        SceneManager.RenderTransparent(renderCommandEncoder: renderCommandEncoder)
+        
+        renderCommandEncoder.popDebugGroup()
+    }
+    
     func baseRenderPass(commandBuffer: MTLCommandBuffer) {
         let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _baseRenderPassDescriptor)
         renderCommandEncoder?.label = "Base Render Command Encoder"
         renderCommandEncoder?.pushDebugGroup("Starting Base Render")
         SceneManager.Render(renderCommandEncoder: renderCommandEncoder!)
         renderCommandEncoder?.popDebugGroup()
+        renderCommandEncoder?.endEncoding()
+    }
+    
+    func orderIndependentTransparencyRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
+        guard let drawableTexture = view.currentDrawable?.texture else { return }
+        
+        _baseRenderPassDescriptor.colorAttachments[0].texture = drawableTexture
+        _baseRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
+        
+        let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _forwardRenderPassDescriptor)
+        renderCommandEncoder?.label = "Order Independent Transparency Render Command Encoder"
+        
+        renderCommandEncoder?.pushDebugGroup("[Tile Render] Init Image Block")
+        renderCommandEncoder?.setRenderPipelineState(Graphics.RenderPipelineStates[.TileRender])
+        renderCommandEncoder?.dispatchThreadsPerTile(_optimalTileSize)
+        renderCommandEncoder?.popDebugGroup()
+        
+        drawOpaqueObjects(renderCommandEncoder: renderCommandEncoder!)
+        drawTransparentObjects(renderCommandEncoder: renderCommandEncoder!)
+        
+        renderCommandEncoder?.pushDebugGroup("Blend Fragments")
+        renderCommandEncoder?.setRenderPipelineState(Graphics.RenderPipelineStates[.Blend])
+        renderCommandEncoder?.setCullMode(.none)
+        renderCommandEncoder?.setDepthStencilState(Graphics.DepthStencilStates[.AlwaysNoWrite])
+        renderCommandEncoder?.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        renderCommandEncoder?.popDebugGroup()
+        
         renderCommandEncoder?.endEncoding()
     }
     
@@ -406,7 +502,8 @@ class Renderer: NSObject, MTKViewDelegate {
         let commandBuffer = Engine.CommandQueue.makeCommandBuffer()
         commandBuffer?.label = "Base Command Buffer"
         
-        baseRenderPass(commandBuffer: commandBuffer!)
+//        baseRenderPass(commandBuffer: commandBuffer!)
+        orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer!)
         // Intermediate renders go here
         finalRenderPass(view: view, commandBuffer: commandBuffer!)
         

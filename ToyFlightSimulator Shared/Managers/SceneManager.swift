@@ -33,4 +33,12 @@ class SceneManager {
     public static func Render(renderCommandEncoder: MTLRenderCommandEncoder) {
         _currentScene.render(renderCommandEncoder: renderCommandEncoder)
     }
+    
+    public static func RenderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
+        _currentScene.renderOpaque(renderCommandEncoder: renderCommandEncoder)
+    }
+    
+    public static func RenderTransparent(renderCommandEncoder: MTLRenderCommandEncoder) {
+        _currentScene.renderTransparent(renderCommandEncoder: renderCommandEncoder)
+    }
 }

@@ -34,8 +34,8 @@ class GameObject: Node {
 
 extension GameObject: Renderable {
     func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
-        renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
+//        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
+//        renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
         
         // Vertex Shader
         renderCommandEncoder.setVertexBytes(&_modelConstants, length: ModelConstants.stride, index: 2)

@@ -8,7 +8,9 @@
 import MetalKit
 
 enum DepthStencilStateType {
+    case AlwaysNoWrite
     case Less
+    case LessEqualWrite
     case LessEqualNoWrite
 }
 
@@ -16,7 +18,9 @@ class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilSt
     private var _library: [DepthStencilStateType: DepthStencilState] = [:]
     
     override func makeLibrary() {
+        _library.updateValue(AlwaysNoWrite_DepthStencilState(), forKey: .AlwaysNoWrite)
         _library.updateValue(Less_DepthStencilState(), forKey: .Less)
+        _library.updateValue(LessEqualWrite_DepthStencilState(), forKey: .LessEqualWrite)
         _library.updateValue(LessEqualNoWrite_DepthStencilState(), forKey: .LessEqualNoWrite)
     }
     
@@ -29,6 +33,20 @@ protocol DepthStencilState {
     var depthStencilState: MTLDepthStencilState! { get }
 }
 
+class AlwaysNoWrite_DepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState!
+    
+    init() {
+        let depthStencilDescriptor = MTLDepthStencilDescriptor()
+        depthStencilDescriptor.label = "DepthCompareAlwaysAndNoWriteDepthStencil"
+        depthStencilDescriptor.isDepthWriteEnabled = false
+        depthStencilDescriptor.depthCompareFunction = .always
+        depthStencilDescriptor.backFaceStencil = nil
+        depthStencilDescriptor.frontFaceStencil = nil
+        depthStencilState = Engine.Device.makeDepthStencilState(descriptor: depthStencilDescriptor)
+    }
+}
+
 class Less_DepthStencilState: DepthStencilState {
     var depthStencilState: MTLDepthStencilState!
     
@@ -37,6 +55,18 @@ class Less_DepthStencilState: DepthStencilState {
         depthStencilDescriptor.label = "DepthCompareLessAndWriteDepthStencil"
         depthStencilDescriptor.isDepthWriteEnabled = true
         depthStencilDescriptor.depthCompareFunction = .less
+        depthStencilState = Engine.Device.makeDepthStencilState(descriptor: depthStencilDescriptor)
+    }
+}
+
+class LessEqualWrite_DepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState!
+    
+    init() {
+        let depthStencilDescriptor = MTLDepthStencilDescriptor()
+        depthStencilDescriptor.label = "DepthCompareLessEqualAndWriteDepthStencil"
+        depthStencilDescriptor.isDepthWriteEnabled = true
+        depthStencilDescriptor.depthCompareFunction = .lessEqual
         depthStencilState = Engine.Device.makeDepthStencilState(descriptor: depthStencilDescriptor)
     }
 }
