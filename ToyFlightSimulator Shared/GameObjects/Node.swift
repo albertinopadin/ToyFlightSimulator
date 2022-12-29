@@ -15,6 +15,8 @@ class Node {
     private var _scale = float3(1, 1, 1)
     private var _rotation = float3(0, 0, 0)
     
+    var transparent: Bool = false  // TODO: Figure out how to partition objects opaque vs transparent
+    
     var parentModelMatrix = matrix_identity_float4x4
     
     private var _modelMatrix = matrix_identity_float4x4
@@ -73,6 +75,38 @@ class Node {
         
         for child in children {
             child.render(renderCommandEncoder: renderCommandEncoder)
+        }
+        
+        renderCommandEncoder.popDebugGroup()
+    }
+    
+    func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
+        renderCommandEncoder.pushDebugGroup("Rendering opaque \(_name)")
+        
+        if !transparent {
+            if let renderable = self as? Renderable {
+                renderable.doRender(renderCommandEncoder)
+            }
+        }
+        
+        for child in children {
+            child.renderOpaque(renderCommandEncoder: renderCommandEncoder)
+        }
+        
+        renderCommandEncoder.popDebugGroup()
+    }
+    
+    func renderTransparent(renderCommandEncoder: MTLRenderCommandEncoder) {
+        renderCommandEncoder.pushDebugGroup("Rendering transparent \(_name)")
+        
+        if transparent {
+            if let renderable = self as? Renderable {
+                renderable.doRender(renderCommandEncoder)
+            }
+        }
+        
+        for child in children {
+            child.renderTransparent(renderCommandEncoder: renderCommandEncoder)
         }
         
         renderCommandEncoder.popDebugGroup()

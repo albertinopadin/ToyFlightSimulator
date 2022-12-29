@@ -234,6 +234,9 @@
 		CEFC6E3129531C0C009B692B /* Triangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E3029531C0C009B692B /* Triangle.swift */; };
 		CEFC6E3229531C0C009B692B /* Triangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E3029531C0C009B692B /* Triangle.swift */; };
 		CEFC6E3329531C0C009B692B /* Triangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E3029531C0C009B692B /* Triangle.swift */; };
+		CEFC6EC5295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */; };
+		CEFC6EC6295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */; };
+		CEFC6EC7295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -329,6 +332,7 @@
 		CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DebugDrawingShaders.metal; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
 		CEFC6E3029531C0C009B692B /* Triangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Triangle.swift; sourceTree = "<group>"; };
+		CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = OrderIndependentTransparencyShaders.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -630,6 +634,7 @@
 				CE3BFFAE28E572EC0014A752 /* SkySphereShaders.metal */,
 				CE3BFFB228E572FB0014A752 /* FinalShaders.metal */,
 				CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */,
+				CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */,
 			);
 			path = Shaders;
 			sourceTree = "<group>";
@@ -835,6 +840,7 @@
 				CECEE79929068D7A00B64AAC /* DebugLine.swift in Sources */,
 				CE3BFFAF28E572EC0014A752 /* SkySphereShaders.metal in Sources */,
 				CE3BFF8628E2FD9C0014A752 /* GameObject.swift in Sources */,
+				CEFC6EC5295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
 				CECEE79D29068D9B00B64AAC /* DebugBox.swift in Sources */,
 				CE3BFF3228E058C30014A752 /* Mouse.swift in Sources */,
 				CE3BFF8228E2FD6F0014A752 /* Renderable.swift in Sources */,
@@ -939,6 +945,7 @@
 				CE7F484B28B771390082B197 /* Light.swift in Sources */,
 				CE3BFF8F28E2FE140014A752 /* Math.swift in Sources */,
 				CE7F484F28B771550082B197 /* TimeIt.swift in Sources */,
+				CEFC6EC6295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
 				CE3BFF9328E451E50014A752 /* CameraManager.swift in Sources */,
 				CE7F480728B758920082B197 /* AppDelegate.swift in Sources */,
 				CE3BFF8728E2FD9C0014A752 /* GameObject.swift in Sources */,
@@ -966,6 +973,7 @@
 				CE3BFF8828E2FD9C0014A752 /* GameObject.swift in Sources */,
 				CE7F482028B758920082B197 /* Shaders_OG.metal in Sources */,
 				CE3BFF8428E2FD6F0014A752 /* Renderable.swift in Sources */,
+				CEFC6EC7295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
 				CE7F481928B758920082B197 /* GameViewController.swift in Sources */,
 				CED6F61F290E9980008B1EA1 /* DebugLine.swift in Sources */,
 				CE3BFFEA28E6A0F40014A752 /* F16.swift in Sources */,

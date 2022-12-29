@@ -47,27 +47,27 @@ class FlightboxScene: Scene {
         let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
         addChild(sky)
         
-        let debugLine = DebugLine(name: "Red Line",
-                                  startPoint: float3(0, 0, 0),
-                                  endPoint: float3(0, 50, 0),
-                                  color: float4(1, 0, 0, 1))
-        addChild(debugLine)
+//        let debugLine = DebugLine(name: "Red Line",
+//                                  startPoint: float3(0, 0, 0),
+//                                  endPoint: float3(0, 50, 0),
+//                                  color: float4(1, 0, 0, 1))
+//        addChild(debugLine)
         
         let f16Pos = f16.getPosition()
         
-        let debugSphereBluePos = float3(x: f16Pos.x + 1, y: f16Pos.y, z: f16Pos.z - 2)
-        let debugSphereBlue = DebugSphere(name: "Blue Sphere",
-                                          position: debugSphereBluePos,
-                                          radius: 1.0,
-                                          color: float4(0, 0, 1, 0.5))
-        addChild(debugSphereBlue)
-        
-        let debugSphereRedPos = float3(x: f16Pos.x - 1, y: f16Pos.y, z: f16Pos.z - 2)
-        let debugSphereRed = DebugSphere(name: "Red Sphere",
-                                         position: debugSphereRedPos,
-                                         radius: 1.0,
-                                         color: float4(1, 0, 0, 0.4))
-        addChild(debugSphereRed)
+//        let debugSphereBluePos = float3(x: f16Pos.x + 1, y: f16Pos.y, z: f16Pos.z - 2)
+//        let debugSphereBlue = DebugSphere(name: "Blue Sphere",
+//                                          position: debugSphereBluePos,
+//                                          radius: 1.0,
+//                                          color: float4(0, 0, 1, 0.5))
+//        addChild(debugSphereBlue)
+//        
+//        let debugSphereRedPos = float3(x: f16Pos.x - 1, y: f16Pos.y, z: f16Pos.z - 2)
+//        let debugSphereRed = DebugSphere(name: "Red Sphere",
+//                                         position: debugSphereRedPos,
+//                                         radius: 1.0,
+//                                         color: float4(1, 0, 0, 0.4))
+//        addChild(debugSphereRed)
 
 //        let debugSphereBluePos = float3(x: f16Pos.x + 1, y: f16Pos.y, z: f16Pos.z - 2)
 //        let debugSphereBlue = DebugSphere(name: "Blue Sphere",
