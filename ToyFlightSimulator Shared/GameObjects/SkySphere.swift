@@ -8,12 +8,10 @@
 import MetalKit
 
 class SkySphere: GameObject {
-//    var renderPipelineStateType: RenderPipelineStateType = .SkySphere
     private var _skySphereTextureType: TextureType!
     
     init(skySphereTextureType: TextureType) {
-        super.init(name: "SkySphere", meshType: .SkySphere)
-        renderPipelineStateType = .SkySphere
+        super.init(name: "SkySphere", meshType: .SkySphere, renderPipelineStateType: .SkySphere)
         _skySphereTextureType = skySphereTextureType
         
         setScale(1000)
@@ -22,5 +20,10 @@ class SkySphere: GameObject {
     override func render(renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.setFragmentTexture(Assets.Textures[_skySphereTextureType], index: 10)
         super.render(renderCommandEncoder: renderCommandEncoder)
+    }
+    
+    override func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
+        renderCommandEncoder.setFragmentTexture(Assets.Textures[_skySphereTextureType], index: 10)
+        super.renderOpaque(renderCommandEncoder: renderCommandEncoder)
     }
 }
