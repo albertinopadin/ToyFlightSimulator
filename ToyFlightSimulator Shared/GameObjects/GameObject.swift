@@ -34,8 +34,9 @@ class GameObject: Node {
 
 extension GameObject: Renderable {
     func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
-//        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
-//        renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
+        if renderPipelineStateType == .OpaqueMaterial || renderPipelineStateType == .SkySphere {
+            renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
+        }
         
         // Vertex Shader
         renderCommandEncoder.setVertexBytes(&_modelConstants, length: ModelConstants.stride, index: 2)
@@ -59,6 +60,6 @@ extension GameObject {
     
     public func useMaterial(_ material: Material) {
         _material = material
-        renderPipelineStateType = .Material
+        renderPipelineStateType = .OpaqueMaterial
     }
 }
