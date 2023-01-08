@@ -429,7 +429,6 @@ class Renderer: NSObject, MTKViewDelegate {
         renderCommandEncoder.setCullMode(.none)
         renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
         
-        // TODO: Draw opaque objects... somehow!
         SceneManager.RenderOpaque(renderCommandEncoder: renderCommandEncoder)
         
         renderCommandEncoder.popDebugGroup()
@@ -441,20 +440,19 @@ class Renderer: NSObject, MTKViewDelegate {
         renderCommandEncoder.setCullMode(.none)
         renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
         
-        // TODO: Draw transparent objects... somehow!
         SceneManager.RenderTransparent(renderCommandEncoder: renderCommandEncoder)
         
         renderCommandEncoder.popDebugGroup()
     }
     
-    func baseRenderPass(commandBuffer: MTLCommandBuffer) {
-        let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _baseRenderPassDescriptor)
-        renderCommandEncoder?.label = "Base Render Command Encoder"
-        renderCommandEncoder?.pushDebugGroup("Starting Base Render")
-        SceneManager.Render(renderCommandEncoder: renderCommandEncoder!)
-        renderCommandEncoder?.popDebugGroup()
-        renderCommandEncoder?.endEncoding()
-    }
+//    func baseRenderPass(commandBuffer: MTLCommandBuffer) {
+//        let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _baseRenderPassDescriptor)
+//        renderCommandEncoder?.label = "Base Render Command Encoder"
+//        renderCommandEncoder?.pushDebugGroup("Starting Base Render")
+//        SceneManager.Render(renderCommandEncoder: renderCommandEncoder!)
+//        renderCommandEncoder?.popDebugGroup()
+//        renderCommandEncoder?.endEncoding()
+//    }
     
     func orderIndependentTransparencyRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
         guard let drawableTexture = view.currentDrawable?.texture else { return }

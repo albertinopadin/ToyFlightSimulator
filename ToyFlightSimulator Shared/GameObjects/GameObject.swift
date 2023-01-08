@@ -59,7 +59,13 @@ extension GameObject {
     }
     
     public func useMaterial(_ material: Material) {
+        if material.color.w < 1.0 {
+            self.transparent = true
+            renderPipelineStateType = .OrderIndependentTransparent
+        } else {
+            renderPipelineStateType = .OpaqueMaterial
+        }
+        
         _material = material
-        renderPipelineStateType = .OpaqueMaterial
     }
 }

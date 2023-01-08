@@ -32,14 +32,24 @@ class Node {
     }
     
     var children: [Node] = []
+    var opaqueChildren: [Node] = []
+    var transparentChildren: [Node] = []
     
     init(name: String) {
         self._name = name
         self._id = UUID().uuidString
     }
     
+//    func addChild(_ child: Node) {
+//        children.append(child)
+//    }
+    
     func addChild(_ child: Node) {
-        children.append(child)
+        if child.transparent {
+            transparentChildren.append(child)
+        } else {
+            opaqueChildren.append(child)
+        }
     }
     
     func updateModelMatrix() {
@@ -59,26 +69,40 @@ class Node {
     /// Override this function instead of the update function
     func doUpdate() { }
     
+//    func update() {
+//        doUpdate()
+//        for child in children {
+//            child.parentModelMatrix = self.modelMatrix
+//            child.update()
+//        }
+//    }
+    
     func update() {
         doUpdate()
-        for child in children {
+        
+        for child in opaqueChildren {
+            child.parentModelMatrix = self.modelMatrix
+            child.update()
+        }
+        
+        for child in transparentChildren {
             child.parentModelMatrix = self.modelMatrix
             child.update()
         }
     }
     
-    func render(renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.pushDebugGroup("Rendering \(_name)")
-        if let renderable = self as? Renderable {
-            renderable.doRender(renderCommandEncoder)
-        }
-        
-        for child in children {
-            child.render(renderCommandEncoder: renderCommandEncoder)
-        }
-        
-        renderCommandEncoder.popDebugGroup()
-    }
+//    func render(renderCommandEncoder: MTLRenderCommandEncoder) {
+//        renderCommandEncoder.pushDebugGroup("Rendering \(_name)")
+//        if let renderable = self as? Renderable {
+//            renderable.doRender(renderCommandEncoder)
+//        }
+//
+//        for child in children {
+//            child.render(renderCommandEncoder: renderCommandEncoder)
+//        }
+//
+//        renderCommandEncoder.popDebugGroup()
+//    }
     
     func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.pushDebugGroup("Rendering opaque \(_name)")
@@ -89,7 +113,7 @@ class Node {
             }
         }
         
-        for child in children {
+        for child in opaqueChildren {
             child.renderOpaque(renderCommandEncoder: renderCommandEncoder)
         }
         
@@ -105,7 +129,7 @@ class Node {
             }
         }
         
-        for child in children {
+        for child in transparentChildren {
             child.renderTransparent(renderCommandEncoder: renderCommandEncoder)
         }
         

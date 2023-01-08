@@ -12,7 +12,7 @@ enum ShaderType {
     case InstancedVertex
     case SkySphereVertex
     case FinalVertex
-//    case QuadPassVertex
+    case QuadPassVertex
     
     case BaseFragment
     case MaterialFragment
@@ -20,6 +20,7 @@ enum ShaderType {
     case FinalFragment
     case DebugDrawingFragment
     case TransparentFragment
+    case TransparentMaterialFragment
     case BlendFragment
     
     case TileKernel
@@ -34,7 +35,7 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "instanced_vertex_shader"), forKey: .InstancedVertex)
         _library.updateValue(Shader(functionName: "skysphere_vertex_shader"), forKey: .SkySphereVertex)
         _library.updateValue(Shader(functionName: "final_vertex_shader"), forKey: .FinalVertex)
-//        _library.updateValue(Shader(functionName: "quad_pass_vertex_shader"), forKey: .QuadPassVertex)
+        _library.updateValue(Shader(functionName: "quad_pass_vertex_shader"), forKey: .QuadPassVertex)
         
         _library.updateValue(Shader(functionName: "base_fragment_shader"), forKey: .BaseFragment)
         _library.updateValue(Shader(functionName: "material_fragment_shader"), forKey: .MaterialFragment)
@@ -42,6 +43,7 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "final_fragment_shader"), forKey: .FinalFragment)
         _library.updateValue(Shader(functionName: "debug_fragment_shader"), forKey: .DebugDrawingFragment)
         _library.updateValue(Shader(functionName: "transparent_fragment_shader"), forKey: .TransparentFragment)
+        _library.updateValue(Shader(functionName: "transparent_material_fragment_shader"), forKey: .TransparentMaterialFragment)
         _library.updateValue(Shader(functionName: "blend_fragments"), forKey: .BlendFragment)
         
         _library.updateValue(Shader(functionName: "init_transparent_fragment_store"), forKey: .TileKernel)

@@ -7,8 +7,9 @@
 
 class Quad: GameObject {
     init() {
+//        super.init(name: "Quad", meshType: .Quad)
         super.init(name: "Quad", meshType: .Quad_Custom)
 //        useBaseColorTexture(.BaseColorRender_0)
-        useBaseColorTexture(.None)
+//        useBaseColorTexture(.None)
     }
 }
