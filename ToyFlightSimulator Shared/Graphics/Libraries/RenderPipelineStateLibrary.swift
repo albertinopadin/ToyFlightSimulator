@@ -13,7 +13,6 @@ enum RenderPipelineStateType {
     case Instanced
     case SkySphere
     case Final
-    case DebugDrawing
     
     // For order-independent transparency:
     case TileRender
@@ -32,7 +31,6 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(InstancedRenderPipelineState(), forKey: .Instanced)
         _library.updateValue(SkySphereRenderPipelineState(), forKey: .SkySphere)
         _library.updateValue(FinalRenderPipelineState(), forKey: .Final)
-        _library.updateValue(DebugDrawingRenderPipelineState(), forKey: .DebugDrawing)
         
         _library.updateValue(TileRenderPipelineState(), forKey: .TileRender)
         _library.updateValue(OpaqueRenderPipelineState(), forKey: .Opaque)
@@ -143,16 +141,6 @@ class MaterialRenderPipelineState: RenderPipelineState {
     }
 }
 
-class DebugDrawingRenderPipelineState: RenderPipelineState {
-    init() {
-        let renderPipelineDescriptor = RenderPipelineState.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
-                                                                                       vertexShaderType: .BaseVertex,
-                                                                                       fragmentShaderType: .DebugDrawingFragment)
-        renderPipelineDescriptor.label = "Debug Drawing Render Pipeline Descriptor"
-        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
-    }
-}
-
 class InstancedRenderPipelineState: RenderPipelineState {
     init() {
         let renderPipelineDescriptor = RenderPipelineState.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
@@ -223,9 +211,6 @@ class OpaqueMaterialRenderPipelineState: RenderPipelineState {
 class OrderIndependentTransparencyRenderPipelineState: RenderPipelineState {
     init() {
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
-//        renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
-//        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-//        renderPipelineDescriptor.stencilAttachmentPixelFormat = .invalid
         renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
         renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.BaseVertex]
 //        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.TransparentFragment]
@@ -233,7 +218,6 @@ class OrderIndependentTransparencyRenderPipelineState: RenderPipelineState {
         
         renderPipelineDescriptor.colorAttachments[0].isBlendingEnabled = false
         renderPipelineDescriptor.colorAttachments[0].writeMask = MTLColorWriteMask(rawValue: 0)
-//        renderPipelineDescriptor.colorAttachments[0].writeMask = .all
         renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
         
         renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
@@ -251,8 +235,6 @@ class BlendRenderPipelineState: RenderPipelineState {
         renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
         renderPipelineDescriptor.stencilAttachmentPixelFormat = .invalid
         renderPipelineDescriptor.vertexDescriptor = nil
-//        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
-//        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.BaseVertex]
         renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.QuadPassVertex]
         renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.BlendFragment]
         

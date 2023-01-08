@@ -45,6 +45,7 @@ class Node {
 //    }
     
     func addChild(_ child: Node) {
+        // TODO: Order children not just on transparent but on Pipeline State Descriptor ???
         if child.transparent {
             transparentChildren.append(child)
         } else {

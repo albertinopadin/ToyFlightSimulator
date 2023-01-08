@@ -7,7 +7,7 @@
 
 import MetalKit
 
-class GameObject: Node {
+class GameObject: Node, Renderable {
     var renderPipelineStateType: RenderPipelineStateType
     
     private var _modelConstants = ModelConstants()
@@ -30,13 +30,14 @@ class GameObject: Node {
         _modelConstants.modelMatrix = self.modelMatrix
         super.update()
     }
-}
-
-extension GameObject: Renderable {
+    
     func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
-        if renderPipelineStateType == .OpaqueMaterial || renderPipelineStateType == .SkySphere {
-            renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
-        }
+//        if renderPipelineStateType == .OpaqueMaterial || renderPipelineStateType == .SkySphere {
+//            renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
+//        }
+        
+        // TODO: Set this before rendering all objects using specific RPST:
+        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
         
         // Vertex Shader
         renderCommandEncoder.setVertexBytes(&_modelConstants, length: ModelConstants.stride, index: 2)

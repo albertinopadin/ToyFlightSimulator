@@ -44,14 +44,17 @@ class FlightboxScene: Scene {
         quad.setPositionY(14)
         addChild(quad)
         
-        let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
-        addChild(sky)
-        
 //        let debugLine = DebugLine(name: "Red Line",
 //                                  startPoint: float3(0, 0, 0),
 //                                  endPoint: float3(0, 50, 0),
 //                                  color: float4(1, 0, 0, 1))
 //        addChild(debugLine)
+        
+        let debugLine = Line(startPoint: float3(0, 0, 0),
+                             endPoint: float3(0, 50, 0),
+                             color: float4(1, 0, 0, 1))
+        addChild(debugLine)
+        
         
         let f16Pos = f16.getPosition()
         
@@ -146,6 +149,9 @@ class FlightboxScene: Scene {
 //        testCube.useMaterial(testCubeMaterial)
 //        testCube.setPosition(f16Pos.x, 1, f16Pos.z - 4)
 //        addChild(testCube)
+        
+        let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+        addChild(sky)
         
         print("Flightbox scene children:")
         for child in children {

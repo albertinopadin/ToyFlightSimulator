@@ -240,6 +240,9 @@
 		CEFC6F22296B4200009B692B /* Sphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6F21296B4200009B692B /* Sphere.swift */; };
 		CEFC6F23296B4200009B692B /* Sphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6F21296B4200009B692B /* Sphere.swift */; };
 		CEFC6F24296B4200009B692B /* Sphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6F21296B4200009B692B /* Sphere.swift */; };
+		CEFC6F26296B61CA009B692B /* Line.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6F25296B61CA009B692B /* Line.swift */; };
+		CEFC6F27296B61CA009B692B /* Line.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6F25296B61CA009B692B /* Line.swift */; };
+		CEFC6F28296B61CA009B692B /* Line.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6F25296B61CA009B692B /* Line.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -337,6 +340,7 @@
 		CEFC6E3029531C0C009B692B /* Triangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Triangle.swift; sourceTree = "<group>"; };
 		CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = OrderIndependentTransparencyShaders.metal; sourceTree = "<group>"; };
 		CEFC6F21296B4200009B692B /* Sphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sphere.swift; sourceTree = "<group>"; };
+		CEFC6F25296B61CA009B692B /* Line.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Line.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -409,6 +413,7 @@
 				CEFC6E2C2952EA44009B692B /* Cube.swift */,
 				CEFC6E3029531C0C009B692B /* Triangle.swift */,
 				CEFC6F21296B4200009B692B /* Sphere.swift */,
+				CEFC6F25296B61CA009B692B /* Line.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -898,6 +903,7 @@
 				CE3BFFA728E453260014A752 /* Sun.swift in Sources */,
 				CE7F483A28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE7F48D328BCB4DD0082B197 /* GameView.swift in Sources */,
+				CEFC6F26296B61CA009B692B /* Line.swift in Sources */,
 				CEFC6F22296B4200009B692B /* Sphere.swift in Sources */,
 				CE7F483628B76FE30082B197 /* Shaders.metal in Sources */,
 			);
@@ -922,6 +928,7 @@
 				CE7F48A928BB0BED0082B197 /* FlyCameraController.swift in Sources */,
 				CE3BFFAC28E453310014A752 /* Quad.swift in Sources */,
 				CE3BFFA828E453260014A752 /* Sun.swift in Sources */,
+				CEFC6F27296B61CA009B692B /* Line.swift in Sources */,
 				CE3BFF6A28E1B4C10014A752 /* Assets.swift in Sources */,
 				CE7F484728B770EB0082B197 /* MathUtils.swift in Sources */,
 				CE3BFF9728E451F00014A752 /* LightManager.swift in Sources */,
@@ -1033,6 +1040,7 @@
 				CE3BFF4028E059B60014A752 /* Lighting.metal in Sources */,
 				CED6F621290E998A008B1EA1 /* DebugBox.swift in Sources */,
 				CE7F48D528BCB4DD0082B197 /* GameView.swift in Sources */,
+				CEFC6F28296B61CA009B692B /* Line.swift in Sources */,
 				CEFC6F24296B4200009B692B /* Sphere.swift in Sources */,
 				CE7F483828B76FE30082B197 /* Shaders.metal in Sources */,
 			);

@@ -8,7 +8,5 @@
 class Cube: GameObject {
     init() {
         super.init(name: "Cube", meshType: .Cube_Custom)
-//        useBaseColorTexture(.BaseColorRender_0)
-        useBaseColorTexture(.None)
     }
 }

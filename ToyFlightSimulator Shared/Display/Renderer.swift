@@ -500,7 +500,6 @@ class Renderer: NSObject, MTKViewDelegate {
         let commandBuffer = Engine.CommandQueue.makeCommandBuffer()
         commandBuffer?.label = "Base Command Buffer"
         
-//        baseRenderPass(commandBuffer: commandBuffer!)
         orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer!)
         // Intermediate renders go here
         finalRenderPass(view: view, commandBuffer: commandBuffer!)
