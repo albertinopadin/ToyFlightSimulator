@@ -11,6 +11,8 @@
 
 using namespace metal;
 
+// Heavily inspired from: https://developer.apple.com/documentation/metal/metal_sample_code_library/implementing_order-independent_transparency_with_image_blocksd
+
 static constexpr constant short kNumLayers = 4;
 
 struct TransparentFragmentValues {
@@ -21,6 +23,19 @@ struct TransparentFragmentValues {
 struct TransparentFragmentStore {
     TransparentFragmentValues values [[ imageblock_data ]];
 };
+
+// A vertex function that generates a full-screen quad pass:
+vertex RasterizerData quad_pass_vertex_shader(uint vid [[ vertex_id ]]) {
+    RasterizerData out;
+    
+    float4 position;
+    position.x = (vid == 2) ? 3.0 : -1.0;
+    position.y = (vid == 0) ? -3.0 : 1.0;
+    position.zw = 1.0;
+
+    out.position = position;
+    return out;
+}
 
 kernel void init_transparent_fragment_store(imageblock<TransparentFragmentValues, imageblock_layout_explicit> blockData,
                                             ushort2 localThreadID [[ thread_position_in_threadgroup ]]) {
@@ -39,6 +54,70 @@ fragment TransparentFragmentStore transparent_fragment_shader(RasterizerData rd 
     
     // Get fragment distance from camera:
 //    half depth = rd.position.z / rd.position.w;  // What to do about w? position is only a float3
+    half depth = rd.position.z;
+    
+    for (short i = 0; i < kNumLayers; ++i) {
+        half layerDepth = fragmentValues.depths[i];
+        half4 layerColor = fragmentValues.colors[i];
+        
+        bool insert (depth <= layerDepth);
+        fragmentValues.colors[i] = insert ? finalColor : layerColor;
+        fragmentValues.depths[i] = insert ? depth : layerDepth;
+        
+        finalColor = insert ? layerColor : finalColor;
+        depth = insert ? layerDepth : depth;
+    }
+    
+    out.values = fragmentValues;
+    return out;
+}
+
+fragment TransparentFragmentStore transparent_material_fragment_shader(
+                        RasterizerData rd [[ stage_in ]],
+                        constant Material &material [[ buffer(1) ]],
+                        constant int &lightCount [[ buffer(2) ]],
+                        constant LightData *lightDatas [[ buffer(3) ]],
+                        sampler sampler2d [[ sampler(0) ]],
+                        texture2d<float> baseColorMap [[ texture(0) ]],
+                        texture2d<float> normalMap [[ texture(1) ]],
+                        TransparentFragmentValues fragmentValues [[ imageblock_data ]]) {
+                            
+    float2 texCoord = rd.textureCoordinate;
+    float4 color = rd.color;
+    
+    if (material.useMaterialColor) {
+        color = material.color;
+    }
+    
+    if (material.useBaseTexture) {
+        color = baseColorMap.sample(sampler2d, texCoord);
+    }
+    
+    float3 unitNormal;
+    if (material.isLit) {
+        unitNormal = normalize(rd.surfaceNormal);
+        if (material.useNormalMapTexture) {
+            float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
+            float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
+            unitNormal = TBN * sampleNormal;
+        }
+        
+        float3 unitToCameraVector = normalize(rd.toCameraVector);
+        
+        float3 phongIntensity = Lighting::GetPhongIntensity(material,
+                                                            lightDatas,
+                                                            lightCount,
+                                                            rd.worldPosition,
+                                                            unitNormal,
+                                                            unitToCameraVector);
+        color *= float4(phongIntensity, 1.0);
+    }
+    
+    TransparentFragmentStore out;
+    half4 finalColor = half4(color);
+    finalColor.xyz *= finalColor.w;
+    
+    // Get fragment distance from camera:
     half depth = rd.position.z;
     
     for (short i = 0; i < kNumLayers; ++i) {

@@ -80,12 +80,14 @@ class FlightboxScene: Scene {
         let testQuad = Quad()
         var testQuadMaterial = Material()
         testQuadMaterial.isLit = true
-        testQuadMaterial.color = RED_COLOR
+//        testQuadMaterial.color = RED_COLOR
+        testQuadMaterial.color = float4(1, 0, 0, 0.5)
         testQuadMaterial.shininess = 100000
         testQuadMaterial.diffuse = float3(1, 0.1, 0.1)
         testQuadMaterial.specular = float3(1, 1, 1)
         testQuadMaterial.useNormalMapTexture = false
         testQuad.useMaterial(testQuadMaterial)
+//        testQuad.transparent = true
         testQuad.setPositionZ(1)
         testQuad.setPositionY(10)
         testQuad.setPositionX(5)

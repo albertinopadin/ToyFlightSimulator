@@ -54,13 +54,13 @@ class Scene: Node {
         super.update()
     }
     
-    override func render(renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.pushDebugGroup("Rendering Scene")
-        renderCommandEncoder.setVertexBytes(&_sceneConstants, length: SceneConstants.stride, index: 1)
-        _lightManager.setLightData(renderCommandEncoder)
-        super.render(renderCommandEncoder: renderCommandEncoder)
-        renderCommandEncoder.popDebugGroup()
-    }
+//    override func render(renderCommandEncoder: MTLRenderCommandEncoder) {
+//        renderCommandEncoder.pushDebugGroup("Rendering Scene")
+//        renderCommandEncoder.setVertexBytes(&_sceneConstants, length: SceneConstants.stride, index: 1)
+//        _lightManager.setLightData(renderCommandEncoder)
+//        super.render(renderCommandEncoder: renderCommandEncoder)
+//        renderCommandEncoder.popDebugGroup()
+//    }
     
     override func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.pushDebugGroup("Rendering Opaque Scene")

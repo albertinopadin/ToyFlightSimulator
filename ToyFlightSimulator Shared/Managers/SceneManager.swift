@@ -30,9 +30,9 @@ class SceneManager {
         _currentScene.update()
     }
     
-    public static func Render(renderCommandEncoder: MTLRenderCommandEncoder) {
-        _currentScene.render(renderCommandEncoder: renderCommandEncoder)
-    }
+//    public static func Render(renderCommandEncoder: MTLRenderCommandEncoder) {
+//        _currentScene.render(renderCommandEncoder: renderCommandEncoder)
+//    }
     
     public static func RenderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
         _currentScene.renderOpaque(renderCommandEncoder: renderCommandEncoder)
