@@ -80,20 +80,20 @@ class FlightboxScene: Scene {
         var sphereBlueMaterial = Material()
         sphereBlueMaterial.color = float4(0.0, 0.0, 1.0, 0.4)
         
-        let sphereBluePos = float3(x: f16Pos.x + 1, y: f16Pos.y, z: f16Pos.z - 2)
+        let sphereBluePos = float3(x: f16Pos.x + 1.5, y: f16Pos.y, z: f16Pos.z - 2)
         let sphereBlue = Sphere()
         sphereBlue.setPosition(sphereBluePos)
-        sphereBlue.setScale(1.5)
+//        sphereBlue.setScale(1.5)
         sphereBlue.useMaterial(sphereBlueMaterial)
         addChild(sphereBlue)
         
         var sphereRedMaterial = Material()
         sphereRedMaterial.color = float4(1.0, 0.0, 0.0, 0.4)
         
-        let sphereRedPos = float3(x: f16Pos.x - 1, y: f16Pos.y, z: f16Pos.z - 2)
+        let sphereRedPos = float3(x: f16Pos.x - 1.5, y: f16Pos.y, z: f16Pos.z - 2)
         let sphereRed = Sphere()
         sphereRed.setPosition(sphereRedPos)
-        sphereRed.setScale(1.5)
+//        sphereRed.setScale(1.5)
         sphereRed.useMaterial(sphereRedMaterial)
         addChild(sphereRed)
         
