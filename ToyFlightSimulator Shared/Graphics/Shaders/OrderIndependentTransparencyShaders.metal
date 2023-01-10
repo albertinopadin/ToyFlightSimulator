@@ -53,8 +53,7 @@ fragment TransparentFragmentStore transparent_fragment_shader(RasterizerData rd 
     finalColor.xyz *= finalColor.w;
     
     // Get fragment distance from camera:
-//    half depth = rd.position.z / rd.position.w;  // What to do about w? position is only a float3
-    half depth = rd.position.z;
+    half depth = rd.position.z / rd.position.w;
     
     for (short i = 0; i < kNumLayers; ++i) {
         half layerDepth = fragmentValues.depths[i];
@@ -118,7 +117,7 @@ fragment TransparentFragmentStore transparent_material_fragment_shader(
     finalColor.xyz *= finalColor.w;
     
     // Get fragment distance from camera:
-    half depth = rd.position.z;
+    half depth = rd.position.z / rd.position.w;
     
     for (short i = 0; i < kNumLayers; ++i) {
         half layerDepth = fragmentValues.depths[i];
