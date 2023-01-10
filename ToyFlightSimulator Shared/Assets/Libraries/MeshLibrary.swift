@@ -12,6 +12,7 @@ enum MeshType {
     case Triangle_Custom
     case Quad_Custom
     case Cube_Custom
+    case Sphere_Custom
     
     case Sphere
     case Quad
@@ -29,6 +30,7 @@ class MeshLibrary: Library<MeshType, Mesh> {
         _library.updateValue(TriangleMesh(), forKey: .Triangle_Custom)
         _library.updateValue(QuadMesh(), forKey: .Quad_Custom)
         _library.updateValue(CubeMesh(), forKey: .Cube_Custom)
+        _library.updateValue(SphereMesh(), forKey: .Sphere_Custom)
         
         
         _library.updateValue(Mesh(modelName: "sphere"), forKey: .Sphere)
@@ -57,6 +59,17 @@ class Mesh {
     
     init(modelName: String) {
         createMeshFromModel(modelName)
+    }
+    
+    init(mtkMesh: MTKMesh, mdlMesh: MDLMesh) {
+        self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
+        self._vertexCount = mtkMesh.vertexCount
+        for i in 0..<mtkMesh.submeshes.count {
+            let mtkSubmesh = mtkMesh.submeshes[i]
+            let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
+            let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh)
+            addSubmesh(submesh)
+        }
     }
     
     func createMesh() { }
@@ -486,5 +499,34 @@ class CubeMesh: Mesh {
                   color: float4(1.0, 0.0, 1.0, 1.0),
                   textureCoordinate: float2(1,0),
                   normal: float3( 0, 0, 1))
+    }
+}
+
+class SphereMesh: Mesh {
+    private var color: float4
+    
+    init(radius: Float = 1.0, color: float4 = BLUE_COLOR) {
+        let diameter = radius * 2
+        self.color = color
+        
+        let allocator = MTKMeshBufferAllocator(device: Engine.Device)
+        let mdlSphere = MDLMesh(sphereWithExtent: float3(diameter, diameter, diameter),
+                                segments: SIMD2<UInt32>(100, 100),
+                                inwardNormals: false,
+                                geometryType: .triangles,
+                                allocator: allocator)
+        
+        mdlSphere.vertexDescriptor = Graphics.MDLVertexDescriptors[.Base]
+        let mtkMesh = try! MTKMesh(mesh: mdlSphere, device: Engine.Device)
+        
+        let vertexLayoutStride = (mtkMesh.vertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride
+        for meshBuffer in mtkMesh.vertexBuffers {
+            for i in 0..<mtkMesh.vertexCount {
+                let colorPosition = (i * vertexLayoutStride) + float4.stride
+                meshBuffer.buffer.contents().advanced(by: colorPosition).copyMemory(from: &self.color, byteCount: float4.stride)
+            }
+        }
+        
+        super.init(mtkMesh: mtkMesh, mdlMesh: mdlSphere)
     }
 }

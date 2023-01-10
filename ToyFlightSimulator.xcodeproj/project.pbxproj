@@ -217,14 +217,6 @@
 		CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
-		CECEE79729068D6B00B64AAC /* DebugDrawing.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECEE79629068D6B00B64AAC /* DebugDrawing.swift */; };
-		CECEE79929068D7A00B64AAC /* DebugLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECEE79829068D7A00B64AAC /* DebugLine.swift */; };
-		CECEE79B29068D8F00B64AAC /* DebugSphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECEE79A29068D8F00B64AAC /* DebugSphere.swift */; };
-		CECEE79D29068D9B00B64AAC /* DebugBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECEE79C29068D9B00B64AAC /* DebugBox.swift */; };
-		CED6F61F290E9980008B1EA1 /* DebugLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECEE79829068D7A00B64AAC /* DebugLine.swift */; };
-		CED6F620290E9986008B1EA1 /* DebugSphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECEE79A29068D8F00B64AAC /* DebugSphere.swift */; };
-		CED6F621290E998A008B1EA1 /* DebugBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECEE79C29068D9B00B64AAC /* DebugBox.swift */; };
-		CED6F622290E998E008B1EA1 /* DebugDrawing.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECEE79629068D6B00B64AAC /* DebugDrawing.swift */; };
 		CED6F624290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */; };
 		CED6F625290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */; };
 		CED6F626290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */; };
@@ -331,10 +323,6 @@
 		CE7F48B328BB26670082B197 /* SimulationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulationController.swift; sourceTree = "<group>"; };
 		CE7F48D228BCB4DD0082B197 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDLVertexDescriptorLibrary.swift; sourceTree = "<group>"; };
-		CECEE79629068D6B00B64AAC /* DebugDrawing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugDrawing.swift; sourceTree = "<group>"; };
-		CECEE79829068D7A00B64AAC /* DebugLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLine.swift; sourceTree = "<group>"; };
-		CECEE79A29068D8F00B64AAC /* DebugSphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugSphere.swift; sourceTree = "<group>"; };
-		CECEE79C29068D9B00B64AAC /* DebugBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugBox.swift; sourceTree = "<group>"; };
 		CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DebugDrawingShaders.metal; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
 		CEFC6E3029531C0C009B692B /* Triangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Triangle.swift; sourceTree = "<group>"; };
@@ -611,7 +599,6 @@
 		CE7F48B928BB93550082B197 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				CECEE79529068C3F00B64AAC /* DebugDrawing */,
 				CE3BFFB628E573690014A752 /* Resources */,
 				CE3BFF4928E1B1FA0014A752 /* Types */,
 				CE3BFF3028E058AE0014A752 /* Input */,
@@ -656,17 +643,6 @@
 				CE7F48D228BCB4DD0082B197 /* GameView.swift */,
 			);
 			path = Display;
-			sourceTree = "<group>";
-		};
-		CECEE79529068C3F00B64AAC /* DebugDrawing */ = {
-			isa = PBXGroup;
-			children = (
-				CECEE79629068D6B00B64AAC /* DebugDrawing.swift */,
-				CECEE79829068D7A00B64AAC /* DebugLine.swift */,
-				CECEE79A29068D8F00B64AAC /* DebugSphere.swift */,
-				CECEE79C29068D9B00B64AAC /* DebugBox.swift */,
-			);
-			path = DebugDrawing;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -840,18 +816,15 @@
 				CE3BFF6028E1B2D10014A752 /* DepthStencilStateLibrary.swift in Sources */,
 				CE7F48B028BB1C3F0082B197 /* GameVertexDescriptor.swift in Sources */,
 				CE3BFF2A28E056EB0014A752 /* BaseShaders.metal in Sources */,
-				CECEE79B29068D8F00B64AAC /* DebugSphere.swift in Sources */,
 				CE7F48B428BB26670082B197 /* SimulationController.swift in Sources */,
 				CE3BFF1F28E054880014A752 /* MetalTypes.swift in Sources */,
 				CE3BFFB328E572FB0014A752 /* FinalShaders.metal in Sources */,
 				CE7F48A828BB0BED0082B197 /* FlyCameraController.swift in Sources */,
 				CE3BFF2628E056720014A752 /* Shared.metal in Sources */,
 				CE7F484628B770EB0082B197 /* MathUtils.swift in Sources */,
-				CECEE79929068D7A00B64AAC /* DebugLine.swift in Sources */,
 				CE3BFFAF28E572EC0014A752 /* SkySphereShaders.metal in Sources */,
 				CE3BFF8628E2FD9C0014A752 /* GameObject.swift in Sources */,
 				CEFC6EC5295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
-				CECEE79D29068D9B00B64AAC /* DebugBox.swift in Sources */,
 				CE3BFF3228E058C30014A752 /* Mouse.swift in Sources */,
 				CE3BFF8228E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CE3BFF2C28E0575A0014A752 /* InstancedShaders.metal in Sources */,
@@ -894,7 +867,6 @@
 				CE3BFF6428E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE3BFF7E28E2FCF50014A752 /* Node.swift in Sources */,
 				CE7F484A28B771390082B197 /* Light.swift in Sources */,
-				CECEE79729068D6B00B64AAC /* DebugDrawing.swift in Sources */,
 				CE7F484E28B771550082B197 /* TimeIt.swift in Sources */,
 				CE56921828EA9F7B00F6B42C /* F16Camera.swift in Sources */,
 				CE3BFF9F28E452480014A752 /* DebugCamera.swift in Sources */,
@@ -989,7 +961,6 @@
 				CE3BFF8428E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CEFC6EC7295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
 				CE7F481928B758920082B197 /* GameViewController.swift in Sources */,
-				CED6F61F290E9980008B1EA1 /* DebugLine.swift in Sources */,
 				CE3BFFEA28E6A0F40014A752 /* F16.swift in Sources */,
 				CE7F484428B770C20082B197 /* Node_1.swift in Sources */,
 				CE3BFF4828E1B0CE0014A752 /* SceneManager.swift in Sources */,
@@ -1011,7 +982,6 @@
 				CE3BFF3E28E059B60014A752 /* BaseShaders.metal in Sources */,
 				CE3BFF7028E1B4D70014A752 /* MeshLibrary.swift in Sources */,
 				CE3BFF5228E1B2230014A752 /* Library.swift in Sources */,
-				CED6F622290E998E008B1EA1 /* DebugDrawing.swift in Sources */,
 				CE3BFF3B28E0599F0014A752 /* Engine.swift in Sources */,
 				CE3BFF4428E1AF490014A752 /* Preferences.swift in Sources */,
 				CE3BFF9028E2FE140014A752 /* Math.swift in Sources */,
@@ -1030,7 +1000,6 @@
 				CE3BFF6628E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE3BFF8028E2FCF50014A752 /* Node.swift in Sources */,
 				CE3BFF3A28E0599F0014A752 /* MetalTypes.swift in Sources */,
-				CED6F620290E9986008B1EA1 /* DebugSphere.swift in Sources */,
 				CE3BFF3828E059950014A752 /* Keycodes.swift in Sources */,
 				CE56921A28EA9F7B00F6B42C /* F16Camera.swift in Sources */,
 				CE3BFFA128E452480014A752 /* DebugCamera.swift in Sources */,
@@ -1038,7 +1007,6 @@
 				CE7F483C28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE3BFFA928E453260014A752 /* Sun.swift in Sources */,
 				CE3BFF4028E059B60014A752 /* Lighting.metal in Sources */,
-				CED6F621290E998A008B1EA1 /* DebugBox.swift in Sources */,
 				CE7F48D528BCB4DD0082B197 /* GameView.swift in Sources */,
 				CEFC6F28296B61CA009B692B /* Line.swift in Sources */,
 				CEFC6F24296B4200009B692B /* Sphere.swift in Sources */,
