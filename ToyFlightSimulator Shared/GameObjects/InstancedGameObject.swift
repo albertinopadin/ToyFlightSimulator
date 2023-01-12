@@ -16,6 +16,7 @@ class InstancedGameObject: Node {
     
     init(meshType: MeshType, instanceCount: Int) {
         super.init(name: "Instanced Game Object")
+        self._renderPipelineStateType = .Instanced
         self._mesh = Assets.Meshes[meshType]
         self._mesh.setInstanceCount(instanceCount)
         self.generateInstances(instanceCount)

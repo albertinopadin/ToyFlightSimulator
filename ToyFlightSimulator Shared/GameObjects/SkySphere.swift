@@ -22,8 +22,13 @@ class SkySphere: GameObject {
 //        super.render(renderCommandEncoder: renderCommandEncoder)
 //    }
     
-    override func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
+//    override func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
+//        renderCommandEncoder.setFragmentTexture(Assets.Textures[_skySphereTextureType], index: 10)
+//        super.renderOpaque(renderCommandEncoder: renderCommandEncoder)
+//    }
+    
+    override func render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
         renderCommandEncoder.setFragmentTexture(Assets.Textures[_skySphereTextureType], index: 10)
-        super.renderOpaque(renderCommandEncoder: renderCommandEncoder)
+        super.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
     }
 }

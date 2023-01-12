@@ -44,8 +44,10 @@ class SandboxScene: Scene {
         addChild(quad4)
         
         print("Sandbox scene children:")
-        for child in children {
-            print(child.getName())
+        for subchildren in children.values {
+            for child in subchildren {
+                print(child.getName())
+            }
         }
     }
     

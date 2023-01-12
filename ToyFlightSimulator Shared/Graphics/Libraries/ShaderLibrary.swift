@@ -18,7 +18,6 @@ enum ShaderType {
     case MaterialFragment
     case SkySphereFragment
     case FinalFragment
-    case DebugDrawingFragment
     case TransparentFragment
     case TransparentMaterialFragment
     case BlendFragment
@@ -41,7 +40,6 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "material_fragment_shader"), forKey: .MaterialFragment)
         _library.updateValue(Shader(functionName: "skysphere_fragment_shader"), forKey: .SkySphereFragment)
         _library.updateValue(Shader(functionName: "final_fragment_shader"), forKey: .FinalFragment)
-        _library.updateValue(Shader(functionName: "debug_fragment_shader"), forKey: .DebugDrawingFragment)
         _library.updateValue(Shader(functionName: "transparent_fragment_shader"), forKey: .TransparentFragment)
         _library.updateValue(Shader(functionName: "transparent_material_fragment_shader"), forKey: .TransparentMaterialFragment)
         _library.updateValue(Shader(functionName: "blend_fragments"), forKey: .BlendFragment)

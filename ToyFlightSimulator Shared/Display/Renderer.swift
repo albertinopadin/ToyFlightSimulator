@@ -425,23 +425,24 @@ class Renderer: NSObject, MTKViewDelegate {
     
     func drawOpaqueObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.pushDebugGroup("Opaque Object Rendering")
-        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Opaque])
+//        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Opaque])
         renderCommandEncoder.setCullMode(.none)
         renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
-        
-        SceneManager.RenderOpaque(renderCommandEncoder: renderCommandEncoder)
-        
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Base)
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Material)
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Instanced)
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Opaque)
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OpaqueMaterial)
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .SkySphere)
         renderCommandEncoder.popDebugGroup()
     }
     
     func drawTransparentObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.pushDebugGroup("Transparent Object Rendering")
-        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OrderIndependentTransparent])
+//        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OrderIndependentTransparent])
         renderCommandEncoder.setCullMode(.none)
         renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
-        
-        SceneManager.RenderTransparent(renderCommandEncoder: renderCommandEncoder)
-        
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OrderIndependentTransparent)
         renderCommandEncoder.popDebugGroup()
     }
     
@@ -468,6 +469,7 @@ class Renderer: NSObject, MTKViewDelegate {
         renderCommandEncoder?.dispatchThreadsPerTile(_optimalTileSize)
         renderCommandEncoder?.popDebugGroup()
         
+        SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
         drawOpaqueObjects(renderCommandEncoder: renderCommandEncoder!)
         drawTransparentObjects(renderCommandEncoder: renderCommandEncoder!)
         

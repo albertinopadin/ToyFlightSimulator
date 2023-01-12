@@ -217,9 +217,6 @@
 		CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
-		CED6F624290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */; };
-		CED6F625290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */; };
-		CED6F626290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */; };
 		CEFC6E2D2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
 		CEFC6E2E2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
 		CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
@@ -323,7 +320,6 @@
 		CE7F48B328BB26670082B197 /* SimulationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulationController.swift; sourceTree = "<group>"; };
 		CE7F48D228BCB4DD0082B197 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDLVertexDescriptorLibrary.swift; sourceTree = "<group>"; };
-		CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DebugDrawingShaders.metal; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
 		CEFC6E3029531C0C009B692B /* Triangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Triangle.swift; sourceTree = "<group>"; };
 		CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = OrderIndependentTransparencyShaders.metal; sourceTree = "<group>"; };
@@ -630,7 +626,6 @@
 				CE3BFF2B28E057590014A752 /* InstancedShaders.metal */,
 				CE3BFFAE28E572EC0014A752 /* SkySphereShaders.metal */,
 				CE3BFFB228E572FB0014A752 /* FinalShaders.metal */,
-				CED6F623290E9B74008B1EA1 /* DebugDrawingShaders.metal */,
 				CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */,
 			);
 			path = Shaders;
@@ -837,7 +832,6 @@
 				CE3BFF2828E056BB0014A752 /* Lighting.metal in Sources */,
 				CE3BFF5828E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
 				CE3BFF8A28E2FDB20014A752 /* InstancedGameObject.swift in Sources */,
-				CED6F624290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */,
 				CE3BFFA328E452F00014A752 /* LightObject.swift in Sources */,
 				CE3BFFAB28E453310014A752 /* Quad.swift in Sources */,
 				CE3E526328E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
@@ -893,7 +887,6 @@
 				CE3BFF5928E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
 				CE3BFF7728E2FC0A0014A752 /* Scene.swift in Sources */,
 				CE3BFF6128E1B2D10014A752 /* DepthStencilStateLibrary.swift in Sources */,
-				CED6F625290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */,
 				CE3BFF5D28E1B2BC0014A752 /* VertexDescriptorLibrary.swift in Sources */,
 				CE3BFF8B28E2FDB20014A752 /* InstancedGameObject.swift in Sources */,
 				CE3BFF6528E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
@@ -972,7 +965,6 @@
 				CE3BFF8C28E2FDB20014A752 /* InstancedGameObject.swift in Sources */,
 				CE3BFFA528E452F00014A752 /* LightObject.swift in Sources */,
 				CE3BFFAD28E453310014A752 /* Quad.swift in Sources */,
-				CED6F626290E9B74008B1EA1 /* DebugDrawingShaders.metal in Sources */,
 				CE3E526528E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
 				CE3BFF5E28E1B2BC0014A752 /* VertexDescriptorLibrary.swift in Sources */,
 				CE3BFF7828E2FC0A0014A752 /* Scene.swift in Sources */,

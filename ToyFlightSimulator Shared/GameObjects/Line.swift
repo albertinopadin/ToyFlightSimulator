@@ -21,7 +21,7 @@ class Line: GameObject {
         _vertexBuffer = Engine.Device.makeBuffer(bytes: _vertices, length: Vertex.stride(_vertices.count))
         super.init(name: "Line", meshType: .None)
         if color.w < 1.0 {
-            transparent = true
+            _renderPipelineStateType = .OrderIndependentTransparent
         }
     }
     
@@ -31,9 +31,13 @@ class Line: GameObject {
         renderCommandEncoder.drawPrimitives(type: .lineStrip, vertexStart: 0, vertexCount: _vertices.count)
     }
     
-    override func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
-//        renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
-//        renderCommandEncoder.drawPrimitives(type: .lineStrip, vertexStart: 0, vertexCount: _vertices.count)
-        super.renderOpaque(renderCommandEncoder: renderCommandEncoder)
-    }
+//    override func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
+////        renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
+////        renderCommandEncoder.drawPrimitives(type: .lineStrip, vertexStart: 0, vertexCount: _vertices.count)
+//        super.renderOpaque(renderCommandEncoder: renderCommandEncoder)
+//    }
+    
+//    override func render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
+//        
+//    }
 }

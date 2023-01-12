@@ -15,7 +15,7 @@ class Node {
     private var _scale = float3(1, 1, 1)
     private var _rotation = float3(0, 0, 0)
     
-    var transparent: Bool = false  // TODO: Figure out how to partition objects opaque vs transparent
+//    var transparent: Bool = false  // TODO: Figure out how to partition objects opaque vs transparent
     
     var parentModelMatrix = matrix_identity_float4x4
     
@@ -31,27 +31,35 @@ class Node {
         }
     }
     
-    var children: [Node] = []
-    var opaqueChildren: [Node] = []
-    var transparentChildren: [Node] = []
+    internal var _renderPipelineStateType: RenderPipelineStateType = .Opaque
+    
+//    var children: [Node] = []
+//    var opaqueChildren: [Node] = []
+//    var transparentChildren: [Node] = []
+    
+    var children: [RenderPipelineStateType: [Node]] = [:]
     
     init(name: String) {
         self._name = name
         self._id = UUID().uuidString
     }
     
-//    func addChild(_ child: Node) {
-//        children.append(child)
-//    }
-    
     func addChild(_ child: Node) {
-        // TODO: Order children not just on transparent but on Pipeline State Descriptor ???
-        if child.transparent {
-            transparentChildren.append(child)
+        if let _ = children[child._renderPipelineStateType] {
+            children[child._renderPipelineStateType]!.append(child)
         } else {
-            opaqueChildren.append(child)
+            children[child._renderPipelineStateType] = [child]
         }
     }
+    
+//    func addChild(_ child: Node) {
+//        // TODO: Order children not just on transparent but on Pipeline State Descriptor ???
+//        if child.transparent {
+//            transparentChildren.append(child)
+//        } else {
+//            opaqueChildren.append(child)
+//        }
+//    }
     
     func updateModelMatrix() {
         _modelMatrix = matrix_identity_float4x4
@@ -81,61 +89,59 @@ class Node {
     func update() {
         doUpdate()
         
-        for child in opaqueChildren {
-            child.parentModelMatrix = self.modelMatrix
-            child.update()
-        }
-        
-        for child in transparentChildren {
-            child.parentModelMatrix = self.modelMatrix
-            child.update()
+        for childRenderPipelineStateSets in children.values {
+            for child in childRenderPipelineStateSets {
+                child.parentModelMatrix = self.modelMatrix
+                child.update()
+            }
         }
     }
     
-//    func render(renderCommandEncoder: MTLRenderCommandEncoder) {
-//        renderCommandEncoder.pushDebugGroup("Rendering \(_name)")
-//        if let renderable = self as? Renderable {
-//            renderable.doRender(renderCommandEncoder)
+    func render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
+        if _renderPipelineStateType == renderPipelineStateType {
+            if let renderable = self as? Renderable {
+                renderable.doRender(renderCommandEncoder)
+            }
+        }
+        
+        if let children = children[renderPipelineStateType] {
+            for child in children {
+                child.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
+            }
+        }
+    }
+    
+//    func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
+//        renderCommandEncoder.pushDebugGroup("Rendering opaque \(_name)")
+//        
+//        if !transparent {
+//            if let renderable = self as? Renderable {
+//                renderable.doRender(renderCommandEncoder)
+//            }
 //        }
-//
-//        for child in children {
-//            child.render(renderCommandEncoder: renderCommandEncoder)
+//        
+//        for child in opaqueChildren {
+//            child.renderOpaque(renderCommandEncoder: renderCommandEncoder)
 //        }
-//
+//        
 //        renderCommandEncoder.popDebugGroup()
 //    }
-    
-    func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.pushDebugGroup("Rendering opaque \(_name)")
-        
-        if !transparent {
-            if let renderable = self as? Renderable {
-                renderable.doRender(renderCommandEncoder)
-            }
-        }
-        
-        for child in opaqueChildren {
-            child.renderOpaque(renderCommandEncoder: renderCommandEncoder)
-        }
-        
-        renderCommandEncoder.popDebugGroup()
-    }
-    
-    func renderTransparent(renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.pushDebugGroup("Rendering transparent \(_name)")
-        
-        if transparent {
-            if let renderable = self as? Renderable {
-                renderable.doRender(renderCommandEncoder)
-            }
-        }
-        
-        for child in transparentChildren {
-            child.renderTransparent(renderCommandEncoder: renderCommandEncoder)
-        }
-        
-        renderCommandEncoder.popDebugGroup()
-    }
+//    
+//    func renderTransparent(renderCommandEncoder: MTLRenderCommandEncoder) {
+//        renderCommandEncoder.pushDebugGroup("Rendering transparent \(_name)")
+//        
+//        if transparent {
+//            if let renderable = self as? Renderable {
+//                renderable.doRender(renderCommandEncoder)
+//            }
+//        }
+//        
+//        for child in transparentChildren {
+//            child.renderTransparent(renderCommandEncoder: renderCommandEncoder)
+//        }
+//        
+//        renderCommandEncoder.popDebugGroup()
+//    }
 }
 
 extension Node {

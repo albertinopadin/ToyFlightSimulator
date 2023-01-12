@@ -8,7 +8,7 @@
 import MetalKit
 
 class GameObject: Node, Renderable {
-    var renderPipelineStateType: RenderPipelineStateType
+//    var renderPipelineStateType: RenderPipelineStateType
     
     private var _modelConstants = ModelConstants()
     private var _mesh: Mesh!
@@ -19,11 +19,11 @@ class GameObject: Node, Renderable {
     
     var mesh: Mesh!
     
-    init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .Base) {
-        self.renderPipelineStateType = renderPipelineStateType
+    init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         super.init(name: name)
+        self._renderPipelineStateType = renderPipelineStateType
         _mesh = Assets.Meshes[meshType]
-        print("GameObject named \(self.getName()) render pipeline state type: \(self.renderPipelineStateType)")
+        print("GameObject named \(self.getName()) render pipeline state type: \(self._renderPipelineStateType)")
     }
     
     override func update() {
@@ -37,7 +37,7 @@ class GameObject: Node, Renderable {
 //        }
         
         // TODO: Set this before rendering all objects using specific RPST:
-        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
+//        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
         
         // Vertex Shader
         renderCommandEncoder.setVertexBytes(&_modelConstants, length: ModelConstants.stride, index: 2)
@@ -61,10 +61,9 @@ extension GameObject {
     
     public func useMaterial(_ material: Material) {
         if material.color.w < 1.0 {
-            self.transparent = true
-            renderPipelineStateType = .OrderIndependentTransparent
+            _renderPipelineStateType = .OrderIndependentTransparent
         } else {
-            renderPipelineStateType = .OpaqueMaterial
+            _renderPipelineStateType = .OpaqueMaterial
         }
         
         _material = material
