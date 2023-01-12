@@ -425,7 +425,6 @@ class Renderer: NSObject, MTKViewDelegate {
     
     func drawOpaqueObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.pushDebugGroup("Opaque Object Rendering")
-//        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Opaque])
         renderCommandEncoder.setCullMode(.none)
         renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
         SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Base)
@@ -439,7 +438,6 @@ class Renderer: NSObject, MTKViewDelegate {
     
     func drawTransparentObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.pushDebugGroup("Transparent Object Rendering")
-//        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OrderIndependentTransparent])
         renderCommandEncoder.setCullMode(.none)
         renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
         SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OrderIndependentTransparent)

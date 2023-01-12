@@ -30,26 +30,6 @@ class SceneManager {
         _currentScene.update()
     }
     
-//    public static func Render(renderCommandEncoder: MTLRenderCommandEncoder) {
-//        _currentScene.render(renderCommandEncoder: renderCommandEncoder)
-//    }
-    
-    //case Base
-    //case Material
-    //case Instanced
-    //case SkySphere
-    //case Opaque
-    //case OpaqueMaterial
-    
-//    public static func RenderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
-////        _currentScene
-//        _currentScene.renderOpaque(renderCommandEncoder: renderCommandEncoder)
-//    }
-//
-//    public static func RenderTransparent(renderCommandEncoder: MTLRenderCommandEncoder) {
-//        _currentScene.renderTransparent(renderCommandEncoder: renderCommandEncoder)
-//    }
-    
     public static func SetSceneConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
         _currentScene.setSceneConstants(renderCommandEncoder: renderCommandEncoder)
     }

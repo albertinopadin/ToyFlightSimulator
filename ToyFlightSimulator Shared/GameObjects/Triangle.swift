@@ -8,6 +8,5 @@
 class Triangle: GameObject {
     init() {
         super.init(name: "Triangle", meshType: .Triangle_Custom)
-//        useBaseColorTexture(.None)
     }
 }

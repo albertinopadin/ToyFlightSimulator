@@ -54,37 +54,12 @@ class Scene: Node {
         super.update()
     }
     
-//    override func render(renderCommandEncoder: MTLRenderCommandEncoder) {
-//        renderCommandEncoder.pushDebugGroup("Rendering Scene")
-//        renderCommandEncoder.setVertexBytes(&_sceneConstants, length: SceneConstants.stride, index: 1)
-//        _lightManager.setLightData(renderCommandEncoder)
-//        super.render(renderCommandEncoder: renderCommandEncoder)
-//        renderCommandEncoder.popDebugGroup()
-//    }
-    
-//    override func renderOpaque(renderCommandEncoder: MTLRenderCommandEncoder) {
-//        renderCommandEncoder.pushDebugGroup("Rendering Opaque Scene")
-//        renderCommandEncoder.setVertexBytes(&_sceneConstants, length: SceneConstants.stride, index: 1)
-//        _lightManager.setLightData(renderCommandEncoder)
-//        super.renderOpaque(renderCommandEncoder: renderCommandEncoder)
-//        renderCommandEncoder.popDebugGroup()
-//    }
-//
-//    override func renderTransparent(renderCommandEncoder: MTLRenderCommandEncoder) {
-//        renderCommandEncoder.pushDebugGroup("Rendering Transparent Scene")
-//        renderCommandEncoder.setVertexBytes(&_sceneConstants, length: SceneConstants.stride, index: 1)
-//        _lightManager.setLightData(renderCommandEncoder)
-//        super.renderTransparent(renderCommandEncoder: renderCommandEncoder)
-//        renderCommandEncoder.popDebugGroup()
-//    }
-    
     func setSceneConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.setVertexBytes(&_sceneConstants, length: SceneConstants.stride, index: 1)
     }
     
     override func render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
         renderCommandEncoder.pushDebugGroup("Rendering \(renderPipelineStateType) Scene")
-//        renderCommandEncoder.setVertexBytes(&_sceneConstants, length: SceneConstants.stride, index: 1)
         _lightManager.setLightData(renderCommandEncoder)
         super.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
         renderCommandEncoder.popDebugGroup()

@@ -8,8 +8,6 @@
 import MetalKit
 
 class GameObject: Node, Renderable {
-//    var renderPipelineStateType: RenderPipelineStateType
-    
     private var _modelConstants = ModelConstants()
     private var _mesh: Mesh!
     
@@ -32,13 +30,6 @@ class GameObject: Node, Renderable {
     }
     
     func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
-//        if renderPipelineStateType == .OpaqueMaterial || renderPipelineStateType == .SkySphere {
-//            renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
-//        }
-        
-        // TODO: Set this before rendering all objects using specific RPST:
-//        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
-        
         // Vertex Shader
         renderCommandEncoder.setVertexBytes(&_modelConstants, length: ModelConstants.stride, index: 2)
         
