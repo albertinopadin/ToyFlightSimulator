@@ -5,7 +5,6 @@
 //  Created by Albertino Padin on 11/30/22.
 //
 
-
 import MetalKit
 
 enum MDLVertexDescriptorType {
@@ -23,12 +22,6 @@ class MDLVertexDescriptorLibrary: Library<MDLVertexDescriptorType, MDLVertexDesc
         return _library[type]!
     }
 }
-
-//protocol MDL_VertexDescriptor {
-//    var name: String { get }
-//    var vertexDescriptor: MTLVertexDescriptor! { get }
-//    mutating func addAttribute(format: MTLVertexFormat, bufferIndex: Int)
-//}
 
 public struct BaseMDLVertexDescriptor {
     var name: String = "Base MDL Vertex Descriptor"

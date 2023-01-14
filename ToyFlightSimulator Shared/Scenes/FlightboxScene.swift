@@ -22,6 +22,9 @@ class FlightboxScene: Scene {
         f16.setPositionY(10)
         addChild(f16)
         
+        let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+        addChild(sky)
+        
         sun.setPosition(0, 5, 5)
         sun.setLightBrightness(1.0)
         sun.setLightColor(1, 1, 1)
@@ -44,41 +47,12 @@ class FlightboxScene: Scene {
         quad.setPositionY(14)
         addChild(quad)
         
-//        let debugLine = DebugLine(name: "Red Line",
-//                                  startPoint: float3(0, 0, 0),
-//                                  endPoint: float3(0, 50, 0),
-//                                  color: float4(1, 0, 0, 1))
-//        addChild(debugLine)
-        
         let debugLine = Line(startPoint: float3(0, 0, 0),
                              endPoint: float3(0, 50, 0),
                              color: float4(1, 0, 0, 1))
         addChild(debugLine)
         
-        
         let f16Pos = f16.getPosition()
-        
-//        let debugSphereBluePos = float3(x: f16Pos.x + 1, y: f16Pos.y, z: f16Pos.z - 2)
-//        let debugSphereBlue = DebugSphere(name: "Blue Sphere",
-//                                          position: debugSphereBluePos,
-//                                          radius: 1.0,
-//                                          color: float4(0, 0, 1, 0.5))
-//        addChild(debugSphereBlue)
-//        
-//        let debugSphereRedPos = float3(x: f16Pos.x - 1, y: f16Pos.y, z: f16Pos.z - 2)
-//        let debugSphereRed = DebugSphere(name: "Red Sphere",
-//                                         position: debugSphereRedPos,
-//                                         radius: 1.0,
-//                                         color: float4(1, 0, 0, 0.4))
-//        addChild(debugSphereRed)
-
-//        let debugSphereBluePos = float3(x: f16Pos.x + 1, y: f16Pos.y, z: f16Pos.z - 2)
-//        let debugSphereBlue = DebugSphere(name: "Blue Sphere",
-//                                          position: debugSphereBluePos,
-//                                          radius: 1.0,
-//                                          color: float4(0, 0, 1, 0.5))
-//        addChild(debugSphereBlue)
-        
         
         var sphereBlueMaterial = Material()
         sphereBlueMaterial.color = float4(0.0, 0.0, 1.0, 0.4)
@@ -104,14 +78,12 @@ class FlightboxScene: Scene {
         let testQuad = Quad()
         var testQuadMaterial = Material()
         testQuadMaterial.isLit = true
-//        testQuadMaterial.color = RED_COLOR
         testQuadMaterial.color = float4(1, 0, 0, 0.5)
         testQuadMaterial.shininess = 100000
         testQuadMaterial.diffuse = float3(1, 0.1, 0.1)
         testQuadMaterial.specular = float3(1, 1, 1)
         testQuadMaterial.useNormalMapTexture = false
         testQuad.useMaterial(testQuadMaterial)
-//        testQuad.transparent = true
         testQuad.setPositionZ(1)
         testQuad.setPositionY(10)
         testQuad.setPositionX(5)
@@ -149,9 +121,6 @@ class FlightboxScene: Scene {
 //        testCube.useMaterial(testCubeMaterial)
 //        testCube.setPosition(f16Pos.x, 1, f16Pos.z - 4)
 //        addChild(testCube)
-        
-        let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
-        addChild(sky)
         
         print("Flightbox scene children:")
         for subchildren in children.values {
