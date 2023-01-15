@@ -87,6 +87,20 @@ class Node {
             }
         }
     }
+    
+    func renderShadow(renderCommandEncoder: MTLRenderCommandEncoder, shadowViewProjectionMatrix: float4x4) {
+        if let renderable = self as? Renderable {
+            renderable.doRenderShadow(renderCommandEncoder: renderCommandEncoder,
+                                      shadowViewProjectionMatrix: shadowViewProjectionMatrix)
+        }
+        
+        for cGroup in children.values {
+            for child in cGroup {
+                child.renderShadow(renderCommandEncoder: renderCommandEncoder,
+                                   shadowViewProjectionMatrix: shadowViewProjectionMatrix)
+            }
+        }
+    }
 }
 
 extension Node {

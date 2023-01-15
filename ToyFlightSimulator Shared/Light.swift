@@ -10,11 +10,11 @@ import Metal
 import simd
 
 
-enum LightType: UInt32 {
-    case ambient
-    case directional
-    case omni
-}
+//enum LightType: UInt32 {
+//    case ambient
+//    case directional
+//    case omni
+//}
 
 
 class Light {

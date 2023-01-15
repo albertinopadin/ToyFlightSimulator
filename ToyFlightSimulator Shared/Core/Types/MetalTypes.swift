@@ -115,6 +115,8 @@ struct Material: sizeable {
 }
 
 struct LightData: sizeable {
+    var type: UInt32 = 0
+    var viewProjectionMatrix: float4x4 = matrix_identity_float4x4
     var position: float3 = float3(0, 0, 0)
     var color: float3 = float3(0, 0, 0)
     var brightness: Float = 1.0
@@ -122,4 +124,8 @@ struct LightData: sizeable {
     var ambientIntensity: Float = 1.0
     var diffuseIntensity: Float = 1.0
     var specularIntensity: Float = 1.0
+}
+
+struct ShadowData: sizeable {
+    var modelViewProjectionMatrix: simd_float4x4
 }

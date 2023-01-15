@@ -14,13 +14,14 @@ class Renderer: NSObject, MTKViewDelegate {
     
     private var _baseRenderPassDescriptor: MTLRenderPassDescriptor!
     private var _forwardRenderPassDescriptor: MTLRenderPassDescriptor!
+    private var _shadowRenderPassDescriptor: MTLRenderPassDescriptor!
     private let _optimalTileSize: MTLSize = MTLSize(width: 32, height: 16, depth: 1)
     
     init(_ mtkView: MTKView) {
         super.init()
         updateScreenSize(view: mtkView)
-        createBaseRenderPassDescriptor()
         createForwardRenderPassDescriptor()
+        createShadowRenderPassDescriptor()
         mtkView.delegate = self
     }
     
@@ -112,6 +113,13 @@ class Renderer: NSObject, MTKViewDelegate {
         _forwardRenderPassDescriptor.imageblockSampleLength = Graphics.RenderPipelineStates[.OrderIndependentTransparent].imageblockSampleLength
     }
     
+    func createShadowRenderPassDescriptor() {
+        _shadowRenderPassDescriptor = MTLRenderPassDescriptor()
+        _shadowRenderPassDescriptor.depthAttachment.loadAction = .clear
+        _shadowRenderPassDescriptor.depthAttachment.storeAction = .store
+        _shadowRenderPassDescriptor.depthAttachment.clearDepth = 1.0
+    }
+    
     
     // --- MTKViewDelegate methods ---
     public func updateScreenSize(view: MTKView) {
@@ -121,6 +129,31 @@ class Renderer: NSObject, MTKViewDelegate {
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         // When window is resized
         updateScreenSize(view: view)
+    }
+    
+    func shadowRenderPass(commandBuffer: MTLCommandBuffer) {
+        for light in SceneManager.getLightObjects() {
+            _shadowRenderPassDescriptor.depthAttachment.texture = light.shadowTexture
+            let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _shadowRenderPassDescriptor)
+            renderCommandEncoder?.label = "Shadow Render Command Encoder"
+            renderCommandEncoder?.pushDebugGroup("Rendering Shadow for \(light.getName())")
+            renderCommandEncoder?.setRenderPipelineState(Graphics.RenderPipelineStates[.Shadow])
+            renderCommandEncoder?.setDepthStencilState(Graphics.DepthStencilStates[.Less])
+            renderCommandEncoder?.setFrontFacing(.counterClockwise)  // ???
+            renderCommandEncoder?.setCullMode(.back)
+            
+            SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
+            
+            let shadowViewMatrix = light.modelMatrix.inverse
+            let shadowProjectionMatrix = light.projectionMatrix
+            let shadowViewProjectionMatrix = shadowProjectionMatrix * shadowViewMatrix
+            
+            SceneManager.RenderShadows(renderCommandEncoder: renderCommandEncoder!,
+                                       shadowViewProjectionMatrix: shadowViewProjectionMatrix)
+            
+            renderCommandEncoder?.popDebugGroup()
+            renderCommandEncoder?.endEncoding()
+        }
     }
     
     func drawOpaqueObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
@@ -145,10 +178,15 @@ class Renderer: NSObject, MTKViewDelegate {
     }
     
     func orderIndependentTransparencyRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
-        guard let drawableTexture = view.currentDrawable?.texture else { return }
+        // TODO: Decide if should have Final Render Pass, or if should render directly to view's
+        //       current drawable texture:
+//        guard let drawableTexture = view.currentDrawable?.texture else { return }
+
+//        _baseRenderPassDescriptor.colorAttachments[0].texture = drawableTexture
+//        _baseRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
         
-        _baseRenderPassDescriptor.colorAttachments[0].texture = drawableTexture
-        _baseRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
+//        _forwardRenderPassDescriptor.colorAttachments[0].texture = drawableTexture
+//        _forwardRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
         
         let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _forwardRenderPassDescriptor)
         renderCommandEncoder?.label = "Order Independent Transparency Render Command Encoder"
@@ -160,6 +198,7 @@ class Renderer: NSObject, MTKViewDelegate {
         
         SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
         drawOpaqueObjects(renderCommandEncoder: renderCommandEncoder!)
+        renderCommandEncoder?.setFragmentTexture(SceneManager.getLightObjects()[0].shadowTexture, index: 2)
         drawTransparentObjects(renderCommandEncoder: renderCommandEncoder!)
         
         renderCommandEncoder?.pushDebugGroup("Blend Fragments")
@@ -189,8 +228,9 @@ class Renderer: NSObject, MTKViewDelegate {
         SceneManager.Update(deltaTime: 1.0 / Float(view.preferredFramesPerSecond))
         
         let commandBuffer = Engine.CommandQueue.makeCommandBuffer()
-        commandBuffer?.label = "Base Command Buffer"
+        commandBuffer?.label = "Draw Command Buffer"
         
+        shadowRenderPass(commandBuffer: commandBuffer!)
         orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer!)
         // Intermediate renders go here
         finalRenderPass(view: view, commandBuffer: commandBuffer!)

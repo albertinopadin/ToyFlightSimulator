@@ -16,6 +16,11 @@ struct FragmentOutput {
     half4 color1 [[ color(1) ]];
 };
 
+vertex float4 shadow_vertex_shader(VertexIn in [[stage_in]],
+                                   constant float4x4 &modelViewProjectionMatrix [[buffer(2)]]) {
+    return modelViewProjectionMatrix * float4(in.position, 1.0);
+}
+
 vertex RasterizerData base_vertex_shader(const VertexIn vIn [[ stage_in ]],
                                          constant SceneConstants &sceneConstants [[ buffer(1) ]],
                                          constant ModelConstants &modelConstants [[ buffer(2) ]]) {
@@ -59,7 +64,8 @@ fragment FragmentOutput material_fragment_shader(RasterizerData rd [[ stage_in ]
                                                  constant LightData *lightDatas [[ buffer(3) ]],
                                                  sampler sampler2d [[ sampler(0) ]],
                                                  texture2d<float> baseColorMap [[ texture(0) ]],
-                                                 texture2d<float> normalMap [[ texture(1) ]]) {
+                                                 texture2d<float> normalMap [[ texture(1) ]],
+                                                 depth2d<float, access::sample> shadowMap [[ texture(2) ]]) {
     float2 texCoord = rd.textureCoordinate;
     float4 color = rd.color;
     
@@ -87,7 +93,8 @@ fragment FragmentOutput material_fragment_shader(RasterizerData rd [[ stage_in ]
                                                             lightCount,
                                                             rd.worldPosition,
                                                             unitNormal,
-                                                            unitToCameraVector);
+                                                            unitToCameraVector,
+                                                            shadowMap);
         color *= float4(phongIntensity, 1.0);
     }
     

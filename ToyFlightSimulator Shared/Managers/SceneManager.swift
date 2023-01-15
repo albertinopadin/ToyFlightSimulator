@@ -30,6 +30,10 @@ class SceneManager {
         _currentScene.update()
     }
     
+    public static func getLightObjects() -> [LightObject] {
+        return _currentScene.lightManager.lightObjects
+    }
+    
     public static func SetSceneConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
         _currentScene.setSceneConstants(renderCommandEncoder: renderCommandEncoder)
     }
@@ -37,5 +41,10 @@ class SceneManager {
     public static func Render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
         _currentScene.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
+    }
+    
+    public static func RenderShadows(renderCommandEncoder: MTLRenderCommandEncoder, shadowViewProjectionMatrix: float4x4) {
+        _currentScene.renderShadow(renderCommandEncoder: renderCommandEncoder,
+                                   shadowViewProjectionMatrix: shadowViewProjectionMatrix)
     }
 }

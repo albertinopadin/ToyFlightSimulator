@@ -60,7 +60,14 @@ struct Material {
     float shininess;
 };
 
+enum LightType : uint {
+    LightTypeAmbient,
+    LightTypeDirectional
+};
+
 struct LightData {
+    LightType type;
+    float4x4 viewProjectionMatrix;
     float3 position;
     float3 color;
     float brightness;

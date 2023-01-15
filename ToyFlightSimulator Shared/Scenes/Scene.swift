@@ -9,8 +9,8 @@ import MetalKit
 
 // Scene is head node of scene graph
 class Scene: Node {
+    var lightManager = LightManager()
     private var _cameraManager = CameraManager()
-    private var _lightManager = LightManager()
     private var _sceneConstants = SceneConstants()
     
     override init(name: String) {
@@ -29,7 +29,7 @@ class Scene: Node {
     
     func addLight(_ lightObject: LightObject) {
         self.addChild(lightObject)
-        _lightManager.addLightObject(lightObject)
+        lightManager.addLightObject(lightObject)
     }
     
     func updateCameras(deltaTime: Float) {
@@ -60,7 +60,7 @@ class Scene: Node {
     
     override func render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
         renderCommandEncoder.pushDebugGroup("Rendering \(renderPipelineStateType) Scene")
-        _lightManager.setLightData(renderCommandEncoder)
+        lightManager.setLightData(renderCommandEncoder)
         super.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
         renderCommandEncoder.popDebugGroup()
     }

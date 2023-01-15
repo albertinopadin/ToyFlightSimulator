@@ -25,10 +25,16 @@ class FlightboxScene: Scene {
         let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
         addChild(sky)
         
-        sun.setPosition(0, 5, 5)
-        sun.setLightBrightness(1.0)
+        sun.type = .directional
+        sun.setPosition(0, 10, 5)
+        sun.setLightBrightness(100.0)
         sun.setLightColor(1, 1, 1)
         sun.setLightAmbientIntensity(0.04)
+        sun.setLightDiffuseIntensity(0.04)
+        sun.setLightSpecularIntensity(0.04)
+//        sun.setLightAmbientIntensity(0.5)
+//        sun.setLightDiffuseIntensity(0.5)
+//        sun.setLightSpecularIntensity(0.5)
         addLight(sun)
         
         var groundMaterial = Material()

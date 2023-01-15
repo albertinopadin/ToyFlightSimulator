@@ -63,6 +63,12 @@ extension InstancedGameObject: Renderable {
         
         _mesh.drawPrimitives(renderCommandEncoder)
     }
+    
+    func doRenderShadow(renderCommandEncoder: MTLRenderCommandEncoder, shadowViewProjectionMatrix: float4x4) {
+        var shadowData = ShadowData(modelViewProjectionMatrix: shadowViewProjectionMatrix * modelMatrix)
+        renderCommandEncoder.setVertexBytes(&shadowData, length: ShadowData.stride, index: 2)
+        _mesh.drawShadowPrimitives(renderCommandEncoder)
+    }
 }
 
 // Material Properties

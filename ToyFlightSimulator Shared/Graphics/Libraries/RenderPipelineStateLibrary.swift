@@ -20,6 +20,8 @@ enum RenderPipelineStateType {
     case OpaqueMaterial
     case OrderIndependentTransparent
     case Blend
+    
+    case Shadow
 }
 
 class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState> {
@@ -37,6 +39,8 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(OpaqueMaterialRenderPipelineState(), forKey: .OpaqueMaterial)
         _library.updateValue(OrderIndependentTransparencyRenderPipelineState(), forKey: .OrderIndependentTransparent)
         _library.updateValue(BlendRenderPipelineState(), forKey: .Blend)
+        
+        _library.updateValue(ShadowRenderPipelineState(), forKey: .Shadow)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {
@@ -223,7 +227,7 @@ class OrderIndependentTransparencyRenderPipelineState: RenderPipelineState {
         renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
         renderPipelineDescriptor.stencilAttachmentPixelFormat = .invalid
         
-        renderPipelineDescriptor.label = "Transparent Render Pipline Descriptor"
+        renderPipelineDescriptor.label = "Transparent Render Pipeline Descriptor"
         super.init(renderPipelineDescriptor: renderPipelineDescriptor)
     }
 }
@@ -237,9 +241,18 @@ class BlendRenderPipelineState: RenderPipelineState {
         renderPipelineDescriptor.vertexDescriptor = nil
         renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.QuadPassVertex]
         renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.BlendFragment]
-        
         renderPipelineDescriptor.label = "Transparent Fragment Blending Descriptor"
         super.init(renderPipelineDescriptor: renderPipelineDescriptor)
     }
 }
 
+class ShadowRenderPipelineState: RenderPipelineState {
+    init() {
+        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
+        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
+        renderPipelineDescriptor.label = "Shadow Render Pipeline Descriptor"
+        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
+    }
+}

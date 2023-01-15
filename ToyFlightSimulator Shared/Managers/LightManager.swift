@@ -8,15 +8,15 @@
 import MetalKit
 
 class LightManager {
-    private var _lightObjects: [LightObject] = []
+    var lightObjects: [LightObject] = []
     
     func addLightObject(_ lightObject: LightObject) {
-        self._lightObjects.append(lightObject)
+        self.lightObjects.append(lightObject)
     }
     
     private func gatherLightData() -> [LightData] {
         var result: [LightData] = []
-        for lightObject in _lightObjects {
+        for lightObject in lightObjects {
             result.append(lightObject.lightData)
         }
         return result

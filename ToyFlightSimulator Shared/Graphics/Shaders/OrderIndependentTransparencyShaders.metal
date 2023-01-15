@@ -11,7 +11,7 @@
 
 using namespace metal;
 
-// Heavily inspired from: https://developer.apple.com/documentation/metal/metal_sample_code_library/implementing_order-independent_transparency_with_image_blocksd
+// Heavily inspired from: https://developer.apple.com/documentation/metal/metal_sample_code_library/implementing_order-independent_transparency_with_image_blocks
 
 static constexpr constant short kNumLayers = 4;
 
@@ -79,6 +79,7 @@ fragment TransparentFragmentStore transparent_material_fragment_shader(
                         sampler sampler2d [[ sampler(0) ]],
                         texture2d<float> baseColorMap [[ texture(0) ]],
                         texture2d<float> normalMap [[ texture(1) ]],
+                        depth2d<float, access::sample> shadowMap [[ texture(2) ]],
                         TransparentFragmentValues fragmentValues [[ imageblock_data ]]) {
                             
     float2 texCoord = rd.textureCoordinate;
@@ -108,7 +109,8 @@ fragment TransparentFragmentStore transparent_material_fragment_shader(
                                                             lightCount,
                                                             rd.worldPosition,
                                                             unitNormal,
-                                                            unitToCameraVector);
+                                                            unitToCameraVector,
+                                                            shadowMap);
         color *= float4(phongIntensity, 1.0);
     }
     

@@ -36,7 +36,8 @@ class F16Camera: Camera {
     // To make a camera follow a node, invert the camera's model matrix:
     override func updateModelMatrix() {
         super.updateModelMatrix()
-        viewMatrix = simd_inverse(modelMatrix)
+//        viewMatrix = simd_inverse(modelMatrix)
+        viewMatrix = modelMatrix.inverse
     }
     
     override func doUpdate() {
