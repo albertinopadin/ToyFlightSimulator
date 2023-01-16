@@ -26,7 +26,7 @@ class FlightboxScene: Scene {
         addChild(sky)
         
 //        sun.type = .directional
-        sun.setPosition(0, 15, 5)
+        sun.setPosition(10, 15, 5)
 //        sun.setLightBrightness(100.0)
         sun.setLightBrightness(1.0)
         sun.setLightColor(1, 1, 1)
