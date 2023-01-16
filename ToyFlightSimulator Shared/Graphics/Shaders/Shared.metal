@@ -68,6 +68,8 @@ enum LightType : uint {
 struct LightData {
     LightType type;
     float4x4 viewProjectionMatrix;
+    float4x4 lightSpaceMatrix;
+    
     float3 position;
     float3 color;
     float brightness;

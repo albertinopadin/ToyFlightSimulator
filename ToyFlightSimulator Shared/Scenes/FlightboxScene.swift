@@ -26,15 +26,16 @@ class FlightboxScene: Scene {
         addChild(sky)
         
         sun.type = .directional
-        sun.setPosition(0, 10, 5)
-        sun.setLightBrightness(100.0)
+        sun.setPosition(0, 15, 5)
+//        sun.setLightBrightness(100.0)
+        sun.setLightBrightness(1.0)
         sun.setLightColor(1, 1, 1)
         sun.setLightAmbientIntensity(0.04)
-        sun.setLightDiffuseIntensity(0.04)
-        sun.setLightSpecularIntensity(0.04)
+//        sun.setLightDiffuseIntensity(0.04)
+//        sun.setLightSpecularIntensity(0.04)
 //        sun.setLightAmbientIntensity(0.5)
-//        sun.setLightDiffuseIntensity(0.5)
-//        sun.setLightSpecularIntensity(0.5)
+        sun.setLightDiffuseIntensity(1.0)
+        sun.setLightSpecularIntensity(0.5)
         addLight(sun)
         
         var groundMaterial = Material()

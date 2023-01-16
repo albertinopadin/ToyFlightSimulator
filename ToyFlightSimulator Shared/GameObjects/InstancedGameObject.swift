@@ -69,6 +69,11 @@ extension InstancedGameObject: Renderable {
         renderCommandEncoder.setVertexBytes(&shadowData, length: ShadowData.stride, index: 2)
         _mesh.drawShadowPrimitives(renderCommandEncoder)
     }
+    
+    func doRenderDepth(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+        renderCommandEncoder.setVertexBuffer(_modelConstantBuffer, offset: 0, index: 2)
+        _mesh.drawDepthPrimitives(renderCommandEncoder)
+    }
 }
 
 // Material Properties

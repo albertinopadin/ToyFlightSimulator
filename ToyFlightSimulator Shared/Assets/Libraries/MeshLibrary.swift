@@ -220,6 +220,28 @@ class Mesh {
             }
         }
     }
+    
+    func drawDepthPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+        if let _vertexBuffer = _vertexBuffer {
+            renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
+            
+            if _submeshes.count > 0 {
+                for submesh in _submeshes {
+                    renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                               indexCount: submesh.indexCount,
+                                                               indexType: submesh.indexType,
+                                                               indexBuffer: submesh.indexBuffer,
+                                                               indexBufferOffset: submesh.indexBufferOffset,
+                                                               instanceCount: _instanceCount)
+                }
+            } else {
+                renderCommandEncoder.drawPrimitives(type: .triangle,
+                                                    vertexStart: 0,
+                                                    vertexCount: _vertices.count,
+                                                    instanceCount: _instanceCount)
+            }
+        }
+    }
 }
 
 // Index Information

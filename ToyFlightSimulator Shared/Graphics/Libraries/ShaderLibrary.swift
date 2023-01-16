@@ -14,6 +14,7 @@ enum ShaderType {
     case FinalVertex
     case QuadPassVertex
     case ShadowVertex
+    case DepthVertex
     
     case BaseFragment
     case MaterialFragment
@@ -37,6 +38,7 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "final_vertex_shader"), forKey: .FinalVertex)
         _library.updateValue(Shader(functionName: "quad_pass_vertex_shader"), forKey: .QuadPassVertex)
         _library.updateValue(Shader(functionName: "shadow_vertex_shader"), forKey: .ShadowVertex)
+        _library.updateValue(Shader(functionName: "depth_vertex_shader"), forKey: .DepthVertex)
         
         _library.updateValue(Shader(functionName: "base_fragment_shader"), forKey: .BaseFragment)
         _library.updateValue(Shader(functionName: "material_fragment_shader"), forKey: .MaterialFragment)

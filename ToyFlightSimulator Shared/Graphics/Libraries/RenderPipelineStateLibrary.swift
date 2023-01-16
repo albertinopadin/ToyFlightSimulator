@@ -22,6 +22,7 @@ enum RenderPipelineStateType {
     case Blend
     
     case Shadow
+    case Depth
 }
 
 class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState> {
@@ -41,6 +42,7 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(BlendRenderPipelineState(), forKey: .Blend)
         
         _library.updateValue(ShadowRenderPipelineState(), forKey: .Shadow)
+        _library.updateValue(DepthRenderPipelineState(), forKey: .Depth)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {
@@ -253,6 +255,18 @@ class ShadowRenderPipelineState: RenderPipelineState {
         renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
         renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
         renderPipelineDescriptor.label = "Shadow Render Pipeline Descriptor"
+        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
+    }
+}
+
+class DepthRenderPipelineState: RenderPipelineState {
+    init() {
+        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
+        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.DepthVertex]
+        renderPipelineDescriptor.fragmentFunction = nil
+        renderPipelineDescriptor.label = "Depth Render Pipeline Descriptor"
         super.init(renderPipelineDescriptor: renderPipelineDescriptor)
     }
 }

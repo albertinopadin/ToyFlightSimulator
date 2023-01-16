@@ -111,6 +111,7 @@ extension matrix_float4x4 {
         self = matrix_multiply(self, result)
     }
     
+    // https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
     static func perspective(degreesFov: Float, aspectRatio: Float, near: Float, far: Float) -> matrix_float4x4 {
         let fov = degreesFov.toRadians
         
@@ -128,6 +129,40 @@ extension matrix_float4x4 {
             float4(0,  0,  z, -1),
             float4(0,  0,  w,  0)
         )
+        return result
+    }
+    
+    static func orthographic(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) -> matrix_float4x4 {
+        return float4x4(
+                [ 2 / (right - left), 0, 0, 0],
+                [0, 2 / (top - bottom), 0, 0],
+                [0, 0, 1 / (far - near), 0],
+                [(left + right) / (left - right), (top + bottom) / (bottom - top), near / (near - far), 1]
+            )
+     }
+    
+    static func orthographic(width: Float, height: Float, length: Float) -> matrix_float4x4 {
+        return float4x4 (
+            [ Float(2.0) / width,   0,                      0,                      0 ],
+            [ 0,                    Float(2.0) / height,    0,                      0 ],
+            [ 0,                    0,                      Float(2.0) / length,    0 ],
+            [ 0,                    0,                      0,                      Float(1.0) ]
+        )
+     }
+    
+    static func lookAt(eye: float3, center: float3, up: float3) -> matrix_float4x4 {
+        let z = normalize(eye - center)
+        let x = normalize(cross(up, z))
+        let y = cross(z, x)
+        let w = float3(dot(x, -eye), dot(y, -eye), dot(z, -eye))
+
+        let X = float4(x.x, y.x, z.x, 0)
+        let Y = float4(x.y, y.y, z.y, 0)
+        let Z = float4(x.z, y.z, z.z, 0)
+        let W = float4(w.x, w.y, x.z, 1)
+        
+        var result = matrix_identity_float4x4
+        result.columns = (X, Y, Z, W)
         return result
     }
 }

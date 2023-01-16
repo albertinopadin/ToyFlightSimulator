@@ -101,6 +101,18 @@ class Node {
             }
         }
     }
+    
+    func renderDepth(renderCommandEncoder: MTLRenderCommandEncoder) {
+        if let renderable = self as? Renderable {
+            renderable.doRenderDepth(renderCommandEncoder)
+        }
+        
+        for cGroup in children.values {
+            for child in cGroup {
+                child.renderDepth(renderCommandEncoder: renderCommandEncoder)
+            }
+        }
+    }
 }
 
 extension Node {

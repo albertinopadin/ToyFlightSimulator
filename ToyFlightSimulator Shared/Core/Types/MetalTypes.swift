@@ -115,8 +115,10 @@ struct Material: sizeable {
 }
 
 struct LightData: sizeable {
-    var type: UInt32 = 0
-    var viewProjectionMatrix: float4x4 = matrix_identity_float4x4
+    var type: UInt32 = 0  // Warren Moore / 30 Days of Metal
+    var viewProjectionMatrix: float4x4 = matrix_identity_float4x4  // Warren Moore / 30 Days of Metal
+    var lightSpaceMatrix = matrix_identity_float4x4  // 2etime
+    var translation: float3 = float3(0, 0, 0)
     var position: float3 = float3(0, 0, 0)
     var color: float3 = float3(0, 0, 0)
     var brightness: Float = 1.0

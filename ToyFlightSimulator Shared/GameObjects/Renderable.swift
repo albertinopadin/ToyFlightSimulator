@@ -10,4 +10,5 @@ import MetalKit
 protocol Renderable {
     func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder)
     func doRenderShadow(renderCommandEncoder: MTLRenderCommandEncoder, shadowViewProjectionMatrix: float4x4)
+    func doRenderDepth(_ renderCommandEncoder: MTLRenderCommandEncoder)
 }

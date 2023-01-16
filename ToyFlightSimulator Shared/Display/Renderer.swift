@@ -15,13 +15,18 @@ class Renderer: NSObject, MTKViewDelegate {
     private var _baseRenderPassDescriptor: MTLRenderPassDescriptor!
     private var _forwardRenderPassDescriptor: MTLRenderPassDescriptor!
     private var _shadowRenderPassDescriptor: MTLRenderPassDescriptor!
+    
+    private var _depthPassTexture: MTLTexture!
+    private var _depthRenderPassDescriptor: MTLRenderPassDescriptor!
+    
     private let _optimalTileSize: MTLSize = MTLSize(width: 32, height: 16, depth: 1)
     
     init(_ mtkView: MTKView) {
         super.init()
         updateScreenSize(view: mtkView)
         createForwardRenderPassDescriptor()
-        createShadowRenderPassDescriptor()
+//        createShadowRenderPassDescriptor()
+        createDepthRenderPassDescriptor()
         mtkView.delegate = self
     }
     
@@ -120,6 +125,22 @@ class Renderer: NSObject, MTKViewDelegate {
         _shadowRenderPassDescriptor.depthAttachment.clearDepth = 1.0
     }
     
+    func createDepthRenderPassDescriptor() {
+        let depthTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainDepthPixelFormat,
+                                                                              width: 4096 * 2,
+                                                                              height: 4096 * 2,
+                                                                              mipmapped: false)
+        depthTextureDescriptor.usage = [.renderTarget, .shaderRead]
+        depthTextureDescriptor.storageMode = .private
+        _depthPassTexture = Engine.Device.makeTexture(descriptor: depthTextureDescriptor)!
+        
+        _depthRenderPassDescriptor = MTLRenderPassDescriptor()
+        _depthRenderPassDescriptor.depthAttachment.texture = _depthPassTexture
+        _depthRenderPassDescriptor.depthAttachment.storeAction = .store
+        _depthRenderPassDescriptor.depthAttachment.loadAction = .clear
+        _depthRenderPassDescriptor.depthAttachment.clearDepth = 1.0
+    }
+    
     
     // --- MTKViewDelegate methods ---
     public func updateScreenSize(view: MTKView) {
@@ -129,6 +150,24 @@ class Renderer: NSObject, MTKViewDelegate {
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         // When window is resized
         updateScreenSize(view: view)
+    }
+    
+    func depthRenderPass(commandBuffer: MTLCommandBuffer) {
+        let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _depthRenderPassDescriptor)
+        renderCommandEncoder?.label = "Depth Render Command Encoder"
+        renderCommandEncoder?.pushDebugGroup("Depth Pass")
+        renderCommandEncoder?.setRenderPipelineState(Graphics.RenderPipelineStates[.Depth])
+        renderCommandEncoder?.setDepthClipMode(.clamp)
+        renderCommandEncoder?.setDepthStencilState(Graphics.DepthStencilStates[.Less])
+        renderCommandEncoder?.setFrontFacing(.counterClockwise)
+        renderCommandEncoder?.setCullMode(.front)
+        renderCommandEncoder?.setDepthBias(0.001, slopeScale: 2, clamp: 1)
+        
+        SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
+        SceneManager.RenderDepth(renderCommandEncoder: renderCommandEncoder!)
+        
+        renderCommandEncoder?.popDebugGroup()
+        renderCommandEncoder?.endEncoding()
     }
     
     func shadowRenderPass(commandBuffer: MTLCommandBuffer) {
@@ -167,6 +206,7 @@ class Renderer: NSObject, MTKViewDelegate {
         SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OpaqueMaterial)
         SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .SkySphere)
         renderCommandEncoder.popDebugGroup()
+//        renderCommandEncoder.endEncoding()
     }
     
     func drawTransparentObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
@@ -175,6 +215,7 @@ class Renderer: NSObject, MTKViewDelegate {
         renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
         SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OrderIndependentTransparent)
         renderCommandEncoder.popDebugGroup()
+//        renderCommandEncoder.endEncoding()
     }
     
     func orderIndependentTransparencyRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
@@ -197,8 +238,9 @@ class Renderer: NSObject, MTKViewDelegate {
         renderCommandEncoder?.popDebugGroup()
         
         SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
+//        renderCommandEncoder?.setFragmentTexture(SceneManager.getLightObjects()[0].shadowTexture, index: 2)
+        renderCommandEncoder?.setFragmentTexture(_depthPassTexture, index: 2)
         drawOpaqueObjects(renderCommandEncoder: renderCommandEncoder!)
-        renderCommandEncoder?.setFragmentTexture(SceneManager.getLightObjects()[0].shadowTexture, index: 2)
         drawTransparentObjects(renderCommandEncoder: renderCommandEncoder!)
         
         renderCommandEncoder?.pushDebugGroup("Blend Fragments")
@@ -230,7 +272,8 @@ class Renderer: NSObject, MTKViewDelegate {
         let commandBuffer = Engine.CommandQueue.makeCommandBuffer()
         commandBuffer?.label = "Draw Command Buffer"
         
-        shadowRenderPass(commandBuffer: commandBuffer!)
+//        shadowRenderPass(commandBuffer: commandBuffer!)
+        depthRenderPass(commandBuffer: commandBuffer!)
         orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer!)
         // Intermediate renders go here
         finalRenderPass(view: view, commandBuffer: commandBuffer!)

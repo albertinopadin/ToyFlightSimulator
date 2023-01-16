@@ -25,6 +25,7 @@ class LightManager {
     func setLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
         var lightDatas = gatherLightData()
         var lightCount = lightDatas.count
+        renderCommandEncoder.setVertexBytes(&lightDatas, length: LightData.stride(lightCount), index: 3)
         renderCommandEncoder.setFragmentBytes(&lightCount, length: Int32.size, index: 2)
         renderCommandEncoder.setFragmentBytes(&lightDatas, length: LightData.stride(lightCount), index: 3)
     }

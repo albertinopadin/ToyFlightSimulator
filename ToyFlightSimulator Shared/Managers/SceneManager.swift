@@ -47,4 +47,9 @@ class SceneManager {
         _currentScene.renderShadow(renderCommandEncoder: renderCommandEncoder,
                                    shadowViewProjectionMatrix: shadowViewProjectionMatrix)
     }
+    
+    public static func RenderDepth(renderCommandEncoder: MTLRenderCommandEncoder) {
+        _currentScene.lightManager.setLightData(renderCommandEncoder)
+        _currentScene.renderDepth(renderCommandEncoder: renderCommandEncoder)
+    }
 }

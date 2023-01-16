@@ -44,6 +44,11 @@ class GameObject: Node, Renderable {
         renderCommandEncoder.setVertexBytes(&shadowData, length: ShadowData.stride, index: 2)
         _mesh.drawShadowPrimitives(renderCommandEncoder)
     }
+    
+    func doRenderDepth(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+        renderCommandEncoder.setVertexBytes(&_modelConstants, length: ModelConstants.stride, index: 2)
+        _mesh.drawDepthPrimitives(renderCommandEncoder)
+    }
 }
 
 // Material Properties

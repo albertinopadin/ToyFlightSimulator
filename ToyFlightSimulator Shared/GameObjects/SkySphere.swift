@@ -21,4 +21,8 @@ class SkySphere: GameObject {
         renderCommandEncoder.setFragmentTexture(Assets.Textures[_skySphereTextureType], index: 10)
         super.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
     }
+    
+    override func renderDepth(renderCommandEncoder: MTLRenderCommandEncoder) {
+        
+    }
 }

@@ -16,9 +16,18 @@ struct FragmentOutput {
     half4 color1 [[ color(1) ]];
 };
 
+// Warren Moore / 30 Days of Metal:
 vertex float4 shadow_vertex_shader(VertexIn in [[stage_in]],
                                    constant float4x4 &modelViewProjectionMatrix [[buffer(2)]]) {
     return modelViewProjectionMatrix * float4(in.position, 1.0);
+}
+
+// 2etime:
+vertex float4 depth_vertex_shader(const VertexIn in [[stage_in]],
+                                  constant LightData &lightData [[ buffer(3) ]],
+                                  constant ModelConstants &modelConstants [[ buffer(2) ]]) {
+    float4 worldPosition = lightData.lightSpaceMatrix * modelConstants.modelMatrix * float4(in.position, 1);
+    return worldPosition;
 }
 
 vertex RasterizerData base_vertex_shader(const VertexIn vIn [[ stage_in ]],
