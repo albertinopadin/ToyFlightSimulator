@@ -23,6 +23,6 @@ class SkySphere: GameObject {
     }
     
     override func renderDepth(renderCommandEncoder: MTLRenderCommandEncoder) {
-        
+        // Explicitly No-op here, as depth render will just render the whole SkySphere, which is not what we want
     }
 }
