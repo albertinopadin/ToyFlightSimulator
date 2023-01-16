@@ -206,7 +206,6 @@ class Renderer: NSObject, MTKViewDelegate {
         SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OpaqueMaterial)
         SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .SkySphere)
         renderCommandEncoder.popDebugGroup()
-//        renderCommandEncoder.endEncoding()
     }
     
     func drawTransparentObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
@@ -215,7 +214,6 @@ class Renderer: NSObject, MTKViewDelegate {
         renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
         SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OrderIndependentTransparent)
         renderCommandEncoder.popDebugGroup()
-//        renderCommandEncoder.endEncoding()
     }
     
     func orderIndependentTransparencyRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
@@ -239,7 +237,7 @@ class Renderer: NSObject, MTKViewDelegate {
         
         SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
 //        renderCommandEncoder?.setFragmentTexture(SceneManager.getLightObjects()[0].shadowTexture, index: 2)
-        renderCommandEncoder?.setFragmentTexture(_depthPassTexture, index: 2)
+//        renderCommandEncoder?.setFragmentTexture(_depthPassTexture, index: 2)
         drawOpaqueObjects(renderCommandEncoder: renderCommandEncoder!)
         drawTransparentObjects(renderCommandEncoder: renderCommandEncoder!)
         

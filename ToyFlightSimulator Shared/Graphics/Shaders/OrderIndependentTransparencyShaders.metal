@@ -79,7 +79,7 @@ fragment TransparentFragmentStore transparent_material_fragment_shader(
                         sampler sampler2d [[ sampler(0) ]],
                         texture2d<float> baseColorMap [[ texture(0) ]],
                         texture2d<float> normalMap [[ texture(1) ]],
-                        depth2d<float, access::sample> shadowMap [[ texture(2) ]],
+                        const depth2d<float> shadowMap [[ texture(2) ]],
                         TransparentFragmentValues fragmentValues [[ imageblock_data ]]) {
                             
     float2 texCoord = rd.textureCoordinate;
@@ -104,13 +104,20 @@ fragment TransparentFragmentStore transparent_material_fragment_shader(
         
         float3 unitToCameraVector = normalize(rd.toCameraVector);
         
+//        float3 phongIntensity = Lighting::GetPhongIntensity(material,
+//                                                            lightDatas,
+//                                                            lightCount,
+//                                                            rd.worldPosition,
+//                                                            unitNormal,
+//                                                            unitToCameraVector,
+//                                                            shadowMap);
         float3 phongIntensity = Lighting::GetPhongIntensity(material,
                                                             lightDatas,
                                                             lightCount,
                                                             rd.worldPosition,
                                                             unitNormal,
-                                                            unitToCameraVector,
-                                                            shadowMap);
+                                                            unitToCameraVector);
+        
         color *= float4(phongIntensity, 1.0);
     }
     
