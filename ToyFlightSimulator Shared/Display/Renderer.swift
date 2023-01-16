@@ -271,7 +271,7 @@ class Renderer: NSObject, MTKViewDelegate {
         commandBuffer?.label = "Draw Command Buffer"
         
 //        shadowRenderPass(commandBuffer: commandBuffer!)
-        depthRenderPass(commandBuffer: commandBuffer!)
+//        depthRenderPass(commandBuffer: commandBuffer!)
         orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer!)
         // Intermediate renders go here
         finalRenderPass(view: view, commandBuffer: commandBuffer!)

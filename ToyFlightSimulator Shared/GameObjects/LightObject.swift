@@ -57,6 +57,8 @@ class LightObject: GameObject {
 //        lightData.translation = translation
         lightData.translation = self.getPosition()
         lightData.color = self.getLightColor()
+        lightData.position = self.getPosition()
+        super.update()
     }
     
 //    override func update() {
