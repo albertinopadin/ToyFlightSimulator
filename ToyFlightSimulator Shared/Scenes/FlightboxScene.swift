@@ -30,6 +30,7 @@ class FlightboxScene: Scene {
 //        sun.setLightBrightness(100.0)
         sun.setLightBrightness(1.0)
         sun.setLightColor(1, 1, 1)
+//        sun.setLightColor(0, 1, 0)
 //        sun.setLightColor(1, 0, 0)
         sun.setLightAmbientIntensity(0.04)
 //        sun.setLightDiffuseIntensity(0.04)

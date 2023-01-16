@@ -41,7 +41,7 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(OrderIndependentTransparencyRenderPipelineState(), forKey: .OrderIndependentTransparent)
         _library.updateValue(BlendRenderPipelineState(), forKey: .Blend)
         
-        _library.updateValue(ShadowRenderPipelineState(), forKey: .Shadow)
+//        _library.updateValue(ShadowRenderPipelineState(), forKey: .Shadow)
         _library.updateValue(DepthRenderPipelineState(), forKey: .Depth)
     }
     
@@ -248,17 +248,17 @@ class BlendRenderPipelineState: RenderPipelineState {
     }
 }
 
-class ShadowRenderPipelineState: RenderPipelineState {
-    init() {
-        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
-        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
-        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
-        renderPipelineDescriptor.label = "Shadow Render Pipeline Descriptor"
-        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
-    }
-}
-
+//class ShadowRenderPipelineState: RenderPipelineState {
+//    init() {
+//        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+//        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+//        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
+//        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
+//        renderPipelineDescriptor.label = "Shadow Render Pipeline Descriptor"
+//        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
+//    }
+//}
+//
 class DepthRenderPipelineState: RenderPipelineState {
     init() {
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()

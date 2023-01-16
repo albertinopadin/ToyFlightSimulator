@@ -17,31 +17,31 @@ class LightObject: GameObject {
     let shadowMapSize = 2048
     var type = LightType.directional
     var lightData = LightData()
-    var shadowTexture: MTLTexture
+//    var shadowTexture: MTLTexture
     
     var projectionMatrix = matrix_identity_float4x4
     var viewMatrix = matrix_identity_float4x4
     var translation = float3(0,0,0)
     
     init(name: String) {
-        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainDepthPixelFormat,
-                                                                               width: shadowMapSize,
-                                                                               height: shadowMapSize,
-                                                                               mipmapped: false)
-        shadowTextureDescriptor.storageMode = .private
-        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
-        shadowTexture = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor)!
+//        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainDepthPixelFormat,
+//                                                                               width: shadowMapSize,
+//                                                                               height: shadowMapSize,
+//                                                                               mipmapped: false)
+//        shadowTextureDescriptor.storageMode = .private
+//        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
+//        shadowTexture = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor)!
         super.init(name: name, meshType: .None)
     }
     
     init(name: String, meshType: MeshType) {
-        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainDepthPixelFormat,
-                                                                               width: shadowMapSize,
-                                                                               height: shadowMapSize,
-                                                                               mipmapped: false)
-        shadowTextureDescriptor.storageMode = .private
-        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
-        shadowTexture = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor)!
+//        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainDepthPixelFormat,
+//                                                                               width: shadowMapSize,
+//                                                                               height: shadowMapSize,
+//                                                                               mipmapped: false)
+//        shadowTextureDescriptor.storageMode = .private
+//        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
+//        shadowTexture = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor)!
         super.init(name: name, meshType: meshType)
     }
     
@@ -55,30 +55,11 @@ class LightObject: GameObject {
         viewMatrix = matrix_float4x4.lookAt(eye: -self.getPosition(), center: [0,0,0], up: [0,1,0])
         lightData.lightSpaceMatrix = matrix_multiply(projectionMatrix, viewMatrix)
 //        lightData.translation = translation
-        lightData.translation = self.getPosition()
-        lightData.color = self.getLightColor()
+//        lightData.translation = self.getPosition()
+//        lightData.color = self.getLightColor()
         lightData.position = self.getPosition()
         super.update()
     }
-    
-//    override func update() {
-//        let shadowViewMatrix = self.modelMatrix.inverse
-//        let shadowProjectionMatrix = self.projectionMatrix
-//        let shadowViewProjectionMatrix = shadowProjectionMatrix * shadowViewMatrix
-//        self.lightData.viewProjectionMatrix = shadowViewProjectionMatrix
-//        self.lightData.position = self.getPosition()
-//        super.update()
-//    }
-    
-    // Warren Moore / 30 Days of Metal:
-//    var direction: SIMD3<Float> {
-//        return -modelMatrix.columns.2.xyz
-//    }
-//
-//    // Seems to control how big the area lit up is:
-//    var projectionMatrix: float4x4 {
-//        return simd_float4x4(orthographicProjectionWithLeft: -1.5, top: 1.5, right: 1.5, bottom: -1.5, near: 0, far: 1000)
-//    }
 }
 
 extension LightObject {

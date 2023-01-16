@@ -104,19 +104,13 @@ fragment TransparentFragmentStore transparent_material_fragment_shader(
         
         float3 unitToCameraVector = normalize(rd.toCameraVector);
         
-//        float3 phongIntensity = Lighting::GetPhongIntensity(material,
-//                                                            lightDatas,
-//                                                            lightCount,
-//                                                            rd.worldPosition,
-//                                                            unitNormal,
-//                                                            unitToCameraVector,
-//                                                            shadowMap);
         float3 phongIntensity = Lighting::GetPhongIntensity(material,
                                                             lightDatas,
                                                             lightCount,
                                                             rd.worldPosition,
                                                             unitNormal,
-                                                            unitToCameraVector);
+                                                            unitToCameraVector,
+                                                            shadowMap);
         
         color *= float4(phongIntensity, 1.0);
     }

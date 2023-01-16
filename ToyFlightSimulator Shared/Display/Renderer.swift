@@ -118,13 +118,13 @@ class Renderer: NSObject, MTKViewDelegate {
         _forwardRenderPassDescriptor.imageblockSampleLength = Graphics.RenderPipelineStates[.OrderIndependentTransparent].imageblockSampleLength
     }
     
-    func createShadowRenderPassDescriptor() {
-        _shadowRenderPassDescriptor = MTLRenderPassDescriptor()
-        _shadowRenderPassDescriptor.depthAttachment.loadAction = .clear
-        _shadowRenderPassDescriptor.depthAttachment.storeAction = .store
-        _shadowRenderPassDescriptor.depthAttachment.clearDepth = 1.0
-    }
-    
+//    func createShadowRenderPassDescriptor() {
+//        _shadowRenderPassDescriptor = MTLRenderPassDescriptor()
+//        _shadowRenderPassDescriptor.depthAttachment.loadAction = .clear
+//        _shadowRenderPassDescriptor.depthAttachment.storeAction = .store
+//        _shadowRenderPassDescriptor.depthAttachment.clearDepth = 1.0
+//    }
+//
     func createDepthRenderPassDescriptor() {
         let depthTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainDepthPixelFormat,
                                                                               width: 4096 * 2,
@@ -133,7 +133,7 @@ class Renderer: NSObject, MTKViewDelegate {
         depthTextureDescriptor.usage = [.renderTarget, .shaderRead]
         depthTextureDescriptor.storageMode = .private
         _depthPassTexture = Engine.Device.makeTexture(descriptor: depthTextureDescriptor)!
-        
+
         _depthRenderPassDescriptor = MTLRenderPassDescriptor()
         _depthRenderPassDescriptor.depthAttachment.texture = _depthPassTexture
         _depthRenderPassDescriptor.depthAttachment.storeAction = .store
@@ -162,38 +162,38 @@ class Renderer: NSObject, MTKViewDelegate {
         renderCommandEncoder?.setFrontFacing(.counterClockwise)
         renderCommandEncoder?.setCullMode(.front)
         renderCommandEncoder?.setDepthBias(0.001, slopeScale: 2, clamp: 1)
-        
+
         SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
         SceneManager.RenderDepth(renderCommandEncoder: renderCommandEncoder!)
-        
+
         renderCommandEncoder?.popDebugGroup()
         renderCommandEncoder?.endEncoding()
     }
-    
-    func shadowRenderPass(commandBuffer: MTLCommandBuffer) {
-        for light in SceneManager.getLightObjects() {
-            _shadowRenderPassDescriptor.depthAttachment.texture = light.shadowTexture
-            let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _shadowRenderPassDescriptor)
-            renderCommandEncoder?.label = "Shadow Render Command Encoder"
-            renderCommandEncoder?.pushDebugGroup("Rendering Shadow for \(light.getName())")
-            renderCommandEncoder?.setRenderPipelineState(Graphics.RenderPipelineStates[.Shadow])
-            renderCommandEncoder?.setDepthStencilState(Graphics.DepthStencilStates[.Less])
-            renderCommandEncoder?.setFrontFacing(.counterClockwise)  // ???
-            renderCommandEncoder?.setCullMode(.back)
-            
-            SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
-            
-            let shadowViewMatrix = light.modelMatrix.inverse
-            let shadowProjectionMatrix = light.projectionMatrix
-            let shadowViewProjectionMatrix = shadowProjectionMatrix * shadowViewMatrix
-            
-            SceneManager.RenderShadows(renderCommandEncoder: renderCommandEncoder!,
-                                       shadowViewProjectionMatrix: shadowViewProjectionMatrix)
-            
-            renderCommandEncoder?.popDebugGroup()
-            renderCommandEncoder?.endEncoding()
-        }
-    }
+
+//    func shadowRenderPass(commandBuffer: MTLCommandBuffer) {
+//        for light in SceneManager.getLightObjects() {
+////            _shadowRenderPassDescriptor.depthAttachment.texture = light.shadowTexture
+//            let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _shadowRenderPassDescriptor)
+//            renderCommandEncoder?.label = "Shadow Render Command Encoder"
+//            renderCommandEncoder?.pushDebugGroup("Rendering Shadow for \(light.getName())")
+//            renderCommandEncoder?.setRenderPipelineState(Graphics.RenderPipelineStates[.Shadow])
+//            renderCommandEncoder?.setDepthStencilState(Graphics.DepthStencilStates[.Less])
+//            renderCommandEncoder?.setFrontFacing(.counterClockwise)  // ???
+//            renderCommandEncoder?.setCullMode(.back)
+//
+//            SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
+//
+//            let shadowViewMatrix = light.modelMatrix.inverse
+//            let shadowProjectionMatrix = light.projectionMatrix
+//            let shadowViewProjectionMatrix = shadowProjectionMatrix * shadowViewMatrix
+//
+//            SceneManager.RenderShadows(renderCommandEncoder: renderCommandEncoder!,
+//                                       shadowViewProjectionMatrix: shadowViewProjectionMatrix)
+//
+//            renderCommandEncoder?.popDebugGroup()
+//            renderCommandEncoder?.endEncoding()
+//        }
+//    }
     
     func drawOpaqueObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.pushDebugGroup("Opaque Object Rendering")
@@ -237,7 +237,7 @@ class Renderer: NSObject, MTKViewDelegate {
         
         SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
 //        renderCommandEncoder?.setFragmentTexture(SceneManager.getLightObjects()[0].shadowTexture, index: 2)
-//        renderCommandEncoder?.setFragmentTexture(_depthPassTexture, index: 2)
+        renderCommandEncoder?.setFragmentTexture(_depthPassTexture, index: 2)
         drawOpaqueObjects(renderCommandEncoder: renderCommandEncoder!)
         drawTransparentObjects(renderCommandEncoder: renderCommandEncoder!)
         
@@ -270,8 +270,7 @@ class Renderer: NSObject, MTKViewDelegate {
         let commandBuffer = Engine.CommandQueue.makeCommandBuffer()
         commandBuffer?.label = "Draw Command Buffer"
         
-//        shadowRenderPass(commandBuffer: commandBuffer!)
-//        depthRenderPass(commandBuffer: commandBuffer!)
+        depthRenderPass(commandBuffer: commandBuffer!)
         orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer!)
         // Intermediate renders go here
         finalRenderPass(view: view, commandBuffer: commandBuffer!)
