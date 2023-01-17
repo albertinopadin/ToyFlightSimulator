@@ -6,6 +6,6 @@ Toy Flight Simulator implemented with Swift and Metal
 ![Toy Flight Sim](ToyFlightSim.png)
 
 
-1/16/2023 - Tried implementing shadows (in shadow branch) - inspired by [Warrren Moore's shadow tutorial]() and [2etime's shadow example]()
+1/16/2023 - Tried implementing shadows (in shadow branch) - inspired by [Warrren Moore's shadow tutorial](https://medium.com/@warrenm/thirty-days-of-metal-day-19-directional-shadows-116cecbafcbb) and [2etime's shadow example](https://discord.com/channels/428977382515277824/428977382515277830/1059718599398404116)
 
 ![Shadows](TFSShadows.png)
