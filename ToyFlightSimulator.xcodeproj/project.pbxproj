@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CE2BBFB0297652B500BD61C3 /* HeadsUpDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2BBFAF297652B500BD61C3 /* HeadsUpDisplay.swift */; };
+		CE2BBFB1297652B500BD61C3 /* HeadsUpDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2BBFAF297652B500BD61C3 /* HeadsUpDisplay.swift */; };
+		CE2BBFB2297652B500BD61C3 /* HeadsUpDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2BBFAF297652B500BD61C3 /* HeadsUpDisplay.swift */; };
 		CE3BFF1F28E054880014A752 /* MetalTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF1E28E054880014A752 /* MetalTypes.swift */; };
 		CE3BFF2128E055BB0014A752 /* Engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2028E055BB0014A752 /* Engine.swift */; };
 		CE3BFF2428E056230014A752 /* Graphics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2328E056230014A752 /* Graphics.swift */; };
@@ -235,6 +238,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CE2BBFAF297652B500BD61C3 /* HeadsUpDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadsUpDisplay.swift; sourceTree = "<group>"; };
 		CE3BFF1E28E054880014A752 /* MetalTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalTypes.swift; sourceTree = "<group>"; };
 		CE3BFF2028E055BB0014A752 /* Engine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Engine.swift; sourceTree = "<group>"; };
 		CE3BFF2328E056230014A752 /* Graphics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Graphics.swift; sourceTree = "<group>"; };
@@ -398,6 +402,7 @@
 				CEFC6E3029531C0C009B692B /* Triangle.swift */,
 				CEFC6F21296B4200009B692B /* Sphere.swift */,
 				CEFC6F25296B61CA009B692B /* Line.swift */,
+				CE2BBFAF297652B500BD61C3 /* HeadsUpDisplay.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -852,6 +857,7 @@
 				CE3BFF9228E451E50014A752 /* CameraManager.swift in Sources */,
 				CE3BFF5428E1B29C0014A752 /* ShaderLibrary.swift in Sources */,
 				CEFC6E2D2952EA44009B692B /* Cube.swift in Sources */,
+				CE2BBFB0297652B500BD61C3 /* HeadsUpDisplay.swift in Sources */,
 				CE3BFF7228E1B4E10014A752 /* TextureLibrary.swift in Sources */,
 				CE3BFF9628E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6928E1B4C10014A752 /* Assets.swift in Sources */,
@@ -932,6 +938,7 @@
 				CE7F483B28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE7F48D428BCB4DD0082B197 /* GameView.swift in Sources */,
 				CE7F483728B76FE30082B197 /* Shaders.metal in Sources */,
+				CE2BBFB1297652B500BD61C3 /* HeadsUpDisplay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -983,6 +990,7 @@
 				CE3BFF9428E451E50014A752 /* CameraManager.swift in Sources */,
 				CE3BFF5628E1B29C0014A752 /* ShaderLibrary.swift in Sources */,
 				CE3BFF7428E1B4E10014A752 /* TextureLibrary.swift in Sources */,
+				CE2BBFB2297652B500BD61C3 /* HeadsUpDisplay.swift in Sources */,
 				CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */,
 				CE3BFF9828E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6B28E1B4C10014A752 /* Assets.swift in Sources */,

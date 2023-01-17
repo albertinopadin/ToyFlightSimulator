@@ -20,6 +20,8 @@ enum RenderPipelineStateType {
     case OpaqueMaterial
     case OrderIndependentTransparent
     case Blend
+    
+    case HeadsUpDisplay
 }
 
 class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState> {
@@ -37,6 +39,8 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(OpaqueMaterialRenderPipelineState(), forKey: .OpaqueMaterial)
         _library.updateValue(OrderIndependentTransparencyRenderPipelineState(), forKey: .OrderIndependentTransparent)
         _library.updateValue(BlendRenderPipelineState(), forKey: .Blend)
+        
+        _library.updateValue(HudRenderPipelineState(), forKey: .HeadsUpDisplay)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {
@@ -243,3 +247,14 @@ class BlendRenderPipelineState: RenderPipelineState {
     }
 }
 
+class HudRenderPipelineState: RenderPipelineState {
+    init() {
+        let renderPipelineDescriptor =
+            RenderPipelineState.getOpaqueRenderPipelineDescriptor(vertexDescriptorType: .Base,
+                                                                  vertexShaderType: .BaseVertex,
+                                                                  fragmentShaderType: .MaterialFragment)
+        
+        renderPipelineDescriptor.label = "HUD Render Pipline Descriptor"
+        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
+    }
+}

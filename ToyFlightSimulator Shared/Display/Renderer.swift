@@ -14,6 +14,7 @@ class Renderer: NSObject, MTKViewDelegate {
     
     private var _baseRenderPassDescriptor: MTLRenderPassDescriptor!
     private var _forwardRenderPassDescriptor: MTLRenderPassDescriptor!
+    private var _hudRenderPassDescriptor: MTLRenderPassDescriptor!
     private let _optimalTileSize: MTLSize = MTLSize(width: 32, height: 16, depth: 1)
     
     init(_ mtkView: MTKView) {
@@ -21,6 +22,7 @@ class Renderer: NSObject, MTKViewDelegate {
         updateScreenSize(view: mtkView)
         createBaseRenderPassDescriptor()
         createForwardRenderPassDescriptor()
+        createHudRenderPassDescriptor()
         mtkView.delegate = self
     }
     
@@ -112,6 +114,25 @@ class Renderer: NSObject, MTKViewDelegate {
         _forwardRenderPassDescriptor.imageblockSampleLength = Graphics.RenderPipelineStates[.OrderIndependentTransparent].imageblockSampleLength
     }
     
+    private func createHudRenderPassDescriptor() {
+        let hudTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainPixelFormat,
+                                                                            width: Int(Renderer.ScreenSize.x/2),
+                                                                            height: Int(Renderer.ScreenSize.y/2),
+                                                                            mipmapped: false)
+        hudTextureDescriptor.usage = [.renderTarget, .shaderRead]
+        Assets.Textures.setTexture(textureType: .HeadsUpDisplay,
+                                   texture: Engine.Device.makeTexture(descriptor: hudTextureDescriptor)!)
+        
+        _hudRenderPassDescriptor = MTLRenderPassDescriptor()
+        _hudRenderPassDescriptor.colorAttachments[0].texture = Assets.Textures[.HeadsUpDisplay]
+        _hudRenderPassDescriptor.colorAttachments[0].storeAction = .store
+        _hudRenderPassDescriptor.colorAttachments[0].loadAction = .clear
+        
+        _hudRenderPassDescriptor.depthAttachment.texture = Assets.Textures[.BaseDepthRender]
+        _hudRenderPassDescriptor.depthAttachment.storeAction = .dontCare
+        _hudRenderPassDescriptor.depthAttachment.loadAction = .dontCare
+    }
+    
     
     // --- MTKViewDelegate methods ---
     public func updateScreenSize(view: MTKView) {
@@ -172,6 +193,19 @@ class Renderer: NSObject, MTKViewDelegate {
         renderCommandEncoder?.endEncoding()
     }
     
+    func hudRenderPass(commandBuffer: MTLCommandBuffer) {
+        let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _hudRenderPassDescriptor)
+        renderCommandEncoder?.label = "HUD Render Command Encoder"
+        renderCommandEncoder?.pushDebugGroup("Rendering HUD")
+        SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder!, renderPipelineStateType: .Base)
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder!, renderPipelineStateType: .Opaque)
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder!, renderPipelineStateType: .OpaqueMaterial)
+        SceneManager.Render(renderCommandEncoder: renderCommandEncoder!, renderPipelineStateType: .HeadsUpDisplay)
+        renderCommandEncoder?.popDebugGroup()
+        renderCommandEncoder?.endEncoding()
+    }
+    
     func finalRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
         let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: view.currentRenderPassDescriptor!)
         renderCommandEncoder?.label = "Final Render Command Encoder"
@@ -193,6 +227,7 @@ class Renderer: NSObject, MTKViewDelegate {
         
         orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer!)
         // Intermediate renders go here
+        hudRenderPass(commandBuffer: commandBuffer!)
         finalRenderPass(view: view, commandBuffer: commandBuffer!)
         
         commandBuffer?.present(view.currentDrawable!)

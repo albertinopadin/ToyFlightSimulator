@@ -22,10 +22,23 @@ class FlightboxScene: Scene {
         f16.setPositionY(10)
         addChild(f16)
         
+//        let f16Sphere = Sphere()
+//        var sphereMat = Material()
+//        sphereMat.color = GREEN_COLOR
+//        f16Sphere.useMaterial(sphereMat)
+//        f16Sphere.setPosition(1.5, 0, 0)
+//        f16.addChild(f16Sphere)
+        
+        let hud = HeadsUpDisplay()
+        f16.addChild(hud)
+        hud.setPosition(1.5, 0, 0)
+        hud.setScale(0.5)
+//        addChild(hud)
+        
         let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
         addChild(sky)
         
-        sun.setPosition(0, 5, 5)
+        sun.setPosition(0, 15, 5)
         sun.setLightBrightness(1.0)
         sun.setLightColor(1, 1, 1)
         sun.setLightAmbientIntensity(0.04)

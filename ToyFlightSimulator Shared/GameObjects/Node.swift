@@ -81,8 +81,15 @@ class Node {
             }
         }
         
-        if let children = children[renderPipelineStateType] {
-            for child in children {
+        // TODO: THIS IS A BUG; FIXED BELOW
+//        if let children = children[renderPipelineStateType] {
+//            for child in children {
+//                child.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
+//            }
+//        }
+        
+        for childSet in children.values {
+            for child in childSet {
                 child.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
             }
         }

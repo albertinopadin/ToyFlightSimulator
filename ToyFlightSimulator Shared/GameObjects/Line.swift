@@ -25,6 +25,11 @@ class Line: GameObject {
         }
     }
     
+    convenience init(startPoint: float3, endPoint: float3, color: float4, renderPipelineStateType: RenderPipelineStateType) {
+        self.init(startPoint: startPoint, endPoint: endPoint, color: color)
+        _renderPipelineStateType = renderPipelineStateType
+    }
+    
     override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
         super.doRender(renderCommandEncoder)
         renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)

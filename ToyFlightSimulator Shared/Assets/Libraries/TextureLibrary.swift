@@ -19,6 +19,8 @@ enum TextureType {
     
     case F16
     case F16Canopy
+    
+    case HeadsUpDisplay
 }
 
 class TextureLibrary: Library<TextureType, MTLTexture> {
