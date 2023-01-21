@@ -22,10 +22,20 @@ class FlightboxScene: Scene {
         f16.setPositionY(10)
         addChild(f16)
         
+        let f16Sphere = Sphere()
+        var f16SphereMaterial = Material()
+        f16SphereMaterial.color = GRABBER_BLUE_COLOR
+        f16SphereMaterial.diffuse = float3(1,1,1)
+        f16SphereMaterial.specular = float3(1,1,1)
+        f16Sphere.useMaterial(f16SphereMaterial)
+        f16Sphere.setPosition(1.5, 0, 0)
+        f16Sphere.setScale(0.5)
+        f16.addChild(f16Sphere)
+        
         let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
         addChild(sky)
         
-        sun.setPosition(0, 5, 5)
+        sun.setPosition(0, 15, 5)
         sun.setLightBrightness(1.0)
         sun.setLightColor(1, 1, 1)
         sun.setLightAmbientIntensity(0.04)
@@ -123,10 +133,8 @@ class FlightboxScene: Scene {
 //        addChild(testCube)
         
         print("Flightbox scene children:")
-        for subchildren in children.values {
-            for child in subchildren {
-                print(child.getName())
-            }
+        for child in children {
+            print(child.getName())
         }
     }
     

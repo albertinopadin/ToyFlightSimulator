@@ -31,7 +31,7 @@ class Node {
     
     internal var _renderPipelineStateType: RenderPipelineStateType = .Opaque
     
-    var children: [RenderPipelineStateType: [Node]] = [:]
+    var children: [Node] = []
     
     init(name: String) {
         self._name = name
@@ -39,11 +39,7 @@ class Node {
     }
     
     func addChild(_ child: Node) {
-        if let _ = children[child._renderPipelineStateType] {
-            children[child._renderPipelineStateType]!.append(child)
-        } else {
-            children[child._renderPipelineStateType] = [child]
-        }
+        children.append(child)
     }
     
     func updateModelMatrix() {
@@ -66,11 +62,9 @@ class Node {
     func update() {
         doUpdate()
         
-        for childRenderPipelineStateSets in children.values {
-            for child in childRenderPipelineStateSets {
-                child.parentModelMatrix = self.modelMatrix
-                child.update()
-            }
+        for child in children {
+            child.parentModelMatrix = self.modelMatrix
+            child.update()
         }
     }
     
@@ -81,10 +75,8 @@ class Node {
             }
         }
         
-        if let children = children[renderPipelineStateType] {
-            for child in children {
-                child.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
-            }
+        for child in children {
+            child.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
         }
     }
 }
