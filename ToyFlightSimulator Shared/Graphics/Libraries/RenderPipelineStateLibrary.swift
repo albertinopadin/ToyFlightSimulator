@@ -55,13 +55,27 @@ class RenderPipelineState {
         }
     }
     
-    init(tilePipelineDescriptor: MTLTileRenderPipelineDescriptor) {
+    init(label: String, block: (MTLRenderPipelineDescriptor) -> Void) {
+        let descriptor = MTLRenderPipelineDescriptor()
+        descriptor.label = label
+        block(descriptor)
         do {
-            renderPipelineState = try Engine.Device.makeRenderPipelineState(tileDescriptor: tilePipelineDescriptor,
+            renderPipelineState = try Engine.Device.makeRenderPipelineState(descriptor: descriptor)
+        } catch {
+            fatalError(error.localizedDescription)
+        }
+    }
+    
+    init(label: String, tileBlock: (MTLTileRenderPipelineDescriptor) -> Void) {
+        let descriptor = MTLTileRenderPipelineDescriptor()
+        descriptor.label = label
+        tileBlock(descriptor)
+        do {
+            renderPipelineState = try Engine.Device.makeRenderPipelineState(tileDescriptor: descriptor,
                                                                             options: .argumentInfo,
                                                                             reflection: nil)
-        } catch let error as NSError {
-            print("ERROR::CREATE::RENDER_PIPELINE_STATE_WITH_TILE_DESC::__::\(error)")
+        } catch {
+            fatalError(error.localizedDescription)
         }
     }
     
@@ -163,24 +177,22 @@ class SkySphereRenderPipelineState: RenderPipelineState {
 
 class FinalRenderPipelineState: RenderPipelineState {
     init() {
-        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
-        renderPipelineDescriptor.label = "Final Render Pipeline Descriptor"
-        renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
-        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.FinalVertex]
-        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.FinalFragment]
-        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
+        super.init(label: "Final Render Pipeline Descriptor") { descriptor in
+            descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexFunction = Graphics.Shaders[.FinalVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.FinalFragment]
+        }
     }
 }
 
 class TileRenderPipelineState: RenderPipelineState {
     init() {
-        let tileRenderPipelineDescriptor = MTLTileRenderPipelineDescriptor()
-        tileRenderPipelineDescriptor.label = "Init Image Block Kernel"
-        tileRenderPipelineDescriptor.tileFunction = Graphics.Shaders[.TileKernel]
-        tileRenderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
-        tileRenderPipelineDescriptor.threadgroupSizeMatchesTileSize = true
-        super.init(tilePipelineDescriptor: tileRenderPipelineDescriptor)
+        super.init(label: "Init Image Block Kernel") { descriptor in
+            descriptor.tileFunction = Graphics.Shaders[.TileKernel]
+            descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
+            descriptor.threadgroupSizeMatchesTileSize = true
+        }
     }
 }
 
@@ -210,36 +222,30 @@ class OpaqueMaterialRenderPipelineState: RenderPipelineState {
 
 class OrderIndependentTransparencyRenderPipelineState: RenderPipelineState {
     init() {
-        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
-        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
-        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.BaseVertex]
-//        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.TransparentFragment]
-        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.TransparentMaterialFragment]
-        
-        renderPipelineDescriptor.colorAttachments[0].isBlendingEnabled = false
-        renderPipelineDescriptor.colorAttachments[0].writeMask = MTLColorWriteMask(rawValue: 0)
-        renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
-        
-        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-        renderPipelineDescriptor.stencilAttachmentPixelFormat = .invalid
-        
-        renderPipelineDescriptor.label = "Transparent Render Pipline Descriptor"
-        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
+        super.init(label: "Transparent Render Pipline Descriptor") { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexFunction = Graphics.Shaders[.BaseVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.TransparentMaterialFragment]
+            
+            descriptor.colorAttachments[0].isBlendingEnabled = false
+            descriptor.colorAttachments[0].writeMask = MTLColorWriteMask(rawValue: 0)
+            descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
+            
+            descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
+            descriptor.stencilAttachmentPixelFormat = .invalid
+        }
     }
 }
 
 class BlendRenderPipelineState: RenderPipelineState {
     init() {
-        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
-        renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-        renderPipelineDescriptor.stencilAttachmentPixelFormat = .invalid
-        renderPipelineDescriptor.vertexDescriptor = nil
-        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[.QuadPassVertex]
-        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[.BlendFragment]
-        
-        renderPipelineDescriptor.label = "Transparent Fragment Blending Descriptor"
-        super.init(renderPipelineDescriptor: renderPipelineDescriptor)
+        super.init(label: "Transparent Fragment Blending Descriptor") { descriptor in
+            descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
+            descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
+            descriptor.stencilAttachmentPixelFormat = .invalid
+            descriptor.vertexDescriptor = nil
+            descriptor.vertexFunction = Graphics.Shaders[.QuadPassVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.BlendFragment]
+        }
     }
 }
-
