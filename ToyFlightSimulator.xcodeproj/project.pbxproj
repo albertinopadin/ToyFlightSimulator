@@ -217,6 +217,9 @@
 		CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
+		CEAB3838297CCB2F0087F7CB /* OITRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */; };
+		CEAB3839297CCB2F0087F7CB /* OITRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */; };
+		CEAB383A297CCB2F0087F7CB /* OITRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */; };
 		CEFC6E2D2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
 		CEFC6E2E2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
 		CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
@@ -320,6 +323,7 @@
 		CE7F48B328BB26670082B197 /* SimulationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulationController.swift; sourceTree = "<group>"; };
 		CE7F48D228BCB4DD0082B197 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDLVertexDescriptorLibrary.swift; sourceTree = "<group>"; };
+		CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OITRenderer.swift; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
 		CEFC6E3029531C0C009B692B /* Triangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Triangle.swift; sourceTree = "<group>"; };
 		CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = OrderIndependentTransparencyShaders.metal; sourceTree = "<group>"; };
@@ -634,8 +638,9 @@
 		CE7F48BC28BB937F0082B197 /* Display */ = {
 			isa = PBXGroup;
 			children = (
-				CE7F483928B76FF60082B197 /* Renderer.swift */,
 				CE7F48D228BCB4DD0082B197 /* GameView.swift */,
+				CE7F483928B76FF60082B197 /* Renderer.swift */,
+				CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */,
 			);
 			path = Display;
 			sourceTree = "<group>";
@@ -826,6 +831,7 @@
 				CE3BFFE828E6A0F40014A752 /* F16.swift in Sources */,
 				CE7F48AC28BB17070082B197 /* GameMesh.swift in Sources */,
 				CE3BFF4728E1B05A0014A752 /* SceneManager.swift in Sources */,
+				CEAB3838297CCB2F0087F7CB /* OITRenderer.swift in Sources */,
 				CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CE7F482128B758920082B197 /* Renderer_OG.swift in Sources */,
 				CE3BFF2128E055BB0014A752 /* Engine.swift in Sources */,
@@ -908,6 +914,7 @@
 				CE3BFF5128E1B2230014A752 /* Library.swift in Sources */,
 				CE56921D28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
 				CE7F482228B758920082B197 /* Renderer_OG.swift in Sources */,
+				CEAB3839297CCB2F0087F7CB /* OITRenderer.swift in Sources */,
 				CE7F481F28B758920082B197 /* Shaders_OG.metal in Sources */,
 				CE7F480928B758920082B197 /* GameViewController.swift in Sources */,
 				CE3BFFE928E6A0F40014A752 /* F16.swift in Sources */,
@@ -957,6 +964,7 @@
 				CE3BFFEA28E6A0F40014A752 /* F16.swift in Sources */,
 				CE7F484428B770C20082B197 /* Node_1.swift in Sources */,
 				CE3BFF4828E1B0CE0014A752 /* SceneManager.swift in Sources */,
+				CEAB383A297CCB2F0087F7CB /* OITRenderer.swift in Sources */,
 				CE7F484028B770B00082B197 /* Colors.swift in Sources */,
 				CE7F484C28B771390082B197 /* Light.swift in Sources */,
 				CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,

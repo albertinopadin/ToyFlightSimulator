@@ -65,10 +65,10 @@ class GameViewController: NSViewController {
         gameView.clearColor = Preferences.ClearColor
         gameView.colorPixelFormat = Preferences.MainPixelFormat
         gameView.framebufferOnly = false
-//        gameView.preferredFramesPerSecond = 120
+        gameView.preferredFramesPerSecond = 120
         
         Engine.Start(device: defaultDevice)
-        renderer = Renderer(gameView)
+        renderer = OITRenderer(gameView)
         SceneManager.SetScene(Preferences.StartingSceneType)
         
         
