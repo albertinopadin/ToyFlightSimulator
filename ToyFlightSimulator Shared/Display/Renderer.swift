@@ -54,45 +54,6 @@ class Renderer: NSObject, MTKViewDelegate {
         renderEncoder.popDebugGroup()
     }
     
-    func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "GBuffer Generation Stage") {
-            
-        }
-    }
-    
-    func encodeDirectionalLightingStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "Directional Lighting Stage") {
-            
-        }
-    }
-    
-    func encodeLightMaskStage(using renderEncoder: MTLRenderCommandEncoder) {
-        // TODO: Get Light Mask pipeline state and depth stencil state here
-        encodeStage(using: renderEncoder, label: "Point Light Mask Stage") {
-            
-        }
-    }
-    
-    func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "Point Light Stage") {
-            
-        }
-    }
-    
-    func encodeSkyboxStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "Skybox Stage") {
-            
-        }
-    }
-    
-    func encodeShadowMapPass(into commandBuffer: MTLCommandBuffer) {
-        // TODO: get shadow render pass descriptor
-//        encodePass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Map Pass") { renderEncoder in
-//
-//        }
-    }
-    
-    
     private func createBaseRenderPassDescriptor() {
         // --- BASE COLOR 0 TEXTURE ---
         let base0TextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainPixelFormat,

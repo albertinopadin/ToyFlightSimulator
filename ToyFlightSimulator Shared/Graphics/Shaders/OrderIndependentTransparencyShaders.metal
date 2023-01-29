@@ -25,7 +25,7 @@ struct TransparentFragmentStore {
 };
 
 // A vertex function that generates a full-screen quad pass:
-vertex RasterizerData quad_pass_vertex_shader(uint vid [[ vertex_id ]]) {
+vertex RasterizerData quad_pass_vertex(uint vid [[ vertex_id ]]) {
     RasterizerData out;
     
     float4 position;
@@ -46,8 +46,8 @@ kernel void init_transparent_fragment_store(imageblock<TransparentFragmentValues
     }
 }
 
-fragment TransparentFragmentStore transparent_fragment_shader(RasterizerData rd [[ stage_in ]],
-                                                              TransparentFragmentValues fragmentValues [[ imageblock_data ]]) {
+fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stage_in ]],
+                                                       TransparentFragmentValues fragmentValues [[ imageblock_data ]]) {
     TransparentFragmentStore out;
     half4 finalColor = half4(rd.color);
     finalColor.xyz *= finalColor.w;
@@ -71,7 +71,7 @@ fragment TransparentFragmentStore transparent_fragment_shader(RasterizerData rd 
     return out;
 }
 
-fragment TransparentFragmentStore transparent_material_fragment_shader(
+fragment TransparentFragmentStore transparent_material_fragment(
                         RasterizerData rd [[ stage_in ]],
                         constant Material &material [[ buffer(1) ]],
                         constant int &lightCount [[ buffer(2) ]],

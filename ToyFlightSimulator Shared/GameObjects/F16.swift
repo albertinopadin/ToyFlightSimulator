@@ -5,6 +5,8 @@
 //  Created by Albertino Padin on 9/29/22.
 //
 
+import MetalKit
+
 class F16: GameObject {
     private var _camera: F16Camera?
     private let _camPositionOffset = float3(0, 2, 4)

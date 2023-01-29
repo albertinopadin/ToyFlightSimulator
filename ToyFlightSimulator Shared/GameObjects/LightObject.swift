@@ -9,6 +9,10 @@ import MetalKit
 
 class LightObject: GameObject {
     var lightData = LightData()
+    let projectionMatrix: float4x4 = Transform.orthographicProjection(-100, 100, -100, 100, -100, 200)
+    var viewMatrix: float4x4 {
+        Transform.look(eye: self.getPosition(), target: .zero, up: [0,1,0])
+    }
     
     init(name: String) {
         super.init(name: name, meshType: .None)
@@ -19,6 +23,7 @@ class LightObject: GameObject {
     }
     
     override func update() {
+        self.lightData.viewProjectionMatrix = projectionMatrix * viewMatrix
         self.lightData.position = self.getPosition()
         super.update()
     }

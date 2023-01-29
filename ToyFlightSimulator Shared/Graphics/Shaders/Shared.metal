@@ -61,6 +61,7 @@ struct Material {
 };
 
 struct LightData {
+    float4x4 viewProjectionMatrix;
     float3 position;
     float3 color;
     float brightness;

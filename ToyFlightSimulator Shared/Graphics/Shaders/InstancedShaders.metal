@@ -10,10 +10,10 @@
 
 using namespace metal;
 
-vertex RasterizerData instanced_vertex_shader(const VertexIn vIn [[ stage_in ]],
-                                              constant SceneConstants &sceneConstants [[ buffer(1) ]],
-                                              constant ModelConstants *modelConstants [[ buffer(2) ]],
-                                              uint instanceId [[ instance_id ]]) {
+vertex RasterizerData instanced_vertex(const VertexIn vIn [[ stage_in ]],
+                                       constant SceneConstants &sceneConstants [[ buffer(1) ]],
+                                       constant ModelConstants *modelConstants [[ buffer(2) ]],
+                                       uint instanceId [[ instance_id ]]) {
     RasterizerData rd;
     ModelConstants modelConstant = modelConstants[instanceId];
     // Order of matrix multiplication is important here:

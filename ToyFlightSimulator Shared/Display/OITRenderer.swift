@@ -55,66 +55,58 @@ class OITRenderer: Renderer {
     }
     
     func drawOpaqueObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.pushDebugGroup("Opaque Object Rendering")
-        renderCommandEncoder.setCullMode(.none)
-        renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
-        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Base)
-        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Material)
-        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Instanced)
-        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Opaque)
-        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OpaqueMaterial)
-        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .SkySphere)
-        renderCommandEncoder.popDebugGroup()
+        encodeStage(using: renderCommandEncoder, label: "Opaque Object Rendering") {
+            renderCommandEncoder.setCullMode(.none)
+            renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
+            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Base)
+            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Material)
+            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Instanced)
+            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Opaque)
+            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OpaqueMaterial)
+            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .SkySphere)
+        }
     }
     
     func drawTransparentObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.pushDebugGroup("Transparent Object Rendering")
-        renderCommandEncoder.setCullMode(.none)
-        renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
-        SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OrderIndependentTransparent)
-        renderCommandEncoder.popDebugGroup()
+        encodeStage(using: renderCommandEncoder, label: "Transparent Object Rendering") {
+            renderCommandEncoder.setCullMode(.none)
+            renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
+            SceneManager.Render(renderCommandEncoder: renderCommandEncoder,
+                                renderPipelineStateType: .OrderIndependentTransparent)
+        }
     }
     
     func orderIndependentTransparencyRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
-//        guard let drawableTexture = view.currentDrawable?.texture else { return }
-        
-//        _forwardRenderPassDescriptor.colorAttachments[0].texture = drawableTexture
-//        _forwardRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
-        
-        let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: _forwardRenderPassDescriptor)
-        renderCommandEncoder?.label = "Order Independent Transparency Render Command Encoder"
-        
-        renderCommandEncoder?.pushDebugGroup("[Tile Render] Init Image Block")
-        renderCommandEncoder?.setRenderPipelineState(Graphics.RenderPipelineStates[.TileRender])
-        renderCommandEncoder?.dispatchThreadsPerTile(_optimalTileSize)
-        renderCommandEncoder?.popDebugGroup()
-        
-        SceneManager.SetSceneConstants(renderCommandEncoder: renderCommandEncoder!)
-        drawOpaqueObjects(renderCommandEncoder: renderCommandEncoder!)
-        drawTransparentObjects(renderCommandEncoder: renderCommandEncoder!)
-        
-        renderCommandEncoder?.pushDebugGroup("Blend Fragments")
-        renderCommandEncoder?.setRenderPipelineState(Graphics.RenderPipelineStates[.Blend])
-        renderCommandEncoder?.setCullMode(.none)
-        renderCommandEncoder?.setDepthStencilState(Graphics.DepthStencilStates[.AlwaysNoWrite])
-        // Draw full screen quad:
-        renderCommandEncoder?.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
-        renderCommandEncoder?.popDebugGroup()
-        
-        renderCommandEncoder?.endEncoding()
+        encodePass(into: commandBuffer,
+                   using: _forwardRenderPassDescriptor,
+                   label: "Order Independent Transparency Render Pass") { renderEncoder in
+            encodeStage(using: renderEncoder, label: "[Tile Render] Init Image Block") {
+                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TileRender])
+                renderEncoder.dispatchThreadsPerTile(_optimalTileSize)
+            }
+            
+            SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
+            drawOpaqueObjects(renderCommandEncoder: renderEncoder)
+            drawTransparentObjects(renderCommandEncoder: renderEncoder)
+            
+            encodeStage(using: renderEncoder, label: "Blend Fragments") {
+                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Blend])
+                renderEncoder.setCullMode(.none)
+                renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.AlwaysNoWrite])
+                // Draw full screen quad:
+                renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+            }
+        }
     }
     
     func finalRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
-        let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: view.currentRenderPassDescriptor!)
-        renderCommandEncoder?.label = "Final Render Command Encoder"
-        renderCommandEncoder?.pushDebugGroup("Starting Final Render")
-        
-        renderCommandEncoder?.setRenderPipelineState(Graphics.RenderPipelineStates[.Final])
-        renderCommandEncoder?.setFragmentTexture(Assets.Textures[.BaseColorRender_0], index: 0)
-        Assets.Meshes[.Quad].drawPrimitives(renderCommandEncoder!)
-        
-        renderCommandEncoder?.popDebugGroup()
-        renderCommandEncoder?.endEncoding()
+        encodePass(into: commandBuffer, using: view.currentRenderPassDescriptor!, label: "Final Render Pass") { renderEncoder in
+            encodeStage(using: renderEncoder, label: "Final Render") {
+                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Final])
+                renderEncoder.setFragmentTexture(Assets.Textures[.BaseColorRender_0], index: 0)
+                Assets.Meshes[.Quad].drawPrimitives(renderEncoder)
+            }
+        }
     }
     
     override func draw(in view: MTKView) {

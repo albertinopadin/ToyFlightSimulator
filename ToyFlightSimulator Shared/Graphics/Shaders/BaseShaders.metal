@@ -16,9 +16,9 @@ struct FragmentOutput {
     half4 color1 [[ color(1) ]];
 };
 
-vertex RasterizerData base_vertex_shader(const VertexIn vIn [[ stage_in ]],
-                                         constant SceneConstants &sceneConstants [[ buffer(1) ]],
-                                         constant ModelConstants &modelConstants [[ buffer(2) ]]) {
+vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
+                                  constant SceneConstants &sceneConstants [[ buffer(1) ]],
+                                  constant ModelConstants &modelConstants [[ buffer(2) ]]) {
     RasterizerData rd;
     
     float4 worldPosition = modelConstants.modelMatrix * float4(vIn.position, 1);
@@ -37,12 +37,12 @@ vertex RasterizerData base_vertex_shader(const VertexIn vIn [[ stage_in ]],
     return rd;
 }
 
-fragment FragmentOutput base_fragment_shader(RasterizerData rd [[ stage_in ]],
-                                             constant int &lightCount [[ buffer(2) ]],
-                                             constant LightData *lightDatas [[ buffer(3) ]],
-                                             sampler sampler2d [[ sampler(0) ]],
-                                             texture2d<float> baseColorMap [[ texture(0) ]],
-                                             texture2d<float> normalMap [[ texture(1) ]]) {
+fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]],
+                                      constant int &lightCount [[ buffer(2) ]],
+                                      constant LightData *lightDatas [[ buffer(3) ]],
+                                      sampler sampler2d [[ sampler(0) ]],
+                                      texture2d<float> baseColorMap [[ texture(0) ]],
+                                      texture2d<float> normalMap [[ texture(1) ]]) {
     float4 color = rd.color;
     float3 unitNormal = normalize(rd.surfaceNormal);
     
@@ -53,13 +53,13 @@ fragment FragmentOutput base_fragment_shader(RasterizerData rd [[ stage_in ]],
 }
 
 
-fragment FragmentOutput material_fragment_shader(RasterizerData rd [[ stage_in ]],
-                                                 constant Material &material [[ buffer(1) ]],
-                                                 constant int &lightCount [[ buffer(2) ]],
-                                                 constant LightData *lightDatas [[ buffer(3) ]],
-                                                 sampler sampler2d [[ sampler(0) ]],
-                                                 texture2d<float> baseColorMap [[ texture(0) ]],
-                                                 texture2d<float> normalMap [[ texture(1) ]]) {
+fragment FragmentOutput material_fragment(RasterizerData rd [[ stage_in ]],
+                                          constant Material &material [[ buffer(1) ]],
+                                          constant int &lightCount [[ buffer(2) ]],
+                                          constant LightData *lightDatas [[ buffer(3) ]],
+                                          sampler sampler2d [[ sampler(0) ]],
+                                          texture2d<float> baseColorMap [[ texture(0) ]],
+                                          texture2d<float> normalMap [[ texture(1) ]]) {
     float2 texCoord = rd.textureCoordinate;
     float4 color = rd.color;
     
