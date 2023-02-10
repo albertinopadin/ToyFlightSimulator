@@ -28,4 +28,18 @@ class LightManager {
         renderCommandEncoder.setFragmentBytes(&lightCount, length: Int32.size, index: 2)
         renderCommandEncoder.setFragmentBytes(&lightDatas, length: LightData.stride(lightCount), index: 3)
     }
+    
+    func getDirectionalLightData() -> LightData? {
+        for _lightObject in _lightObjects {
+            if _lightObject.type == .Directional {
+                return _lightObject.lightData
+            }
+        }
+        
+        return nil
+    }
+    
+    func getPointLightData() -> [LightData] {
+        _lightObjects.filter({ $0.type == .Point }).map { $0.lightData }
+    }
 }

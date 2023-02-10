@@ -49,13 +49,34 @@ class Scene: Node {
         _sceneConstants.skyViewMatrix[3][1] = 0  // Remove y translation
         _sceneConstants.skyViewMatrix[3][2] = 0  // Remove z translation
         _sceneConstants.projectionMatrix = _cameraManager.currentCamera.projectionMatrix
+        _sceneConstants.projectionMatrixInverse = _cameraManager.currentCamera.projectionMatrix.inverse
         _sceneConstants.totalGameTime = GameTime.TotalGameTime
         _sceneConstants.cameraPosition = _cameraManager.currentCamera.getPosition()
         super.update()
     }
     
     func setSceneConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.setVertexBytes(&_sceneConstants, length: SceneConstants.stride, index: 1)
+        renderCommandEncoder.setVertexBytes(&_sceneConstants,
+                                            length: SceneConstants.stride,
+                                            index: Int(TFSBufferIndexSceneConstants.rawValue))
+    }
+    
+    func setDirectionalLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
+        var directionalLight = _lightManager.getDirectionalLightData()!
+        renderCommandEncoder.setVertexBytes(&directionalLight,
+                                            length: LightData.stride,
+                                            index: Int(TFSBufferLightData.rawValue))
+        renderCommandEncoder.setFragmentBytes(&directionalLight,
+                                              length: LightData.stride,
+                                              index: Int(TFSBufferLightData.rawValue))
+    }
+    
+    func setPointLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
+        var pointLights = _lightManager.getPointLightData()
+        let buf = Engine.Device.makeBuffer(bytes: &pointLights, length: LightData.stride(pointLights.count))
+        renderCommandEncoder.setVertexBuffer(buf,
+                                             offset: 0,
+                                             index: Int(TFSBufferIndexLightsData.rawValue))
     }
     
     override func render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {

@@ -64,11 +64,13 @@ class GameViewController: NSViewController {
         gameView.device = defaultDevice
         gameView.clearColor = Preferences.ClearColor
         gameView.colorPixelFormat = Preferences.MainPixelFormat
+        gameView.depthStencilPixelFormat = .depth32Float_stencil8
         gameView.framebufferOnly = false
         gameView.preferredFramesPerSecond = 120
         
         Engine.Start(device: defaultDevice)
-        renderer = OITRenderer(gameView)
+//        renderer = OITRenderer(gameView)  // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
+        renderer = SinglePassDeferredRenderer(gameView)
         SceneManager.SetScene(Preferences.StartingSceneType)
         
         

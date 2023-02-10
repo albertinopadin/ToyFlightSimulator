@@ -63,6 +63,11 @@ extension InstancedGameObject: Renderable {
         
         _mesh.drawPrimitives(renderCommandEncoder)
     }
+    
+    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+        // NOT IMPLEMENTED
+        fatalError("NOT IMPLEMENTED")
+    }
 }
 
 // Material Properties

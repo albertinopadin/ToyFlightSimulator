@@ -78,6 +78,7 @@ struct Vertex: sizeable {
 
 struct ModelConstants: sizeable {
     var modelMatrix = matrix_identity_float4x4
+    var normalMatrix = matrix_identity_float3x3
 }
 
 struct SceneConstants: sizeable {
@@ -85,6 +86,7 @@ struct SceneConstants: sizeable {
     var viewMatrix = matrix_identity_float4x4
     var skyViewMatrix = matrix_identity_float4x4
     var projectionMatrix = matrix_identity_float4x4
+    var projectionMatrixInverse = matrix_identity_float4x4
     var cameraPosition = float3(0, 0, 0)
 }
 
@@ -107,6 +109,7 @@ struct Material: sizeable {
     // For GPU bugfix:
     var useBaseTexture: Bool = false
     var useNormalMapTexture: Bool = false
+    var useSpecularTexture: Bool = false
     
     var ambient: float3 = float3(0.1, 0.1, 0.1)
     var diffuse: float3 = float3(1, 1, 1)
@@ -115,7 +118,12 @@ struct Material: sizeable {
 }
 
 struct LightData: sizeable {
+    var type: UInt32 = 0
     var viewProjectionMatrix: float4x4 = matrix_identity_float4x4
+    var shadowViewProjectionMatrix: float4x4 = matrix_identity_float4x4
+    var shadowTransformMatrix: float4x4 = matrix_identity_float4x4
+    var eyeDirection: float4 = float4(0, 0, 0, 0)
+    
     var position: float3 = float3(0, 0, 0)
     var color: float3 = float3(0, 0, 0)
     var brightness: Float = 1.0

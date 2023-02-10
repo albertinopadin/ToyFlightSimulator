@@ -29,7 +29,8 @@ enum ShaderType {
     case TransparentMaterialFragment
     case BlendFragment
     
-    case GBufferFragment
+    case GBufferFragmentBase
+    case GBufferFragmentMaterial
     case DeferredDirectionalLightingFragment
     case DeferredPointLightFragment
     case SkyboxFragment
@@ -64,7 +65,8 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "transparent_material_fragment"), forKey: .TransparentMaterialFragment)
         _library.updateValue(Shader(functionName: "blend_fragments"), forKey: .BlendFragment)
         
-        _library.updateValue(Shader(functionName: "gbuffer_fragment"), forKey: .GBufferFragment)
+        _library.updateValue(Shader(functionName: "gbuffer_fragment_base"), forKey: .GBufferFragmentBase)
+        _library.updateValue(Shader(functionName: "gbuffer_fragment_material"), forKey: .GBufferFragmentMaterial)
         _library.updateValue(Shader(functionName: "deferred_directional_lighting_fragment"),
                              forKey: .DeferredDirectionalLightingFragment)
         _library.updateValue(Shader(functionName: "deferred_point_lighting_fragment"), forKey: .DeferredPointLightFragment)

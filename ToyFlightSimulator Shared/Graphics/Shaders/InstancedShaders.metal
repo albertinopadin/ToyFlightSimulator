@@ -7,12 +7,13 @@
 
 #include <metal_stdlib>
 #include "Shared.metal"
+#include "TFSShaderTypes.h"
 
 using namespace metal;
 
 vertex RasterizerData instanced_vertex(const VertexIn vIn [[ stage_in ]],
-                                       constant SceneConstants &sceneConstants [[ buffer(1) ]],
-                                       constant ModelConstants *modelConstants [[ buffer(2) ]],
+                                       constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                       constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
                                        uint instanceId [[ instance_id ]]) {
     RasterizerData rd;
     ModelConstants modelConstant = modelConstants[instanceId];

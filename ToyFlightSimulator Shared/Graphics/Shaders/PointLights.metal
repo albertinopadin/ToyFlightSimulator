@@ -10,6 +10,7 @@ using namespace metal;
 
 #include "TFSShaderTypes.h"
 #include "TFSShaderCommon.h"
+#include "Shared.metal"
 
 struct LightMaskOut
 {
@@ -20,7 +21,7 @@ vertex LightMaskOut
 light_mask_vertex(const device float4         * vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
                   const device TFSPointLight  * light_data      [[ buffer(TFSBufferIndexLightsData) ]],
                   const device vector_float4  * light_positions [[ buffer(TFSBufferIndexLightsPosition) ]],
-                  constant TFSFrameData       & frameData       [[ buffer(TFSBufferFrameData) ]],
+                  constant SceneConstants     & sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                   uint                          iid             [[ instance_id ]],
                   uint                          vid             [[ vertex_id ]])
 {
@@ -29,7 +30,7 @@ light_mask_vertex(const device float4         * vertices        [[ buffer(TFSBuf
     // Transform light to position relative to the temple
     float4 vertex_eye_position = float4(vertices[vid].xyz * light_data[iid].light_radius + light_positions[iid].xyz, 1);
 
-    out.position = frameData.projection_matrix * vertex_eye_position;
+    out.position = sceneConstants.projectionMatrix * vertex_eye_position;
 
     return out;
 }

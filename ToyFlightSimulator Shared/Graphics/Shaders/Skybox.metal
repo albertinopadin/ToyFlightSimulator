@@ -24,7 +24,7 @@ struct SkyboxInOut
 };
 
 vertex SkyboxInOut skybox_vertex(SkyboxVertex in [[ stage_in ]],
-                                 constant SceneConstants &sceneConstants [[ buffer(1) ]],
+                                 constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                  constant ModelConstants &modelConstants [[ buffer(2) ]])
 {
     SkyboxInOut out;

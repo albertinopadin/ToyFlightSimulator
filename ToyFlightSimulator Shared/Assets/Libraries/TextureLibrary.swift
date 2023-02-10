@@ -26,8 +26,8 @@ class TextureLibrary: Library<TextureType, MTLTexture> {
     
     override func makeLibrary() {
         // How can I load multiple textures for single object/mesh ???
-        _library.updateValue(Texture("F16s", ext: "bmp", origin: .bottomLeft), forKey: .F16)
-        _library.updateValue(Texture("F16t", ext: "bmp", origin: .bottomLeft), forKey: .F16Canopy)
+//        _library.updateValue(Texture("F16s", ext: "bmp", origin: .bottomLeft), forKey: .F16)
+//        _library.updateValue(Texture("F16t", ext: "bmp", origin: .bottomLeft), forKey: .F16Canopy)
         _library.updateValue(Texture("clouds", origin: .bottomLeft), forKey: .Clouds_Skysphere)
     }
     
@@ -74,8 +74,10 @@ class TextureLoader {
         if let url = Bundle.main.url(forResource: _textureName, withExtension: _textureExtension) {
             let textureLoader = MTKTextureLoader(device: Engine.Device)
             let options: [MTKTextureLoader.Option: Any] = [
-                MTKTextureLoader.Option.origin: _origin as Any,
-                MTKTextureLoader.Option.generateMipmaps: true  // Unoptimized
+                .origin: _origin as Any,
+                .generateMipmaps: true,  // Unoptimized
+                .textureUsage: MTLTextureUsage.shaderRead.rawValue,
+                .textureStorageMode: MTLStorageMode.private.rawValue
             ]
             
             do {

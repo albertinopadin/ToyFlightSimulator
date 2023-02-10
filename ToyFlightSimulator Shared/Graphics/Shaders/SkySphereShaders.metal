@@ -7,11 +7,13 @@
 
 #include <metal_stdlib>
 #include "Shared.metal"
+#include "TFSShaderTypes.h"
+
 using namespace metal;
 
 vertex RasterizerData skysphere_vertex(const VertexIn vIn [[ stage_in ]],
-                                       constant SceneConstants &sceneConstants [[ buffer(1) ]],
-                                       constant ModelConstants &modelConstants [[ buffer(2) ]]) {
+                                       constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                       constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]]) {
     RasterizerData rd;
     
     float4 worldPosition = modelConstants.modelMatrix * float4(vIn.position, 1);

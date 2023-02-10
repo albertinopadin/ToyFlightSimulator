@@ -29,7 +29,9 @@ typedef enum TFSBufferIndices
     TFSBufferIndexLightsData        = 3,
     TFSBufferIndexLightsPosition    = 4,
     TFSBufferLightData              = 5,
-    TFSBufferModelConstants         = 6
+    TFSBufferModelConstants         = 6,
+    TFSBufferIndexSceneConstants    = 7,
+    TFSBufferIndexMaterial          = 8
     
 } TFSBufferIndices;
 
@@ -38,10 +40,11 @@ typedef enum TFSBufferIndices
 typedef enum TFSVertexAttributes
 {
     TFSVertexAttributePosition  = 0,
-    TFSVertexAttributeTexcoord  = 1,
-    TFSVertexAttributeNormal    = 2,
-    TFSVertexAttributeTangent   = 3,
-    TFSVertexAttributeBitangent = 4
+    TFSVertexAttributeColor     = 1,
+    TFSVertexAttributeTexcoord  = 2,
+    TFSVertexAttributeNormal    = 3,
+    TFSVertexAttributeTangent   = 4,
+    TFSVertexAttributeBitangent = 5
 } TFSVertexAttributes;
 
 // Texture index values shared between shader and C code to ensure Metal shader texture indices

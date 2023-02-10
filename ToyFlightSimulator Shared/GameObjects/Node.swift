@@ -30,6 +30,7 @@ class Node {
     }
     
     internal var _renderPipelineStateType: RenderPipelineStateType = .Opaque
+    internal var _gBufferRenderPipelineStateType: RenderPipelineStateType = .GBufferGenerationBase
     
     var children: [Node] = []
     
@@ -69,14 +70,32 @@ class Node {
     }
     
     func render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
-        if _renderPipelineStateType == renderPipelineStateType {
-            if let renderable = self as? Renderable {
-                renderable.doRender(renderCommandEncoder)
-            }
+        if _renderPipelineStateType == renderPipelineStateType, let renderable = self as? Renderable {
+            renderable.doRender(renderCommandEncoder)
         }
         
         for child in children {
             child.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
+        }
+    }
+    
+    func renderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
+        if _gBufferRenderPipelineStateType == gBufferRPS, let renderable = self as? Renderable {
+            renderable.doRender(renderCommandEncoder)
+        }
+        
+        for child in children {
+            child.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: gBufferRPS)
+        }
+    }
+    
+    func renderShadows(renderCommandEncoder: MTLRenderCommandEncoder) {
+        if let renderable = self as? Renderable {
+            renderable.doRenderShadow(renderCommandEncoder)
+        }
+        
+        for child in children {
+            child.renderShadows(renderCommandEncoder: renderCommandEncoder)
         }
     }
 }

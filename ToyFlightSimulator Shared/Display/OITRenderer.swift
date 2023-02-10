@@ -113,7 +113,7 @@ class OITRenderer: Renderer {
         SceneManager.Update(deltaTime: 1.0 / Float(view.preferredFramesPerSecond))
         
         let commandBuffer = Engine.CommandQueue.makeCommandBuffer()
-        commandBuffer?.label = "Base Command Buffer"
+        commandBuffer?.label = "Order Independent Transparency Render Command Buffer"
         
         orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer!)
         // Intermediate renders go here

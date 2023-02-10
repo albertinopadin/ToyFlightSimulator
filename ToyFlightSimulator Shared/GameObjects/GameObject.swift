@@ -14,40 +14,67 @@ class GameObject: Node, Renderable {
     private var _material: Material? = nil
     private var _baseColorTextureType: TextureType = .None
     private var _normalMapTextureType: TextureType = .None
+    private var _specularTextureType: TextureType = .None
     
     var mesh: Mesh!
     
     init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         super.init(name: name)
         self._renderPipelineStateType = renderPipelineStateType
+        if renderPipelineStateType == .OpaqueMaterial {
+            self._gBufferRenderPipelineStateType = .GBufferGenerationMaterial
+        }
         _mesh = Assets.Meshes[meshType]
         print("GameObject named \(self.getName()) render pipeline state type: \(self._renderPipelineStateType)")
     }
     
+    convenience init(name: String,
+                     meshType: MeshType,
+                     renderPipelineStateType: RenderPipelineStateType = .Opaque,
+                     gBufferRPS: RenderPipelineStateType = .GBufferGenerationBase) {
+        self.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
+        self._gBufferRenderPipelineStateType = gBufferRPS
+    }
+    
     override func update() {
         _modelConstants.modelMatrix = self.modelMatrix
+        _modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
         super.update()
     }
     
     func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
         // Vertex Shader
-        renderCommandEncoder.setVertexBytes(&_modelConstants, length: ModelConstants.stride, index: 2)
+        renderCommandEncoder.setVertexBytes(&_modelConstants,
+                                            length: ModelConstants.stride,
+                                            index: Int(TFSBufferModelConstants.rawValue))
         
         _mesh.drawPrimitives(renderCommandEncoder,
                              material: _material,
                              baseColorTextureType: _baseColorTextureType,
-                             normalMapTextureType: _normalMapTextureType)
+                             normalMapTextureType: _normalMapTextureType,
+                             specularTextureType: _specularTextureType)
+    }
+    
+    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+        renderCommandEncoder.setVertexBytes(&_modelConstants,
+                                            length: ModelConstants.stride,
+                                            index: Int(TFSBufferModelConstants.rawValue))
+        _mesh.drawShadowPrimitives(renderCommandEncoder)
     }
 }
 
 // Material Properties
 extension GameObject {
     public func useBaseColorTexture(_ textureType: TextureType) {
-        self._baseColorTextureType = textureType
+        _baseColorTextureType = textureType
     }
     
     public func useNormalMapTexture(_ textureType: TextureType) {
-        self._normalMapTextureType = textureType
+        _normalMapTextureType = textureType
+    }
+    
+    public func useSpecularTexture(_ textureType: TextureType) {
+        _specularTextureType = textureType
     }
     
     public func useMaterial(_ material: Material) {
@@ -56,6 +83,8 @@ extension GameObject {
         } else {
             _renderPipelineStateType = .OpaqueMaterial
         }
+        
+        _gBufferRenderPipelineStateType = .GBufferGenerationMaterial
         
         _material = material
     }

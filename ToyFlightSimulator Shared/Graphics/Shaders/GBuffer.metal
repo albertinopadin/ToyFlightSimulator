@@ -14,6 +14,8 @@ using namespace metal;
 // Include header shared between all Metal shader code files
 #include "TFSShaderCommon.h"
 
+#include "Shared.metal"
+
 // Per-vertex inputs fed by vertex buffer laid out with MTLVertexDescriptor in Metal API
 typedef struct
 {
@@ -29,6 +31,7 @@ typedef struct
 typedef struct
 {
     float4 position [[ position ]];
+    float4 color;
     float2 tex_coord;
     float3 shadow_coord;
     float3 eye_position;
@@ -37,57 +40,121 @@ typedef struct
     half3 normal;
 } ColorInOut;
 
-vertex ColorInOut gbuffer_vertex(DescriptorDefinedVertex   in        [[ stage_in ]],
-                                 constant TFSFrameData  & frameData  [[ buffer(TFSBufferFrameData) ]])
+vertex ColorInOut gbuffer_vertex(VertexIn in [[ stage_in ]],
+                                 constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                 constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                                 constant LightData &lightData [[ buffer(TFSBufferLightData) ]])
 {
     ColorInOut out;
+    out.color = in.color;
+    out.tex_coord = in.textureCoordinate;
     
-    float4 model_position = float4(in.position, 1.0);
+    float4 modelPosition = float4(in.position, 1.0);
+    float4 worldPosition = modelConstants.modelMatrix * modelPosition;
     // Make position a float4 to perform 4x4 matrix math on it
-    float4 eye_position = frameData.temple_modelview_matrix * model_position;
-    out.position = frameData.projection_matrix * eye_position;
-    out.tex_coord = in.tex_coord;
+    float4 eyePosition = sceneConstants.viewMatrix * worldPosition;
+    out.position = sceneConstants.projectionMatrix * eyePosition;
+    out.eye_position = eyePosition.xyz;
+    out.shadow_coord = (lightData.shadowTransformMatrix *
+                        lightData.shadowViewProjectionMatrix *
+                        worldPosition).xyz;
     
-    out.eye_position = eye_position.xyz;
-
     // Rotate tangents, bitangents, and normals by the normal matrix
-    half3x3 normalMatrix = half3x3(frameData.temple_normal_matrix);
-    
-    out.shadow_coord = (frameData.shadow_mvp_xform_matrix * model_position ).xyz;
-    
+    half3x3 normalMatrix = half3x3(modelConstants.normalMatrix);
     // Calculate tangent, bitangent and normal in eye's space
-    out.tangent = normalize(normalMatrix * in.tangent);
-    out.bitangent = -normalize(normalMatrix * in.bitangent);
-    out.normal = normalize(normalMatrix * in.normal);
+    out.tangent = normalize(normalMatrix * half3(in.tangent));
+    out.bitangent = -normalize(normalMatrix * half3(in.bitangent));
+    out.normal = normalize(normalMatrix * half3(in.normal));
 
     return out;
 }
 
-fragment GBufferData gbuffer_fragment(ColorInOut               in           [[ stage_in ]],
-                                      constant TFSFrameData & frameData    [[ buffer(TFSBufferFrameData) ]],
-                                      texture2d<half>          baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
-                                      texture2d<half>          normalMap    [[ texture(TFSTextureIndexNormal) ]],
-                                      texture2d<half>          specularMap  [[ texture(TFSTextureIndexSpecular) ]],
-                                      depth2d<float>           shadowMap    [[ texture(TFSTextureIndexShadow) ]])
+fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in ]],
+                                           depth2d<float> shadowMap [[ texture(TFSTextureIndexShadow) ]])
 {
-    constexpr sampler linearSampler(mip_filter::linear,
-                                    mag_filter::linear,
-                                    min_filter::linear);
-    
-    half4 base_color_sample = baseColorMap.sample(linearSampler, in.tex_coord.xy);
-    half4 normal_sample = normalMap.sample(linearSampler, in.tex_coord.xy);
-    half specular_contrib = specularMap.sample(linearSampler, in.tex_coord.xy).r;
+    half4 base_color = half4(in.color);
+    half3 normal = half3(in.normal);
+    half specularContribution = 10.0;  // Hardcoded for base
     
     // Fill in on-chip geometry buffer data
     GBufferData gBuffer;
     
     // Calculate normal in eye space
-    half3 tangent_normal = normalize((normal_sample.xyz * 2.0) - 1.0);
+    half3 tangent_normal = normalize((normal * 2.0) - 1.0);
 
+    half3 eye_normal = (tangent_normal.x * half3(in.tangent) +
+                        tangent_normal.y * half3(in.bitangent) +
+                        tangent_normal.z * half3(in.normal));
+    
+    eye_normal = normalize(eye_normal);
+    
+    constexpr sampler shadowSampler(coord::normalized,
+                                    filter::linear,
+                                    mip_filter::none,
+                                    address::clamp_to_edge,
+                                    compare_func::less);
+    
+    // Compare the depth value in the shadow map to the depth value of the fragment in the sun's.
+    // frame of reference.  If the sample is occluded, it will be zero.
+    float shadow_sample = shadowMap.sample_compare(shadowSampler, in.shadow_coord.xy, in.shadow_coord.z);
+    
+    // Store shadow with albedo in unused fourth channel
+    gBuffer.albedo_specular = half4(base_color.xyz, specularContribution);
+    
+    // Store the specular contribution with the normal in unused fourth channel.
+    gBuffer.normal_shadow = half4(eye_normal.xyz, shadow_sample);
+    
+    gBuffer.depth = in.eye_position.z;
+    
+    return gBuffer;
+}
+
+fragment GBufferData gbuffer_fragment_material(ColorInOut        in           [[ stage_in ]],
+                                               constant Material &material    [[ buffer(TFSBufferIndexMaterial) ]],
+                                               sampler           sampler2d    [[ sampler(0) ]],
+                                               texture2d<half>   baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
+                                               texture2d<half>   normalMap    [[ texture(TFSTextureIndexNormal) ]],
+                                               texture2d<half>   specularMap  [[ texture(TFSTextureIndexSpecular) ]],
+                                               depth2d<float>    shadowMap    [[ texture(TFSTextureIndexShadow) ]])
+{
+//    constexpr sampler linearSampler(mip_filter::linear,
+//                                    mag_filter::linear,
+//                                    min_filter::linear);
+    
+    half4 base_color_sample;
+    half4 normal_sample;
+    half specular_contrib;
+    
+    if (material.useMaterialColor) {
+        base_color_sample = half4(material.color);
+    } else if (material.useBaseTexture) {
+//        base_color_sample = baseColorMap.sample(linearSampler, in.tex_coord.xy);
+        base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord);
+    }
+    
+    if (material.useNormalMapTexture) {
+//        normal_sample = normalMap.sample(linearSampler, in.tex_coord);
+        normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
+    } else {
+        normal_sample = half4(in.normal, 0.0);
+    }
+    
+    if (material.useSpecularTexture) {
+//        specular_contrib = specularMap.sample(linearSampler, in.tex_coord).r;
+        specular_contrib = specularMap.sample(sampler2d, in.tex_coord).r;
+    } else {
+        specular_contrib = 1.0;
+    }
+    
+    // Fill in on-chip geometry buffer data
+    GBufferData gBuffer;
+    
+    // Calculate normal in eye space
+    half3 tangent_normal = normalize((normal_sample.rgb * 2.0) - 1.0);
     half3 eye_normal = (tangent_normal.x * in.tangent +
                         tangent_normal.y * in.bitangent +
                         tangent_normal.z * in.normal);
-    
+
     eye_normal = normalize(eye_normal);
     
     constexpr sampler shadowSampler(coord::normalized,
@@ -110,4 +177,3 @@ fragment GBufferData gbuffer_fragment(ColorInOut               in           [[ s
     
     return gBuffer;
 }
-

@@ -8,6 +8,7 @@
 #include <metal_stdlib>
 #include "Lighting.metal"
 #include "Shared.metal"
+#include "TFSShaderTypes.h"
 
 using namespace metal;
 
@@ -73,12 +74,12 @@ fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stag
 
 fragment TransparentFragmentStore transparent_material_fragment(
                         RasterizerData rd [[ stage_in ]],
-                        constant Material &material [[ buffer(1) ]],
+                        constant Material &material [[ buffer(TFSBufferIndexMaterial) ]],
                         constant int &lightCount [[ buffer(2) ]],
                         constant LightData *lightDatas [[ buffer(3) ]],
                         sampler sampler2d [[ sampler(0) ]],
-                        texture2d<float> baseColorMap [[ texture(0) ]],
-                        texture2d<float> normalMap [[ texture(1) ]],
+                        texture2d<float> baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
+                        texture2d<float> normalMap [[ texture(TFSTextureIndexNormal) ]],
                         TransparentFragmentValues fragmentValues [[ imageblock_data ]]) {
                             
     float2 texCoord = rd.textureCoordinate;

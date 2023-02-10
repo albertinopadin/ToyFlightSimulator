@@ -23,7 +23,8 @@ enum RenderPipelineStateType {
     
     // For Deferred Lighting:
     case ShadowGeneration
-    case GBufferGeneration
+    case GBufferGenerationBase
+    case GBufferGenerationMaterial
     case DirectionalLighting
     case LightMask
     case PointLight
@@ -47,11 +48,12 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(BlendRenderPipelineState(), forKey: .Blend)
         
         _library.updateValue(ShadowGenerationRenderPipelineState(), forKey: .ShadowGeneration)
-        _library.updateValue(GBufferGenerationRenderPipelineState(), forKey: .GBufferGeneration)
+        _library.updateValue(GBufferGenerationBaseRenderPipelineState(), forKey: .GBufferGenerationBase)
+        _library.updateValue(GBufferGenerationMaterialRenderPipelineState(), forKey: .GBufferGenerationMaterial)
         _library.updateValue(DirectionalLightingRenderPipelineState(), forKey: .DirectionalLighting)
         _library.updateValue(LightMaskRenderPipelineState(), forKey: .LightMask)
         _library.updateValue(PointLightingRenderPipelineState(), forKey: .PointLight)
-        _library.updateValue(SkyboxRenderPipelineState(), forKey: .Skybox)
+//        _library.updateValue(SkyboxRenderPipelineState(), forKey: .Skybox)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {
@@ -66,7 +68,7 @@ class RenderPipelineState {
         do {
             renderPipelineState = try Engine.Device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
         } catch let error as NSError {
-            print("ERROR::CREATE::RENDER_PIPELINE_STATE::__::\(error)")
+            print("ERROR::CREATE::RENDER_PIPELINE_STATE::__::\(error) for \(renderPipelineDescriptor.label!)")
         }
     }
     
@@ -87,7 +89,7 @@ class RenderPipelineState {
         do {
             renderPipelineState = try Engine.Device.makeRenderPipelineState(descriptor: descriptor)
         } catch let error as NSError {
-            print("ERROR::CREATE::RENDER_PIPELINE_STATE::__::\(error)")
+            print("ERROR::CREATE::RENDER_PIPELINE_STATE::__::\(error) for \(label)")
         }
     }
     
@@ -283,16 +285,31 @@ class ShadowGenerationRenderPipelineState: RenderPipelineState {
     init() {
         super.init(label: "Shadow Generation Stage") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]  // ???
             descriptor.depthAttachmentPixelFormat = .depth32Float
         }
     }
 }
 
-class GBufferGenerationRenderPipelineState: RenderPipelineState {
+class GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
     init() {
         super.init(label: "GBuffer Generation Stage") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.GBufferVertex]
-            descriptor.fragmentFunction = Graphics.Shaders[.GBufferFragment]
+            descriptor.fragmentFunction = Graphics.Shaders[.GBufferFragmentBase]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
+            descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
+            descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat
+            RenderPipelineState.setRenderTargetPixelFormats(descriptor: descriptor)
+        }
+    }
+}
+
+class GBufferGenerationMaterialRenderPipelineState: RenderPipelineState {
+    init() {
+        super.init(label: "GBuffer Generation Stage") { descriptor in
+            descriptor.vertexFunction = Graphics.Shaders[.GBufferVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.GBufferFragmentMaterial]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat

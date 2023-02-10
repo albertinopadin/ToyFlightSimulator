@@ -9,15 +9,17 @@
 #define SHARED_METAL
 
 #include <metal_stdlib>
+#include "TFSShaderTypes.h"
+
 using namespace metal;
 
 struct VertexIn {
-    float3 position [[ attribute(0) ]];
-    float4 color [[ attribute(1) ]];
-    float2 textureCoordinate [[ attribute(2) ]];
-    float3 normal [[ attribute(3) ]];
-    float3 tangent [[ attribute(4) ]];
-    float3 bitangent [[ attribute(5) ]];
+    float3 position [[ attribute(TFSVertexAttributePosition) ]];
+    float4 color [[ attribute(TFSVertexAttributeColor) ]];
+    float2 textureCoordinate [[ attribute(TFSVertexAttributeTexcoord) ]];
+    float3 normal [[ attribute(TFSVertexAttributeNormal) ]];
+    float3 tangent [[ attribute(TFSVertexAttributeTangent) ]];
+    float3 bitangent [[ attribute(TFSVertexAttributeBitangent) ]];
 };
 
 struct RasterizerData {
@@ -36,6 +38,7 @@ struct RasterizerData {
 
 struct ModelConstants {
     float4x4 modelMatrix;
+    float3x3 normalMatrix;
 };
 
 struct SceneConstants {
@@ -43,6 +46,7 @@ struct SceneConstants {
     float4x4 viewMatrix;
     float4x4 skyViewMatrix;
     float4x4 projectionMatrix;
+    float4x4 projectionMatrixInverse;
     float3 cameraPosition;
 };
 
@@ -53,6 +57,7 @@ struct Material {
     
     bool useBaseTexture;
     bool useNormalMapTexture;
+    bool useSpecularTexture;
     
     float3 ambient;
     float3 diffuse;
@@ -60,8 +65,20 @@ struct Material {
     float shininess;
 };
 
+enum LightType: uint {
+    LightTypeAmbient,
+    LightTypeDirectional,
+    LightTypeOmni,
+    LightTypePoint
+};
+
 struct LightData {
+    LightType type;
     float4x4 viewProjectionMatrix;
+    float4x4 shadowViewProjectionMatrix;
+    float4x4 shadowTransformMatrix;
+    float4 eyeDirection;
+    
     float3 position;
     float3 color;
     float brightness;

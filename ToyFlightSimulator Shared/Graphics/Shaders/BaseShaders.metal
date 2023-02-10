@@ -8,6 +8,7 @@
 #include <metal_stdlib>
 #include "Lighting.metal"
 #include "Shared.metal"
+#include "TFSShaderTypes.h"
 
 using namespace metal;
 
@@ -17,8 +18,8 @@ struct FragmentOutput {
 };
 
 vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
-                                  constant SceneConstants &sceneConstants [[ buffer(1) ]],
-                                  constant ModelConstants &modelConstants [[ buffer(2) ]]) {
+                                  constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                  constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]]) {
     RasterizerData rd;
     
     float4 worldPosition = modelConstants.modelMatrix * float4(vIn.position, 1);
@@ -41,8 +42,8 @@ fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]],
                                       constant int &lightCount [[ buffer(2) ]],
                                       constant LightData *lightDatas [[ buffer(3) ]],
                                       sampler sampler2d [[ sampler(0) ]],
-                                      texture2d<float> baseColorMap [[ texture(0) ]],
-                                      texture2d<float> normalMap [[ texture(1) ]]) {
+                                      texture2d<float> baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
+                                      texture2d<float> normalMap [[ texture(TFSTextureIndexNormal) ]]) {
     float4 color = rd.color;
     float3 unitNormal = normalize(rd.surfaceNormal);
     
@@ -54,12 +55,12 @@ fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]],
 
 
 fragment FragmentOutput material_fragment(RasterizerData rd [[ stage_in ]],
-                                          constant Material &material [[ buffer(1) ]],
+                                          constant Material &material [[ buffer(TFSBufferIndexMaterial) ]],
                                           constant int &lightCount [[ buffer(2) ]],
                                           constant LightData *lightDatas [[ buffer(3) ]],
                                           sampler sampler2d [[ sampler(0) ]],
-                                          texture2d<float> baseColorMap [[ texture(0) ]],
-                                          texture2d<float> normalMap [[ texture(1) ]]) {
+                                          texture2d<float> baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
+                                          texture2d<float> normalMap [[ texture(TFSTextureIndexNormal) ]]) {
     float2 texCoord = rd.textureCoordinate;
     float4 color = rd.color;
     

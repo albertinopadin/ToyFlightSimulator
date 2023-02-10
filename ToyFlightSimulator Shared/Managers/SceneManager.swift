@@ -34,8 +34,28 @@ class SceneManager {
         _currentScene.setSceneConstants(renderCommandEncoder: renderCommandEncoder)
     }
     
+    public static func SetDirectionalLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
+        _currentScene.setDirectionalLightConstants(renderCommandEncoder: renderCommandEncoder)
+    }
+    
+    public static func SetPointLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
+        _currentScene.setPointLightConstants(renderCommandEncoder: renderCommandEncoder)
+    }
+    
     public static func Render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
         _currentScene.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
+    }
+    
+    public static func RenderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder) {
+        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.GBufferGenerationBase])
+        _currentScene.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: .GBufferGenerationBase)
+        
+        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.GBufferGenerationMaterial])
+        _currentScene.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: .GBufferGenerationMaterial)
+    }
+    
+    public static func RenderShadows(renderCommandEncoder: MTLRenderCommandEncoder) {
+        _currentScene.renderShadows(renderCommandEncoder: renderCommandEncoder)
     }
 }

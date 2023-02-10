@@ -14,6 +14,8 @@ using namespace metal;
 // Include header shared between all Metal shader code files
 #include "TFSShaderCommon.h"
 
+#include "Shared.metal"
+
 struct QuadInOut
 {
     float4 position [[position]];
@@ -21,51 +23,48 @@ struct QuadInOut
 };
 
 vertex QuadInOut
-deferred_directional_lighting_vertex(constant TFSSimpleVertex * vertices  [[ buffer(TFSBufferIndexMeshPositions) ]],
-                                     constant TFSFrameData    & frameData [[ buffer(TFSBufferFrameData) ]],
-                                     uint                        vid       [[ vertex_id ]])
+deferred_directional_lighting_vertex(constant TFSSimpleVertex * vertices       [[ buffer(TFSBufferIndexMeshPositions) ]],
+                                     constant SceneConstants  & sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                     uint                       vid            [[ vertex_id ]])
 {
     QuadInOut out;
-
     out.position = float4(vertices[vid].position, 0, 1);
-
-    float4 unprojected_eye_coord = frameData.projection_matrix_inverse * out.position;
+    float4 unprojected_eye_coord = sceneConstants.projectionMatrixInverse * out.position;
     out.eye_position = unprojected_eye_coord.xyz / unprojected_eye_coord.w;
-
     return out;
 }
 
 half4
-deferred_directional_lighting_fragment_common(QuadInOut                in,
-                                              constant TFSFrameData & frameData,
-                                              float                    depth,
-                                              half4                    normal_shadow,
-                                              half4                    albedo_specular)
+deferred_directional_lighting_fragment_common(QuadInOut             in,
+                                              constant LightData  & lightData,
+                                              float                 depth,
+                                              half4                 normal_shadow,
+                                              half4                 albedo_specular)
 {
 
-    half sun_diffuse_intensity = dot(normal_shadow.xyz, half3(frameData.sun_eye_direction.xyz));
+    half sun_diffuse_intensity = dot(normal_shadow.xyz, half3(lightData.eyeDirection.xyz));
 
     sun_diffuse_intensity = max(sun_diffuse_intensity, 0.h);
 
-    half3 sun_color = half3(frameData.sun_color.xyz);
+    half3 sun_color = half3(lightData.color.xyz);
 
     half3 diffuse_contribution = albedo_specular.xyz * sun_diffuse_intensity * sun_color;
 
-    // Calculate specular contributioh from directional light
+    // Calculate specular contribution from directional light
     
     // Used eye_space depth to determine the position of the fragment in eye_space
     float3 eye_space_fragment_pos = normalize(in.eye_position) * depth;
 
-    float4 eye_light_direction = frameData.sun_eye_direction;
+    float4 eye_light_direction = lightData.eyeDirection;
 
     // Specular Contribution
-    float3 halfway_vector = normalize(eye_space_fragment_pos - eye_light_direction.xyz );
+    float3 halfway_vector = normalize(eye_space_fragment_pos - eye_light_direction.xyz);
 
-    half specular_intensity = half(frameData.sun_specular_intensity);
+    half specular_intensity = half(lightData.specularIntensity);
 
-    half specular_shininess = albedo_specular.w * half(frameData.shininess_factor);
+    half specular_shininess = albedo_specular.w * half(1.0);  // TODO: Should perhaps be something like material.shininess ???
 
-    half specular_factor = powr(max(dot(half3(normal_shadow.xyz),half3(halfway_vector)),0.0h), specular_intensity);
+    half specular_factor = powr(max(dot(half3(normal_shadow.xyz), half3(halfway_vector)), 0.0h), specular_intensity);
 
     half3 specular_contribution = specular_factor * half3(albedo_specular.xyz) * specular_shininess * sun_color;
 
@@ -87,16 +86,17 @@ deferred_directional_lighting_fragment_common(QuadInOut                in,
 
 // Only Version 2.3 of the macOS Metal shading language, where Apple Silicon was introduced,
 // and the iOS version of the shading language can use the GBufferData structure an an input.
-
 fragment AccumLightBuffer
-deferred_directional_lighting_fragment(
-    QuadInOut                in        [[ stage_in ]],
-    constant TFSFrameData & frameData [[ buffer(TFSBufferFrameData) ]],
-    GBufferData              GBuffer)
+deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_in ]],
+                                       constant LightData & lightData [[ buffer(TFSBufferLightData) ]],
+                                       GBufferData          GBuffer)
 {
     AccumLightBuffer output;
     output.lighting =
-        deferred_directional_lighting_fragment_common(in, frameData, GBuffer.depth,  GBuffer.normal_shadow,  GBuffer.albedo_specular);
-
+        deferred_directional_lighting_fragment_common(in,
+                                                      lightData,
+                                                      GBuffer.depth,
+                                                      GBuffer.normal_shadow,
+                                                      GBuffer.albedo_specular);
     return output;
 }

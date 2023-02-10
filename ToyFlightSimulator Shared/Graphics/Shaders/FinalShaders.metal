@@ -7,6 +7,7 @@
 
 #include <metal_stdlib>
 #include "Shared.metal"
+
 using namespace metal;
 
 struct FinalRasterizerData {
