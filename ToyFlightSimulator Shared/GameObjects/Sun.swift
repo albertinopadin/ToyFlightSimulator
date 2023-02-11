@@ -10,4 +10,9 @@ class Sun: LightObject {
         super.init(name: "Sun")
         self.setScale(float3(repeating: 0.3))
     }
+    
+    init(meshType: MeshType) {
+        super.init(name: "Sun", meshType: meshType)
+        self.setScale(float3(repeating: 0.3))
+    }
 }

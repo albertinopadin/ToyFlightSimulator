@@ -129,34 +129,6 @@ class Mesh {
         renderCommandEncoder.setFragmentBytes(&mat, length: Material.stride, index: Int(TFSBufferIndexMaterial.rawValue))
     }
     
-//    func applyTextures(renderCommandEncoder: MTLRenderCommandEncoder,
-//                       customBaseColorTextureType: TextureType,
-//                       customNormalMapTextureType: TextureType,
-//                       customSpecularTextureType: TextureType) {
-//        _material.useBaseTexture = customBaseColorTextureType != .None || _baseColorTexture != nil
-//        _material.useNormalMapTexture = customNormalMapTextureType != .None || _normalMapTexture != nil
-//        _material.useSpecularTexture = customSpecularTextureType != .None || _normalMapTexture != nil
-//        
-//        renderCommandEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
-//        
-//        let baseColorTex = customBaseColorTextureType == .None ?
-//                            _baseColorTexture : Assets.Textures[customBaseColorTextureType]
-//        if baseColorTex != nil {
-//            renderCommandEncoder.setFragmentTexture(baseColorTex, index: Int(TFSTextureIndexBaseColor.rawValue))
-//        }
-//        
-//        let normalMapTex = customNormalMapTextureType == .None ?
-//                            _normalMapTexture : Assets.Textures[customNormalMapTextureType]
-//        if normalMapTex != nil {
-//            renderCommandEncoder.setFragmentTexture(normalMapTex, index: Int(TFSTextureIndexNormal.rawValue))
-//        }
-//        
-//        let specularTex = customSpecularTextureType == .None ? _specularTexture : Assets.Textures[customSpecularTextureType]
-//        if specularTex != nil {
-//            renderCommandEncoder.setFragmentTexture(specularTex, index: Int(TFSTextureIndexSpecular.rawValue))
-//        }
-//    }
-    
     func drawPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder,
                         material: Material? = nil,
                         baseColorTextureType: TextureType = .None,

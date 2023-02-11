@@ -73,14 +73,14 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
                                            depth2d<float> shadowMap [[ texture(TFSTextureIndexShadow) ]])
 {
     half4 base_color = half4(in.color);
-    half3 normal = half3(in.normal);
-    half specularContribution = 10.0;  // Hardcoded for base
+    half4 normal = half4(in.normal, 0);
+    half specularContribution = 1.0;  // Hardcoded for base
     
     // Fill in on-chip geometry buffer data
     GBufferData gBuffer;
     
     // Calculate normal in eye space
-    half3 tangent_normal = normalize((normal * 2.0) - 1.0);
+    half3 tangent_normal = normalize((normal.rgb * 2.0) - 1.0);
 
     half3 eye_normal = (tangent_normal.x * half3(in.tangent) +
                         tangent_normal.y * half3(in.bitangent) +
@@ -117,10 +117,6 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut        in           [[
                                                texture2d<half>   specularMap  [[ texture(TFSTextureIndexSpecular) ]],
                                                depth2d<float>    shadowMap    [[ texture(TFSTextureIndexShadow) ]])
 {
-//    constexpr sampler linearSampler(mip_filter::linear,
-//                                    mag_filter::linear,
-//                                    min_filter::linear);
-    
     half4 base_color_sample;
     half4 normal_sample;
     half specular_contrib;
@@ -128,19 +124,16 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut        in           [[
     if (material.useMaterialColor) {
         base_color_sample = half4(material.color);
     } else if (material.useBaseTexture) {
-//        base_color_sample = baseColorMap.sample(linearSampler, in.tex_coord.xy);
         base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord);
     }
     
     if (material.useNormalMapTexture) {
-//        normal_sample = normalMap.sample(linearSampler, in.tex_coord);
         normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
     } else {
         normal_sample = half4(in.normal, 0.0);
     }
     
     if (material.useSpecularTexture) {
-//        specular_contrib = specularMap.sample(linearSampler, in.tex_coord).r;
         specular_contrib = specularMap.sample(sampler2d, in.tex_coord).r;
     } else {
         specular_contrib = 1.0;

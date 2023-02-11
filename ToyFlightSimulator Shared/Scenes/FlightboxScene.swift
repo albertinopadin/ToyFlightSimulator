@@ -9,7 +9,7 @@ class FlightboxScene: Scene {
     var f16Camera = F16Camera()
     
     var f16: F16!
-    var sun = Sun()
+    var sun = Sun(meshType: .Sphere)
     var quad = Quad()
     
     var paused: Bool = false

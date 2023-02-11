@@ -20,14 +20,15 @@ class Renderer: NSObject, MTKViewDelegate {
     var baseRenderPassDescriptor: MTLRenderPassDescriptor!
     
     let shadowMap: MTLTexture!
+    let shadowMapSize: Int = 4096
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor!
     
     init(_ mtkView: MTKView) {
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
         
         let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
-                                                                               width: 2048,
-                                                                               height: 2048,
+                                                                               width: shadowMapSize,
+                                                                               height: shadowMapSize,
                                                                                mipmapped: false)
         shadowTextureDescriptor.resourceOptions = .storageModePrivate
         shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]

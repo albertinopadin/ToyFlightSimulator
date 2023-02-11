@@ -17,10 +17,7 @@ enum LightType: UInt32 {
 class LightObject: GameObject {
     var type: LightType = .Directional
     var lightData = LightData()
-//    let projectionMatrix: float4x4 = Transform.orthographicProjection(-100, 100, -100, 100, -100, 200)
-//    let projectionMatrix: float4x4 = Transform.orthographicProjection(-10, 10, -10, 10, -10, 50)
-//    let projectionMatrix: float4x4 = Transform.orthographicProjection(-1, 1, -1, 1, -1, 2)
-    let projectionMatrix: float4x4 = Transform.orthographicProjection(-15, 15, -15, 15, -15, 200)
+    let projectionMatrix: float4x4 = Transform.orthographicProjection(-20, 20, -20, 20, -20, 100)
     var viewMatrix: float4x4 {
         Transform.look(eye: self.modelMatrix.columns.3.xyz, target: .zero, up: Y_AXIS)
     }
@@ -31,12 +28,15 @@ class LightObject: GameObject {
     let shadowScale = Transform.scaleMatrix(.init(0.5, -0.5, 1))
     let shadowTranslate = Transform.translationMatrix(.init(0.5, 0.5, 0))
     
-    init(name: String) {
+    private var _meshType: MeshType = .None
+    
+    init(name: String, type: LightType = .Directional) {
         super.init(name: name, meshType: .None)
         self.lightData.shadowTransformMatrix = shadowTranslate * shadowScale
     }
     
-    init(name: String, meshType: MeshType) {
+    init(name: String, type: LightType = .Directional, meshType: MeshType = .Sphere) {
+        self._meshType = meshType
         super.init(name: name, meshType: meshType)
         self.lightData.shadowTransformMatrix = shadowTranslate * shadowScale
     }
@@ -54,7 +54,14 @@ class LightObject: GameObject {
 }
 
 extension LightObject {
-    public func setLightColor(_ color: SIMD3<Float>) { self.lightData.color = color }
+    public func setLightColor(_ color: SIMD3<Float>) {
+        self.lightData.color = color
+        if _meshType != .None {
+            var material = Material()
+            material.color = float4(color, 0)
+            self.useMaterial(material)
+        }
+    }
     public func setLightColor(_ r: Float, _ g: Float, _ b: Float) { setLightColor(SIMD3<Float>(r, g, b)) }
     public func getLightColor() -> SIMD3<Float> { return self.lightData.color }
     

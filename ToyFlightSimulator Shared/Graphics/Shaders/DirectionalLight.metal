@@ -61,8 +61,10 @@ deferred_directional_lighting_fragment_common(QuadInOut             in,
     float3 halfway_vector = normalize(eye_space_fragment_pos - eye_light_direction.xyz);
 
     half specular_intensity = half(lightData.specularIntensity);
-
-    half specular_shininess = albedo_specular.w * half(1.0);  // TODO: Should perhaps be something like material.shininess ???
+    
+    half shininess = half(1.0);
+    
+    half specular_shininess = albedo_specular.w * shininess;
 
     half specular_factor = powr(max(dot(half3(normal_shadow.xyz), half3(halfway_vector)), 0.0h), specular_intensity);
 
