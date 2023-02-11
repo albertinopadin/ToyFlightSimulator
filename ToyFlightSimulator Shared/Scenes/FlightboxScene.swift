@@ -35,7 +35,7 @@ class FlightboxScene: Scene {
         let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
         addChild(sky)
         
-        sun.setPosition(5, 25, 5)
+        sun.setPosition(1, 25, 5)
         sun.setLightBrightness(1.0)
 //        sun.setLightBrightness(0.2)
         sun.setLightColor(1, 1, 1)

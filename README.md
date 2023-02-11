@@ -9,3 +9,8 @@ Toy Flight Simulator implemented with Swift and Metal
 1/16/2023 - Tried implementing shadows (in shadow branch) - inspired by [Warrren Moore's shadow tutorial](https://medium.com/@warrenm/thirty-days-of-metal-day-19-directional-shadows-116cecbafcbb) and [2etime's shadow example](https://discord.com/channels/428977382515277824/428977382515277830/1059718599398404116)
 
 ![Shadows](TFSShadows.png)
+
+
+2/10/2023 - Implemented Shadow, GBuffer and Directional Lighting stages of Single-Pass Deferred Lighting Renderer, using Apple's [Rendering a Scene with Deferred Lighting in Swift example](https://developer.apple.com/documentation/metal/metal_sample_code_library/rendering_a_scene_with_deferred_lighting_in_swift)
+
+![Deferred Lighting with Shadows v1](TFSDeferredLightingShadows.png)
