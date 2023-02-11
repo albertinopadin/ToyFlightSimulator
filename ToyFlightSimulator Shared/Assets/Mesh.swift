@@ -102,6 +102,8 @@ class Mesh {
     }
     
     private func createMeshFromModel(_ modelName: String, ext: String = "obj") {
+        print("[createMeshFromModel] model name: \(modelName)")
+        
         guard let assetURL = Bundle.main.url(forResource: modelName, withExtension: ext) else {
             fatalError("Asset \(modelName) does not exist.")
         }
@@ -124,6 +126,7 @@ class Mesh {
         asset.loadTextures()
         
         for child in asset.childObjects(of: MDLObject.self) {
+            print("[createMeshFromModel] \(modelName) child name: \(child.name)")
             _childMeshes = Mesh.makeMeshes(object: child, vertexDescriptor: descriptor)
         }
         

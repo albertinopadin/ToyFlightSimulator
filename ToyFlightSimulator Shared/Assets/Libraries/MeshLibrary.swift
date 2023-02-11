@@ -36,7 +36,7 @@ class MeshLibrary: Library<MeshType, Mesh> {
         _library.updateValue(Mesh(modelName: "sphere"), forKey: .Sphere)
         _library.updateValue(Mesh(modelName: "quad"), forKey: .Quad)
         _library.updateValue(Mesh(modelName: "skysphere"), forKey: .SkySphere)
-        _library.updateValue(Mesh(modelName: "f16"), forKey: .F16)
+        _library.updateValue(Mesh(modelName: "f16r"), forKey: .F16)
     }
     
     override subscript(type: MeshType) -> Mesh {

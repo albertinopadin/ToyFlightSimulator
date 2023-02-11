@@ -10,6 +10,7 @@ import MetalKit
 class F16: GameObject {
     private var _camera: F16Camera?
     private let _camPositionOffset = float3(0, 2, 4)
+//    private let _camPositionOffset = float3(-4, 2, 0)
     
     private var _moveSpeed: Float = 4.0
     private var _turnSpeed: Float = 2.0
@@ -26,7 +27,9 @@ class F16: GameObject {
         _camera?.setPosition(_camPositionOffset)
         _camera?.positionOffset = _camPositionOffset
         _camera?.setRotationX(Float(-15).toRadians)
+//        _camera?.setRotationY(Float(-90).toRadians)
         super.init(name: "F-16", meshType: .F16, renderPipelineStateType: .OpaqueMaterial)
+//        self.rotateY(Float(90).toRadians)
         addChild(camera)
         
         // Results in gimbal lock and can't rotate on Z axis

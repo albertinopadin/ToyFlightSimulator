@@ -16,6 +16,24 @@
 		CE2ED262299394E500C81F47 /* ModelIO+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */; };
 		CE2ED263299394E500C81F47 /* ModelIO+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */; };
 		CE2ED264299394E500C81F47 /* ModelIO+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */; };
+		CE2ED26C2997F02D00C81F47 /* F16s.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2662997F02D00C81F47 /* F16s.bmp */; };
+		CE2ED26D2997F02D00C81F47 /* F16s.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2662997F02D00C81F47 /* F16s.bmp */; };
+		CE2ED26E2997F02D00C81F47 /* F16s.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2662997F02D00C81F47 /* F16s.bmp */; };
+		CE2ED26F2997F02D00C81F47 /* f16.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2672997F02D00C81F47 /* f16.mtl */; };
+		CE2ED2702997F02D00C81F47 /* f16.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2672997F02D00C81F47 /* f16.mtl */; };
+		CE2ED2712997F02D00C81F47 /* f16.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2672997F02D00C81F47 /* f16.mtl */; };
+		CE2ED2722997F02D00C81F47 /* F16t.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2682997F02D00C81F47 /* F16t.bmp */; };
+		CE2ED2732997F02D00C81F47 /* F16t.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2682997F02D00C81F47 /* F16t.bmp */; };
+		CE2ED2742997F02D00C81F47 /* F16t.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2682997F02D00C81F47 /* F16t.bmp */; };
+		CE2ED2762997F09100C81F47 /* f16.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2752997F09100C81F47 /* f16.obj */; };
+		CE2ED2772997F09100C81F47 /* f16.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2752997F09100C81F47 /* f16.obj */; };
+		CE2ED2782997F09100C81F47 /* f16.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2752997F09100C81F47 /* f16.obj */; };
+		CE2ED2832997F9B700C81F47 /* f16r.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2812997F9B700C81F47 /* f16r.mtl */; };
+		CE2ED2842997F9B700C81F47 /* f16r.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2812997F9B700C81F47 /* f16r.mtl */; };
+		CE2ED2852997F9B700C81F47 /* f16r.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2812997F9B700C81F47 /* f16r.mtl */; };
+		CE2ED2862997F9B700C81F47 /* f16r.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2822997F9B700C81F47 /* f16r.obj */; };
+		CE2ED2872997F9B700C81F47 /* f16r.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2822997F9B700C81F47 /* f16r.obj */; };
+		CE2ED2882997F9B700C81F47 /* f16r.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2822997F9B700C81F47 /* f16r.obj */; };
 		CE3BFF1F28E054880014A752 /* MetalTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF1E28E054880014A752 /* MetalTypes.swift */; };
 		CE3BFF2128E055BB0014A752 /* Engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2028E055BB0014A752 /* Engine.swift */; };
 		CE3BFF2428E056230014A752 /* Graphics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2328E056230014A752 /* Graphics.swift */; };
@@ -119,18 +137,6 @@
 		CE3BFFB328E572FB0014A752 /* FinalShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFFB228E572FB0014A752 /* FinalShaders.metal */; };
 		CE3BFFB428E572FB0014A752 /* FinalShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFFB228E572FB0014A752 /* FinalShaders.metal */; };
 		CE3BFFB528E572FB0014A752 /* FinalShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFFB228E572FB0014A752 /* FinalShaders.metal */; };
-		CE3BFFBF28E573BC0014A752 /* f16.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBB28E573BB0014A752 /* f16.obj */; };
-		CE3BFFC028E573BC0014A752 /* f16.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBB28E573BB0014A752 /* f16.obj */; };
-		CE3BFFC128E573BC0014A752 /* f16.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBB28E573BB0014A752 /* f16.obj */; };
-		CE3BFFC228E573BC0014A752 /* f16.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBC28E573BB0014A752 /* f16.mtl */; };
-		CE3BFFC328E573BC0014A752 /* f16.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBC28E573BB0014A752 /* f16.mtl */; };
-		CE3BFFC428E573BC0014A752 /* f16.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBC28E573BB0014A752 /* f16.mtl */; };
-		CE3BFFC528E573BC0014A752 /* F16t.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBD28E573BC0014A752 /* F16t.bmp */; };
-		CE3BFFC628E573BC0014A752 /* F16t.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBD28E573BC0014A752 /* F16t.bmp */; };
-		CE3BFFC728E573BC0014A752 /* F16t.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBD28E573BC0014A752 /* F16t.bmp */; };
-		CE3BFFC828E573BC0014A752 /* F16s.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBE28E573BC0014A752 /* F16s.bmp */; };
-		CE3BFFC928E573BC0014A752 /* F16s.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBE28E573BC0014A752 /* F16s.bmp */; };
-		CE3BFFCA28E573BC0014A752 /* F16s.bmp in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFBE28E573BC0014A752 /* F16s.bmp */; };
 		CE3BFFCD28E573C80014A752 /* sphere.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFCB28E573C80014A752 /* sphere.obj */; };
 		CE3BFFCE28E573C80014A752 /* sphere.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFCB28E573C80014A752 /* sphere.obj */; };
 		CE3BFFCF28E573C80014A752 /* sphere.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE3BFFCB28E573C80014A752 /* sphere.obj */; };
@@ -251,6 +257,12 @@
 		CE2ED258299223A900C81F47 /* Mesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mesh.swift; sourceTree = "<group>"; };
 		CE2ED25C299223E900C81F47 /* SubMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubMesh.swift; sourceTree = "<group>"; };
 		CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModelIO+Extensions.swift"; sourceTree = "<group>"; };
+		CE2ED2662997F02D00C81F47 /* F16s.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = F16s.bmp; sourceTree = "<group>"; };
+		CE2ED2672997F02D00C81F47 /* f16.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = f16.mtl; sourceTree = "<group>"; };
+		CE2ED2682997F02D00C81F47 /* F16t.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = F16t.bmp; sourceTree = "<group>"; };
+		CE2ED2752997F09100C81F47 /* f16.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = f16.obj; sourceTree = "<group>"; };
+		CE2ED2812997F9B700C81F47 /* f16r.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = f16r.mtl; sourceTree = "<group>"; };
+		CE2ED2822997F9B700C81F47 /* f16r.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = f16r.obj; sourceTree = "<group>"; };
 		CE3BFF1E28E054880014A752 /* MetalTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalTypes.swift; sourceTree = "<group>"; };
 		CE3BFF2028E055BB0014A752 /* Engine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Engine.swift; sourceTree = "<group>"; };
 		CE3BFF2328E056230014A752 /* Graphics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Graphics.swift; sourceTree = "<group>"; };
@@ -289,10 +301,6 @@
 		CE3BFFAA28E453310014A752 /* Quad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Quad.swift; sourceTree = "<group>"; };
 		CE3BFFAE28E572EC0014A752 /* SkySphereShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SkySphereShaders.metal; sourceTree = "<group>"; };
 		CE3BFFB228E572FB0014A752 /* FinalShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = FinalShaders.metal; sourceTree = "<group>"; };
-		CE3BFFBB28E573BB0014A752 /* f16.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = f16.obj; sourceTree = "<group>"; };
-		CE3BFFBC28E573BB0014A752 /* f16.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = f16.mtl; sourceTree = "<group>"; };
-		CE3BFFBD28E573BC0014A752 /* F16t.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = F16t.bmp; sourceTree = "<group>"; };
-		CE3BFFBE28E573BC0014A752 /* F16s.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = F16s.bmp; sourceTree = "<group>"; };
 		CE3BFFCB28E573C80014A752 /* sphere.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sphere.obj; sourceTree = "<group>"; };
 		CE3BFFCC28E573C80014A752 /* sphere.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sphere.mtl; sourceTree = "<group>"; };
 		CE3BFFD328E573D60014A752 /* normal_example.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = normal_example.png; sourceTree = "<group>"; };
@@ -533,10 +541,12 @@
 		CE3BFFBA28E573920014A752 /* F16 */ = {
 			isa = PBXGroup;
 			children = (
-				CE3BFFBC28E573BB0014A752 /* f16.mtl */,
-				CE3BFFBB28E573BB0014A752 /* f16.obj */,
-				CE3BFFBE28E573BC0014A752 /* F16s.bmp */,
-				CE3BFFBD28E573BC0014A752 /* F16t.bmp */,
+				CE2ED2812997F9B700C81F47 /* f16r.mtl */,
+				CE2ED2822997F9B700C81F47 /* f16r.obj */,
+				CE2ED2752997F09100C81F47 /* f16.obj */,
+				CE2ED2672997F02D00C81F47 /* f16.mtl */,
+				CE2ED2662997F02D00C81F47 /* F16s.bmp */,
+				CE2ED2682997F02D00C81F47 /* F16t.bmp */,
 			);
 			path = F16;
 			sourceTree = "<group>";
@@ -773,20 +783,22 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE2ED2862997F9B700C81F47 /* f16r.obj in Resources */,
 				CE3BFFE428E573E40014A752 /* skysphere.obj in Resources */,
+				CE2ED26C2997F02D00C81F47 /* F16s.bmp in Resources */,
 				CE3BFFD628E573D60014A752 /* normal_example.png in Resources */,
-				CE3BFFBF28E573BC0014A752 /* f16.obj in Resources */,
 				CE7F47FC28B758920082B197 /* Main.storyboard in Resources */,
-				CE3BFFC228E573BC0014A752 /* f16.mtl in Resources */,
+				CE2ED2722997F02D00C81F47 /* F16t.bmp in Resources */,
 				CE3BFFD028E573C80014A752 /* sphere.mtl in Resources */,
+				CE2ED2832997F9B700C81F47 /* f16r.mtl in Resources */,
 				CE3BFFD928E573D60014A752 /* quad.mtl in Resources */,
+				CE2ED2762997F09100C81F47 /* f16.obj in Resources */,
 				CE3BFFCD28E573C80014A752 /* sphere.obj in Resources */,
 				CE3BFFDC28E573D60014A752 /* quad.obj in Resources */,
-				CE3BFFC528E573BC0014A752 /* F16t.bmp in Resources */,
-				CE3BFFC828E573BC0014A752 /* F16s.bmp in Resources */,
 				CE7F482728B758920082B197 /* Assets.xcassets in Resources */,
 				CE7F47FF28B758920082B197 /* LaunchScreen.storyboard in Resources */,
 				CE3BFFE128E573E40014A752 /* clouds.png in Resources */,
+				CE2ED26F2997F02D00C81F47 /* f16.mtl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -794,20 +806,22 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE2ED2872997F9B700C81F47 /* f16r.obj in Resources */,
 				CE3BFFE528E573E40014A752 /* skysphere.obj in Resources */,
+				CE2ED26D2997F02D00C81F47 /* F16s.bmp in Resources */,
 				CE3BFFD728E573D60014A752 /* normal_example.png in Resources */,
-				CE3BFFC028E573BC0014A752 /* f16.obj in Resources */,
 				CE7F480C28B758920082B197 /* Main.storyboard in Resources */,
-				CE3BFFC328E573BC0014A752 /* f16.mtl in Resources */,
+				CE2ED2732997F02D00C81F47 /* F16t.bmp in Resources */,
 				CE3BFFD128E573C80014A752 /* sphere.mtl in Resources */,
+				CE2ED2842997F9B700C81F47 /* f16r.mtl in Resources */,
 				CE3BFFDA28E573D60014A752 /* quad.mtl in Resources */,
+				CE2ED2772997F09100C81F47 /* f16.obj in Resources */,
 				CE3BFFCE28E573C80014A752 /* sphere.obj in Resources */,
 				CE3BFFDD28E573D60014A752 /* quad.obj in Resources */,
-				CE3BFFC628E573BC0014A752 /* F16t.bmp in Resources */,
-				CE3BFFC928E573BC0014A752 /* F16s.bmp in Resources */,
 				CE7F482828B758920082B197 /* Assets.xcassets in Resources */,
 				CE7F480F28B758920082B197 /* LaunchScreen.storyboard in Resources */,
 				CE3BFFE228E573E40014A752 /* clouds.png in Resources */,
+				CE2ED2702997F02D00C81F47 /* f16.mtl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -815,19 +829,21 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE2ED2742997F02D00C81F47 /* F16t.bmp in Resources */,
 				CE3BFFDE28E573D60014A752 /* quad.obj in Resources */,
-				CE3BFFCA28E573BC0014A752 /* F16s.bmp in Resources */,
 				CE3BFFD828E573D60014A752 /* normal_example.png in Resources */,
+				CE2ED2712997F02D00C81F47 /* f16.mtl in Resources */,
 				CE7F481C28B758920082B197 /* Main.storyboard in Resources */,
 				CE3BFFE628E573E40014A752 /* skysphere.obj in Resources */,
+				CE2ED2882997F9B700C81F47 /* f16r.obj in Resources */,
 				CE3BFFCF28E573C80014A752 /* sphere.obj in Resources */,
-				CE3BFFC428E573BC0014A752 /* f16.mtl in Resources */,
-				CE3BFFC128E573BC0014A752 /* f16.obj in Resources */,
+				CE2ED2782997F09100C81F47 /* f16.obj in Resources */,
 				CE3BFFE328E573E40014A752 /* clouds.png in Resources */,
 				CE7F482928B758920082B197 /* Assets.xcassets in Resources */,
-				CE3BFFC728E573BC0014A752 /* F16t.bmp in Resources */,
+				CE2ED2852997F9B700C81F47 /* f16r.mtl in Resources */,
 				CE3BFFDB28E573D60014A752 /* quad.mtl in Resources */,
 				CE3BFFD228E573C80014A752 /* sphere.mtl in Resources */,
+				CE2ED26E2997F02D00C81F47 /* F16s.bmp in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

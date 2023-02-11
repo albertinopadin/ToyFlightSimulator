@@ -76,8 +76,11 @@ class Submesh {
                 .textureStorageMode: MTLStorageMode.private.rawValue
             ]
             
+            print("Property type: \(property.type)")
+            
             switch property.type {
             case .string:
+                print("Material property is string!")
                 if let stringValue = property.stringValue {
                     newTexture = try? textureLoader.newTexture(name: stringValue,
                                                                 scaleFactor: 1.0,
@@ -85,24 +88,73 @@ class Submesh {
                                                                 options: options)
                 }
             case .URL:
+                print("Material property is url!")
                 if let textureURL = property.urlValue {
                     newTexture = try? textureLoader.newTexture(URL: textureURL, options: options)
                 }
             case .texture:
+                print("Material property is texture!")
                 let sourceTexture = property.textureSamplerValue!.texture!
+                print("sourceTexture: \(sourceTexture.debugDescription)")
                 newTexture = try? textureLoader.newTexture(texture: sourceTexture, options: options)
+            case .color:
+                print("Material property is color!")
+                let color = float4(Float(property.color!.components![0]),
+                                   Float(property.color!.components![1]),
+                                   Float(property.color!.components![2]),
+                                   Float(property.color!.components![3]))
+                
+                newTexture = makeSolid2DTexture(device: Engine.Device,
+                                                color: color)
+            case .buffer:
+                print("Material property is a buffer!")
+            case .matrix44:
+                print("Material property is 4x4 matrix!")
+            case .float, .float2, .float3, .float4:
+                print("Material property is float!")
             case .none:
                 print("Material property is none!")
-                newTexture = nil
+//                newTexture = nil
             default:
 //                fatalError("Texture data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription)")
-                newTexture = nil
+                print("In default block")
+//                newTexture = nil
             }
         }
         
 //        let tex = try? textureLoader.newTexture(texture: sourceTexture, options: options)
 //        return tex
         return newTexture
+    }
+    
+    private func makeSolid2DTexture(device: MTLDevice,
+                                    color: simd_float4,
+                                    pixelFormat: MTLPixelFormat = .bgra8Unorm) -> MTLTexture? {
+        print("[makeSolid2DTexture] Color: \(color)")
+        let descriptor = MTLTextureDescriptor()
+        descriptor.width = 8
+        descriptor.height = 8
+        descriptor.mipmapLevelCount = 1
+        descriptor.storageMode = .managed
+        descriptor.arrayLength = 1
+        descriptor.sampleCount = 1
+        descriptor.cpuCacheMode = .writeCombined
+        descriptor.allowGPUOptimizedContents = false
+        descriptor.pixelFormat = pixelFormat
+        descriptor.textureType = .type2D
+        descriptor.usage = .shaderRead
+        guard let texture = device.makeTexture(descriptor: descriptor) else {
+            print("[makeSolid2DTexture] Could not create texture!")
+            return nil
+        }
+        let origin = MTLOrigin(x: 0, y: 0, z: 0)
+        let size = MTLSize(width: texture.width, height: texture.height, depth: texture.depth)
+        let region = MTLRegion(origin: origin, size: size)
+        let mappedColor = simd_uchar4(color * 255)
+        Array<simd_uchar4>(repeating: mappedColor, count: 64).withUnsafeBytes { ptr in
+            texture.replace(region: region, mipmapLevel: 0, withBytes: ptr.baseAddress!, bytesPerRow: 32)
+        }
+        return texture
     }
     
     private func createTextures(_ mdlMaterial: MDLMaterial) {
