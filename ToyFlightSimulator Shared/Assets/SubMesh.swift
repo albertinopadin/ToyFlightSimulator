@@ -55,16 +55,6 @@ class Submesh {
         guard let material = material else { return nil }
         
         let textureLoader = MTKTextureLoader(device: Engine.Device)
-//        guard let materialProperty = material?.property(with: semantic) else { return nil }
-//        guard let sourceTexture = materialProperty.textureSamplerValue?.texture else { return nil }
-//        let options: [MTKTextureLoader.Option: Any] = [
-//            .origin: textureOrigin as Any,
-//            .generateMipmaps: true,
-//            .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-//            .textureStorageMode: MTLStorageMode.private.rawValue
-//        ]
-//        let tex = try? textureLoader.newTexture(texture: sourceTexture, options: options)
-//        return tex
         
         var newTexture: MTLTexture!
         
@@ -114,16 +104,12 @@ class Submesh {
                 print("Material property is float!")
             case .none:
                 print("Material property is none!")
-//                newTexture = nil
             default:
 //                fatalError("Texture data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription)")
                 print("In default block")
-//                newTexture = nil
             }
         }
         
-//        let tex = try? textureLoader.newTexture(texture: sourceTexture, options: options)
-//        return tex
         return newTexture
     }
     

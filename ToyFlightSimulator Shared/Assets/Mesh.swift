@@ -130,44 +130,6 @@ class Mesh {
             _childMeshes = Mesh.makeMeshes(object: child, vertexDescriptor: descriptor)
         }
         
-//        var mdlMeshes: [MDLMesh] = []
-//        do {
-//            mdlMeshes = try MTKMesh.newMeshes(asset: asset, device: Engine.Device).modelIOMeshes
-//        } catch {
-//            print("ERROR::LOADING_MESH::__\(modelName)__::\(error)")
-//        }
-//
-//        var mtkMeshes: [MTKMesh] = []
-//        for mdlMesh in mdlMeshes {
-//            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-//                                    normalAttributeNamed: MDLVertexAttributeNormal,
-//                                    tangentAttributeNamed: MDLVertexAttributeTangent)
-//
-//            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-//                                    tangentAttributeNamed: MDLVertexAttributeTangent,
-//                                    bitangentAttributeNamed: MDLVertexAttributeBitangent)
-//
-//            mdlMesh.vertexDescriptor = descriptor
-//            do {
-//                let mtkMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
-//                mtkMeshes.append(mtkMesh)
-//            } catch {
-//                print("ERROR::LOADING_MDLMESH::__\(modelName)__::\(error)")
-//            }
-//        }
-//
-//        let mtkMesh = mtkMeshes[0]
-//        let mdlMesh = mdlMeshes[0]
-//        self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
-//        self._vertexCount = mtkMesh.vertexCount
-//        for i in 0..<mtkMesh.submeshes.count {
-//            let mtkSubmesh = mtkMesh.submeshes[i]
-//            let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
-//            let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh)
-//            addSubmesh(submesh)
-//        }
-        
-//        print("Num Submeshes for \(modelName): \(_submeshes.count)")
         print("Num child meshes for \(modelName): \(_childMeshes.count)")
     }
     
