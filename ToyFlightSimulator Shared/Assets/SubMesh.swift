@@ -44,6 +44,7 @@ class Submesh {
         _indexType = mtkSubmesh.indexType
         _primitiveType = mtkSubmesh.primitiveType
         
+        print("Creating textures and material for \(mtkSubmesh.name)")
         createTextures(mdlSubmesh.material!)
         createMaterial(mdlSubmesh.material!)
     }
@@ -51,17 +52,57 @@ class Submesh {
     private func texture(for semantic: MDLMaterialSemantic,
                          in material: MDLMaterial?,
                          textureOrigin: MTKTextureLoader.Origin) -> MTLTexture? {
+        guard let material = material else { return nil }
+        
         let textureLoader = MTKTextureLoader(device: Engine.Device)
-        guard let materialProperty = material?.property(with: semantic) else { return nil }
-        guard let sourceTexture = materialProperty.textureSamplerValue?.texture else { return nil }
-        let options: [MTKTextureLoader.Option: Any] = [
-            .origin: textureOrigin as Any,
-            .generateMipmaps: true,
-            .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-            .textureStorageMode: MTLStorageMode.private.rawValue
-        ]
-        let tex = try? textureLoader.newTexture(texture: sourceTexture, options: options)
-        return tex
+//        guard let materialProperty = material?.property(with: semantic) else { return nil }
+//        guard let sourceTexture = materialProperty.textureSamplerValue?.texture else { return nil }
+//        let options: [MTKTextureLoader.Option: Any] = [
+//            .origin: textureOrigin as Any,
+//            .generateMipmaps: true,
+//            .textureUsage: MTLTextureUsage.shaderRead.rawValue,
+//            .textureStorageMode: MTLStorageMode.private.rawValue
+//        ]
+//        let tex = try? textureLoader.newTexture(texture: sourceTexture, options: options)
+//        return tex
+        
+        var newTexture: MTLTexture!
+        
+        for property in material.properties(with: semantic) {
+            let options: [MTKTextureLoader.Option: Any] = [
+                .origin: textureOrigin as Any,
+                .generateMipmaps: true,
+                .textureUsage: MTLTextureUsage.shaderRead.rawValue,
+                .textureStorageMode: MTLStorageMode.private.rawValue
+            ]
+            
+            switch property.type {
+            case .string:
+                if let stringValue = property.stringValue {
+                    newTexture = try? textureLoader.newTexture(name: stringValue,
+                                                                scaleFactor: 1.0,
+                                                                bundle: nil,
+                                                                options: options)
+                }
+            case .URL:
+                if let textureURL = property.urlValue {
+                    newTexture = try? textureLoader.newTexture(URL: textureURL, options: options)
+                }
+            case .texture:
+                let sourceTexture = property.textureSamplerValue!.texture!
+                newTexture = try? textureLoader.newTexture(texture: sourceTexture, options: options)
+            case .none:
+                print("Material property is none!")
+                newTexture = nil
+            default:
+//                fatalError("Texture data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription)")
+                newTexture = nil
+            }
+        }
+        
+//        let tex = try? textureLoader.newTexture(texture: sourceTexture, options: options)
+//        return tex
+        return newTexture
     }
     
     private func createTextures(_ mdlMaterial: MDLMaterial) {

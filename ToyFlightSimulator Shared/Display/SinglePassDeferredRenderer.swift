@@ -53,7 +53,7 @@ class SinglePassDeferredRenderer: Renderer {
         encodeStage(using: renderEncoder, label: "GBuffer Generation Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.GBufferGenerationMaterial])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.GBufferGeneration])
-//            renderEncoder.setFrontFacing(.counterClockwise)
+            // NOTE: For some reason, setting cull mode to back makes meshes appear 'extruded' or turned inside out.
 //            renderEncoder.setCullMode(.back)  // TODO: Set this on ???
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setStencilReferenceValue(128)
@@ -216,6 +216,7 @@ class SinglePassDeferredRenderer: Renderer {
     }
     
     override func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+        print("[drawableSizeWillChange] new size: \(size)")
         gBufferTextures.makeTextures(device: Engine.Device, size: size, storageMode: .memoryless)
         // Re-set GBuffer textures in the view render pass descriptor after they have been reallocated by a resize
         setGBufferTextures(_gBufferAndLightingRenderPassDescriptor)

@@ -42,24 +42,34 @@ class GameObject: Node, Renderable {
         super.update()
     }
     
+    func encodeRender(using renderEncoder: MTLRenderCommandEncoder, label: String, _ encodingBlock: () -> Void) {
+        renderEncoder.pushDebugGroup(label)
+        encodingBlock()
+        renderEncoder.popDebugGroup()
+    }
+    
     func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
-        // Vertex Shader
-        renderCommandEncoder.setVertexBytes(&_modelConstants,
-                                            length: ModelConstants.stride,
-                                            index: Int(TFSBufferModelConstants.rawValue))
-        
-        _mesh.drawPrimitives(renderCommandEncoder,
-                             material: _material,
-                             baseColorTextureType: _baseColorTextureType,
-                             normalMapTextureType: _normalMapTextureType,
-                             specularTextureType: _specularTextureType)
+        encodeRender(using: renderCommandEncoder, label: "Rendering \(self.getName())") {
+            // Vertex Shader
+            renderCommandEncoder.setVertexBytes(&_modelConstants,
+                                                length: ModelConstants.stride,
+                                                index: Int(TFSBufferModelConstants.rawValue))
+            
+            _mesh.drawPrimitives(renderCommandEncoder,
+                                 material: _material,
+                                 baseColorTextureType: _baseColorTextureType,
+                                 normalMapTextureType: _normalMapTextureType,
+                                 specularTextureType: _specularTextureType)
+        }
     }
     
     func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.setVertexBytes(&_modelConstants,
-                                            length: ModelConstants.stride,
-                                            index: Int(TFSBufferModelConstants.rawValue))
-        _mesh.drawShadowPrimitives(renderCommandEncoder)
+        encodeRender(using: renderCommandEncoder, label: "Shadow Rendering \(self.getName())") {
+            renderCommandEncoder.setVertexBytes(&_modelConstants,
+                                                length: ModelConstants.stride,
+                                                index: Int(TFSBufferModelConstants.rawValue))
+            _mesh.drawShadowPrimitives(renderCommandEncoder)
+        }
     }
 }
 

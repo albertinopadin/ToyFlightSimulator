@@ -261,7 +261,7 @@ class SphereMesh: Mesh {
         
         mdlSphere.vertexDescriptor = Graphics.MDLVertexDescriptors[.Base]
         let mtkMesh = try! MTKMesh(mesh: mdlSphere, device: Engine.Device)
-        
+
         let vertexLayoutStride = (mtkMesh.vertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride
         for meshBuffer in mtkMesh.vertexBuffers {
             for i in 0..<mtkMesh.vertexCount {
@@ -271,5 +271,15 @@ class SphereMesh: Mesh {
         }
         
         super.init(mtkMesh: mtkMesh, mdlMesh: mdlSphere)
+        
+//        super.init(mdlMesh: mdlSphere, vertexDescriptor: Graphics.MDLVertexDescriptors[.Base])
+//
+//        let vertexLayoutStride = (metalKitMesh!.vertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride
+//        for meshBuffer in metalKitMesh!.vertexBuffers {
+//            for i in 0..<metalKitMesh!.vertexCount {
+//                let colorPosition = (i * vertexLayoutStride) + float4.stride
+//                meshBuffer.buffer.contents().advanced(by: colorPosition).copyMemory(from: &self.color, byteCount: float4.stride)
+//            }
+//        }
     }
 }

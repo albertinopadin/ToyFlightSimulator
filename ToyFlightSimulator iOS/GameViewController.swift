@@ -10,36 +10,35 @@ import MetalKit
 
 // Our iOS specific view controller
 class GameViewController: UIViewController {
-
+    var gameView: GameView!
     var renderer: Renderer!
-    var mtkView: MTKView!
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        guard let mtkView = self.view as? MTKView else {
-            print("View of Gameview controller is not an MTKView")
+        guard let _gameView = self.view as? GameView else {
+            print("View attached to GameViewController is not a GameView")
             return
         }
+        
+        gameView = _gameView
 
         // Select the device to render with.  We choose the default device
         guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
-            print("Metal is not supported")
+            print("Metal is not supported on this device")
             return
         }
 
-        mtkView.device = defaultDevice
-        mtkView.backgroundColor = UIColor.black
-
-        guard let newRenderer = Renderer(metalKitView: mtkView) else {
-            print("Renderer cannot be initialized")
-            return
-        }
-
-        renderer = newRenderer
-
-        renderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
-
-        mtkView.delegate = renderer
+        gameView.device = defaultDevice
+        gameView.clearColor = Preferences.ClearColor
+        gameView.colorPixelFormat = Preferences.MainPixelFormat
+        gameView.depthStencilPixelFormat = .depth32Float_stencil8
+        gameView.framebufferOnly = false
+        gameView.preferredFramesPerSecond = 120
+        
+        Engine.Start(device: defaultDevice)
+//        renderer = OITRenderer(gameView)  // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
+        renderer = SinglePassDeferredRenderer(gameView)
+        SceneManager.SetScene(Preferences.StartingSceneType)
     }
 }

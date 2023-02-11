@@ -14,6 +14,8 @@ class Mesh {
     private var _vertexBuffer: MTLBuffer! = nil
     private var _instanceCount: Int = 1
     private var _submeshes: [Submesh] = []
+    private var _childMeshes: [Mesh] = []
+    var metalKitMesh: MTKMesh? = nil
     
     init() {
         createMesh()
@@ -24,7 +26,43 @@ class Mesh {
         createMeshFromModel(modelName)
     }
     
+    init(mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor) {
+        mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                normalAttributeNamed: MDLVertexAttributeNormal,
+                                tangentAttributeNamed: MDLVertexAttributeTangent)
+        
+        mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                tangentAttributeNamed: MDLVertexAttributeTangent,
+                                bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        
+        mdlMesh.vertexDescriptor = vertexDescriptor
+        do {
+            metalKitMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
+            self._vertexBuffer = metalKitMesh!.vertexBuffers[0].buffer
+            self._vertexCount = metalKitMesh!.vertexCount
+            for i in 0..<metalKitMesh!.submeshes.count {
+                let mtkSubmesh = metalKitMesh!.submeshes[i]
+                let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
+                let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh)
+                addSubmesh(submesh)
+            }
+        } catch {
+            print("ERROR::LOADING_MDLMESH::__::\(error.localizedDescription)")
+        }
+        
+        print("Num submeshes for \(mdlMesh.name): \(_submeshes.count)")
+    }
+    
     init(mtkMesh: MTKMesh, mdlMesh: MDLMesh) {
+        mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                normalAttributeNamed: MDLVertexAttributeNormal,
+                                tangentAttributeNamed: MDLVertexAttributeTangent)
+        
+        mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                tangentAttributeNamed: MDLVertexAttributeTangent,
+                                bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        
+        self.metalKitMesh = mtkMesh
         self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
         self._vertexCount = mtkMesh.vertexCount
         for i in 0..<mtkMesh.submeshes.count {
@@ -43,6 +81,24 @@ class Mesh {
                                                      length: Vertex.stride(_vertices.count),
                                                      options: [])
         }
+    }
+    
+    private static func makeMeshes(object: MDLObject, vertexDescriptor: MDLVertexDescriptor) -> [Mesh] {
+        var meshes = [Mesh]()
+        
+        if let mesh = object as? MDLMesh {
+            let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
+            meshes.append(newMesh)
+        }
+        
+        if object.conforms(to: MDLObjectContainerComponent.self) {
+            for child in object.children.objects {
+                let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor)
+                meshes.append(contentsOf: childMeshes)
+            }
+        }
+        
+        return meshes
     }
     
     private func createMeshFromModel(_ modelName: String, ext: String = "obj") {
@@ -67,39 +123,49 @@ class Mesh {
                                        error: nil)
         asset.loadTextures()
         
-        var mdlMeshes: [MDLMesh] = []
-        do {
-            mdlMeshes = try MTKMesh.newMeshes(asset: asset, device: Engine.Device).modelIOMeshes
-        } catch {
-            print("ERROR::LOADING_MESH::__\(modelName)__::\(error)")
+        for child in asset.childObjects(of: MDLObject.self) {
+            _childMeshes = Mesh.makeMeshes(object: child, vertexDescriptor: descriptor)
         }
         
-        var mtkMeshes: [MTKMesh] = []
-        for mdlMesh in mdlMeshes {
-            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                                    tangentAttributeNamed: MDLVertexAttributeTangent,
-                                    bitangentAttributeNamed: MDLVertexAttributeBitangent)
-            mdlMesh.vertexDescriptor = descriptor
-            do {
-                let mtkMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
-                mtkMeshes.append(mtkMesh)
-            } catch {
-                print("ERROR::LOADING_MDLMESH::__\(modelName)__::\(error)")
-            }
-        }
-
-        let mtkMesh = mtkMeshes[0]
-        let mdlMesh = mdlMeshes[0]
-        self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
-        self._vertexCount = mtkMesh.vertexCount
-        for i in 0..<mtkMesh.submeshes.count {
-            let mtkSubmesh = mtkMesh.submeshes[i]
-            let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
-            let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh)
-            addSubmesh(submesh)
-        }
+//        var mdlMeshes: [MDLMesh] = []
+//        do {
+//            mdlMeshes = try MTKMesh.newMeshes(asset: asset, device: Engine.Device).modelIOMeshes
+//        } catch {
+//            print("ERROR::LOADING_MESH::__\(modelName)__::\(error)")
+//        }
+//
+//        var mtkMeshes: [MTKMesh] = []
+//        for mdlMesh in mdlMeshes {
+//            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+//                                    normalAttributeNamed: MDLVertexAttributeNormal,
+//                                    tangentAttributeNamed: MDLVertexAttributeTangent)
+//
+//            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+//                                    tangentAttributeNamed: MDLVertexAttributeTangent,
+//                                    bitangentAttributeNamed: MDLVertexAttributeBitangent)
+//
+//            mdlMesh.vertexDescriptor = descriptor
+//            do {
+//                let mtkMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
+//                mtkMeshes.append(mtkMesh)
+//            } catch {
+//                print("ERROR::LOADING_MDLMESH::__\(modelName)__::\(error)")
+//            }
+//        }
+//
+//        let mtkMesh = mtkMeshes[0]
+//        let mdlMesh = mdlMeshes[0]
+//        self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
+//        self._vertexCount = mtkMesh.vertexCount
+//        for i in 0..<mtkMesh.submeshes.count {
+//            let mtkSubmesh = mtkMesh.submeshes[i]
+//            let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
+//            let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh)
+//            addSubmesh(submesh)
+//        }
         
-        print("Num Submeshes for \(modelName): \(_submeshes.count)")
+//        print("Num Submeshes for \(modelName): \(_submeshes.count)")
+        print("Num child meshes for \(modelName): \(_childMeshes.count)")
     }
     
     func setInstanceCount(_ count: Int) {
@@ -163,6 +229,14 @@ class Mesh {
                                                     instanceCount: _instanceCount)
             }
         }
+        
+        for child in _childMeshes {
+            child.drawPrimitives(renderCommandEncoder,
+                                 material: material,
+                                 baseColorTextureType: baseColorTextureType,
+                                 normalMapTextureType: normalMapTextureType,
+                                 specularTextureType: specularTextureType)
+        }
     }
     
     func drawShadowPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder) {
@@ -184,6 +258,10 @@ class Mesh {
                                                     vertexCount: _vertices.count,
                                                     instanceCount: _instanceCount)
             }
+        }
+        
+        for child in _childMeshes {
+            child.drawShadowPrimitives(renderCommandEncoder)
         }
     }
 }
