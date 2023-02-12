@@ -6,31 +6,38 @@
 //
 
 class FlightboxScene: Scene {
-    var f16Camera = F16Camera()
+    var attachedCamera = AttachedCamera()
     
     var f16: F16!
+    var f18: F18!
     var sun = Sun(meshType: .Sphere)
     var quad = Quad()
     
     var paused: Bool = false
     
     override func buildScene() {
-        f16 = F16(camera: f16Camera)
-        addCamera(f16Camera)
-        f16.setScale(2)
-        f16.setPositionZ(4)
-        f16.setPositionY(10)
-        addChild(f16)
+//        f16 = F16(camera: attachedCamera)
+//        addCamera(attachedCamera)
+//        f16.setPositionZ(4)
+//        f16.setPositionY(10)
+//        addChild(f16)
         
-        let f16Sphere = Sphere()
-        var f16SphereMaterial = Material()
-        f16SphereMaterial.color = GRABBER_BLUE_COLOR
-        f16SphereMaterial.diffuse = float3(1,1,1)
-        f16SphereMaterial.specular = float3(1,1,1)
-        f16Sphere.useMaterial(f16SphereMaterial)
-        f16Sphere.setPosition(1.5, 0, 0)
-        f16Sphere.setScale(0.5)
-        f16.addChild(f16Sphere)
+        f18 = F18(camera: attachedCamera)
+        addCamera(attachedCamera)
+        f18.setPositionZ(4)
+        f18.setPositionY(10)
+//        f18.setScale(0.1)  // TODO: Figure out why this isn't working for Aircraft
+        addChild(f18)
+        
+//        let f16Sphere = Sphere()
+//        var f16SphereMaterial = Material()
+//        f16SphereMaterial.color = GRABBER_BLUE_COLOR
+//        f16SphereMaterial.diffuse = float3(1,1,1)
+//        f16SphereMaterial.specular = float3(1,1,1)
+//        f16Sphere.useMaterial(f16SphereMaterial)
+//        f16Sphere.setPosition(1.5, 0, 0)
+//        f16Sphere.setScale(0.5)
+//        f16.addChild(f16Sphere)
         
         let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
         addChild(sky)
@@ -63,12 +70,13 @@ class FlightboxScene: Scene {
                              color: float4(1, 0, 0, 1))
         addChild(debugLine)
         
-        let f16Pos = f16.getPosition()
+//        let jetPos = f16.getPosition()
+        let jetPos = f18.getPosition()
         
         var sphereBlueMaterial = Material()
         sphereBlueMaterial.color = float4(0.0, 0.0, 1.0, 0.4)
         
-        let sphereBluePos = float3(x: f16Pos.x + 1, y: f16Pos.y, z: f16Pos.z - 2)
+        let sphereBluePos = float3(x: jetPos.x + 1, y: jetPos.y, z: jetPos.z - 2)
         let sphereBlue = Sphere()
         sphereBlue.setPosition(sphereBluePos)
         sphereBlue.setScale(1.5)
@@ -78,7 +86,7 @@ class FlightboxScene: Scene {
         var sphereRedMaterial = Material()
         sphereRedMaterial.color = float4(1.0, 0.0, 0.0, 0.4)
         
-        let sphereRedPos = float3(x: f16Pos.x - 1, y: f16Pos.y, z: f16Pos.z - 2)
+        let sphereRedPos = float3(x: jetPos.x - 1, y: jetPos.y, z: jetPos.z - 2)
         let sphereRed = Sphere()
         sphereRed.setPosition(sphereRedPos)
         sphereRed.setScale(1.5)
@@ -110,7 +118,7 @@ class FlightboxScene: Scene {
         
         let testCube = Cube()
         testCube.useMaterial(testCubeMaterial)
-        testCube.setPosition(f16Pos.x, 1, f16Pos.z - 4)
+        testCube.setPosition(jetPos.x, 1, jetPos.z - 4)
         addChild(testCube)
         
 //        let testQuad2 = Quad()
@@ -120,12 +128,12 @@ class FlightboxScene: Scene {
         
         let testTri = Triangle()
 //        testTri.useMaterial(testCubeMaterial)
-        testTri.setPosition(f16Pos.x, 1, f16Pos.z - 12)
+        testTri.setPosition(jetPos.x, 1, jetPos.z - 12)
         addChild(testTri)
         
         let testQuad2 = Quad()
         testQuad2.useMaterial(testCubeMaterial)
-        testQuad2.setPosition(f16Pos.x, 1, f16Pos.z - 8)
+        testQuad2.setPosition(jetPos.x, 1, jetPos.z - 8)
         addChild(testQuad2)
         
 //        let testCube = Cube()

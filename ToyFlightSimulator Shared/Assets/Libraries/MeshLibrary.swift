@@ -20,6 +20,7 @@ enum MeshType {
     case SkySphere
     
     case F16
+    case F18
 }
 
 class MeshLibrary: Library<MeshType, Mesh> {
@@ -32,11 +33,12 @@ class MeshLibrary: Library<MeshType, Mesh> {
         _library.updateValue(CubeMesh(), forKey: .Cube_Custom)
         _library.updateValue(SphereMesh(), forKey: .Sphere_Custom)
         
-        
         _library.updateValue(Mesh(modelName: "sphere"), forKey: .Sphere)
         _library.updateValue(Mesh(modelName: "quad"), forKey: .Quad)
         _library.updateValue(Mesh(modelName: "skysphere"), forKey: .SkySphere)
+        
         _library.updateValue(Mesh(modelName: "f16r"), forKey: .F16)
+        _library.updateValue(Mesh(modelName: "FA-18F"), forKey: .F18)
     }
     
     override subscript(type: MeshType) -> Mesh {

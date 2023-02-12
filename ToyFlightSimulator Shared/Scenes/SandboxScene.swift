@@ -7,7 +7,7 @@
 
 class SandboxScene: Scene {
     var debugCamera = DebugCamera()
-    var f16Camera = F16Camera()
+    var f16Camera = AttachedCamera()
     var sun = Sun()
 //    var quad = Quad()
     var quad1 = Quad()

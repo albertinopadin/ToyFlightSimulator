@@ -34,6 +34,36 @@
 		CE2ED2862997F9B700C81F47 /* f16r.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2822997F9B700C81F47 /* f16r.obj */; };
 		CE2ED2872997F9B700C81F47 /* f16r.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2822997F9B700C81F47 /* f16r.obj */; };
 		CE2ED2882997F9B700C81F47 /* f16r.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2822997F9B700C81F47 /* f16r.obj */; };
+		CE2ED28E2998A0D600C81F47 /* FA-18F.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED28B2998A0D600C81F47 /* FA-18F.obj */; };
+		CE2ED2972998A10400C81F47 /* F18.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED2962998A10400C81F47 /* F18.swift */; };
+		CE2ED2992998A14200C81F47 /* Aircraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED2982998A14200C81F47 /* Aircraft.swift */; };
+		CE2ED29A2998A37F00C81F47 /* Aircraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED2982998A14200C81F47 /* Aircraft.swift */; };
+		CE2ED29B2998A38000C81F47 /* Aircraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED2982998A14200C81F47 /* Aircraft.swift */; };
+		CE2ED29C2998A44D00C81F47 /* FA-18F.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED28B2998A0D600C81F47 /* FA-18F.obj */; };
+		CE2ED29D2998A44E00C81F47 /* FA-18F.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED28B2998A0D600C81F47 /* FA-18F.obj */; };
+		CE2ED29E2998A45400C81F47 /* Dirty.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2942998A0DF00C81F47 /* Dirty.jpg */; };
+		CE2ED29F2998A45400C81F47 /* Diffuse.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2912998A0DF00C81F47 /* Diffuse.jpg */; };
+		CE2ED2A02998A45400C81F47 /* Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2922998A0DF00C81F47 /* Specular.jpg */; };
+		CE2ED2A12998A45400C81F47 /* UV.pdf in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2902998A0DF00C81F47 /* UV.pdf */; };
+		CE2ED2A22998A45400C81F47 /* Bumpmap.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2952998A0E000C81F47 /* Bumpmap.jpg */; };
+		CE2ED2A32998A45400C81F47 /* FA-18F.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED28A2998A0D600C81F47 /* FA-18F.mtl */; };
+		CE2ED2A42998A45400C81F47 /* Emissive.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2932998A0DF00C81F47 /* Emissive.jpg */; };
+		CE2ED2A52998A45500C81F47 /* Dirty.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2942998A0DF00C81F47 /* Dirty.jpg */; };
+		CE2ED2A62998A45500C81F47 /* Diffuse.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2912998A0DF00C81F47 /* Diffuse.jpg */; };
+		CE2ED2A72998A45500C81F47 /* Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2922998A0DF00C81F47 /* Specular.jpg */; };
+		CE2ED2A82998A45500C81F47 /* UV.pdf in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2902998A0DF00C81F47 /* UV.pdf */; };
+		CE2ED2A92998A45500C81F47 /* Bumpmap.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2952998A0E000C81F47 /* Bumpmap.jpg */; };
+		CE2ED2AA2998A45500C81F47 /* FA-18F.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED28A2998A0D600C81F47 /* FA-18F.mtl */; };
+		CE2ED2AB2998A45500C81F47 /* Emissive.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2932998A0DF00C81F47 /* Emissive.jpg */; };
+		CE2ED2B22998A45700C81F47 /* Dirty.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2942998A0DF00C81F47 /* Dirty.jpg */; };
+		CE2ED2B32998A45700C81F47 /* Diffuse.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2912998A0DF00C81F47 /* Diffuse.jpg */; };
+		CE2ED2B42998A45700C81F47 /* Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2922998A0DF00C81F47 /* Specular.jpg */; };
+		CE2ED2B52998A45700C81F47 /* UV.pdf in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2902998A0DF00C81F47 /* UV.pdf */; };
+		CE2ED2B62998A45700C81F47 /* Bumpmap.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2952998A0E000C81F47 /* Bumpmap.jpg */; };
+		CE2ED2B72998A45700C81F47 /* FA-18F.mtl in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED28A2998A0D600C81F47 /* FA-18F.mtl */; };
+		CE2ED2B82998A45700C81F47 /* Emissive.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE2ED2932998A0DF00C81F47 /* Emissive.jpg */; };
+		CE2ED2B92998A4CF00C81F47 /* F18.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED2962998A10400C81F47 /* F18.swift */; };
+		CE2ED2BA2998A4D000C81F47 /* F18.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED2962998A10400C81F47 /* F18.swift */; };
 		CE3BFF1F28E054880014A752 /* MetalTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF1E28E054880014A752 /* MetalTypes.swift */; };
 		CE3BFF2128E055BB0014A752 /* Engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2028E055BB0014A752 /* Engine.swift */; };
 		CE3BFF2428E056230014A752 /* Graphics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2328E056230014A752 /* Graphics.swift */; };
@@ -164,9 +194,9 @@
 		CE3E526328E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
 		CE3E526428E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
 		CE3E526528E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
-		CE56921828EA9F7B00F6B42C /* F16Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* F16Camera.swift */; };
-		CE56921928EA9F7B00F6B42C /* F16Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* F16Camera.swift */; };
-		CE56921A28EA9F7B00F6B42C /* F16Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* F16Camera.swift */; };
+		CE56921828EA9F7B00F6B42C /* AttachedCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */; };
+		CE56921928EA9F7B00F6B42C /* AttachedCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */; };
+		CE56921A28EA9F7B00F6B42C /* AttachedCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */; };
 		CE56921C28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */; };
 		CE56921D28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */; };
 		CE56921E28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */; };
@@ -263,6 +293,16 @@
 		CE2ED2752997F09100C81F47 /* f16.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = f16.obj; sourceTree = "<group>"; };
 		CE2ED2812997F9B700C81F47 /* f16r.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = f16r.mtl; sourceTree = "<group>"; };
 		CE2ED2822997F9B700C81F47 /* f16r.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = f16r.obj; sourceTree = "<group>"; };
+		CE2ED28A2998A0D600C81F47 /* FA-18F.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "FA-18F.mtl"; sourceTree = "<group>"; };
+		CE2ED28B2998A0D600C81F47 /* FA-18F.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "FA-18F.obj"; sourceTree = "<group>"; };
+		CE2ED2902998A0DF00C81F47 /* UV.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = UV.pdf; sourceTree = "<group>"; };
+		CE2ED2912998A0DF00C81F47 /* Diffuse.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Diffuse.jpg; sourceTree = "<group>"; };
+		CE2ED2922998A0DF00C81F47 /* Specular.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Specular.jpg; sourceTree = "<group>"; };
+		CE2ED2932998A0DF00C81F47 /* Emissive.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Emissive.jpg; sourceTree = "<group>"; };
+		CE2ED2942998A0DF00C81F47 /* Dirty.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Dirty.jpg; sourceTree = "<group>"; };
+		CE2ED2952998A0E000C81F47 /* Bumpmap.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Bumpmap.jpg; sourceTree = "<group>"; };
+		CE2ED2962998A10400C81F47 /* F18.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F18.swift; sourceTree = "<group>"; };
+		CE2ED2982998A14200C81F47 /* Aircraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aircraft.swift; sourceTree = "<group>"; };
 		CE3BFF1E28E054880014A752 /* MetalTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalTypes.swift; sourceTree = "<group>"; };
 		CE3BFF2028E055BB0014A752 /* Engine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Engine.swift; sourceTree = "<group>"; };
 		CE3BFF2328E056230014A752 /* Graphics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Graphics.swift; sourceTree = "<group>"; };
@@ -310,7 +350,7 @@
 		CE3BFFE028E573E40014A752 /* skysphere.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = skysphere.obj; sourceTree = "<group>"; };
 		CE3BFFE728E6A0F40014A752 /* F16.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F16.swift; sourceTree = "<group>"; };
 		CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkySphere.swift; sourceTree = "<group>"; };
-		CE56921728EA9F7B00F6B42C /* F16Camera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F16Camera.swift; sourceTree = "<group>"; };
+		CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachedCamera.swift; sourceTree = "<group>"; };
 		CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightboxScene.swift; sourceTree = "<group>"; };
 		CE7F47EE28B758920082B197 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE7F47F328B758920082B197 /* ToyFlightSimulator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToyFlightSimulator.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -387,6 +427,21 @@
 			path = Utils;
 			sourceTree = "<group>";
 		};
+		CE2ED2892998A08300C81F47 /* F18 */ = {
+			isa = PBXGroup;
+			children = (
+				CE2ED2952998A0E000C81F47 /* Bumpmap.jpg */,
+				CE2ED2912998A0DF00C81F47 /* Diffuse.jpg */,
+				CE2ED2942998A0DF00C81F47 /* Dirty.jpg */,
+				CE2ED2932998A0DF00C81F47 /* Emissive.jpg */,
+				CE2ED2922998A0DF00C81F47 /* Specular.jpg */,
+				CE2ED2902998A0DF00C81F47 /* UV.pdf */,
+				CE2ED28A2998A0D600C81F47 /* FA-18F.mtl */,
+				CE2ED28B2998A0D600C81F47 /* FA-18F.obj */,
+			);
+			path = F18;
+			sourceTree = "<group>";
+		};
 		CE3BFF2228E056020014A752 /* Graphics */ = {
 			isa = PBXGroup;
 			children = (
@@ -429,12 +484,14 @@
 				CE3BFFA228E452F00014A752 /* LightObject.swift */,
 				CE3BFFA628E453260014A752 /* Sun.swift */,
 				CE3BFFAA28E453310014A752 /* Quad.swift */,
-				CE3BFFE728E6A0F40014A752 /* F16.swift */,
 				CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */,
 				CEFC6E2C2952EA44009B692B /* Cube.swift */,
 				CEFC6E3029531C0C009B692B /* Triangle.swift */,
 				CEFC6F21296B4200009B692B /* Sphere.swift */,
 				CEFC6F25296B61CA009B692B /* Line.swift */,
+				CE2ED2982998A14200C81F47 /* Aircraft.swift */,
+				CE3BFFE728E6A0F40014A752 /* F16.swift */,
+				CE2ED2962998A10400C81F47 /* F18.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -494,7 +551,7 @@
 			children = (
 				CE3BFF9A28E4523D0014A752 /* Camera.swift */,
 				CE3BFF9E28E452480014A752 /* DebugCamera.swift */,
-				CE56921728EA9F7B00F6B42C /* F16Camera.swift */,
+				CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */,
 			);
 			path = Cameras;
 			sourceTree = "<group>";
@@ -502,10 +559,11 @@
 		CE3BFFB628E573690014A752 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				CE3BFFB928E573870014A752 /* Sphere */,
 				CE3BFFB828E573800014A752 /* Quad */,
+				CE3BFFB928E573870014A752 /* Sphere */,
 				CE3BFFB728E573730014A752 /* Skysphere */,
 				CE3BFFBA28E573920014A752 /* F16 */,
+				CE2ED2892998A08300C81F47 /* F18 */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -789,13 +847,21 @@
 				CE3BFFD628E573D60014A752 /* normal_example.png in Resources */,
 				CE7F47FC28B758920082B197 /* Main.storyboard in Resources */,
 				CE2ED2722997F02D00C81F47 /* F16t.bmp in Resources */,
+				CE2ED2B42998A45700C81F47 /* Specular.jpg in Resources */,
+				CE2ED28E2998A0D600C81F47 /* FA-18F.obj in Resources */,
 				CE3BFFD028E573C80014A752 /* sphere.mtl in Resources */,
 				CE2ED2832997F9B700C81F47 /* f16r.mtl in Resources */,
 				CE3BFFD928E573D60014A752 /* quad.mtl in Resources */,
 				CE2ED2762997F09100C81F47 /* f16.obj in Resources */,
 				CE3BFFCD28E573C80014A752 /* sphere.obj in Resources */,
+				CE2ED2B32998A45700C81F47 /* Diffuse.jpg in Resources */,
 				CE3BFFDC28E573D60014A752 /* quad.obj in Resources */,
+				CE2ED2B52998A45700C81F47 /* UV.pdf in Resources */,
+				CE2ED2B82998A45700C81F47 /* Emissive.jpg in Resources */,
+				CE2ED2B72998A45700C81F47 /* FA-18F.mtl in Resources */,
 				CE7F482728B758920082B197 /* Assets.xcassets in Resources */,
+				CE2ED2B22998A45700C81F47 /* Dirty.jpg in Resources */,
+				CE2ED2B62998A45700C81F47 /* Bumpmap.jpg in Resources */,
 				CE7F47FF28B758920082B197 /* LaunchScreen.storyboard in Resources */,
 				CE3BFFE128E573E40014A752 /* clouds.png in Resources */,
 				CE2ED26F2997F02D00C81F47 /* f16.mtl in Resources */,
@@ -807,18 +873,26 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE2ED2872997F9B700C81F47 /* f16r.obj in Resources */,
+				CE2ED29C2998A44D00C81F47 /* FA-18F.obj in Resources */,
 				CE3BFFE528E573E40014A752 /* skysphere.obj in Resources */,
 				CE2ED26D2997F02D00C81F47 /* F16s.bmp in Resources */,
 				CE3BFFD728E573D60014A752 /* normal_example.png in Resources */,
 				CE7F480C28B758920082B197 /* Main.storyboard in Resources */,
+				CE2ED2A02998A45400C81F47 /* Specular.jpg in Resources */,
 				CE2ED2732997F02D00C81F47 /* F16t.bmp in Resources */,
 				CE3BFFD128E573C80014A752 /* sphere.mtl in Resources */,
 				CE2ED2842997F9B700C81F47 /* f16r.mtl in Resources */,
 				CE3BFFDA28E573D60014A752 /* quad.mtl in Resources */,
 				CE2ED2772997F09100C81F47 /* f16.obj in Resources */,
 				CE3BFFCE28E573C80014A752 /* sphere.obj in Resources */,
+				CE2ED29F2998A45400C81F47 /* Diffuse.jpg in Resources */,
 				CE3BFFDD28E573D60014A752 /* quad.obj in Resources */,
+				CE2ED2A12998A45400C81F47 /* UV.pdf in Resources */,
+				CE2ED2A42998A45400C81F47 /* Emissive.jpg in Resources */,
+				CE2ED2A32998A45400C81F47 /* FA-18F.mtl in Resources */,
 				CE7F482828B758920082B197 /* Assets.xcassets in Resources */,
+				CE2ED29E2998A45400C81F47 /* Dirty.jpg in Resources */,
+				CE2ED2A22998A45400C81F47 /* Bumpmap.jpg in Resources */,
 				CE7F480F28B758920082B197 /* LaunchScreen.storyboard in Resources */,
 				CE3BFFE228E573E40014A752 /* clouds.png in Resources */,
 				CE2ED2702997F02D00C81F47 /* f16.mtl in Resources */,
@@ -832,15 +906,23 @@
 				CE2ED2742997F02D00C81F47 /* F16t.bmp in Resources */,
 				CE3BFFDE28E573D60014A752 /* quad.obj in Resources */,
 				CE3BFFD828E573D60014A752 /* normal_example.png in Resources */,
+				CE2ED2A92998A45500C81F47 /* Bumpmap.jpg in Resources */,
 				CE2ED2712997F02D00C81F47 /* f16.mtl in Resources */,
 				CE7F481C28B758920082B197 /* Main.storyboard in Resources */,
+				CE2ED2A82998A45500C81F47 /* UV.pdf in Resources */,
 				CE3BFFE628E573E40014A752 /* skysphere.obj in Resources */,
+				CE2ED2AA2998A45500C81F47 /* FA-18F.mtl in Resources */,
+				CE2ED2A52998A45500C81F47 /* Dirty.jpg in Resources */,
+				CE2ED29D2998A44E00C81F47 /* FA-18F.obj in Resources */,
 				CE2ED2882997F9B700C81F47 /* f16r.obj in Resources */,
 				CE3BFFCF28E573C80014A752 /* sphere.obj in Resources */,
 				CE2ED2782997F09100C81F47 /* f16.obj in Resources */,
 				CE3BFFE328E573E40014A752 /* clouds.png in Resources */,
 				CE7F482928B758920082B197 /* Assets.xcassets in Resources */,
+				CE2ED2AB2998A45500C81F47 /* Emissive.jpg in Resources */,
 				CE2ED2852997F9B700C81F47 /* f16r.mtl in Resources */,
+				CE2ED2A62998A45500C81F47 /* Diffuse.jpg in Resources */,
+				CE2ED2A72998A45500C81F47 /* Specular.jpg in Resources */,
 				CE3BFFDB28E573D60014A752 /* quad.mtl in Resources */,
 				CE3BFFD228E573C80014A752 /* sphere.mtl in Resources */,
 				CE2ED26E2997F02D00C81F47 /* F16s.bmp in Resources */,
@@ -861,6 +943,7 @@
 				CE3BFF2628E056720014A752 /* Shared.metal in Sources */,
 				CE7F484628B770EB0082B197 /* MathUtils.swift in Sources */,
 				CE3BFFAF28E572EC0014A752 /* SkySphereShaders.metal in Sources */,
+				CE2ED2992998A14200C81F47 /* Aircraft.swift in Sources */,
 				CE3BFF8628E2FD9C0014A752 /* GameObject.swift in Sources */,
 				CEFC6EC5295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
 				CE3BFF3228E058C30014A752 /* Mouse.swift in Sources */,
@@ -909,11 +992,12 @@
 				CE3BFF6428E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE3BFF7E28E2FCF50014A752 /* Node.swift in Sources */,
 				CE7F484E28B771550082B197 /* TimeIt.swift in Sources */,
-				CE56921828EA9F7B00F6B42C /* F16Camera.swift in Sources */,
+				CE56921828EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
 				CE3BFF9F28E452480014A752 /* DebugCamera.swift in Sources */,
 				CE3BFF3428E058CE0014A752 /* Keycodes.swift in Sources */,
 				CEAB3840297CDE770087F7CB /* ShadowShaders.metal in Sources */,
 				CE7F47F728B758920082B197 /* AppDelegate.swift in Sources */,
+				CE2ED2972998A10400C81F47 /* F18.swift in Sources */,
 				CE3BFFA728E453260014A752 /* Sun.swift in Sources */,
 				CE7F483A28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE7F48D328BCB4DD0082B197 /* GameView.swift in Sources */,
@@ -935,6 +1019,7 @@
 				CEAB38592981081E0087F7CB /* InstancedShaders.metal in Sources */,
 				CE3BFF4C28E1B20D0014A752 /* GameTime.swift in Sources */,
 				CEAB384B297FB3720087F7CB /* GBufferTextures.swift in Sources */,
+				CE2ED2B92998A4CF00C81F47 /* F18.swift in Sources */,
 				CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CE3E526428E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
 				CE3BFF5928E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
@@ -948,6 +1033,7 @@
 				CE3BFFA828E453260014A752 /* Sun.swift in Sources */,
 				CEFC6F27296B61CA009B692B /* Line.swift in Sources */,
 				CE2ED25A299223A900C81F47 /* Mesh.swift in Sources */,
+				CE2ED29A2998A37F00C81F47 /* Aircraft.swift in Sources */,
 				CE886A3D2983BF210013062D /* Skybox.metal in Sources */,
 				CE3BFF6A28E1B4C10014A752 /* Assets.swift in Sources */,
 				CE7F484728B770EB0082B197 /* MathUtils.swift in Sources */,
@@ -958,7 +1044,7 @@
 				CEFC6E3229531C0C009B692B /* Triangle.swift in Sources */,
 				CE886A402983BFB30013062D /* PointLights.metal in Sources */,
 				CE3BFFA028E452480014A752 /* DebugCamera.swift in Sources */,
-				CE56921928EA9F7B00F6B42C /* F16Camera.swift in Sources */,
+				CE56921928EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
 				CE3BFF8328E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CE3BFF7B28E2FC270014A752 /* SandboxScene.swift in Sources */,
 				CE2ED25E299223E900C81F47 /* SubMesh.swift in Sources */,
@@ -1014,6 +1100,7 @@
 				CE7F484028B770B00082B197 /* Colors.swift in Sources */,
 				CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CE7F485028B771550082B197 /* TimeIt.swift in Sources */,
+				CE2ED29B2998A38000C81F47 /* Aircraft.swift in Sources */,
 				CE3BFF5A28E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
 				CE886A3C2983BF1B0013062D /* Skybox.metal in Sources */,
 				CE3BFF8C28E2FDB20014A752 /* InstancedGameObject.swift in Sources */,
@@ -1052,7 +1139,7 @@
 				CE3BFF8028E2FCF50014A752 /* Node.swift in Sources */,
 				CE3BFF3A28E0599F0014A752 /* MetalTypes.swift in Sources */,
 				CE3BFF3828E059950014A752 /* Keycodes.swift in Sources */,
-				CE56921A28EA9F7B00F6B42C /* F16Camera.swift in Sources */,
+				CE56921A28EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
 				CE3BFFA128E452480014A752 /* DebugCamera.swift in Sources */,
 				CE3BFF3F28E059B60014A752 /* InstancedShaders.metal in Sources */,
 				CEAB3842297CDE770087F7CB /* ShadowShaders.metal in Sources */,
@@ -1065,6 +1152,7 @@
 				CEFC6F24296B4200009B692B /* Sphere.swift in Sources */,
 				CE7F483828B76FE30082B197 /* Shaders.metal in Sources */,
 				CE2ED264299394E500C81F47 /* ModelIO+Extensions.swift in Sources */,
+				CE2ED2BA2998A4D000C81F47 /* F18.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

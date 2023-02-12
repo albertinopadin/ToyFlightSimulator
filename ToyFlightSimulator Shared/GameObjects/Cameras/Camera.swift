@@ -9,7 +9,7 @@ import simd
 
 enum CameraType {
     case Debug
-    case F16Cam
+    case Attached
 }
 
 class Camera: GameObject {

@@ -1,5 +1,5 @@
 //
-//  F16Camera.swift
+//  AttachedCamera.swift
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 10/2/22.
@@ -7,7 +7,7 @@
 
 import simd
 
-class F16Camera: Camera {
+class AttachedCamera: Camera {
     private var _lastPosition = float3(0, 0, 0)
     private var _lastRotation = float3(0, 0, 0)
     
@@ -26,7 +26,7 @@ class F16Camera: Camera {
     public var positionOffset: float3 = float3(0, 0, 0)
     
     init() {
-        super.init(name: "F16Camera", cameraType: .F16Cam)
+        super.init(name: "AttachedCamera", cameraType: .Attached)
         _projectionMatrix = matrix_float4x4.perspective(degreesFov: 45.0,
                                                         aspectRatio: Renderer.AspectRatio,
                                                         near: 0.1,
