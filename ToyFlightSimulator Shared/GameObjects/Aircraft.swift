@@ -11,8 +11,8 @@ class Aircraft: GameObject {
     private var _camera: AttachedCamera?
     private static let _defaultCameraPositionOffset = float3(0, 2, 4)
     
-    private var _moveSpeed: Float = 4.0
-    private var _turnSpeed: Float = 2.0
+    private var _moveSpeed: Float = 25.0
+    private var _turnSpeed: Float = 4.0
     
     private var _lastPosition = float3(0, 0, 0)
     private var _lastRotation = float3(0, 0, 0)
@@ -25,12 +25,15 @@ class Aircraft: GameObject {
          meshType: MeshType,
          renderPipelineStateType: RenderPipelineStateType,
          camera: AttachedCamera,
-         cameraOffset: float3 = _defaultCameraPositionOffset) {
+         cameraOffset: float3 = _defaultCameraPositionOffset,
+         scale: Float = 1.0) {
         _camera = camera
         _camera?.setPosition(cameraOffset)
         _camera?.positionOffset = cameraOffset
         _camera?.setRotationX(Float(-15).toRadians)
+        _camera?.setScale(1/scale)  // Set the inverse of parent scale to preserve view matrix
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
+        modelMatrix.scale(axis: float3(repeating: scale))  // Scale model matrix only once, on init
         addChild(camera)
         
         // Results in gimbal lock and can't rotate on Z axis

@@ -14,11 +14,12 @@ class F18: Aircraft {
         super.init(name: "F-18", meshType: .F18, renderPipelineStateType: .OpaqueMaterial)
     }
     
-    init(camera: AttachedCamera) {
+    init(camera: AttachedCamera, scale: Float = 0.5) {
         super.init(name: "F-18",
                    meshType: .F18,
                    renderPipelineStateType: .OpaqueMaterial,
                    camera: camera,
-                   cameraOffset: _cameraPositionOffset)
+                   cameraOffset: _cameraPositionOffset,
+                   scale: scale)
     }
 }

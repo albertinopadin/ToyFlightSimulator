@@ -26,7 +26,6 @@ class FlightboxScene: Scene {
         addCamera(attachedCamera)
         f18.setPositionZ(4)
         f18.setPositionY(10)
-//        f18.setScale(0.1)  // TODO: Figure out why this isn't working for Aircraft
         addChild(f18)
         
 //        let f16Sphere = Sphere()
