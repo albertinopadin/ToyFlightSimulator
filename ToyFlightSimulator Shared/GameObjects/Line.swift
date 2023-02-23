@@ -25,7 +25,7 @@ class Line: GameObject {
         }
     }
     
-    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, applyMaterials: Bool) {
         super.doRender(renderCommandEncoder)
         renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
         renderCommandEncoder.drawPrimitives(type: .lineStrip, vertexStart: 0, vertexCount: _vertices.count)

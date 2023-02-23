@@ -53,7 +53,7 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(DirectionalLightingRenderPipelineState(), forKey: .DirectionalLighting)
         _library.updateValue(LightMaskRenderPipelineState(), forKey: .LightMask)
         _library.updateValue(PointLightingRenderPipelineState(), forKey: .PointLight)
-//        _library.updateValue(SkyboxRenderPipelineState(), forKey: .Skybox)
+        _library.updateValue(SkyboxRenderPipelineState(), forKey: .Skybox)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {

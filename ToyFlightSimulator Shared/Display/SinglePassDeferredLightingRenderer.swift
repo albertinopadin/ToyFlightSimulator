@@ -7,7 +7,7 @@
 
 import MetalKit
 
-class SinglePassDeferredRenderer: Renderer {
+class SinglePassDeferredLightingRenderer: Renderer {
     // Create quad for fullscreen composition drawing
     private let _quadVertices: [TFSSimpleVertex] = [
         .init(position: .init(x: -1, y: -1)),
@@ -156,19 +156,28 @@ class SinglePassDeferredRenderer: Renderer {
         }
     }
     
-//    func encodeSkyboxStage(using renderEncoder: MTLRenderCommandEncoder) {
-//        encodeStage(using: renderEncoder, label: "Skybox Stage") {
-//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Skybox])
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
-//            renderEncoder.setCullMode(.front)
-//            
-////            renderEncoder.setVertexBuffer(scene.frameData, offset: 0, index: Int(AAPLBufferFrameData.rawValue))
-////            renderEncoder.setFragmentTexture(scene.skyMap, index: Int(AAPLTextureIndexBaseColor.rawValue))
-////
-////            renderEncoder.draw(meshes: [scene.skyMesh],
-////                               requiresMaterials: false)
+    func encodeSkyboxStage(using renderEncoder: MTLRenderCommandEncoder) {
+        encodeStage(using: renderEncoder, label: "Skybox Stage") {
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Skybox])
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
+            renderEncoder.setCullMode(.front)
+
+//            renderEncoder.setVertexBuffer(scene.frameData, offset: 0, index: Int(AAPLBufferFrameData.rawValue))
+//            renderEncoder.setFragmentTexture(scene.skyMap, index: Int(AAPLTextureIndexBaseColor.rawValue))
+//
+//            renderEncoder.draw(meshes: [scene.skyMesh],
+//                               requiresMaterials: false)
+            
+            SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
+            SceneManager.Render(renderCommandEncoder: renderEncoder, renderPipelineStateType: .Skybox, applyMaterials: false)
+        }
+        
+//        encodeStage(using: renderEncoder, label: "SkySphere") {
+//            renderEncoder.setCullMode(.none)
+//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
+//            SceneManager.Render(renderCommandEncoder: renderEncoder, renderPipelineStateType: .SkySphere)
 //        }
-//    }
+    }
     
     func encodeShadowMapPass(into commandBuffer: MTLCommandBuffer) {
         encodePass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Map Pass") { renderEncoder in
@@ -207,7 +216,7 @@ class SinglePassDeferredRenderer: Renderer {
                 encodeDirectionalLightingStage(using: renderEncoder)
 //                encodeLightMaskStage(using: renderEncoder)
 //                encodePointLightStage(using: renderEncoder)
-//                encodeSkyboxStage(using: renderEncoder)
+                encodeSkyboxStage(using: renderEncoder)
             }
         }
         

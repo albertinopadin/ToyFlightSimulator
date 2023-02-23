@@ -11,10 +11,16 @@ using namespace metal;
 #include "TFSShaderTypes.h"
 #include "Shared.metal"
 
+//struct SkyboxVertex
+//{
+//    float4 position [[ attribute(TFSVertexAttributePosition) ]];
+//    float3 normal   [[ attribute(TFSVertexAttributeNormal) ]];
+//};
+
 struct SkyboxVertex
 {
-    float4 position [[ attribute(TFSVertexAttributePosition) ]];
-    float3 normal   [[ attribute(TFSVertexAttributeNormal) ]];
+    float4 position [[ attribute(0) ]];
+    float3 normal   [[ attribute(1) ]];
 };
 
 struct SkyboxInOut
@@ -25,12 +31,15 @@ struct SkyboxInOut
 
 vertex SkyboxInOut skybox_vertex(SkyboxVertex in [[ stage_in ]],
                                  constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-                                 constant ModelConstants &modelConstants [[ buffer(2) ]])
+                                 constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]])
 {
     SkyboxInOut out;
     float4 worldPosition = modelConstants.modelMatrix * in.position;
     out.position = sceneConstants.projectionMatrix * sceneConstants.skyViewMatrix * worldPosition;
-    out.texcoord = in.normal;
+//    out.position = sceneConstants.projectionMatrix * worldPosition;
+//    out.position = sceneConstants.projectionMatrix * sceneConstants.skyViewMatrix * in.position;
+//    out.texcoord = in.normal;
+    out.texcoord = in.position.xyz;
     return out;
 }
 

@@ -38,7 +38,10 @@ class FlightboxScene: Scene {
 //        f16Sphere.setScale(0.5)
 //        f16.addChild(f16Sphere)
         
-        let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+//        let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+//        addChild(sky)
+        
+        let sky = SkyBox(skyBoxTextureType: .SkyMap)
         addChild(sky)
         
         sun.setPosition(1, 25, 5)

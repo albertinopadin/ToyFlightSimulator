@@ -17,7 +17,7 @@ enum LightType: UInt32 {
 class LightObject: GameObject {
     var type: LightType = .Directional
     var lightData = LightData()
-    let projectionMatrix: float4x4 = Transform.orthographicProjection(-20, 20, -20, 20, -20, 100)
+    let projectionMatrix: float4x4 = Transform.orthographicProjection(-100, 100, -100, 100, -100, 100)
     var viewMatrix: float4x4 {
         Transform.look(eye: self.modelMatrix.columns.3.xyz, target: .zero, up: Y_AXIS)
     }

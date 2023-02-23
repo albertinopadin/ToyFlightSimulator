@@ -20,7 +20,9 @@ class Renderer: NSObject, MTKViewDelegate {
     var baseRenderPassDescriptor: MTLRenderPassDescriptor!
     
     let shadowMap: MTLTexture!
-    let shadowMapSize: Int = 4096
+//    let shadowMapSize: Int = 4096
+//    let shadowMapSize: Int = 8192
+    let shadowMapSize: Int = 16_384
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor!
     
     init(_ mtkView: MTKView) {

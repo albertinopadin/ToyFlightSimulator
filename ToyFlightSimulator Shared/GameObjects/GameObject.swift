@@ -48,7 +48,7 @@ class GameObject: Node, Renderable {
         renderEncoder.popDebugGroup()
     }
     
-    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
         encodeRender(using: renderCommandEncoder, label: "Rendering \(self.getName())") {
             // Vertex Shader
             renderCommandEncoder.setVertexBytes(&_modelConstants,
@@ -57,6 +57,7 @@ class GameObject: Node, Renderable {
             
             _mesh.drawPrimitives(renderCommandEncoder,
                                  material: _material,
+                                 applyMaterials: applyMaterials,
                                  baseColorTextureType: _baseColorTextureType,
                                  normalMapTextureType: _normalMapTextureType,
                                  specularTextureType: _specularTextureType)

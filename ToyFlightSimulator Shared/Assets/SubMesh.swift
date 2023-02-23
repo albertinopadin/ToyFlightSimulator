@@ -66,11 +66,11 @@ class Submesh {
                 .textureStorageMode: MTLStorageMode.private.rawValue
             ]
             
-            print("Property type: \(property.type)")
+//            print("Property type: \(property.type)")
             
             switch property.type {
             case .string:
-                print("Material property is string!")
+//                print("Material property is string!")
                 if let stringValue = property.stringValue {
                     newTexture = try? textureLoader.newTexture(name: stringValue,
                                                                 scaleFactor: 1.0,
@@ -78,17 +78,17 @@ class Submesh {
                                                                 options: options)
                 }
             case .URL:
-                print("Material property is url!")
+//                print("Material property is url!")
                 if let textureURL = property.urlValue {
                     newTexture = try? textureLoader.newTexture(URL: textureURL, options: options)
                 }
             case .texture:
-                print("Material property is texture!")
+//                print("Material property is texture!")
                 let sourceTexture = property.textureSamplerValue!.texture!
-                print("sourceTexture: \(sourceTexture.debugDescription)")
+//                print("sourceTexture: \(sourceTexture.debugDescription)")
                 newTexture = try? textureLoader.newTexture(texture: sourceTexture, options: options)
             case .color:
-                print("Material property is color!")
+//                print("Material property is color!")
                 let color = float4(Float(property.color!.components![0]),
                                    Float(property.color!.components![1]),
                                    Float(property.color!.components![2]),

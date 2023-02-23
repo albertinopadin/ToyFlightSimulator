@@ -18,6 +18,7 @@ enum MeshType {
     case Quad
     
     case SkySphere
+    case Skybox
     
     case F16
     case F18
@@ -32,6 +33,7 @@ class MeshLibrary: Library<MeshType, Mesh> {
         _library.updateValue(QuadMesh(), forKey: .Quad_Custom)
         _library.updateValue(CubeMesh(), forKey: .Cube_Custom)
         _library.updateValue(SphereMesh(), forKey: .Sphere_Custom)
+        _library.updateValue(SkyboxMesh(), forKey: .Skybox)
         
         _library.updateValue(Mesh(modelName: "sphere"), forKey: .Sphere)
         _library.updateValue(Mesh(modelName: "quad"), forKey: .Quad)
@@ -248,11 +250,11 @@ class CubeMesh: Mesh {
 }
 
 class SphereMesh: Mesh {
-    private var color: float4
+    private var _color: float4
     
     init(radius: Float = 1.0, color: float4 = BLUE_COLOR) {
         let diameter = radius * 2
-        self.color = color
+        _color = color
         
         let allocator = MTKMeshBufferAllocator(device: Engine.Device)
         let mdlSphere = MDLMesh(sphereWithExtent: float3(diameter, diameter, diameter),
@@ -268,20 +270,34 @@ class SphereMesh: Mesh {
         for meshBuffer in mtkMesh.vertexBuffers {
             for i in 0..<mtkMesh.vertexCount {
                 let colorPosition = (i * vertexLayoutStride) + float4.stride
-                meshBuffer.buffer.contents().advanced(by: colorPosition).copyMemory(from: &self.color, byteCount: float4.stride)
+                meshBuffer.buffer.contents().advanced(by: colorPosition).copyMemory(from: &_color, byteCount: float4.stride)
             }
         }
         
         super.init(mtkMesh: mtkMesh, mdlMesh: mdlSphere)
+    }
+}
+
+class Icosahedron: Mesh {
+    
+}
+
+class SkyboxMesh: Mesh {
+    override init() {
+        let allocator = MTKMeshBufferAllocator(device: Engine.Device)
+        let sphereMDLMesh = MDLMesh.newEllipsoid(withRadii: float3(repeating: 150),
+                                                 radialSegments: 20,
+                                                 verticalSegments: 20,
+                                                 geometryType: .triangles,
+                                                 inwardNormals: false,
+                                                 hemisphere: false,
+                                                 allocator: allocator)
+        let sphereDescriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Skybox])
+        sphereDescriptor.attribute(0).name = MDLVertexAttributePosition
+        sphereDescriptor.attribute(1).name = MDLVertexAttributeNormal
         
-//        super.init(mdlMesh: mdlSphere, vertexDescriptor: Graphics.MDLVertexDescriptors[.Base])
-//
-//        let vertexLayoutStride = (metalKitMesh!.vertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride
-//        for meshBuffer in metalKitMesh!.vertexBuffers {
-//            for i in 0..<metalKitMesh!.vertexCount {
-//                let colorPosition = (i * vertexLayoutStride) + float4.stride
-//                meshBuffer.buffer.contents().advanced(by: colorPosition).copyMemory(from: &self.color, byteCount: float4.stride)
-//            }
-//        }
+        sphereMDLMesh.vertexDescriptor = sphereDescriptor
+        let mtkMesh = try! MTKMesh(mesh: sphereMDLMesh, device: Engine.Device)
+        super.init(mtkMesh: mtkMesh, mdlMesh: sphereMDLMesh, addTangentBases: false)
     }
 }

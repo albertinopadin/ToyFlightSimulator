@@ -86,6 +86,7 @@ class OITRenderer: Renderer {
             }
             
             SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
+            SceneManager.SetLightData(renderCommandEncoder: renderEncoder)
             drawOpaqueObjects(renderCommandEncoder: renderEncoder)
             drawTransparentObjects(renderCommandEncoder: renderEncoder)
             

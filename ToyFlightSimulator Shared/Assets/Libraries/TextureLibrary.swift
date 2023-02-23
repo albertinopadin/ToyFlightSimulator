@@ -17,18 +17,15 @@ enum TextureType {
     // Sky Sphere
     case Clouds_Skysphere
     
-    case F16
-    case F16Canopy
+    case SkyMap
 }
 
 class TextureLibrary: Library<TextureType, MTLTexture> {
     private var _library: [TextureType: Texture] = [:]
     
     override func makeLibrary() {
-        // How can I load multiple textures for single object/mesh ???
-//        _library.updateValue(Texture("F16s", ext: "bmp", origin: .bottomLeft), forKey: .F16)
-//        _library.updateValue(Texture("F16t", ext: "bmp", origin: .bottomLeft), forKey: .F16Canopy)
         _library.updateValue(Texture("clouds", origin: .bottomLeft), forKey: .Clouds_Skysphere)
+        _library.updateValue(Texture(name: "SkyMap", label: "Sky Map"), forKey: .SkyMap)
     }
     
     func setTexture(textureType: TextureType, texture: MTLTexture) {
@@ -51,6 +48,25 @@ private class Texture {
         let textureLoader = TextureLoader(textureName: textureName, textureExtension: ext, origin: origin)
         let texture: MTLTexture = textureLoader.loadTextureFromBundle()
         setTexture(texture)
+    }
+    
+    // TODO: Clean this up later
+    init(name: String, label: String, scale: CGFloat = 1.0) {
+        let textureLoader = MTKTextureLoader(device: Engine.Device)
+        let options: [MTKTextureLoader.Option: Any] = [
+            .textureUsage: MTLTextureUsage.shaderRead.rawValue,
+            .textureStorageMode: MTLStorageMode.private.rawValue
+        ]
+        
+        var result: MTLTexture!
+        do {
+            result = try textureLoader.newTexture(name: name, scaleFactor: scale, bundle: nil, options: options)
+            result.label = label
+        } catch {
+            fatalError("Failed to create texture: \(error.localizedDescription)")
+        }
+        
+        self.texture = result
     }
             
     func setTexture(_ texture: MTLTexture) {

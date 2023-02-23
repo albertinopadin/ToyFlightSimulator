@@ -79,10 +79,17 @@ class Scene: Node {
                                              index: Int(TFSBufferIndexLightsData.rawValue))
     }
     
-    override func render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
-        renderCommandEncoder.pushDebugGroup("Rendering \(renderPipelineStateType) Scene")
+    func setLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
         _lightManager.setLightData(renderCommandEncoder)
-        super.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
+    }
+    
+    override func render(renderCommandEncoder: MTLRenderCommandEncoder,
+                         renderPipelineStateType: RenderPipelineStateType,
+                         applyMaterials: Bool = true) {
+        renderCommandEncoder.pushDebugGroup("Rendering \(renderPipelineStateType) Scene")
+        super.render(renderCommandEncoder: renderCommandEncoder,
+                     renderPipelineStateType: renderPipelineStateType,
+                     applyMaterials: applyMaterials)
         renderCommandEncoder.popDebugGroup()
     }
 }

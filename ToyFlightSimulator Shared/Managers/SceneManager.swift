@@ -42,9 +42,17 @@ class SceneManager {
         _currentScene.setPointLightConstants(renderCommandEncoder: renderCommandEncoder)
     }
     
-    public static func Render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
+    public static func SetLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
+        _currentScene.setLightData(renderCommandEncoder: renderCommandEncoder)
+    }
+    
+    public static func Render(renderCommandEncoder: MTLRenderCommandEncoder,
+                              renderPipelineStateType: RenderPipelineStateType,
+                              applyMaterials: Bool = true) {
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
-        _currentScene.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
+        _currentScene.render(renderCommandEncoder: renderCommandEncoder,
+                             renderPipelineStateType: renderPipelineStateType,
+                             applyMaterials: applyMaterials)
     }
     
     public static func RenderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder) {

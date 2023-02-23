@@ -38,7 +38,7 @@ class GameViewController: UIViewController {
         
         Engine.Start(device: defaultDevice)
 //        renderer = OITRenderer(gameView)  // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
-        renderer = SinglePassDeferredRenderer(gameView)
+        renderer = SinglePassDeferredLightingRenderer(gameView)
         SceneManager.SetScene(Preferences.StartingSceneType)
     }
 }

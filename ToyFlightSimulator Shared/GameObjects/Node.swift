@@ -69,19 +69,24 @@ class Node {
         }
     }
     
-    func render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
+    func render(renderCommandEncoder: MTLRenderCommandEncoder,
+                renderPipelineStateType: RenderPipelineStateType,
+                applyMaterials: Bool = true) {
         if _renderPipelineStateType == renderPipelineStateType, let renderable = self as? Renderable {
-            renderable.doRender(renderCommandEncoder)
+            renderable.doRender(renderCommandEncoder, applyMaterials: applyMaterials)
         }
         
         for child in children {
-            child.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
+            child.render(renderCommandEncoder: renderCommandEncoder,
+                         renderPipelineStateType: renderPipelineStateType,
+                         applyMaterials: applyMaterials)
         }
     }
     
     func renderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
-        if _gBufferRenderPipelineStateType == gBufferRPS, let renderable = self as? Renderable {
-            renderable.doRender(renderCommandEncoder)
+        if _gBufferRenderPipelineStateType == gBufferRPS, _renderPipelineStateType != .Skybox,
+            let renderable = self as? Renderable {
+            renderable.doRender(renderCommandEncoder, applyMaterials: true)
         }
         
         for child in children {
@@ -90,7 +95,7 @@ class Node {
     }
     
     func renderShadows(renderCommandEncoder: MTLRenderCommandEncoder) {
-        if let renderable = self as? Renderable {
+        if _renderPipelineStateType != .Skybox, let renderable = self as? Renderable {
             renderable.doRenderShadow(renderCommandEncoder)
         }
         

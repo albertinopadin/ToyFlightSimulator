@@ -104,6 +104,6 @@ public struct SkyboxVertexDescriptor: VertexDescriptor {
         // Normal
         addAttribute(format: .float3, bufferIndex: 0)
         
-        vertexDescriptor.layouts[0].stride = 12
+        vertexDescriptor.layouts[0].stride = 24
     }
 }

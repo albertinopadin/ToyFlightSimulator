@@ -26,6 +26,16 @@ class Mesh {
         createMeshFromModel(modelName)
     }
     
+//    init(metalKitMesh: MTKMesh) {
+//        self.metalKitMesh = metalKitMesh
+//
+//        var submeshes = [Submesh]()
+//        for metalKitSubMesh in metalKitMesh.submeshes {
+//            submeshes.append(Submesh(metalKitSubmesh: metalKitSubMesh))
+//        }
+//        _submeshes = submeshes
+//    }
+    
     init(mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor) {
         mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
                                 normalAttributeNamed: MDLVertexAttributeNormal,
@@ -53,14 +63,16 @@ class Mesh {
         print("Num submeshes for \(mdlMesh.name): \(_submeshes.count)")
     }
     
-    init(mtkMesh: MTKMesh, mdlMesh: MDLMesh) {
-        mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                                normalAttributeNamed: MDLVertexAttributeNormal,
-                                tangentAttributeNamed: MDLVertexAttributeTangent)
-        
-        mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                                tangentAttributeNamed: MDLVertexAttributeTangent,
-                                bitangentAttributeNamed: MDLVertexAttributeBitangent)
+    init(mtkMesh: MTKMesh, mdlMesh: MDLMesh, addTangentBases: Bool = true) {
+        if addTangentBases {
+            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                    normalAttributeNamed: MDLVertexAttributeNormal,
+                                    tangentAttributeNamed: MDLVertexAttributeTangent)
+            
+            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                    tangentAttributeNamed: MDLVertexAttributeTangent,
+                                    bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        }
         
         self.metalKitMesh = mtkMesh
         self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
@@ -162,6 +174,7 @@ class Mesh {
     
     func drawPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder,
                         material: Material? = nil,
+                        applyMaterials: Bool = true,
                         baseColorTextureType: TextureType = .None,
                         normalMapTextureType: TextureType = .None,
                         specularTextureType: TextureType = .None) {
@@ -170,11 +183,13 @@ class Mesh {
             
             if _submeshes.count > 0 {
                 for submesh in _submeshes {
-                    submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
-                                          customBaseColorTextureType: baseColorTextureType,
-                                          customNormalMapTextureType: normalMapTextureType,
-                                          customSpecularTextureType: specularTextureType)
-                    submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
+                    if applyMaterials {
+                        submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
+                                              customBaseColorTextureType: baseColorTextureType,
+                                              customNormalMapTextureType: normalMapTextureType,
+                                              customSpecularTextureType: specularTextureType)
+                        submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
+                    }
                     
                     renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
                                                                indexCount: submesh.indexCount,
@@ -184,7 +199,7 @@ class Mesh {
                                                                instanceCount: _instanceCount)
                 }
             } else {
-                if let material {
+                if applyMaterials, let material {
                     applyMaterial(renderCommandEncoder: renderCommandEncoder, material: material)
                 }
                 
@@ -198,6 +213,7 @@ class Mesh {
         for child in _childMeshes {
             child.drawPrimitives(renderCommandEncoder,
                                  material: material,
+                                 applyMaterials: applyMaterials,
                                  baseColorTextureType: baseColorTextureType,
                                  normalMapTextureType: normalMapTextureType,
                                  specularTextureType: specularTextureType)

@@ -64,13 +64,14 @@ class GameViewController: NSViewController {
         gameView.device = defaultDevice
         gameView.clearColor = Preferences.ClearColor
         gameView.colorPixelFormat = Preferences.MainPixelFormat
-        gameView.depthStencilPixelFormat = .depth32Float_stencil8
+//        gameView.depthStencilPixelFormat = .depth32Float_stencil8
         gameView.framebufferOnly = false
         gameView.preferredFramesPerSecond = 120
         
         Engine.Start(device: defaultDevice)
 //        renderer = OITRenderer(gameView)  // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
-        renderer = SinglePassDeferredRenderer(gameView)
+//        renderer = SinglePassDeferredLightingRenderer(gameView)
+        renderer = initRenderer(type: .SinglePassDeferredLighting, gView: gameView)
         SceneManager.SetScene(Preferences.StartingSceneType)
         
         
@@ -83,6 +84,16 @@ class GameViewController: NSViewController {
 //        }
 
         registerControllerObservers()
+    }
+    
+    func initRenderer(type: RendererType, gView: GameView) -> Renderer {
+        switch type {
+            case .OrderIndependentTransparency:
+                return OITRenderer(gameView)
+            case .SinglePassDeferredLighting:
+                gView.depthStencilPixelFormat = .depth32Float_stencil8
+                return SinglePassDeferredLightingRenderer(gameView)
+        }
     }
 
 //    func updateCamera(_ timestep: Float) {

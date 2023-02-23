@@ -51,7 +51,7 @@ class InstancedGameObject: Node {
 }
 
 extension InstancedGameObject: Renderable {
-    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Instanced])
         renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
         

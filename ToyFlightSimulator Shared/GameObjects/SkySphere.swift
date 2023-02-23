@@ -13,12 +13,15 @@ class SkySphere: GameObject {
     init(skySphereTextureType: TextureType) {
         super.init(name: "SkySphere", meshType: .SkySphere, renderPipelineStateType: .SkySphere)
         _skySphereTextureType = skySphereTextureType
-        
         setScale(1000)
     }
     
-    override func render(renderCommandEncoder: MTLRenderCommandEncoder, renderPipelineStateType: RenderPipelineStateType) {
+    override func render(renderCommandEncoder: MTLRenderCommandEncoder,
+                         renderPipelineStateType: RenderPipelineStateType,
+                         applyMaterials: Bool = true) {
         renderCommandEncoder.setFragmentTexture(Assets.Textures[_skySphereTextureType], index: 10)
-        super.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: renderPipelineStateType)
+        super.render(renderCommandEncoder: renderCommandEncoder,
+                     renderPipelineStateType: renderPipelineStateType,
+                     applyMaterials: applyMaterials)
     }
 }
