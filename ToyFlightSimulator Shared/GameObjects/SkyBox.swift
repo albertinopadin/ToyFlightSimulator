@@ -13,18 +13,18 @@ class SkyBox: GameObject {
     init(skyBoxTextureType: TextureType) {
         super.init(name: "SkyBox", meshType: .Skybox, renderPipelineStateType: .Skybox)
         _skyBoxTextureType = skyBoxTextureType
-        setScale(25)
-        setPosition(0, 0, 0)
+//        setScale(25)
+//        setScale(0.5)
+        setPosition(0, 0, -10)
     }
     
     override func render(renderCommandEncoder: MTLRenderCommandEncoder,
                          renderPipelineStateType: RenderPipelineStateType,
                          applyMaterials: Bool = false) {
-        if renderPipelineStateType == self._renderPipelineStateType {
-            renderCommandEncoder.setFragmentTexture(Assets.Textures[_skyBoxTextureType], index: Int(TFSTextureIndexBaseColor.rawValue))
-            super.render(renderCommandEncoder: renderCommandEncoder,
-                         renderPipelineStateType: renderPipelineStateType,
-                         applyMaterials: applyMaterials)
-        }
+        renderCommandEncoder.setFragmentTexture(Assets.Textures[_skyBoxTextureType],
+                                                index: Int(TFSTextureIndexBaseColor.rawValue))
+        super.render(renderCommandEncoder: renderCommandEncoder,
+                     renderPipelineStateType: renderPipelineStateType,
+                     applyMaterials: applyMaterials)
     }
 }

@@ -285,7 +285,7 @@ class Icosahedron: Mesh {
 class SkyboxMesh: Mesh {
     override init() {
         let allocator = MTKMeshBufferAllocator(device: Engine.Device)
-        let sphereMDLMesh = MDLMesh.newEllipsoid(withRadii: float3(repeating: 150),
+        let sphereMDLMesh = MDLMesh.newEllipsoid(withRadii: float3(repeating: 150),  // 150
                                                  radialSegments: 20,
                                                  verticalSegments: 20,
                                                  geometryType: .triangles,

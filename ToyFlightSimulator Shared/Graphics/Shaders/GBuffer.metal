@@ -21,9 +21,9 @@ typedef struct
 {
     float3 position  [[ attribute(TFSVertexAttributePosition) ]];
     float2 tex_coord [[ attribute(TFSVertexAttributeTexcoord) ]];
-    half3 normal     [[ attribute(TFSVertexAttributeNormal) ]];
-    half3 tangent    [[ attribute(TFSVertexAttributeTangent) ]];
-    half3 bitangent  [[ attribute(TFSVertexAttributeBitangent) ]];
+    half3  normal    [[ attribute(TFSVertexAttributeNormal) ]];
+    half3  tangent   [[ attribute(TFSVertexAttributeTangent) ]];
+    half3  bitangent [[ attribute(TFSVertexAttributeBitangent) ]];
 } DescriptorDefinedVertex;
 
 // Vertex shader outputs and per-fragment inputs.  Includes clip-space position and vertex outputs

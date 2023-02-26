@@ -44,6 +44,12 @@ extension VertexDescriptor {
         attributeIndex += 1
     }
     
+    mutating func addAttribute(attributeIdx: Int, format: MTLVertexFormat, bufferIndex: Int, m_offset: Int) {
+        vertexDescriptor.attributes[attributeIdx].format = format
+        vertexDescriptor.attributes[attributeIdx].bufferIndex = bufferIndex
+        vertexDescriptor.attributes[attributeIdx].offset = m_offset
+    }
+    
     func getOffsetForFormat(_ format: MTLVertexFormat) -> Int {
         switch format {
         case .float2:
@@ -99,11 +105,82 @@ public struct SkyboxVertexDescriptor: VertexDescriptor {
         vertexDescriptor = MTLVertexDescriptor()
         
         // Position
-        addAttribute(format: .float3, bufferIndex: 0)
+//        addAttribute(format: .float3, bufferIndex: 0)
+//
+//        // Normal
+//        addAttribute(format: .float3, bufferIndex: 0)
+//
+//        vertexDescriptor.layouts[0].stride = 24
         
-        // Normal
-        addAttribute(format: .float3, bufferIndex: 0)
+//        let position = vertexDescriptor.attributes[Int(TFSVertexAttributePosition.rawValue)]!
+//        position.format = .float3
+//        position.offset = 0
+//        position.bufferIndex = Int(TFSBufferIndexMeshPositions.rawValue)
+//        
+//        vertexDescriptor.layouts[Int(TFSBufferIndexMeshPositions.rawValue)].stride = 12
+//        
+//        let normals = vertexDescriptor.attributes[Int(TFSVertexAttributeNormal.rawValue)]!
+//        normals.format = .float3
+//        normals.offset = 0
+//        normals.bufferIndex = Int(TFSBufferIndexMeshGenerics.rawValue)
+//        
+//        vertexDescriptor.layouts[Int(TFSBufferIndexMeshGenerics.rawValue)].stride = 12
         
-        vertexDescriptor.layouts[0].stride = 24
+//        attributeIndex = 2
+        
+//        addAttribute(attributeIdx: Int(TFSVertexAttributePosition.rawValue),
+//                     format: .float3,
+//                     bufferIndex: Int(TFSBufferIndexMeshPositions.rawValue),
+//                     m_offset: 0)
+//        vertexDescriptor.layouts[Int(TFSBufferIndexMeshPositions.rawValue)].stride = 12
+//
+//        addAttribute(attributeIdx: Int(TFSVertexAttributeNormal.rawValue),
+//                     format: .float3,
+//                     bufferIndex: Int(TFSBufferIndexMeshGenerics.rawValue),
+//                     m_offset: 0)
+//        vertexDescriptor.layouts[Int(TFSBufferIndexMeshGenerics.rawValue)].stride = 12
+        
+//        addAttribute(attributeIdx: 0,
+//                     format: .float3,
+//                     bufferIndex: 0,
+//                     m_offset: 0)
+//        vertexDescriptor.layouts[0].stride = 12
+//
+//        addAttribute(attributeIdx: 1,
+//                     format: .float3,
+//                     bufferIndex: 1,
+//                     m_offset: 0)
+//        vertexDescriptor.layouts[1].stride = 12
+        
+        addAttribute(attributeIdx: 0,
+                     format: .float3,
+                     bufferIndex: 0,
+                     m_offset: 0)
+
+        addAttribute(attributeIdx: 1,
+                     format: .float3,
+                     bufferIndex: 0,
+                     m_offset: getOffsetForFormat(.float3))
+
+        vertexDescriptor.layouts[0].stride = 36
+//
+//        attributeIndex = 2
+//        offset = getOffsetForFormat(.float3) * 2
+//        print("Skybox Vertex Descriptor offset: \(offset)")
+        
+//        addAttribute(attributeIdx: 0,
+//                     format: .float3,
+//                     bufferIndex: 0,
+//                     m_offset: 0)
+//        vertexDescriptor.layouts[0].stride = 16
+//
+//        addAttribute(attributeIdx: 1,
+//                     format: .float3,
+//                     bufferIndex: 1,
+//                     m_offset: 0)
+//        vertexDescriptor.layouts[1].stride = 16
+//
+//        attributeIndex = 2
+//        offset = getOffsetForFormat(.float3) * 2
     }
 }

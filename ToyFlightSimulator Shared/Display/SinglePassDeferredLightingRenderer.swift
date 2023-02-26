@@ -160,23 +160,12 @@ class SinglePassDeferredLightingRenderer: Renderer {
         encodeStage(using: renderEncoder, label: "Skybox Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Skybox])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
-            renderEncoder.setCullMode(.front)
-
-//            renderEncoder.setVertexBuffer(scene.frameData, offset: 0, index: Int(AAPLBufferFrameData.rawValue))
-//            renderEncoder.setFragmentTexture(scene.skyMap, index: Int(AAPLTextureIndexBaseColor.rawValue))
-//
-//            renderEncoder.draw(meshes: [scene.skyMesh],
-//                               requiresMaterials: false)
+//            renderEncoder.setCullMode(.front)
+//            renderEncoder.setCullMode(.back)  <-- This or not setting the cull mode works. WTF?
             
             SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
             SceneManager.Render(renderCommandEncoder: renderEncoder, renderPipelineStateType: .Skybox, applyMaterials: false)
         }
-        
-//        encodeStage(using: renderEncoder, label: "SkySphere") {
-//            renderEncoder.setCullMode(.none)
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
-//            SceneManager.Render(renderCommandEncoder: renderEncoder, renderPipelineStateType: .SkySphere)
-//        }
     }
     
     func encodeShadowMapPass(into commandBuffer: MTLCommandBuffer) {
