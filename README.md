@@ -14,3 +14,8 @@ Toy Flight Simulator implemented with Swift and Metal
 2/10/2023 - Implemented Shadow, GBuffer and Directional Lighting stages of Single-Pass Deferred Lighting Renderer, using Apple's [Rendering a Scene with Deferred Lighting in Swift example](https://developer.apple.com/documentation/metal/metal_sample_code_library/rendering_a_scene_with_deferred_lighting_in_swift)
 
 ![Deferred Lighting with Shadows v1](TFSDeferredLightingShadows.png)
+
+
+2/26/2023 - Implemented Skybox stage of Single-Pass Deferred Lighting Renderer; using new F/A-18F fighter jet model
+
+![Skybox & F-18](SPDL.png)
