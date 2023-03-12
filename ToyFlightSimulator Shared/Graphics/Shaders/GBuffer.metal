@@ -59,12 +59,17 @@ vertex ColorInOut gbuffer_vertex(VertexIn in [[ stage_in ]],
                         lightData.shadowViewProjectionMatrix *
                         worldPosition).xyz;
     
-    // Rotate tangents, bitangents, and normals by the normal matrix
-    half3x3 normalMatrix = half3x3(modelConstants.normalMatrix);
-    // Calculate tangent, bitangent and normal in eye's space
-    out.tangent = normalize(normalMatrix * half3(in.tangent));
-    out.bitangent = -normalize(normalMatrix * half3(in.bitangent));
-    out.normal = normalize(normalMatrix * half3(in.normal));
+//    // Rotate tangents, bitangents, and normals by the normal matrix
+//    half3x3 normalMatrix = half3x3(modelConstants.normalMatrix);
+//    // Calculate tangent, bitangent and normal in eye's space
+//    out.tangent = normalize(normalMatrix * half3(in.tangent));
+//    out.bitangent = -normalize(normalMatrix * half3(in.bitangent));
+//    out.normal = normalize(normalMatrix * half3(in.normal));
+    
+    // Seems to look better:
+    out.tangent = normalize(half3(in.tangent));
+    out.bitangent = -normalize(half3(in.bitangent));
+    out.normal = normalize(half3(in.normal));
 
     return out;
 }
@@ -121,20 +126,28 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut        in           [[
     half4 normal_sample;
     half specular_contrib;
     
+    // Testing
+    constexpr sampler linearSampler(mip_filter::linear,
+                                    mag_filter::linear,
+                                    min_filter::linear);
+    
     if (material.useMaterialColor) {
         base_color_sample = half4(material.color);
     } else if (material.useBaseTexture) {
-        base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord);
+//        base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord);
+        base_color_sample = baseColorMap.sample(linearSampler, in.tex_coord);
     }
     
     if (material.useNormalMapTexture) {
-        normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
+//        normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
+        normal_sample = normalMap.sample(linearSampler, in.tex_coord.xy);
     } else {
         normal_sample = half4(in.normal, 0.0);
     }
     
     if (material.useSpecularTexture) {
-        specular_contrib = specularMap.sample(sampler2d, in.tex_coord).r;
+//        specular_contrib = specularMap.sample(sampler2d, in.tex_coord).r;
+        specular_contrib = specularMap.sample(linearSampler, in.tex_coord).r;
     } else {
         specular_contrib = 1.0;
     }
