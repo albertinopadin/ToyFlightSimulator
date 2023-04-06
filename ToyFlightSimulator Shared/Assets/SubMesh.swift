@@ -9,6 +9,8 @@ import MetalKit
 
 // Index Information
 class Submesh {
+    public var name: String = "Submesh"
+    
     private var _indices: [UInt32] = []
     
     private var _indexCount: Int = 0
@@ -44,7 +46,8 @@ class Submesh {
         _indexType = mtkSubmesh.indexType
         _primitiveType = mtkSubmesh.primitiveType
         
-        print("Creating textures and material for \(mtkSubmesh.name)")
+        name = mtkSubmesh.name
+        print("[Submesh init] Creating textures and material for \(mtkSubmesh.name)")
         createTextures(mdlSubmesh.material!)
         createMaterial(mdlSubmesh.material!)
     }

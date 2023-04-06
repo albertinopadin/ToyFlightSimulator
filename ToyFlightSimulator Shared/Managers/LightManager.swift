@@ -30,6 +30,7 @@ class LightManager {
     }
     
     func getDirectionalLightData() -> LightData? {
+//        print("[getDirectionalLightData] number of light objects: \(_lightObjects.count)")
         for _lightObject in _lightObjects {
             if _lightObject.type == .Directional {
                 return _lightObject.lightData

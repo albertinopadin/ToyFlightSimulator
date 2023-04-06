@@ -8,15 +8,13 @@
 import MetalKit
 
 class GameObject: Node, Renderable {
-    private var _modelConstants = ModelConstants()
+    internal var _modelConstants = ModelConstants()
     private var _mesh: Mesh!
     
-    private var _material: Material? = nil
-    private var _baseColorTextureType: TextureType = .None
-    private var _normalMapTextureType: TextureType = .None
-    private var _specularTextureType: TextureType = .None
-    
-    var mesh: Mesh!
+    internal var _material: Material? = nil
+    internal var _baseColorTextureType: TextureType = .None
+    internal var _normalMapTextureType: TextureType = .None
+    internal var _specularTextureType: TextureType = .None
     
     init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         super.init(name: name)

@@ -10,6 +10,7 @@ import MetalKit
 enum SceneType {
     case Sandbox
     case Flightbox
+    case FreeCamFlightbox
 }
 
 class SceneManager {
@@ -21,6 +22,8 @@ class SceneManager {
             _currentScene = SandboxScene(name: "Sandbox")
         case .Flightbox:
             _currentScene = FlightboxScene(name: "Flightbox")
+        case .FreeCamFlightbox:
+            _currentScene = FreeCamFlightboxScene(name: "FreeCamFlightbox")
         }
     }
     

@@ -12,6 +12,7 @@ class F18: Aircraft {
     
     init() {
         super.init(name: "F-18", meshType: .F18, renderPipelineStateType: .OpaqueMaterial)
+        self.shouldUpdate = false  // Don't update when user moves camera
     }
     
     init(camera: AttachedCamera, scale: Float = 0.5) {

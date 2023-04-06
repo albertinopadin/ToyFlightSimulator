@@ -9,6 +9,7 @@ import MetalKit
 
 // Vertex Information
 class Mesh {
+    public var name: String = "Mesh"
     private var _vertices: [Vertex] = []
     private var _vertexCount: Int = 0
     private var _vertexBuffer: MTLBuffer! = nil
@@ -23,20 +24,13 @@ class Mesh {
     }
     
     init(modelName: String) {
+        name = modelName
         createMeshFromModel(modelName)
     }
     
-//    init(metalKitMesh: MTKMesh) {
-//        self.metalKitMesh = metalKitMesh
-//
-//        var submeshes = [Submesh]()
-//        for metalKitSubMesh in metalKitMesh.submeshes {
-//            submeshes.append(Submesh(metalKitSubmesh: metalKitSubMesh))
-//        }
-//        _submeshes = submeshes
-//    }
-    
     init(mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor) {
+        name = mdlMesh.name
+        
         mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
                                 normalAttributeNamed: MDLVertexAttributeNormal,
                                 tangentAttributeNamed: MDLVertexAttributeTangent)
@@ -48,6 +42,9 @@ class Mesh {
         mdlMesh.vertexDescriptor = vertexDescriptor
         do {
             metalKitMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
+            if metalKitMesh!.vertexBuffers.count > 1 {
+                print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
+            }
             self._vertexBuffer = metalKitMesh!.vertexBuffers[0].buffer
             self._vertexCount = metalKitMesh!.vertexCount
             for i in 0..<metalKitMesh!.submeshes.count {
@@ -64,6 +61,8 @@ class Mesh {
     }
     
     init(mtkMesh: MTKMesh, mdlMesh: MDLMesh, addTangentBases: Bool = true) {
+        name = mtkMesh.name
+        
         if addTangentBases {
             mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
                                     normalAttributeNamed: MDLVertexAttributeNormal,
@@ -75,6 +74,9 @@ class Mesh {
         }
         
         self.metalKitMesh = mtkMesh
+        if metalKitMesh!.vertexBuffers.count > 1 {
+            print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
+        }
         self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
         self._vertexCount = mtkMesh.vertexCount
         for i in 0..<mtkMesh.submeshes.count {
@@ -99,11 +101,13 @@ class Mesh {
         var meshes = [Mesh]()
         
         if let mesh = object as? MDLMesh {
+            print("[makeMeshes] object is MDLMesh")
             let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
             meshes.append(newMesh)
         }
         
         if object.conforms(to: MDLObjectContainerComponent.self) {
+            print("[makeMeshes] object conforms to MDLObjectContainerComponent and has \(object.children.objects.count) children")
             for child in object.children.objects {
                 let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor)
                 meshes.append(contentsOf: childMeshes)
@@ -132,7 +136,6 @@ class Mesh {
         let asset: MDLAsset = MDLAsset(url: assetURL,
                                        vertexDescriptor: descriptor,
                                        bufferAllocator: bufferAllocator,
-//                                       preserveTopology: true,
                                        preserveTopology: false,
                                        error: nil)
         asset.loadTextures()
@@ -143,6 +146,12 @@ class Mesh {
         }
         
         print("Num child meshes for \(modelName): \(_childMeshes.count)")
+        for cm in _childMeshes {
+            print("Mesh named \(name); Child mesh name: \(cm.name)")
+            for sm in cm._submeshes {
+                print("Child mesh \(cm.name); Submesh name: \(sm.name)")
+            }
+        }
     }
     
     func setInstanceCount(_ count: Int) {
