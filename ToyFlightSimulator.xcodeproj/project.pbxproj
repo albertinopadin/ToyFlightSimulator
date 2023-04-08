@@ -10,9 +10,9 @@
 		CE2ED259299223A900C81F47 /* Mesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED258299223A900C81F47 /* Mesh.swift */; };
 		CE2ED25A299223A900C81F47 /* Mesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED258299223A900C81F47 /* Mesh.swift */; };
 		CE2ED25B299223A900C81F47 /* Mesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED258299223A900C81F47 /* Mesh.swift */; };
-		CE2ED25D299223E900C81F47 /* SubMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED25C299223E900C81F47 /* SubMesh.swift */; };
-		CE2ED25E299223E900C81F47 /* SubMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED25C299223E900C81F47 /* SubMesh.swift */; };
-		CE2ED25F299223E900C81F47 /* SubMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED25C299223E900C81F47 /* SubMesh.swift */; };
+		CE2ED25D299223E900C81F47 /* Submesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED25C299223E900C81F47 /* Submesh.swift */; };
+		CE2ED25E299223E900C81F47 /* Submesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED25C299223E900C81F47 /* Submesh.swift */; };
+		CE2ED25F299223E900C81F47 /* Submesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED25C299223E900C81F47 /* Submesh.swift */; };
 		CE2ED262299394E500C81F47 /* ModelIO+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */; };
 		CE2ED263299394E500C81F47 /* ModelIO+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */; };
 		CE2ED264299394E500C81F47 /* ModelIO+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */; };
@@ -309,7 +309,7 @@
 
 /* Begin PBXFileReference section */
 		CE2ED258299223A900C81F47 /* Mesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mesh.swift; sourceTree = "<group>"; };
-		CE2ED25C299223E900C81F47 /* SubMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubMesh.swift; sourceTree = "<group>"; };
+		CE2ED25C299223E900C81F47 /* Submesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Submesh.swift; sourceTree = "<group>"; };
 		CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModelIO+Extensions.swift"; sourceTree = "<group>"; };
 		CE2ED2662997F02D00C81F47 /* F16s.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = F16s.bmp; sourceTree = "<group>"; };
 		CE2ED2672997F02D00C81F47 /* f16.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = f16.mtl; sourceTree = "<group>"; };
@@ -568,7 +568,7 @@
 				CE7F47EE28B758920082B197 /* Assets.xcassets */,
 				CE3BFF6828E1B4C10014A752 /* Assets.swift */,
 				CE2ED258299223A900C81F47 /* Mesh.swift */,
-				CE2ED25C299223E900C81F47 /* SubMesh.swift */,
+				CE2ED25C299223E900C81F47 /* Submesh.swift */,
 				CE76931229DD5F5500BBC718 /* SingleSMMesh.swift */,
 				CE76930A29DD5A4400BBC718 /* ObjModel.swift */,
 				CE3BFF6C28E1B4C60014A752 /* Libraries */,
@@ -990,7 +990,7 @@
 				CE3BFF8628E2FD9C0014A752 /* GameObject.swift in Sources */,
 				CEFC6EC5295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
 				CE3BFF3228E058C30014A752 /* Mouse.swift in Sources */,
-				CE2ED25D299223E900C81F47 /* SubMesh.swift in Sources */,
+				CE2ED25D299223E900C81F47 /* Submesh.swift in Sources */,
 				CE3BFF8228E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CE3BFF2C28E0575A0014A752 /* InstancedShaders.metal in Sources */,
 				CE76931B29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
@@ -1102,7 +1102,7 @@
 				CE3BFF8328E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CE3BFF7B28E2FC270014A752 /* SandboxScene.swift in Sources */,
 				CE76930C29DD5A4400BBC718 /* ObjModel.swift in Sources */,
-				CE2ED25E299223E900C81F47 /* SubMesh.swift in Sources */,
+				CE2ED25E299223E900C81F47 /* Submesh.swift in Sources */,
 				CE3BFF5128E1B2230014A752 /* Library.swift in Sources */,
 				CE76931829DE75CB00BBC718 /* SingleSMMeshLibrary.swift in Sources */,
 				CE56921D28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
@@ -1152,7 +1152,7 @@
 				CE2ED2BE299CB91200C81F47 /* RendererType.swift in Sources */,
 				CE7F481928B758920082B197 /* GameViewController.swift in Sources */,
 				CE3BFFEA28E6A0F40014A752 /* F16.swift in Sources */,
-				CE2ED25F299223E900C81F47 /* SubMesh.swift in Sources */,
+				CE2ED25F299223E900C81F47 /* Submesh.swift in Sources */,
 				CE3BFF4828E1B0CE0014A752 /* SceneManager.swift in Sources */,
 				CEAB383A297CCB2F0087F7CB /* OITRenderer.swift in Sources */,
 				CE2ED25B299223A900C81F47 /* Mesh.swift in Sources */,

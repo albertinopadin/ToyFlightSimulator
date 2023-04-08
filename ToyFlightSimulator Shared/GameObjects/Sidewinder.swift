@@ -7,6 +7,6 @@
 
 class Sidewinder: SubMeshGameObject {
     init() {
-        super.init(name: "Sidewinder", meshType: .F18_Sidewinder)
+        super.init(name: "Sidewinder", meshType: .F18_Sidewinder, renderPipelineStateType: .OpaqueMaterial)
     }
 }

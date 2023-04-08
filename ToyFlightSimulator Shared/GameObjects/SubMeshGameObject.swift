@@ -11,7 +11,7 @@ class SubMeshGameObject: GameObject {
     private var _singleSMMesh: SingleSMMesh!
     
     init(name: String, meshType: SingleSMMeshType, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
-        super.init(name: name, meshType: .None)
+        super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
         _singleSMMesh = Assets.SingleSMMeshes[meshType]
     }
     

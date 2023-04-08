@@ -187,7 +187,7 @@ class Mesh {
                         baseColorTextureType: TextureType = .None,
                         normalMapTextureType: TextureType = .None,
                         specularTextureType: TextureType = .None) {
-        if let _vertexBuffer = _vertexBuffer {
+        if let _vertexBuffer {
             renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
             
             if _submeshes.count > 0 {

@@ -30,17 +30,25 @@ class FreeCamFlightboxScene: Scene {
         ground.setScale(float3(100, 100, 100))
         addChild(ground)
         
-        camera.setPosition(0, 15, 25)
+//        camera.setPosition(0, 15, 25)
+        camera.setPosition(4, 12, 20)
         camera.setRotationX(Float(15).toRadians)
         addCamera(camera)
         
-        f18.setScale(0.25)
+//        f18.setScale(0.25)  // TODO: setScale doesn't work
         f18.setPosition(0, 2, 0)
         addChild(f18)
         
-        sidewinderMissile.setPosition(0, 5, 0)
+        var swMaterial = Material()
+        swMaterial.color = BLUE_COLOR
+        
+//        sidewinderMissile.useMaterial(swMaterial)
+//        sidewinderMissile.setPosition(1, 2, 0)
+//        sidewinderMissile.setScale(0.25)
+        
+        sidewinderMissile.setScale(4.0)
+        sidewinderMissile.setPosition(0, -2, 0)
         sidewinderMissile.rotateY(Float(90).toRadians)
-        sidewinderMissile.setScale(2.0)
         addChild(sidewinderMissile)
     }
     

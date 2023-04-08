@@ -17,6 +17,7 @@ class SingleSMMesh {
     private var _childMesh: SingleSMMesh!
 
     init(modelName: String, submeshName: String) {
+        print("[SingleSMMesh init] modelName: \(modelName); submeshName: \(submeshName)")
         name = modelName
         createSingleSMMeshFromModel(modelName: modelName, submeshName: submeshName)
     }
@@ -54,10 +55,19 @@ class SingleSMMesh {
     private static func makeSingleSMMeshWithSubmeshNamed(_ submeshName: String,
                                                          object: MDLObject,
                                                          vertexDescriptor: MDLVertexDescriptor) -> SingleSMMesh? {
-        if let mesh = object as? MDLMesh {
-            if let mdlSubmesh = getMdlSubmeshNamed(submeshName, mdlMesh: mesh) {
-                let metalKitMesh = try! MTKMesh(mesh: mesh, device: Engine.Device)
+        if let mdlMesh = object as? MDLMesh {
+            if let mdlSubmesh = getMdlSubmeshNamed(submeshName, mdlMesh: mdlMesh) {
+                mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                        normalAttributeNamed: MDLVertexAttributeNormal,
+                                        tangentAttributeNamed: MDLVertexAttributeTangent)
+                
+                mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                        tangentAttributeNamed: MDLVertexAttributeTangent,
+                                        bitangentAttributeNamed: MDLVertexAttributeBitangent)
+                
+                let metalKitMesh = try! MTKMesh(mesh: mdlMesh, device: Engine.Device)
                 let mtkSubmesh = metalKitMesh.submeshes.filter({ $0.name == submeshName })[0]
+                print("[SingleSMMesh makeSingleSMMeshWithSubmeshNamed] Creating Submesh...")
                 let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh)
                 return SingleSMMesh(mtkMesh: metalKitMesh, submesh: submesh)
             }
@@ -126,7 +136,7 @@ class SingleSMMesh {
                         baseColorTextureType: TextureType = .None,
                         normalMapTextureType: TextureType = .None,
                         specularTextureType: TextureType = .None) {
-        if let _vertexBuffer = _vertexBuffer {
+        if let _vertexBuffer {
             renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
 
             if applyMaterials {
@@ -145,13 +155,13 @@ class SingleSMMesh {
                                                        instanceCount: _instanceCount)
         }
 
-        if let cm = _childMesh {
-            cm.drawPrimitives(renderCommandEncoder,
-                              material: material,
-                              applyMaterials: applyMaterials,
-                              baseColorTextureType: baseColorTextureType,
-                              normalMapTextureType: normalMapTextureType,
-                              specularTextureType: specularTextureType)
+        if let _childMesh {
+            _childMesh.drawPrimitives(renderCommandEncoder,
+                                      material: material,
+                                      applyMaterials: applyMaterials,
+                                      baseColorTextureType: baseColorTextureType,
+                                      normalMapTextureType: normalMapTextureType,
+                                      specularTextureType: specularTextureType)
         }
         
     }
@@ -168,8 +178,8 @@ class SingleSMMesh {
                                                        instanceCount: _instanceCount)
         }
         
-        if let cm = _childMesh {
-            cm.drawShadowPrimitives(renderCommandEncoder)
+        if let _childMesh {
+            _childMesh.drawShadowPrimitives(renderCommandEncoder)
         }
     }
 }
