@@ -19,3 +19,8 @@ Toy Flight Simulator implemented with Swift and Metal
 2/26/2023 - Implemented Skybox stage of Single-Pass Deferred Lighting Renderer; using new F/A-18F fighter jet model
 
 ![Skybox & F-18](SPDL.png)
+
+
+4/9/2023 - Figured out how to independently render submeshes from F-18 OBJ model (AIM-9 & AIM-120 missles displayed):
+
+![Missles](Missiles.png)

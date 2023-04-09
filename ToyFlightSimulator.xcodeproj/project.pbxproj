@@ -290,6 +290,9 @@
 		CEB2DFD029D437990048D292 /* FreeCamFlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */; };
 		CEB2DFD129D437990048D292 /* FreeCamFlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */; };
 		CEB2DFD229D437990048D292 /* FreeCamFlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */; };
+		CEED93A329E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
+		CEED93A429E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
+		CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEFC6E2D2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
 		CEFC6E2E2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
 		CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
@@ -419,6 +422,7 @@
 		CEAB384E297FB7D80087F7CB /* TFSBridgingHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TFSBridgingHeader.h; sourceTree = "<group>"; };
 		CEAB384F2981024E0087F7CB /* Transform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transform.swift; sourceTree = "<group>"; };
 		CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreeCamFlightboxScene.swift; sourceTree = "<group>"; };
+		CEED93A229E2B3EE0020DC53 /* AIM120.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIM120.swift; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
 		CEFC6E3029531C0C009B692B /* Triangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Triangle.swift; sourceTree = "<group>"; };
 		CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = OrderIndependentTransparencyShaders.metal; sourceTree = "<group>"; };
@@ -528,6 +532,7 @@
 				CE2ED2962998A10400C81F47 /* F18.swift */,
 				CE2ED2BF299CBB3C00C81F47 /* SkyBox.swift */,
 				CE76931A29DE79CE00BBC718 /* Sidewinder.swift */,
+				CEED93A229E2B3EE0020DC53 /* AIM120.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -997,6 +1002,7 @@
 				CE76931329DD5F5500BBC718 /* SingleSMMesh.swift in Sources */,
 				CE2ED259299223A900C81F47 /* Mesh.swift in Sources */,
 				CE3BFFE828E6A0F40014A752 /* F16.swift in Sources */,
+				CEED93A329E2B3EE0020DC53 /* AIM120.swift in Sources */,
 				CE3BFF4728E1B05A0014A752 /* SceneManager.swift in Sources */,
 				CEAB3838297CCB2F0087F7CB /* OITRenderer.swift in Sources */,
 				CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
@@ -1118,6 +1124,7 @@
 				CEFC6E2E2952EA44009B692B /* Cube.swift in Sources */,
 				CE3BFFB428E572FB0014A752 /* FinalShaders.metal in Sources */,
 				CE7F483F28B770B00082B197 /* Colors.swift in Sources */,
+				CEED93A429E2B3EE0020DC53 /* AIM120.swift in Sources */,
 				CE3BFF8F28E2FE140014A752 /* Math.swift in Sources */,
 				CE7F484F28B771550082B197 /* TimeIt.swift in Sources */,
 				CEFC6EC6295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
@@ -1160,6 +1167,7 @@
 				CE76931529DD5F5500BBC718 /* SingleSMMesh.swift in Sources */,
 				CE7F484028B770B00082B197 /* Colors.swift in Sources */,
 				CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
+				CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */,
 				CE7F485028B771550082B197 /* TimeIt.swift in Sources */,
 				CE2ED29B2998A38000C81F47 /* Aircraft.swift in Sources */,
 				CE3BFF5A28E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,

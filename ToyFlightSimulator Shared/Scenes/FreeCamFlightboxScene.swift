@@ -11,6 +11,7 @@ class FreeCamFlightboxScene: Scene {
     var sun = Sun(meshType: .Sphere)
     var ground = Quad()
     var sidewinderMissile = Sidewinder()
+    var aim120 = AIM120()
     
     override func buildScene() {
         sun.setPosition(1, 25, 5)
@@ -39,17 +40,15 @@ class FreeCamFlightboxScene: Scene {
         f18.setPosition(0, 2, 0)
         addChild(f18)
         
-        var swMaterial = Material()
-        swMaterial.color = BLUE_COLOR
-        
-//        sidewinderMissile.useMaterial(swMaterial)
-//        sidewinderMissile.setPosition(1, 2, 0)
-//        sidewinderMissile.setScale(0.25)
-        
         sidewinderMissile.setScale(4.0)
         sidewinderMissile.setPosition(0, -2, 0)
         sidewinderMissile.rotateY(Float(90).toRadians)
         addChild(sidewinderMissile)
+        
+        aim120.setScale(4.0)
+        aim120.setPosition(0, 0, 0)
+        aim120.rotateY(Float(90).toRadians)
+        addChild(aim120)
     }
     
     override func doUpdate() {
