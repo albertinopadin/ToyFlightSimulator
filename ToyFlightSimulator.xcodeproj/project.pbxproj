@@ -293,6 +293,9 @@
 		CEED93A329E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A429E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
+		CEED93A729E3B2600020DC53 /* AircraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A629E3B2600020DC53 /* AircraftStore.swift */; };
+		CEED93A829E3B2600020DC53 /* AircraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A629E3B2600020DC53 /* AircraftStore.swift */; };
+		CEED93A929E3B2600020DC53 /* AircraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A629E3B2600020DC53 /* AircraftStore.swift */; };
 		CEFC6E2D2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
 		CEFC6E2E2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
 		CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC6E2C2952EA44009B692B /* Cube.swift */; };
@@ -423,6 +426,7 @@
 		CEAB384F2981024E0087F7CB /* Transform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transform.swift; sourceTree = "<group>"; };
 		CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreeCamFlightboxScene.swift; sourceTree = "<group>"; };
 		CEED93A229E2B3EE0020DC53 /* AIM120.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIM120.swift; sourceTree = "<group>"; };
+		CEED93A629E3B2600020DC53 /* AircraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftStore.swift; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
 		CEFC6E3029531C0C009B692B /* Triangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Triangle.swift; sourceTree = "<group>"; };
 		CEFC6EC4295B55EA009B692B /* OrderIndependentTransparencyShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = OrderIndependentTransparencyShaders.metal; sourceTree = "<group>"; };
@@ -531,6 +535,7 @@
 				CE3BFFE728E6A0F40014A752 /* F16.swift */,
 				CE2ED2962998A10400C81F47 /* F18.swift */,
 				CE2ED2BF299CBB3C00C81F47 /* SkyBox.swift */,
+				CEED93A629E3B2600020DC53 /* AircraftStore.swift */,
 				CE76931A29DE79CE00BBC718 /* Sidewinder.swift */,
 				CEED93A229E2B3EE0020DC53 /* AIM120.swift */,
 			);
@@ -1052,6 +1057,7 @@
 				CEAB3840297CDE770087F7CB /* ShadowShaders.metal in Sources */,
 				CE7F47F728B758920082B197 /* AppDelegate.swift in Sources */,
 				CE2ED2972998A10400C81F47 /* F18.swift in Sources */,
+				CEED93A729E3B2600020DC53 /* AircraftStore.swift in Sources */,
 				CE3BFFA728E453260014A752 /* Sun.swift in Sources */,
 				CE7F483A28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE7F48D328BCB4DD0082B197 /* GameView.swift in Sources */,
@@ -1096,6 +1102,7 @@
 				CE3BFF6A28E1B4C10014A752 /* Assets.swift in Sources */,
 				CE76931029DD5DF600BBC718 /* SubMeshGameObject.swift in Sources */,
 				CE7F484728B770EB0082B197 /* MathUtils.swift in Sources */,
+				CEED93A829E3B2600020DC53 /* AircraftStore.swift in Sources */,
 				CE3BFF9728E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6F28E1B4D70014A752 /* MeshLibrary.swift in Sources */,
 				CEAB3841297CDE770087F7CB /* ShadowShaders.metal in Sources */,
@@ -1217,6 +1224,7 @@
 				CEAB3842297CDE770087F7CB /* ShadowShaders.metal in Sources */,
 				CE7F483C28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE3BFFA928E453260014A752 /* Sun.swift in Sources */,
+				CEED93A929E3B2600020DC53 /* AircraftStore.swift in Sources */,
 				CE3BFF4028E059B60014A752 /* Lighting.metal in Sources */,
 				CE7F48D528BCB4DD0082B197 /* GameView.swift in Sources */,
 				CEFC6F28296B61CA009B692B /* Line.swift in Sources */,

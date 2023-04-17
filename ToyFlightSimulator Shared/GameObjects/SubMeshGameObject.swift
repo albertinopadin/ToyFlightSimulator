@@ -15,7 +15,9 @@ class SubMeshGameObject: GameObject {
         _singleSMMesh = Assets.SingleSMMeshes[meshType]
     }
     
-    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
+    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
+                           applyMaterials: Bool = true,
+                           submeshesToRender: [String: Bool]? = nil) {
         encodeRender(using: renderCommandEncoder, label: "Rendering \(self.getName())") {
             renderCommandEncoder.setVertexBytes(&_modelConstants,
                                                 length: ModelConstants.stride,
@@ -30,7 +32,7 @@ class SubMeshGameObject: GameObject {
         }
     }
     
-    override func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+    override func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
         encodeRender(using: renderCommandEncoder, label: "Shadow Rendering \(self.getName())") {
             renderCommandEncoder.setVertexBytes(&_modelConstants,
                                                 length: ModelConstants.stride,

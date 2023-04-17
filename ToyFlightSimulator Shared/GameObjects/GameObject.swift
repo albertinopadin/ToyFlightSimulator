@@ -46,7 +46,9 @@ class GameObject: Node, Renderable {
         renderEncoder.popDebugGroup()
     }
     
-    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
+    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
+                  applyMaterials: Bool = true,
+                  submeshesToRender: [String: Bool]? = nil) {
         encodeRender(using: renderCommandEncoder, label: "Rendering \(self.getName())") {
             // Vertex Shader
             renderCommandEncoder.setVertexBytes(&_modelConstants,
@@ -58,16 +60,17 @@ class GameObject: Node, Renderable {
                                  applyMaterials: applyMaterials,
                                  baseColorTextureType: _baseColorTextureType,
                                  normalMapTextureType: _normalMapTextureType,
-                                 specularTextureType: _specularTextureType)
+                                 specularTextureType: _specularTextureType,
+                                 submeshesToDisplay: submeshesToRender)
         }
     }
     
-    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]?) {
         encodeRender(using: renderCommandEncoder, label: "Shadow Rendering \(self.getName())") {
             renderCommandEncoder.setVertexBytes(&_modelConstants,
                                                 length: ModelConstants.stride,
                                                 index: Int(TFSBufferModelConstants.rawValue))
-            _mesh.drawShadowPrimitives(renderCommandEncoder)
+            _mesh.drawShadowPrimitives(renderCommandEncoder, submeshesToDisplay: submeshesToRender)
         }
     }
 }

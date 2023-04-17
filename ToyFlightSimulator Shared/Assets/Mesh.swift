@@ -186,26 +186,48 @@ class Mesh {
                         applyMaterials: Bool = true,
                         baseColorTextureType: TextureType = .None,
                         normalMapTextureType: TextureType = .None,
-                        specularTextureType: TextureType = .None) {
+                        specularTextureType: TextureType = .None,
+                        submeshesToDisplay: [String: Bool]? = nil) {
         if let _vertexBuffer {
             renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
             
             if _submeshes.count > 0 {
-                for submesh in _submeshes {
-                    if applyMaterials {
-                        submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
-                                              customBaseColorTextureType: baseColorTextureType,
-                                              customNormalMapTextureType: normalMapTextureType,
-                                              customSpecularTextureType: specularTextureType)
-                        submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
+                if let submeshesToDisplay {
+                    for submesh in _submeshes {
+                        if submeshesToDisplay[submesh.name]! {
+                            if applyMaterials {
+                                submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
+                                                      customBaseColorTextureType: baseColorTextureType,
+                                                      customNormalMapTextureType: normalMapTextureType,
+                                                      customSpecularTextureType: specularTextureType)
+                                submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
+                            }
+                            
+                            renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                                       indexCount: submesh.indexCount,
+                                                                       indexType: submesh.indexType,
+                                                                       indexBuffer: submesh.indexBuffer,
+                                                                       indexBufferOffset: submesh.indexBufferOffset,
+                                                                       instanceCount: _instanceCount)
+                        }
                     }
-                    
-                    renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                               indexCount: submesh.indexCount,
-                                                               indexType: submesh.indexType,
-                                                               indexBuffer: submesh.indexBuffer,
-                                                               indexBufferOffset: submesh.indexBufferOffset,
-                                                               instanceCount: _instanceCount)
+                } else {
+                    for submesh in _submeshes {
+                        if applyMaterials {
+                            submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
+                                                  customBaseColorTextureType: baseColorTextureType,
+                                                  customNormalMapTextureType: normalMapTextureType,
+                                                  customSpecularTextureType: specularTextureType)
+                            submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
+                        }
+                        
+                        renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                                   indexCount: submesh.indexCount,
+                                                                   indexType: submesh.indexType,
+                                                                   indexBuffer: submesh.indexBuffer,
+                                                                   indexBufferOffset: submesh.indexBufferOffset,
+                                                                   instanceCount: _instanceCount)
+                    }
                 }
             } else {
                 if applyMaterials, let material {
@@ -225,22 +247,36 @@ class Mesh {
                                  applyMaterials: applyMaterials,
                                  baseColorTextureType: baseColorTextureType,
                                  normalMapTextureType: normalMapTextureType,
-                                 specularTextureType: specularTextureType)
+                                 specularTextureType: specularTextureType,
+                                 submeshesToDisplay: submeshesToDisplay)
         }
     }
     
-    func drawShadowPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+    func drawShadowPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToDisplay: [String: Bool]? = nil) {
         if let _vertexBuffer = _vertexBuffer {
             renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
             
             if _submeshes.count > 0 {
-                for submesh in _submeshes {
-                    renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                               indexCount: submesh.indexCount,
-                                                               indexType: submesh.indexType,
-                                                               indexBuffer: submesh.indexBuffer,
-                                                               indexBufferOffset: submesh.indexBufferOffset,
-                                                               instanceCount: _instanceCount)
+                if let submeshesToDisplay {
+                    for submesh in _submeshes {
+                        if submeshesToDisplay[submesh.name]! {
+                            renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                                       indexCount: submesh.indexCount,
+                                                                       indexType: submesh.indexType,
+                                                                       indexBuffer: submesh.indexBuffer,
+                                                                       indexBufferOffset: submesh.indexBufferOffset,
+                                                                       instanceCount: _instanceCount)
+                        }
+                    }
+                } else {
+                    for submesh in _submeshes {
+                        renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                                   indexCount: submesh.indexCount,
+                                                                   indexType: submesh.indexType,
+                                                                   indexBuffer: submesh.indexBuffer,
+                                                                   indexBufferOffset: submesh.indexBufferOffset,
+                                                                   instanceCount: _instanceCount)
+                    }
                 }
             } else {
                 renderCommandEncoder.drawPrimitives(type: .triangle,
@@ -251,7 +287,7 @@ class Mesh {
         }
         
         for child in _childMeshes {
-            child.drawShadowPrimitives(renderCommandEncoder)
+            child.drawShadowPrimitives(renderCommandEncoder, submeshesToDisplay: submeshesToDisplay)
         }
     }
 }

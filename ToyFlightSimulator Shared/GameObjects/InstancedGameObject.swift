@@ -51,7 +51,9 @@ class InstancedGameObject: Node {
 }
 
 extension InstancedGameObject: Renderable {
-    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
+    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
+                  applyMaterials: Bool = true,
+                  submeshesToRender: [String: Bool]? = nil) {
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Instanced])
         renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
         
@@ -61,10 +63,10 @@ extension InstancedGameObject: Renderable {
         // Fragment Shader
         renderCommandEncoder.setFragmentBytes(&_material, length: Material.stride, index: 1)
         
-        _mesh.drawPrimitives(renderCommandEncoder)
+        _mesh.drawPrimitives(renderCommandEncoder, submeshesToDisplay: submeshesToRender)
     }
     
-    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
         // NOT IMPLEMENTED
         fatalError("NOT IMPLEMENTED")
     }
