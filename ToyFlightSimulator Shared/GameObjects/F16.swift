@@ -9,6 +9,7 @@ import MetalKit
 
 class F16: Aircraft {
     private let _cameraPositionOffset = float3(0, 2, 4)
+    var shouldUpdate: Bool = true
     
     init() {
         super.init(name: "F-16", meshType: .F16, renderPipelineStateType: .OpaqueMaterial)
@@ -21,5 +22,11 @@ class F16: Aircraft {
                    renderPipelineStateType: .OpaqueMaterial,
                    camera: camera,
                    cameraOffset: _cameraPositionOffset)
+    }
+    
+    override func doUpdate() {
+        if shouldUpdate {
+            super.doUpdate()
+        }
     }
 }

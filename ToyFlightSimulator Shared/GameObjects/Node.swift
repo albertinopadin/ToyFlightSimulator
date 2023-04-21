@@ -16,7 +16,6 @@ class Node {
     private var _rotation = float3(0, 0, 0)
     
     var parentModelMatrix = matrix_identity_float4x4
-    var shouldUpdate: Bool = true
     
     private var _modelMatrix = matrix_identity_float4x4
     
@@ -33,6 +32,7 @@ class Node {
     internal var _renderPipelineStateType: RenderPipelineStateType = .Opaque
     internal var _gBufferRenderPipelineStateType: RenderPipelineStateType = .GBufferGenerationBase
     
+    var parent: Node? = nil
     var children: [Node] = []
     
     init(name: String) {
@@ -42,6 +42,7 @@ class Node {
     
     func addChild(_ child: Node) {
         children.append(child)
+        child.parent = self
     }
     
     func updateModelMatrix() {
@@ -62,9 +63,7 @@ class Node {
     func doUpdate() { }
     
     func update() {
-        if shouldUpdate {
-            doUpdate()
-        }
+        doUpdate()
         
         for child in children {
             child.parentModelMatrix = self.modelMatrix

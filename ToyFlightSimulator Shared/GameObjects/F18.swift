@@ -9,6 +9,8 @@ import MetalKit
 
 class F18: Aircraft {
     private let _cameraPositionOffset = float3(0, 10, 20)
+    private var _spacePressed: Bool = false
+    var shouldUpdate: Bool = true
     
     var stores: [String] = [
         "AIM-9XL_Paint",
@@ -21,6 +23,18 @@ class F18: Aircraft {
         "TankWingR_Paint",
         "TankCenter_Paint"
     ]
+    
+//    var storesBehavior: [String: float3] = [
+//        "AIM-9XL_Paint": float3(0, 0, 5),
+//        "AIM-9XR_Paint": float3(0, 0, 5),
+//        "AIM-120DL_Paint": float3(0, 0, 5),
+//        "AIM-120DR_Paint": float3(0, 0, 5),
+//        "GBU-16L_Paint": float3(0, -5, 0),
+//        "GBU-16R_Paint": float3(0, -5, 0),
+//        "TankWingL_Paint": float3(0, -5, 0),
+//        "TankWingR_Paint": float3(0, -5, 0),
+//        "TankCenter_Paint": float3(0, -5, 0)
+//    ]
     
     var storesLeft: Int
     
@@ -195,7 +209,7 @@ class F18: Aircraft {
     init() {
         self.storesLeft = stores.count
         super.init(name: "F-18", meshType: .F18, renderPipelineStateType: .OpaqueMaterial)
-//        self.shouldUpdate = false  // Don't update when user moves camera
+        self.shouldUpdate = false  // Don't update when user moves camera
     }
     
     init(camera: AttachedCamera, scale: Float = 0.5) {
@@ -209,18 +223,33 @@ class F18: Aircraft {
     }
     
     override func doUpdate() {
-//        if shouldUpdate {
-//            super.doUpdate()
-//        }
+        if shouldUpdate {
+            super.doUpdate()
+        }
         
         if Keyboard.IsKeyPressed(.space) {
-            print("[F18 doUpdate] Pressed Space!")
-            if storesLeft > 0 {
-                let storeToReleaseIdx = stores.count - storesLeft
-                let storeToRelease = stores[storeToReleaseIdx]
-                print("Store to release: \(storeToRelease)")
-                submeshesToDisplay[storeToRelease] = false
-                storesLeft -= 1
+            if !_spacePressed {
+                _spacePressed.toggle()
+                print("[F18 doUpdate] Pressed Space!")
+                if storesLeft > 0 {
+                    let storeToReleaseIdx = stores.count - storesLeft
+                    let storeToRelease = stores[storeToReleaseIdx]
+                    print("Store to release: \(storeToRelease)")
+                    submeshesToDisplay[storeToRelease] = false
+                    storesLeft -= 1
+                    
+                    if storeToRelease.hasPrefix("AIM-9X") {
+                        print("Firing AIM-9X!")
+                        let sidewinder = Sidewinder()
+                        sidewinder.setPosition(self.getPosition())
+                        sidewinder.fire(direction: -self.getFwdVector(), speed: 1.0)
+                        self.parent?.addChild(sidewinder)
+                    }
+                }
+            }
+        } else {
+            if _spacePressed {
+                _spacePressed.toggle()
             }
         }
     }
