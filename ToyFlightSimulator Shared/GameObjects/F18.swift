@@ -24,18 +24,6 @@ class F18: Aircraft {
         "TankCenter_Paint"
     ]
     
-//    var storesBehavior: [String: float3] = [
-//        "AIM-9XL_Paint": float3(0, 0, 5),
-//        "AIM-9XR_Paint": float3(0, 0, 5),
-//        "AIM-120DL_Paint": float3(0, 0, 5),
-//        "AIM-120DR_Paint": float3(0, 0, 5),
-//        "GBU-16L_Paint": float3(0, -5, 0),
-//        "GBU-16R_Paint": float3(0, -5, 0),
-//        "TankWingL_Paint": float3(0, -5, 0),
-//        "TankWingR_Paint": float3(0, -5, 0),
-//        "TankCenter_Paint": float3(0, -5, 0)
-//    ]
-    
     var storesLeft: Int
     
 //    var landingGear: [String] = [
@@ -239,17 +227,38 @@ class F18: Aircraft {
                     storesLeft -= 1
                     
                     if storeToRelease.hasPrefix("AIM-9X") {
-                        print("Firing AIM-9X!")
+                        print("Fox 2!")
                         let sidewinder = Sidewinder()
-                        sidewinder.setPosition(self.getPosition())
-                        sidewinder.fire(direction: -self.getFwdVector(), speed: 1.0)
+                        sidewinder.modelMatrix = self.modelMatrix
+//                        sidewinder.setPosition(self.getPosition())
+//                        sidewinder.setScale(self.getScale())
+                        sidewinder.setRotation(self.getRotation())
+                        sidewinder.fire(direction: self.getFwdVector(), speed: 0.15)
                         self.parent?.addChild(sidewinder)
+                    } else if storeToRelease.hasPrefix("AIM-120") {
+                        print("Fox 3!")
+                        let amraam = AIM120()
+                        amraam.setRotation(self.getRotation())
+                        amraam.fire(direction: self.getFwdVector(), speed: 0.15)
+                        self.parent?.addChild(amraam)
+                    } else if storeToRelease.hasPrefix("GBU-16") {
+                        print("Dropping JDAM")
                     }
                 }
             }
         } else {
             if _spacePressed {
                 _spacePressed.toggle()
+            }
+        }
+        
+        if Keyboard.IsKeyPressed(.l) {
+            // Reset loadout
+            if storesLeft < stores.count {
+                storesLeft = stores.count
+                for store in stores {
+                    submeshesToDisplay[store] = true
+                }
             }
         }
     }

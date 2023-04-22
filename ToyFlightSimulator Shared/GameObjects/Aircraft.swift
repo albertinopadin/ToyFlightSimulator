@@ -55,7 +55,7 @@ class Aircraft: GameObject {
     
     // TODO: Need to get 'z' axis from existing modelMatrix
     func getFwdVector() -> float3 {
-        let fwd = normalize(self.modelMatrix.upperLeft3x3 * float3(0, 0, 1))
+        let fwd = -normalize(self.modelMatrix.upperLeft3x3 * float3(0, 0, 1))
         print("fwd vector: \(fwd)")
         return fwd
     }

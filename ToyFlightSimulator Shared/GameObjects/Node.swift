@@ -45,6 +45,10 @@ class Node {
         child.parent = self
     }
     
+    func removeChild(_ child: Node) {
+        children.removeAll(where: { $0.getID() == child.getID() })
+    }
+    
     func updateModelMatrix() {
         _modelMatrix = matrix_identity_float4x4
         _modelMatrix.translate(direction: _position)
