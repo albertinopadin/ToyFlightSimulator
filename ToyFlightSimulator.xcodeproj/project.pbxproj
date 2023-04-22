@@ -197,6 +197,9 @@
 		CE3BFFE828E6A0F40014A752 /* F16.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFFE728E6A0F40014A752 /* F16.swift */; };
 		CE3BFFE928E6A0F40014A752 /* F16.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFFE728E6A0F40014A752 /* F16.swift */; };
 		CE3BFFEA28E6A0F40014A752 /* F16.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFFE728E6A0F40014A752 /* F16.swift */; };
+		CE3DD2E929F37FE500787E53 /* Missile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2E829F37FE500787E53 /* Missile.swift */; };
+		CE3DD2EA29F37FE500787E53 /* Missile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2E829F37FE500787E53 /* Missile.swift */; };
+		CE3DD2EB29F37FE500787E53 /* Missile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2E829F37FE500787E53 /* Missile.swift */; };
 		CE3E526328E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
 		CE3E526428E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
 		CE3E526528E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
@@ -381,6 +384,7 @@
 		CE3BFFDF28E573E40014A752 /* clouds.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = clouds.png; sourceTree = "<group>"; };
 		CE3BFFE028E573E40014A752 /* skysphere.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = skysphere.obj; sourceTree = "<group>"; };
 		CE3BFFE728E6A0F40014A752 /* F16.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F16.swift; sourceTree = "<group>"; };
+		CE3DD2E829F37FE500787E53 /* Missile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Missile.swift; sourceTree = "<group>"; };
 		CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkySphere.swift; sourceTree = "<group>"; };
 		CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachedCamera.swift; sourceTree = "<group>"; };
 		CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightboxScene.swift; sourceTree = "<group>"; };
@@ -536,6 +540,7 @@
 				CE2ED2962998A10400C81F47 /* F18.swift */,
 				CE2ED2BF299CBB3C00C81F47 /* SkyBox.swift */,
 				CEED93A629E3B2600020DC53 /* AircraftStore.swift */,
+				CE3DD2E829F37FE500787E53 /* Missile.swift */,
 				CE76931A29DE79CE00BBC718 /* Sidewinder.swift */,
 				CEED93A229E2B3EE0020DC53 /* AIM120.swift */,
 			);
@@ -1026,6 +1031,7 @@
 				CE7F47F928B758920082B197 /* GameViewController.swift in Sources */,
 				CE3BFF2428E056230014A752 /* Graphics.swift in Sources */,
 				CE3BFF6E28E1B4D70014A752 /* MeshLibrary.swift in Sources */,
+				CE3DD2E929F37FE500787E53 /* Missile.swift in Sources */,
 				CE3BFF5028E1B2230014A752 /* Library.swift in Sources */,
 				CE3BFF4328E1AEF80014A752 /* Preferences.swift in Sources */,
 				CEAB38502981024E0087F7CB /* Transform.swift in Sources */,
@@ -1095,6 +1101,7 @@
 				CE3BFFA828E453260014A752 /* Sun.swift in Sources */,
 				CEFC6F27296B61CA009B692B /* Line.swift in Sources */,
 				CE2ED25A299223A900C81F47 /* Mesh.swift in Sources */,
+				CE3DD2EA29F37FE500787E53 /* Missile.swift in Sources */,
 				CE2ED2C129A2522900C81F47 /* SkyBox.swift in Sources */,
 				CEB2DFD129D437990048D292 /* FreeCamFlightboxScene.swift in Sources */,
 				CE2ED29A2998A37F00C81F47 /* Aircraft.swift in Sources */,
@@ -1193,6 +1200,7 @@
 				CE3BFF7028E1B4D70014A752 /* MeshLibrary.swift in Sources */,
 				CE3BFF5228E1B2230014A752 /* Library.swift in Sources */,
 				CE3BFF3B28E0599F0014A752 /* Engine.swift in Sources */,
+				CE3DD2EB29F37FE500787E53 /* Missile.swift in Sources */,
 				CE3BFF4428E1AF490014A752 /* Preferences.swift in Sources */,
 				CE3BFF9028E2FE140014A752 /* Math.swift in Sources */,
 				CEAB38522981024E0087F7CB /* Transform.swift in Sources */,
