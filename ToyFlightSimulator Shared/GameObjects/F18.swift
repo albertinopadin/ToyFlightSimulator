@@ -7,24 +7,41 @@
 
 import MetalKit
 
+struct Store {
+    var remaining: Int
+    var submeshNames: [String]
+    
+    init(remaining: Int, submeshNames: [String]) {
+        self.remaining = remaining
+        self.submeshNames = submeshNames
+    }
+}
+
 class F18: Aircraft {
     private let _cameraPositionOffset = float3(0, 10, 20)
     private var _spacePressed: Bool = false
+    private var _mKeyPressed: Bool = false
+    private var _nKeyPressed: Bool = false
     var shouldUpdate: Bool = true
     
-    var stores: [String] = [
-        "AIM-9XL_Paint",
-        "AIM-9XR_Paint",
-        "AIM-120DL_Paint",
-        "AIM-120DR_Paint",
-        "GBU-16L_Paint",
-        "GBU-16R_Paint",
-        "TankWingL_Paint",
-        "TankWingR_Paint",
-        "TankCenter_Paint"
+    static let AIM9Name = "AIM-9"
+    static let AIM120Name = "AIM-120"
+    static let GBU16Name = "GBU-16"
+    static let FuelTankName = "FuelTank"
+    
+    static let storesNames = [
+        AIM9Name,
+        AIM120Name,
+        GBU16Name,
+        FuelTankName
     ]
     
-    var storesLeft: Int
+    var stores: [String: Store] = [
+        AIM9Name: Store(remaining: 2, submeshNames: ["AIM-9XL_Paint", "AIM-9XR_Paint"]),
+        AIM120Name: Store(remaining: 2, submeshNames: ["AIM-120DL_Paint", "AIM-120DR_Paint"]),
+        GBU16Name: Store(remaining: 2, submeshNames: ["GBU-16L_Paint", "GBU-16R_Paint"]),
+        FuelTankName: Store(remaining: 3, submeshNames: ["TankWingL_Paint", "TankWingR_Paint", "TankCenter_Paint"])
+    ]
     
 //    var landingGear: [String] = [
 //
@@ -195,13 +212,11 @@ class F18: Aircraft {
     ]
     
     init() {
-        self.storesLeft = stores.count
         super.init(name: "F-18", meshType: .F18, renderPipelineStateType: .OpaqueMaterial)
         self.shouldUpdate = false  // Don't update when user moves camera
     }
     
     init(camera: AttachedCamera, scale: Float = 0.5) {
-        self.storesLeft = stores.count
         super.init(name: "F-18",
                    meshType: .F18,
                    renderPipelineStateType: .OpaqueMaterial,
@@ -215,50 +230,79 @@ class F18: Aircraft {
             super.doUpdate()
         }
         
-        if Keyboard.IsKeyPressed(.space) {
-            if !_spacePressed {
-                _spacePressed.toggle()
-                print("[F18 doUpdate] Pressed Space!")
-                if storesLeft > 0 {
-                    let storeToReleaseIdx = stores.count - storesLeft
-                    let storeToRelease = stores[storeToReleaseIdx]
-                    print("Store to release: \(storeToRelease)")
-                    submeshesToDisplay[storeToRelease] = false
-                    storesLeft -= 1
-                    
-                    if storeToRelease.hasPrefix("AIM-9X") {
-                        print("Fox 2!")
-                        let sidewinder = Sidewinder()
-                        sidewinder.modelMatrix = self.modelMatrix
-//                        sidewinder.setPosition(self.getPosition())
-//                        sidewinder.setScale(self.getScale())
-                        sidewinder.setRotation(self.getRotation())
-                        sidewinder.fire(direction: self.getFwdVector(), speed: 0.15)
-                        self.parent?.addChild(sidewinder)
-                    } else if storeToRelease.hasPrefix("AIM-120") {
-                        print("Fox 3!")
-                        let amraam = AIM120()
-                        amraam.setRotation(self.getRotation())
-                        amraam.fire(direction: self.getFwdVector(), speed: 0.15)
-                        self.parent?.addChild(amraam)
-                    } else if storeToRelease.hasPrefix("GBU-16") {
-                        print("Dropping JDAM")
-                    }
+        handleKeyPressedDebounced(keyCode: .space, keyPressed: &_spacePressed) {
+            var aim9s = stores[F18.AIM9Name]!
+            if aim9s.remaining > 0 {
+                let storeIdx = aim9s.submeshNames.count - aim9s.remaining
+                let storeToRelease = aim9s.submeshNames[storeIdx]
+                print("Fox 2!")
+                let sidewinder = Sidewinder()
+                sidewinder.fire(direction: float3(0,0,-1), speed: 0.5)
+                self.addChild(sidewinder)
+                if storeToRelease.hasPrefix("AIM-9XL") {
+                    sidewinder.setPositionX(-13.37)
                 }
+                aim9s.remaining -= 1
+                submeshesToDisplay[storeToRelease] = false
+                stores[F18.AIM9Name] = aim9s  // Not the most elegant solution; have to do this due to structs being value types
             }
-        } else {
-            if _spacePressed {
-                _spacePressed.toggle()
+        }
+        
+        handleKeyPressedDebounced(keyCode: .n, keyPressed: &_nKeyPressed) {
+            var aim120s = stores[F18.AIM120Name]!
+            if aim120s.remaining > 0 {
+                let storeIdx = aim120s.submeshNames.count - aim120s.remaining
+                let storeToRelease = aim120s.submeshNames[storeIdx]
+                print("Fox 3!")
+                let amraam = AIM120()
+                amraam.fire(direction: float3(0,0,-1), speed: 0.5)
+                self.addChild(amraam)
+                if storeToRelease.hasPrefix("AIM-120DL") {
+                    amraam.setPositionX(-8.58)
+                }
+                aim120s.remaining -= 1
+                submeshesToDisplay[storeToRelease] = false
+                stores[F18.AIM120Name] = aim120s  // Not the most elegant solution; have to do this due to structs being value types
+            }
+        }
+        
+        handleKeyPressedDebounced(keyCode: .m, keyPressed: &_mKeyPressed) {
+            var gbu16s = stores[F18.GBU16Name]!
+            if gbu16s.remaining > 0 {
+                let storeIdx = gbu16s.submeshNames.count - gbu16s.remaining
+                let storeToRelease = gbu16s.submeshNames[storeIdx]
+                print("Dropping JDAM!")
+                // TODO: JDAM drop code
+                gbu16s.remaining -= 1
+                submeshesToDisplay[storeToRelease] = false
+                stores[F18.GBU16Name] = gbu16s  // Not the most elegant solution; have to do this due to structs being value types
             }
         }
         
         if Keyboard.IsKeyPressed(.l) {
             // Reset loadout
-            if storesLeft < stores.count {
-                storesLeft = stores.count
-                for store in stores {
-                    submeshesToDisplay[store] = true
+            for storeName in F18.storesNames {
+                var store = stores[storeName]!
+                if store.remaining < store.submeshNames.count {
+                    store.remaining = store.submeshNames.count
+                    for smn in store.submeshNames {
+                        submeshesToDisplay[smn] = true
+                    }
+                    stores[storeName] = store
                 }
+            }
+        }
+    }
+    
+    func handleKeyPressedDebounced(keyCode: Keycodes, keyPressed: inout Bool, _ handleBlock: () -> Void) {
+        if Keyboard.IsKeyPressed(keyCode) {
+            if !keyPressed {
+                keyPressed.toggle()
+                handleBlock()
+            }
+        } else {
+            if keyPressed {
+                keyPressed.toggle()
             }
         }
     }
