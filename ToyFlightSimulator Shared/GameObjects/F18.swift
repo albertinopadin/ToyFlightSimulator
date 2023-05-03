@@ -272,7 +272,12 @@ class F18: Aircraft {
                 let storeIdx = gbu16s.submeshNames.count - gbu16s.remaining
                 let storeToRelease = gbu16s.submeshNames[storeIdx]
                 print("Dropping JDAM!")
-                // TODO: JDAM drop code
+                let jdam = GBU16()
+                jdam.drop(forwardComponent: 0.0)  // TODO: Shoots off to the right instead of fwd
+                self.addChild(jdam)
+                if storeToRelease.hasPrefix("GBU-16L") {
+                    jdam.setPositionX(-6.63)
+                }
                 gbu16s.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
                 stores[F18.GBU16Name] = gbu16s  // Not the most elegant solution; have to do this due to structs being value types
