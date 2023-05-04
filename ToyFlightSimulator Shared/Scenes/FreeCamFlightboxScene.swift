@@ -37,7 +37,7 @@ class FreeCamFlightboxScene: Scene {
         addCamera(camera)
         
 //        f18.setScale(0.25)  // TODO: setScale doesn't work
-        f18.setPosition(0, 2, 0)
+        f18.setPosition(0, 10, 0)
         addChild(f18)
         
         sidewinderMissile.setScale(4.0)

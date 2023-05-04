@@ -1,11 +1,11 @@
 //
-//  Bomb.swift
+//  Droppable.swift
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 5/2/23.
 //
 
-class Bomb: SubMeshGameObject {
+class Droppable: SubMeshGameObject {
     let gravity: Float = -9.8
     var velocityVector: float3 = float3(x: 0, y: 0, z: 0)
     var forwardVelocityComponent: Float = 0.0

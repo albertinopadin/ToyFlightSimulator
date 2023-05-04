@@ -13,8 +13,8 @@ class DebugCamera: Camera {
         return _projectionMatrix
     }
     
-    private var _moveSpeed: Float = 4.0
-    private var _turnSpeed: Float = 1.0
+    private var _moveSpeed: Float = 10.0
+    private var _turnSpeed: Float = 0.1
     
     init() {
         super.init(name: "Debug", cameraType: .Debug)
@@ -56,8 +56,8 @@ class DebugCamera: Camera {
         }
         
         if Mouse.IsMouseButtonPressed(button: .RIGHT) {
-            self.rotate(Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed,
-                        Mouse.GetDX() * GameTime.DeltaTime * _turnSpeed,
+            self.rotate(-Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed,
+                        -Mouse.GetDX() * GameTime.DeltaTime * _turnSpeed,
                         0)
         }
         

@@ -200,12 +200,15 @@
 		CE3DD2E929F37FE500787E53 /* Missile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2E829F37FE500787E53 /* Missile.swift */; };
 		CE3DD2EA29F37FE500787E53 /* Missile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2E829F37FE500787E53 /* Missile.swift */; };
 		CE3DD2EB29F37FE500787E53 /* Missile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2E829F37FE500787E53 /* Missile.swift */; };
-		CE3DD2ED2A020F4900787E53 /* Bomb.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2EC2A020F4900787E53 /* Bomb.swift */; };
-		CE3DD2EE2A020F4900787E53 /* Bomb.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2EC2A020F4900787E53 /* Bomb.swift */; };
-		CE3DD2EF2A020F4900787E53 /* Bomb.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2EC2A020F4900787E53 /* Bomb.swift */; };
+		CE3DD2ED2A020F4900787E53 /* Droppable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2EC2A020F4900787E53 /* Droppable.swift */; };
+		CE3DD2EE2A020F4900787E53 /* Droppable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2EC2A020F4900787E53 /* Droppable.swift */; };
+		CE3DD2EF2A020F4900787E53 /* Droppable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2EC2A020F4900787E53 /* Droppable.swift */; };
 		CE3DD2F12A02309300787E53 /* GBU16.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2F02A02309300787E53 /* GBU16.swift */; };
 		CE3DD2F22A02309300787E53 /* GBU16.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2F02A02309300787E53 /* GBU16.swift */; };
 		CE3DD2F32A02309300787E53 /* GBU16.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2F02A02309300787E53 /* GBU16.swift */; };
+		CE3DD2F52A039B0700787E53 /* FuelTank.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2F42A039B0700787E53 /* FuelTank.swift */; };
+		CE3DD2F62A039B0700787E53 /* FuelTank.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2F42A039B0700787E53 /* FuelTank.swift */; };
+		CE3DD2F72A039B0700787E53 /* FuelTank.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2F42A039B0700787E53 /* FuelTank.swift */; };
 		CE3E526328E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
 		CE3E526428E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
 		CE3E526528E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
@@ -391,8 +394,9 @@
 		CE3BFFE028E573E40014A752 /* skysphere.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = skysphere.obj; sourceTree = "<group>"; };
 		CE3BFFE728E6A0F40014A752 /* F16.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F16.swift; sourceTree = "<group>"; };
 		CE3DD2E829F37FE500787E53 /* Missile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Missile.swift; sourceTree = "<group>"; };
-		CE3DD2EC2A020F4900787E53 /* Bomb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bomb.swift; sourceTree = "<group>"; };
+		CE3DD2EC2A020F4900787E53 /* Droppable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Droppable.swift; sourceTree = "<group>"; };
 		CE3DD2F02A02309300787E53 /* GBU16.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GBU16.swift; sourceTree = "<group>"; };
+		CE3DD2F42A039B0700787E53 /* FuelTank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTank.swift; sourceTree = "<group>"; };
 		CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkySphere.swift; sourceTree = "<group>"; };
 		CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachedCamera.swift; sourceTree = "<group>"; };
 		CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightboxScene.swift; sourceTree = "<group>"; };
@@ -549,10 +553,11 @@
 				CE2ED2962998A10400C81F47 /* F18.swift */,
 				CEED93A629E3B2600020DC53 /* AircraftStore.swift */,
 				CE3DD2E829F37FE500787E53 /* Missile.swift */,
-				CE3DD2EC2A020F4900787E53 /* Bomb.swift */,
+				CE3DD2EC2A020F4900787E53 /* Droppable.swift */,
 				CE76931A29DE79CE00BBC718 /* Sidewinder.swift */,
 				CEED93A229E2B3EE0020DC53 /* AIM120.swift */,
 				CE3DD2F02A02309300787E53 /* GBU16.swift */,
+				CE3DD2F42A039B0700787E53 /* FuelTank.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -1004,6 +1009,7 @@
 				CE3BFF6028E1B2D10014A752 /* DepthStencilStateLibrary.swift in Sources */,
 				CE3BFF2A28E056EB0014A752 /* BaseShaders.metal in Sources */,
 				CE3BFF1F28E054880014A752 /* MetalTypes.swift in Sources */,
+				CE3DD2F52A039B0700787E53 /* FuelTank.swift in Sources */,
 				CE76930F29DD5DF600BBC718 /* SubMeshGameObject.swift in Sources */,
 				CE3BFFB328E572FB0014A752 /* FinalShaders.metal in Sources */,
 				CE3BFF2628E056720014A752 /* Shared.metal in Sources */,
@@ -1054,7 +1060,7 @@
 				CE3BFF9228E451E50014A752 /* CameraManager.swift in Sources */,
 				CE3BFF5428E1B29C0014A752 /* ShaderLibrary.swift in Sources */,
 				CEFC6E2D2952EA44009B692B /* Cube.swift in Sources */,
-				CE3DD2ED2A020F4900787E53 /* Bomb.swift in Sources */,
+				CE3DD2ED2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE886A4B298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */,
 				CE3BFF7228E1B4E10014A752 /* TextureLibrary.swift in Sources */,
 				CE3BFF9628E451F00014A752 /* LightManager.swift in Sources */,
@@ -1101,6 +1107,7 @@
 				CE2ED2B92998A4CF00C81F47 /* F18.swift in Sources */,
 				CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CE76931C29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
+				CE3DD2F62A039B0700787E53 /* FuelTank.swift in Sources */,
 				CE3E526428E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
 				CE3BFF5928E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
 				CE3BFF7728E2FC0A0014A752 /* Scene.swift in Sources */,
@@ -1160,7 +1167,7 @@
 				CE3BFF9328E451E50014A752 /* CameraManager.swift in Sources */,
 				CE7F480728B758920082B197 /* AppDelegate.swift in Sources */,
 				CE886A482985007A0013062D /* DirectionalLight.metal in Sources */,
-				CE3DD2EE2A020F4900787E53 /* Bomb.swift in Sources */,
+				CE3DD2EE2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE3BFF8728E2FD9C0014A752 /* GameObject.swift in Sources */,
 				CE3BFFA428E452F00014A752 /* LightObject.swift in Sources */,
 				CE7F483B28B76FF60082B197 /* Renderer.swift in Sources */,
@@ -1177,6 +1184,7 @@
 				CE3BFF6228E1B2D10014A752 /* DepthStencilStateLibrary.swift in Sources */,
 				CE3BFF3D28E059B60014A752 /* Shared.metal in Sources */,
 				CE3BFFB528E572FB0014A752 /* FinalShaders.metal in Sources */,
+				CE3DD2F72A039B0700787E53 /* FuelTank.swift in Sources */,
 				CE76931129DD5DF600BBC718 /* SubMeshGameObject.swift in Sources */,
 				CE7F484828B770EB0082B197 /* MathUtils.swift in Sources */,
 				CE3BFFB128E572EC0014A752 /* SkySphereShaders.metal in Sources */,
@@ -1227,7 +1235,7 @@
 				CE3BFF5628E1B29C0014A752 /* ShaderLibrary.swift in Sources */,
 				CE3BFF7428E1B4E10014A752 /* TextureLibrary.swift in Sources */,
 				CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */,
-				CE3DD2EF2A020F4900787E53 /* Bomb.swift in Sources */,
+				CE3DD2EF2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE886A4D298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */,
 				CE3BFF9828E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6B28E1B4C10014A752 /* Assets.swift in Sources */,

@@ -7,7 +7,7 @@
 
 import MetalKit
 
-struct Store {
+class Store {
     var remaining: Int
     var submeshNames: [String]
     
@@ -22,6 +22,8 @@ class F18: Aircraft {
     private var _spacePressed: Bool = false
     private var _mKeyPressed: Bool = false
     private var _nKeyPressed: Bool = false
+    private var _jKeyPressed: Bool = false
+    
     var shouldUpdate: Bool = true
     
     static let AIM9Name = "AIM-9"
@@ -36,7 +38,7 @@ class F18: Aircraft {
         FuelTankName
     ]
     
-    var stores: [String: Store] = [
+    let stores: [String: Store] = [
         AIM9Name: Store(remaining: 2, submeshNames: ["AIM-9XL_Paint", "AIM-9XR_Paint"]),
         AIM120Name: Store(remaining: 2, submeshNames: ["AIM-120DL_Paint", "AIM-120DR_Paint"]),
         GBU16Name: Store(remaining: 2, submeshNames: ["GBU-16L_Paint", "GBU-16R_Paint"]),
@@ -231,7 +233,7 @@ class F18: Aircraft {
         }
         
         handleKeyPressedDebounced(keyCode: .space, keyPressed: &_spacePressed) {
-            var aim9s = stores[F18.AIM9Name]!
+            let aim9s = stores[F18.AIM9Name]!
             if aim9s.remaining > 0 {
                 let storeIdx = aim9s.submeshNames.count - aim9s.remaining
                 let storeToRelease = aim9s.submeshNames[storeIdx]
@@ -244,12 +246,11 @@ class F18: Aircraft {
                 }
                 aim9s.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
-                stores[F18.AIM9Name] = aim9s  // Not the most elegant solution; have to do this due to structs being value types
             }
         }
         
         handleKeyPressedDebounced(keyCode: .n, keyPressed: &_nKeyPressed) {
-            var aim120s = stores[F18.AIM120Name]!
+            let aim120s = stores[F18.AIM120Name]!
             if aim120s.remaining > 0 {
                 let storeIdx = aim120s.submeshNames.count - aim120s.remaining
                 let storeToRelease = aim120s.submeshNames[storeIdx]
@@ -262,12 +263,11 @@ class F18: Aircraft {
                 }
                 aim120s.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
-                stores[F18.AIM120Name] = aim120s  // Not the most elegant solution; have to do this due to structs being value types
             }
         }
         
         handleKeyPressedDebounced(keyCode: .m, keyPressed: &_mKeyPressed) {
-            var gbu16s = stores[F18.GBU16Name]!
+            let gbu16s = stores[F18.GBU16Name]!
             if gbu16s.remaining > 0 {
                 let storeIdx = gbu16s.submeshNames.count - gbu16s.remaining
                 let storeToRelease = gbu16s.submeshNames[storeIdx]
@@ -280,20 +280,41 @@ class F18: Aircraft {
                 }
                 gbu16s.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
-                stores[F18.GBU16Name] = gbu16s  // Not the most elegant solution; have to do this due to structs being value types
+            }
+        }
+        
+        handleKeyPressedDebounced(keyCode: .j, keyPressed: &_jKeyPressed) {
+            let fuelTanks = stores[F18.FuelTankName]!
+            if fuelTanks.remaining > 0 {
+                let storeIdx = fuelTanks.submeshNames.count - fuelTanks.remaining
+                let storeToRelease = fuelTanks.submeshNames[storeIdx]
+                print("Jettissoning fuel tank!")
+                let fuelTank = FuelTank()
+                fuelTank.drop(forwardComponent: 0.0)
+                self.addChild(fuelTank)
+                if storeToRelease.hasPrefix("TankWingL") {
+                    fuelTank.setPositionX(-2.4)
+                    fuelTank.setPositionY(0.38)
+                    fuelTank.setPositionZ(0.71)
+                } else if storeToRelease.hasPrefix("TankWingR") {
+                    fuelTank.setPositionX(2.4)
+                    fuelTank.setPositionY(0.38)
+                    fuelTank.setPositionZ(0.71)
+                }
+                fuelTanks.remaining -= 1
+                submeshesToDisplay[storeToRelease] = false
             }
         }
         
         if Keyboard.IsKeyPressed(.l) {
             // Reset loadout
             for storeName in F18.storesNames {
-                var store = stores[storeName]!
+                let store = stores[storeName]!
                 if store.remaining < store.submeshNames.count {
                     store.remaining = store.submeshNames.count
                     for smn in store.submeshNames {
                         submeshesToDisplay[smn] = true
                     }
-                    stores[storeName] = store
                 }
             }
         }
