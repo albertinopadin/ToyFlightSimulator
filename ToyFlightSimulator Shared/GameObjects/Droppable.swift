@@ -6,7 +6,7 @@
 //
 
 class Droppable: SubMeshGameObject {
-    let gravity: Float = -9.8
+    let gravity: Float = -9.8  // TODO: This should probably go in a constants file somewhere...
     var velocityVector: float3 = float3(x: 0, y: 0, z: 0)
     var forwardVelocityComponent: Float = 0.0
     

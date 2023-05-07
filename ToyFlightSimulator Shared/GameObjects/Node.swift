@@ -109,9 +109,7 @@ class Node {
             child.renderShadows(renderCommandEncoder: renderCommandEncoder)
         }
     }
-}
-
-extension Node {
+    
     //Naming
     func setName(_ name: String){ self._name = name }
     func getName()->String{ return _name }
@@ -119,6 +117,9 @@ extension Node {
     
     //Positioning and Movement
     func setPosition(_ position: float3) {
+        if _name == "F-18" {
+            print("[Node setPosition] Setting F-18 position to: \(position)")
+        }
         self._position = position
         updateModelMatrix()
         afterTranslation()
@@ -176,4 +177,3 @@ extension Node {
     func getScaleY() -> Float { return self._scale.y }
     func getScaleZ() -> Float { return self._scale.z }
 }
-

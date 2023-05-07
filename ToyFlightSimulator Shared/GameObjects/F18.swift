@@ -218,7 +218,7 @@ class F18: Aircraft {
         self.shouldUpdate = false  // Don't update when user moves camera
     }
     
-    init(camera: AttachedCamera, scale: Float = 0.5) {
+    init(camera: AttachedCamera, scale: Float = 1.0) {
         super.init(name: "F-18",
                    meshType: .F18,
                    renderPipelineStateType: .OpaqueMaterial,
@@ -239,8 +239,20 @@ class F18: Aircraft {
                 let storeToRelease = aim9s.submeshNames[storeIdx]
                 print("Fox 2!")
                 let sidewinder = Sidewinder()
-                sidewinder.fire(direction: float3(0,0,-1), speed: 0.5)
-                self.addChild(sidewinder)
+                sidewinder.fire(direction: self.getFwdVector(), speed: 0.5)
+                sidewinder.setPosition(self.getPosition())
+                sidewinder.setRotation(self.getRotation())
+                sidewinder.setScale(self.getScale())
+                self.parent!.addChild(sidewinder)
+                // Remove after debugging:
+                print("\n[F18 doUpdate] aim9 model matrix:\n\(sidewinder.modelMatrix)")
+                print("\n[F18 doUpdate] aim9 position: \(sidewinder.getPosition())")
+                print("[F18 doUpdate] aim9 rotation: \(sidewinder.getRotation())")
+                print("[F18 doUpdate] aim9 scale: \(sidewinder.getScale())")
+                print("\n[F18 doUpdate] Hornet model matrix:\n\(self.modelMatrix)")
+                print("\n[F18 doUpdate] Hornet position: \(self.getPosition())")
+                print("[F18 doUpdate] Hornet rotation: \(self.getRotation())")
+                print("[F18 doUpdate] Hornet scale: \(self.parent!.getScale())")
                 if storeToRelease.hasPrefix("AIM-9XL") {
                     sidewinder.setPositionX(-13.37)
                 }
@@ -256,8 +268,11 @@ class F18: Aircraft {
                 let storeToRelease = aim120s.submeshNames[storeIdx]
                 print("Fox 3!")
                 let amraam = AIM120()
-                amraam.fire(direction: float3(0,0,-1), speed: 0.5)
-                self.addChild(amraam)
+                amraam.fire(direction: self.getFwdVector(), speed: 0.5)
+                amraam.setPosition(self.getPosition())
+                amraam.setRotation(self.getRotation())
+                amraam.setScale(self.getScale())
+                self.parent!.addChild(amraam)
                 if storeToRelease.hasPrefix("AIM-120DL") {
                     amraam.setPositionX(-8.58)
                 }
@@ -273,8 +288,11 @@ class F18: Aircraft {
                 let storeToRelease = gbu16s.submeshNames[storeIdx]
                 print("Dropping JDAM!")
                 let jdam = GBU16()
-                jdam.drop(forwardComponent: 0.0)  // TODO: Shoots off to the right instead of fwd
-                self.addChild(jdam)
+                jdam.drop(forwardComponent: 0.1)
+                jdam.setPosition(self.getPosition())
+                jdam.setRotation(self.getRotation())
+                jdam.setScale(self.getScale())
+                self.parent!.addChild(jdam)
                 if storeToRelease.hasPrefix("GBU-16L") {
                     jdam.setPositionX(-6.63)
                 }
@@ -291,7 +309,10 @@ class F18: Aircraft {
                 print("Jettissoning fuel tank!")
                 let fuelTank = FuelTank()
                 fuelTank.drop(forwardComponent: 0.0)
-                self.addChild(fuelTank)
+                fuelTank.setPosition(self.getPosition())
+                fuelTank.setRotation(self.getRotation())
+                fuelTank.setScale(self.getScale())
+                self.parent!.addChild(fuelTank)
                 if storeToRelease.hasPrefix("TankWingL") {
                     fuelTank.setPositionX(-2.4)
                     fuelTank.setPositionY(0.38)

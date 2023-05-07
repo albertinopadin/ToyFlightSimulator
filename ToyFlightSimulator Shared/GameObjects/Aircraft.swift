@@ -14,9 +14,6 @@ class Aircraft: GameObject {
     private var _moveSpeed: Float = 25.0
     private var _turnSpeed: Float = 4.0
     
-    private var _lastPosition = float3(0, 0, 0)
-    private var _lastRotation = float3(0, 0, 0)
-    
     override init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
     }
@@ -33,7 +30,8 @@ class Aircraft: GameObject {
         _camera?.setRotationX(Float(-15).toRadians)
         _camera?.setScale(1/scale)  // Set the inverse of parent scale to preserve view matrix
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
-        modelMatrix.scale(axis: float3(repeating: scale))  // Scale model matrix only once, on init
+        print("[Aircraft init] name: \(name), scale: \(scale)")
+//        modelMatrix.scale(axis: float3(repeating: scale))  // Scale model matrix only once, on init
         addChild(camera)
         
         // Results in gimbal lock and can't rotate on Z axis
@@ -60,71 +58,78 @@ class Aircraft: GameObject {
         return fwd
     }
     
+//    func getUpVector() -> float3 {
+//        // TODO
+//    }
+//
+//    func getRightVector() -> float3 {
+//        // TODO
+//    }
+    
     func moveAlongVector(_ vector: float3, distance: Float) {
         let to = vector * distance
         self.move(to)
     }
     
-    var mostRecentTranslation: float3 {
-        return getPosition() - _lastPosition
-    }
-    
-    
-    // TODO: Understand *why* this works to correctly rotate about axes but not for translation
-    override func updateModelMatrix() {
-//        modelMatrix = matrix_identity_float4x4
-//        modelMatrix.translate(direction: getPosition())
-        modelMatrix.translate(direction: getPosition() - _lastPosition)
-
-        modelMatrix.rotate(angle: getRotationX() - _lastRotation.x, axis: X_AXIS)
-        modelMatrix.rotate(angle: getRotationY() - _lastRotation.y, axis: Y_AXIS)
-        modelMatrix.rotate(angle: getRotationZ() - _lastRotation.z, axis: Z_AXIS)
-
-//        modelMatrix.scale(axis: getScale())
-
-        _lastPosition = getPosition()
-        _lastRotation = getRotation()
+    func rotateOnAxis(_ axis: float3, rotation: Float) {
+        // TODO
     }
     
     override func doUpdate() {
         if Keyboard.IsKeyPressed(.leftArrow) {
             self.rotateZ(GameTime.DeltaTime * _turnSpeed)
+//            rotateOnAxis(getFwdVector(), rotation: GameTime.DeltaTime * _turnSpeed)
         }
         
         if Keyboard.IsKeyPressed(.rightArrow) {
             self.rotateZ(-GameTime.DeltaTime * _turnSpeed)
+//            rotateOnAxis(getFwdVector(), rotation: -GameTime.DeltaTime * _turnSpeed)
         }
         
         if Keyboard.IsKeyPressed(.upArrow) {
+            // TODO: Rotate along RIGHT vector
             self.rotateX(-GameTime.DeltaTime * _turnSpeed)
+//            rotateOnAxis(getRightVector(), rotation: -GameTime.DeltaTime * _turnSpeed)
         }
         
         if Keyboard.IsKeyPressed(.downArrow) {
+            // TODO: Rotate along RIGHT vector
             self.rotateX(GameTime.DeltaTime * _turnSpeed)
+//            rotateOnAxis(getRightVector(), rotation: GameTime.DeltaTime * _turnSpeed)
         }
         
         if Keyboard.IsKeyPressed(.q) {
+            // TODO: Rotate along UP vector
             self.rotateY(GameTime.DeltaTime * _turnSpeed)
+//            rotateOnAxis(getUpVector(), rotation: GameTime.DeltaTime * _turnSpeed)
         }
         
         if Keyboard.IsKeyPressed(.e) {
+            // TODO: Rotate along UP vector
             self.rotateY(-GameTime.DeltaTime * _turnSpeed)
+//            rotateOnAxis(getUpVector(), rotation: -GameTime.DeltaTime * _turnSpeed)
         }
         
         if Keyboard.IsKeyPressed(.a) {
+            // TODO: move along RIGHT vector instead
             self.moveX(-GameTime.DeltaTime * _moveSpeed)
+//            moveAlongVector(getRightVector(), distance: -GameTime.DeltaTime * _moveSpeed)
         }
         
         if Keyboard.IsKeyPressed(.d) {
+            // TODO: move along RIGHT vector instead
             self.moveX(GameTime.DeltaTime * _moveSpeed)
+//            moveAlongVector(getRightVector(), distance: GameTime.DeltaTime * _moveSpeed)
         }
         
         if Keyboard.IsKeyPressed(.w) {
-            self.moveZ(-GameTime.DeltaTime * _moveSpeed)
+//            self.moveZ(-GameTime.DeltaTime * _moveSpeed)
+            moveAlongVector(getFwdVector(), distance: GameTime.DeltaTime * _moveSpeed)
         }
         
         if Keyboard.IsKeyPressed(.s) {
-            self.moveZ(GameTime.DeltaTime * _moveSpeed)
+//            self.moveZ(GameTime.DeltaTime * _moveSpeed)
+            moveAlongVector(getFwdVector(), distance: -GameTime.DeltaTime * _moveSpeed)
         }
     }
 }
