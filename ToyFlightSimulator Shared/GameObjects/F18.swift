@@ -288,7 +288,7 @@ class F18: Aircraft {
                 let storeToRelease = gbu16s.submeshNames[storeIdx]
                 print("Dropping JDAM!")
                 let jdam = GBU16()
-                jdam.drop(forwardComponent: 0.1)
+                jdam.drop(forwardComponent: 0.02)
                 jdam.setPosition(self.getPosition())
                 jdam.setRotation(self.getRotation())
                 jdam.setScale(self.getScale())

@@ -53,18 +53,18 @@ class Aircraft: GameObject {
     
     // TODO: Need to get 'z' axis from existing modelMatrix
     func getFwdVector() -> float3 {
-        let fwd = -normalize(self.modelMatrix.upperLeft3x3 * float3(0, 0, 1))
+        let fwd = -normalize(modelMatrix.upperLeft3x3 * float3(0, 0, 1))
         print("fwd vector: \(fwd)")
         return fwd
     }
     
-//    func getUpVector() -> float3 {
-//        // TODO
-//    }
-//
-//    func getRightVector() -> float3 {
-//        // TODO
-//    }
+    func getUpVector() -> float3 {
+        return normalize(modelMatrix.upperLeft3x3 * float3(0, 1, 0))
+    }
+
+    func getRightVector() -> float3 {
+        return normalize(modelMatrix.upperLeft3x3 * float3(1, 0, 0))
+    }
     
     func moveAlongVector(_ vector: float3, distance: Float) {
         let to = vector * distance
@@ -111,24 +111,18 @@ class Aircraft: GameObject {
         }
         
         if Keyboard.IsKeyPressed(.a) {
-            // TODO: move along RIGHT vector instead
-            self.moveX(-GameTime.DeltaTime * _moveSpeed)
-//            moveAlongVector(getRightVector(), distance: -GameTime.DeltaTime * _moveSpeed)
+            moveAlongVector(getRightVector(), distance: -GameTime.DeltaTime * _moveSpeed)
         }
         
         if Keyboard.IsKeyPressed(.d) {
-            // TODO: move along RIGHT vector instead
-            self.moveX(GameTime.DeltaTime * _moveSpeed)
-//            moveAlongVector(getRightVector(), distance: GameTime.DeltaTime * _moveSpeed)
+            moveAlongVector(getRightVector(), distance: GameTime.DeltaTime * _moveSpeed)
         }
         
         if Keyboard.IsKeyPressed(.w) {
-//            self.moveZ(-GameTime.DeltaTime * _moveSpeed)
             moveAlongVector(getFwdVector(), distance: GameTime.DeltaTime * _moveSpeed)
         }
         
         if Keyboard.IsKeyPressed(.s) {
-//            self.moveZ(GameTime.DeltaTime * _moveSpeed)
             moveAlongVector(getFwdVector(), distance: -GameTime.DeltaTime * _moveSpeed)
         }
     }
