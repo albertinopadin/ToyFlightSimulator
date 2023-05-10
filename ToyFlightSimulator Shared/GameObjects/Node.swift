@@ -117,9 +117,6 @@ class Node {
     
     //Positioning and Movement
     func setPosition(_ position: float3) {
-        if _name == "F-18" {
-            print("[Node setPosition] Setting F-18 position to: \(position)")
-        }
         self._position = position
         updateModelMatrix()
         afterTranslation()

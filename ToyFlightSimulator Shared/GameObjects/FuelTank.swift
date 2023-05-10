@@ -7,6 +7,10 @@
 
 class FuelTank: Droppable {
     init() {
-        super.init(name: "Fuel Tank", meshType: .F18_FuelTank, renderPipelineStateType: .OpaqueMaterial)
+        super.init(name: "Fuel_Tank", meshType: .F18_FuelTank, renderPipelineStateType: .OpaqueMaterial)
+    }
+    
+    init(modelName: String, submeshName: String) {
+        super.init(name: "Fuel_Tank", modelName: modelName, submeshName: submeshName)
     }
 }

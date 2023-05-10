@@ -9,6 +9,17 @@ class Missile: SubMeshGameObject {
     var direction: float3 = float3(0, 0, 0)
     var speed: Float = 0.0
     
+    override init(name: String, meshType: SingleSMMeshType, renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
+        super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
+    }
+    
+    override init(name: String,
+         modelName: String,
+         submeshName: String,
+         renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
+        super.init(name: name, modelName: modelName, submeshName: submeshName, renderPipelineStateType: renderPipelineStateType)
+    }
+    
     func fire(direction: float3, speed: Float) {
         self.direction = direction
         self.speed = speed

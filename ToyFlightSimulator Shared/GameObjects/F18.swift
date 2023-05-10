@@ -10,12 +10,13 @@ import MetalKit
 class Store {
     var remaining: Int
     var submeshNames: [String]
-    
+
     init(remaining: Int, submeshNames: [String]) {
         self.remaining = remaining
         self.submeshNames = submeshNames
     }
 }
+
 
 class F18: Aircraft {
     private let _cameraPositionOffset = float3(0, 10, 20)
@@ -25,6 +26,8 @@ class F18: Aircraft {
     private var _jKeyPressed: Bool = false
     
     var shouldUpdate: Bool = true
+    
+    static let F18_ModelName = "FA-18F"
     
     static let AIM9Name = "AIM-9"
     static let AIM120Name = "AIM-120"
@@ -44,6 +47,7 @@ class F18: Aircraft {
         GBU16Name: Store(remaining: 2, submeshNames: ["GBU-16L_Paint", "GBU-16R_Paint"]),
         FuelTankName: Store(remaining: 3, submeshNames: ["TankWingL_Paint", "TankWingR_Paint", "TankCenter_Paint"])
     ]
+    
     
 //    var landingGear: [String] = [
 //
@@ -237,25 +241,14 @@ class F18: Aircraft {
             if aim9s.remaining > 0 {
                 let storeIdx = aim9s.submeshNames.count - aim9s.remaining
                 let storeToRelease = aim9s.submeshNames[storeIdx]
+                print("Store to release: \(storeToRelease)")
                 print("Fox 2!")
-                let sidewinder = Sidewinder()
+                let sidewinder = Sidewinder(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 sidewinder.fire(direction: self.getFwdVector(), speed: 0.5)
                 sidewinder.setPosition(self.getPosition())
                 sidewinder.setRotation(self.getRotation())
                 sidewinder.setScale(self.getScale())
                 self.parent!.addChild(sidewinder)
-                // Remove after debugging:
-                print("\n[F18 doUpdate] aim9 model matrix:\n\(sidewinder.modelMatrix)")
-                print("\n[F18 doUpdate] aim9 position: \(sidewinder.getPosition())")
-                print("[F18 doUpdate] aim9 rotation: \(sidewinder.getRotation())")
-                print("[F18 doUpdate] aim9 scale: \(sidewinder.getScale())")
-                print("\n[F18 doUpdate] Hornet model matrix:\n\(self.modelMatrix)")
-                print("\n[F18 doUpdate] Hornet position: \(self.getPosition())")
-                print("[F18 doUpdate] Hornet rotation: \(self.getRotation())")
-                print("[F18 doUpdate] Hornet scale: \(self.parent!.getScale())")
-                if storeToRelease.hasPrefix("AIM-9XL") {
-                    sidewinder.setPositionX(-13.37)
-                }
                 aim9s.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
             }
@@ -267,15 +260,12 @@ class F18: Aircraft {
                 let storeIdx = aim120s.submeshNames.count - aim120s.remaining
                 let storeToRelease = aim120s.submeshNames[storeIdx]
                 print("Fox 3!")
-                let amraam = AIM120()
+                let amraam = AIM120(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 amraam.fire(direction: self.getFwdVector(), speed: 0.5)
                 amraam.setPosition(self.getPosition())
                 amraam.setRotation(self.getRotation())
                 amraam.setScale(self.getScale())
                 self.parent!.addChild(amraam)
-                if storeToRelease.hasPrefix("AIM-120DL") {
-                    amraam.setPositionX(-8.58)
-                }
                 aim120s.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
             }
@@ -287,15 +277,12 @@ class F18: Aircraft {
                 let storeIdx = gbu16s.submeshNames.count - gbu16s.remaining
                 let storeToRelease = gbu16s.submeshNames[storeIdx]
                 print("Dropping JDAM!")
-                let jdam = GBU16()
+                let jdam = GBU16(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 jdam.drop(forwardComponent: 0.02)
                 jdam.setPosition(self.getPosition())
                 jdam.setRotation(self.getRotation())
                 jdam.setScale(self.getScale())
                 self.parent!.addChild(jdam)
-                if storeToRelease.hasPrefix("GBU-16L") {
-                    jdam.setPositionX(-6.63)
-                }
                 gbu16s.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
             }
@@ -306,22 +293,13 @@ class F18: Aircraft {
             if fuelTanks.remaining > 0 {
                 let storeIdx = fuelTanks.submeshNames.count - fuelTanks.remaining
                 let storeToRelease = fuelTanks.submeshNames[storeIdx]
-                print("Jettissoning fuel tank!")
-                let fuelTank = FuelTank()
+                print("Jettisoning fuel tank!")
+                let fuelTank = FuelTank(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 fuelTank.drop(forwardComponent: 0.0)
                 fuelTank.setPosition(self.getPosition())
                 fuelTank.setRotation(self.getRotation())
                 fuelTank.setScale(self.getScale())
                 self.parent!.addChild(fuelTank)
-                if storeToRelease.hasPrefix("TankWingL") {
-                    fuelTank.setPositionX(-2.4)
-                    fuelTank.setPositionY(0.38)
-                    fuelTank.setPositionZ(0.71)
-                } else if storeToRelease.hasPrefix("TankWingR") {
-                    fuelTank.setPositionX(2.4)
-                    fuelTank.setPositionY(0.38)
-                    fuelTank.setPositionZ(0.71)
-                }
                 fuelTanks.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
             }

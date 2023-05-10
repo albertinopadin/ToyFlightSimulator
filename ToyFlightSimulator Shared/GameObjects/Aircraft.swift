@@ -73,6 +73,9 @@ class Aircraft: GameObject {
     
     func rotateOnAxis(_ axis: float3, rotation: Float) {
         // TODO
+        // I think in order to do this while keeping track of the rotations per axis,
+        // need to figure out a way to deconstruct a rotation around an arbitrary axis
+        // into rotations in the X, Y, and Z axes.
     }
     
     override func doUpdate() {
