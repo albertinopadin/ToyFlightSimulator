@@ -52,6 +52,7 @@ class Node {
     func updateModelMatrix() {
         _modelMatrix = matrix_identity_float4x4
         _modelMatrix.translate(direction: _position)
+        // Using Euler angles; TODO: change to using quaternions
         _modelMatrix.rotate(angle: _rotation.x, axis: X_AXIS)
         _modelMatrix.rotate(angle: _rotation.y, axis: Y_AXIS)
         _modelMatrix.rotate(angle: _rotation.z, axis: Z_AXIS)
@@ -72,6 +73,19 @@ class Node {
         for child in children {
             child.parentModelMatrix = self.modelMatrix
             child.update()
+        }
+    }
+    
+    func handleKeyPressedDebounced(keyCode: Keycodes, keyPressed: inout Bool, _ handleBlock: () -> Void) {
+        if Keyboard.IsKeyPressed(keyCode) {
+            if !keyPressed {
+                keyPressed.toggle()
+                handleBlock()
+            }
+        } else {
+            if keyPressed {
+                keyPressed.toggle()
+            }
         }
     }
     
@@ -153,6 +167,11 @@ class Node {
     func getRotationX() -> Float { return self._rotation.x }
     func getRotationY() -> Float { return self._rotation.y }
     func getRotationZ() -> Float { return self._rotation.z }
+    
+//    func rotateOnAxis(_ axis: float3, degrees: Float) {
+//        _modelMatrix.rotate(angle: degrees, axis: axis)
+//        afterRotation()
+//    }
     
     //Scaling
     func setScale(_ scale: float3) {

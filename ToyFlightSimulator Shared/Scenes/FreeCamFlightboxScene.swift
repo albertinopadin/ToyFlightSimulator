@@ -52,6 +52,6 @@ class FreeCamFlightboxScene: Scene {
     }
     
     override func doUpdate() {
-        // ?
+        super.doUpdate()
     }
 }

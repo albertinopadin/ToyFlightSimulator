@@ -14,6 +14,7 @@ class FlightboxScene: Scene {
     var quad = Quad()
     
     var paused: Bool = false
+    var _pPressed: Bool = false
     
     override func buildScene() {
 //        f16 = F16(camera: attachedCamera)
@@ -151,12 +152,9 @@ class FlightboxScene: Scene {
     }
     
     override func doUpdate() {
-//        if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
-//            f16.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
-//            f16.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
-//        }
+        super.doUpdate()
         
-        if Keyboard.IsKeyPressed(.p) {
+        handleKeyPressedDebounced(keyCode: .p, keyPressed: &_pPressed) {
             paused.toggle()
         }
         

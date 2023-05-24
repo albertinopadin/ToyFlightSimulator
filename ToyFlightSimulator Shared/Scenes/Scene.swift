@@ -13,6 +13,9 @@ class Scene: Node {
     private var _lightManager = LightManager()
     private var _sceneConstants = SceneConstants()
     
+    private var _cmdPressed: Bool = false
+    private var _rPressed: Bool = false
+    
     override init(name: String) {
         super.init(name: name)
         buildScene()
@@ -36,11 +39,15 @@ class Scene: Node {
         _cameraManager.update(deltaTime: deltaTime)
     }
     
-//    override func doUpdate() {
-//        if Keyboard.IsKeyPressed(.p) {
-//            
-//        }
-//    }
+    override func doUpdate() {
+        handleKeyPressedDebounced(keyCode: .command, keyPressed: &_cmdPressed) {
+            print("CMD pressed")
+            handleKeyPressedDebounced(keyCode: .r, keyPressed: &_rPressed) {
+                print("CMD-R pressed")
+                // TODO: Figure out how to reset scene
+            }
+        }
+    }
     
     override func update() {
         _sceneConstants.viewMatrix = _cameraManager.currentCamera.viewMatrix

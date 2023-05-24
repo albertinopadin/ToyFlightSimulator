@@ -319,19 +319,6 @@ class F18: Aircraft {
         }
     }
     
-    func handleKeyPressedDebounced(keyCode: Keycodes, keyPressed: inout Bool, _ handleBlock: () -> Void) {
-        if Keyboard.IsKeyPressed(keyCode) {
-            if !keyPressed {
-                keyPressed.toggle()
-                handleBlock()
-            }
-        } else {
-            if keyPressed {
-                keyPressed.toggle()
-            }
-        }
-    }
-    
     override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
                            submeshesToRender: [String : Bool]? = nil) {

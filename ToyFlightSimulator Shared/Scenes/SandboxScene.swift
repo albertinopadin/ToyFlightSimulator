@@ -62,6 +62,8 @@ class SandboxScene: Scene {
     }
     
     override func doUpdate() {
+        super.doUpdate()
+        
 //        if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
 //            for quad in [quad1, quad2, quad3, quad4] {
 //                quad.rotateX(Mouse.GetDY() * GameTime.DeltaTime)

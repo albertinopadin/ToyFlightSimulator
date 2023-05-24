@@ -47,6 +47,8 @@ class GameViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: Keyboard.SetCommandKeyPressed(event:))
 
         guard let _gameView = self.view as? GameView else {
             print("View attached to GameViewController is not a GameView")
