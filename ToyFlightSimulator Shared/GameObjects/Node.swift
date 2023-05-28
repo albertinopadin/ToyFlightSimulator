@@ -13,12 +13,11 @@ class Node {
     
     private var _position = float3(0, 0, 0)
     private var _scale = float3(1, 1, 1)
-//    private var _rotation = float3(0, 0, 0)
-    private var _rotationMatrix = matrix_identity_float4x4
     
     var parentModelMatrix = matrix_identity_float4x4
     
     private var _modelMatrix = matrix_identity_float4x4
+    private var _rotationMatrix = matrix_identity_float4x4
     
     var modelMatrix: matrix_float4x4 {
         set {
@@ -33,6 +32,10 @@ class Node {
     var rotationMatrix: matrix_float4x4 {
         get {
             return _rotationMatrix
+        }
+        
+        set {
+            _rotationMatrix = newValue
         }
     }
     
@@ -140,6 +143,32 @@ class Node {
         return normalize(float3(right.x, right.y, right.z))
     }
     
+    func moveAlongVector(_ vector: float3, distance: Float) {
+        let to = vector * distance
+        self.move(to)
+    }
+    
+    
+    // Adapted from ChatGPT-4:
+    func decomposeToEulers(_ rotationMatrix: matrix_float4x4) -> float3 {
+        let _v = rotationMatrix.columns.0.x * rotationMatrix.columns.0.x + rotationMatrix.columns.1.x * rotationMatrix.columns.1.x
+        let sy = sqrt(_v)
+        let isSingular = sy < 1e-6
+        var x, y, z: Float
+        if !isSingular {
+            x = atan2(rotationMatrix.columns.2.y, rotationMatrix.columns.2.z)
+            y = atan2(-rotationMatrix.columns.2.x, sy)
+            z = atan2(rotationMatrix.columns.1.x, rotationMatrix.columns.0.x)
+        } else {
+            x = atan2(-rotationMatrix.columns.1.z, rotationMatrix.columns.1.y)
+            y = atan2(-rotationMatrix.columns.2.x, sy)
+            z = 0
+        }
+//        return float3(x: x, y: y, z: z)  // Right-handed coordinate system
+//        return float3(x: -x, y: -y, z: z)  // Left-handed coordinate system
+        return float3(x: -x, y: -y, z: z)
+    }
+    
     //Naming
     func setName(_ name: String){ self._name = name }
     func getName()->String{ return _name }
@@ -166,20 +195,17 @@ class Node {
     func getPositionZ() -> Float { return self._position.z }
     
     //Rotating
-//    func setRotation(angle: Float, axis: float3) {
-//        // Maybe reset rotation matrix to identity here ???
-//        _rotationMatrix = simd_float4x4(simd_quatf(angle: angle, axis: axis)) * matrix_identity_float4x4
-//        updateModelMatrix()
-//        afterRotation()
-//    }
-//    func setRotation(_ x: Float, _ y: Float, _ z: Float) { setRotation(float3(x, y, z)) }
-//    func setRotationX(_ xRotation: Float) { setRotation(xRotation, getRotationY(), getRotationZ()) }
-//    func setRotationX(_ xRotation: Float) { setRotation(angle: xRotation, axis: X_AXIS)}
-//    func setRotationY(_ yRotation: Float) { setRotation(getRotationX(), yRotation, getRotationZ()) }
-//    func setRotationY(_ yRotation: Float) { setRotation(angle: yRotation, axis: Y_AXIS)}
-//    func setRotationZ(_ zRotation: Float) { setRotation(getRotationX(), getRotationY(), zRotation) }
-//    func setRotationZ(_ zRotation: Float) { setRotation(angle: zRotation, axis: Z_AXIS)}
-//    func rotate(_ x: Float, _ y: Float, _ z: Float){ setRotation(getRotationX() + x, getRotationY() + y, getRotationZ() + z) }
+    func setRotation(angle: Float, axis: float3) {
+        let normalizedAxis = simd_normalize(axis)
+        _rotationMatrix = simd_float4x4(simd_quatf(angle: angle, axis: normalizedAxis))
+        updateModelMatrix()
+        afterRotation()
+    }
+    
+    func setRotationX(_ xRotation: Float) { setRotation(angle: xRotation, axis: getRightVector())}
+    func setRotationY(_ yRotation: Float) { setRotation(angle: yRotation, axis: getUpVector())}
+    func setRotationZ(_ zRotation: Float) { setRotation(angle: zRotation, axis: getFwdVector())}
+    
     func rotate(deltaAngle: Float, axis: float3) {
         let normalizedAxis = simd_normalize(axis)
         _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: normalizedAxis)) * _rotationMatrix
@@ -192,15 +218,10 @@ class Node {
     func rotateX(_ delta: Float){ rotate(deltaAngle: delta, axis: getRightVector()) }
     func rotateY(_ delta: Float){ rotate(deltaAngle: delta, axis: getUpVector()) }
     func rotateZ(_ delta: Float){ rotate(deltaAngle: delta, axis: getFwdVector()) }
-//    func getRotation() -> float3 { return self._rotation }
-//    func getRotationX() -> Float { return self._rotation.x }
-//    func getRotationY() -> Float { return self._rotation.y }
-//    func getRotationZ() -> Float { return self._rotation.z }
     
-//    func rotateOnAxis(_ axis: float3, degrees: Float) {
-//        _modelMatrix.rotate(angle: degrees, axis: axis)
-//        afterRotation()
-//    }
+    func getRotationX() -> Float { return decomposeToEulers(_rotationMatrix).x }
+    func getRotationY() -> Float { return decomposeToEulers(_rotationMatrix).y }
+    func getRotationZ() -> Float { return decomposeToEulers(_rotationMatrix).z }
     
     //Scaling
     func setScale(_ scale: float3) {

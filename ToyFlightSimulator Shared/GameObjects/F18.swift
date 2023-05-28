@@ -246,7 +246,7 @@ class F18: Aircraft {
                 let sidewinder = Sidewinder(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 sidewinder.fire(direction: self.getFwdVector(), speed: 0.5)
                 sidewinder.setPosition(self.getPosition())
-//                sidewinder.setRotation(self.getRotation())
+                sidewinder.rotationMatrix = self.rotationMatrix
                 sidewinder.setScale(self.getScale())
                 self.parent!.addChild(sidewinder)
                 aim9s.remaining -= 1
@@ -263,7 +263,7 @@ class F18: Aircraft {
                 let amraam = AIM120(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 amraam.fire(direction: self.getFwdVector(), speed: 0.5)
                 amraam.setPosition(self.getPosition())
-//                amraam.setRotation(self.getRotation())
+                amraam.rotationMatrix = self.rotationMatrix
                 amraam.setScale(self.getScale())
                 self.parent!.addChild(amraam)
                 aim120s.remaining -= 1
@@ -280,7 +280,7 @@ class F18: Aircraft {
                 let jdam = GBU16(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 jdam.drop(forwardComponent: 0.02)
                 jdam.setPosition(self.getPosition())
-//                jdam.setRotation(self.getRotation())
+                jdam.rotationMatrix = self.rotationMatrix
                 jdam.setScale(self.getScale())
                 self.parent!.addChild(jdam)
                 gbu16s.remaining -= 1
@@ -297,7 +297,7 @@ class F18: Aircraft {
                 let fuelTank = FuelTank(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 fuelTank.drop(forwardComponent: 0.0)
                 fuelTank.setPosition(self.getPosition())
-//                fuelTank.setRotation(self.getRotation())
+                fuelTank.rotationMatrix = self.rotationMatrix
                 fuelTank.setScale(self.getScale())
                 self.parent!.addChild(fuelTank)
                 fuelTanks.remaining -= 1

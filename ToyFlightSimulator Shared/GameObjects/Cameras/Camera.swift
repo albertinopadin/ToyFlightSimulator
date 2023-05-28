@@ -38,12 +38,7 @@ class Camera: GameObject {
     override func updateModelMatrix() {
         super.updateModelMatrix()
         _viewMatrix = matrix_identity_float4x4
-//        _viewMatrix.rotate(angle: self.getRotationX(), axis: X_AXIS)
-//        _viewMatrix.rotate(angle: self.getRotationY(), axis: Y_AXIS)
-//        _viewMatrix.rotate(angle: self.getRotationZ(), axis: Z_AXIS)
-        // TODO: Make this work again:
-//        _viewMatrix = matrix_multiply(rotationMatrix, _viewMatrix)
-//        _viewMatrix = matrix_multiply(_viewMatrix, rotationMatrix)
+        _viewMatrix = matrix_multiply(_viewMatrix, rotationMatrix)
         _viewMatrix.translate(direction: -self.getPosition())
     }
 }
