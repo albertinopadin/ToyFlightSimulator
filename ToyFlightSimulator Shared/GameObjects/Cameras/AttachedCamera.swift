@@ -41,9 +41,10 @@ class AttachedCamera: Camera {
     
     override func doUpdate() {
         if Mouse.IsMouseButtonPressed(button: .RIGHT) {
-            self.rotate(Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed,
-                        Mouse.GetDX() * GameTime.DeltaTime * _turnSpeed,
-                        0)
+            // TODO:
+//            self.rotate(Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed,
+//                        Mouse.GetDX() * GameTime.DeltaTime * _turnSpeed,
+//                        0)
         }
         
         if Mouse.IsMouseButtonPressed(button: .CENTER) {

@@ -13,7 +13,8 @@ class Node {
     
     private var _position = float3(0, 0, 0)
     private var _scale = float3(1, 1, 1)
-    private var _rotation = float3(0, 0, 0)
+//    private var _rotation = float3(0, 0, 0)
+    private var _rotationMatrix = matrix_identity_float4x4
     
     var parentModelMatrix = matrix_identity_float4x4
     
@@ -26,6 +27,12 @@ class Node {
         
         get {
             return matrix_multiply(parentModelMatrix, _modelMatrix)
+        }
+    }
+    
+    var rotationMatrix: matrix_float4x4 {
+        get {
+            return _rotationMatrix
         }
     }
     
@@ -51,12 +58,22 @@ class Node {
     
     func updateModelMatrix() {
         _modelMatrix = matrix_identity_float4x4
+//        _modelMatrix = matrix_multiply(_rotationMatrix, _modelMatrix)
+        _modelMatrix.scale(axis: _scale)
+//        _modelMatrix.translate(direction: -_position)
+//        _modelMatrix = matrix_multiply(_modelMatrix, _rotationMatrix)
+//        _modelMatrix = matrix_multiply(_rotationMatrix, _modelMatrix)
+//        _modelMatrix = _modelMatrix * _rotationMatrix
         _modelMatrix.translate(direction: _position)
         // Using Euler angles; TODO: change to using quaternions
-        _modelMatrix.rotate(angle: _rotation.x, axis: X_AXIS)
-        _modelMatrix.rotate(angle: _rotation.y, axis: Y_AXIS)
-        _modelMatrix.rotate(angle: _rotation.z, axis: Z_AXIS)
-        _modelMatrix.scale(axis: _scale)
+//        _modelMatrix.rotate(angle: _rotation.x, axis: X_AXIS)
+//        _modelMatrix.rotate(angle: _rotation.y, axis: Y_AXIS)
+//        _modelMatrix.rotate(angle: _rotation.z, axis: Z_AXIS)
+//        _modelMatrix = matrix_multiply(_rotationMatrix, _modelMatrix)
+//        _modelMatrix = matrix_multiply(_modelMatrix, _rotationMatrix)
+        
+        // Doing the rotation after the translation seems like it should not work, but it does:
+        _modelMatrix = _modelMatrix * _rotationMatrix
     }
     
     // Override these when needed:
@@ -124,6 +141,21 @@ class Node {
         }
     }
     
+    func getFwdVector() -> float3 {
+        let forward = modelMatrix.columns.2
+        return normalize(float3(-forward.x, -forward.y, -forward.z))
+    }
+    
+    func getUpVector() -> float3 {
+        let up = modelMatrix.columns.1
+        return normalize(float3(up.x, up.y, up.z))
+    }
+
+    func getRightVector() -> float3 {
+        let right = modelMatrix.columns.0
+        return normalize(float3(right.x, right.y, right.z))
+    }
+    
     //Naming
     func setName(_ name: String){ self._name = name }
     func getName()->String{ return _name }
@@ -150,23 +182,43 @@ class Node {
     func getPositionZ() -> Float { return self._position.z }
     
     //Rotating
-    func setRotation(_ rotation: float3) {
-        self._rotation = rotation
+//    func setRotation(angle: Float, axis: float3) {
+//        // Maybe reset rotation matrix to identity here ???
+//        _rotationMatrix = simd_float4x4(simd_quatf(angle: angle, axis: axis)) * matrix_identity_float4x4
+//        updateModelMatrix()
+//        afterRotation()
+//    }
+//    func setRotation(_ x: Float, _ y: Float, _ z: Float) { setRotation(float3(x, y, z)) }
+//    func setRotationX(_ xRotation: Float) { setRotation(xRotation, getRotationY(), getRotationZ()) }
+//    func setRotationX(_ xRotation: Float) { setRotation(angle: xRotation, axis: X_AXIS)}
+//    func setRotationY(_ yRotation: Float) { setRotation(getRotationX(), yRotation, getRotationZ()) }
+//    func setRotationY(_ yRotation: Float) { setRotation(angle: yRotation, axis: Y_AXIS)}
+//    func setRotationZ(_ zRotation: Float) { setRotation(getRotationX(), getRotationY(), zRotation) }
+//    func setRotationZ(_ zRotation: Float) { setRotation(angle: zRotation, axis: Z_AXIS)}
+//    func rotate(_ x: Float, _ y: Float, _ z: Float){ setRotation(getRotationX() + x, getRotationY() + y, getRotationZ() + z) }
+    func rotate(deltaAngle: Float, axis: float3) {
+//        _rotationMatrix = matrix_identity_float4x4
+//        _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: axis)) * _rotationMatrix
+//        let axisInObjectSpace = (_rotationMatrix.inverse.transpose * simd_float4(axis, 0)).xyz
+        let normalizedAxis = simd_normalize(axis)
+        _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: normalizedAxis)) * _rotationMatrix
+//        _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: normalizedAxis))
+//        _rotationMatrix = simd_float4x4(rotateAbout: normalizedAxis, byAngle: deltaAngle) * _rotationMatrix
+//        _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: axis)) * _rotationMatrix
+//        _rotationMatrix = _rotationMatrix * simd_float4x4(simd_quatf(angle: deltaAngle, axis: axis))
         updateModelMatrix()
         afterRotation()
     }
-    func setRotation(_ x: Float, _ y: Float, _ z: Float) { setRotation(float3(x, y, z)) }
-    func setRotationX(_ xRotation: Float) { setRotation(xRotation, getRotationY(), getRotationZ()) }
-    func setRotationY(_ yRotation: Float) { setRotation(getRotationX(), yRotation, getRotationZ()) }
-    func setRotationZ(_ zRotation: Float) { setRotation(getRotationX(), getRotationY(), zRotation) }
-    func rotate(_ x: Float, _ y: Float, _ z: Float){ setRotation(getRotationX() + x, getRotationY() + y, getRotationZ() + z) }
-    func rotateX(_ delta: Float){ rotate(delta, 0, 0) }
-    func rotateY(_ delta: Float){ rotate(0, delta, 0) }
-    func rotateZ(_ delta: Float){ rotate(0, 0, delta) }
-    func getRotation() -> float3 { return self._rotation }
-    func getRotationX() -> Float { return self._rotation.x }
-    func getRotationY() -> Float { return self._rotation.y }
-    func getRotationZ() -> Float { return self._rotation.z }
+//    func rotateX(_ delta: Float){ rotate(deltaAngle: delta, axis: X_AXIS) }
+//    func rotateY(_ delta: Float){ rotate(deltaAngle: delta, axis: Y_AXIS) }
+//    func rotateZ(_ delta: Float){ rotate(deltaAngle: delta, axis: Z_AXIS) }
+    func rotateX(_ delta: Float){ rotate(deltaAngle: delta, axis: getRightVector()) }
+    func rotateY(_ delta: Float){ rotate(deltaAngle: delta, axis: getUpVector()) }
+    func rotateZ(_ delta: Float){ rotate(deltaAngle: delta, axis: getFwdVector()) }
+//    func getRotation() -> float3 { return self._rotation }
+//    func getRotationX() -> Float { return self._rotation.x }
+//    func getRotationY() -> Float { return self._rotation.y }
+//    func getRotationZ() -> Float { return self._rotation.z }
     
 //    func rotateOnAxis(_ axis: float3, degrees: Float) {
 //        _modelMatrix.rotate(angle: degrees, axis: axis)

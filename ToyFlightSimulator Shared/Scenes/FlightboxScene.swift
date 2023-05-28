@@ -160,6 +160,7 @@ class FlightboxScene: Scene {
         
         if !paused {
             quad.rotateZ(GameTime.DeltaTime)
+//            print("Quad rotation matrix: \(quad.rotationMatrix)")
 //            f16.rotateZ(GameTime.DeltaTime)
         }
     }

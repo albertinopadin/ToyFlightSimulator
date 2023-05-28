@@ -22,7 +22,7 @@ class Aircraft: GameObject {
     
     override init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
-        initAxes()
+//        initAxes()
     }
     
     init(name: String,
@@ -34,7 +34,8 @@ class Aircraft: GameObject {
         _camera = camera
         _camera?.setPosition(cameraOffset)
         _camera?.positionOffset = cameraOffset
-        _camera?.setRotationX(Float(-15).toRadians)
+//        _camera?.setRotationX(Float(-15).toRadians)
+        _camera?.rotateX(Float(-15).toRadians)
         _camera?.setScale(1/scale)  // Set the inverse of parent scale to preserve view matrix
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
         print("[Aircraft init] name: \(name), scale: \(scale)")
@@ -45,15 +46,15 @@ class Aircraft: GameObject {
 //        self.setRotationY(Float(90).toRadians)
 //        self.rotateY(Float(90).toRadians)
         
-        initAxes()
+//        initAxes()
     }
     
     // TODO: Testing:
-    func initAxes() {
-        _X = getRightVector()
-        _Y = getUpVector()
-        _Z = getFwdVector()
-    }
+//    func initAxes() {
+//        _X = getRightVector()
+//        _Y = getUpVector()
+//        _Z = getFwdVector()
+//    }
     
 //    var xAxis: float3 {
 //        return normalize(modelMatrix.upperLeft3x3 * X_AXIS)
@@ -67,21 +68,21 @@ class Aircraft: GameObject {
 //        return normalize(modelMatrix.upperLeft3x3 * Z_AXIS)
 //    }
     
-    func getFwdVector() -> float3 {
-        let forward = modelMatrix.columns.2
-        return normalize(float3(-forward.x, -forward.y, -forward.z))
-    }
-    
-    func getUpVector() -> float3 {
-        let up = modelMatrix.columns.1
-        return normalize(float3(up.x, up.y, up.z))
-    }
+//    func getFwdVector() -> float3 {
+//        let forward = modelMatrix.columns.2
+//        return normalize(float3(-forward.x, -forward.y, -forward.z))
+//    }
+//    
+//    func getUpVector() -> float3 {
+//        let up = modelMatrix.columns.1
+//        return normalize(float3(up.x, up.y, up.z))
+//    }
+//
+//    func getRightVector() -> float3 {
+//        let right = modelMatrix.columns.0
+//        return normalize(float3(right.x, right.y, right.z))
+//    }
 
-    func getRightVector() -> float3 {
-        let right = modelMatrix.columns.0
-        return normalize(float3(right.x, right.y, right.z))
-    }
-    
     func moveAlongVector(_ vector: float3, distance: Float) {
         let to = vector * distance
         self.move(to)
@@ -167,12 +168,12 @@ class Aircraft: GameObject {
 //            print("Pressed P")
 //        }
         
-        let currentRotation = decomposeToEulers(modelMatrix)
-        if currentRotation != self.getRotation() {
-            print("ROTATIONS NOT EQUAL")
-            print("Current: \(currentRotation)")
-            print("self: \(self.getRotation())")
-        }
+//        let currentRotation = decomposeToEulers(modelMatrix)
+//        if currentRotation != self.getRotation() {
+//            print("ROTATIONS NOT EQUAL")
+//            print("Current: \(currentRotation)")
+//            print("self: \(self.getRotation())")
+//        }
         
         if Keyboard.IsKeyPressed(.leftArrow) {
 //            self.rotateZ(GameTime.DeltaTime * _turnSpeed)
@@ -187,10 +188,12 @@ class Aircraft: GameObject {
             
 //            let axisRotation = Transform.rotationMatrix(radians: deltaTurn, axis: getFwdVectorTranslatedToOrigin())
 //            let axisRotation = getRotationMatrix(angle: deltaTurn, axis: getFwdVector())
-            var axisRotation = getRotationMatrix(angle: deltaTurn, axis: getFwdVectorTranslatedToOrigin())
-            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
-            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
+//            var axisRotation = getRotationMatrix(angle: deltaTurn, axis: getFwdVectorTranslatedToOrigin())
+//            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
+//            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
 //            modelMatrix = matrix_multiply(axisRotation, modelMatrix)
+//            self.rotate(deltaAngle: deltaTurn, axis: getFwdVector())
+            self.rotateZ(-deltaTurn)
             
 //            self.modelMatrix.rotate(angle: -deltaTurn, axis: getFwdVector())
         }
@@ -207,10 +210,12 @@ class Aircraft: GameObject {
 //            let axisRotation = matrix_float4x4(rotateAbout: _Z, byAngle: GameTime.DeltaTime * _turnSpeed)
             
 //            let axisRotation = Transform.rotationMatrix(radians: -deltaTurn, axis: getFwdVectorTranslatedToOrigin())
-            var axisRotation = getRotationMatrix(angle: -deltaTurn, axis: getFwdVectorTranslatedToOrigin())
-            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
-            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
+//            var axisRotation = getRotationMatrix(angle: -deltaTurn, axis: getFwdVectorTranslatedToOrigin())
+//            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
+//            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
 //            modelMatrix = matrix_multiply(axisRotation, modelMatrix)
+//            self.rotate(deltaAngle: -deltaTurn, axis: getFwdVector())
+            self.rotateZ(deltaTurn)
             
 //            self.modelMatrix.rotate(angle: deltaTurn, axis: getFwdVector())
         }
@@ -228,11 +233,12 @@ class Aircraft: GameObject {
 //            let axisRotation = matrix_float4x4(rotateAbout: _X, byAngle: -GameTime.DeltaTime * _turnSpeed)
             
 //            let axisRotation = Transform.rotationMatrix(radians: -deltaTurn, axis: getRightVectorTranslatedToOrigin())
-            var axisRotation = getRotationMatrix(angle: -deltaTurn, axis: getRightVectorTranslatedToOrigin())
-            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
-            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
+//            var axisRotation = getRotationMatrix(angle: -deltaTurn, axis: getRightVectorTranslatedToOrigin())
+//            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
+//            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
 //            modelMatrix = matrix_multiply(axisRotation, modelMatrix)
-            
+//            self.rotate(deltaAngle: -deltaTurn, axis: getRightVector())
+            self.rotateX(-deltaTurn)
 //            self.modelMatrix.rotate(angle: -deltaTurn, axis: getRightVector())
         }
         
@@ -249,11 +255,12 @@ class Aircraft: GameObject {
 //            let axisRotation = matrix_float4x4(rotateAbout: _X, byAngle: GameTime.DeltaTime * _turnSpeed)
             
 //            let axisRotation = Transform.rotationMatrix(radians: deltaTurn, axis: getRightVectorTranslatedToOrigin())
-            var axisRotation = getRotationMatrix(angle: deltaTurn, axis: getRightVectorTranslatedToOrigin())
-            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
-            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
+//            var axisRotation = getRotationMatrix(angle: deltaTurn, axis: getRightVectorTranslatedToOrigin())
+//            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
+//            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
 //            modelMatrix = matrix_multiply(axisRotation, modelMatrix)
-            
+//            self.rotate(deltaAngle: deltaTurn, axis: getRightVector())
+            self.rotateX(deltaTurn)
 //            self.modelMatrix.rotate(angle: deltaTurn, axis: getRightVector())
         }
         
@@ -271,11 +278,12 @@ class Aircraft: GameObject {
 //            let axisRotation = matrix_float4x4(rotateAbout: _Y, byAngle: GameTime.DeltaTime * _turnSpeed)
             
 //            let axisRotation = Transform.rotationMatrix(radians: deltaTurn, axis: getUpVectorTranslatedToOrigin())
-            var axisRotation = getRotationMatrix(angle: deltaTurn, axis: getUpVectorTranslatedToOrigin())
-            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
-            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
+//            var axisRotation = getRotationMatrix(angle: deltaTurn, axis: getUpVectorTranslatedToOrigin())
+//            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
+//            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
 //            modelMatrix = matrix_multiply(axisRotation, modelMatrix)
-            
+//            self.rotate(deltaAngle: deltaTurn, axis: getUpVector())
+            self.rotateY(deltaTurn)
 //            self.modelMatrix.rotate(angle: deltaTurn, axis: getUpVector())
         }
         
@@ -292,11 +300,12 @@ class Aircraft: GameObject {
 //            let axisRotation = matrix_float4x4(rotateAbout: _Y, byAngle: -GameTime.DeltaTime * _turnSpeed)
             
 //            let axisRotation = Transform.rotationMatrix(radians: -deltaTurn, axis: getUpVectorTranslatedToOrigin())
-            var axisRotation = getRotationMatrix(angle: -deltaTurn, axis: getUpVectorTranslatedToOrigin())
-            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
-            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
+//            var axisRotation = getRotationMatrix(angle: -deltaTurn, axis: getUpVectorTranslatedToOrigin())
+//            axisRotation = axisRotation * Transform.translationMatrix(self.getPosition())
+//            self.setRotation(self.getRotation() + decomposeToEulers(axisRotation))
 //            modelMatrix = matrix_multiply(axisRotation, modelMatrix)
-            
+//            self.rotate(deltaAngle: -deltaTurn, axis: getUpVector())
+            self.rotateY(-deltaTurn)
 //            self.modelMatrix.rotate(angle: -deltaTurn, axis: getUpVector())
         }
         
