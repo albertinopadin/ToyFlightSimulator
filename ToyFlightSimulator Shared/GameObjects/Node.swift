@@ -57,23 +57,7 @@ class Node {
     }
     
     func updateModelMatrix() {
-        _modelMatrix = matrix_identity_float4x4
-//        _modelMatrix = matrix_multiply(_rotationMatrix, _modelMatrix)
-        _modelMatrix.scale(axis: _scale)
-//        _modelMatrix.translate(direction: -_position)
-//        _modelMatrix = matrix_multiply(_modelMatrix, _rotationMatrix)
-//        _modelMatrix = matrix_multiply(_rotationMatrix, _modelMatrix)
-//        _modelMatrix = _modelMatrix * _rotationMatrix
-        _modelMatrix.translate(direction: _position)
-        // Using Euler angles; TODO: change to using quaternions
-//        _modelMatrix.rotate(angle: _rotation.x, axis: X_AXIS)
-//        _modelMatrix.rotate(angle: _rotation.y, axis: Y_AXIS)
-//        _modelMatrix.rotate(angle: _rotation.z, axis: Z_AXIS)
-//        _modelMatrix = matrix_multiply(_rotationMatrix, _modelMatrix)
-//        _modelMatrix = matrix_multiply(_modelMatrix, _rotationMatrix)
-        
-        // Doing the rotation after the translation seems like it should not work, but it does:
-        _modelMatrix = _modelMatrix * _rotationMatrix
+        _modelMatrix = Transform.translationMatrix(_position) * _rotationMatrix * Transform.scaleMatrix(_scale)
     }
     
     // Override these when needed:
@@ -197,15 +181,8 @@ class Node {
 //    func setRotationZ(_ zRotation: Float) { setRotation(angle: zRotation, axis: Z_AXIS)}
 //    func rotate(_ x: Float, _ y: Float, _ z: Float){ setRotation(getRotationX() + x, getRotationY() + y, getRotationZ() + z) }
     func rotate(deltaAngle: Float, axis: float3) {
-//        _rotationMatrix = matrix_identity_float4x4
-//        _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: axis)) * _rotationMatrix
-//        let axisInObjectSpace = (_rotationMatrix.inverse.transpose * simd_float4(axis, 0)).xyz
         let normalizedAxis = simd_normalize(axis)
         _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: normalizedAxis)) * _rotationMatrix
-//        _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: normalizedAxis))
-//        _rotationMatrix = simd_float4x4(rotateAbout: normalizedAxis, byAngle: deltaAngle) * _rotationMatrix
-//        _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: axis)) * _rotationMatrix
-//        _rotationMatrix = _rotationMatrix * simd_float4x4(simd_quatf(angle: deltaAngle, axis: axis))
         updateModelMatrix()
         afterRotation()
     }
