@@ -12,6 +12,7 @@ class OITRenderer: Renderer {
     private let _optimalTileSize: MTLSize = MTLSize(width: 32, height: 16, depth: 1)
     
     override init(_ mtkView: MTKView) {
+        print("[OIT Renderer init]")
         super.init(mtkView)
         createForwardRenderPassDescriptor()
     }

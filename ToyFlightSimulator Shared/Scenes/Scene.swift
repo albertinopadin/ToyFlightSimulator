@@ -17,6 +17,7 @@ class Scene: Node {
     private var _rPressed: Bool = false
     
     override init(name: String) {
+        print("[Scene init] Initilizing scene named: \(name)")
         super.init(name: name)
         buildScene()
     }
@@ -37,6 +38,10 @@ class Scene: Node {
     
     func updateCameras(deltaTime: Float) {
         _cameraManager.update(deltaTime: deltaTime)
+    }
+    
+    func setAspectRatio(_ aspectRatio: Float) {
+        _cameraManager.setAspectRatio(aspectRatio)
     }
     
     override func doUpdate() {

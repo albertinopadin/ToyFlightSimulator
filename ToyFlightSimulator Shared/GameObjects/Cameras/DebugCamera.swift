@@ -8,29 +8,14 @@
 import simd
 
 class DebugCamera: Camera {
-    private var _projectionMatrix = matrix_identity_float4x4
-    override var projectionMatrix: matrix_float4x4 {
-        return _projectionMatrix
-    }
-    
     private var _moveSpeed: Float = 10.0
     private var _turnSpeed: Float = 0.1
     
     init() {
-        super.init(name: "Debug", cameraType: .Debug)
-        print("Renderer.AspectRatio: \(Renderer.AspectRatio)")
-        _projectionMatrix = matrix_float4x4.perspective(degreesFov: 45.0,
-                                                        aspectRatio: Renderer.AspectRatio,
-                                                        near: 0.1,
-                                                        far: 1000)
+        super.init(name: "Debug", cameraType: .Debug, aspectRatio: Renderer.AspectRatio)
     }
     
     override func doUpdate() {
-//        _projectionMatrix = matrix_float4x4.perspective(degreesFov: 45.0,
-//                                                        aspectRatio: Renderer.AspectRatio,
-//                                                        near: 0.1,
-//                                                        far: 1000)
-        
         if Keyboard.IsKeyPressed(.leftArrow) || Keyboard.IsKeyPressed(.a) {
             self.moveX(-GameTime.DeltaTime * _moveSpeed)
         }
@@ -56,7 +41,7 @@ class DebugCamera: Camera {
         }
         
         if Mouse.IsMouseButtonPressed(button: .RIGHT) {
-            // TODO: 
+            // TODO:
 //            self.rotate(-Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed,
 //                        -Mouse.GetDX() * GameTime.DeltaTime * _turnSpeed,
 //                        0)

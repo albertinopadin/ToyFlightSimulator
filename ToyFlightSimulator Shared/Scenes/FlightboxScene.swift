@@ -43,6 +43,7 @@ class FlightboxScene: Scene {
 //        let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
 //        addChild(sky)
         
+        // TODO: Does not work with OIT Renderer:
         let sky = SkyBox(skyBoxTextureType: .SkyMap)
         addChild(sky)
         

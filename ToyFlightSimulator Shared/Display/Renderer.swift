@@ -171,6 +171,7 @@ class Renderer: NSObject, MTKViewDelegate {
     // --- MTKViewDelegate methods ---
     public func updateScreenSize(view: MTKView) {
         Renderer.ScreenSize = float2(Float(view.drawableSize.width), Float(view.drawableSize.height))
+        SceneManager.SetAspectRatio(Renderer.AspectRatio)
     }
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {

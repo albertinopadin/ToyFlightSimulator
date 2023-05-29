@@ -35,6 +35,9 @@ class SinglePassDeferredLightingRenderer: Renderer {
         _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
                                                      length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
         super.init(mtkView)
+        let textureSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
+        gBufferTextures.makeTextures(device: Engine.Device, size: textureSize, storageMode: .memoryless)
+        setGBufferTextures(_gBufferAndLightingRenderPassDescriptor)
     }
     
     func setGBufferTextures(renderEncoder: MTLRenderCommandEncoder) {
@@ -225,5 +228,6 @@ class SinglePassDeferredLightingRenderer: Renderer {
         gBufferTextures.makeTextures(device: Engine.Device, size: size, storageMode: .memoryless)
         // Re-set GBuffer textures in the view render pass descriptor after they have been reallocated by a resize
         setGBufferTextures(_gBufferAndLightingRenderPassDescriptor)
+        updateScreenSize(view: view)
     }
 }
