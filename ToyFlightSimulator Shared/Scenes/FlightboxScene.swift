@@ -154,7 +154,7 @@ class FlightboxScene: Scene {
     override func doUpdate() {
         super.doUpdate()
         
-        handleKeyPressedDebounced(keyCode: .p, keyPressed: &_pPressed) {
+            InputManager.handleKeyPressedDebounced(keyCode: .p, keyPressed: &_pPressed) {
             paused.toggle()
         }
         

@@ -236,7 +236,7 @@ class F18: Aircraft {
             super.doUpdate()
         }
         
-        handleKeyPressedDebounced(keyCode: .space, keyPressed: &_spacePressed) {
+        InputManager.handleKeyPressedDebounced(keyCode: .space, keyPressed: &_spacePressed) {
             let aim9s = stores[F18.AIM9Name]!
             if aim9s.remaining > 0 {
                 let storeIdx = aim9s.submeshNames.count - aim9s.remaining
@@ -254,7 +254,7 @@ class F18: Aircraft {
             }
         }
         
-        handleKeyPressedDebounced(keyCode: .n, keyPressed: &_nKeyPressed) {
+        InputManager.handleKeyPressedDebounced(keyCode: .n, keyPressed: &_nKeyPressed) {
             let aim120s = stores[F18.AIM120Name]!
             if aim120s.remaining > 0 {
                 let storeIdx = aim120s.submeshNames.count - aim120s.remaining
@@ -271,7 +271,7 @@ class F18: Aircraft {
             }
         }
         
-        handleKeyPressedDebounced(keyCode: .m, keyPressed: &_mKeyPressed) {
+        InputManager.handleKeyPressedDebounced(keyCode: .m, keyPressed: &_mKeyPressed) {
             let gbu16s = stores[F18.GBU16Name]!
             if gbu16s.remaining > 0 {
                 let storeIdx = gbu16s.submeshNames.count - gbu16s.remaining
@@ -288,7 +288,7 @@ class F18: Aircraft {
             }
         }
         
-        handleKeyPressedDebounced(keyCode: .j, keyPressed: &_jKeyPressed) {
+        InputManager.handleKeyPressedDebounced(keyCode: .j, keyPressed: &_jKeyPressed) {
             let fuelTanks = stores[F18.FuelTankName]!
             if fuelTanks.remaining > 0 {
                 let storeIdx = fuelTanks.submeshNames.count - fuelTanks.remaining

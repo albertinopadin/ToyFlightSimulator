@@ -80,18 +80,18 @@ class Node {
         }
     }
     
-    func handleKeyPressedDebounced(keyCode: Keycodes, keyPressed: inout Bool, _ handleBlock: () -> Void) {
-        if Keyboard.IsKeyPressed(keyCode) {
-            if !keyPressed {
-                keyPressed.toggle()
-                handleBlock()
-            }
-        } else {
-            if keyPressed {
-                keyPressed.toggle()
-            }
-        }
-    }
+//    func handleKeyPressedDebounced(keyCode: Keycodes, keyPressed: inout Bool, _ handleBlock: () -> Void) {
+//        if Keyboard.IsKeyPressed(keyCode) {
+//            if !keyPressed {
+//                keyPressed.toggle()
+//                handleBlock()
+//            }
+//        } else {
+//            if keyPressed {
+//                keyPressed.toggle()
+//            }
+//        }
+//    }
     
     func render(renderCommandEncoder: MTLRenderCommandEncoder,
                 renderPipelineStateType: RenderPipelineStateType,

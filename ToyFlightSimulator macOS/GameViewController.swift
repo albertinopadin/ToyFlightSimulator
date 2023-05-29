@@ -66,16 +66,12 @@ class GameViewController: NSViewController {
         gameView.device = defaultDevice
         gameView.clearColor = Preferences.ClearColor
         gameView.colorPixelFormat = Preferences.MainPixelFormat
-//        gameView.depthStencilPixelFormat = .depth32Float_stencil8
         gameView.framebufferOnly = false
         gameView.preferredFramesPerSecond = 120
         
         Engine.Start(device: defaultDevice)
-//        renderer = OITRenderer(gameView)  // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
-//        renderer = SinglePassDeferredLightingRenderer(gameView)
-        renderer = initRenderer(type: .SinglePassDeferredLighting, gView: gameView)
+        renderer = initRenderer(type: .SinglePassDeferredLighting)
         SceneManager.SetScene(Preferences.StartingSceneType)
-        
         
 //        cameraController = FlyCameraController(pointOfView: simController.renderer.pointOfView)
 //        cameraController.eye = SIMD3<Float>(0, 0, 4)
@@ -88,12 +84,13 @@ class GameViewController: NSViewController {
         registerControllerObservers()
     }
     
-    func initRenderer(type: RendererType, gView: GameView) -> Renderer {
+    func initRenderer(type: RendererType) -> Renderer {
         switch type {
             case .OrderIndependentTransparency:
+                // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
                 return OITRenderer(gameView)
             case .SinglePassDeferredLighting:
-                gView.depthStencilPixelFormat = .depth32Float_stencil8
+                gameView.depthStencilPixelFormat = .depth32Float_stencil8
                 return SinglePassDeferredLightingRenderer(gameView)
         }
     }
@@ -157,10 +154,12 @@ class GameViewController: NSViewController {
     }
 
     private func controllerDidConnect(_ controller: GCController) {
+        print("Controller Connected!")
         gameController = controller
     }
 
     private func controllerDidDisconnect(_ controller: GCController) {
+        print("Controller Disconnected!")
         gameController = nil
     }
 }

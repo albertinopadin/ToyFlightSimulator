@@ -40,9 +40,9 @@ class Scene: Node {
     }
     
     override func doUpdate() {
-        handleKeyPressedDebounced(keyCode: .command, keyPressed: &_cmdPressed) {
+        InputManager.handleKeyPressedDebounced(keyCode: .command, keyPressed: &_cmdPressed) {
             print("CMD pressed")
-            handleKeyPressedDebounced(keyCode: .r, keyPressed: &_rPressed) {
+                InputManager.handleKeyPressedDebounced(keyCode: .r, keyPressed: &_rPressed) {
                 print("CMD-R pressed")
                 // TODO: Figure out how to reset scene
             }

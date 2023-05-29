@@ -44,43 +44,43 @@ class Aircraft: GameObject {
         let deltaMove = GameTime.DeltaTime * _moveSpeed
         let deltaTurn = GameTime.DeltaTime * _turnSpeed
         
-        if Keyboard.IsKeyPressed(.leftArrow) {
+        if InputManager.HasCommand(.RollLeft) {
             self.rotateZ(-deltaTurn)
         }
         
-        if Keyboard.IsKeyPressed(.rightArrow) {
+        if InputManager.HasCommand(.RollRight) {
             self.rotateZ(deltaTurn)
         }
         
-        if Keyboard.IsKeyPressed(.upArrow) {
+        if InputManager.HasCommand(.PitchUp) {
             self.rotateX(-deltaTurn)
         }
         
-        if Keyboard.IsKeyPressed(.downArrow) {
+        if InputManager.HasCommand(.PitchDown) {
             self.rotateX(deltaTurn)
         }
         
-        if Keyboard.IsKeyPressed(.q) {
+        if InputManager.HasCommand(.YawLeft) {
             self.rotateY(deltaTurn)
         }
         
-        if Keyboard.IsKeyPressed(.e) {
+        if InputManager.HasCommand(.YawRight) {
             self.rotateY(-deltaTurn)
         }
         
-        if Keyboard.IsKeyPressed(.a) {
+        if InputManager.HasCommand(.MoveLeft) {
             moveAlongVector(getRightVector(), distance: -deltaMove)
         }
         
-        if Keyboard.IsKeyPressed(.d) {
+        if InputManager.HasCommand(.MoveRight) {
             moveAlongVector(getRightVector(), distance: deltaMove)
         }
         
-        if Keyboard.IsKeyPressed(.w) {
+        if InputManager.HasCommand(.MoveForward) {
             moveAlongVector(getFwdVector(), distance: deltaMove)
         }
         
-        if Keyboard.IsKeyPressed(.s) {
+        if InputManager.HasCommand(.MoveRearward) {
             moveAlongVector(getFwdVector(), distance: -deltaMove)
         }
     }
