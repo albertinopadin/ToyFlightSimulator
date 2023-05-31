@@ -40,12 +40,13 @@ class FlightboxScene: Scene {
 //        f16Sphere.setScale(0.5)
 //        f16.addChild(f16Sphere)
         
-//        let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
-//        addChild(sky)
-        
-        // TODO: Does not work with OIT Renderer:
-        let sky = SkyBox(skyBoxTextureType: .SkyMap)
-        addChild(sky)
+        if _rendererType == .OrderIndependentTransparency {
+            let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+            addChild(sky)
+        } else {
+            let sky = SkyBox(skyBoxTextureType: .SkyMap)
+            addChild(sky)
+        }
         
         sun.setPosition(1, 25, 5)
         sun.setLightBrightness(1.0)

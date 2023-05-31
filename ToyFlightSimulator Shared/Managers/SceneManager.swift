@@ -16,14 +16,14 @@ enum SceneType {
 class SceneManager {
     private static var _currentScene: Scene?
     
-    public static func SetScene(_ sceneType: SceneType) {
+    public static func SetScene(_ sceneType: SceneType, rendererType: RendererType) {
         switch sceneType {
         case .Sandbox:
-            _currentScene = SandboxScene(name: "Sandbox")
+            _currentScene = SandboxScene(name: "Sandbox", rendererType: rendererType)
         case .Flightbox:
-            _currentScene = FlightboxScene(name: "Flightbox")
+            _currentScene = FlightboxScene(name: "Flightbox", rendererType: rendererType)
         case .FreeCamFlightbox:
-            _currentScene = FreeCamFlightboxScene(name: "FreeCamFlightbox")
+            _currentScene = FreeCamFlightboxScene(name: "FreeCamFlightbox", rendererType: rendererType)
         }
     }
     

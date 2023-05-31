@@ -16,9 +16,19 @@ class Scene: Node {
     private var _cmdPressed: Bool = false
     private var _rPressed: Bool = false
     
+    internal var _rendererType: RendererType!
+    
     override init(name: String) {
         print("[Scene init] Initilizing scene named: \(name)")
         super.init(name: name)
+        self._rendererType = .SinglePassDeferredLighting  // Set default
+        buildScene()
+    }
+    
+    init(name: String, rendererType: RendererType) {
+        print("[Scene init] Initilizing scene named: \(name)")
+        super.init(name: name)
+        self._rendererType = rendererType
         buildScene()
     }
     

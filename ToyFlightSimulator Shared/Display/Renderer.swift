@@ -38,7 +38,7 @@ class Renderer: NSObject, MTKViewDelegate {
         shadowMap.label = "Shadow Map"
         
         super.init()
-        updateScreenSize(view: mtkView)
+        updateScreenSize(size: mtkView.drawableSize)
         createBaseRenderPassDescriptor()
         createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
         mtkView.delegate = self
@@ -169,14 +169,14 @@ class Renderer: NSObject, MTKViewDelegate {
     
     
     // --- MTKViewDelegate methods ---
-    public func updateScreenSize(view: MTKView) {
-        Renderer.ScreenSize = float2(Float(view.drawableSize.width), Float(view.drawableSize.height))
+    public func updateScreenSize(size: CGSize) {
+        Renderer.ScreenSize = float2(Float(size.width), Float(size.height))
         SceneManager.SetAspectRatio(Renderer.AspectRatio)
     }
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         // When window is resized
-        updateScreenSize(view: view)
+        updateScreenSize(size: size)
     }
     
     func draw(in view: MTKView) {

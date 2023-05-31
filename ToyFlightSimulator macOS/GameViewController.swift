@@ -70,8 +70,9 @@ class GameViewController: NSViewController {
         gameView.preferredFramesPerSecond = 120
         
         Engine.Start(device: defaultDevice)
-        renderer = initRenderer(type: .SinglePassDeferredLighting)
-        SceneManager.SetScene(Preferences.StartingSceneType)
+        let rendererType: RendererType = .SinglePassDeferredLighting
+        renderer = initRenderer(type: rendererType)
+        SceneManager.SetScene(Preferences.StartingSceneType, rendererType: rendererType)
         
 //        cameraController = FlyCameraController(pointOfView: simController.renderer.pointOfView)
 //        cameraController.eye = SIMD3<Float>(0, 0, 4)
