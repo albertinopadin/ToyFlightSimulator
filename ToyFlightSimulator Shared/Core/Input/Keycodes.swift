@@ -5,7 +5,7 @@
 //  Created by Albertino Padin on 9/25/22.
 //
 
-enum Keycodes: UInt16 {
+enum Keycodes: UInt16, CaseIterable {
     //Special Chars
     case space             = 0x31
     case returnKey         = 0x24

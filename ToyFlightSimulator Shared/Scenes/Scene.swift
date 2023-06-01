@@ -55,13 +55,14 @@ class Scene: Node {
     }
     
     override func doUpdate() {
-        InputManager.handleKeyPressedDebounced(keyCode: .command, keyPressed: &_cmdPressed) {
-            print("CMD pressed")
-                InputManager.handleKeyPressedDebounced(keyCode: .r, keyPressed: &_rPressed) {
-                print("CMD-R pressed")
-                // TODO: Figure out how to reset scene
-            }
-        }
+        // TODO:
+//        InputManager.handleKeyPressedDebounced(keyCode: .command, keyPressed: &_cmdPressed) {
+//            print("CMD pressed")
+//                InputManager.handleKeyPressedDebounced(keyCode: .r, keyPressed: &_rPressed) {
+//                print("CMD-R pressed")
+//                // TODO: Figure out how to reset scene
+//            }
+//        }
     }
     
     override func update() {

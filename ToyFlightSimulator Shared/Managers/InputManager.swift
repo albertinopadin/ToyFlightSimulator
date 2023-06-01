@@ -24,12 +24,23 @@ enum UserCommand {
     case JettisonFuelTank
     
     case ResetLoadout
+    
+    case Pause
 }
 
 class InputManager {
     // Key or Button mappings (depending on if using keyboard, controller or joystick/throttle) ???
     
+    static var keysPressed: [Keycodes: Bool] = {
+        var kp: [Keycodes: Bool] = [Keycodes: Bool]()
+        for kc in Keycodes.allCases {
+            kp[kc] = false
+        }
+        return kp
+    }()
+    
     static var keyboardMappings: [UserCommand: Keycodes] = [
+        .Pause: .p,
         .ResetLoadout: .l,
         .MoveForward: .w,
         .MoveRearward: .s,
@@ -50,15 +61,20 @@ class InputManager {
     // TODO:
     static var controllerMappings: [UserCommand: ControllerState] = [:]
     
-    static func handleKeyPressedDebounced(keyCode: Keycodes, keyPressed: inout Bool, _ handleBlock: () -> Void) {
+    static func handleKeyPressedDebounced(keyCode: Keycodes, _ handleBlock: () -> Void) {
+        guard let _ = keysPressed[keyCode] else {
+            print("[InputManager handleKeyPressedDebounced] WARNING: Unknown Key Code: \(keyCode)")
+            return
+        }
+        
         if Keyboard.IsKeyPressed(keyCode) {
-            if !keyPressed {
-                keyPressed.toggle()
+            if !keysPressed[keyCode]! {
+                keysPressed[keyCode]!.toggle()
                 handleBlock()
             }
         } else {
-            if keyPressed {
-                keyPressed.toggle()
+            if keysPressed[keyCode]! {
+                keysPressed[keyCode]!.toggle()
             }
         }
     }
@@ -68,7 +84,19 @@ class InputManager {
         return Keyboard.IsKeyPressed(key)
     }
     
-//    static func HasCommandDebounced(command: UserCommand) -> Bool {
-//
+    static func HasCommandDebounced(command: UserCommand, _ handleBlock: () -> Void) {
+        guard let key = keyboardMappings[command] else { return }
+        handleKeyPressedDebounced(keyCode: key, handleBlock)
+    }
+    
+    // TODO: (Reference Scene file)
+//    static func HasMultiInputCommand(command: UserCommand, _ handleBlock: () -> Void) {
+//        InputManager.handleKeyPressedDebounced(keyCode: .command, keyPressed: &_cmdPressed) {
+//            print("CMD pressed")
+//                InputManager.handleKeyPressedDebounced(keyCode: .r, keyPressed: &_rPressed) {
+//                print("CMD-R pressed")
+//                // TODO: Figure out how to reset scene
+//            }
+//        }
 //    }
 }
