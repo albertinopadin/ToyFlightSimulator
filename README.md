@@ -28,4 +28,6 @@ Toy Flight Simulator implemented with Swift and Metal
 
 5/31/2023 - Aircraft rotations (pitch, roll, yaw) stabilized, implemented firing missiles and dropping bombs.
 
-{% include youtube.html id="CXxXFoxoLWA" %}
+[![Toy Flight Sim 5-31-23]
+(https://img.youtube.com/vi/CXxXFoxoLWA/maxresdefault.jpg)]
+(https://www.youtube.com/watch?v=CXxXFoxoLWA)
