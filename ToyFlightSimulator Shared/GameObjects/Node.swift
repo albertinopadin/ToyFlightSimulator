@@ -80,19 +80,6 @@ class Node {
         }
     }
     
-//    func handleKeyPressedDebounced(keyCode: Keycodes, keyPressed: inout Bool, _ handleBlock: () -> Void) {
-//        if Keyboard.IsKeyPressed(keyCode) {
-//            if !keyPressed {
-//                keyPressed.toggle()
-//                handleBlock()
-//            }
-//        } else {
-//            if keyPressed {
-//                keyPressed.toggle()
-//            }
-//        }
-//    }
-    
     func render(renderCommandEncoder: MTLRenderCommandEncoder,
                 renderPipelineStateType: RenderPipelineStateType,
                 applyMaterials: Bool = true) {
@@ -148,27 +135,6 @@ class Node {
         self.move(to)
     }
     
-    
-    // Adapted from ChatGPT-4:
-    func decomposeToEulers(_ rotationMatrix: matrix_float4x4) -> float3 {
-        let _v = rotationMatrix.columns.0.x * rotationMatrix.columns.0.x + rotationMatrix.columns.1.x * rotationMatrix.columns.1.x
-        let sy = sqrt(_v)
-        let isSingular = sy < 1e-6
-        var x, y, z: Float
-        if !isSingular {
-            x = atan2(rotationMatrix.columns.2.y, rotationMatrix.columns.2.z)
-            y = atan2(-rotationMatrix.columns.2.x, sy)
-            z = atan2(rotationMatrix.columns.1.x, rotationMatrix.columns.0.x)
-        } else {
-            x = atan2(-rotationMatrix.columns.1.z, rotationMatrix.columns.1.y)
-            y = atan2(-rotationMatrix.columns.2.x, sy)
-            z = 0
-        }
-//        return float3(x: x, y: y, z: z)  // Right-handed coordinate system
-//        return float3(x: -x, y: -y, z: z)  // Left-handed coordinate system
-        return float3(x: -x, y: -y, z: z)
-    }
-    
     //Naming
     func setName(_ name: String){ self._name = name }
     func getName()->String{ return _name }
@@ -219,9 +185,15 @@ class Node {
     func rotateY(_ delta: Float){ rotate(deltaAngle: delta, axis: getUpVector()) }
     func rotateZ(_ delta: Float){ rotate(deltaAngle: delta, axis: getFwdVector()) }
     
-    func getRotationX() -> Float { return decomposeToEulers(_rotationMatrix).x }
-    func getRotationY() -> Float { return decomposeToEulers(_rotationMatrix).y }
-    func getRotationZ() -> Float { return decomposeToEulers(_rotationMatrix).z }
+    func rotate3Axis(deltaX: Float, deltaY: Float, deltaZ: Float) {
+        rotateX(deltaX)
+        rotateY(deltaY)
+        rotateZ(deltaZ)
+    }
+    
+    func getRotationX() -> Float { return Transform.decomposeToEulers(_rotationMatrix).x }
+    func getRotationY() -> Float { return Transform.decomposeToEulers(_rotationMatrix).y }
+    func getRotationZ() -> Float { return Transform.decomposeToEulers(_rotationMatrix).z }
     
     //Scaling
     func setScale(_ scale: float3) {

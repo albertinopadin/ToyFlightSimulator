@@ -102,4 +102,24 @@ enum Transform {
         
         return .init(col0, col1, col2, col3)
     }
+    
+    // Adapted from ChatGPT-4:
+    static func decomposeToEulers(_ rotationMatrix: matrix_float4x4) -> float3 {
+        let _v = rotationMatrix.columns.0.x * rotationMatrix.columns.0.x + rotationMatrix.columns.1.x * rotationMatrix.columns.1.x
+        let sy = sqrt(_v)
+        let isSingular = sy < 1e-6
+        var x, y, z: Float
+        if !isSingular {
+            x = atan2(rotationMatrix.columns.2.y, rotationMatrix.columns.2.z)
+            y = atan2(-rotationMatrix.columns.2.x, sy)
+            z = atan2(rotationMatrix.columns.1.x, rotationMatrix.columns.0.x)
+        } else {
+            x = atan2(-rotationMatrix.columns.1.z, rotationMatrix.columns.1.y)
+            y = atan2(-rotationMatrix.columns.2.x, sy)
+            z = 0
+        }
+//        return float3(x: x, y: y, z: z)  // Right-handed coordinate system
+//        return float3(x: -x, y: -y, z: z)  // Left-handed coordinate system
+        return float3(x: -x, y: -y, z: z)
+    }
 }
