@@ -63,6 +63,10 @@ class Scene: Node {
 //                // TODO: Figure out how to reset scene
 //            }
 //        }
+        
+        InputManager.HasMultiInputCommand(command: .ResetScene) {
+            print("Commanded to reset scene!")
+        }
     }
     
     override func update() {

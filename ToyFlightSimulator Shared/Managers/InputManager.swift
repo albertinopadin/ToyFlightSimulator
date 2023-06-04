@@ -28,9 +28,14 @@ enum UserCommand {
     case Pause
 }
 
+enum SpecialUserCommand: CaseIterable {
+    case ResetScene
+}
+
 class InputManager {
-    // Key or Button mappings (depending on if using keyboard, controller or joystick/throttle) ???
+    static var controller: Controller = Controller()
     
+    // Key or Button mappings (depending on if using keyboard, controller or joystick/throttle) ???
     static var keysPressed: [Keycodes: Bool] = {
         var kp: [Keycodes: Bool] = [Keycodes: Bool]()
         for kc in Keycodes.allCases {
@@ -58,8 +63,25 @@ class InputManager {
         .JettisonFuelTank: .j
     ]
     
-    // TODO:
-    static var controllerMappings: [UserCommand: ControllerState] = [:]
+    static var multiKeyInputMappings: [SpecialUserCommand: [Keycodes]] = [
+        .ResetScene: [.command, .r]
+    ]
+    
+    static var specialCommandsActive: [SpecialUserCommand: Bool] = {
+        var sca: [SpecialUserCommand: Bool] = [SpecialUserCommand: Bool]()
+        for suc in SpecialUserCommand.allCases {
+            sca[suc] = false
+        }
+        return sca
+    }()
+    
+    // TODO: This is pretty bad...
+    static var controllerMappings: [UserCommand: ControllerState] = [
+        .RollLeft: .RightStickX,
+        .RollRight: .RightStickX,
+        .PitchUp: .RightStickY,
+        .PitchDown: .RightStickY
+    ]
     
     static func handleKeyPressedDebounced(keyCode: Keycodes, _ handleBlock: () -> Void) {
         guard let _ = keysPressed[keyCode] else {
@@ -69,19 +91,37 @@ class InputManager {
         
         if Keyboard.IsKeyPressed(keyCode) {
             if !keysPressed[keyCode]! {
-                keysPressed[keyCode]!.toggle()
+                keysPressed[keyCode] = true
                 handleBlock()
             }
         } else {
             if keysPressed[keyCode]! {
-                keysPressed[keyCode]!.toggle()
+                keysPressed[keyCode] = false
             }
         }
     }
     
     static func HasCommand(_ command: UserCommand) -> Bool {
-        guard let key = keyboardMappings[command] else { return false }
-        return Keyboard.IsKeyPressed(key)
+        if controller.present {
+            guard let controllerState = controllerMappings[command] else { return false }
+            let controllerValue = controller.getState(controllerState)
+            
+            switch command {
+                case .RollLeft:
+                    return controllerValue < 0.0
+                case .RollRight:
+                    return controllerValue > 0.0
+                case .PitchUp:
+                    return controllerValue > 0.0
+                case .PitchDown:
+                    return controllerValue < 0.0
+                default:
+                    return false
+            }
+        } else {
+            guard let key = keyboardMappings[command] else { return false }
+            return Keyboard.IsKeyPressed(key)
+        }
     }
     
     static func HasCommandDebounced(command: UserCommand, _ handleBlock: () -> Void) {
@@ -89,14 +129,25 @@ class InputManager {
         handleKeyPressedDebounced(keyCode: key, handleBlock)
     }
     
-    // TODO: (Reference Scene file)
-//    static func HasMultiInputCommand(command: UserCommand, _ handleBlock: () -> Void) {
-//        InputManager.handleKeyPressedDebounced(keyCode: .command, keyPressed: &_cmdPressed) {
-//            print("CMD pressed")
-//                InputManager.handleKeyPressedDebounced(keyCode: .r, keyPressed: &_rPressed) {
-//                print("CMD-R pressed")
-//                // TODO: Figure out how to reset scene
-//            }
-//        }
-//    }
+    static func HasMultiInputCommand(command: SpecialUserCommand, _ handleBlock: () -> Void) {
+        guard let keyboardCommands: [Keycodes] = multiKeyInputMappings[command] else {
+            print("[HasMultiInputCommand] WARNING: no mapping for command: \(command)")
+            return
+        }
+        
+        let allKeysPressed: Bool = keyboardCommands.reduce(into: true) { resultBool, keyCode in
+            resultBool = resultBool && Keyboard.IsKeyPressed(keyCode)
+        }
+        
+        if allKeysPressed {
+            if !specialCommandsActive[command]! {
+                specialCommandsActive[command] = true
+                handleBlock()
+            }
+        } else {
+            if specialCommandsActive[command]! {
+                specialCommandsActive[command] = false
+            }
+        }
+    }
 }

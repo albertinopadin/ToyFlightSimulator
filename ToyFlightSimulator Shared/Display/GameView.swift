@@ -18,13 +18,13 @@ extension GameView {
     override var acceptsFirstResponder: Bool { return true }
     
     override func keyDown(with event: NSEvent) {
-        print("Key Down: \(event.keyCode)")
-        print("Key Down modifier is command? \(event.modifierFlags.contains(.command))")
+//        print("Key Down: \(event.keyCode)")
+//        print("Key Down modifier is command? \(event.modifierFlags.contains(.command))")
         Keyboard.SetKeyPressed(event.keyCode, pressed: true)
     }
     
     override func keyUp(with event: NSEvent) {
-        print("Key Up: \(event.keyCode)")
+//        print("Key Up: \(event.keyCode)")
         Keyboard.SetKeyPressed(event.keyCode, pressed: false)
     }
 }

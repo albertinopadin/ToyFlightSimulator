@@ -34,16 +34,18 @@ class GameViewController: NSViewController {
     
 //    var cameraController: FlyCameraController!
 
-    var gameController: GCController?
-    var virtualController: Any?
-
-    private var observers = [Any]()
-
-    deinit {
-        for observer in observers {
-            NotificationCenter.default.removeObserver(observer)
-        }
-    }
+//    var gameController: GCController?
+//    var virtualController: Any?
+//
+//    private var observers = [Any]()
+//
+//    deinit {
+//        for observer in observers {
+//            NotificationCenter.default.removeObserver(observer)
+//        }
+//    }
+    
+//    var controller: Controller!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -82,7 +84,9 @@ class GameViewController: NSViewController {
 //            self?.updateCamera(Float(frameDuration))
 //        }
 
-        registerControllerObservers()
+//        registerControllerObservers()
+        
+        
     }
     
     func initRenderer(type: RendererType) -> Renderer {
@@ -130,37 +134,37 @@ class GameViewController: NSViewController {
 //    }
 
     //MARK: - Game Controller Support
-    private func registerControllerObservers() {
-        let connectionObserver = NotificationCenter.default.addObserver(
-            forName: NSNotification.Name.GCControllerDidConnect,
-            object: nil,
-            queue: nil)
-        { [weak self] notification in
-            if let controller = notification.object as? GCController {
-                self?.controllerDidConnect(controller)
-            }
-        }
-
-        let disconnectionObserver = NotificationCenter.default.addObserver(
-            forName: NSNotification.Name.GCControllerDidDisconnect,
-            object: nil,
-            queue: nil)
-        { [weak self] notification in
-            if let controller = notification.object as? GCController {
-                self?.controllerDidDisconnect(controller)
-            }
-        }
-
-        observers = [connectionObserver, disconnectionObserver]
-    }
-
-    private func controllerDidConnect(_ controller: GCController) {
-        print("Controller Connected!")
-        gameController = controller
-    }
-
-    private func controllerDidDisconnect(_ controller: GCController) {
-        print("Controller Disconnected!")
-        gameController = nil
-    }
+//    private func registerControllerObservers() {
+//        let connectionObserver = NotificationCenter.default.addObserver(
+//            forName: NSNotification.Name.GCControllerDidConnect,
+//            object: nil,
+//            queue: nil)
+//        { [weak self] notification in
+//            if let controller = notification.object as? GCController {
+//                self?.controllerDidConnect(controller)
+//            }
+//        }
+//
+//        let disconnectionObserver = NotificationCenter.default.addObserver(
+//            forName: NSNotification.Name.GCControllerDidDisconnect,
+//            object: nil,
+//            queue: nil)
+//        { [weak self] notification in
+//            if let controller = notification.object as? GCController {
+//                self?.controllerDidDisconnect(controller)
+//            }
+//        }
+//
+//        observers = [connectionObserver, disconnectionObserver]
+//    }
+//
+//    private func controllerDidConnect(_ controller: GCController) {
+//        print("Controller Connected!")
+//        gameController = controller
+//    }
+//
+//    private func controllerDidDisconnect(_ controller: GCController) {
+//        print("Controller Disconnected!")
+//        gameController = nil
+//    }
 }
