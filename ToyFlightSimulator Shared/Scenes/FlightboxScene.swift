@@ -156,7 +156,7 @@ class FlightboxScene: Scene {
     override func doUpdate() {
         super.doUpdate()
         
-            InputManager.HasCommandDebounced(command: .Pause) {
+            InputManager.HasDiscreteCommandDebounced(command: .Pause) {
             paused.toggle()
         }
         

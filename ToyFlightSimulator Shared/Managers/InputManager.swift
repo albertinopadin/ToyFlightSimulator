@@ -5,19 +5,7 @@
 //  Created by Albertino Padin on 5/29/23.
 //
 
-enum UserCommand {
-    case MoveForward
-    case MoveRearward
-    case MoveRight
-    case MoveLeft
-    
-    case PitchUp
-    case PitchDown
-    case RollRight
-    case RollLeft
-    case YawRight
-    case YawLeft
-    
+enum DiscreteCommand {
     case FireMissileAIM9
     case FireMissileAIM120
     case DropBomb
@@ -28,8 +16,22 @@ enum UserCommand {
     case Pause
 }
 
+enum ContinuousCommand {
+    case MoveFwd
+    case MoveSide
+    
+    case Pitch
+    case Roll
+    case Yaw
+}
+
 enum SpecialUserCommand: CaseIterable {
     case ResetScene
+}
+
+struct KeycodeValue {
+    let keyCode: Keycodes
+    let value: Float
 }
 
 class InputManager {
@@ -44,19 +46,20 @@ class InputManager {
         return kp
     }()
     
-    static var keyboardMappings: [UserCommand: Keycodes] = [
+    static var pitchAxisFlipped: Bool = true
+    
+    static var keyboardMappingsContinuous: [ContinuousCommand: [KeycodeValue]] = [
+        .MoveFwd: [KeycodeValue(keyCode: .w, value: 1.0), KeycodeValue(keyCode: .s, value: -1.0)],
+        .MoveSide: [KeycodeValue(keyCode: .a, value: 1.0), KeycodeValue(keyCode: .d, value: -1.0)],
+        .Pitch: [KeycodeValue(keyCode: .upArrow, value: pitchAxisFlipped ? -1.0 : 1.0),
+                 KeycodeValue(keyCode: .downArrow, value: pitchAxisFlipped ? 1.0 : -1.0)],
+        .Roll: [KeycodeValue(keyCode: .rightArrow, value: 1.0), KeycodeValue(keyCode: .leftArrow, value: -1.0)],
+        .Yaw: [KeycodeValue(keyCode: .e, value: -1.0), KeycodeValue(keyCode: .q, value: 1.0)]
+    ]
+    
+    static var keyboardMappingsDiscrete: [DiscreteCommand: Keycodes] = [
         .Pause: .p,
         .ResetLoadout: .l,
-        .MoveForward: .w,
-        .MoveRearward: .s,
-        .MoveLeft: .a,
-        .MoveRight: .d,
-        .PitchUp: .upArrow,
-        .PitchDown: .downArrow,
-        .RollLeft: .leftArrow,
-        .RollRight: .rightArrow,
-        .YawLeft: .q,
-        .YawRight: .e,
         .FireMissileAIM9: .space,
         .FireMissileAIM120: .n,
         .DropBomb: .m,
@@ -75,12 +78,16 @@ class InputManager {
         return sca
     }()
     
-    // TODO: This is pretty bad...
-    static var controllerMappings: [UserCommand: ControllerState] = [
-        .RollLeft: .RightStickX,
-        .RollRight: .RightStickX,
-        .PitchUp: .RightStickY,
-        .PitchDown: .RightStickY
+    static var controllerMappingsContinuous: [ContinuousCommand: ControllerState] = [
+        .Roll: .RightStickX,
+        .Pitch: .RightStickY,
+        .MoveFwd: .LeftStickY,
+        .MoveSide: .LeftStickX
+    ]
+    
+    static var controllerMappingsDiscrete: [DiscreteCommand: ControllerState] = [
+        .FireMissileAIM9: .RightTrigger,
+        .DropBomb: .LeftTrigger
     ]
     
     static func handleKeyPressedDebounced(keyCode: Keycodes, _ handleBlock: () -> Void) {
@@ -101,32 +108,49 @@ class InputManager {
         }
     }
     
-    static func HasCommand(_ command: UserCommand) -> Bool {
+    static func DiscreteCommand(_ command: DiscreteCommand) -> Bool {
         if controller.present {
-            guard let controllerState = controllerMappings[command] else { return false }
+            guard let controllerState = controllerMappingsDiscrete[command] else { return false }
             let controllerValue = controller.getState(controllerState)
-            
-            switch command {
-                case .RollLeft:
-                    return controllerValue < 0.0
-                case .RollRight:
-                    return controllerValue > 0.0
-                case .PitchUp:
-                    return controllerValue > 0.0
-                case .PitchDown:
-                    return controllerValue < 0.0
-                default:
-                    return false
-            }
+            return controllerValue > .zero
         } else {
-            guard let key = keyboardMappings[command] else { return false }
+            guard let key = keyboardMappingsDiscrete[command] else { return false }
             return Keyboard.IsKeyPressed(key)
         }
     }
     
-    static func HasCommandDebounced(command: UserCommand, _ handleBlock: () -> Void) {
-        guard let key = keyboardMappings[command] else { return }
-        handleKeyPressedDebounced(keyCode: key, handleBlock)
+    static func ContinuousCommand(_ command: ContinuousCommand) -> Float {
+        if controller.present {
+            guard let controllerState = controllerMappingsContinuous[command] else { return .zero }
+            let controllerValue = controller.getState(controllerState)
+            if command == .Pitch && pitchAxisFlipped {
+                return -controllerValue
+            } else {
+                return controllerValue
+            }
+        } else {
+            guard let keysValues = keyboardMappingsContinuous[command] else { return .zero }
+            for kv in keysValues {
+                if Keyboard.IsKeyPressed(kv.keyCode) {
+                    return kv.value
+                }
+            }
+            return .zero
+        }
+    }
+    
+    static func HasDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
+        // TODO: Debounce this:
+        if controller.present {
+            guard let controllerState = controllerMappingsDiscrete[command] else { return }
+            let controllerValue = controller.getState(controllerState)
+            if controllerValue > .zero {
+                handleBlock()
+            }
+        } else {
+            guard let key = keyboardMappingsDiscrete[command] else { return }
+            handleKeyPressedDebounced(keyCode: key, handleBlock)
+        }
     }
     
     static func HasMultiInputCommand(command: SpecialUserCommand, _ handleBlock: () -> Void) {

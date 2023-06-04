@@ -14,6 +14,9 @@ enum ControllerState {
     
     case RightStickX
     case RightStickY
+    
+    case RightTrigger
+    case LeftTrigger
 }
 
 class Controller {
@@ -26,7 +29,9 @@ class Controller {
         .LeftStickX: { $0.leftThumbstick.xAxis.value },
         .LeftStickY: { $0.leftThumbstick.yAxis.value },
         .RightStickX: { $0.rightThumbstick.xAxis.value },
-        .RightStickY: { $0.rightThumbstick.yAxis.value }
+        .RightStickY: { $0.rightThumbstick.yAxis.value },
+        .RightTrigger: { $0.rightTrigger.value },
+        .LeftTrigger: { $0.leftTrigger.value }
     ]
 
     deinit {

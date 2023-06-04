@@ -44,45 +44,55 @@ class Aircraft: GameObject {
         let deltaMove = GameTime.DeltaTime * _moveSpeed
         let deltaTurn = GameTime.DeltaTime * _turnSpeed
         
-        if InputManager.HasCommand(.RollLeft) {
-            self.rotateZ(-deltaTurn)
-        }
+//        if InputManager.HasCommand(.RollLeft) {
+//            self.rotateZ(-deltaTurn)
+//        }
+//
+//        if InputManager.HasCommand(.RollRight) {
+//            self.rotateZ(deltaTurn)
+//        }
         
-        if InputManager.HasCommand(.RollRight) {
-            self.rotateZ(deltaTurn)
-        }
+        self.rotateZ(deltaTurn * InputManager.ContinuousCommand(.Roll))
         
-        if InputManager.HasCommand(.PitchUp) {
-            self.rotateX(-deltaTurn)
-        }
+//        if InputManager.HasCommand(.PitchUp) {
+//            self.rotateX(-deltaTurn)
+//        }
+//
+//        if InputManager.HasCommand(.PitchDown) {
+//            self.rotateX(deltaTurn)
+//        }
         
-        if InputManager.HasCommand(.PitchDown) {
-            self.rotateX(deltaTurn)
-        }
+        self.rotateX(deltaTurn * InputManager.ContinuousCommand(.Pitch))
         
-        if InputManager.HasCommand(.YawLeft) {
-            self.rotateY(deltaTurn)
-        }
+//        if InputManager.HasCommand(.YawLeft) {
+//            self.rotateY(deltaTurn)
+//        }
+//
+//        if InputManager.HasCommand(.YawRight) {
+//            self.rotateY(-deltaTurn)
+//        }
         
-        if InputManager.HasCommand(.YawRight) {
-            self.rotateY(-deltaTurn)
-        }
+        self.rotateY(deltaTurn * InputManager.ContinuousCommand(.Yaw))
         
-        if InputManager.HasCommand(.MoveLeft) {
-            moveAlongVector(getRightVector(), distance: -deltaMove)
-        }
+//        if InputManager.HasCommand(.MoveLeft) {
+//            moveAlongVector(getRightVector(), distance: -deltaMove)
+//        }
+//
+//        if InputManager.HasCommand(.MoveRight) {
+//            moveAlongVector(getRightVector(), distance: deltaMove)
+//        }
         
-        if InputManager.HasCommand(.MoveRight) {
-            moveAlongVector(getRightVector(), distance: deltaMove)
-        }
+//        if InputManager.HasCommand(.MoveForward) {
+//            moveAlongVector(getFwdVector(), distance: deltaMove)
+//        }
+//
+//        if InputManager.HasCommand(.MoveRearward) {
+//            moveAlongVector(getFwdVector(), distance: -deltaMove)
+//        }
         
-        if InputManager.HasCommand(.MoveForward) {
-            moveAlongVector(getFwdVector(), distance: deltaMove)
-        }
+        moveAlongVector(getFwdVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveFwd))
         
-        if InputManager.HasCommand(.MoveRearward) {
-            moveAlongVector(getFwdVector(), distance: -deltaMove)
-        }
+        moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
     }
 }
 

@@ -236,7 +236,7 @@ class F18: Aircraft {
             super.doUpdate()
         }
         
-        InputManager.HasCommandDebounced(command: .FireMissileAIM9) {
+        InputManager.HasDiscreteCommandDebounced(command: .FireMissileAIM9) {
             let aim9s = stores[F18.AIM9Name]!
             if aim9s.remaining > 0 {
                 let storeIdx = aim9s.submeshNames.count - aim9s.remaining
@@ -254,7 +254,7 @@ class F18: Aircraft {
             }
         }
         
-        InputManager.HasCommandDebounced(command: .FireMissileAIM120) {
+        InputManager.HasDiscreteCommandDebounced(command: .FireMissileAIM120) {
             let aim120s = stores[F18.AIM120Name]!
             if aim120s.remaining > 0 {
                 let storeIdx = aim120s.submeshNames.count - aim120s.remaining
@@ -271,7 +271,7 @@ class F18: Aircraft {
             }
         }
         
-        InputManager.HasCommandDebounced(command: .DropBomb) {
+        InputManager.HasDiscreteCommandDebounced(command: .DropBomb) {
             let gbu16s = stores[F18.GBU16Name]!
             if gbu16s.remaining > 0 {
                 let storeIdx = gbu16s.submeshNames.count - gbu16s.remaining
@@ -288,7 +288,7 @@ class F18: Aircraft {
             }
         }
         
-        InputManager.HasCommandDebounced(command: .JettisonFuelTank) {
+        InputManager.HasDiscreteCommandDebounced(command: .JettisonFuelTank) {
             let fuelTanks = stores[F18.FuelTankName]!
             if fuelTanks.remaining > 0 {
                 let storeIdx = fuelTanks.submeshNames.count - fuelTanks.remaining
@@ -305,7 +305,7 @@ class F18: Aircraft {
             }
         }
         
-        if InputManager.HasCommand(.ResetLoadout) {
+        if InputManager.DiscreteCommand(.ResetLoadout) {
             // Reset loadout
             for storeName in F18.storesNames {
                 let store = stores[storeName]!
