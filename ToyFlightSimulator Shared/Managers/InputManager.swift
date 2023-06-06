@@ -50,7 +50,7 @@ class InputManager {
     
     static var keyboardMappingsContinuous: [ContinuousCommand: [KeycodeValue]] = [
         .MoveFwd: [KeycodeValue(keyCode: .w, value: 1.0), KeycodeValue(keyCode: .s, value: -1.0)],
-        .MoveSide: [KeycodeValue(keyCode: .a, value: 1.0), KeycodeValue(keyCode: .d, value: -1.0)],
+        .MoveSide: [KeycodeValue(keyCode: .d, value: 1.0), KeycodeValue(keyCode: .a, value: -1.0)],
         .Pitch: [KeycodeValue(keyCode: .upArrow, value: pitchAxisFlipped ? -1.0 : 1.0),
                  KeycodeValue(keyCode: .downArrow, value: pitchAxisFlipped ? 1.0 : -1.0)],
         .Roll: [KeycodeValue(keyCode: .rightArrow, value: 1.0), KeycodeValue(keyCode: .leftArrow, value: -1.0)],
@@ -109,37 +109,50 @@ class InputManager {
     }
     
     static func DiscreteCommand(_ command: DiscreteCommand) -> Bool {
+        var hasCommand: Bool = false
+        
+        guard let key = keyboardMappingsDiscrete[command] else { return false }
+        hasCommand = hasCommand || Keyboard.IsKeyPressed(key)
+        
         if controller.present {
-            guard let controllerState = controllerMappingsDiscrete[command] else { return false }
+//            guard let controllerState = controllerMappingsDiscrete[command] else { return false }
+            guard let controllerState = controllerMappingsDiscrete[command] else { return hasCommand }
             let controllerValue = controller.getState(controllerState)
-            return controllerValue > .zero
-        } else {
-            guard let key = keyboardMappingsDiscrete[command] else { return false }
-            return Keyboard.IsKeyPressed(key)
+            hasCommand = hasCommand || controllerValue > .zero
         }
+        
+        return hasCommand
     }
     
     static func ContinuousCommand(_ command: ContinuousCommand) -> Float {
+        var continuousValue: Float = .zero
+        
+        guard let keysValues = keyboardMappingsContinuous[command] else { return .zero }
+        for kv in keysValues {
+            if Keyboard.IsKeyPressed(kv.keyCode) {
+                continuousValue = kv.value
+                break
+            }
+        }
+        
         if controller.present {
-            guard let controllerState = controllerMappingsContinuous[command] else { return .zero }
+//            guard let controllerState = controllerMappingsContinuous[command] else { return .zero }
+            guard let controllerState = controllerMappingsContinuous[command] else { return continuousValue }
             let controllerValue = controller.getState(controllerState)
             if command == .Pitch && pitchAxisFlipped {
-                return -controllerValue
+                continuousValue += -controllerValue
             } else {
-                return controllerValue
+                continuousValue += controllerValue
             }
-        } else {
-            guard let keysValues = keyboardMappingsContinuous[command] else { return .zero }
-            for kv in keysValues {
-                if Keyboard.IsKeyPressed(kv.keyCode) {
-                    return kv.value
-                }
-            }
-            return .zero
         }
+        
+        return continuousValue
     }
     
     static func HasDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
+        guard let key = keyboardMappingsDiscrete[command] else { return }
+        handleKeyPressedDebounced(keyCode: key, handleBlock)
+        
         // TODO: Debounce this:
         if controller.present {
             guard let controllerState = controllerMappingsDiscrete[command] else { return }
@@ -147,9 +160,6 @@ class InputManager {
             if controllerValue > .zero {
                 handleBlock()
             }
-        } else {
-            guard let key = keyboardMappingsDiscrete[command] else { return }
-            handleKeyPressedDebounced(keyCode: key, handleBlock)
         }
     }
     

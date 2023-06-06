@@ -55,17 +55,10 @@ class Scene: Node {
     }
     
     override func doUpdate() {
-        // TODO:
-//        InputManager.handleKeyPressedDebounced(keyCode: .command, keyPressed: &_cmdPressed) {
-//            print("CMD pressed")
-//                InputManager.handleKeyPressedDebounced(keyCode: .r, keyPressed: &_rPressed) {
-//                print("CMD-R pressed")
-//                // TODO: Figure out how to reset scene
-//            }
-//        }
-        
         InputManager.HasMultiInputCommand(command: .ResetScene) {
             print("Commanded to reset scene!")
+            // TODO: tear down old scene first
+//            buildScene()
         }
     }
     

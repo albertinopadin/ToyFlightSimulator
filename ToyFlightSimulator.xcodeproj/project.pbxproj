@@ -233,6 +233,7 @@
 		CE76931B29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
 		CE76931C29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
 		CE76931D29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
+		CE7C3D292A2F377B009C1E6F /* Hotas.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7C3D282A2F377B009C1E6F /* Hotas.swift */; };
 		CE7F47F728B758920082B197 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F47F628B758920082B197 /* AppDelegate.swift */; };
 		CE7F47F928B758920082B197 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F47F828B758920082B197 /* GameViewController.swift */; };
 		CE7F47FC28B758920082B197 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CE7F47FA28B758920082B197 /* Main.storyboard */; };
@@ -411,6 +412,8 @@
 		CE76931229DD5F5500BBC718 /* SingleSMMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleSMMesh.swift; sourceTree = "<group>"; };
 		CE76931629DE75CB00BBC718 /* SingleSMMeshLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleSMMeshLibrary.swift; sourceTree = "<group>"; };
 		CE76931A29DE79CE00BBC718 /* Sidewinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidewinder.swift; sourceTree = "<group>"; };
+		CE7C3D272A2F303D009C1E6F /* ToyFlightSimulator-iOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ToyFlightSimulator-iOS-Info.plist"; sourceTree = SOURCE_ROOT; };
+		CE7C3D282A2F377B009C1E6F /* Hotas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hotas.swift; sourceTree = "<group>"; };
 		CE7F47EE28B758920082B197 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE7F47F328B758920082B197 /* ToyFlightSimulator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToyFlightSimulator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE7F47F628B758920082B197 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -577,6 +580,7 @@
 				CE3BFF3328E058CE0014A752 /* Keycodes.swift */,
 				CE3BFF3128E058C30014A752 /* Mouse.swift */,
 				CEB84E7A2A24AC3300BEF778 /* Controller.swift */,
+				CE7C3D282A2F377B009C1E6F /* Hotas.swift */,
 			);
 			path = Input;
 			sourceTree = "<group>";
@@ -732,6 +736,7 @@
 		CE7F47F528B758920082B197 /* ToyFlightSimulator iOS */ = {
 			isa = PBXGroup;
 			children = (
+				CE7C3D272A2F303D009C1E6F /* ToyFlightSimulator-iOS-Info.plist */,
 				CE7F47F628B758920082B197 /* AppDelegate.swift */,
 				CE7F47F828B758920082B197 /* GameViewController.swift */,
 				CE7F47FA28B758920082B197 /* Main.storyboard */,
@@ -1225,6 +1230,7 @@
 				CE3BFF5A28E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
 				CE886A3C2983BF1B0013062D /* Skybox.metal in Sources */,
 				CE3BFF8C28E2FDB20014A752 /* InstancedGameObject.swift in Sources */,
+				CE7C3D292A2F377B009C1E6F /* Hotas.swift in Sources */,
 				CE3BFFA528E452F00014A752 /* LightObject.swift in Sources */,
 				CE3BFFAD28E453310014A752 /* Quad.swift in Sources */,
 				CE3E526528E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
@@ -1450,6 +1456,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = W6KXUJP8M6;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ToyFlightSimulator-iOS-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
@@ -1482,6 +1489,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = W6KXUJP8M6;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ToyFlightSimulator-iOS-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
