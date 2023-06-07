@@ -35,7 +35,14 @@ struct KeycodeValue {
 }
 
 class InputManager {
-    static var controller: Controller = Controller()
+    static var controller: Controller!
+    static var hotas: Hotas!
+    
+    public static func Initialize() {
+        controller = Controller()
+        hotas = Hotas()
+    }
+    
     
     // Key or Button mappings (depending on if using keyboard, controller or joystick/throttle) ???
     static var keysPressed: [Keycodes: Bool] = {

@@ -19,5 +19,6 @@ class Engine {
         
         Graphics.Initialize()
         Assets.Initialize()
+        InputManager.Initialize()
     }
 }

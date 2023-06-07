@@ -414,6 +414,7 @@
 		CE76931A29DE79CE00BBC718 /* Sidewinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidewinder.swift; sourceTree = "<group>"; };
 		CE7C3D272A2F303D009C1E6F /* ToyFlightSimulator-iOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ToyFlightSimulator-iOS-Info.plist"; sourceTree = SOURCE_ROOT; };
 		CE7C3D282A2F377B009C1E6F /* Hotas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hotas.swift; sourceTree = "<group>"; };
+		CE7C3D2A2A30400A009C1E6F /* ToyFlightSimulator-macOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ToyFlightSimulator-macOS-Info.plist"; sourceTree = SOURCE_ROOT; };
 		CE7F47EE28B758920082B197 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE7F47F328B758920082B197 /* ToyFlightSimulator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToyFlightSimulator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE7F47F628B758920082B197 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -759,6 +760,7 @@
 		CE7F481528B758920082B197 /* ToyFlightSimulator macOS */ = {
 			isa = PBXGroup;
 			children = (
+				CE7C3D2A2A30400A009C1E6F /* ToyFlightSimulator-macOS-Info.plist */,
 				CE7F481628B758920082B197 /* AppDelegate.swift */,
 				CE7F481828B758920082B197 /* GameViewController.swift */,
 				CE7F481A28B758920082B197 /* Main.storyboard */,
@@ -1585,6 +1587,7 @@
 				DEVELOPMENT_TEAM = W6KXUJP8M6;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ToyFlightSimulator-macOS-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
@@ -1618,6 +1621,7 @@
 				DEVELOPMENT_TEAM = W6KXUJP8M6;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ToyFlightSimulator-macOS-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
