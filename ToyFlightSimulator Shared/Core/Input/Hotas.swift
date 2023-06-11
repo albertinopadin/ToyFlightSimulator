@@ -222,30 +222,38 @@ class Hotas {
               reportId: UInt32,
               report: UnsafeMutablePointer<UInt8>,
               reportLength: CFIndex) {
-//        let data = Data(bytes: UnsafePointer<UInt8>(report), count: reportLength)
+        let data = Data(bytes: UnsafePointer<UInt8>(report), count: reportLength)
         
         // TODO: Make sense of this data:
         // Looks like the first 4 bytes are button/hat data, bytes 5-12 are axis data
-//        if lastData != data {
-//            lastData = data
-//            print("[Hotas read] data changed:")
+        if lastData != data {
+            lastData = data
+            print("[Hotas read] data changed:")
 //            print("Report length: \(reportLength)")
 //            print("Report type: \(reportType)")
 //            print("Report ID: \(reportId)")
-//            print("Data length (in bytes): \(lastData.count)")
+            print("Data length (in bytes): \(lastData.count)")
 //            print("Data string: \(lastData.hexEncodedString())")
-//            print("Button Data: \(lastData.subdata(in: buttonDataRange).hexEncodedString())")
+            print("Button Data: \(lastData.subdata(in: buttonDataRange).hexEncodedString())")
 //            print("Axis Data: \(lastData.subdata(in: axisDataRange).hexEncodedString())")
-//        }
+        }
         
 //        var xAxisValueRef: Unmanaged<IOHIDValue> = IOHIDValue
-//        if let elements = IOHIDDeviceCopyMatchingElements(joystickDevice!, nil, UInt32(kIOHIDOptionsTypeNone)) {
-//            for elem in elements as! [IOHIDElement] {
+        if let elements = IOHIDDeviceCopyMatchingElements(joystickDevice!, nil, UInt32(kIOHIDOptionsTypeNone)) {
+            let hidElements: [IOHIDElement] = elements as! [IOHIDElement]
+            print("[Hotas read] Number of elements: \(hidElements.count)")
+            for elem in hidElements {
 //                let elemType: IOHIDElementType = IOHIDElementGetType(elem)
 //                print("[Hotas read] element type: \(elemType)")
-////                var value: Unmanaged<IOHIDValue> =
-////                let returnValue = IOHIDDeviceGetValue(joystickDevice!, elem, &value)
-//            }
-//        }
+                var valuePtr: UnsafeMutablePointer<Unmanaged<IOHIDValue>> = UnsafeMutablePointer<Unmanaged<IOHIDValue>>.allocate(capacity: 1)
+                let elemUsage: Int = Int(IOHIDElementGetUsage(elem))
+                let ioReturn: IOReturn = IOHIDDeviceGetValue(joystickDevice!, elem, valuePtr)
+                
+                if ioReturn == kIOReturnSuccess {
+                    let intValue: Int = IOHIDValueGetIntegerValue(valuePtr.pointee.takeUnretainedValue())
+                    print("Element usage: \(elemUsage), value: \(intValue)")
+                }
+            }
+        }
     }
 }
