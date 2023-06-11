@@ -15,10 +15,20 @@ public extension Notification.Name {
     static let HIDDeviceDisconnected = Notification.Name("HIDDeviceDisconnected")
 }
 
+extension Data {
+    func hexEncodedString() -> String {
+        return map { String(format: "%02hhx", $0) }.joined()
+    }
+}
+
 class Hotas {
     static let reportSize: Int = 64
     
-    var gameControllerDevice: IOHIDDevice?
+    var joystickDevice: IOHIDDevice?
+    
+    var lastData = Data()
+    let buttonDataRange = 0..<4
+    let axisDataRange = 4..<12
 
     init() {
         print("Hotas init")
@@ -56,12 +66,12 @@ class Hotas {
         let deviceMatchingCallback: IOHIDDeviceCallback = { inContext, inResult, inSender, inDeviceRef in
             print("[deviceMatchingCallback]")
             print("inContext: \(inContext), inResult: \(inResult), inSender: \(inSender), device ref: \(inDeviceRef)")
-            let this:Hotas = unsafeBitCast(inContext, to: Hotas.self)
+            let this: Hotas = unsafeBitCast(inContext, to: Hotas.self)
             this.deviceAdded(inResult, inSender: inSender!, inIOHIDDeviceRef: inDeviceRef)
         }
 
         let deviceRemovalCallback: IOHIDDeviceCallback = { inContext, inResult, inSender, inDeviceRef in
-            let this:Hotas = unsafeBitCast(inContext, to: Hotas.self)
+            let this: Hotas = unsafeBitCast(inContext, to: Hotas.self)
             this.deviceRemoved(inIOHIDDeviceRef: inDeviceRef)
         }
         
@@ -76,17 +86,130 @@ class Hotas {
     }
     
     func deviceAdded(_ inResult: IOReturn, inSender: UnsafeMutableRawPointer, inIOHIDDeviceRef: IOHIDDevice!) {
+        joystickDevice = inIOHIDDeviceRef
+        
         let report = UnsafeMutablePointer<UInt8>.allocate(capacity: Hotas.reportSize)
-        let inputCallback: IOHIDReportCallback = { inContext, inResult, inSender, inType, reportId, report, reportLength in
-            let this:Hotas = unsafeBitCast(inContext, to: Hotas.self)
-            this.read(inResult, inSender: inSender!, type: inType, reportId: reportId, report: report, reportLength: reportLength)
+        
+        let inputReportCallback: IOHIDReportCallback = { inContext, inResult, inSender, inType, reportId, report, reportLength in
+            let this: Hotas = unsafeBitCast(inContext, to: Hotas.self)
+            this.read(inResult, inSender: inSender!, reportType: inType, reportId: reportId, report: report, reportLength: reportLength)
         }
+        
+        let inputValueCallback: IOHIDValueCallback = { inContext, inResult, inSender, inValue in
+            let element = IOHIDValueGetElement(inValue)
+            let usage = IOHIDElementGetUsage(element)
+            let intValue = IOHIDValueGetIntegerValue(inValue)
+            
+//            print("[Input Value] value: \(inValue)")
+//            print("Element: \(element)")
+//            print("Usage: \(usage)")
+//            print("Int Value: \(intValue)")
+            
+            switch Int(usage) {
+                case kHIDUsage_GD_X:
+                    break
+//                    print("[InputValueCallback] X axis value: \(intValue)")
+                case kHIDUsage_GD_Y:
+                    break
+//                    print("[InputValueCallback] Y axis value: \(intValue)")
+                case kHIDUsage_GD_Z:
+                    print("[InputValueCallback] Z axis value: \(intValue)")
+                case kHIDUsage_GD_Joystick:
+                    print("[InputValueCallback] Joystick value: \(intValue)")
+                case kHIDUsage_Game_Gun:
+                    print("[InputValueCallback] GameGun value: \(intValue)")
+                case kHIDUsage_GD_Qx:
+                    print("[InputValueCallback] Qx value: \(intValue)")
+                case kHIDUsage_GD_Qy:
+                    print("[InputValueCallback] Qy value: \(intValue)")
+                case kHIDUsage_GD_Qz:
+                    print("[InputValueCallback] Qz value: \(intValue)")
+                case kHIDUsage_GD_Qw:
+                    print("[InputValueCallback] Qw value: \(intValue)")
+                case kHIDUsage_GD_Rx:
+                    print("[InputValueCallback] Rx value: \(intValue)")
+                case kHIDUsage_GD_Ry:
+                    print("[InputValueCallback] Ry value: \(intValue)")
+                case kHIDUsage_GD_Rz:
+                    print("[InputValueCallback] Rz value: \(intValue)")
+                case kHIDUsage_GD_Vx:
+                    print("[InputValueCallback] Vx value: \(intValue)")
+                case kHIDUsage_GD_Vy:
+                    print("[InputValueCallback] Vy value: \(intValue)")
+                case kHIDUsage_GD_Vz:
+                    print("[InputValueCallback] Vz value: \(intValue)")
+                case kHIDUsage_GD_Vbrx:
+                    print("[InputValueCallback] Vbrx value: \(intValue)")
+                case kHIDUsage_GD_Vbry:
+                    print("[InputValueCallback] Vbry value: \(intValue)")
+                case kHIDUsage_GD_Vbrz:
+                    print("[InputValueCallback] Vbrz value: \(intValue)")
+                case kHIDUsage_Keypad0:
+                    print("[InputValueCallback] Keypad0 value: \(intValue)")
+                case kHIDUsage_Keyboard0:
+                    print("[InputValueCallback] Keyboard0 value: \(intValue)")
+                case kHIDUsage_GD_Mouse:
+                    break
+    //                print("[InputValueCallback] Mouse value: \(intValue)")
+                case kHIDUsage_GD_Pointer:
+                    break
+    //                print("[InputValueCallback] Pointer value: \(intValue)")
+                case kHIDUsage_GD_GamePad:
+                    print("[InputValueCallback] GamePad value: \(intValue)")
+                case kHIDUsage_GD_Keyboard:
+                    print("[InputValueCallback] Keyboard value: \(intValue)")
+                case kHIDUsage_GD_Keypad:
+                    print("[InputValueCallback] Keypad value: \(intValue)")
+                case kHIDUsage_GD_MultiAxisController:
+                    print("[InputValueCallback] MultiAxisController value: \(intValue)")
+                case kHIDUsage_GD_TabletPCSystemControls:
+                    print("[InputValueCallback] TabletPCSystemControls value: \(intValue)")
+                case kHIDUsage_GD_AssistiveControl:
+                    print("[InputValueCallback] AssistiveControl value: \(intValue)")
+                case kHIDUsage_GD_SystemMultiAxisController:
+                    print("[InputValueCallback] SystemMultiAxisController value: \(intValue)")
+                case kHIDUsage_GD_SpatialController:
+                    print("[InputValueCallback] SpatialController value: \(intValue)")
+                case kHIDUsage_GD_AssistiveControlCompatible:
+                    print("[InputValueCallback] AssistiveControlCompatible value: \(intValue)")
+                case kHIDUsage_GD_Slider:
+                    print("[InputValueCallback] Slider value: \(intValue)")
+                case kHIDUsage_GD_Dial:
+                    print("[InputValueCallback] Dial value: \(intValue)")
+                case kHIDUsage_GD_Wheel:
+                    print("[InputValueCallback] Wheel value: \(intValue)")
+                case kHIDUsage_GD_Hatswitch:
+                    print("[InputValueCallback] Hat Switch value: \(intValue)")
+                case kHIDUsage_GD_Select:
+                    print("[InputValueCallback] Select value: \(intValue)")
+                case kHIDUsage_GD_DPadUp:
+                    print("[InputValueCallback] DPad UP value: \(intValue)")
+                case kHIDUsage_GD_DPadDown:
+                    print("[InputValueCallback] DPad DOWN value: \(intValue)")
+                case kHIDUsage_GD_DPadLeft:
+                    print("[InputValueCallback] DPad LEFT value: \(intValue)")
+                case kHIDUsage_GD_DPadRight:
+                    print("[InputValueCallback] DPad RIGHT value: \(intValue)")
+                case kHIDUsage_Undefined:
+                    print("[InputValueCallback] Usage Undefined value: \(intValue)")
+                default:
+//                    let _ = 0
+                    print("[InputValueCallback] Unknown usage: \(usage), value: \(intValue)")
+            }
+        }
+        
+        let reportDescriptor: CFTypeRef = IOHIDDeviceGetProperty(inIOHIDDeviceRef, kIOHIDReportDescriptorKey as CFString)!
+        print("[Hotas deviceAdded] Report Descriptor: \(reportDescriptor)")
         
         IOHIDDeviceRegisterInputReportCallback(inIOHIDDeviceRef,
                                                report,
                                                Hotas.reportSize,
-                                               inputCallback,
+                                               inputReportCallback,
                                                unsafeBitCast(self, to: UnsafeMutableRawPointer.self))
+        
+        IOHIDDeviceRegisterInputValueCallback(inIOHIDDeviceRef,
+                                              inputValueCallback,
+                                              unsafeBitCast(self, to: UnsafeMutableRawPointer.self))
     }
     
     func deviceRemoved(inIOHIDDeviceRef: IOHIDDevice!) {
@@ -94,13 +217,35 @@ class Hotas {
     }
     
     func read(_ inResult: IOReturn,
-                     inSender: UnsafeMutableRawPointer,
-                     type: IOHIDReportType,
-                     reportId: UInt32,
-                     report: UnsafeMutablePointer<UInt8>,
-                     reportLength: CFIndex) {
-        let data = Data(bytes: UnsafePointer<UInt8>(report), count: reportLength)
+              inSender: UnsafeMutableRawPointer,
+              reportType: IOHIDReportType,
+              reportId: UInt32,
+              report: UnsafeMutablePointer<UInt8>,
+              reportLength: CFIndex) {
+//        let data = Data(bytes: UnsafePointer<UInt8>(report), count: reportLength)
+        
         // TODO: Make sense of this data:
-//        print("[Hotas read] data: \(data.base64EncodedString())")
+        // Looks like the first 4 bytes are button/hat data, bytes 5-12 are axis data
+//        if lastData != data {
+//            lastData = data
+//            print("[Hotas read] data changed:")
+//            print("Report length: \(reportLength)")
+//            print("Report type: \(reportType)")
+//            print("Report ID: \(reportId)")
+//            print("Data length (in bytes): \(lastData.count)")
+//            print("Data string: \(lastData.hexEncodedString())")
+//            print("Button Data: \(lastData.subdata(in: buttonDataRange).hexEncodedString())")
+//            print("Axis Data: \(lastData.subdata(in: axisDataRange).hexEncodedString())")
+//        }
+        
+//        var xAxisValueRef: Unmanaged<IOHIDValue> = IOHIDValue
+//        if let elements = IOHIDDeviceCopyMatchingElements(joystickDevice!, nil, UInt32(kIOHIDOptionsTypeNone)) {
+//            for elem in elements as! [IOHIDElement] {
+//                let elemType: IOHIDElementType = IOHIDElementGetType(elem)
+//                print("[Hotas read] element type: \(elemType)")
+////                var value: Unmanaged<IOHIDValue> =
+////                let returnValue = IOHIDDeviceGetValue(joystickDevice!, elem, &value)
+//            }
+//        }
     }
 }
