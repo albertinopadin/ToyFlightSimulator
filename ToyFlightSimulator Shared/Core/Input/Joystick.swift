@@ -21,11 +21,23 @@ extension Data {
     }
 }
 
-class Hotas {
+enum JoystickContinuousState {
+    case JoystickX
+    case JoystickY
+}
+
+enum JoystickDiscreteState {
+    case RedButton
+    case TriggerSemi
+    case TriggerFull
+}
+
+class Joystick {
 //    static let reportSize: Int = 64
     static let reportSize: Int = 256
     
     var joystickDevice: IOHIDDevice?
+    var present: Bool = false
     
     var lastData = Data()
     let buttonDataRange = 0..<4
@@ -34,6 +46,17 @@ class Hotas {
     var hidElementPagesUsages: [UInt32: [UInt32: Int]] = [:]
     
     var lastReportErrors = 0
+    
+    let joystickContinuousStateMapping: [JoystickContinuousState: Int] = [
+        .JoystickX: 0,
+        .JoystickY: 0
+    ]
+    
+    var joystickDiscreteStateMapping: [JoystickDiscreteState: Bool] = [
+        .RedButton: false,
+        .TriggerSemi: false,
+        .TriggerFull: false
+    ]
 
     init() {
         print("Hotas init")
@@ -71,12 +94,12 @@ class Hotas {
         let deviceMatchingCallback: IOHIDDeviceCallback = { inContext, inResult, inSender, inDeviceRef in
             print("[deviceMatchingCallback]")
             print("inContext: \(inContext), inResult: \(inResult), inSender: \(inSender), device ref: \(inDeviceRef)")
-            let this: Hotas = unsafeBitCast(inContext, to: Hotas.self)
+            let this: Joystick = unsafeBitCast(inContext, to: Joystick.self)
             this.deviceAdded(inResult, inSender: inSender!, inIOHIDDeviceRef: inDeviceRef)
         }
 
         let deviceRemovalCallback: IOHIDDeviceCallback = { inContext, inResult, inSender, inDeviceRef in
-            let this: Hotas = unsafeBitCast(inContext, to: Hotas.self)
+            let this: Joystick = unsafeBitCast(inContext, to: Joystick.self)
             this.deviceRemoved(inIOHIDDeviceRef: inDeviceRef)
         }
         
@@ -91,12 +114,13 @@ class Hotas {
     }
     
     func deviceAdded(_ inResult: IOReturn, inSender: UnsafeMutableRawPointer, inIOHIDDeviceRef: IOHIDDevice!) {
+        present = true
         joystickDevice = inIOHIDDeviceRef
         
-        let report = UnsafeMutablePointer<UInt8>.allocate(capacity: Hotas.reportSize)
+        let report = UnsafeMutablePointer<UInt8>.allocate(capacity: Joystick.reportSize)
         
         let inputReportCallback: IOHIDReportCallback = { inContext, inResult, inSender, inType, reportId, report, reportLength in
-            let this: Hotas = unsafeBitCast(inContext, to: Hotas.self)
+            let this: Joystick = unsafeBitCast(inContext, to: Joystick.self)
             this.read(inResult, inSender: inSender!, reportType: inType, reportId: reportId, report: report, reportLength: reportLength)
         }
         
@@ -208,7 +232,7 @@ class Hotas {
         
         IOHIDDeviceRegisterInputReportCallback(inIOHIDDeviceRef,
                                                report,
-                                               Hotas.reportSize,
+                                               Joystick.reportSize,
                                                inputReportCallback,
                                                unsafeBitCast(self, to: UnsafeMutableRawPointer.self))
         
@@ -219,6 +243,8 @@ class Hotas {
     
     func deviceRemoved(inIOHIDDeviceRef: IOHIDDevice!) {
         print("[Hotas deviceRemoved]")
+        present = false
+        joystickDevice = nil
     }
     
     func read(_ inResult: IOReturn,
@@ -281,14 +307,17 @@ class Hotas {
                                 hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
                                 if isRedButton {
                                     print("PRESSED RED BUTTON")
+                                    joystickDiscreteStateMapping[.RedButton] = intValue == 1
                                 }
                                 
                                 if isTriggerFirstDetent {
                                     print("TRIGGER FIRST DETENT")
+                                    joystickDiscreteStateMapping[.TriggerSemi] = intValue == 1
                                 }
                                 
                                 if isTriggerSecondDetent {
                                     print("TRIGGER FULLY PRESSED")
+                                    joystickDiscreteStateMapping[.TriggerFull] = intValue == 1
                                 }
                             }
                         } else {

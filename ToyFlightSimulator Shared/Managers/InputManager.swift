@@ -36,11 +36,11 @@ struct KeycodeValue {
 
 class InputManager {
     static var controller: Controller!
-    static var hotas: Hotas!
+    static var joystick: Joystick!
     
     public static func Initialize() {
         controller = Controller()
-        hotas = Hotas()
+        joystick = Joystick()
     }
     
     
@@ -97,6 +97,11 @@ class InputManager {
         .DropBomb: .LeftTrigger
     ]
     
+    static var joystickMappingsDiscrete: [DiscreteCommand: JoystickDiscreteState] = [
+        .FireMissileAIM9: .TriggerFull,
+        .FireMissileAIM120: .RedButton
+    ]
+    
     static func handleKeyPressedDebounced(keyCode: Keycodes, _ handleBlock: () -> Void) {
         guard let _ = keysPressed[keyCode] else {
             print("[InputManager handleKeyPressedDebounced] WARNING: Unknown Key Code: \(keyCode)")
@@ -126,6 +131,13 @@ class InputManager {
             guard let controllerState = controllerMappingsDiscrete[command] else { return hasCommand }
             let controllerValue = controller.getState(controllerState)
             hasCommand = hasCommand || controllerValue > .zero
+        }
+        
+        if joystick.present {
+//            print("Joystick is present!")
+            guard let joystickState = joystickMappingsDiscrete[command] else { return hasCommand }
+            guard let joystickValue = joystick.joystickDiscreteStateMapping[joystickState] else { return hasCommand }
+            hasCommand = hasCommand || joystickValue
         }
         
         return hasCommand
@@ -165,6 +177,15 @@ class InputManager {
             guard let controllerState = controllerMappingsDiscrete[command] else { return }
             let controllerValue = controller.getState(controllerState)
             if controllerValue > .zero {
+                handleBlock()
+            }
+        }
+        
+        if joystick.present {
+//            print("Joystick is present!")
+            guard let joystickState = joystickMappingsDiscrete[command] else { return }
+            guard let joystickValue = joystick.joystickDiscreteStateMapping[joystickState] else { return }
+            if joystickValue {
                 handleBlock()
             }
         }
