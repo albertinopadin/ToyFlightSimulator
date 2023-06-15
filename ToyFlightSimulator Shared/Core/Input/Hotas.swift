@@ -22,13 +22,18 @@ extension Data {
 }
 
 class Hotas {
-    static let reportSize: Int = 64
+//    static let reportSize: Int = 64
+    static let reportSize: Int = 256
     
     var joystickDevice: IOHIDDevice?
     
     var lastData = Data()
     let buttonDataRange = 0..<4
     let axisDataRange = 4..<12
+    
+    var hidElementPagesUsages: [UInt32: [UInt32: Int]] = [:]
+    
+    var lastReportErrors = 0
 
     init() {
         print("Hotas init")
@@ -227,31 +232,83 @@ class Hotas {
         // TODO: Make sense of this data:
         // Looks like the first 4 bytes are button/hat data, bytes 5-12 are axis data
         if lastData != data {
+            if data.count != lastData.count {
+                print("Data count changed; length (in bytes): \(data.count)")
+            }
+            
             lastData = data
-            print("[Hotas read] data changed:")
+//            print("[Hotas read] data changed:")
 //            print("Report length: \(reportLength)")
 //            print("Report type: \(reportType)")
 //            print("Report ID: \(reportId)")
-            print("Data length (in bytes): \(lastData.count)")
+            
 //            print("Data string: \(lastData.hexEncodedString())")
-            print("Button Data: \(lastData.subdata(in: buttonDataRange).hexEncodedString())")
+//            print("Button Data: \(lastData.subdata(in: buttonDataRange).hexEncodedString())")
 //            print("Axis Data: \(lastData.subdata(in: axisDataRange).hexEncodedString())")
         }
         
-//        var xAxisValueRef: Unmanaged<IOHIDValue> = IOHIDValue
         if let elements = IOHIDDeviceCopyMatchingElements(joystickDevice!, nil, UInt32(kIOHIDOptionsTypeNone)) {
             let hidElements: [IOHIDElement] = elements as! [IOHIDElement]
-            print("[Hotas read] Number of elements: \(hidElements.count)")
+//            if hidElements.count != hidElementUsages.count {
+//                print("[Hotas read] Number of recorded HID element usages: \(hidElementUsages.count)")
+//                print("[Hotas read] Number of elements: \(hidElements.count)")
+//                print("HID Elements: \(hidElements)")
+//            }
+            
+            var reportErrors = 0
+            
             for elem in hidElements {
 //                let elemType: IOHIDElementType = IOHIDElementGetType(elem)
 //                print("[Hotas read] element type: \(elemType)")
                 var valuePtr: UnsafeMutablePointer<Unmanaged<IOHIDValue>> = UnsafeMutablePointer<Unmanaged<IOHIDValue>>.allocate(capacity: 1)
-                let elemUsage: Int = Int(IOHIDElementGetUsage(elem))
+                let elemUsagePage: UInt32 = IOHIDElementGetUsagePage(elem)
+                let elemUsage: UInt32 = IOHIDElementGetUsage(elem)
                 let ioReturn: IOReturn = IOHIDDeviceGetValue(joystickDevice!, elem, valuePtr)
                 
                 if ioReturn == kIOReturnSuccess {
                     let intValue: Int = IOHIDValueGetIntegerValue(valuePtr.pointee.takeUnretainedValue())
-                    print("Element usage: \(elemUsage), value: \(intValue)")
+                    
+                    if let hidElemPage = hidElementPagesUsages[elemUsagePage] {
+                        if let hidElemVal = hidElemPage[elemUsage] {
+                            let isNoise = elemUsagePage == 255 && (elemUsage == 1 || elemUsage == 2)
+                            let isXYJoystick = elemUsagePage == 1 && (elemUsage == 48 || elemUsage == 49)
+                            let isButtonPage = elemUsagePage == kHIDPage_Button
+                            let isRedButton = isButtonPage && elemUsage == kHIDUsage_Button_2
+                            let isTriggerFirstDetent = isButtonPage && elemUsage == kHIDUsage_Button_1
+                            let isTriggerSecondDetent = isButtonPage && elemUsage == kHIDUsage_Button_6
+                            if hidElemVal != intValue && !isNoise && !isXYJoystick {
+                                print("HID Element changed, elem: \(elem), page: \(elemUsagePage), usage: \(elemUsage), value: \(intValue)")
+                                hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
+                                if isRedButton {
+                                    print("PRESSED RED BUTTON")
+                                }
+                                
+                                if isTriggerFirstDetent {
+                                    print("TRIGGER FIRST DETENT")
+                                }
+                                
+                                if isTriggerSecondDetent {
+                                    print("TRIGGER FULLY PRESSED")
+                                }
+                            }
+                        } else {
+                            hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
+                        }
+                        
+                    } else {
+                        hidElementPagesUsages[elemUsagePage] = [:]
+                        hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
+                    }
+                } else {
+//                    print("ERROR :: Call to IOHIDDeviceGetValue failed!")
+//                    print("ioReturn: \(ioReturn); Page: \(elemUsagePage); Usage: \(elemUsage)")
+//                    print("Usage is kHIDUsage_GD_Joystick ? \(elemUsage == kHIDUsage_GD_Joystick)")
+                    reportErrors += 1
+                }
+                
+                if lastReportErrors != reportErrors {
+                    print("ERRORS in call to IOHIDDeviceGetValue; number: \(reportErrors)")
+                    lastReportErrors = reportErrors
                 }
             }
         }
