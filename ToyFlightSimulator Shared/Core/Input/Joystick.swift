@@ -26,7 +26,7 @@ enum JoystickContinuousState {
     case JoystickY
 }
 
-enum JoystickDiscreteState {
+enum JoystickDiscreteState: CaseIterable {
     case RedButton
     case TriggerSemi
     case TriggerFull

@@ -8,7 +8,7 @@
 import GameController
 
 
-enum ControllerState {
+enum ControllerState: CaseIterable {
     case LeftStickX
     case LeftStickY
     

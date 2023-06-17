@@ -43,8 +43,8 @@ class InputManager {
         joystick = Joystick()
     }
     
-    
-    // Key or Button mappings (depending on if using keyboard, controller or joystick/throttle) ???
+    // TODO: These three computed properties follow the same initialization pattern.
+    //       Wonder if there is a generic way to do this...
     static var keysPressed: [Keycodes: Bool] = {
         var kp: [Keycodes: Bool] = [Keycodes: Bool]()
         for kc in Keycodes.allCases {
@@ -52,6 +52,23 @@ class InputManager {
         }
         return kp
     }()
+    
+    static var controllerDiscreteState: [ControllerState: Bool] = {
+        var cds: [ControllerState: Bool] = [ControllerState: Bool]()
+        for cs in ControllerState.allCases {
+            cds[cs] = false
+        }
+        return cds
+    }()
+    
+    static var joystickDiscreteState: [JoystickDiscreteState: Bool] = {
+        var jbp: [JoystickDiscreteState: Bool] = [JoystickDiscreteState: Bool]()
+        for jb in JoystickDiscreteState.allCases {
+            jbp[jb] = false
+        }
+        return jbp
+    }()
+    
     
     static var pitchAxisFlipped: Bool = true
     
@@ -120,6 +137,44 @@ class InputManager {
         }
     }
     
+    static func handleControllerDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
+        guard let controllerState = controllerMappingsDiscrete[command] else { return }
+        guard let controllerCommandState = controllerDiscreteState[controllerState] else { return }
+        let controllerValue = controller.getState(controllerState)
+        if controllerValue > .zero {
+            if !controllerCommandState {
+                controllerDiscreteState[controllerState] = true
+                handleBlock()
+            }
+        } else {
+            if controllerCommandState {
+                controllerDiscreteState[controllerState] = false
+            }
+        }
+    }
+    
+    static func handleJoystickDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
+        guard let joystickState = joystickMappingsDiscrete[command] else { return }
+        
+        guard let joystickCommandState = joystickDiscreteState[joystickState] else {
+            print("[InputManager handleJoystickDiscreteCommandDebounced] WARNING: Unknown joystick command: \(command)")
+            return
+        }
+        
+        guard let joystickValue = joystick.joystickDiscreteStateMapping[joystickState] else { return }
+        
+        if joystickValue {
+            if !joystickCommandState {
+                joystickDiscreteState[joystickState] = true
+                handleBlock()
+            }
+        } else {
+            if joystickCommandState {
+                joystickDiscreteState[joystickState] = false
+            }
+        }
+    }
+    
     static func DiscreteCommand(_ command: DiscreteCommand) -> Bool {
         var hasCommand: Bool = false
         
@@ -134,7 +189,6 @@ class InputManager {
         }
         
         if joystick.present {
-//            print("Joystick is present!")
             guard let joystickState = joystickMappingsDiscrete[command] else { return hasCommand }
             guard let joystickValue = joystick.joystickDiscreteStateMapping[joystickState] else { return hasCommand }
             hasCommand = hasCommand || joystickValue
@@ -172,22 +226,12 @@ class InputManager {
         guard let key = keyboardMappingsDiscrete[command] else { return }
         handleKeyPressedDebounced(keyCode: key, handleBlock)
         
-        // TODO: Debounce this:
         if controller.present {
-            guard let controllerState = controllerMappingsDiscrete[command] else { return }
-            let controllerValue = controller.getState(controllerState)
-            if controllerValue > .zero {
-                handleBlock()
-            }
+            handleControllerDiscreteCommandDebounced(command: command, handleBlock)
         }
         
         if joystick.present {
-//            print("Joystick is present!")
-            guard let joystickState = joystickMappingsDiscrete[command] else { return }
-            guard let joystickValue = joystick.joystickDiscreteStateMapping[joystickState] else { return }
-            if joystickValue {
-                handleBlock()
-            }
+            handleJoystickDiscreteCommandDebounced(command: command, handleBlock)
         }
     }
     
