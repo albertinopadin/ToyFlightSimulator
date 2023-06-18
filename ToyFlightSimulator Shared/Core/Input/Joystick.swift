@@ -30,11 +30,14 @@ enum JoystickDiscreteState: CaseIterable {
     case RedButton
     case TriggerSemi
     case TriggerFull
+    case TrimUp
+    case TrimDown
+    case TrimLeft
+    case TrimRight
 }
 
 class Joystick {
-//    static let reportSize: Int = 64
-    static let reportSize: Int = 256
+    static let reportSize: Int = 64
     
     var joystickDevice: IOHIDDevice?
     var present: Bool = false
@@ -47,9 +50,9 @@ class Joystick {
     
     var lastReportErrors = 0
     
-    let joystickContinuousStateMapping: [JoystickContinuousState: Int] = [
-        .JoystickX: 0,
-        .JoystickY: 0
+    var joystickContinuousStateMapping: [JoystickContinuousState: Float] = [
+        .JoystickX: 0.0,
+        .JoystickY: 0.0
     ]
     
     var joystickDiscreteStateMapping: [JoystickDiscreteState: Bool] = [
@@ -57,27 +60,15 @@ class Joystick {
         .TriggerSemi: false,
         .TriggerFull: false
     ]
+    
+    // TODO: Get this dynamically from HID input reports:
+    let xyMin: Int = 0
+    let xyMax: Int = 65_535
+    let xyZero: Int = 32_768
 
     init() {
-        print("Hotas init")
-        
-//        RunLoop.current.run()
-        
         let thread = Thread(target: self, selector: #selector(self.run), object: nil)
         thread.start()
-        print("Exiting Hotas init")
-        
-//        NotificationCenter.default.addObserver(forName: .HIDDeviceConnected,
-//                                               object: nil,
-//                                               queue: nil) { [weak self] notification in
-//            print("Got notification for HID Device Connected")
-//        }
-//
-//        NotificationCenter.default.addObserver(forName: .HIDDeviceDisconnected,
-//                                               object: nil,
-//                                               queue: nil) { [weak self] notification in
-//            print("Got notification for HID Device Disconnected")
-//        }
     }
     
     @objc func run() {
@@ -236,15 +227,32 @@ class Joystick {
                                                inputReportCallback,
                                                unsafeBitCast(self, to: UnsafeMutableRawPointer.self))
         
-        IOHIDDeviceRegisterInputValueCallback(inIOHIDDeviceRef,
-                                              inputValueCallback,
-                                              unsafeBitCast(self, to: UnsafeMutableRawPointer.self))
+//        IOHIDDeviceRegisterInputValueCallback(inIOHIDDeviceRef,
+//                                              inputValueCallback,
+//                                              unsafeBitCast(self, to: UnsafeMutableRawPointer.self))
+        
+        
+//        NotificationCenter.default.addObserver(forName: .HIDDeviceConnected,
+//                                               object: nil,
+//                                               queue: nil) { [weak self] notification in
+//            print("Got notification for HID Device Connected")
+//        }
     }
     
     func deviceRemoved(inIOHIDDeviceRef: IOHIDDevice!) {
         print("[Hotas deviceRemoved]")
         present = false
         joystickDevice = nil
+        
+//        NotificationCenter.default.addObserver(forName: .HIDDeviceDisconnected,
+//                                               object: nil,
+//                                               queue: nil) { [weak self] notification in
+//            print("Got notification for HID Device Disconnected")
+//        }
+    }
+    
+    func getNormalizedAxisValue(rawIntValue: Int) -> Float {
+        return Float(Float(rawIntValue) - Float(xyZero)) / Float(xyZero)
     }
     
     func read(_ inResult: IOReturn,
@@ -297,28 +305,49 @@ class Joystick {
                     if let hidElemPage = hidElementPagesUsages[elemUsagePage] {
                         if let hidElemVal = hidElemPage[elemUsage] {
                             let isNoise = elemUsagePage == 255 && (elemUsage == 1 || elemUsage == 2)
-                            let isXYJoystick = elemUsagePage == 1 && (elemUsage == 48 || elemUsage == 49)
+//                            let isXYJoystick = elemUsagePage == 1 && (elemUsage == 48 || elemUsage == 49)
+                            let isDesktopPage = elemUsagePage == kHIDPage_GenericDesktop
+                            let isXYJoystick = isDesktopPage && (elemUsage == kHIDUsage_GD_X || elemUsage == kHIDUsage_GD_Y)
+                            let isJoystickX = isDesktopPage && elemUsage == kHIDUsage_GD_X
+                            let isJoystickY = isDesktopPage && elemUsage == kHIDUsage_GD_Y
                             let isButtonPage = elemUsagePage == kHIDPage_Button
                             let isRedButton = isButtonPage && elemUsage == kHIDUsage_Button_2
                             let isTriggerFirstDetent = isButtonPage && elemUsage == kHIDUsage_Button_1
                             let isTriggerSecondDetent = isButtonPage && elemUsage == kHIDUsage_Button_6
-                            if hidElemVal != intValue && !isNoise && !isXYJoystick {
+                            if hidElemVal != intValue && !isNoise {
                                 print("HID Element changed, elem: \(elem), page: \(elemUsagePage), usage: \(elemUsage), value: \(intValue)")
+                                
+                                if !isXYJoystick {
+                                    hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
+                                    if isRedButton {
+                                        print("PRESSED RED BUTTON")
+                                        joystickDiscreteStateMapping[.RedButton] = intValue == 1
+                                    }
+                                    
+                                    if isTriggerFirstDetent {
+                                        print("TRIGGER FIRST DETENT")
+                                        joystickDiscreteStateMapping[.TriggerSemi] = intValue == 1
+                                    }
+                                    
+                                    if isTriggerSecondDetent {
+                                        print("TRIGGER FULLY PRESSED")
+                                        joystickDiscreteStateMapping[.TriggerFull] = intValue == 1
+                                    }
+                                }
+                                
+                                if isXYJoystick {
+                                    let normalizedValue = getNormalizedAxisValue(rawIntValue: intValue)
+                                    print("XY Joystick normalized value: \(normalizedValue)")
+                                    if isJoystickX {
+                                        joystickContinuousStateMapping[.JoystickX] = normalizedValue
+                                    }
+                                    
+                                    if isJoystickY {
+                                        joystickContinuousStateMapping[.JoystickY] = normalizedValue
+                                    }
+                                }
+                                
                                 hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
-                                if isRedButton {
-                                    print("PRESSED RED BUTTON")
-                                    joystickDiscreteStateMapping[.RedButton] = intValue == 1
-                                }
-                                
-                                if isTriggerFirstDetent {
-                                    print("TRIGGER FIRST DETENT")
-                                    joystickDiscreteStateMapping[.TriggerSemi] = intValue == 1
-                                }
-                                
-                                if isTriggerSecondDetent {
-                                    print("TRIGGER FULLY PRESSED")
-                                    joystickDiscreteStateMapping[.TriggerFull] = intValue == 1
-                                }
                             }
                         } else {
                             hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue

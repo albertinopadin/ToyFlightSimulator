@@ -114,6 +114,11 @@ class InputManager {
         .DropBomb: .LeftTrigger
     ]
     
+    static var joystickMappingsContinuous: [ContinuousCommand: JoystickContinuousState] = [
+        .Pitch: .JoystickY,
+        .Roll: .JoystickX
+    ]
+    
     static var joystickMappingsDiscrete: [DiscreteCommand: JoystickDiscreteState] = [
         .FireMissileAIM9: .TriggerFull,
         .FireMissileAIM120: .RedButton
@@ -216,6 +221,16 @@ class InputManager {
                 continuousValue += -controllerValue
             } else {
                 continuousValue += controllerValue
+            }
+        }
+        
+        if joystick.present {
+            guard let joystickState = joystickMappingsContinuous[command] else { return continuousValue }
+            guard let joystickValue = joystick.joystickContinuousStateMapping[joystickState] else { return continuousValue }
+            if command == .Pitch && !pitchAxisFlipped {
+                continuousValue += -joystickValue
+            } else {
+                continuousValue += joystickValue
             }
         }
         
