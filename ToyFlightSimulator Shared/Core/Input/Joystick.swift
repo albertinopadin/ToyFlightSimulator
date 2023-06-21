@@ -251,8 +251,18 @@ class Joystick {
 //        }
     }
     
-    func getNormalizedAxisValue(rawIntValue: Int) -> Float {
-        return Float(Float(rawIntValue) - Float(xyZero)) / Float(xyZero)
+    func getNormalizedAxisValue(rawIntValue: Int, minValue: Int, maxValue: Int, axis: String) -> Float {
+        let zeroVal: Float = (Float(maxValue - 1) / 2.0) + (Float(minValue) / 2.0)
+        var correction: Int = 0
+        if axis == "x" {
+            correction = 600
+        }
+        let rawNormalizedValue = Float(Float(rawIntValue + correction) - zeroVal) / zeroVal
+        if abs(rawNormalizedValue) < 1e-2 {
+            return 0.0
+        } else {
+            return rawNormalizedValue
+        }
     }
     
     func read(_ inResult: IOReturn,
@@ -300,7 +310,16 @@ class Joystick {
                 let ioReturn: IOReturn = IOHIDDeviceGetValue(joystickDevice!, elem, valuePtr)
                 
                 if ioReturn == kIOReturnSuccess {
-                    let intValue: Int = IOHIDValueGetIntegerValue(valuePtr.pointee.takeUnretainedValue())
+                    let elemValue = valuePtr.pointee.takeUnretainedValue()
+                    let intValue: Int = IOHIDValueGetIntegerValue(elemValue)
+                    let scaledValue: Double = IOHIDValueGetScaledValue(elemValue,
+                                                                       UInt32(kIOHIDValueScaleTypeCalibrated))
+                    
+                    let hidElemLogicalMin: Int = IOHIDElementGetLogicalMin(elem)
+                    let hidElemLogicalMax: Int = IOHIDElementGetLogicalMax(elem)
+                    
+                    let hidElemPhysicalMin: Int = IOHIDElementGetPhysicalMin(elem)
+                    let hidElemPhysicalMax: Int = IOHIDElementGetPhysicalMax(elem)
                     
                     if let hidElemPage = hidElementPagesUsages[elemUsagePage] {
                         if let hidElemVal = hidElemPage[elemUsage] {
@@ -336,14 +355,31 @@ class Joystick {
                                 }
                                 
                                 if isXYJoystick {
-                                    let normalizedValue = getNormalizedAxisValue(rawIntValue: intValue)
-                                    print("XY Joystick normalized value: \(normalizedValue)")
+                                    print("XY Joystick scaled value: \(scaledValue)")
+                                    
+                                    print("XY Joystick Logical MIN: \(hidElemLogicalMin)")
+                                    print("XY Joystick Physical MIN: \(hidElemPhysicalMin)")
+                                    print("XY Joystick Logical MAX: \(hidElemLogicalMax)")
+                                    print("XY Joystick Physical MAX: \(hidElemPhysicalMax)")
+                                    
                                     if isJoystickX {
+                                        let normalizedValue = getNormalizedAxisValue(rawIntValue: intValue,
+                                                                                     minValue: hidElemPhysicalMin,
+                                                                                     maxValue: hidElemPhysicalMax,
+                                                                                     axis: "x")
+                                        print("XY Joystick normalized value: \(normalizedValue)")
                                         joystickContinuousStateMapping[.JoystickX] = normalizedValue
+//                                        joystickContinuousStateMapping[.JoystickX] = Float(scaledValue)
                                     }
                                     
                                     if isJoystickY {
+                                        let normalizedValue = getNormalizedAxisValue(rawIntValue: intValue,
+                                                                                     minValue: hidElemPhysicalMin,
+                                                                                     maxValue: hidElemPhysicalMax,
+                                                                                     axis: "y")
+                                        print("XY Joystick normalized value: \(normalizedValue)")
                                         joystickContinuousStateMapping[.JoystickY] = normalizedValue
+//                                        joystickContinuousStateMapping[.JoystickY] = Float(scaledValue)
                                     }
                                 }
                                 
@@ -357,6 +393,8 @@ class Joystick {
                         hidElementPagesUsages[elemUsagePage] = [:]
                         hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
                     }
+                    
+//                    valuePtr.pointee.release()
                 } else {
 //                    print("ERROR :: Call to IOHIDDeviceGetValue failed!")
 //                    print("ioReturn: \(ioReturn); Page: \(elemUsagePage); Usage: \(elemUsage)")
