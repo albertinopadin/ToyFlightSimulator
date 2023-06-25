@@ -37,10 +37,12 @@ struct KeycodeValue {
 class InputManager {
     static var controller: Controller!
     static var joystick: Joystick!
+    static var throttle: Throttle!
     
     public static func Initialize() {
         controller = Controller()
         joystick = Joystick()
+        throttle = Throttle()
     }
     
     // TODO: These three computed properties follow the same initialization pattern.
@@ -124,6 +126,10 @@ class InputManager {
         .FireMissileAIM120: .RedButton
     ]
     
+    static var throttleMappingContinuous: [ContinuousCommand: ThrottleContinuousState] = [
+        .MoveFwd: .ThrottleRight
+    ]
+    
     static func handleKeyPressedDebounced(keyCode: Keycodes, _ handleBlock: () -> Void) {
         guard let _ = keysPressed[keyCode] else {
             print("[InputManager handleKeyPressedDebounced] WARNING: Unknown Key Code: \(keyCode)")
@@ -202,6 +208,27 @@ class InputManager {
         return hasCommand
     }
     
+    static func GetControllerContinuousValue(_ command: ContinuousCommand) -> Float {
+        guard let controllerState = controllerMappingsContinuous[command] else { return .zero }
+        return controller.getState(controllerState)
+    }
+    
+    static func GetJoystickContinuousValue(_ command: ContinuousCommand) -> Float {
+        guard let joystickState = joystickMappingsContinuous[command] else { return .zero }
+        guard let joystickValue = joystick.joystickContinuousStateMapping[joystickState] else { return .zero }
+        return joystickValue
+    }
+    
+    static func GetThrottleContinuousValue(_ command: ContinuousCommand) -> Float {
+        if command == .MoveFwd {
+            print("[InputMgr] Throttle present! Command: \(command)")
+        }
+        
+        guard let throttleState = throttleMappingContinuous[command] else { return .zero }
+        guard let throttleValue = throttle.throttleContinuousStateMapping[throttleState] else { return .zero }
+        return throttleValue
+    }
+    
     static func ContinuousCommand(_ command: ContinuousCommand) -> Float {
         var continuousValue: Float = .zero
         
@@ -214,9 +241,7 @@ class InputManager {
         }
         
         if controller.present {
-//            guard let controllerState = controllerMappingsContinuous[command] else { return .zero }
-            guard let controllerState = controllerMappingsContinuous[command] else { return continuousValue }
-            let controllerValue = controller.getState(controllerState)
+            let controllerValue = GetControllerContinuousValue(command)
             if command == .Pitch && pitchAxisFlipped {
                 continuousValue += -controllerValue
             } else {
@@ -225,13 +250,17 @@ class InputManager {
         }
         
         if joystick.present {
-            guard let joystickState = joystickMappingsContinuous[command] else { return continuousValue }
-            guard let joystickValue = joystick.joystickContinuousStateMapping[joystickState] else { return continuousValue }
+            let joystickValue = GetJoystickContinuousValue(command)
             if command == .Pitch && !pitchAxisFlipped {
                 continuousValue += -joystickValue
             } else {
                 continuousValue += joystickValue
             }
+        }
+        
+        if throttle.present {
+            let throttleValue = GetThrottleContinuousValue(command)
+            continuousValue += throttleValue
         }
         
         return continuousValue

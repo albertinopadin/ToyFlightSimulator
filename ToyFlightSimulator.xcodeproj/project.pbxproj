@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */; };
+		CE0EF7292A46CF9F00F54A2C /* HIDDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7282A46CF9F00F54A2C /* HIDDevice.swift */; };
+		CE0EF72B2A4705FE00F54A2C /* Throttle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF72A2A4705FE00F54A2C /* Throttle.swift */; };
 		CE2ED259299223A900C81F47 /* Mesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED258299223A900C81F47 /* Mesh.swift */; };
 		CE2ED25A299223A900C81F47 /* Mesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED258299223A900C81F47 /* Mesh.swift */; };
 		CE2ED25B299223A900C81F47 /* Mesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED258299223A900C81F47 /* Mesh.swift */; };
@@ -333,6 +336,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotasConfig.swift; sourceTree = "<group>"; };
+		CE0EF7282A46CF9F00F54A2C /* HIDDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDDevice.swift; sourceTree = "<group>"; };
+		CE0EF72A2A4705FE00F54A2C /* Throttle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Throttle.swift; sourceTree = "<group>"; };
 		CE2ED258299223A900C81F47 /* Mesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mesh.swift; sourceTree = "<group>"; };
 		CE2ED25C299223E900C81F47 /* Submesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Submesh.swift; sourceTree = "<group>"; };
 		CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModelIO+Extensions.swift"; sourceTree = "<group>"; };
@@ -581,7 +587,10 @@
 				CE3BFF3328E058CE0014A752 /* Keycodes.swift */,
 				CE3BFF3128E058C30014A752 /* Mouse.swift */,
 				CEB84E7A2A24AC3300BEF778 /* Controller.swift */,
+				CE0EF7282A46CF9F00F54A2C /* HIDDevice.swift */,
+				CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */,
 				CE7C3D282A2F377B009C1E6F /* Joystick.swift */,
+				CE0EF72A2A4705FE00F54A2C /* Throttle.swift */,
 			);
 			path = Input;
 			sourceTree = "<group>";
@@ -1211,6 +1220,7 @@
 				CE7F484828B770EB0082B197 /* MathUtils.swift in Sources */,
 				CE3BFFB128E572EC0014A752 /* SkySphereShaders.metal in Sources */,
 				CE3BFF8828E2FD9C0014A752 /* GameObject.swift in Sources */,
+				CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */,
 				CE76931929DE75CB00BBC718 /* SingleSMMeshLibrary.swift in Sources */,
 				CE3BFF8428E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CEFC6EC7295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
@@ -1259,6 +1269,7 @@
 				CE3BFF5628E1B29C0014A752 /* ShaderLibrary.swift in Sources */,
 				CE3BFF7428E1B4E10014A752 /* TextureLibrary.swift in Sources */,
 				CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */,
+				CE0EF7292A46CF9F00F54A2C /* HIDDevice.swift in Sources */,
 				CE3DD2EF2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE886A4D298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */,
 				CE3BFF9828E451F00014A752 /* LightManager.swift in Sources */,
@@ -1273,6 +1284,7 @@
 				CE3BFF3A28E0599F0014A752 /* MetalTypes.swift in Sources */,
 				CE3BFF3828E059950014A752 /* Keycodes.swift in Sources */,
 				CE76930D29DD5A4400BBC718 /* ObjModel.swift in Sources */,
+				CE0EF72B2A4705FE00F54A2C /* Throttle.swift in Sources */,
 				CE56921A28EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
 				CE3BFFA128E452480014A752 /* DebugCamera.swift in Sources */,
 				CE3BFF3F28E059B60014A752 /* InstancedShaders.metal in Sources */,
