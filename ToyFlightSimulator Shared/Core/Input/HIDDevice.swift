@@ -229,17 +229,31 @@ class HIDDevice {
 //        }
     }
     
-    func getNormalizedAxisValue(rawIntValue: Int, minValue: Int, maxValue: Int, axis: String) -> Float {
-        let zeroVal: Float = (Float(maxValue - 1) / 2.0) + (Float(minValue) / 2.0)
+    func getNormalizedAxisValue(rawValue: Int, minPhysicalValue: Int, maxPhysicalValue: Int, axis: String = "") -> Float {
+        let zeroVal: Float = (Float(maxPhysicalValue - 1) / 2.0) + (Float(minPhysicalValue) / 2.0)
         var correction: Int = 0
         if axis == "x" {
             correction = 600
         }
-        let rawNormalizedValue = Float(Float(rawIntValue + correction) - zeroVal) / zeroVal
-        if abs(rawNormalizedValue) < 1e-2 {
+        let normalizedValue = Float(Float(rawValue + correction) - zeroVal) / zeroVal
+        if abs(normalizedValue) < 1e-2 {
             return 0.0
         } else {
-            return rawNormalizedValue
+            return normalizedValue
+        }
+    }
+    
+    func getRescaledAxisValue(rawValue: Int,
+                              minPhysicalValue: Int,
+                              maxPhysicalValue: Int,
+                              minAxisValue: Float = 0.0,
+                              maxAxisValue: Float = 1.0) -> Float {
+        let range: Float = Float(maxPhysicalValue - minPhysicalValue)
+        let scaledValue = (Float(rawValue - minPhysicalValue) / range) * maxAxisValue
+        if abs(scaledValue) < 1e-2 {
+            return 0.0
+        } else {
+            return scaledValue
         }
     }
     

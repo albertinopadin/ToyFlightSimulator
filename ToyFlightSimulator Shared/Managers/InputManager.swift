@@ -220,10 +220,6 @@ class InputManager {
     }
     
     static func GetThrottleContinuousValue(_ command: ContinuousCommand) -> Float {
-        if command == .MoveFwd {
-            print("[InputMgr] Throttle present! Command: \(command)")
-        }
-        
         guard let throttleState = throttleMappingContinuous[command] else { return .zero }
         guard let throttleValue = throttle.throttleContinuousStateMapping[throttleState] else { return .zero }
         return throttleValue

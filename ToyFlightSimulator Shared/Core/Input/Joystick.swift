@@ -142,21 +142,20 @@ class Joystick: HIDDevice {
                                     print("XY Joystick Physical MAX: \(hidElemPhysicalMax)")
                                     
                                     if isJoystickX {
-                                        let normalizedValue = getNormalizedAxisValue(rawIntValue: intValue,
-                                                                                     minValue: hidElemPhysicalMin,
-                                                                                     maxValue: hidElemPhysicalMax,
+                                        let normalizedValue = getNormalizedAxisValue(rawValue: intValue,
+                                                                                     minPhysicalValue: hidElemPhysicalMin,
+                                                                                     maxPhysicalValue: hidElemPhysicalMax,
                                                                                      axis: "x")
-                                        print("XY Joystick normalized value: \(normalizedValue)")
+                                        print("X Joystick normalized value: \(normalizedValue)")
                                         joystickContinuousStateMapping[.JoystickX] = normalizedValue
 //                                        joystickContinuousStateMapping[.JoystickX] = Float(scaledValue)
                                     }
                                     
                                     if isJoystickY {
-                                        let normalizedValue = getNormalizedAxisValue(rawIntValue: intValue,
-                                                                                     minValue: hidElemPhysicalMin,
-                                                                                     maxValue: hidElemPhysicalMax,
-                                                                                     axis: "y")
-                                        print("XY Joystick normalized value: \(normalizedValue)")
+                                        let normalizedValue = getNormalizedAxisValue(rawValue: intValue,
+                                                                                     minPhysicalValue: hidElemPhysicalMin,
+                                                                                     maxPhysicalValue: hidElemPhysicalMax)
+                                        print("Y Joystick normalized value: \(normalizedValue)")
                                         joystickContinuousStateMapping[.JoystickY] = normalizedValue
 //                                        joystickContinuousStateMapping[.JoystickY] = Float(scaledValue)
                                     }

@@ -20,6 +20,9 @@ enum ThrottleDiscreteState: CaseIterable {
 }
 
 class Throttle: HIDDevice {
+    static let VALUE_RANGE_MIN: Float = 0.0
+    static let VALUE_RAGE_MAX: Float = 5.0
+    
     var throttleContinuousStateMapping: [ThrottleContinuousState: Float] = [
         .ThrottleLeft: 0.0,
         .ThrottleRight: 0.0
@@ -95,10 +98,11 @@ class Throttle: HIDDevice {
                                         case kHIDUsage_GD_Z:
                                             print("GD_Z")
                                             let rawThrottleVal = hidElemPhysicalMax - intValue
-                                            let throttleVal = getNormalizedAxisValue(rawIntValue: rawThrottleVal,
-                                                                                     minValue: hidElemPhysicalMin,
-                                                                                     maxValue: hidElemPhysicalMax,
-                                                                                     axis: "Z")
+                                            let throttleVal = getRescaledAxisValue(rawValue: rawThrottleVal,
+                                                                                   minPhysicalValue: hidElemPhysicalMin,
+                                                                                   maxPhysicalValue: hidElemPhysicalMax,
+                                                                                   minAxisValue: Throttle.VALUE_RANGE_MIN,
+                                                                                   maxAxisValue: Throttle.VALUE_RAGE_MAX)
                                             throttleContinuousStateMapping[.ThrottleRight] = throttleVal
                                         case kHIDUsage_GD_Rx:
                                             print("GD_Rx")
