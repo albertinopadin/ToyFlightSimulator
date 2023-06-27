@@ -25,22 +25,26 @@ extension Data {
 class HIDDevice {
     static let reportSize: Int = 64
     
-    var hidDevice: IOHIDDevice?
+    let name: String
+    let vendorId: Int
+    let productId: Int
     
+    var hidDevice: IOHIDDevice?
     var present: Bool = false
     
-    var lastData = Data()
+    let dQueue: DispatchQueue
     
     var hidElementPagesUsages: [UInt32: [UInt32: Int]] = [:]
     
+    var lastData = Data()
     var lastReportErrors = 0
-    
-    let vendorId: Int
-    let productId: Int
 
-    init(vendorId: Int, productId: Int) {
+    init(name: String, vendorId: Int, productId: Int) {
+        self.name = name
         self.vendorId = vendorId
         self.productId = productId
+        let dQueueName = "\(name.lowercased().replacingOccurrences(of: " ", with: "_"))_dispatch_queue"
+        self.dQueue = DispatchQueue(label: dQueueName)
         let thread = Thread(target: self, selector: #selector(self.run), object: nil)
         thread.start()
     }
@@ -264,6 +268,89 @@ class HIDDevice {
               report: UnsafeMutablePointer<UInt8>,
               reportLength: CFIndex) {
         // Override this function
+        if let elements = IOHIDDeviceCopyMatchingElements(hidDevice!, nil, UInt32(kIOHIDOptionsTypeNone)) {
+            let hidElements: [IOHIDElement] = elements as! [IOHIDElement]
+            
+            for elem in hidElements {
+                let elemUsagePage: UInt32 = IOHIDElementGetUsagePage(elem)
+                
+                print("[\(name)] Usage Page:")
+                switch Int(elemUsagePage) {
+                    case kHIDPage_Undefined:
+                        print("UNDEFINED")
+                    case kHIDPage_GenericDesktop:
+                        print("GenericDesktop")
+                    case kHIDPage_Simulation:
+                        print("Simulation")
+                    case kHIDPage_VR:
+                        print("VR")
+                    case kHIDPage_Sport:
+                        print("Sport")
+                    case kHIDPage_Game:
+                        print("Game")
+                    case kHIDPage_GenericDeviceControls:
+                        print("GenericDeviceControls")
+                    case kHIDPage_KeyboardOrKeypad:
+                        print("KeyboardOrKeypad")
+                    case kHIDPage_LEDs:
+                        print("LEDs")
+                    case kHIDPage_Button:
+                        print("Button")
+                    case kHIDPage_Ordinal:
+                        print("Ordinal")
+                    case kHIDPage_Telephony:
+                        print("Telephony")
+                    case kHIDPage_Consumer:
+                        print("Consumer")
+                    case kHIDPage_Digitizer:
+                        print("Digitizer")
+                    case kHIDPage_Haptics:
+                        print("Haptics")
+                    case kHIDPage_PID:
+                        print("PID")
+                    case kHIDPage_Unicode:
+                        print("Unicode")
+                    case kHIDPage_AlphanumericDisplay:
+                        print("AlphanumericDisplay")
+                    case kHIDPage_Sensor:
+                        print("Sensor")
+                    case kHIDPage_Monitor:
+                        print("Monitor")
+                    case kHIDPage_MonitorEnumerated:
+                        print("MonitorEnumerated")
+                    case kHIDPage_MonitorVirtual:
+                        print("MonitorVirtual")
+                    case kHIDPage_MonitorReserved:
+                        print("MonitorReserved")
+                    case kHIDPage_PowerDevice:
+                        print("PowerDevice")
+                    case kHIDPage_BatterySystem:
+                        print("BatterySystem")
+                    case kHIDPage_PowerReserved:
+                        print("PowerReserved")
+                    case kHIDPage_PowerReserved2:
+                        print("PowerReserved2")
+                    case kHIDPage_BarCodeScanner:
+                        print("BarCodeScanner")
+                    case kHIDPage_WeighingDevice:
+                        print("WeighingDevice")
+                    case kHIDPage_Scale:
+                        print("Scale")
+                    case kHIDPage_MagneticStripeReader:
+                        print("MagneticStripeReader")
+                    case kHIDPage_CameraControl:
+                        print("CameraControl")
+                    case kHIDPage_Arcade:
+                        print("Arcade")
+                    case kHIDPage_FIDO:
+                        print("FIDO")
+                    case kHIDPage_VendorDefinedStart:
+                        print("VendorDefinedStart")
+                    default:
+                        print("[Throttle] UKNOWN usage page")
+                }
+            }
+        }
     }
 }
 

@@ -33,7 +33,9 @@ class Throttle: HIDDevice {
     ]
 
     init() {
-        super.init(vendorId: ThrustmasterWarthog.vendorId, productId: ThrustmasterWarthog.throttleProductId)
+        super.init(name: ThrustmasterWarthog.throttleName,
+                   vendorId: ThrustmasterWarthog.vendorId,
+                   productId: ThrustmasterWarthog.throttleProductId)
     }
     
     override func read(_ inResult: IOReturn,
@@ -103,7 +105,9 @@ class Throttle: HIDDevice {
                                                                                    maxPhysicalValue: hidElemPhysicalMax,
                                                                                    minAxisValue: Throttle.VALUE_RANGE_MIN,
                                                                                    maxAxisValue: Throttle.VALUE_RAGE_MAX)
-                                            throttleContinuousStateMapping[.ThrottleRight] = throttleVal
+                                            dQueue.sync {
+                                                throttleContinuousStateMapping[.ThrottleRight] = throttleVal
+                                            }
                                         case kHIDUsage_GD_Rx:
                                             print("GD_Rx")
                                         case kHIDUsage_GD_Ry:
@@ -121,82 +125,6 @@ class Throttle: HIDDevice {
                                         default:
                                             print("UKNOWN")
                                     }
-                                }
-                                
-                                print("[Throttle] Usage Page:")
-                                switch Int(elemUsagePage) {
-                                    case kHIDPage_Undefined:
-                                        print("UNDEFINED")
-                                    case kHIDPage_GenericDesktop:
-                                        print("GenericDesktop")
-                                    case kHIDPage_Simulation:
-                                        print("Simulation")
-                                    case kHIDPage_VR:
-                                        print("VR")
-                                    case kHIDPage_Sport:
-                                        print("Sport")
-                                    case kHIDPage_Game:
-                                        print("Game")
-                                    case kHIDPage_GenericDeviceControls:
-                                        print("GenericDeviceControls")
-                                    case kHIDPage_KeyboardOrKeypad:
-                                        print("KeyboardOrKeypad")
-                                    case kHIDPage_LEDs:
-                                        print("LEDs")
-                                    case kHIDPage_Button:
-                                        print("Button")
-                                    case kHIDPage_Ordinal:
-                                        print("Ordinal")
-                                    case kHIDPage_Telephony:
-                                        print("Telephony")
-                                    case kHIDPage_Consumer:
-                                        print("Consumer")
-                                    case kHIDPage_Digitizer:
-                                        print("Digitizer")
-                                    case kHIDPage_Haptics:
-                                        print("Haptics")
-                                    case kHIDPage_PID:
-                                        print("PID")
-                                    case kHIDPage_Unicode:
-                                        print("Unicode")
-                                    case kHIDPage_AlphanumericDisplay:
-                                        print("AlphanumericDisplay")
-                                    case kHIDPage_Sensor:
-                                        print("Sensor")
-                                    case kHIDPage_Monitor:
-                                        print("Monitor")
-                                    case kHIDPage_MonitorEnumerated:
-                                        print("MonitorEnumerated")
-                                    case kHIDPage_MonitorVirtual:
-                                        print("MonitorVirtual")
-                                    case kHIDPage_MonitorReserved:
-                                        print("MonitorReserved")
-                                    case kHIDPage_PowerDevice:
-                                        print("PowerDevice")
-                                    case kHIDPage_BatterySystem:
-                                        print("BatterySystem")
-                                    case kHIDPage_PowerReserved:
-                                        print("PowerReserved")
-                                    case kHIDPage_PowerReserved2:
-                                        print("PowerReserved2")
-                                    case kHIDPage_BarCodeScanner:
-                                        print("BarCodeScanner")
-                                    case kHIDPage_WeighingDevice:
-                                        print("WeighingDevice")
-                                    case kHIDPage_Scale:
-                                        print("Scale")
-                                    case kHIDPage_MagneticStripeReader:
-                                        print("MagneticStripeReader")
-                                    case kHIDPage_CameraControl:
-                                        print("CameraControl")
-                                    case kHIDPage_Arcade:
-                                        print("Arcade")
-                                    case kHIDPage_FIDO:
-                                        print("FIDO")
-                                    case kHIDPage_VendorDefinedStart:
-                                        print("VendorDefinedStart")
-                                    default:
-                                        print("[Throttle] UKNOWN usage page")
                                 }
                                 
                                 hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue

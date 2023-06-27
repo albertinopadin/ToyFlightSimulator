@@ -40,7 +40,9 @@ class Joystick: HIDDevice {
     ]
 
     init() {
-        super.init(vendorId: ThrustmasterWarthog.vendorId, productId: ThrustmasterWarthog.joystickProductId)
+        super.init(name: ThrustmasterWarthog.joystickName,
+                   vendorId: ThrustmasterWarthog.vendorId,
+                   productId: ThrustmasterWarthog.joystickProductId)
     }
     
     override func read(_ inResult: IOReturn,
@@ -119,17 +121,23 @@ class Joystick: HIDDevice {
                                     hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
                                     if isRedButton {
                                         print("PRESSED RED BUTTON")
-                                        joystickDiscreteStateMapping[.RedButton] = intValue == 1
+                                        dQueue.sync {
+                                            joystickDiscreteStateMapping[.RedButton] = intValue == 1
+                                        }
                                     }
                                     
                                     if isTriggerFirstDetent {
                                         print("TRIGGER FIRST DETENT")
-                                        joystickDiscreteStateMapping[.TriggerSemi] = intValue == 1
+                                        dQueue.sync {
+                                            joystickDiscreteStateMapping[.TriggerSemi] = intValue == 1
+                                        }
                                     }
                                     
                                     if isTriggerSecondDetent {
                                         print("TRIGGER FULLY PRESSED")
-                                        joystickDiscreteStateMapping[.TriggerFull] = intValue == 1
+                                        dQueue.sync {
+                                            joystickDiscreteStateMapping[.TriggerFull] = intValue == 1
+                                        }
                                     }
                                 }
                                 
@@ -147,8 +155,9 @@ class Joystick: HIDDevice {
                                                                                      maxPhysicalValue: hidElemPhysicalMax,
                                                                                      axis: "x")
                                         print("X Joystick normalized value: \(normalizedValue)")
-                                        joystickContinuousStateMapping[.JoystickX] = normalizedValue
-//                                        joystickContinuousStateMapping[.JoystickX] = Float(scaledValue)
+                                        dQueue.sync {
+                                            joystickContinuousStateMapping[.JoystickX] = normalizedValue
+                                        }
                                     }
                                     
                                     if isJoystickY {
@@ -156,8 +165,9 @@ class Joystick: HIDDevice {
                                                                                      minPhysicalValue: hidElemPhysicalMin,
                                                                                      maxPhysicalValue: hidElemPhysicalMax)
                                         print("Y Joystick normalized value: \(normalizedValue)")
-                                        joystickContinuousStateMapping[.JoystickY] = normalizedValue
-//                                        joystickContinuousStateMapping[.JoystickY] = Float(scaledValue)
+                                        dQueue.sync {
+                                            joystickContinuousStateMapping[.JoystickY] = normalizedValue
+                                        }
                                     }
                                 }
                                 
