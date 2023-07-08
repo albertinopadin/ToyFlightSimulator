@@ -13,6 +13,8 @@ enum DiscreteCommand {
     
     case ResetLoadout
     
+    case ToggleGear
+    
     case Pause
 }
 
@@ -89,7 +91,8 @@ class InputManager {
         .FireMissileAIM9: .space,
         .FireMissileAIM120: .n,
         .DropBomb: .m,
-        .JettisonFuelTank: .j
+        .JettisonFuelTank: .j,
+        .ToggleGear: .g
     ]
     
     static var multiKeyInputMappings: [SpecialUserCommand: [Keycodes]] = [

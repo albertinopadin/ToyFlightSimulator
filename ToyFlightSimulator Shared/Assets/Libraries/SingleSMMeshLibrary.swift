@@ -18,10 +18,14 @@ class SingleSMMeshLibrary: Library<SingleSMMeshType, SingleSMMesh> {
     private var _library: [SingleSMMeshType: SingleSMMesh] = [:]
     
     override func makeLibrary() {
-        _library.updateValue(SingleSMMesh(modelName: "FA-18F", submeshName: "AIM-9XR_Paint"), forKey: .F18_Sidewinder)
-        _library.updateValue(SingleSMMesh(modelName: "FA-18F", submeshName: "AIM-120DR_Paint"), forKey: .F18_AIM120)
-        _library.updateValue(SingleSMMesh(modelName: "FA-18F", submeshName: "GBU-16R_Paint"), forKey: .F18_GBU16)
-        _library.updateValue(SingleSMMesh(modelName: "FA-18F", submeshName: "TankCenter_Paint"), forKey: .F18_FuelTank)
+        _library.updateValue(SingleSMMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                      submeshName: "AIM-9XR_Paint"), forKey: .F18_Sidewinder)
+        _library.updateValue(SingleSMMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                      submeshName: "AIM-120DR_Paint"), forKey: .F18_AIM120)
+        _library.updateValue(SingleSMMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                      submeshName: "GBU-16R_Paint"), forKey: .F18_GBU16)
+        _library.updateValue(SingleSMMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                      submeshName: "TankCenter_Paint"), forKey: .F18_FuelTank)
     }
     
     override subscript(type: SingleSMMeshType) -> SingleSMMesh {

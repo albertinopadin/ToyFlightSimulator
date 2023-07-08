@@ -9,7 +9,7 @@ import MetalKit
 
 class GameObject: Node, Renderable {
     internal var _modelConstants = ModelConstants()
-    private var _mesh: Mesh!
+    internal var _mesh: Mesh!
     
     internal var _material: Material? = nil
     internal var _baseColorTextureType: TextureType = .None

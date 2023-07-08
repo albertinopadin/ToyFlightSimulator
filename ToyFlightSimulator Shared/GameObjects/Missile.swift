@@ -9,15 +9,26 @@ class Missile: SubMeshGameObject {
     var direction: float3 = float3(0, 0, 0)
     var speed: Float = 0.0
     
-    override init(name: String, meshType: SingleSMMeshType, renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
-        super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
+    override init(name: String,
+                  meshType: SingleSMMeshType,
+                  moveToInitialParentMeshPosition: Bool = true,
+                  renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
+        super.init(name: name,
+                   meshType: meshType,
+                   moveToInitialParentMeshPosition: moveToInitialParentMeshPosition,
+                   renderPipelineStateType: renderPipelineStateType)
     }
     
     override init(name: String,
          modelName: String,
          submeshName: String,
+         moveToInitialParentMeshPosition: Bool = true,
          renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
-        super.init(name: name, modelName: modelName, submeshName: submeshName, renderPipelineStateType: renderPipelineStateType)
+        super.init(name: name,
+                   modelName: modelName,
+                   submeshName: submeshName,
+                   moveToInitialParentMeshPosition: moveToInitialParentMeshPosition,
+                   renderPipelineStateType: renderPipelineStateType)
     }
     
     func fire(direction: float3, speed: Float) {
@@ -27,6 +38,7 @@ class Missile: SubMeshGameObject {
     
     override func doUpdate() {
         let currentPos = self.getPosition()
+//        print("[Missile doUpdate] currentPos: \(currentPos)")
         if abs(currentPos.x) > 1000 || abs(currentPos.y) > 1000 || abs(currentPos.z) > 1000 {
             // Reap from scene
             print("Removing self {\(self.getName()), \(self.getID())} from scene.")

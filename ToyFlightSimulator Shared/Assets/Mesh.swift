@@ -14,8 +14,8 @@ class Mesh {
     private var _vertexCount: Int = 0
     private var _vertexBuffer: MTLBuffer! = nil
     private var _instanceCount: Int = 1
-    private var _submeshes: [Submesh] = []
-    private var _childMeshes: [Mesh] = []
+    internal var _submeshes: [Submesh] = []
+    internal var _childMeshes: [Mesh] = []
     var metalKitMesh: MTKMesh? = nil
     
     init() {
@@ -23,9 +23,9 @@ class Mesh {
         createBuffer()
     }
     
-    init(modelName: String) {
+    init(modelName: String, ext: String = "obj") {
         name = modelName
-        createMeshFromModel(modelName)
+        createMeshFromModel(modelName, ext: ext)
     }
     
     init(mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor) {
@@ -138,7 +138,9 @@ class Mesh {
                                        bufferAllocator: bufferAllocator,
                                        preserveTopology: false,
                                        error: nil)
+        print("[createMeshFromModel] Created asset: \(asset)")
         asset.loadTextures()
+        print("[createMeshFromModel] Loaded asset textures")
         
         for child in asset.childObjects(of: MDLObject.self) {
             print("[createMeshFromModel] \(modelName) child name: \(child.name)")

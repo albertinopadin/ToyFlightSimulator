@@ -20,6 +20,8 @@ class Aircraft: GameObject {
     private var _moveSpeed: Float = 25.0
     private var _turnSpeed: Float = 4.0
     
+    internal var gearDown: Bool = true
+    
     override init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
     }

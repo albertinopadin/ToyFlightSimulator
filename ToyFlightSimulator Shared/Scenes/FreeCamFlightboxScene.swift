@@ -31,8 +31,10 @@ class FreeCamFlightboxScene: Scene {
         ground.setScale(float3(100, 100, 100))
         addChild(ground)
         
-        camera.setPosition(4, 12, 20)
-        camera.setRotationX(Float(15).toRadians)
+//        camera.setPosition(4, 12, 20)
+        camera.setPosition(40, 11, -4)
+//        camera.setRotationX(Float(15).toRadians)
+        camera.setRotationY(Float(-75).toRadians)
         addCamera(camera)
         
 //        f18.setScale(0.25)  // TODO: setScale doesn't work
@@ -40,17 +42,20 @@ class FreeCamFlightboxScene: Scene {
         addChild(f18)
         
         sidewinderMissile.setScale(4.0)
-        sidewinderMissile.setPosition(0, -2, 0)
+        sidewinderMissile.setPosition(0, 2, -12)
         sidewinderMissile.rotateY(Float(90).toRadians)
         addChild(sidewinderMissile)
         
         aim120.setScale(4.0)
-        aim120.setPosition(0, 0, 0)
+        aim120.setPosition(0, 4, -24)
         aim120.rotateY(Float(90).toRadians)
         addChild(aim120)
     }
     
     override func doUpdate() {
         super.doUpdate()
+        
+        sidewinderMissile.rotateY(GameTime.DeltaTime)
+        aim120.rotateY(GameTime.DeltaTime)
     }
 }

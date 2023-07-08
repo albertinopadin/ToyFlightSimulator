@@ -11,18 +11,38 @@ class SubMeshGameObject: GameObject {
     private var _singleSMMesh: SingleSMMesh!
     var submeshName: String = ""
     
-    init(name: String, meshType: SingleSMMeshType, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
+    init(name: String,
+         meshType: SingleSMMeshType,
+         moveToInitialParentMeshPosition: Bool = true,
+         renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
         _singleSMMesh = Assets.SingleSMMeshes[meshType]
+        
+        print("[SubMeshGameObject init] moveToInitialParentMeshPosition: \(moveToInitialParentMeshPosition)")
+        
+        if moveToInitialParentMeshPosition {
+            self.setPosition(_singleSMMesh.initialPositionInParentMesh)
+        }
     }
     
     init(name: String,
          modelName: String,
          submeshName: String,
+         moveToInitialParentMeshPosition: Bool = true,
          renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
-        _singleSMMesh = SingleSMMesh(modelName: modelName, submeshName: submeshName)
+        _singleSMMesh = SingleSMMesh.createSingleSMMeshFromModel(modelName: modelName, submeshName: submeshName)
         self.submeshName = submeshName
+        
+        print("[SubMeshGameObject init] moveToInitialParentMeshPosition: \(moveToInitialParentMeshPosition)")
+        
+        if moveToInitialParentMeshPosition {
+            self.setPosition(_singleSMMesh.initialPositionInParentMesh)
+        }
+    }
+    
+    public func getInitialPositionInParentMesh() -> float3 {
+        return _singleSMMesh.initialPositionInParentMesh
     }
     
     override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,

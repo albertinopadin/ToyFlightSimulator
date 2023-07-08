@@ -33,6 +33,7 @@ class F18: Aircraft {
     static let AIM120Name = "AIM-120"
     static let GBU16Name = "GBU-16"
     static let FuelTankName = "FuelTank"
+    static let NoseGearName = "NoseWheels_Paint"
     
     static let storesNames = [
         AIM9Name,
@@ -52,6 +53,20 @@ class F18: Aircraft {
 //    var landingGear: [String] = [
 //
 //    ]
+    
+    let noseWheelGearSubmeshNames: [String] = [
+        "TopStrut_Paint",
+        "MainStrut_Paint",
+        "UpperStrut_Paint",
+        "MidStrut_Paint",
+        "LowerStrut_Paint",
+        "MidRing_Paint",
+        "CatobarHook_Paint",
+        "BackStrut_Paint",
+        "BackStrut1_Paint",
+        "BackStrut2_Paint",
+        "NoseWheels_Paint"
+    ]
     
     var movables: [String] = [
         "CanopyFront_Paint",
@@ -172,7 +187,7 @@ class F18: Aircraft {
         "GearDoors2R_Paint": true,
         "GearDoors3L_Paint": true,
         "GearDoors3R_Paint": true,
-        "TopStrut_Paint": true,
+        "TopStrut_Paint": true,  // TODO:: Need to rotate all of this to hide front gear...
         "MainStrut_Paint": true,
         "UpperStrut_Paint": true,
         "MidStrut_Paint": true,
@@ -231,6 +246,13 @@ class F18: Aircraft {
                    scale: scale)
     }
     
+    func weaponReleaseSetup(gameObject: GameObject) {
+        let rotatedPosition = (self.rotationMatrix * float4(gameObject.getPosition(), 1)).xyz
+        gameObject.setPosition(rotatedPosition + self.getPosition())
+        gameObject.rotationMatrix = self.rotationMatrix
+        gameObject.setScale(self.getScale())
+    }
+    
     override func doUpdate() {
         if shouldUpdate {
             super.doUpdate()
@@ -245,9 +267,7 @@ class F18: Aircraft {
                 print("Fox 2!")
                 let sidewinder = Sidewinder(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 sidewinder.fire(direction: self.getFwdVector(), speed: 0.5)
-                sidewinder.setPosition(self.getPosition())
-                sidewinder.rotationMatrix = self.rotationMatrix
-                sidewinder.setScale(self.getScale())
+                weaponReleaseSetup(gameObject: sidewinder)
                 self.parent!.addChild(sidewinder)
                 aim9s.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
@@ -262,9 +282,7 @@ class F18: Aircraft {
                 print("Fox 3!")
                 let amraam = AIM120(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 amraam.fire(direction: self.getFwdVector(), speed: 0.5)
-                amraam.setPosition(self.getPosition())
-                amraam.rotationMatrix = self.rotationMatrix
-                amraam.setScale(self.getScale())
+                weaponReleaseSetup(gameObject: amraam)
                 self.parent!.addChild(amraam)
                 aim120s.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
@@ -279,9 +297,7 @@ class F18: Aircraft {
                 print("Dropping JDAM!")
                 let jdam = GBU16(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 jdam.drop(forwardComponent: 0.02)
-                jdam.setPosition(self.getPosition())
-                jdam.rotationMatrix = self.rotationMatrix
-                jdam.setScale(self.getScale())
+                weaponReleaseSetup(gameObject: jdam)
                 self.parent!.addChild(jdam)
                 gbu16s.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
@@ -296,9 +312,7 @@ class F18: Aircraft {
                 print("Jettisoning fuel tank!")
                 let fuelTank = FuelTank(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 fuelTank.drop(forwardComponent: 0.0)
-                fuelTank.setPosition(self.getPosition())
-                fuelTank.rotationMatrix = self.rotationMatrix
-                fuelTank.setScale(self.getScale())
+                weaponReleaseSetup(gameObject: fuelTank)
                 self.parent!.addChild(fuelTank)
                 fuelTanks.remaining -= 1
                 submeshesToDisplay[storeToRelease] = false
@@ -317,6 +331,60 @@ class F18: Aircraft {
                 }
             }
         }
+        
+        // TODO: Figure out how to move individual submesh without re-instantiating it:
+//        InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) {
+//            print("Toggling gear \(gearDown ? "up": "down")")
+//
+//            for noseGearSubmeshName in noseWheelGearSubmeshNames {
+//                if let submesh = self._mesh._childMeshes.map({
+//                    $0._submeshes.filter({ $0.name == noseGearSubmeshName })
+//                }).first?.first {
+//                    print("Found \(noseGearSubmeshName)")
+//                    if gearDown {
+////                        submesh.submeshConstants.submeshModelMatrix = Transform.rotationMatrix(radians: Float(1.0).toRadians,
+////                                                                                               axis: X_AXIS)
+//                        submesh.submeshConstants.submeshModelMatrix = simd_float4x4(simd_quatf(angle: Float(-10.0).toRadians,
+//                                                                                               axis: getRightVector()))
+//
+//                    } else {
+////                        submesh.submeshConstants.submeshModelMatrix = Transform.rotationMatrix(radians: Float(-1.0).toRadians,
+////                                                                                               axis: X_AXIS)
+//                        submesh.submeshConstants.submeshModelMatrix = matrix_identity_float4x4
+//                    }
+//                }
+//            }
+//
+//            gearDown.toggle()
+//        }
+        
+        
+//        let noseGearRotation = simd_float4x4(simd_quatf(angle: Float(-0.25).toRadians, axis: getRightVector()))
+//        let noseGearRotation = simd_float4x4(simd_quatf(angle: Float(-0.5).toRadians, axis: X_AXIS))
+//        let noseGearTranslationToOrigin = Transform.translationMatrix(-self.getPosition())
+//        let noseGearTranslationBack = Transform.translationMatrix(self.getPosition())
+        
+
+//        for noseGearSubmeshName in noseWheelGearSubmeshNames {
+//            if let submesh = self._mesh._childMeshes.map({
+//                $0._submeshes.filter({ $0.name == noseGearSubmeshName })
+//            }).first?.first {
+////                if appliedTranslation {
+////                    submesh.submeshConstants.submeshModelMatrix = noseGearRotation * submesh.submeshConstants.submeshModelMatrix
+////                } else {
+////                    submesh.submeshConstants.submeshModelMatrix = noseGearTranslation * noseGearRotation * submesh.submeshConstants.submeshModelMatrix
+////                }
+//
+////                submesh.submeshConstants.submeshModelMatrix = submesh.submeshConstants.submeshModelMatrix * noseGearRotation
+//
+////                submesh.submeshConstants.submeshModelMatrix = noseGearTranslationBack * noseGearRotation * noseGearTranslationToOrigin * submesh.submeshConstants.submeshModelMatrix
+//
+//                submesh.submeshConstants.submeshModelMatrix = noseGearRotation * submesh.submeshConstants.submeshModelMatrix
+//            }
+//        }
+//
+//        appliedTranslation = true
+        
     }
     
     override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
