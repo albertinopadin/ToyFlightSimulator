@@ -7,6 +7,17 @@
 
 import MetalKit
 
+struct SingleMeshVertexMetadata {
+    let initialPositionInParentMesh: float3
+    let uniqueVertices: Int
+    let minX: Float
+    let maxX: Float
+    let minY: Float
+    let maxY: Float
+    let minZ: Float
+    let maxZ: Float
+}
+
 class SingleSMMesh {
     public var name: String = "SingleSMMesh"
     private var _vertices: [Vertex] = []
@@ -14,8 +25,7 @@ class SingleSMMesh {
     private var _vertexBuffer: MTLBuffer!
     private var _instanceCount: Int = 1
     internal var _submesh: Submesh!
-    internal var _uniqueVertices: Int = 0
-    public let initialPositionInParentMesh: float3
+    public let vertexMetadata: SingleMeshVertexMetadata!
 
     init(mtkMesh: MTKMesh, submesh: Submesh) {
         name = submesh.name
@@ -28,32 +38,68 @@ class SingleSMMesh {
         _submesh = submesh
         
         // Centralize vertices:
-        (initialPositionInParentMesh, _uniqueVertices) = SingleSMMesh.getAverageVertexPosition(submesh: _submesh,
-                                                                                               vertexBuffer: _vertexBuffer,
-                                                                                               vertexCount: _vertexCount)
+        vertexMetadata = SingleSMMesh.getVertexMetadata(submesh: _submesh, vertexBuffer: _vertexBuffer, vertexCount: _vertexCount)
         
-        print("[SingleSMMesh init] \(name) Initial average vertex position: \(initialPositionInParentMesh)")
-        print("[SingleSMMesh init] \(name) vertex count: \(_uniqueVertices)")
-        translateSubmeshVertices(delta: -initialPositionInParentMesh)
+        print("[SingleSMMesh init] \(name) Initial average vertex position: \(vertexMetadata.initialPositionInParentMesh)")
+        print("[SingleSMMesh init] \(name) vertex count: \(vertexMetadata.uniqueVertices)")
+        translateSubmeshVertices(delta: -vertexMetadata.initialPositionInParentMesh)
     }
     
-    private static func getAverageVertexPosition(submesh: Submesh, vertexBuffer: MTLBuffer, vertexCount: Int) -> (float3, Int) {
-        var indexDict: [UInt32: Bool] = [:]
+    private static func processVertices(submesh: Submesh,
+                                        vertexBuffer: MTLBuffer,
+                                        vertexCount: Int,
+                                        handleBlock: (_ vertexBufferPointer: UnsafeMutablePointer<Vertex>,
+                                                      _ indexBufferPointer: UnsafeMutablePointer<UInt32>) -> Void) {
         let vertexBufferPointer: UnsafeMutablePointer<Vertex> = vertexBuffer.contents().bindMemory(to: Vertex.self,
                                                                                                     capacity: vertexCount)
         var indexBufferPointer: UnsafeMutablePointer<UInt32> =
                                 submesh.indexBuffer.contents().bindMemory(to: UInt32.self, capacity: submesh.indexCount)
         
-        var totalPosition = float3(0, 0, 0)
-        print("[getAverageVertexPosition] submesh index buffer offset: \(submesh.indexBufferOffset)")
-        print("[getAverageVertexPosition] submesh index count: \(submesh.indexCount)")
         indexBufferPointer += submesh.indexBufferOffset
-        for i in 0..<submesh.indexCount {
-            let index: UInt32 = indexBufferPointer[i]
-            let seen = indexDict[index] ?? false
-            if !seen {
-                totalPosition += vertexBufferPointer[Int(index)].position
-                indexDict[index] = true
+        
+        handleBlock(vertexBufferPointer, indexBufferPointer)
+    }
+    
+    private static func getVertexMetadata(submesh: Submesh, vertexBuffer: MTLBuffer, vertexCount: Int) -> SingleMeshVertexMetadata {
+        var indexDict: [UInt32: Bool] = [:]
+        var totalPosition = float3(0, 0, 0)
+        var minCoords = float3(.infinity, .infinity, .infinity)
+        var maxCoords = float3(-.infinity, -.infinity, -.infinity)  // Can I do this???
+        
+        processVertices(submesh: submesh, vertexBuffer: vertexBuffer, vertexCount: vertexCount) {
+            vertexBufferPointer, indexBufferPointer in
+            for i in 0..<submesh.indexCount {
+                let index: UInt32 = indexBufferPointer[i]
+                let seen = indexDict[index] ?? false
+                if !seen {
+                    let vertexPosition = vertexBufferPointer[Int(index)].position
+                    totalPosition += vertexPosition
+                    indexDict[index] = true
+                    
+                    if vertexPosition.x < minCoords.x {
+                        minCoords.x = vertexPosition.x
+                    }
+                    
+                    if vertexPosition.y < minCoords.y {
+                        minCoords.y = vertexPosition.y
+                    }
+                    
+                    if vertexPosition.z < minCoords.z {
+                        minCoords.z = vertexPosition.z
+                    }
+                    
+                    if vertexPosition.x > maxCoords.x {
+                        maxCoords.x = vertexPosition.x
+                    }
+                    
+                    if vertexPosition.y > maxCoords.y {
+                        maxCoords.y = vertexPosition.y
+                    }
+                    
+                    if vertexPosition.z > maxCoords.z {
+                        maxCoords.z = vertexPosition.z
+                    }
+                }
             }
         }
         
@@ -63,26 +109,30 @@ class SingleSMMesh {
         let averagePosition = float3(totalPosition.x / Float(uniqueVertices),
                                      totalPosition.y / Float(uniqueVertices),
                                      totalPosition.z / Float(uniqueVertices))
-        return (averagePosition, uniqueVertices)
+        
+        return SingleMeshVertexMetadata(initialPositionInParentMesh: averagePosition,
+                                        uniqueVertices: uniqueVertices,
+                                        minX: minCoords.x,
+                                        maxX: maxCoords.x,
+                                        minY: minCoords.y,
+                                        maxY: maxCoords.y,
+                                        minZ: minCoords.z,
+                                        maxZ: maxCoords.z)
     }
     
     public func translateSubmeshVertices(delta: float3) {
-        print("[translateSubmeshVertices] delta: \(delta)")
         var indexDict: [UInt32: Bool] = [:]
-        let vertexBufferPointer: UnsafeMutablePointer<Vertex> = _vertexBuffer.contents().bindMemory(to: Vertex.self,
-                                                                                                    capacity: _vertexCount)
-        var indexBufferPointer: UnsafeMutablePointer<UInt32> =
-                                _submesh.indexBuffer.contents().bindMemory(to: UInt32.self, capacity: _submesh.indexCount)
-        
-        indexBufferPointer = indexBufferPointer.advanced(by: _submesh.indexBufferOffset)
-        for i in 0..<_submesh.indexCount {
-            let index: UInt32 = indexBufferPointer[i]
-            let seen = indexDict[index] ?? false
-            if !seen {
-                var vertex = vertexBufferPointer[Int(index)]
-                vertex.position += delta
-                vertexBufferPointer[Int(index)] = vertex
-                indexDict[index] = true
+        SingleSMMesh.processVertices(submesh: _submesh, vertexBuffer: _vertexBuffer, vertexCount: _vertexCount) {
+            vertexBufferPointer, indexBufferPointer in
+            for i in 0..<_submesh.indexCount {
+                let index: UInt32 = indexBufferPointer[i]
+                let seen = indexDict[index] ?? false
+                if !seen {
+                    var vertex = vertexBufferPointer[Int(index)]
+                    vertex.position += delta
+                    vertexBufferPointer[Int(index)] = vertex
+                    indexDict[index] = true
+                }
             }
         }
     }

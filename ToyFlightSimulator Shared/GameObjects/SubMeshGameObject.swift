@@ -18,10 +18,8 @@ class SubMeshGameObject: GameObject {
         super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
         _singleSMMesh = Assets.SingleSMMeshes[meshType]
         
-        print("[SubMeshGameObject init] moveToInitialParentMeshPosition: \(moveToInitialParentMeshPosition)")
-        
         if moveToInitialParentMeshPosition {
-            self.setPosition(_singleSMMesh.initialPositionInParentMesh)
+            self.setPosition(_singleSMMesh.vertexMetadata.initialPositionInParentMesh)
         }
     }
     
@@ -34,15 +32,13 @@ class SubMeshGameObject: GameObject {
         _singleSMMesh = SingleSMMesh.createSingleSMMeshFromModel(modelName: modelName, submeshName: submeshName)
         self.submeshName = submeshName
         
-        print("[SubMeshGameObject init] moveToInitialParentMeshPosition: \(moveToInitialParentMeshPosition)")
-        
         if moveToInitialParentMeshPosition {
-            self.setPosition(_singleSMMesh.initialPositionInParentMesh)
+            self.setPosition(_singleSMMesh.vertexMetadata.initialPositionInParentMesh)
         }
     }
     
     public func getInitialPositionInParentMesh() -> float3 {
-        return _singleSMMesh.initialPositionInParentMesh
+        return _singleSMMesh.vertexMetadata.initialPositionInParentMesh
     }
     
     override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
