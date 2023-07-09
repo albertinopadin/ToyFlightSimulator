@@ -43,6 +43,9 @@ class FreeCamFlightboxScene: Scene {
         
         sidewinderMissile.setScale(4.0)
         sidewinderMissile.setPosition(0, 2, -12)
+        let sidewinderSubmeshMetadata = sidewinderMissile.getSubmeshVertexMetadata()
+        let newOrigin = float3(0, 0, sidewinderSubmeshMetadata.maxZ / 2)
+        sidewinderMissile.setSubmeshOrigin(newOrigin)
         sidewinderMissile.rotateY(Float(90).toRadians)
         addChild(sidewinderMissile)
         

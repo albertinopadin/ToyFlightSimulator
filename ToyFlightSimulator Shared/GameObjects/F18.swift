@@ -246,11 +246,23 @@ class F18: Aircraft {
                    scale: scale)
     }
     
-    func weaponReleaseSetup(gameObject: GameObject) {
-        let rotatedPosition = (self.rotationMatrix * float4(gameObject.getPosition(), 1)).xyz
-        gameObject.setPosition(rotatedPosition + self.getPosition())
-        gameObject.rotationMatrix = self.rotationMatrix
-        gameObject.setScale(self.getScale())
+    func weaponReleaseSetup(submeshGameObject: SubMeshGameObject) {
+        let releasePosition = submeshGameObject.getPosition() + submeshGameObject.getInitialPositionInParentMesh()
+        let rotatedPosition = (self.rotationMatrix * float4(releasePosition, 1)).xyz
+        submeshGameObject.setPosition(rotatedPosition + self.getPosition())
+        submeshGameObject.rotationMatrix = self.rotationMatrix
+        submeshGameObject.setScale(self.getScale())
+    }
+    
+    func weaponRelease(store: Store, handleBlock: (String) -> Void) {
+        if store.remaining > 0 {
+            let storeIdx = store.submeshNames.count - store.remaining
+            let storeToRelease = store.submeshNames[storeIdx]
+            print("Store to release: \(storeToRelease)")
+            handleBlock(storeToRelease)
+            store.remaining -= 1
+            submeshesToDisplay[storeToRelease] = false
+        }
     }
     
     override func doUpdate() {
@@ -260,62 +272,45 @@ class F18: Aircraft {
         
         InputManager.HasDiscreteCommandDebounced(command: .FireMissileAIM9) {
             let aim9s = stores[F18.AIM9Name]!
-            if aim9s.remaining > 0 {
-                let storeIdx = aim9s.submeshNames.count - aim9s.remaining
-                let storeToRelease = aim9s.submeshNames[storeIdx]
-                print("Store to release: \(storeToRelease)")
+            weaponRelease(store: aim9s) { storeToRelease in
                 print("Fox 2!")
                 let sidewinder = Sidewinder(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 sidewinder.fire(direction: self.getFwdVector(), speed: 0.5)
-                weaponReleaseSetup(gameObject: sidewinder)
+                weaponReleaseSetup(submeshGameObject: sidewinder)
                 self.parent!.addChild(sidewinder)
-                aim9s.remaining -= 1
-                submeshesToDisplay[storeToRelease] = false
             }
         }
         
         InputManager.HasDiscreteCommandDebounced(command: .FireMissileAIM120) {
             let aim120s = stores[F18.AIM120Name]!
-            if aim120s.remaining > 0 {
-                let storeIdx = aim120s.submeshNames.count - aim120s.remaining
-                let storeToRelease = aim120s.submeshNames[storeIdx]
+            weaponRelease(store: aim120s) { storeToRelease in
                 print("Fox 3!")
                 let amraam = AIM120(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 amraam.fire(direction: self.getFwdVector(), speed: 0.5)
-                weaponReleaseSetup(gameObject: amraam)
+                weaponReleaseSetup(submeshGameObject: amraam)
                 self.parent!.addChild(amraam)
-                aim120s.remaining -= 1
-                submeshesToDisplay[storeToRelease] = false
             }
         }
         
         InputManager.HasDiscreteCommandDebounced(command: .DropBomb) {
             let gbu16s = stores[F18.GBU16Name]!
-            if gbu16s.remaining > 0 {
-                let storeIdx = gbu16s.submeshNames.count - gbu16s.remaining
-                let storeToRelease = gbu16s.submeshNames[storeIdx]
+            weaponRelease(store: gbu16s) { storeToRelease in
                 print("Dropping JDAM!")
                 let jdam = GBU16(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 jdam.drop(forwardComponent: 0.02)
-                weaponReleaseSetup(gameObject: jdam)
+                weaponReleaseSetup(submeshGameObject: jdam)
                 self.parent!.addChild(jdam)
-                gbu16s.remaining -= 1
-                submeshesToDisplay[storeToRelease] = false
             }
         }
         
         InputManager.HasDiscreteCommandDebounced(command: .JettisonFuelTank) {
             let fuelTanks = stores[F18.FuelTankName]!
-            if fuelTanks.remaining > 0 {
-                let storeIdx = fuelTanks.submeshNames.count - fuelTanks.remaining
-                let storeToRelease = fuelTanks.submeshNames[storeIdx]
+            weaponRelease(store: fuelTanks) { storeToRelease in
                 print("Jettisoning fuel tank!")
                 let fuelTank = FuelTank(modelName: F18.F18_ModelName, submeshName: storeToRelease)
                 fuelTank.drop(forwardComponent: 0.0)
-                weaponReleaseSetup(gameObject: fuelTank)
+                weaponReleaseSetup(submeshGameObject: fuelTank)
                 self.parent!.addChild(fuelTank)
-                fuelTanks.remaining -= 1
-                submeshesToDisplay[storeToRelease] = false
             }
         }
         

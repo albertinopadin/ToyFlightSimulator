@@ -13,32 +13,34 @@ class SubMeshGameObject: GameObject {
     
     init(name: String,
          meshType: SingleSMMeshType,
-         moveToInitialParentMeshPosition: Bool = true,
+         submeshOrigin: float3 = float3(0, 0, 0),
          renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
         _singleSMMesh = Assets.SingleSMMeshes[meshType]
-        
-        if moveToInitialParentMeshPosition {
-            self.setPosition(_singleSMMesh.vertexMetadata.initialPositionInParentMesh)
-        }
+        _singleSMMesh.setSubmeshOrigin(submeshOrigin)
     }
     
     init(name: String,
          modelName: String,
          submeshName: String,
-         moveToInitialParentMeshPosition: Bool = true,
+         submeshOrigin: float3 = float3(0, 0, 0),
          renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
-        _singleSMMesh = SingleSMMesh.createSingleSMMeshFromModel(modelName: modelName, submeshName: submeshName)
         self.submeshName = submeshName
-        
-        if moveToInitialParentMeshPosition {
-            self.setPosition(_singleSMMesh.vertexMetadata.initialPositionInParentMesh)
-        }
+        _singleSMMesh = SingleSMMesh.createSingleSMMeshFromModel(modelName: modelName, submeshName: submeshName)
+        _singleSMMesh.setSubmeshOrigin(submeshOrigin)
     }
     
     public func getInitialPositionInParentMesh() -> float3 {
         return _singleSMMesh.vertexMetadata.initialPositionInParentMesh
+    }
+    
+    public func setSubmeshOrigin(_ origin: float3) {
+        _singleSMMesh.setSubmeshOrigin(origin)
+    }
+    
+    public func getSubmeshVertexMetadata() -> SingleMeshVertexMetadata {
+        return _singleSMMesh.vertexMetadata
     }
     
     override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,

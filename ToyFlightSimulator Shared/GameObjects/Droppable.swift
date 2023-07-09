@@ -10,25 +10,21 @@ class Droppable: SubMeshGameObject {
     var velocityVector: float3 = float3(x: 0, y: 0, z: 0)
     var forwardVelocityComponent: Float = 0.0
     
-    override init(name: String,
-                  meshType: SingleSMMeshType,
-                  moveToInitialParentMeshPosition: Bool = true,
-                  renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
+    init(name: String,
+         meshType: SingleSMMeshType,
+         renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
         super.init(name: name,
                    meshType: meshType,
-                   moveToInitialParentMeshPosition: moveToInitialParentMeshPosition,
                    renderPipelineStateType: renderPipelineStateType)
     }
     
-    override init(name: String,
-                  modelName: String,
-                  submeshName: String,
-                  moveToInitialParentMeshPosition: Bool = true,
-                  renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
+    init(name: String,
+         modelName: String,
+         submeshName: String,
+         renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
         super.init(name: name,
                    modelName: modelName,
                    submeshName: submeshName,
-                   moveToInitialParentMeshPosition: moveToInitialParentMeshPosition,
                    renderPipelineStateType: renderPipelineStateType)
     }
     

@@ -25,7 +25,7 @@ class SingleSMMesh {
     private var _vertexBuffer: MTLBuffer!
     private var _instanceCount: Int = 1
     internal var _submesh: Submesh!
-    public let vertexMetadata: SingleMeshVertexMetadata!
+    public let vertexMetadata: SingleMeshVertexMetadata
 
     init(mtkMesh: MTKMesh, submesh: Submesh) {
         name = submesh.name
@@ -42,6 +42,9 @@ class SingleSMMesh {
         
         print("[SingleSMMesh init] \(name) Initial average vertex position: \(vertexMetadata.initialPositionInParentMesh)")
         print("[SingleSMMesh init] \(name) vertex count: \(vertexMetadata.uniqueVertices)")
+        
+        print("[SingleSMMesh init] \(name) mesh vertex metadata: \(vertexMetadata)")
+        
         translateSubmeshVertices(delta: -vertexMetadata.initialPositionInParentMesh)
     }
     
@@ -64,7 +67,7 @@ class SingleSMMesh {
         var indexDict: [UInt32: Bool] = [:]
         var totalPosition = float3(0, 0, 0)
         var minCoords = float3(.infinity, .infinity, .infinity)
-        var maxCoords = float3(-.infinity, -.infinity, -.infinity)  // Can I do this???
+        var maxCoords = float3(-.infinity, -.infinity, -.infinity)
         
         processVertices(submesh: submesh, vertexBuffer: vertexBuffer, vertexCount: vertexCount) {
             vertexBufferPointer, indexBufferPointer in
@@ -135,6 +138,10 @@ class SingleSMMesh {
                 }
             }
         }
+    }
+    
+    public func setSubmeshOrigin(_ origin: float3) {
+        translateSubmeshVertices(delta: origin)
     }
     
     private func createBuffer() {
