@@ -93,10 +93,16 @@ class Scene: Node {
     
     func setPointLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
         var pointLights = _lightManager.getPointLightData()
-        let buf = Engine.Device.makeBuffer(bytes: &pointLights, length: LightData.stride(pointLights.count))
-        renderCommandEncoder.setVertexBuffer(buf,
-                                             offset: 0,
-                                             index: Int(TFSBufferIndexLightsData.rawValue))
+        // Avoid allocating memory in game loop
+        // (if you use more than 4KB of data, allocate the buffer on init, instead of creating a new one every frame):
+//        let buf = Engine.Device.makeBuffer(bytes: &pointLights, length: LightData.stride(pointLights.count))
+//        renderCommandEncoder.setVertexBuffer(buf,
+//                                             offset: 0,
+//                                             index: Int(TFSBufferIndexLightsData.rawValue))
+        
+        renderCommandEncoder.setVertexBytes(&pointLights,
+                                            length: LightData.stride(pointLights.count),
+                                            index: Int(TFSBufferIndexLightsData.rawValue))
     }
     
     func setLightData(renderCommandEncoder: MTLRenderCommandEncoder) {

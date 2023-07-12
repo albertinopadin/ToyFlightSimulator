@@ -162,8 +162,8 @@ class F18: Aircraft {
         "SlatsOuterR_Paint": true,
         "FlapsL_Paint": true,
         "FlapsR_Paint": true,
-        "EleronsL_Paint": true,
-        "EleronsR_Paint": true,
+        "EleronsL_Paint": false,  // Ailerons
+        "EleronsR_Paint": false,  //
         "EngineNozzles_Paint": true,
         "EleronGearBox_Paint": true,
         "Cockpit_Paint": true,
@@ -232,18 +232,79 @@ class F18: Aircraft {
         "CanopyGlassFront_Glass": true
     ]
     
+    let rightAileron: SubMeshGameObject
+    let leftAileron: SubMeshGameObject
+    let nOriginZ: Float = 0.25
+    
     init() {
+        self.rightAileron = SubMeshGameObject(name: "Right_Aileron",
+                                              modelName: F18.F18_ModelName,
+                                              submeshName: "EleronsR_Paint",
+                                              renderPipelineStateType: .OpaqueMaterial)
+        
+        self.leftAileron = SubMeshGameObject(name: "Left_Aileron",
+                                             modelName: F18.F18_ModelName,
+                                             submeshName: "EleronsL_Paint",
+                                             renderPipelineStateType: .OpaqueMaterial)
+        
+        let newOrigin = float3(0, 0, nOriginZ)
+        
+        let rightAileronMeshMetadata = self.rightAileron.getSubmeshVertexMetadata()
+//        let newOrigin = float3(0, 0, rightAileronMeshMetadata.maxZ / 2)
+//        let newOrigin = float3(0, 0, rightAileronMeshMetadata.minZ / 2)
+        self.rightAileron.setSubmeshOrigin(newOrigin)
+        
+        let leftAileronMeshMetadata = self.leftAileron.getSubmeshVertexMetadata()
+        self.leftAileron.setSubmeshOrigin(newOrigin)
+        
         super.init(name: "F-18", meshType: .F18, renderPipelineStateType: .OpaqueMaterial)
         self.shouldUpdate = false  // Don't update when user moves camera
+        
+        let rightAileronPosition = rightAileronMeshMetadata.initialPositionInParentMesh - newOrigin
+        self.rightAileron.setPosition(rightAileronPosition)
+        self.addChild(self.rightAileron)
+        
+        let leftAileronPosition = leftAileronMeshMetadata.initialPositionInParentMesh - newOrigin
+        self.leftAileron.setPosition(leftAileronPosition)
+        self.addChild(self.leftAileron)
     }
     
     init(camera: AttachedCamera, scale: Float = 1.0) {
+        self.rightAileron = SubMeshGameObject(name: "Right_Aileron",
+                                              modelName: F18.F18_ModelName,
+                                              submeshName: "EleronsR_Paint",
+                                              renderPipelineStateType: .OpaqueMaterial)
+        
+        self.leftAileron = SubMeshGameObject(name: "Left_Aileron",
+                                             modelName: F18.F18_ModelName,
+                                             submeshName: "EleronsL_Paint",
+                                             renderPipelineStateType: .OpaqueMaterial)
+        
+        let newOrigin = float3(0, 0, nOriginZ)
+        
+        let rightAileronMeshMetadata = self.rightAileron.getSubmeshVertexMetadata()
+//        let newOrigin = float3(0, 0, rightAileronMeshMetadata.maxZ / 2)
+//        let newOrigin = float3(0, 0, rightAileronMeshMetadata.minZ / 2)
+        self.rightAileron.setSubmeshOrigin(newOrigin)
+        
+        let leftAileronMeshMetadata = self.leftAileron.getSubmeshVertexMetadata()
+        self.leftAileron.setSubmeshOrigin(newOrigin)
+        
         super.init(name: "F-18",
                    meshType: .F18,
                    renderPipelineStateType: .OpaqueMaterial,
                    camera: camera,
                    cameraOffset: _cameraPositionOffset,
                    scale: scale)
+        
+//        self.rightAileron.setPosition(rightAileronMeshMetadata.initialPositionInParentMesh)
+        let rightAileronPosition = rightAileronMeshMetadata.initialPositionInParentMesh - newOrigin
+        self.rightAileron.setPosition(rightAileronPosition)
+        self.addChild(self.rightAileron)
+        
+        let leftAileronPosition = leftAileronMeshMetadata.initialPositionInParentMesh - newOrigin
+        self.leftAileron.setPosition(leftAileronPosition)
+        self.addChild(self.leftAileron)
     }
     
     func weaponReleaseSetup(submeshGameObject: SubMeshGameObject) {
@@ -326,6 +387,16 @@ class F18: Aircraft {
                 }
             }
         }
+        
+//        rightAileron.rotateX(GameTime.DeltaTime)
+//        rightAileron.rotate(deltaAngle: GameTime.DeltaTime, axis: float3(1, 0, 0.15))
+//        leftAileron.rotate(deltaAngle: GameTime.DeltaTime, axis: float3(-1, 0, 0.15))
+        
+        let roll = InputManager.ContinuousCommand(.Roll)
+//        rightAileron.rotate(deltaAngle: -roll, axis: float3(1, 0, 0.15))
+        rightAileron.setRotation(angle: -roll, axis: float3(1, 0, 0.15))
+//        leftAileron.rotate(deltaAngle: -roll, axis: float3(-1, 0, 0.15))
+        leftAileron.setRotation(angle: -roll, axis: float3(-1, 0, 0.15))
         
         // TODO: Figure out how to move individual submesh without re-instantiating it:
 //        InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) {

@@ -32,7 +32,7 @@ class FreeCamFlightboxScene: Scene {
         addChild(ground)
         
 //        camera.setPosition(4, 12, 20)
-        camera.setPosition(40, 11, -4)
+        camera.setPosition(12, 14, 5)
 //        camera.setRotationX(Float(15).toRadians)
         camera.setRotationY(Float(-75).toRadians)
         addCamera(camera)
