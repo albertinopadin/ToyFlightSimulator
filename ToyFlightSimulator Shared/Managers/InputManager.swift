@@ -13,6 +13,7 @@ enum DiscreteCommand {
     
     case ResetLoadout
     
+    case ToggleFlaps
     case ToggleGear
     
     case Pause
@@ -92,6 +93,7 @@ class InputManager {
         .FireMissileAIM120: .n,
         .DropBomb: .m,
         .JettisonFuelTank: .j,
+        .ToggleFlaps: .f,
         .ToggleGear: .g
     ]
     
