@@ -41,12 +41,12 @@ class InstancedGameObject: Node {
     }
     
     override func update() {
+        super.update()
         var pointer = _modelConstantBuffer.contents().bindMemory(to: ModelConstants.self, capacity: _nodes.count)
         for node in _nodes {
             pointer.pointee.modelMatrix = matrix_multiply(self.modelMatrix, node.modelMatrix)
             pointer = pointer.advanced(by: 1)
         }
-        super.update()
     }
 }
 

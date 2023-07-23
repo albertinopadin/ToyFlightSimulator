@@ -42,6 +42,7 @@ class LightObject: GameObject {
     }
     
     override func update() {
+        super.update()
         self.lightData.type = self.type.rawValue
         self.lightData.viewProjectionMatrix = projectionMatrix * viewMatrix
         let position = self.modelMatrix.columns.3.xyz
@@ -49,7 +50,6 @@ class LightObject: GameObject {
         self.lightData.shadowViewProjectionMatrix = projectionMatrix * shadowViewMatrix
         self.lightData.eyeDirection = normalize(float4(-position, 0))
         self.lightData.position = position
-        super.update()
     }
 }
 

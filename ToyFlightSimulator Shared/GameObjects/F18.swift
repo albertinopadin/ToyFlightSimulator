@@ -265,6 +265,11 @@ class F18: Aircraft {
                                       renderPipelineStateType: .OpaqueMaterial)
     
     var flapsDeployed: Bool = false
+    var flapsDegrees: Float = 0.0
+    var flapsBeganExtending: Bool = false
+    var flapsFinishedExtending: Bool = false
+    var flapsBeganRetracting: Bool = false
+    var flapsFinishedRetracting: Bool = false
     
     let leftWingRearControlSurfaceRotationAxis = float3(-1, 0, 0.15)
     let rightWingRearControlSurfaceRotationAxis = float3(1, 0, 0.15)
@@ -429,16 +434,53 @@ class F18: Aircraft {
         leftElevon.setRotation(angle: -pitch, axis: X_AXIS)
         rightElevon.setRotation(angle: -pitch, axis: X_AXIS)
         
+//        InputManager.HasDiscreteCommandDebounced(command: .ToggleFlaps) {
+//            if !flapsDeployed {
+//                leftFlap.setRotation(angle: -Float(30).toRadians, axis: leftWingRearControlSurfaceRotationAxis)
+//                rightFlap.setRotation(angle: Float(30).toRadians, axis: rightWingRearControlSurfaceRotationAxis)
+//            } else {
+//                leftFlap.setRotation(angle: 0.0, axis: leftWingRearControlSurfaceRotationAxis)
+//                rightFlap.setRotation(angle: 0.0, axis: rightWingRearControlSurfaceRotationAxis)
+//            }
+//
+//            flapsDeployed.toggle()
+//        }
+        
         InputManager.HasDiscreteCommandDebounced(command: .ToggleFlaps) {
             if !flapsDeployed {
-                leftFlap.setRotation(angle: -Float(30).toRadians, axis: leftWingRearControlSurfaceRotationAxis)
-                rightFlap.setRotation(angle: Float(30).toRadians, axis: rightWingRearControlSurfaceRotationAxis)
+                flapsBeganExtending = true
             } else {
-                leftFlap.setRotation(angle: 0.0, axis: leftWingRearControlSurfaceRotationAxis)
-                rightFlap.setRotation(angle: 0.0, axis: rightWingRearControlSurfaceRotationAxis)
+                flapsBeganRetracting = true
             }
-            
+        }
+        
+        
+        if flapsBeganExtending {
+            if flapsDegrees < 30.0 {
+                flapsDegrees += 1.0
+                leftFlap.setRotation(angle: -Float(flapsDegrees).toRadians, axis: leftWingRearControlSurfaceRotationAxis)
+                rightFlap.setRotation(angle: Float(flapsDegrees).toRadians, axis: rightWingRearControlSurfaceRotationAxis)
+            } else {
+                flapsFinishedExtending = true
+            }
+        }
+        
+        if flapsBeganRetracting {
+            if flapsDegrees > 0.0 {
+                flapsDegrees -= 1.0
+                leftFlap.setRotation(angle: -Float(flapsDegrees).toRadians, axis: leftWingRearControlSurfaceRotationAxis)
+                rightFlap.setRotation(angle: Float(flapsDegrees).toRadians, axis: rightWingRearControlSurfaceRotationAxis)
+            } else {
+                flapsFinishedRetracting = true
+            }
+        }
+        
+        if flapsFinishedExtending || flapsFinishedRetracting {
             flapsDeployed.toggle()
+            flapsBeganExtending = false
+            flapsFinishedExtending = false
+            flapsBeganRetracting = false
+            flapsFinishedRetracting = false
         }
         
         // TODO: Figure out how to move individual submesh without re-instantiating it:
