@@ -239,7 +239,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     override func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         print("[SinglePass drawableSizeWillChange] new size: \(size)")
-        if size.width.isNaN && !size.height.isNaN && !size.width.isInfinite && !size.height.isInfinite {
+        if !size.width.isNaN && !size.height.isNaN && !size.width.isInfinite && !size.height.isInfinite {
             updateDrawableSize(size: size)
         }
     }

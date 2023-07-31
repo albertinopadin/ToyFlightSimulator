@@ -14,7 +14,6 @@ struct GameUIView: View {
         GeometryReader { geometry in
             ZStack {
                 MetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize))
-                    .scaledToFill()
                 
                 HStack {
                     Text("Toy Flight Simulator")
@@ -29,7 +28,6 @@ struct GameUIView: View {
                 }
                 .position(CGPoint(x: viewSize.width - 200, y: viewSize.height - 50))
             }
-            .scaledToFit()
             .onAppear {
                 viewSize = getViewSize(geometrySize: viewSize)
             }
@@ -40,14 +38,13 @@ struct GameUIView: View {
             
         }
         
-        
     }
     
     func getViewSize(geometrySize: CGSize) -> CGSize {
         if geometrySize.width > 0 && geometrySize.height > 0 {
             return geometrySize
         } else {
-            return CGSize(width: 1920, height: 1080)
+            return CGSize(width: 3840, height: 2160)
         }
     }
 }

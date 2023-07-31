@@ -208,6 +208,7 @@ class Renderer: NSObject, MTKViewDelegate {
         print("[Renderer updateScreenSize] new size: \(size)")
         if size.width > 0 && size.width.isFinite && size.height > 0 && size.height.isFinite {
             Renderer.ScreenSize = float2(Float(size.width), Float(size.height))
+            print("[Renderer updateScreenSize] aspect ratio: \(Renderer.AspectRatio)")
             SceneManager.SetAspectRatio(Renderer.AspectRatio)
         }
     }
