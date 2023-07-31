@@ -205,8 +205,11 @@ class Renderer: NSObject, MTKViewDelegate {
     
     // --- MTKViewDelegate methods ---
     public func updateScreenSize(size: CGSize) {
-        Renderer.ScreenSize = float2(Float(size.width), Float(size.height))
-        SceneManager.SetAspectRatio(Renderer.AspectRatio)
+        print("[Renderer updateScreenSize] new size: \(size)")
+        if size.width > 0 && size.width.isFinite && size.height > 0 && size.height.isFinite {
+            Renderer.ScreenSize = float2(Float(size.width), Float(size.height))
+            SceneManager.SetAspectRatio(Renderer.AspectRatio)
+        }
     }
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
