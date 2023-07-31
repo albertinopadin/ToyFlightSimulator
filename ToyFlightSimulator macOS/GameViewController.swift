@@ -7,6 +7,7 @@
 
 import Cocoa
 import MetalKit
+import SwiftUI
 
 //enum VirtualKey: Int {
 //    case ANSI_A     = 0x00
@@ -21,7 +22,9 @@ import MetalKit
 //}
 
 // Our macOS specific view controller
-class GameViewController: NSViewController {
+//class GameViewController: NSViewController {
+//class GameViewController<Content>: NSHostingController<Content> where Content: View {
+class GameViewController: NSHostingController<GameUIView> {
     var gameView: GameView!
     var renderer: Renderer!
     // TODO:
@@ -43,12 +46,19 @@ class GameViewController: NSViewController {
 //            NotificationCenter.default.removeObserver(observer)
 //        }
 //    }
+    
+    required init?(coder: NSCoder) {
+        print("GameViewController init with coder")
+        super.init(coder: coder, rootView: GameUIView())
+    }
 
     override func viewDidLoad() {
+        print("GameViewController viewDidLoad")
         super.viewDidLoad()
         
         NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: Keyboard.SetCommandKeyPressed(event:))
-
+//        self.rootView
+        
         guard let _gameView = self.view as? GameView else {
             print("View attached to GameViewController is not a GameView")
             return
@@ -71,6 +81,7 @@ class GameViewController: NSViewController {
         Engine.Start(device: defaultDevice)
         let rendererType: RendererType = .SinglePassDeferredLighting
         renderer = initRenderer(type: rendererType)
+        renderer.metalView = gameView
         SceneManager.SetScene(Preferences.StartingSceneType, rendererType: rendererType)
         
 //        cameraController = FlyCameraController(pointOfView: simController.renderer.pointOfView)
@@ -82,14 +93,25 @@ class GameViewController: NSViewController {
 //        }
     }
     
+//    func initRenderer(type: RendererType) -> Renderer {
+//        switch type {
+//            case .OrderIndependentTransparency:
+//                // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
+//                return OITRenderer(gameView)
+//            case .SinglePassDeferredLighting:
+//                gameView.depthStencilPixelFormat = .depth32Float_stencil8
+//                return SinglePassDeferredLightingRenderer(gameView)
+//        }
+//    }
+    
     func initRenderer(type: RendererType) -> Renderer {
         switch type {
             case .OrderIndependentTransparency:
                 // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
-                return OITRenderer(gameView)
+                return OITRenderer()
             case .SinglePassDeferredLighting:
-                gameView.depthStencilPixelFormat = .depth32Float_stencil8
-                return SinglePassDeferredLightingRenderer(gameView)
+//                gameView.depthStencilPixelFormat = .depth32Float_stencil8
+                return SinglePassDeferredLightingRenderer()
         }
     }
 

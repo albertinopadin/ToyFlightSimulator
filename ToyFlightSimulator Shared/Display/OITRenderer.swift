@@ -11,18 +11,31 @@ class OITRenderer: Renderer {
     private var _forwardRenderPassDescriptor: MTLRenderPassDescriptor!
     private let _optimalTileSize: MTLSize = MTLSize(width: 32, height: 16, depth: 1)
     
-    override init(_ mtkView: MTKView) {
+    override var metalView: MTKView {
+        didSet {
+            createForwardRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
+                                              screenHeight: Int(Renderer.ScreenSize.y))
+        }
+    }
+    
+    init() {
         print("[OIT Renderer init]")
-        super.init(mtkView)
-        createForwardRenderPassDescriptor()
+        super.init(type: .OrderIndependentTransparency)
+    }
+    
+    init(_ mtkView: MTKView) {
+        print("[OIT Renderer init]")
+        super.init(mtkView, type: .OrderIndependentTransparency)
+        createForwardRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
+                                          screenHeight: Int(Renderer.ScreenSize.y))
     }
     
     
-    private func createForwardRenderPassDescriptor() {
+    private func createForwardRenderPassDescriptor(screenWidth: Int, screenHeight: Int) {
         // --- BASE COLOR 0 TEXTURE ---
         let base0TextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainPixelFormat,
-                                                                              width: Int(Renderer.ScreenSize.x),
-                                                                              height: Int(Renderer.ScreenSize.y),
+                                                                              width: screenWidth,
+                                                                              height: screenHeight,
                                                                               mipmapped: false)
         // Defining render target
         base0TextureDescriptor.usage = [.renderTarget, .shaderRead]
@@ -31,8 +44,8 @@ class OITRenderer: Renderer {
         
         // --- BASE DEPTH TEXTURE ---
         let depthTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainDepthPixelFormat,
-                                                                              width: Int(Renderer.ScreenSize.x),
-                                                                              height: Int(Renderer.ScreenSize.y),
+                                                                              width: screenWidth,
+                                                                              height: screenHeight,
                                                                               mipmapped: false)
         // Defining render target
         depthTextureDescriptor.usage = [.renderTarget, .shaderRead]

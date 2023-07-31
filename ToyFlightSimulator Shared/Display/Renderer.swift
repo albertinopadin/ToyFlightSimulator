@@ -9,7 +9,7 @@ import Metal
 import MetalKit
 
 class Renderer: NSObject, MTKViewDelegate {
-    public static var ScreenSize = float2(0, 0)
+    public static var ScreenSize = float2(100, 100)
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
     
     // The max number of command buffers in flight
@@ -20,12 +20,29 @@ class Renderer: NSObject, MTKViewDelegate {
     var baseRenderPassDescriptor: MTLRenderPassDescriptor!
     
     let shadowMap: MTLTexture!
-//    let shadowMapSize: Int = 4096
-//    let shadowMapSize: Int = 8192
     let shadowMapSize: Int = 16_384
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor!
     
-    init(_ mtkView: MTKView) {
+    public let rendererType: RendererType
+    
+    private var _metalView: MTKView!
+    public var metalView: MTKView {
+        get {
+            return _metalView
+        }
+        
+        set {
+            _metalView = newValue
+            updateScreenSize(size: _metalView.drawableSize)
+            createBaseRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
+                                           screenHeight: Int(Renderer.ScreenSize.y))
+            _metalView.delegate = self
+        }
+    }
+    
+    init (type: RendererType) {
+        self.rendererType = type
+        
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
         
         let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
@@ -38,10 +55,27 @@ class Renderer: NSObject, MTKViewDelegate {
         shadowMap.label = "Shadow Map"
         
         super.init()
-        updateScreenSize(size: mtkView.drawableSize)
-        createBaseRenderPassDescriptor()
         createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
-        mtkView.delegate = self
+    }
+    
+    init(_ mtkView: MTKView, type: RendererType) {
+        self.rendererType = type
+        
+        inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
+        
+        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
+                                                                               width: shadowMapSize,
+                                                                               height: shadowMapSize,
+                                                                               mipmapped: false)
+        shadowTextureDescriptor.resourceOptions = .storageModePrivate
+        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
+        shadowMap = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor)!
+        shadowMap.label = "Shadow Map"
+        
+        super.init()
+        
+        metalView = mtkView
+        createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
     }
     
     // Heavily inspired by:
@@ -115,21 +149,22 @@ class Renderer: NSObject, MTKViewDelegate {
         renderEncoder.popDebugGroup()
     }
     
-    private func createBaseRenderPassDescriptor() {
+    private func createBaseRenderPassDescriptor(screenWidth: Int, screenHeight: Int) {
         // --- BASE COLOR 0 TEXTURE ---
         let base0TextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainPixelFormat,
-                                                                              width: Int(Renderer.ScreenSize.x),
-                                                                              height: Int(Renderer.ScreenSize.y),
+                                                                              width: screenWidth,
+                                                                              height: screenHeight,
                                                                               mipmapped: false)
         // Defining render target
         base0TextureDescriptor.usage = [.renderTarget, .shaderRead]
+        let tex = Engine.Device.makeTexture(descriptor: base0TextureDescriptor)
         Assets.Textures.setTexture(textureType: .BaseColorRender_0,
-                                   texture: Engine.Device.makeTexture(descriptor: base0TextureDescriptor)!)
+                                   texture: tex!)
         
         // --- BASE COLOR 1 TEXTURE ---
         let base1TextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainPixelFormat,
-                                                                              width: Int(Renderer.ScreenSize.x),
-                                                                              height: Int(Renderer.ScreenSize.y),
+                                                                              width: screenWidth,
+                                                                              height: screenHeight,
                                                                               mipmapped: false)
         // Defining render target
         base1TextureDescriptor.usage = [.renderTarget, .shaderRead]
@@ -138,8 +173,8 @@ class Renderer: NSObject, MTKViewDelegate {
         
         // --- BASE DEPTH TEXTURE ---
         let depthTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainDepthPixelFormat,
-                                                                              width: Int(Renderer.ScreenSize.x),
-                                                                              height: Int(Renderer.ScreenSize.y),
+                                                                              width: screenWidth,
+                                                                              height: screenHeight,
                                                                               mipmapped: false)
         // Defining render target
         depthTextureDescriptor.usage = [.renderTarget, .shaderRead]
@@ -176,7 +211,9 @@ class Renderer: NSObject, MTKViewDelegate {
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         // When window is resized
-        updateScreenSize(size: size)
+        if size.width.isNaN && !size.height.isNaN {
+            updateScreenSize(size: size)
+        }
     }
     
     func draw(in view: MTKView) {

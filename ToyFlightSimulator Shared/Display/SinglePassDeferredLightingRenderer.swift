@@ -31,10 +31,24 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     private var gBufferTextures = GBufferTextures()
     
-    override init(_ mtkView: MTKView) {
+    override var metalView: MTKView {
+        didSet {
+            metalView.depthStencilPixelFormat = .depth32Float_stencil8
+            let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
+            updateDrawableSize(size: drawableSize)
+        }
+    }
+    
+    init() {
         _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
                                                      length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
-        super.init(mtkView)
+        super.init(type: .SinglePassDeferredLighting)
+    }
+    
+    init(_ mtkView: MTKView) {
+        _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
+                                                     length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
+        super.init(mtkView, type: .SinglePassDeferredLighting)
         let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
         print("[SPDL Renderer init] drawable size: \(drawableSize)")
         updateDrawableSize(size: drawableSize)
@@ -224,7 +238,9 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     override func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        updateDrawableSize(size: size)
+        if size.width.isNaN && !size.height.isNaN {
+            updateDrawableSize(size: size)
+        }
     }
     
     func updateDrawableSize(size: CGSize) {
