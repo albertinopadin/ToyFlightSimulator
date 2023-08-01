@@ -234,6 +234,9 @@ class SinglePassDeferredLightingRenderer: Renderer {
         }
         
         commandBuffer.present(view.currentDrawable!)
+//        if let drawable = view.currentDrawable {
+//            commandBuffer.present(drawable)
+//        }
         commandBuffer.commit()
     }
     

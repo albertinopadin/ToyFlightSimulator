@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct MetalViewWrapper: NSViewRepresentable {
+    typealias NSViewType = GameView
+    
     var viewSize: CGSize
     
     func makeCoordinator() -> Renderer {
@@ -45,7 +47,6 @@ struct MetalViewWrapper: NSViewRepresentable {
         print("[MetalViewWrapper makeNSView] gameView drawableSize: \(gameView.drawableSize)")
         
         context.coordinator.metalView = gameView
-        gameView.delegate = context.coordinator
         SceneManager.SetScene(Preferences.StartingSceneType, rendererType: context.coordinator.rendererType)
         
         return gameView
@@ -54,6 +55,7 @@ struct MetalViewWrapper: NSViewRepresentable {
     func updateNSView(_ nsView: NSViewType, context: Context) {
         print("[MetalViewWrapper updateNSView] drawableSize: \(nsView.drawableSize)")
         print("[MetalViewWrapper updateNSView] nsView.bounds.size: \(nsView.bounds.size)")
+        print("[MetalViewWrapper updateNSView] nsView.frame.size: \(nsView.frame.size)")
         let newSize = nsView.bounds.size
         if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
             context.coordinator.metalView.drawableSize = nsView.bounds.size

@@ -43,15 +43,4 @@ class GameViewController: NSHostingController<GameUIView> {
 
         NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: Keyboard.SetCommandKeyPressed(event:))
     }
-    
-    override func viewDidLayout() {
-//        print("[GameViewController viewDidLayout] view.bounds.size: \(view.bounds.size)")
-//        print("[GameViewController viewDidLayout] view.frame.size: \(view.frame.size)")
-//
-//        print("[GameViewController viewDidLayout] view.window?.frame.size: \(view.window?.frame.size)")
-//        print("[GameViewController viewDidLayout] view.window?.contentView?.frame.size: \(view.window?.contentView?.frame.size)")
-//        print("[GameViewController viewDidLayout] view.window?.contentView?.bounds: \(view.window?.contentView?.bounds)")
-        
-//        rootView = GameUIView(viewSize: view.bounds.size)
-    }
 }

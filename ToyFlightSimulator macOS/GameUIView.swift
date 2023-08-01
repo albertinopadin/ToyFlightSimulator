@@ -9,11 +9,13 @@ import SwiftUI
 
 struct GameUIView: View {
     @State private var viewSize: CGSize = .zero
+    private let minViewSize = CGSize(width: 640, height: 480)
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 MetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize))
+                    .frame(minWidth: minViewSize.width, minHeight: minViewSize.height)
                 
                 HStack {
                     Text("Toy Flight Simulator")
@@ -29,30 +31,28 @@ struct GameUIView: View {
                 .position(CGPoint(x: viewSize.width - 200, y: viewSize.height - 50))
             }
             .onAppear {
-                viewSize = getViewSize(geometrySize: viewSize)
+                print("On Appear geometry size: \(geometry.size)")
+                viewSize = getViewSize(geometrySize: geometry.size)
+                print("On Appear viewSize: \(viewSize)")
             }
             .onChange(of: geometry.size) { newSize in
                 viewSize = newSize
                 print("Geometry changed size: \(newSize)")
             }
-            
         }
-        
     }
     
     func getViewSize(geometrySize: CGSize) -> CGSize {
         if geometrySize.width > 0 && geometrySize.height > 0 {
             return geometrySize
         } else {
-            return CGSize(width: 3840, height: 2160)
+            return minViewSize
         }
     }
 }
 
 struct GameUIView_Previews: PreviewProvider {
-//    static var previewSize = CGSize(width: 1920, height: 1080)
     static var previews: some View {
-//        GameUIView(viewSize: previewSize)
         GameUIView()
     }
 }
