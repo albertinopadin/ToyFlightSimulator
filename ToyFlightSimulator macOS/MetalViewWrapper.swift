@@ -42,9 +42,6 @@ struct MetalViewWrapper: NSViewRepresentable {
         gameView.framebufferOnly = false
         gameView.preferredFramesPerSecond = 120
         gameView.drawableSize = viewSize
-        print("[makeNSView] gameView bounds: \(gameView.bounds)")
-        print("[MetalViewWrapper makeNSView] viewSize: \(viewSize)")
-        print("[MetalViewWrapper makeNSView] gameView drawableSize: \(gameView.drawableSize)")
         
         context.coordinator.metalView = gameView
         SceneManager.SetScene(Preferences.StartingSceneType, rendererType: context.coordinator.rendererType)
@@ -53,9 +50,6 @@ struct MetalViewWrapper: NSViewRepresentable {
     }
     
     func updateNSView(_ nsView: NSViewType, context: Context) {
-        print("[MetalViewWrapper updateNSView] drawableSize: \(nsView.drawableSize)")
-        print("[MetalViewWrapper updateNSView] nsView.bounds.size: \(nsView.bounds.size)")
-        print("[MetalViewWrapper updateNSView] nsView.frame.size: \(nsView.frame.size)")
         let newSize = nsView.bounds.size
         if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
             context.coordinator.metalView.drawableSize = nsView.bounds.size

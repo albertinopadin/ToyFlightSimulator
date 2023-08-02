@@ -23,9 +23,10 @@ struct GameUIView: View {
                     
                     Button("Pause") {
                         print("Pressed SwiftUI Pause button")
+                        // TODO: Super mega hack for now, for testing:
+                        (SceneManager.currentScene as? FlightboxScene)?.paused.toggle()
                     }
                     .background(.blue)
-                    .tint(.blue)
                     
                 }
                 .position(CGPoint(x: viewSize.width - 200, y: viewSize.height - 50))

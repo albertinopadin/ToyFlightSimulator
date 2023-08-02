@@ -137,4 +137,13 @@ class OITRenderer: Renderer {
         commandBuffer?.present(view.currentDrawable!)
         commandBuffer?.commit()
     }
+    
+    override func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+        print("[SinglePass drawableSizeWillChange] new size: \(size)")
+        if !size.width.isNaN && !size.height.isNaN && !size.width.isInfinite && !size.height.isInfinite {
+            updateScreenSize(size: size)
+            createForwardRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
+                                              screenHeight: Int(Renderer.ScreenSize.y))
+        }
+    }
 }

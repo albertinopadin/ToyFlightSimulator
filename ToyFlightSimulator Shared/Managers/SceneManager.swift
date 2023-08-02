@@ -14,63 +14,63 @@ enum SceneType {
 }
 
 class SceneManager {
-    private static var _currentScene: Scene?
+    public static var currentScene: Scene?
     
     public static func SetScene(_ sceneType: SceneType, rendererType: RendererType) {
         switch sceneType {
         case .Sandbox:
-            _currentScene = SandboxScene(name: "Sandbox", rendererType: rendererType)
+            currentScene = SandboxScene(name: "Sandbox", rendererType: rendererType)
         case .Flightbox:
-            _currentScene = FlightboxScene(name: "Flightbox", rendererType: rendererType)
+            currentScene = FlightboxScene(name: "Flightbox", rendererType: rendererType)
         case .FreeCamFlightbox:
-            _currentScene = FreeCamFlightboxScene(name: "FreeCamFlightbox", rendererType: rendererType)
+            currentScene = FreeCamFlightboxScene(name: "FreeCamFlightbox", rendererType: rendererType)
         }
     }
     
     public static func Update(deltaTime: Float) {
         GameTime.UpdateTime(deltaTime)
-        _currentScene?.updateCameras(deltaTime: deltaTime)
-        _currentScene?.update()
+        currentScene?.updateCameras(deltaTime: deltaTime)
+        currentScene?.update()
     }
     
     public static func SetSceneConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
-        _currentScene?.setSceneConstants(renderCommandEncoder: renderCommandEncoder)
+        currentScene?.setSceneConstants(renderCommandEncoder: renderCommandEncoder)
     }
     
     public static func SetDirectionalLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
-        _currentScene?.setDirectionalLightConstants(renderCommandEncoder: renderCommandEncoder)
+        currentScene?.setDirectionalLightConstants(renderCommandEncoder: renderCommandEncoder)
     }
     
     public static func SetPointLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
-        _currentScene?.setPointLightConstants(renderCommandEncoder: renderCommandEncoder)
+        currentScene?.setPointLightConstants(renderCommandEncoder: renderCommandEncoder)
     }
     
     public static func SetLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
-        _currentScene?.setLightData(renderCommandEncoder: renderCommandEncoder)
+        currentScene?.setLightData(renderCommandEncoder: renderCommandEncoder)
     }
     
     public static func Render(renderCommandEncoder: MTLRenderCommandEncoder,
                               renderPipelineStateType: RenderPipelineStateType,
                               applyMaterials: Bool = true) {
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
-        _currentScene?.render(renderCommandEncoder: renderCommandEncoder,
+        currentScene?.render(renderCommandEncoder: renderCommandEncoder,
                              renderPipelineStateType: renderPipelineStateType,
                              applyMaterials: applyMaterials)
     }
     
     public static func RenderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.GBufferGenerationBase])
-        _currentScene?.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: .GBufferGenerationBase)
+        currentScene?.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: .GBufferGenerationBase)
         
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.GBufferGenerationMaterial])
-        _currentScene?.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: .GBufferGenerationMaterial)
+        currentScene?.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: .GBufferGenerationMaterial)
     }
     
     public static func RenderShadows(renderCommandEncoder: MTLRenderCommandEncoder) {
-        _currentScene?.renderShadows(renderCommandEncoder: renderCommandEncoder)
+        currentScene?.renderShadows(renderCommandEncoder: renderCommandEncoder)
     }
     
     public static func SetAspectRatio(_ aspectRatio: Float) {
-        _currentScene?.setAspectRatio(aspectRatio)
+        currentScene?.setAspectRatio(aspectRatio)
     }
 }
