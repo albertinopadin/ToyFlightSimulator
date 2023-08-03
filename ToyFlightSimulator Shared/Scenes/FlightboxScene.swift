@@ -13,9 +13,6 @@ class FlightboxScene: Scene {
     var sun = Sun(meshType: .Sphere)
     var quad = Quad()
     
-    var paused: Bool = false
-    var _pPressed: Bool = false
-    
     override func buildScene() {
 //        f16 = F16(camera: attachedCamera)
 //        addCamera(attachedCamera)
@@ -156,14 +153,11 @@ class FlightboxScene: Scene {
     override func doUpdate() {
         super.doUpdate()
         
-        InputManager.HasDiscreteCommandDebounced(command: .Pause) {
-            paused.toggle()
-        }
+//        InputManager.HasDiscreteCommandDebounced(command: .Pause) {
+//            paused.toggle()
+//        }
         
-        if !paused {
-            quad.rotateZ(GameTime.DeltaTime)
-//            f16.rotateZ(GameTime.DeltaTime)
-        }
+        quad.rotateZ(GameTime.DeltaTime)
     }
 }
 

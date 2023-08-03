@@ -15,6 +15,7 @@ enum SceneType {
 
 class SceneManager {
     public static var currentScene: Scene?
+    public static var paused: Bool = false
     
     public static func SetScene(_ sceneType: SceneType, rendererType: RendererType) {
         switch sceneType {
@@ -28,9 +29,11 @@ class SceneManager {
     }
     
     public static func Update(deltaTime: Float) {
-        GameTime.UpdateTime(deltaTime)
-        currentScene?.updateCameras(deltaTime: deltaTime)
-        currentScene?.update()
+        if !paused {
+            GameTime.UpdateTime(deltaTime)
+            currentScene?.updateCameras(deltaTime: deltaTime)
+            currentScene?.update()
+        }
     }
     
     public static func SetSceneConstants(renderCommandEncoder: MTLRenderCommandEncoder) {

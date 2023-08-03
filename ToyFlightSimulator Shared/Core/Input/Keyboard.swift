@@ -18,10 +18,8 @@ class Keyboard {
     public static func SetCommandKeyPressed(event: NSEvent) -> NSEvent {
 //        print("[SetCommandKeyPressed] event modifier flags: \(event.modifierFlags)")
         if event.modifierFlags.contains(.command) {
-//            print("Command pressed")
             keys[Int(Keycodes.command.rawValue)] = true
         } else {
-//            print("Command released")
             keys[Int(Keycodes.command.rawValue)] = false
         }
         return event

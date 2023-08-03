@@ -8,28 +8,31 @@
 import SwiftUI
 
 struct GameUIView: View {
-    @State private var viewSize: CGSize = .zero
     private let minViewSize = CGSize(width: 640, height: 480)
+    
+    @State private var viewSize: CGSize = .zero
+    @State private var shouldDisplayMenu: Bool = false
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 MetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize))
-                    .frame(minWidth: minViewSize.width, minHeight: minViewSize.height)
                 
-                HStack {
-                    Text("Toy Flight Simulator")
-                        .font(.largeTitle)
-                    
-                    Button("Pause") {
-                        print("Pressed SwiftUI Pause button")
-                        // TODO: Super mega hack for now, for testing:
-                        (SceneManager.currentScene as? FlightboxScene)?.paused.toggle()
+                if shouldDisplayMenu {
+                    HStack {
+                        Text("Toy Flight Simulator")
+                            .font(.largeTitle)
+
+                        Button("Pause") {
+                            print("Pressed SwiftUI Pause button")
+                            SceneManager.paused.toggle()
+                        }
+                        .background(.blue)
                     }
-                    .background(.blue)
-                    
+                    .position(CGPoint(x: viewSize.width - 200, y: viewSize.height - 50))
+                    .transition(.move(edge: .bottom))
+                    .zIndex(100)  // Setting zIndex so transition is always on top
                 }
-                .position(CGPoint(x: viewSize.width - 200, y: viewSize.height - 50))
             }
             .onAppear {
                 print("On Appear geometry size: \(geometry.size)")
@@ -41,7 +44,17 @@ struct GameUIView: View {
                 print("Geometry changed size: \(newSize)")
             }
         }
-    }
+        .frame(minWidth: minViewSize.width, minHeight: minViewSize.height)
+        .onAppear {
+            Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { _ in
+                InputManager.handleKeyPressedDebounced(keyCode: .escape) {
+                    withAnimation {
+                        shouldDisplayMenu.toggle()
+                    }
+                }
+            }
+        }
+     }
     
     func getViewSize(geometrySize: CGSize) -> CGSize {
         if geometrySize.width > 0 && geometrySize.height > 0 {
