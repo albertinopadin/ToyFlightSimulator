@@ -19,18 +19,40 @@ struct GameUIView: View {
                 MetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize))
                 
                 if shouldDisplayMenu {
-                    HStack {
-                        Text("Toy Flight Simulator")
-                            .font(.largeTitle)
-
-                        Button("Pause") {
-                            print("Pressed SwiftUI Pause button")
-                            SceneManager.paused.toggle()
+                    ZStack(alignment: .top) {
+                        RoundedRectangle(cornerRadius: 25.0).overlay {
+                            Label("Menu", systemImage: "airplane")
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                                .foregroundColor(.white)
+                                .padding(10.0)
+                            
+                            VStack {
+                                Menu("Refresh Rate") {
+                                    Text("60 FPS")
+                                    Text("120 FPS")
+                                }
+                                .frame(maxWidth: 200)
+                                
+                                HStack {
+                                    Text("Toy Flight Simulator")
+                                        .font(.largeTitle)
+                                    
+                                    Button("Pause") {
+                                        print("Pressed SwiftUI Pause button")
+                                        SceneManager.paused.toggle()
+                                    }
+                                    .background(.blue)
+                                }
+                                .foregroundColor(.white)
+                                .padding(5)
+                            }
                         }
-                        .background(.blue)
+                        .foregroundColor(.black.opacity(0.9))
                     }
-                    .position(CGPoint(x: viewSize.width - 200, y: viewSize.height - 50))
-                    .transition(.move(edge: .bottom))
+                    .frame(width: viewSize.width - (viewSize.width * 0.25),
+                           height: viewSize.height - (viewSize.height * 0.25),
+                           alignment: .center)
+                    .transition(.move(edge: .top))
                     .zIndex(100)  // Setting zIndex so transition is always on top
                 }
             }
@@ -48,6 +70,7 @@ struct GameUIView: View {
         .onAppear {
             Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { _ in
                 InputManager.handleKeyPressedDebounced(keyCode: .escape) {
+                    SceneManager.paused.toggle()
                     withAnimation {
                         shouldDisplayMenu.toggle()
                     }
