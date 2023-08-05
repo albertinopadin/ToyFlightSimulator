@@ -17,14 +17,26 @@ class SceneManager {
     public static var currentScene: Scene?
     public static var paused: Bool = false
     
+    private static var _sceneType: SceneType?
+    private static var _rendererType: RendererType?
+    
     public static func SetScene(_ sceneType: SceneType, rendererType: RendererType) {
+        _sceneType = sceneType
+        _rendererType = rendererType
+        
         switch sceneType {
-        case .Sandbox:
-            currentScene = SandboxScene(name: "Sandbox", rendererType: rendererType)
-        case .Flightbox:
-            currentScene = FlightboxScene(name: "Flightbox", rendererType: rendererType)
-        case .FreeCamFlightbox:
-            currentScene = FreeCamFlightboxScene(name: "FreeCamFlightbox", rendererType: rendererType)
+            case .Sandbox:
+                currentScene = SandboxScene(name: "Sandbox", rendererType: rendererType)
+            case .Flightbox:
+                currentScene = FlightboxScene(name: "Flightbox", rendererType: rendererType)
+            case .FreeCamFlightbox:
+                currentScene = FreeCamFlightboxScene(name: "FreeCamFlightbox", rendererType: rendererType)
+        }
+    }
+    
+    public static func ResetScene() {
+        if let _sceneType, let _rendererType {
+            SetScene(_sceneType, rendererType: _rendererType)
         }
     }
     

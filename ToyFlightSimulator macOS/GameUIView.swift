@@ -37,9 +37,9 @@ struct GameUIView: View {
                                     Text("Toy Flight Simulator")
                                         .font(.largeTitle)
                                     
-                                    Button("Pause") {
-                                        print("Pressed SwiftUI Pause button")
-                                        SceneManager.paused.toggle()
+                                    Button("Reset Scene") {
+                                        print("Pressed SwiftUI Reset Scene button")
+                                        SceneManager.ResetScene()
                                     }
                                     .background(.blue)
                                 }
@@ -47,11 +47,15 @@ struct GameUIView: View {
                                 .padding(5)
                             }
                         }
+                        .frame(width: viewSize.width - (viewSize.width * 0.10),
+                                height: viewSize.height - (viewSize.height * 0.10),
+                                alignment: .center)
                         .foregroundColor(.black.opacity(0.9))
+                        
                     }
-                    .frame(width: viewSize.width - (viewSize.width * 0.25),
-                           height: viewSize.height - (viewSize.height * 0.25),
-                           alignment: .center)
+                    .frame(width: viewSize.width,
+                           height: viewSize.height,
+                           alignment: .center)  // Setting full view size so animation isn't cut off
                     .transition(.move(edge: .top))
                     .zIndex(100)  // Setting zIndex so transition is always on top
                 }
