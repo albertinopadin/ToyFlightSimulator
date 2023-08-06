@@ -70,19 +70,49 @@ struct IOSGameUIView: View {
         .onAppear {
             Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { _ in
                 InputManager.handleKeyPressedDebounced(keyCode: .escape) {
-                    SceneManager.paused.toggle()
-                    withAnimation {
-                        shouldDisplayMenu.toggle()
-                    }
+                    toggleMenu()
                 }
             }
         }
+        .gesture(
+            DragGesture(minimumDistance: 100)
+                .onEnded { drag in
+                    let delta = drag.location - drag.startLocation
+                    if delta.y > 100 {
+                        showMenu(true)
+                    }
+                    if delta.y < -100 {
+                        showMenu(false)
+                    }
+                }
+        )
      }
+    
+    // TODO: Figure out how to combine toggleMenu and showMenu into single function:
+    func toggleMenu() {
+        SceneManager.paused.toggle()
+        withAnimation {
+            shouldDisplayMenu.toggle()
+        }
+    }
+    
+    func showMenu(_ shouldDisplay: Bool) {
+        SceneManager.paused = shouldDisplay
+        withAnimation {
+            shouldDisplayMenu = shouldDisplay
+        }
+    }
 }
 
 struct IOSGameUIView_Previews: PreviewProvider {
     static var previews: some View {
         IOSGameUIView()
+    }
+}
+
+extension CGPoint {
+    static func -(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
+        return CGPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
     }
 }
 

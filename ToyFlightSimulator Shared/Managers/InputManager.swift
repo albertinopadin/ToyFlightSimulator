@@ -45,11 +45,20 @@ class InputManager {
     static var throttle: Throttle!
     #endif
     
+    #if os(iOS)
+    static var motion: MotionDevice!
+    #endif
+    
     public static func Initialize() {
         controller = Controller()
+        
         #if os(macOS)
         joystick = Joystick()
         throttle = Throttle()
+        #endif
+        
+        #if os(iOS)
+        motion = MotionDevice()
         #endif
     }
     
@@ -140,6 +149,14 @@ class InputManager {
     
     static var throttleMappingContinuous: [ContinuousCommand: ThrottleContinuousState] = [
         .MoveFwd: .ThrottleRight
+    ]
+    #endif
+    
+    #if os(iOS)
+    static var motionMappingContinuous: [ContinuousCommand: MotionContinuousState] = [
+        .Pitch: .MotionPitch,
+        .Roll: .MotionRoll,
+        .Yaw: .MotionYaw
     ]
     #endif
     
@@ -244,6 +261,14 @@ class InputManager {
     }
     #endif
     
+    #if os(iOS)
+    static func GetMotionContinuousValue(_ command: ContinuousCommand) -> Float {
+        guard let motionState = motionMappingContinuous[command] else { return .zero }
+        guard let motionValue = motion.motionContinuousStateMapping[motionState] else { return .zero }
+        return motionValue
+    }
+    #endif
+    
     static func ContinuousCommand(_ command: ContinuousCommand) -> Float {
         var continuousValue: Float = .zero
         
@@ -277,6 +302,13 @@ class InputManager {
         if throttle.present {
             let throttleValue = GetThrottleContinuousValue(command)
             continuousValue += throttleValue
+        }
+        #endif
+        
+        #if os(iOS)
+        if motion.present {
+            let motionValue = GetMotionContinuousValue(command)
+            continuousValue += motionValue
         }
         #endif
         

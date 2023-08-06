@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CE0601632A7FA158001F8CC3 /* MotionDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601622A7FA158001F8CC3 /* MotionDevice.swift */; };
+		CE0601642A7FA158001F8CC3 /* MotionDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601622A7FA158001F8CC3 /* MotionDevice.swift */; };
 		CE085D4D2A7706B800AFD68B /* MacGameUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */; };
 		CE085D4F2A7735AE00AFD68B /* MacMetalViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */; };
 		CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */; };
@@ -440,6 +442,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		CE0601622A7FA158001F8CC3 /* MotionDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionDevice.swift; sourceTree = "<group>"; };
 		CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacGameUIView.swift; sourceTree = "<group>"; };
 		CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMetalViewWrapper.swift; sourceTree = "<group>"; };
 		CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotasConfig.swift; sourceTree = "<group>"; };
@@ -706,6 +709,7 @@
 				CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */,
 				CE7C3D282A2F377B009C1E6F /* Joystick.swift */,
 				CE0EF72A2A4705FE00F54A2C /* Throttle.swift */,
+				CE0601622A7FA158001F8CC3 /* MotionDevice.swift */,
 			);
 			path = Input;
 			sourceTree = "<group>";
@@ -1254,6 +1258,7 @@
 				CE452FB52A7CB435001945B9 /* Keyboard.swift in Sources */,
 				CE452FD72A7CB489001945B9 /* ObjModel.swift in Sources */,
 				CE452FBF2A7CB459001945B9 /* Graphics.swift in Sources */,
+				CE0601642A7FA158001F8CC3 /* MotionDevice.swift in Sources */,
 				CE452FD82A7CB489001945B9 /* Submesh.swift in Sources */,
 				CE452FC42A7CB46F001945B9 /* DepthStencilStateLibrary.swift in Sources */,
 				CE452FB32A7CB42E001945B9 /* GameTime.swift in Sources */,
@@ -1353,6 +1358,7 @@
 				CE2ED2C0299CBB3C00C81F47 /* SkyBox.swift in Sources */,
 				CE3BFF7E28E2FCF50014A752 /* Node.swift in Sources */,
 				CE7F484E28B771550082B197 /* TimeIt.swift in Sources */,
+				CE0601632A7FA158001F8CC3 /* MotionDevice.swift in Sources */,
 				CE76930B29DD5A4400BBC718 /* ObjModel.swift in Sources */,
 				CE56921828EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
 				CE3BFF9F28E452480014A752 /* DebugCamera.swift in Sources */,
