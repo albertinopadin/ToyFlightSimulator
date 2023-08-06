@@ -11,6 +11,7 @@ struct MetalViewWrapper: NSViewRepresentable {
     typealias NSViewType = GameView
     
     var viewSize: CGSize
+    var refreshRate: FPS
     
     func makeCoordinator() -> Renderer {
         guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
@@ -40,7 +41,7 @@ struct MetalViewWrapper: NSViewRepresentable {
         gameView.clearColor = Preferences.ClearColor
         gameView.colorPixelFormat = Preferences.MainPixelFormat
         gameView.framebufferOnly = false
-        gameView.preferredFramesPerSecond = 120
+        gameView.preferredFramesPerSecond = refreshRate.rawValue
         gameView.drawableSize = viewSize
         
         context.coordinator.metalView = gameView
@@ -53,6 +54,7 @@ struct MetalViewWrapper: NSViewRepresentable {
         let newSize = nsView.bounds.size
         if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
             context.coordinator.metalView.drawableSize = nsView.bounds.size
+            context.coordinator.metalView.preferredFramesPerSecond = refreshRate.rawValue
         }
     }
 }
@@ -60,6 +62,6 @@ struct MetalViewWrapper: NSViewRepresentable {
 struct MetalViewWrapper_Previews: PreviewProvider {
     static var previewSize = CGSize(width: 1920, height: 1080)
     static var previews: some View {
-        MetalViewWrapper(viewSize: previewSize)
+        MetalViewWrapper(viewSize: previewSize, refreshRate: .FPS_120)
     }
 }

@@ -7,16 +7,26 @@
 
 import SwiftUI
 
+enum FPS: Int, CaseIterable, Identifiable {
+    case FPS_30 = 30
+    case FPS_60 = 60
+    case FPS_120 = 120
+    
+    var id: Int { rawValue }
+}
+
 struct GameUIView: View {
     private let minViewSize = CGSize(width: 640, height: 480)
     
     @State private var viewSize: CGSize = .zero
     @State private var shouldDisplayMenu: Bool = false
+    @State private var framesPerSecond: FPS = .FPS_120
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                MetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize))
+                MetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize),
+                                 refreshRate: framesPerSecond)
                 
                 if shouldDisplayMenu {
                     ZStack(alignment: .top) {
@@ -26,16 +36,18 @@ struct GameUIView: View {
                                 .foregroundColor(.white)
                                 .padding(10.0)
                             
-                            VStack {
-                                Menu("Refresh Rate") {
-                                    Text("60 FPS")
-                                    Text("120 FPS")
-                                }
-                                .frame(maxWidth: 200)
-                                
-                                HStack {
+                            GeometryReader { geometry in
+                                VStack(spacing: 20) {
                                     Text("Toy Flight Simulator")
                                         .font(.largeTitle)
+                                    
+                                    Picker("Refresh Rate: ", selection: $framesPerSecond) {
+                                        ForEach(FPS.allCases) { fps in
+                                            Text("\(fps.rawValue)").tag(fps).padding()
+                                        }
+                                    }
+                                    .pickerStyle(.segmented)
+                                    .frame(maxWidth: geometry.size.width * 0.35)
                                     
                                     Button("Reset Scene") {
                                         print("Pressed SwiftUI Reset Scene button")
@@ -43,14 +55,13 @@ struct GameUIView: View {
                                     }
                                     .background(.blue)
                                 }
+                                .frame(width: geometry.size.width - 10, height: geometry.size.height - 10, alignment: .top)
                                 .foregroundColor(.white)
-                                .padding(5)
+                                .padding(10)
                             }
                         }
                         .frame(width: viewSize.width - (viewSize.width * 0.10),
-                                height: viewSize.height - (viewSize.height * 0.10),
-                                alignment: .center)
-                        .foregroundColor(.black.opacity(0.9))
+                                height: viewSize.height - (viewSize.height * 0.10))                        .foregroundColor(.black.opacity(0.95))
                         
                     }
                     .frame(width: viewSize.width,
