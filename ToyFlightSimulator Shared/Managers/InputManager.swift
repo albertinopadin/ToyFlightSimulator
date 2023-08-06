@@ -39,13 +39,18 @@ struct KeycodeValue {
 
 class InputManager {
     static var controller: Controller!
+    
+    #if os(macOS)
     static var joystick: Joystick!
     static var throttle: Throttle!
+    #endif
     
     public static func Initialize() {
         controller = Controller()
+        #if os(macOS)
         joystick = Joystick()
         throttle = Throttle()
+        #endif
     }
     
     // TODO: These three computed properties follow the same initialization pattern.
@@ -66,6 +71,7 @@ class InputManager {
         return cds
     }()
     
+    #if os(macOS)
     static var joystickDiscreteState: [JoystickDiscreteState: Bool] = {
         var jbp: [JoystickDiscreteState: Bool] = [JoystickDiscreteState: Bool]()
         for jb in JoystickDiscreteState.allCases {
@@ -73,7 +79,7 @@ class InputManager {
         }
         return jbp
     }()
-    
+    #endif
     
     static var pitchAxisFlipped: Bool = true
     
@@ -121,6 +127,7 @@ class InputManager {
         .DropBomb: .LeftTrigger
     ]
     
+    #if os(macOS)
     static var joystickMappingsContinuous: [ContinuousCommand: JoystickContinuousState] = [
         .Pitch: .JoystickY,
         .Roll: .JoystickX
@@ -134,6 +141,7 @@ class InputManager {
     static var throttleMappingContinuous: [ContinuousCommand: ThrottleContinuousState] = [
         .MoveFwd: .ThrottleRight
     ]
+    #endif
     
     static func handleKeyPressedDebounced(keyCode: Keycodes, _ handleBlock: () -> Void) {
         guard let _ = keysPressed[keyCode] else {
@@ -169,6 +177,7 @@ class InputManager {
         }
     }
     
+    #if os(macOS)
     static func handleJoystickDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
         guard let joystickState = joystickMappingsDiscrete[command] else { return }
         
@@ -190,6 +199,7 @@ class InputManager {
             }
         }
     }
+    #endif
     
     static func DiscreteCommand(_ command: DiscreteCommand) -> Bool {
         var hasCommand: Bool = false
@@ -204,11 +214,13 @@ class InputManager {
             hasCommand = hasCommand || controllerValue > .zero
         }
         
+        #if os(macOS)
         if joystick.present {
             guard let joystickState = joystickMappingsDiscrete[command] else { return hasCommand }
             guard let joystickValue = joystick.joystickDiscreteStateMapping[joystickState] else { return hasCommand }
             hasCommand = hasCommand || joystickValue
         }
+        #endif
         
         return hasCommand
     }
@@ -218,6 +230,7 @@ class InputManager {
         return controller.getState(controllerState)
     }
     
+    #if os(macOS)
     static func GetJoystickContinuousValue(_ command: ContinuousCommand) -> Float {
         guard let joystickState = joystickMappingsContinuous[command] else { return .zero }
         guard let joystickValue = joystick.joystickContinuousStateMapping[joystickState] else { return .zero }
@@ -229,6 +242,7 @@ class InputManager {
         guard let throttleValue = throttle.throttleContinuousStateMapping[throttleState] else { return .zero }
         return throttleValue
     }
+    #endif
     
     static func ContinuousCommand(_ command: ContinuousCommand) -> Float {
         var continuousValue: Float = .zero
@@ -250,6 +264,7 @@ class InputManager {
             }
         }
         
+        #if os(macOS)
         if joystick.present {
             let joystickValue = GetJoystickContinuousValue(command)
             if command == .Pitch && !pitchAxisFlipped {
@@ -263,6 +278,7 @@ class InputManager {
             let throttleValue = GetThrottleContinuousValue(command)
             continuousValue += throttleValue
         }
+        #endif
         
         return continuousValue
     }
@@ -275,9 +291,11 @@ class InputManager {
             handleControllerDiscreteCommandDebounced(command: command, handleBlock)
         }
         
+        #if os(macOS)
         if joystick.present {
             handleJoystickDiscreteCommandDebounced(command: command, handleBlock)
         }
+        #endif
     }
     
     static func HasMultiInputCommand(command: SpecialUserCommand, _ handleBlock: () -> Void) {

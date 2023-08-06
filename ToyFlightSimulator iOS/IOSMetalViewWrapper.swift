@@ -1,14 +1,14 @@
 //
-//  MetalViewWrapper.swift
-//  ToyFlightSimulator macOS
+//  IOSMetalViewWrapper.swift
+//  ToyFlightSimulator iOS
 //
-//  Created by Albertino Padin on 7/30/23.
+//  Created by Albertino Padin on 8/5/23.
 //
 
 import SwiftUI
 
-struct MetalViewWrapper: NSViewRepresentable {
-    typealias NSViewType = GameView
+struct IOSMetalViewWrapper: UIViewRepresentable {
+    typealias UIViewType = GameView
     
     var viewSize: CGSize
     var refreshRate: FPS
@@ -19,8 +19,9 @@ struct MetalViewWrapper: NSViewRepresentable {
         }
         
         Engine.Start(device: defaultDevice)
-//        let rendererType: RendererType = .OrderIndependentTransparency
-        let rendererType: RendererType = .SinglePassDeferredLighting
+        let rendererType: RendererType = .OrderIndependentTransparency
+        // TODO: Single Pass renderer doesn't work due to a memory issue:
+//        let rendererType: RendererType = .SinglePassDeferredLighting
         let renderer = initRenderer(type: rendererType)
         return renderer
     }
@@ -35,7 +36,7 @@ struct MetalViewWrapper: NSViewRepresentable {
         }
     }
     
-    func makeNSView(context: Context) -> GameView {
+    func makeUIView(context: Context) -> GameView {
         let gameView = GameView()
         gameView.device = Engine.Device
         gameView.clearColor = Preferences.ClearColor
@@ -50,7 +51,7 @@ struct MetalViewWrapper: NSViewRepresentable {
         return gameView
     }
     
-    func updateNSView(_ nsView: NSViewType, context: Context) {
+    func updateUIView(_ nsView: UIViewType, context: Context) {
         let newSize = nsView.bounds.size
         if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
             context.coordinator.metalView.drawableSize = nsView.bounds.size
@@ -59,9 +60,10 @@ struct MetalViewWrapper: NSViewRepresentable {
     }
 }
 
-struct MetalViewWrapper_Previews: PreviewProvider {
+struct IOSMetalViewWrapper_Previews: PreviewProvider {
     static var previewSize = CGSize(width: 1920, height: 1080)
     static var previews: some View {
-        MetalViewWrapper(viewSize: previewSize, refreshRate: .FPS_120)
+        IOSMetalViewWrapper(viewSize: previewSize, refreshRate: .FPS_120)
     }
 }
+

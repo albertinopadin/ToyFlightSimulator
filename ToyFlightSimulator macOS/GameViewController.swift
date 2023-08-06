@@ -22,7 +22,7 @@ import SwiftUI
 //}
 
 // Our macOS specific view controller
-class GameViewController: NSHostingController<GameUIView> {
+class GameViewController: NSHostingController<MacGameUIView> {
     var gameView: GameView!
     var renderer: Renderer!
     // TODO:
@@ -34,7 +34,7 @@ class GameViewController: NSHostingController<GameUIView> {
     
     required init?(coder: NSCoder) {
         print("GameViewController init with coder")
-        super.init(coder: coder, rootView: GameUIView())
+        super.init(coder: coder, rootView: MacGameUIView())
     }
     
     override func viewDidLoad() {

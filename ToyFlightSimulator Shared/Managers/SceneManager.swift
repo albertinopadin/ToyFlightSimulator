@@ -14,7 +14,7 @@ enum SceneType {
 }
 
 class SceneManager {
-    public static var currentScene: Scene?
+    public static var currentScene: GameScene?
     public static var paused: Bool = false
     
     private static var _sceneType: SceneType?

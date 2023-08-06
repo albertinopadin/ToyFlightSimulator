@@ -1,5 +1,5 @@
 //
-//  GameUIView.swift
+//  MacGameUIView.swift
 //  ToyFlightSimulator macOS
 //
 //  Created by Albertino Padin on 7/30/23.
@@ -7,15 +7,7 @@
 
 import SwiftUI
 
-enum FPS: Int, CaseIterable, Identifiable {
-    case FPS_30 = 30
-    case FPS_60 = 60
-    case FPS_120 = 120
-    
-    var id: Int { rawValue }
-}
-
-struct GameUIView: View {
+struct MacGameUIView: View {
     private let minViewSize = CGSize(width: 640, height: 480)
     
     @State private var viewSize: CGSize = .zero
@@ -25,8 +17,8 @@ struct GameUIView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                MetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize),
-                                 refreshRate: framesPerSecond)
+                MacMetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize),
+                                    refreshRate: framesPerSecond)
                 
                 if shouldDisplayMenu {
                     ZStack(alignment: .top) {
@@ -103,8 +95,8 @@ struct GameUIView: View {
     }
 }
 
-struct GameUIView_Previews: PreviewProvider {
+struct MacGameUIView_Previews: PreviewProvider {
     static var previews: some View {
-        GameUIView()
+        MacGameUIView()
     }
 }

@@ -8,7 +8,7 @@
 import MetalKit
 
 // Scene is head node of scene graph
-class Scene: Node {
+class GameScene: Node {
     private var _cameraManager = CameraManager()
     private var _lightManager = LightManager()
     private var _sceneConstants = SceneConstants()

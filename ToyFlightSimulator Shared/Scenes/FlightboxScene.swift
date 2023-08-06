@@ -5,7 +5,7 @@
 //  Created by Albertino Padin on 10/4/22.
 //
 
-class FlightboxScene: Scene {
+class FlightboxScene: GameScene {
     var attachedCamera = AttachedCamera()
     
     var f16: F16!

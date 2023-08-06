@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CE085D4D2A7706B800AFD68B /* GameUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4C2A7706B800AFD68B /* GameUIView.swift */; };
-		CE085D4F2A7735AE00AFD68B /* MetalViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4E2A7735AE00AFD68B /* MetalViewWrapper.swift */; };
+		CE085D4D2A7706B800AFD68B /* MacGameUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */; };
+		CE085D4F2A7735AE00AFD68B /* MacMetalViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */; };
 		CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */; };
 		CE0EF7292A46CF9F00F54A2C /* HIDDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7282A46CF9F00F54A2C /* HIDDevice.swift */; };
 		CE0EF72B2A4705FE00F54A2C /* Throttle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF72A2A4705FE00F54A2C /* Throttle.swift */; };
@@ -82,7 +82,6 @@
 		CE3BFF2C28E0575A0014A752 /* InstancedShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2B28E057590014A752 /* InstancedShaders.metal */; };
 		CE3BFF3228E058C30014A752 /* Mouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF3128E058C30014A752 /* Mouse.swift */; };
 		CE3BFF3428E058CE0014A752 /* Keycodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF3328E058CE0014A752 /* Keycodes.swift */; };
-		CE3BFF3628E058DC0014A752 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF3528E058DC0014A752 /* Keyboard.swift */; };
 		CE3BFF3728E059920014A752 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF3528E058DC0014A752 /* Keyboard.swift */; };
 		CE3BFF3828E059950014A752 /* Keycodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF3328E058CE0014A752 /* Keycodes.swift */; };
 		CE3BFF3928E059980014A752 /* Mouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF3128E058C30014A752 /* Mouse.swift */; };
@@ -127,9 +126,9 @@
 		CE3BFF7228E1B4E10014A752 /* TextureLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7128E1B4E10014A752 /* TextureLibrary.swift */; };
 		CE3BFF7328E1B4E10014A752 /* TextureLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7128E1B4E10014A752 /* TextureLibrary.swift */; };
 		CE3BFF7428E1B4E10014A752 /* TextureLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7128E1B4E10014A752 /* TextureLibrary.swift */; };
-		CE3BFF7628E2FC0A0014A752 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7528E2FC0A0014A752 /* Scene.swift */; };
-		CE3BFF7728E2FC0A0014A752 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7528E2FC0A0014A752 /* Scene.swift */; };
-		CE3BFF7828E2FC0A0014A752 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7528E2FC0A0014A752 /* Scene.swift */; };
+		CE3BFF7628E2FC0A0014A752 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7528E2FC0A0014A752 /* GameScene.swift */; };
+		CE3BFF7728E2FC0A0014A752 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7528E2FC0A0014A752 /* GameScene.swift */; };
+		CE3BFF7828E2FC0A0014A752 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7528E2FC0A0014A752 /* GameScene.swift */; };
 		CE3BFF7A28E2FC270014A752 /* SandboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7928E2FC270014A752 /* SandboxScene.swift */; };
 		CE3BFF7B28E2FC270014A752 /* SandboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7928E2FC270014A752 /* SandboxScene.swift */; };
 		CE3BFF7C28E2FC270014A752 /* SandboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7928E2FC270014A752 /* SandboxScene.swift */; };
@@ -294,7 +293,7 @@
 		CE452FFB2A7CB4A6001945B9 /* Aircraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED2982998A14200C81F47 /* Aircraft.swift */; };
 		CE452FFC2A7CB4A6001945B9 /* GameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8528E2FD9C0014A752 /* GameObject.swift */; };
 		CE452FFD2A7CB4AC001945B9 /* SandboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7928E2FC270014A752 /* SandboxScene.swift */; };
-		CE452FFE2A7CB4AC001945B9 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7528E2FC0A0014A752 /* Scene.swift */; };
+		CE452FFE2A7CB4AC001945B9 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7528E2FC0A0014A752 /* GameScene.swift */; };
 		CE452FFF2A7CB4AC001945B9 /* FlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */; };
 		CE4530002A7CB4AC001945B9 /* FreeCamFlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */; };
 		CE4530012A7CB4B1001945B9 /* MathUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F484528B770EB0082B197 /* MathUtils.swift */; };
@@ -308,6 +307,14 @@
 		CE4530092A7CB4BA001945B9 /* TimeIt.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F484D28B771550082B197 /* TimeIt.swift */; };
 		CE45300A2A7CB4BA001945B9 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F483D28B770B00082B197 /* Colors.swift */; };
 		CE45300B2A7CB4BA001945B9 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE7F483528B76FE30082B197 /* Shaders.metal */; };
+		CE45304A2A7F3823001945B9 /* ToyFlightSimulatorIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4530492A7F3823001945B9 /* ToyFlightSimulatorIOSApp.swift */; };
+		CE45304B2A7F3A91001945B9 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF3528E058DC0014A752 /* Keyboard.swift */; };
+		CE45304D2A7F3E36001945B9 /* IOSGameUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE45304C2A7F3E36001945B9 /* IOSGameUIView.swift */; };
+		CE45304F2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE45304E2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift */; };
+		CE4530512A7F3EBF001945B9 /* FPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4530502A7F3EBF001945B9 /* FPS.swift */; };
+		CE4530522A7F3EBF001945B9 /* FPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4530502A7F3EBF001945B9 /* FPS.swift */; };
+		CE4530532A7F3EBF001945B9 /* FPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4530502A7F3EBF001945B9 /* FPS.swift */; };
+		CE4530542A7F3EC3001945B9 /* FPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4530502A7F3EBF001945B9 /* FPS.swift */; };
 		CE56921828EA9F7B00F6B42C /* AttachedCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */; };
 		CE56921928EA9F7B00F6B42C /* AttachedCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */; };
 		CE56921A28EA9F7B00F6B42C /* AttachedCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */; };
@@ -328,10 +335,6 @@
 		CE76931C29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
 		CE76931D29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
 		CE7C3D292A2F377B009C1E6F /* Joystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7C3D282A2F377B009C1E6F /* Joystick.swift */; };
-		CE7F47F728B758920082B197 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F47F628B758920082B197 /* AppDelegate.swift */; };
-		CE7F47F928B758920082B197 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F47F828B758920082B197 /* GameViewController.swift */; };
-		CE7F47FC28B758920082B197 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CE7F47FA28B758920082B197 /* Main.storyboard */; };
-		CE7F47FF28B758920082B197 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CE7F47FD28B758920082B197 /* LaunchScreen.storyboard */; };
 		CE7F480728B758920082B197 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F480628B758920082B197 /* AppDelegate.swift */; };
 		CE7F480928B758920082B197 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F480828B758920082B197 /* GameViewController.swift */; };
 		CE7F480C28B758920082B197 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CE7F480A28B758920082B197 /* Main.storyboard */; };
@@ -437,8 +440,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		CE085D4C2A7706B800AFD68B /* GameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameUIView.swift; sourceTree = "<group>"; };
-		CE085D4E2A7735AE00AFD68B /* MetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalViewWrapper.swift; sourceTree = "<group>"; };
+		CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacGameUIView.swift; sourceTree = "<group>"; };
+		CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMetalViewWrapper.swift; sourceTree = "<group>"; };
 		CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotasConfig.swift; sourceTree = "<group>"; };
 		CE0EF7282A46CF9F00F54A2C /* HIDDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDDevice.swift; sourceTree = "<group>"; };
 		CE0EF72A2A4705FE00F54A2C /* Throttle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Throttle.swift; sourceTree = "<group>"; };
@@ -485,7 +488,7 @@
 		CE3BFF6828E1B4C10014A752 /* Assets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assets.swift; sourceTree = "<group>"; };
 		CE3BFF6D28E1B4D70014A752 /* MeshLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshLibrary.swift; sourceTree = "<group>"; };
 		CE3BFF7128E1B4E10014A752 /* TextureLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextureLibrary.swift; sourceTree = "<group>"; };
-		CE3BFF7528E2FC0A0014A752 /* Scene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scene.swift; sourceTree = "<group>"; };
+		CE3BFF7528E2FC0A0014A752 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
 		CE3BFF7928E2FC270014A752 /* SandboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SandboxScene.swift; sourceTree = "<group>"; };
 		CE3BFF7D28E2FCF50014A752 /* Node.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Node.swift; sourceTree = "<group>"; };
 		CE3BFF8128E2FD6F0014A752 /* Renderable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderable.swift; sourceTree = "<group>"; };
@@ -516,6 +519,10 @@
 		CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkySphere.swift; sourceTree = "<group>"; };
 		CE452FA42A7CA810001945B9 /* ToyFlightSimulatorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ToyFlightSimulatorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE452FAD2A7CAC0F001945B9 /* NodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeTests.swift; sourceTree = "<group>"; };
+		CE4530492A7F3823001945B9 /* ToyFlightSimulatorIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToyFlightSimulatorIOSApp.swift; sourceTree = "<group>"; };
+		CE45304C2A7F3E36001945B9 /* IOSGameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSGameUIView.swift; sourceTree = "<group>"; };
+		CE45304E2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSMetalViewWrapper.swift; sourceTree = "<group>"; };
+		CE4530502A7F3EBF001945B9 /* FPS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FPS.swift; sourceTree = "<group>"; };
 		CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachedCamera.swift; sourceTree = "<group>"; };
 		CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightboxScene.swift; sourceTree = "<group>"; };
 		CE76930A29DD5A4400BBC718 /* ObjModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjModel.swift; sourceTree = "<group>"; };
@@ -528,10 +535,6 @@
 		CE7C3D2A2A30400A009C1E6F /* ToyFlightSimulator-macOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ToyFlightSimulator-macOS-Info.plist"; sourceTree = SOURCE_ROOT; };
 		CE7F47EE28B758920082B197 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE7F47F328B758920082B197 /* ToyFlightSimulator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToyFlightSimulator.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		CE7F47F628B758920082B197 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		CE7F47F828B758920082B197 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
-		CE7F47FB28B758920082B197 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		CE7F47FE28B758920082B197 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		CE7F480428B758920082B197 /* ToyFlightSimulator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToyFlightSimulator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE7F480628B758920082B197 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		CE7F480828B758920082B197 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
@@ -652,7 +655,7 @@
 		CE3BFF2E28E057F50014A752 /* Scenes */ = {
 			isa = PBXGroup;
 			children = (
-				CE3BFF7528E2FC0A0014A752 /* Scene.swift */,
+				CE3BFF7528E2FC0A0014A752 /* GameScene.swift */,
 				CE3BFF7928E2FC270014A752 /* SandboxScene.swift */,
 				CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */,
 				CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */,
@@ -869,10 +872,9 @@
 			isa = PBXGroup;
 			children = (
 				CE7C3D272A2F303D009C1E6F /* ToyFlightSimulator-iOS-Info.plist */,
-				CE7F47F628B758920082B197 /* AppDelegate.swift */,
-				CE7F47F828B758920082B197 /* GameViewController.swift */,
-				CE7F47FA28B758920082B197 /* Main.storyboard */,
-				CE7F47FD28B758920082B197 /* LaunchScreen.storyboard */,
+				CE4530492A7F3823001945B9 /* ToyFlightSimulatorIOSApp.swift */,
+				CE45304C2A7F3E36001945B9 /* IOSGameUIView.swift */,
+				CE45304E2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift */,
 			);
 			path = "ToyFlightSimulator iOS";
 			sourceTree = "<group>";
@@ -896,8 +898,8 @@
 				CE7F481828B758920082B197 /* GameViewController.swift */,
 				CE7F481A28B758920082B197 /* Main.storyboard */,
 				CE7F481D28B758920082B197 /* ToyFlightSimulator_macOS.entitlements */,
-				CE085D4C2A7706B800AFD68B /* GameUIView.swift */,
-				CE085D4E2A7735AE00AFD68B /* MetalViewWrapper.swift */,
+				CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */,
+				CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */,
 			);
 			path = "ToyFlightSimulator macOS";
 			sourceTree = "<group>";
@@ -957,6 +959,7 @@
 				CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */,
 				CE886A4A298525D00013062D /* SinglePassDeferredLightingRenderer.swift */,
 				CE2ED2BB299CB8AA00C81F47 /* RendererType.swift */,
+				CE4530502A7F3EBF001945B9 /* FPS.swift */,
 			);
 			path = Display;
 			sourceTree = "<group>";
@@ -1094,7 +1097,6 @@
 				CE3BFFE428E573E40014A752 /* skysphere.obj in Resources */,
 				CE2ED26C2997F02D00C81F47 /* F16s.bmp in Resources */,
 				CE3BFFD628E573D60014A752 /* normal_example.png in Resources */,
-				CE7F47FC28B758920082B197 /* Main.storyboard in Resources */,
 				CE2ED2722997F02D00C81F47 /* F16t.bmp in Resources */,
 				CE2ED2B42998A45700C81F47 /* Specular.jpg in Resources */,
 				CE2ED28E2998A0D600C81F47 /* FA-18F.obj in Resources */,
@@ -1111,7 +1113,6 @@
 				CE7F482728B758920082B197 /* Assets.xcassets in Resources */,
 				CE2ED2B22998A45700C81F47 /* Dirty.jpg in Resources */,
 				CE2ED2B62998A45700C81F47 /* Bumpmap.jpg in Resources */,
-				CE7F47FF28B758920082B197 /* LaunchScreen.storyboard in Resources */,
 				CE3BFFE128E573E40014A752 /* clouds.png in Resources */,
 				CE2ED26F2997F02D00C81F47 /* f16.mtl in Resources */,
 			);
@@ -1224,7 +1225,7 @@
 				CE452FFC2A7CB4A6001945B9 /* GameObject.swift in Sources */,
 				CE452FC12A7CB460001945B9 /* ShaderLibrary.swift in Sources */,
 				CE452FC72A7CB47F001945B9 /* SkySphereShaders.metal in Sources */,
-				CE452FFE2A7CB4AC001945B9 /* Scene.swift in Sources */,
+				CE452FFE2A7CB4AC001945B9 /* GameScene.swift in Sources */,
 				CE452FB02A7CB3FF001945B9 /* RenderPipelineStateLibrary.swift in Sources */,
 				CE452FC82A7CB47F001945B9 /* OrderIndependentTransparencyShaders.metal in Sources */,
 				CE452FC92A7CB47F001945B9 /* PointLights.metal in Sources */,
@@ -1238,6 +1239,7 @@
 				CE452FCF2A7CB47F001945B9 /* InstancedShaders.metal in Sources */,
 				CE4530092A7CB4BA001945B9 /* TimeIt.swift in Sources */,
 				CE452FEB2A7CB4A6001945B9 /* GBU16.swift in Sources */,
+				CE4530542A7F3EC3001945B9 /* FPS.swift in Sources */,
 				CE452FDE2A7CB48E001945B9 /* MeshLibrary.swift in Sources */,
 				CE452FD92A7CB489001945B9 /* Assets.swift in Sources */,
 				CE452FE32A7CB4A0001945B9 /* DebugCamera.swift in Sources */,
@@ -1301,6 +1303,7 @@
 				CE3BFF8228E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CE3BFF2C28E0575A0014A752 /* InstancedShaders.metal in Sources */,
 				CEB84E7B2A24AC3300BEF778 /* Controller.swift in Sources */,
+				CE45304A2A7F3823001945B9 /* ToyFlightSimulatorIOSApp.swift in Sources */,
 				CE76931B29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
 				CE76931329DD5F5500BBC718 /* SingleSMMesh.swift in Sources */,
 				CE2ED259299223A900C81F47 /* Mesh.swift in Sources */,
@@ -1308,6 +1311,7 @@
 				CEED93A329E2B3EE0020DC53 /* AIM120.swift in Sources */,
 				CE3BFF4728E1B05A0014A752 /* SceneManager.swift in Sources */,
 				CEAB3838297CCB2F0087F7CB /* OITRenderer.swift in Sources */,
+				CE45304B2A7F3A91001945B9 /* Keyboard.swift in Sources */,
 				CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CE886A3B29825CB80013062D /* Skybox.metal in Sources */,
 				CE3BFF2128E055BB0014A752 /* Engine.swift in Sources */,
@@ -1317,11 +1321,11 @@
 				CE3BFFA328E452F00014A752 /* LightObject.swift in Sources */,
 				CE3BFFAB28E453310014A752 /* Quad.swift in Sources */,
 				CE3E526328E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
+				CE45304D2A7F3E36001945B9 /* IOSGameUIView.swift in Sources */,
 				CE3BFF5C28E1B2BC0014A752 /* VertexDescriptorLibrary.swift in Sources */,
 				CE886A3F2983BFB30013062D /* PointLights.metal in Sources */,
-				CE3BFF7628E2FC0A0014A752 /* Scene.swift in Sources */,
+				CE3BFF7628E2FC0A0014A752 /* GameScene.swift in Sources */,
 				CE3BFF7A28E2FC270014A752 /* SandboxScene.swift in Sources */,
-				CE7F47F928B758920082B197 /* GameViewController.swift in Sources */,
 				CE3BFF2428E056230014A752 /* Graphics.swift in Sources */,
 				CE3BFF6E28E1B4D70014A752 /* MeshLibrary.swift in Sources */,
 				CE3DD2E929F37FE500787E53 /* Missile.swift in Sources */,
@@ -1344,7 +1348,6 @@
 				CE3BFF6928E1B4C10014A752 /* Assets.swift in Sources */,
 				CE56921C28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
 				CEFC6E3129531C0C009B692B /* Triangle.swift in Sources */,
-				CE3BFF3628E058DC0014A752 /* Keyboard.swift in Sources */,
 				CE886A432984FFB00013062D /* GBuffer.metal in Sources */,
 				CE3BFF6428E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE2ED2C0299CBB3C00C81F47 /* SkyBox.swift in Sources */,
@@ -1355,14 +1358,15 @@
 				CE3BFF9F28E452480014A752 /* DebugCamera.swift in Sources */,
 				CE3BFF3428E058CE0014A752 /* Keycodes.swift in Sources */,
 				CEAB3840297CDE770087F7CB /* ShadowShaders.metal in Sources */,
-				CE7F47F728B758920082B197 /* AppDelegate.swift in Sources */,
 				CE2ED2972998A10400C81F47 /* F18.swift in Sources */,
 				CEED93A729E3B2600020DC53 /* AircraftStore.swift in Sources */,
+				CE4530512A7F3EBF001945B9 /* FPS.swift in Sources */,
 				CE3BFFA728E453260014A752 /* Sun.swift in Sources */,
 				CE7F483A28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE3DD2F12A02309300787E53 /* GBU16.swift in Sources */,
 				CE7F48D328BCB4DD0082B197 /* GameView.swift in Sources */,
 				CEFC6F26296B61CA009B692B /* Line.swift in Sources */,
+				CE45304F2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift in Sources */,
 				CE886A472985007A0013062D /* DirectionalLight.metal in Sources */,
 				CEFC6F22296B4200009B692B /* Sphere.swift in Sources */,
 				CE7F483628B76FE30082B197 /* Shaders.metal in Sources */,
@@ -1387,8 +1391,9 @@
 				CE76931C29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
 				CE3DD2F62A039B0700787E53 /* FuelTank.swift in Sources */,
 				CE3E526428E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
+				CE4530522A7F3EBF001945B9 /* FPS.swift in Sources */,
 				CE3BFF5928E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
-				CE3BFF7728E2FC0A0014A752 /* Scene.swift in Sources */,
+				CE3BFF7728E2FC0A0014A752 /* GameScene.swift in Sources */,
 				CE3BFF6128E1B2D10014A752 /* DepthStencilStateLibrary.swift in Sources */,
 				CE3BFF5D28E1B2BC0014A752 /* VertexDescriptorLibrary.swift in Sources */,
 				CE3DD2F22A02309300787E53 /* GBU16.swift in Sources */,
@@ -1486,7 +1491,7 @@
 				CE7F484028B770B00082B197 /* Colors.swift in Sources */,
 				CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */,
-				CE085D4D2A7706B800AFD68B /* GameUIView.swift in Sources */,
+				CE085D4D2A7706B800AFD68B /* MacGameUIView.swift in Sources */,
 				CE7F485028B771550082B197 /* TimeIt.swift in Sources */,
 				CE2ED29B2998A38000C81F47 /* Aircraft.swift in Sources */,
 				CE3BFF5A28E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
@@ -1498,7 +1503,7 @@
 				CE3BFFAD28E453310014A752 /* Quad.swift in Sources */,
 				CE3E526528E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
 				CE3BFF5E28E1B2BC0014A752 /* VertexDescriptorLibrary.swift in Sources */,
-				CE3BFF7828E2FC0A0014A752 /* Scene.swift in Sources */,
+				CE3BFF7828E2FC0A0014A752 /* GameScene.swift in Sources */,
 				CE3BFF7C28E2FC270014A752 /* SandboxScene.swift in Sources */,
 				CE3BFF3C28E059AD0014A752 /* Graphics.swift in Sources */,
 				CE886A412983BFB30013062D /* PointLights.metal in Sources */,
@@ -1517,7 +1522,7 @@
 				CE3BFF9D28E4523D0014A752 /* Camera.swift in Sources */,
 				CE3BFF9428E451E50014A752 /* CameraManager.swift in Sources */,
 				CEB2DFD229D437990048D292 /* FreeCamFlightboxScene.swift in Sources */,
-				CE085D4F2A7735AE00AFD68B /* MetalViewWrapper.swift in Sources */,
+				CE085D4F2A7735AE00AFD68B /* MacMetalViewWrapper.swift in Sources */,
 				CE3BFF5628E1B29C0014A752 /* ShaderLibrary.swift in Sources */,
 				CE3BFF7428E1B4E10014A752 /* TextureLibrary.swift in Sources */,
 				CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */,
@@ -1525,6 +1530,7 @@
 				CE3DD2EF2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE886A4D298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */,
 				CE3BFF9828E451F00014A752 /* LightManager.swift in Sources */,
+				CE4530532A7F3EBF001945B9 /* FPS.swift in Sources */,
 				CE56921E28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
 				CE3BFF3728E059920014A752 /* Keyboard.swift in Sources */,
 				CEFC6E3329531C0C009B692B /* Triangle.swift in Sources */,
@@ -1566,22 +1572,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		CE7F47FA28B758920082B197 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				CE7F47FB28B758920082B197 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		CE7F47FD28B758920082B197 /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				CE7F47FE28B758920082B197 /* Base */,
-			);
-			name = LaunchScreen.storyboard;
-			sourceTree = "<group>";
-		};
 		CE7F480A28B758920082B197 /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1783,8 +1773,8 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UIStatusBarHidden = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1816,8 +1806,8 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UIStatusBarHidden = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

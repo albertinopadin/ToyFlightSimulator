@@ -7,12 +7,9 @@
 
 import MetalKit
 
-class GameView: MTKView {
-//    override func performKeyEquivalent(with event: NSEvent) -> Bool {
-//        return true
-//    }
-}
+class GameView: MTKView { }
 
+#if os(macOS)
 // Keyboard input
 extension GameView {
     override var acceptsFirstResponder: Bool { return true }
@@ -92,3 +89,4 @@ extension GameView {
         self.addTrackingArea(area)
     }
 }
+#endif

@@ -124,7 +124,9 @@ class Submesh {
         descriptor.width = 8
         descriptor.height = 8
         descriptor.mipmapLevelCount = 1
+        #if os(macOS)
         descriptor.storageMode = .managed
+        #endif
         descriptor.arrayLength = 1
         descriptor.sampleCount = 1
         descriptor.cpuCacheMode = .writeCombined

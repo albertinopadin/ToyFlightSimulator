@@ -5,7 +5,7 @@
 //  Created by Albertino Padin on 9/27/22.
 //
 
-class SandboxScene: Scene {
+class SandboxScene: GameScene {
     var debugCamera = DebugCamera()
     var f16Camera = AttachedCamera()
     var sun = Sun()

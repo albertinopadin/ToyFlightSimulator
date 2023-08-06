@@ -5,7 +5,7 @@
 //  Created by Albertino Padin on 3/29/23.
 //
 
-class FreeCamFlightboxScene: Scene {
+class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
     var f18 = F18()
     var sun = Sun(meshType: .Sphere)
