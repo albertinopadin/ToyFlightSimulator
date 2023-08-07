@@ -6,6 +6,7 @@
 //
 //  Heavily inspired by https://github.com/Arti3DPlayer/USBDeviceSwift
 
+#if os(macOS)
 import IOKit.hid
 import Foundation
 
@@ -353,4 +354,4 @@ class HIDDevice {
         }
     }
 }
-
+#endif

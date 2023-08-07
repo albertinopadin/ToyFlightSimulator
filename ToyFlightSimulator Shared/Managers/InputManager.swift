@@ -47,6 +47,7 @@ class InputManager {
     
     #if os(iOS)
     static var motion: MotionDevice!
+    static var useMotion: Bool = true
     #endif
     
     public static func Initialize() {
@@ -306,7 +307,7 @@ class InputManager {
         #endif
         
         #if os(iOS)
-        if motion.present {
+        if useMotion && motion.present {
             let motionValue = GetMotionContinuousValue(command)
             continuousValue += motionValue
         }

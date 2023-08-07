@@ -10,6 +10,7 @@ import SwiftUI
 struct IOSGameUIView: View {
     @State private var shouldDisplayMenu: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
+    @State private var useMotionControl: Bool = true
     
     var body: some View {
         GeometryReader { geometry in
@@ -30,19 +31,32 @@ struct IOSGameUIView: View {
                                     Text("Toy Flight Simulator")
                                         .font(.largeTitle)
                                     
-                                    Picker("Refresh Rate: ", selection: $framesPerSecond) {
-                                        ForEach(FPS.allCases) { fps in
-                                            Text("\(fps.rawValue)").tag(fps).padding()
+                                    HStack {
+                                        Text("Refresh Rate: ")
+                                            .padding()
+                                        
+                                        Picker("Refresh Rate: ", selection: $framesPerSecond) {
+                                            ForEach(FPS.allCases) { fps in
+                                                Text("\(fps.rawValue)").tag(fps).padding()
+                                            }
                                         }
+                                        .pickerStyle(.segmented)
+                                        .frame(maxWidth: geometry.size.width * 0.35)
                                     }
-                                    .pickerStyle(.segmented)
-                                    .frame(maxWidth: geometry.size.width * 0.35)
                                     
-                                    Button("Reset Scene") {
+                                    Toggle("Use Motion Control", isOn: $useMotionControl)
+                                        .frame(maxWidth: geometry.size.width * 0.35)
+                                        .padding()
+                                        .onChange(of: useMotionControl) { newValue in
+                                            InputManager.useMotion = newValue
+                                        }
+                                    
+                                    Button("Reset Scene", role: .destructive) {
                                         print("Pressed SwiftUI Reset Scene button")
                                         SceneManager.ResetScene()
                                     }
-                                    .background(.blue)
+                                    .padding()
+                                    .foregroundColor(.red)
                                 }
                                 .frame(width: geometry.size.width - 10, height: geometry.size.height - 10, alignment: .top)
                                 .foregroundColor(.white)
