@@ -52,10 +52,15 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
     }
     
     func updateUIView(_ nsView: UIViewType, context: Context) {
-        let newSize = nsView.bounds.size
-        if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
-            context.coordinator.metalView.drawableSize = nsView.bounds.size
-            context.coordinator.metalView.preferredFramesPerSecond = refreshRate.rawValue
+        context.coordinator.metalView.preferredFramesPerSecond = refreshRate.rawValue
+        
+        // Query renderer to see if screen size has already been set: (is there a better way to do this...?)
+        if !((context.coordinator as? OITRenderer)?.alreadySetScreenSize ?? false) {
+            let newSize = nsView.bounds.size
+            print("[updateUIView] newSize: \(newSize)")
+            if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
+                context.coordinator.metalView.drawableSize = nsView.bounds.size
+            }
         }
     }
 }

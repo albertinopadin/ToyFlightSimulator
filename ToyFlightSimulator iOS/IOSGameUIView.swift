@@ -81,6 +81,7 @@ struct IOSGameUIView: View {
                 print("Geometry changed size: \(newSize)")
             }
         }
+        .ignoresSafeArea()
         .onAppear {
             Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { _ in
                 InputManager.handleKeyPressedDebounced(keyCode: .escape) {
@@ -127,6 +128,13 @@ struct IOSGameUIView_Previews: PreviewProvider {
 extension CGPoint {
     static func -(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
         return CGPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
+    }
+}
+
+extension CGSize {
+    static func *(lhs: CGSize, scalar: Int) -> CGSize {
+        let floatScalar = CGFloat(scalar)
+        return CGSize(width: lhs.width * floatScalar, height: lhs.height * floatScalar)
     }
 }
 

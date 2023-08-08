@@ -10,7 +10,7 @@ import MetalKit
 class GameView: MTKView { }
 
 #if os(macOS)
-// Keyboard input
+// Keyboard input on Mac
 extension GameView {
     override var acceptsFirstResponder: Bool { return true }
     

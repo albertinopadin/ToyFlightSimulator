@@ -8,6 +8,9 @@
 import MetalKit
 
 class OITRenderer: Renderer {
+    #if os(iOS)
+    public var alreadySetScreenSize: Bool = false  // Hack to prevent iOS from lowering resolution
+    #endif
     private var _forwardRenderPassDescriptor: MTLRenderPassDescriptor!
     private let _optimalTileSize: MTLSize = MTLSize(width: 32, height: 16, depth: 1)
     
@@ -139,11 +142,24 @@ class OITRenderer: Renderer {
     }
     
     override func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        print("[SinglePass drawableSizeWillChange] new size: \(size)")
+        print("[OIT drawableSizeWillChange] new size: \(size)")
         if !size.width.isNaN && !size.height.isNaN && !size.width.isInfinite && !size.height.isInfinite {
+            #if os(iOS)
+            if !alreadySetScreenSize {
+                updateScreenSize(size: size)
+                createForwardRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
+                                                  screenHeight: Int(Renderer.ScreenSize.y))
+                alreadySetScreenSize = true
+            } else {
+                print("[OIT drawableSizeWillChange] Already set screen size on iOS")
+            }
+            #endif
+            
+            #if os(macOS)
             updateScreenSize(size: size)
             createForwardRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
                                               screenHeight: Int(Renderer.ScreenSize.y))
+            #endif
         }
     }
 }
