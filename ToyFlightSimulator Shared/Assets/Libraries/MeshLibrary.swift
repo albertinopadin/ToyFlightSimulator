@@ -13,6 +13,7 @@ enum MeshType {
     case Quad_Custom
     case Cube_Custom
     case Sphere_Custom
+    case Capsule_Custom
     
     case Sphere
     case Quad
@@ -33,6 +34,7 @@ class MeshLibrary: Library<MeshType, Mesh> {
         _library.updateValue(QuadMesh(), forKey: .Quad_Custom)
         _library.updateValue(CubeMesh(), forKey: .Cube_Custom)
         _library.updateValue(SphereMesh(), forKey: .Sphere_Custom)
+        _library.updateValue(CapsuleMesh(), forKey: .Capsule_Custom)
         _library.updateValue(SkyboxMesh(), forKey: .Skybox)
         
         _library.updateValue(Mesh(modelName: "sphere"), forKey: .Sphere)
@@ -275,6 +277,35 @@ class SphereMesh: Mesh {
         }
         
         super.init(mtkMesh: mtkMesh, mdlMesh: mdlSphere)
+    }
+}
+
+class CapsuleMesh: Mesh {
+    private var _color: float4
+    
+    init(radius: Float = 1.0, length: Float = 5.0, color: float4 = WHITE_COLOR) {
+        _color = color
+        
+        let allocator = MTKMeshBufferAllocator(device: Engine.Device)
+        let mdlCapsule = MDLMesh(capsuleWithExtent: float3(radius, length, radius),
+                                 cylinderSegments: vector_uint2(32, 32),
+                                 hemisphereSegments: 32,
+                                 inwardNormals: false,
+                                 geometryType: .triangles,
+                                 allocator: allocator)
+        
+        mdlCapsule.vertexDescriptor = Graphics.MDLVertexDescriptors[.Base]
+        let mtkMesh = try! MTKMesh(mesh: mdlCapsule, device: Engine.Device)
+        
+        let vertexLayoutStride = (mtkMesh.vertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride
+        for meshBuffer in mtkMesh.vertexBuffers {
+            for i in 0..<mtkMesh.vertexCount {
+                let colorPosition = (i * vertexLayoutStride) + float4.stride
+                meshBuffer.buffer.contents().advanced(by: colorPosition).copyMemory(from: &_color, byteCount: float4.stride)
+            }
+        }
+        
+        super.init(mtkMesh: mtkMesh, mdlMesh: mdlCapsule)
     }
 }
 

@@ -12,6 +12,7 @@ class FlightboxScene: GameScene {
     var f18: F18!
     var sun = Sun(meshType: .Sphere)
     var quad = Quad()
+    var capsule = CapsuleObject()
     
     override func buildScene() {
 //        f16 = F16(camera: attachedCamera)
@@ -26,6 +27,10 @@ class FlightboxScene: GameScene {
         f18.setPositionY(10)
 //        f18.setScale(0.5)
         addChild(f18)
+        
+        capsule.setPosition(-8, 10, -10)
+        capsule.rotateZ(Float(90).toRadians)
+        addChild(capsule)
         
 //        let f16Sphere = Sphere()
 //        var f16SphereMaterial = Material()

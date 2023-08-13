@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		CE0601632A7FA158001F8CC3 /* MotionDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601622A7FA158001F8CC3 /* MotionDevice.swift */; };
 		CE0601642A7FA158001F8CC3 /* MotionDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601622A7FA158001F8CC3 /* MotionDevice.swift */; };
+		CE0601662A83796B001F8CC3 /* CapsuleObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601652A83796B001F8CC3 /* CapsuleObject.swift */; };
+		CE0601672A83796B001F8CC3 /* CapsuleObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601652A83796B001F8CC3 /* CapsuleObject.swift */; };
+		CE0601682A83796B001F8CC3 /* CapsuleObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601652A83796B001F8CC3 /* CapsuleObject.swift */; };
 		CE085D4D2A7706B800AFD68B /* MacGameUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */; };
 		CE085D4F2A7735AE00AFD68B /* MacMetalViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */; };
 		CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */; };
@@ -443,6 +446,7 @@
 
 /* Begin PBXFileReference section */
 		CE0601622A7FA158001F8CC3 /* MotionDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionDevice.swift; sourceTree = "<group>"; };
+		CE0601652A83796B001F8CC3 /* CapsuleObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleObject.swift; sourceTree = "<group>"; };
 		CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacGameUIView.swift; sourceTree = "<group>"; };
 		CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMetalViewWrapper.swift; sourceTree = "<group>"; };
 		CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotasConfig.swift; sourceTree = "<group>"; };
@@ -694,6 +698,7 @@
 				CEED93A229E2B3EE0020DC53 /* AIM120.swift */,
 				CE3DD2F02A02309300787E53 /* GBU16.swift */,
 				CE3DD2F42A039B0700787E53 /* FuelTank.swift */,
+				CE0601652A83796B001F8CC3 /* CapsuleObject.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -1251,6 +1256,7 @@
 				CE452FB92A7CB445001945B9 /* HIDDevice.swift in Sources */,
 				CE452FBD2A7CB453001945B9 /* Engine.swift in Sources */,
 				CE452FF32A7CB4A6001945B9 /* Droppable.swift in Sources */,
+				CE0601682A83796B001F8CC3 /* CapsuleObject.swift in Sources */,
 				CE452FBE2A7CB456001945B9 /* Preferences.swift in Sources */,
 				CE452FC02A7CB45C001945B9 /* GBufferTextures.swift in Sources */,
 				CE452FEA2A7CB4A6001945B9 /* Sidewinder.swift in Sources */,
@@ -1289,6 +1295,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE3BFF6028E1B2D10014A752 /* DepthStencilStateLibrary.swift in Sources */,
+				CE0601662A83796B001F8CC3 /* CapsuleObject.swift in Sources */,
 				CE3BFF2A28E056EB0014A752 /* BaseShaders.metal in Sources */,
 				CE3BFF1F28E054880014A752 /* MetalTypes.swift in Sources */,
 				CE3DD2F52A039B0700787E53 /* FuelTank.swift in Sources */,
@@ -1510,6 +1517,7 @@
 				CE3E526528E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
 				CE3BFF5E28E1B2BC0014A752 /* VertexDescriptorLibrary.swift in Sources */,
 				CE3BFF7828E2FC0A0014A752 /* GameScene.swift in Sources */,
+				CE0601672A83796B001F8CC3 /* CapsuleObject.swift in Sources */,
 				CE3BFF7C28E2FC270014A752 /* SandboxScene.swift in Sources */,
 				CE3BFF3C28E059AD0014A752 /* Graphics.swift in Sources */,
 				CE886A412983BFB30013062D /* PointLights.metal in Sources */,

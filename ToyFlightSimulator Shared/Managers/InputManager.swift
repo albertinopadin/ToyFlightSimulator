@@ -39,6 +39,7 @@ struct KeycodeValue {
 
 class InputManager {
     static var controller: Controller!
+    static var pitchAxisFlipped: Bool = true
     
     #if os(macOS)
     static var joystick: Joystick!
@@ -90,8 +91,6 @@ class InputManager {
         return jbp
     }()
     #endif
-    
-    static var pitchAxisFlipped: Bool = true
     
     static var keyboardMappingsContinuous: [ContinuousCommand: [KeycodeValue]] = [
         .MoveFwd: [KeycodeValue(keyCode: .w, value: 1.0), KeycodeValue(keyCode: .s, value: -1.0)],
@@ -158,6 +157,14 @@ class InputManager {
         .Pitch: .MotionPitch,
         .Roll: .MotionRoll,
         .Yaw: .MotionYaw
+    ]
+    
+    static var touchContinuousState: [ContinuousCommand: Float] = [
+        .MoveFwd: 0.0,
+        .MoveSide: 0.0,
+        .Pitch: 0.0,
+        .Roll: 0.0,
+        .Yaw: 0.0
     ]
     #endif
     
@@ -311,10 +318,18 @@ class InputManager {
             let motionValue = GetMotionContinuousValue(command)
             continuousValue += motionValue
         }
+        
+        continuousValue += touchContinuousState[command] ?? 0.0
         #endif
         
         return continuousValue
     }
+    
+    #if os(iOS)
+    static func ZeroMotionDevice() {
+        motion.zeroDevice()
+    }
+    #endif
     
     static func HasDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
         guard let key = keyboardMappingsDiscrete[command] else { return }
@@ -352,4 +367,10 @@ class InputManager {
             }
         }
     }
+    
+    #if os(iOS)
+    static func SetContinuous(command: ContinuousCommand, value: Float) {
+        touchContinuousState[command] = value
+    }
+    #endif
 }

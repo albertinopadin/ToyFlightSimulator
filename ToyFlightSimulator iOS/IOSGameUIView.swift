@@ -12,11 +12,40 @@ struct IOSGameUIView: View {
     @State private var framesPerSecond: FPS = .FPS_120
     @State private var useMotionControl: Bool = true
     
+    @State private var throttle: Float = 0.0
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 IOSMetalViewWrapper(viewSize: geometry.size,
                                     refreshRate: framesPerSecond)
+                
+                Button("Zero Controls") {
+                    print("Pressed Zero")
+                    InputManager.ZeroMotionDevice()
+                }
+                .padding()
+                .foregroundColor(.green)
+                .background(.white)
+                .clipShape(Capsule())
+                .position(x: 120, y: 70)
+                
+                Slider(value: $throttle, label: {
+                    Label("Throttle", systemImage: "airplane")
+                }, minimumValueLabel: {
+                    Text("Idle")
+                        .rotationEffect(Angle(degrees: 90))
+                }, maximumValueLabel: {
+                    Text("Max")
+                        .rotationEffect(Angle(degrees: 90))
+                })
+                .rotationEffect(Angle(degrees: -90))
+                .frame(width: 200, height: 100)
+                .position(x: 120, y: geometry.size.height - 100)
+                .onChange(of: throttle) { newValue in
+                    print("Throttle changed: \(newValue)")
+                    InputManager.SetContinuous(command: .MoveFwd, value: throttle)
+                }
                 
                 if shouldDisplayMenu {
                     ZStack(alignment: .top) {
@@ -83,6 +112,8 @@ struct IOSGameUIView: View {
         }
         .ignoresSafeArea()
         .onAppear {
+            InputManager.ZeroMotionDevice()
+            
             Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { _ in
                 InputManager.handleKeyPressedDebounced(keyCode: .escape) {
                     toggleMenu()
