@@ -5,9 +5,8 @@
 //  Created by Albertino Padin on 6/6/23.
 //  Heavily inspired by https://github.com/Arti3DPlayer/USBDeviceSwift
 
+#if os(macOS)
 import IOKit.hid
-import Foundation
-
 
 enum JoystickContinuousState {
     case JoystickX
@@ -198,3 +197,4 @@ class Joystick: HIDDevice {
         }
     }
 }
+#endif

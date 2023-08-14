@@ -8,8 +8,6 @@
 
 #if os(macOS)
 import IOKit.hid
-import Foundation
-
 
 public extension Notification.Name {
     static let HIDDeviceDataReceived = Notification.Name("HIDDeviceDataReceived")

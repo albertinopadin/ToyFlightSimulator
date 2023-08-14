@@ -10,17 +10,20 @@ import SwiftUI
 struct IOSGameUIView: View {
     @State private var shouldDisplayMenu: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
-    @State private var useMotionControl: Bool = true
+    @State private var useMotionControl: Bool = false
     
     @State private var throttle: Float = 0.0
+    @GestureState private var joystickPosition: CGSize = .zero
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 IOSMetalViewWrapper(viewSize: geometry.size,
                                     refreshRate: framesPerSecond)
+//                IOSMetalViewWrapper(viewSize: UIScreen.main.bounds.size,
+//                                    refreshRate: framesPerSecond)
                 
-                Button("Zero Controls") {
+                Button("Zero Motion Device") {
                     print("Pressed Zero")
                     InputManager.ZeroMotionDevice()
                 }
@@ -39,6 +42,7 @@ struct IOSGameUIView: View {
                     Text("Max")
                         .rotationEffect(Angle(degrees: 90))
                 })
+                .background(.gray.opacity(0.25))
                 .rotationEffect(Angle(degrees: -90))
                 .frame(width: 200, height: 100)
                 .position(x: 120, y: geometry.size.height - 100)
@@ -46,6 +50,23 @@ struct IOSGameUIView: View {
                     print("Throttle changed: \(newValue)")
                     InputManager.SetContinuous(command: .MoveFwd, value: throttle)
                 }
+                
+                Circle()
+                    .fill(.gray.opacity(0.5))
+                    .frame(width: 50, height: 50)
+                    .position(x: geometry.size.width - 120, y: geometry.size.height - 100)
+                    .offset(joystickPosition)
+                    .gesture(
+                        DragGesture().updating($joystickPosition) { value, state, transaction in
+                            state = value.translation
+                        }
+                    )
+                    .onChange(of: joystickPosition) { newValue in
+                        print("Joystick position changed: \(newValue)")
+                        // Height / Width are flipped as we're in landscape:
+                        InputManager.SetContinuous(command: .Pitch, value: Float(newValue.height / 100).clamped(to: -1...1))
+                        InputManager.SetContinuous(command: .Roll, value: Float(newValue.width / 100).clamped(to: -1...1))
+                    }
                 
                 if shouldDisplayMenu {
                     ZStack(alignment: .top) {
@@ -103,15 +124,15 @@ struct IOSGameUIView: View {
                     .zIndex(100)  // Setting zIndex so transition is always on top
                 }
             }
-            .onAppear {
+            .onAppear(perform: {
                 print("On Appear geometry size: \(geometry.size)")
-            }
+            })
             .onChange(of: geometry.size) { newSize in
                 print("Geometry changed size: \(newSize)")
             }
         }
         .ignoresSafeArea()
-        .onAppear {
+        .onAppear(perform: {
             InputManager.ZeroMotionDevice()
             
             Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { _ in
@@ -119,7 +140,12 @@ struct IOSGameUIView: View {
                     toggleMenu()
                 }
             }
-        }
+            
+            Timer.scheduledTimer(withTimeInterval: 0.2, repeats: false) { _ in
+                InputManager.ZeroMotionDevice()
+                InputManager.useMotion = useMotionControl
+            }
+        })
         .gesture(
             DragGesture(minimumDistance: 100)
                 .onEnded { drag in
@@ -169,3 +195,12 @@ extension CGSize {
     }
 }
 
+extension Comparable {
+//    func clamp(min: Self, max: Self) -> Self {
+//        return min(max(self, min), max)
+//    }
+    
+    func clamped(to limits: ClosedRange<Self>) -> Self {
+        return min(max(self, limits.lowerBound), limits.upperBound)
+    }
+}

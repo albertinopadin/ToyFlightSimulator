@@ -12,6 +12,7 @@
 		CE0601662A83796B001F8CC3 /* CapsuleObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601652A83796B001F8CC3 /* CapsuleObject.swift */; };
 		CE0601672A83796B001F8CC3 /* CapsuleObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601652A83796B001F8CC3 /* CapsuleObject.swift */; };
 		CE0601682A83796B001F8CC3 /* CapsuleObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601652A83796B001F8CC3 /* CapsuleObject.swift */; };
+		CE0601692A89F039001F8CC3 /* Joystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7C3D282A2F377B009C1E6F /* Joystick.swift */; };
 		CE085D4D2A7706B800AFD68B /* MacGameUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */; };
 		CE085D4F2A7735AE00AFD68B /* MacMetalViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */; };
 		CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */; };
@@ -231,7 +232,6 @@
 		CE452FB82A7CB440001945B9 /* Controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB84E7A2A24AC3300BEF778 /* Controller.swift */; };
 		CE452FB92A7CB445001945B9 /* HIDDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7282A46CF9F00F54A2C /* HIDDevice.swift */; };
 		CE452FBA2A7CB44A001945B9 /* HotasConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */; };
-		CE452FBB2A7CB44D001945B9 /* Joystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7C3D282A2F377B009C1E6F /* Joystick.swift */; };
 		CE452FBC2A7CB451001945B9 /* Throttle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF72A2A4705FE00F54A2C /* Throttle.swift */; };
 		CE452FBD2A7CB453001945B9 /* Engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2028E055BB0014A752 /* Engine.swift */; };
 		CE452FBE2A7CB456001945B9 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF4228E1AEF80014A752 /* Preferences.swift */; };
@@ -1216,6 +1216,7 @@
 				CE452FCD2A7CB47F001945B9 /* ShadowShaders.metal in Sources */,
 				CE452FE82A7CB4A6001945B9 /* Line.swift in Sources */,
 				CE452FCA2A7CB47F001945B9 /* Shared.metal in Sources */,
+				CE0601692A89F039001F8CC3 /* Joystick.swift in Sources */,
 				CE452FDD2A7CB48E001945B9 /* TextureLibrary.swift in Sources */,
 				CE452FEE2A7CB4A6001945B9 /* Triangle.swift in Sources */,
 				CE45300B2A7CB4BA001945B9 /* Shaders.metal in Sources */,
@@ -1278,7 +1279,6 @@
 				CE4530022A7CB4B1001945B9 /* Transform.swift in Sources */,
 				CE45300A2A7CB4BA001945B9 /* Colors.swift in Sources */,
 				CE452FAE2A7CAC0F001945B9 /* NodeTests.swift in Sources */,
-				CE452FBB2A7CB44D001945B9 /* Joystick.swift in Sources */,
 				CE452FB12A7CB424001945B9 /* ModelIO+Extensions.swift in Sources */,
 				CE452FC52A7CB46F001945B9 /* SamplerStateLibrary.swift in Sources */,
 				CE452FE52A7CB4A0001945B9 /* AttachedCamera.swift in Sources */,

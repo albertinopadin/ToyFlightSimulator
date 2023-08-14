@@ -6,9 +6,8 @@
 //
 //  Heavily inspired by https://github.com/Arti3DPlayer/USBDeviceSwift
 
+#if os(macOS)
 import IOKit.hid
-import Foundation
-
 
 enum ThrottleContinuousState {
     case ThrottleLeft
@@ -149,4 +148,4 @@ class Throttle: HIDDevice {
         }
     }
 }
-
+#endif
