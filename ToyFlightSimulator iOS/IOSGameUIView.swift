@@ -42,6 +42,11 @@ struct IOSGameUIView: View {
                     Text("Max")
                         .rotationEffect(Angle(degrees: 90))
                 })
+                .gesture(
+                    DragGesture().onChanged { gesture in
+                        throttle = Float(gesture.translation.width / 200).clamped(to: 0...1)
+                    }
+                )
                 .background(.gray.opacity(0.25))
                 .rotationEffect(Angle(degrees: -90))
                 .frame(width: 200, height: 100)
