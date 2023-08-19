@@ -34,7 +34,7 @@ class FreeCamFlightboxScene: GameScene {
 //        camera.setPosition(4, 12, 20)
         camera.setPosition(12, 14, 5)
 //        camera.setRotationX(Float(15).toRadians)
-        camera.setRotationY(Float(-75).toRadians)
+        camera.setRotationY(Float(75).toRadians)
         addCamera(camera)
         
 //        f18.setScale(0.25)  // TODO: setScale doesn't work

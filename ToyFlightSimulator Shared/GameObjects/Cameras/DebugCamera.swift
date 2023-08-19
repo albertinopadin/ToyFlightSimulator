@@ -24,9 +24,6 @@ class DebugCamera: Camera {
             self.moveAlongVector(getRightVector(), distance: -GameTime.DeltaTime * _moveSpeed)
         }
         
-//        self.moveAlongVector(getRightVector(),
-//                             distance: InputManager.ContinuousCommand(.MoveSide) * GameTime.DeltaTime * _moveSpeed)
-        
         if Keyboard.IsKeyPressed(.upArrow) {
             self.moveAlongVector(getUpVector(), distance: GameTime.DeltaTime * _moveSpeed)
         }
@@ -35,47 +32,40 @@ class DebugCamera: Camera {
             self.moveAlongVector(getUpVector(), distance: -GameTime.DeltaTime * _moveSpeed)
         }
         
-//        self.moveAlongVector(getUpVector(), distance: InputManager.ContinuousCommand(.Pitch) * GameTime.DeltaTime * _moveSpeed)
-        
-        if Keyboard.IsKeyPressed(.w) {
-            self.moveAlongVector(getFwdVector(), distance: -GameTime.DeltaTime * _moveSpeed)
+        if Keyboard.IsKeyPressed(.a) {
+            self.moveAlongVector(getRightVector(), distance: -GameTime.DeltaTime * _moveSpeed)
         }
 
-        if Keyboard.IsKeyPressed(.s) {
-            self.moveAlongVector(getFwdVector(), distance: GameTime.DeltaTime * _moveSpeed)
+        if Keyboard.IsKeyPressed(.d) {
+            self.moveAlongVector(getRightVector(), distance: GameTime.DeltaTime * _moveSpeed)
         }
         
-//        self.moveAlongVector(getFwdVector(), distance: InputManager.ContinuousCommand(.MoveFwd) * GameTime.DeltaTime * _moveSpeed)
+        self.rotate(deltaAngle: -InputManager.ContinuousCommand(.Pitch) * GameTime.DeltaTime * _turnSpeed * 10.0,
+                    axis: getRightVector())
+        self.rotate(deltaAngle: -InputManager.ContinuousCommand(.Roll) * GameTime.DeltaTime * _turnSpeed * 15.0,
+                    axis: getUpVector())
         
-        self.rotateY(-InputManager.ContinuousCommand(.Yaw) * GameTime.DeltaTime * _turnSpeed * 8.0)
-//        self.rotate(deltaAngle: -InputManager.ContinuousCommand(.Yaw) * GameTime.DeltaTime * _turnSpeed * 8.0,
-//                    axis: getUpVector())
-        
-//        let deltaMove = GameTime.DeltaTime * _moveSpeed
-//        let deltaTurn = GameTime.DeltaTime * _turnSpeed * 8.0
-//
-//        self.rotateZ(deltaTurn * InputManager.ContinuousCommand(.Roll))
-//
-//        self.rotateX(deltaTurn * InputManager.ContinuousCommand(.Pitch))
-//
-//        self.rotateY(deltaTurn * InputManager.ContinuousCommand(.Yaw))
-//
-//        moveAlongVector(getFwdVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveFwd))
-//
-//        moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
+        self.moveAlongVector(getRightVector(),
+                             distance: InputManager.ContinuousCommand(.MoveSide) * GameTime.DeltaTime * _moveSpeed)
+        self.moveAlongVector(getFwdVector(),
+                             distance: InputManager.ContinuousCommand(.MoveFwd) * GameTime.DeltaTime * _moveSpeed)
         
         
         if Mouse.IsMouseButtonPressed(button: .RIGHT) {
-            self.rotate3Axis(deltaX: -Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed,
-                             deltaY: -Mouse.GetDX() * GameTime.DeltaTime * _turnSpeed,
-                             deltaZ: 0)
+            self.rotate(deltaAngle: Mouse.GetDY() * GameTime.DeltaTime * _turnSpeed, axis: getRightVector())
+            self.rotate(deltaAngle: Mouse.GetDX() * GameTime.DeltaTime * _turnSpeed, axis: getUpVector())
         }
         
         if Mouse.IsMouseButtonPressed(button: .CENTER) {
-            self.moveX(-Mouse.GetDX() * GameTime.DeltaTime * _moveSpeed)
-            self.moveY(Mouse.GetDY() * GameTime.DeltaTime * _moveSpeed)
+            self.moveAlongVector(getRightVector(), distance: -Mouse.GetDX() * GameTime.DeltaTime * _moveSpeed)
+            self.moveAlongVector(getUpVector(), distance: Mouse.GetDY() * GameTime.DeltaTime * _moveSpeed)
         }
         
         self.moveZ(-Mouse.GetDWheel() * 0.1)
+    }
+    
+    override func updateModelMatrix() {
+        super.updateModelMatrix()
+        viewMatrix = modelMatrix.inverse
     }
 }

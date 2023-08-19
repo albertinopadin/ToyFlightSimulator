@@ -131,7 +131,7 @@ class Node {
     }
     
     func moveAlongVector(_ vector: float3, distance: Float) {
-        let to = vector * distance
+        let to = normalize(vector) * distance
         self.move(to)
     }
     

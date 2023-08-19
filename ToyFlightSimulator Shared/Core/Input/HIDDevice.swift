@@ -7,6 +7,7 @@
 //  Heavily inspired by https://github.com/Arti3DPlayer/USBDeviceSwift
 
 #if os(macOS)
+import Foundation
 import IOKit.hid
 
 public extension Notification.Name {
