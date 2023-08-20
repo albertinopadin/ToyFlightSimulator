@@ -2,11 +2,11 @@
 
 Toy Flight Simulator implemented with Swift and Metal
 
+7/20/23 - [Toy Flight Sim 7-20-23 (YouTube demo)](https://www.youtube.com/watch?v=eXpibhLOVw8)
+
 5/31/2023 - Aircraft rotations (pitch, roll, yaw) stabilized, implemented firing missiles and dropping bombs.
 
 [Toy Flight Sim 5-31-23 (YouTube demo)](https://www.youtube.com/watch?v=CXxXFoxoLWA)
-
-[Toy Flight Sim 7-20-23 (YouTube demo)](https://www.youtube.com/watch?v=eXpibhLOVw8)
 
 4/9/2023 - Figured out how to independently render submeshes from F-18 OBJ model (AIM-9 & AIM-120 missles displayed):
 
