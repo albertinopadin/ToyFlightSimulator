@@ -1,6 +1,6 @@
 # ToyFlightSimulator
 
-Toy Flight Simulator implemented with Swift and Metal
+Toy Flight Simulator implemented with Swift, SwiftUI and Metal
 
 ## Devlog
 
