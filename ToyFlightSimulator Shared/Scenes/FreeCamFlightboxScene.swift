@@ -7,7 +7,7 @@
 
 class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
-    var f18 = F18()
+    var jet = F35()
     var sun = Sun(meshType: .Sphere)
     var ground = Quad()
     var sidewinderMissile = Sidewinder()
@@ -20,9 +20,13 @@ class FreeCamFlightboxScene: GameScene {
         
         print("Sun light type: \(sun.type)")
         
-//        let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
-        let sky = SkyBox(skyBoxTextureType: .SkyMap)
-        addChild(sky)
+        if _rendererType == .OrderIndependentTransparency {
+            let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+            addChild(sky)
+        } else {
+            let sky = SkyBox(skyBoxTextureType: .SkyMap)
+            addChild(sky)
+        }
         
         var groundMaterial = Material()
         groundMaterial.color = float4(0.3, 0.7, 0.1, 1.0)
@@ -38,8 +42,9 @@ class FreeCamFlightboxScene: GameScene {
         addCamera(camera)
         
 //        f18.setScale(0.25)  // TODO: setScale doesn't work
-        f18.setPosition(0, 10, 0)
-        addChild(f18)
+        jet.setPosition(0, 10, 0)
+        jet.setScale(0.025)
+        addChild(jet)
         
         sidewinderMissile.setScale(4.0)
         sidewinderMissile.setPosition(0, 2, -12)

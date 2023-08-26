@@ -15,9 +15,16 @@ class Node {
     private var _scale = float3(1, 1, 1)
     
     var parentModelMatrix = matrix_identity_float4x4
+    var ignoreParentScale: Bool = false
     
     private var _modelMatrix = matrix_identity_float4x4
     private var _rotationMatrix = matrix_identity_float4x4
+    
+    internal var _renderPipelineStateType: RenderPipelineStateType = .Opaque
+    internal var _gBufferRenderPipelineStateType: RenderPipelineStateType = .GBufferGenerationBase
+    
+    var parent: Node? = nil
+    var children: [Node] = []
     
     var modelMatrix: matrix_float4x4 {
         set {
@@ -25,6 +32,13 @@ class Node {
         }
         
         get {
+            // TODO: having a condition here is probably bad for performance...
+            if ignoreParentScale, let parentScale = parent?.getScale() {
+                let unscaledParentModelMatrix = parentModelMatrix * Transform.scaleMatrix(float3(x: 1/parentScale.x,
+                                                                                                 y: 1/parentScale.y,
+                                                                                                 z: 1/parentScale.z))
+                return matrix_multiply(unscaledParentModelMatrix, _modelMatrix)
+            }
             return matrix_multiply(parentModelMatrix, _modelMatrix)
         }
     }
@@ -38,12 +52,6 @@ class Node {
             _rotationMatrix = newValue
         }
     }
-    
-    internal var _renderPipelineStateType: RenderPipelineStateType = .Opaque
-    internal var _gBufferRenderPipelineStateType: RenderPipelineStateType = .GBufferGenerationBase
-    
-    var parent: Node? = nil
-    var children: [Node] = []
     
     init(name: String) {
         self._name = name

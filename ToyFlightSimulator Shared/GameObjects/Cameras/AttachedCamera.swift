@@ -15,6 +15,7 @@ class AttachedCamera: Camera {
     
     init() {
         super.init(name: "AttachedCamera", cameraType: .Attached, aspectRatio: Renderer.AspectRatio)
+        self.ignoreParentScale = true
     }
     
     // To make a camera follow a node, invert the camera's model matrix:

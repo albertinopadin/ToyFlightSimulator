@@ -7,26 +7,17 @@
 
 class FlightboxScene: GameScene {
     var attachedCamera = AttachedCamera()
-    
-    var f16: F16!
-    var f18: F18!
     var sun = Sun(meshType: .Sphere)
     var quad = Quad()
     var capsule = CapsuleObject()
     
     override func buildScene() {
-//        f16 = F16(camera: attachedCamera)
-//        addCamera(attachedCamera)
-//        f16.setPositionZ(4)
-//        f16.setPositionY(10)
-//        addChild(f16)
-        
-        f18 = F18(camera: attachedCamera)
+//        let jet = F18(camera: attachedCamera, scale: 0.25)
+        let jet = F35(camera: attachedCamera, scale: 0.1)
         addCamera(attachedCamera)
-        f18.setPositionZ(4)
-        f18.setPositionY(10)
-//        f18.setScale(0.5)
-        addChild(f18)
+        jet.setPositionZ(4)
+        jet.setPositionY(10)
+        addChild(jet)
         
         capsule.setPosition(-8, 10, -10)
         capsule.rotateZ(Float(90).toRadians)
@@ -78,8 +69,7 @@ class FlightboxScene: GameScene {
                              color: float4(1, 0, 0, 1))
         addChild(debugLine)
         
-//        let jetPos = f16.getPosition()
-        let jetPos = f18.getPosition()
+        let jetPos = jet.getPosition()
         
         var sphereBlueMaterial = Material()
         sphereBlueMaterial.color = float4(0.0, 0.0, 1.0, 0.4)

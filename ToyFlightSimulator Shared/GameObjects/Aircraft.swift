@@ -8,8 +8,10 @@
 import MetalKit
 
 class Aircraft: GameObject {
-    private var _camera: AttachedCamera?
     private static let _defaultCameraPositionOffset = float3(0, 2, 4)
+    
+    private var _camera: AttachedCamera?
+//    private var _containerNode: Node?
     
     private var _X: float3!
     private var _Y: float3!
@@ -38,8 +40,13 @@ class Aircraft: GameObject {
         _camera?.setRotationX(Float(-15).toRadians)
         _camera?.setScale(1/scale)  // Set the inverse of parent scale to preserve view matrix
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
+        self.setScale(scale)
         print("[Aircraft init] name: \(name), scale: \(scale)")
-        addChild(camera)
+        addChild(_camera!)
+        
+//        _containerNode = Node(name: "\(name) container")
+//        _containerNode?.addChild(self)
+//        _containerNode?.addChild(camera)
     }
     
     override func doUpdate() {

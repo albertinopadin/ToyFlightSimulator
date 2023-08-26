@@ -274,6 +274,13 @@ class F18: Aircraft {
     let leftWingRearControlSurfaceRotationAxis = float3(-1, 0, 0.15)
     let rightWingRearControlSurfaceRotationAxis = float3(1, 0, 0.15)
     
+    var landingGearDeployed: Bool = false
+    var landingGearDegrees: Float = 0.0
+    var landingGearBeganExtending: Bool = false
+    var landingGearFinishedExtending: Bool = false
+    var landingGearBeganRetracting: Bool = false
+    var landingGearFinishedRetracting: Bool = false
+    
     init() {
         super.init(name: "F-18", meshType: .F18, renderPipelineStateType: .OpaqueMaterial)
         self.shouldUpdate = false  // Don't update when user moves camera
@@ -434,18 +441,6 @@ class F18: Aircraft {
         leftElevon.setRotation(angle: -pitch, axis: X_AXIS)
         rightElevon.setRotation(angle: -pitch, axis: X_AXIS)
         
-//        InputManager.HasDiscreteCommandDebounced(command: .ToggleFlaps) {
-//            if !flapsDeployed {
-//                leftFlap.setRotation(angle: -Float(30).toRadians, axis: leftWingRearControlSurfaceRotationAxis)
-//                rightFlap.setRotation(angle: Float(30).toRadians, axis: rightWingRearControlSurfaceRotationAxis)
-//            } else {
-//                leftFlap.setRotation(angle: 0.0, axis: leftWingRearControlSurfaceRotationAxis)
-//                rightFlap.setRotation(angle: 0.0, axis: rightWingRearControlSurfaceRotationAxis)
-//            }
-//
-//            flapsDeployed.toggle()
-//        }
-        
         InputManager.HasDiscreteCommandDebounced(command: .ToggleFlaps) {
             if !flapsDeployed {
                 flapsBeganExtending = true
@@ -481,6 +476,41 @@ class F18: Aircraft {
             flapsFinishedExtending = false
             flapsBeganRetracting = false
             flapsFinishedRetracting = false
+        }
+        
+        // TODO: Perhaps extract this out to general function:
+        InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) {
+            if !landingGearDeployed {
+                landingGearBeganExtending = true
+            } else {
+                landingGearBeganRetracting = true
+            }
+        }
+        
+        if landingGearBeganExtending {
+            if landingGearDegrees > 0.0 {
+                landingGearDegrees -= 1.0
+                // TODO
+            }
+        } else {
+            landingGearFinishedExtending = true
+        }
+        
+        if landingGearBeganRetracting {
+            if landingGearDegrees < 90.0 {
+                landingGearDegrees += 1.0
+                // TODO
+            }
+        } else {
+            landingGearFinishedRetracting = true
+        }
+        
+        if landingGearFinishedExtending || landingGearFinishedRetracting {
+            landingGearDeployed.toggle()
+            landingGearBeganExtending = false
+            landingGearFinishedExtending = false
+            landingGearBeganRetracting = false
+            landingGearFinishedRetracting = false
         }
         
         // TODO: Figure out how to move individual submesh without re-instantiating it:

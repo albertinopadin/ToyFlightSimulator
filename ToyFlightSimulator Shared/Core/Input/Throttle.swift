@@ -61,7 +61,7 @@ class Throttle: HIDDevice {
             var reportErrors = 0
             
             for elem in hidElements {
-                var valuePtr: UnsafeMutablePointer<Unmanaged<IOHIDValue>> = UnsafeMutablePointer<Unmanaged<IOHIDValue>>.allocate(capacity: 1)
+                let valuePtr: UnsafeMutablePointer<Unmanaged<IOHIDValue>> = UnsafeMutablePointer<Unmanaged<IOHIDValue>>.allocate(capacity: 1)
                 let elemUsagePage: UInt32 = IOHIDElementGetUsagePage(elem)
                 let elemUsage: UInt32 = IOHIDElementGetUsage(elem)
                 let ioReturn: IOReturn = IOHIDDeviceGetValue(hidDevice!, elem, valuePtr)
@@ -79,63 +79,68 @@ class Throttle: HIDDevice {
                     let hidElemPhysicalMin: Int = IOHIDElementGetPhysicalMin(elem)
                     let hidElemPhysicalMax: Int = IOHIDElementGetPhysicalMax(elem)
                     
-                    if let hidElemPage = hidElementPagesUsages[elemUsagePage] {
-                        if let hidElemVal = hidElemPage[elemUsage] {
-                            let isDesktopPage = elemUsagePage == kHIDPage_GenericDesktop
-                            let isButtonPage = elemUsagePage == kHIDPage_Button
-                            let isUnknownPage = elemUsagePage == 255
-                            if !isUnknownPage && hidElemVal != intValue {
-                                print("[Throttle] HID Element changed, elem: \(elem), page: \(elemUsagePage), usage: \(elemUsage), value: \(intValue)")
-                                
-                                print("[Throttle] Is Desktop Page? \(isDesktopPage)")
-                                print("[Throttle] Is Button Page? \(isButtonPage)")
-                                
-                                if isDesktopPage {
-                                    print("[Throttle] Desktop Page; Usage:")
-                                    switch Int(elemUsage) {
-                                        case kHIDUsage_GD_X:
-                                            print("GD_X")
-                                        case kHIDUsage_GD_Y:
-                                            print("GD_Y")
-                                        case kHIDUsage_GD_Z:
-                                            print("GD_Z")
-                                            let rawThrottleVal = hidElemPhysicalMax - intValue
-                                            let throttleVal = getRescaledAxisValue(rawValue: rawThrottleVal,
-                                                                                   minPhysicalValue: hidElemPhysicalMin,
-                                                                                   maxPhysicalValue: hidElemPhysicalMax,
-                                                                                   minAxisValue: Throttle.VALUE_RANGE_MIN,
-                                                                                   maxAxisValue: Throttle.VALUE_RAGE_MAX)
-                                            dQueue.sync {
+                    dQueue.sync {
+                        if let hidElemPage = hidElementPagesUsages[elemUsagePage] {
+                            if let hidElemVal = hidElemPage[elemUsage] {
+                                let isDesktopPage = elemUsagePage == kHIDPage_GenericDesktop
+                                let isButtonPage = elemUsagePage == kHIDPage_Button
+                                let isUnknownPage = elemUsagePage == 255
+                                if !isUnknownPage && hidElemVal != intValue {
+                                    print("[Throttle] HID Element changed, elem: \(elem), page: \(elemUsagePage), usage: \(elemUsage), value: \(intValue)")
+                                    
+                                    print("[Throttle] Is Desktop Page? \(isDesktopPage)")
+                                    print("[Throttle] Is Button Page? \(isButtonPage)")
+                                    
+                                    if isDesktopPage {
+                                        print("[Throttle] Desktop Page; Usage:")
+                                        switch Int(elemUsage) {
+                                            case kHIDUsage_GD_X:
+                                                print("GD_X")
+                                            case kHIDUsage_GD_Y:
+                                                print("GD_Y")
+                                            case kHIDUsage_GD_Z:
+                                                print("GD_Z")
+                                                let rawThrottleVal = hidElemPhysicalMax - intValue
+                                                let throttleVal = getRescaledAxisValue(rawValue: rawThrottleVal,
+                                                                                       minPhysicalValue: hidElemPhysicalMin,
+                                                                                       maxPhysicalValue: hidElemPhysicalMax,
+                                                                                       minAxisValue: Throttle.VALUE_RANGE_MIN,
+                                                                                       maxAxisValue: Throttle.VALUE_RAGE_MAX)
+//                                                dQueue.sync {
+//                                                    throttleContinuousStateMapping[.ThrottleRight] = throttleVal
+//                                                }
+                                            
                                                 throttleContinuousStateMapping[.ThrottleRight] = throttleVal
-                                            }
-                                        case kHIDUsage_GD_Rx:
-                                            print("GD_Rx")
-                                        case kHIDUsage_GD_Ry:
-                                            print("GD_Ry")
-                                        case kHIDUsage_GD_Rz:
-                                            print("GD_Rz")
-                                        case kHIDUsage_GD_Slider:
-                                            print("GD_Slider")
-                                        case kHIDUsage_GD_Dial:
-                                            print("GD_Dial")
-                                        case kHIDUsage_GD_Wheel:
-                                            print("GD_Wheel")
-                                        case kHIDUsage_GD_Hatswitch:
-                                            print("GD_Hatswitch")
-                                        default:
-                                            print("UKNOWN")
+                                            
+                                            case kHIDUsage_GD_Rx:
+                                                print("GD_Rx")
+                                            case kHIDUsage_GD_Ry:
+                                                print("GD_Ry")
+                                            case kHIDUsage_GD_Rz:
+                                                print("GD_Rz")
+                                            case kHIDUsage_GD_Slider:
+                                                print("GD_Slider")
+                                            case kHIDUsage_GD_Dial:
+                                                print("GD_Dial")
+                                            case kHIDUsage_GD_Wheel:
+                                                print("GD_Wheel")
+                                            case kHIDUsage_GD_Hatswitch:
+                                                print("GD_Hatswitch")
+                                            default:
+                                                print("UKNOWN")
+                                        }
                                     }
+                                    
+                                    hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
                                 }
-                                
+                            } else {
                                 hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
                             }
+                            
                         } else {
+                            hidElementPagesUsages[elemUsagePage] = [:]
                             hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
                         }
-                        
-                    } else {
-                        hidElementPagesUsages[elemUsagePage] = [:]
-                        hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
                     }
                 } else {
                     reportErrors += 1

@@ -13,6 +13,51 @@
 		CE0601672A83796B001F8CC3 /* CapsuleObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601652A83796B001F8CC3 /* CapsuleObject.swift */; };
 		CE0601682A83796B001F8CC3 /* CapsuleObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0601652A83796B001F8CC3 /* CapsuleObject.swift */; };
 		CE0601692A89F039001F8CC3 /* Joystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7C3D282A2F377B009C1E6F /* Joystick.swift */; };
+		CE0602012A9364A5001F8CC3 /* F35_JSF.usdc in Resources */ = {isa = PBXBuildFile; fileRef = CE06018F2A9364A3001F8CC3 /* F35_JSF.usdc */; };
+		CE0602022A9364A5001F8CC3 /* F35_JSF.usdc in Resources */ = {isa = PBXBuildFile; fileRef = CE06018F2A9364A3001F8CC3 /* F35_JSF.usdc */; };
+		CE0602032A9364A5001F8CC3 /* F35_JSF.usdc in Resources */ = {isa = PBXBuildFile; fileRef = CE06018F2A9364A3001F8CC3 /* F35_JSF.usdc */; };
+		CE0602042A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601912A9364A4001F8CC3 /* Pilot Normal.jpg */; };
+		CE0602052A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601912A9364A4001F8CC3 /* Pilot Normal.jpg */; };
+		CE0602062A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601912A9364A4001F8CC3 /* Pilot Normal.jpg */; };
+		CE0602072A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601922A9364A4001F8CC3 /* Joint Strike Body Reflection.jpg */; };
+		CE0602082A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601922A9364A4001F8CC3 /* Joint Strike Body Reflection.jpg */; };
+		CE0602092A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601922A9364A4001F8CC3 /* Joint Strike Body Reflection.jpg */; };
+		CE06020A2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601932A9364A4001F8CC3 /* Joint Strike Body Normal.jpg */; };
+		CE06020B2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601932A9364A4001F8CC3 /* Joint Strike Body Normal.jpg */; };
+		CE06020C2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601932A9364A4001F8CC3 /* Joint Strike Body Normal.jpg */; };
+		CE06020D2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601942A9364A4001F8CC3 /* Joint Strike Interior Specular.jpg */; };
+		CE06020E2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601942A9364A4001F8CC3 /* Joint Strike Interior Specular.jpg */; };
+		CE06020F2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601942A9364A4001F8CC3 /* Joint Strike Interior Specular.jpg */; };
+		CE0602102A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601952A9364A4001F8CC3 /* Joint Strike Interior Reflection.jpg */; };
+		CE0602112A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601952A9364A4001F8CC3 /* Joint Strike Interior Reflection.jpg */; };
+		CE0602122A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601952A9364A4001F8CC3 /* Joint Strike Interior Reflection.jpg */; };
+		CE0602132A9364A5001F8CC3 /* Joint Strike Interior Illumination.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601962A9364A4001F8CC3 /* Joint Strike Interior Illumination.jpg */; };
+		CE0602142A9364A5001F8CC3 /* Joint Strike Interior Illumination.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601962A9364A4001F8CC3 /* Joint Strike Interior Illumination.jpg */; };
+		CE0602152A9364A5001F8CC3 /* Joint Strike Interior Illumination.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601962A9364A4001F8CC3 /* Joint Strike Interior Illumination.jpg */; };
+		CE0602162A9364A5001F8CC3 /* Joint Strike Interior Diffuse.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601972A9364A4001F8CC3 /* Joint Strike Interior Diffuse.jpg */; };
+		CE0602172A9364A5001F8CC3 /* Joint Strike Interior Diffuse.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601972A9364A4001F8CC3 /* Joint Strike Interior Diffuse.jpg */; };
+		CE0602182A9364A5001F8CC3 /* Joint Strike Interior Diffuse.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601972A9364A4001F8CC3 /* Joint Strike Interior Diffuse.jpg */; };
+		CE0602192A9364A5001F8CC3 /* Joint Strike Body Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601982A9364A4001F8CC3 /* Joint Strike Body Specular.jpg */; };
+		CE06021A2A9364A5001F8CC3 /* Joint Strike Body Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601982A9364A4001F8CC3 /* Joint Strike Body Specular.jpg */; };
+		CE06021B2A9364A5001F8CC3 /* Joint Strike Body Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601982A9364A4001F8CC3 /* Joint Strike Body Specular.jpg */; };
+		CE06021C2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601992A9364A4001F8CC3 /* Joint Strike Interior Normal.jpg */; };
+		CE06021D2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601992A9364A4001F8CC3 /* Joint Strike Interior Normal.jpg */; };
+		CE06021E2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE0601992A9364A4001F8CC3 /* Joint Strike Interior Normal.jpg */; };
+		CE06021F2A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019A2A9364A4001F8CC3 /* Joint Strike Body Illumination.jpg */; };
+		CE0602202A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019A2A9364A4001F8CC3 /* Joint Strike Body Illumination.jpg */; };
+		CE0602212A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019A2A9364A4001F8CC3 /* Joint Strike Body Illumination.jpg */; };
+		CE0602222A9364A5001F8CC3 /* Joint Strike Body Diffuse.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019B2A9364A4001F8CC3 /* Joint Strike Body Diffuse.jpg */; };
+		CE0602232A9364A5001F8CC3 /* Joint Strike Body Diffuse.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019B2A9364A4001F8CC3 /* Joint Strike Body Diffuse.jpg */; };
+		CE0602242A9364A5001F8CC3 /* Joint Strike Body Diffuse.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019B2A9364A4001F8CC3 /* Joint Strike Body Diffuse.jpg */; };
+		CE0602252A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019C2A9364A4001F8CC3 /* Pilot Diffuse .jpg */; };
+		CE0602262A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019C2A9364A4001F8CC3 /* Pilot Diffuse .jpg */; };
+		CE0602272A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019C2A9364A4001F8CC3 /* Pilot Diffuse .jpg */; };
+		CE0602282A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019D2A9364A4001F8CC3 /* Pilot Specular.jpg */; };
+		CE0602292A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019D2A9364A4001F8CC3 /* Pilot Specular.jpg */; };
+		CE06022A2A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE06019D2A9364A4001F8CC3 /* Pilot Specular.jpg */; };
+		CE06022C2A945E38001F8CC3 /* F35.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE06022B2A945E38001F8CC3 /* F35.swift */; };
+		CE06022D2A945E38001F8CC3 /* F35.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE06022B2A945E38001F8CC3 /* F35.swift */; };
+		CE06022E2A945E38001F8CC3 /* F35.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE06022B2A945E38001F8CC3 /* F35.swift */; };
 		CE085D4D2A7706B800AFD68B /* MacGameUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */; };
 		CE085D4F2A7735AE00AFD68B /* MacMetalViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */; };
 		CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */; };
@@ -447,6 +492,21 @@
 /* Begin PBXFileReference section */
 		CE0601622A7FA158001F8CC3 /* MotionDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionDevice.swift; sourceTree = "<group>"; };
 		CE0601652A83796B001F8CC3 /* CapsuleObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleObject.swift; sourceTree = "<group>"; };
+		CE06018F2A9364A3001F8CC3 /* F35_JSF.usdc */ = {isa = PBXFileReference; lastKnownFileType = file; path = F35_JSF.usdc; sourceTree = "<group>"; };
+		CE0601912A9364A4001F8CC3 /* Pilot Normal.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Pilot Normal.jpg"; sourceTree = "<group>"; };
+		CE0601922A9364A4001F8CC3 /* Joint Strike Body Reflection.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Joint Strike Body Reflection.jpg"; sourceTree = "<group>"; };
+		CE0601932A9364A4001F8CC3 /* Joint Strike Body Normal.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Joint Strike Body Normal.jpg"; sourceTree = "<group>"; };
+		CE0601942A9364A4001F8CC3 /* Joint Strike Interior Specular.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Joint Strike Interior Specular.jpg"; sourceTree = "<group>"; };
+		CE0601952A9364A4001F8CC3 /* Joint Strike Interior Reflection.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Joint Strike Interior Reflection.jpg"; sourceTree = "<group>"; };
+		CE0601962A9364A4001F8CC3 /* Joint Strike Interior Illumination.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Joint Strike Interior Illumination.jpg"; sourceTree = "<group>"; };
+		CE0601972A9364A4001F8CC3 /* Joint Strike Interior Diffuse.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Joint Strike Interior Diffuse.jpg"; sourceTree = "<group>"; };
+		CE0601982A9364A4001F8CC3 /* Joint Strike Body Specular.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Joint Strike Body Specular.jpg"; sourceTree = "<group>"; };
+		CE0601992A9364A4001F8CC3 /* Joint Strike Interior Normal.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Joint Strike Interior Normal.jpg"; sourceTree = "<group>"; };
+		CE06019A2A9364A4001F8CC3 /* Joint Strike Body Illumination.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Joint Strike Body Illumination.jpg"; sourceTree = "<group>"; };
+		CE06019B2A9364A4001F8CC3 /* Joint Strike Body Diffuse.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Joint Strike Body Diffuse.jpg"; sourceTree = "<group>"; };
+		CE06019C2A9364A4001F8CC3 /* Pilot Diffuse .jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Pilot Diffuse .jpg"; sourceTree = "<group>"; };
+		CE06019D2A9364A4001F8CC3 /* Pilot Specular.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Pilot Specular.jpg"; sourceTree = "<group>"; };
+		CE06022B2A945E38001F8CC3 /* F35.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F35.swift; sourceTree = "<group>"; };
 		CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacGameUIView.swift; sourceTree = "<group>"; };
 		CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMetalViewWrapper.swift; sourceTree = "<group>"; };
 		CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotasConfig.swift; sourceTree = "<group>"; };
@@ -615,6 +675,35 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CE06016A2A93646A001F8CC3 /* F35 */ = {
+			isa = PBXGroup;
+			children = (
+				CE06018F2A9364A3001F8CC3 /* F35_JSF.usdc */,
+				CE0601912A9364A4001F8CC3 /* Pilot Normal.jpg */,
+				CE0601922A9364A4001F8CC3 /* Joint Strike Body Reflection.jpg */,
+				CE0601932A9364A4001F8CC3 /* Joint Strike Body Normal.jpg */,
+				CE0601942A9364A4001F8CC3 /* Joint Strike Interior Specular.jpg */,
+				CE0601952A9364A4001F8CC3 /* Joint Strike Interior Reflection.jpg */,
+				CE0601962A9364A4001F8CC3 /* Joint Strike Interior Illumination.jpg */,
+				CE0601972A9364A4001F8CC3 /* Joint Strike Interior Diffuse.jpg */,
+				CE0601982A9364A4001F8CC3 /* Joint Strike Body Specular.jpg */,
+				CE0601992A9364A4001F8CC3 /* Joint Strike Interior Normal.jpg */,
+				CE06019A2A9364A4001F8CC3 /* Joint Strike Body Illumination.jpg */,
+				CE06019B2A9364A4001F8CC3 /* Joint Strike Body Diffuse.jpg */,
+				CE06019C2A9364A4001F8CC3 /* Pilot Diffuse .jpg */,
+				CE06019D2A9364A4001F8CC3 /* Pilot Specular.jpg */,
+				CE0601902A9364A4001F8CC3 /* textures */,
+			);
+			path = F35;
+			sourceTree = "<group>";
+		};
+		CE0601902A9364A4001F8CC3 /* textures */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = textures;
+			sourceTree = "<group>";
+		};
 		CE2ED260299394C900C81F47 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
@@ -689,9 +778,10 @@
 				CEFC6F25296B61CA009B692B /* Line.swift */,
 				CE2ED2BF299CBB3C00C81F47 /* SkyBox.swift */,
 				CE2ED2982998A14200C81F47 /* Aircraft.swift */,
+				CEED93A629E3B2600020DC53 /* AircraftStore.swift */,
 				CE3BFFE728E6A0F40014A752 /* F16.swift */,
 				CE2ED2962998A10400C81F47 /* F18.swift */,
-				CEED93A629E3B2600020DC53 /* AircraftStore.swift */,
+				CE06022B2A945E38001F8CC3 /* F35.swift */,
 				CE3DD2E829F37FE500787E53 /* Missile.swift */,
 				CE3DD2EC2A020F4900787E53 /* Droppable.swift */,
 				CE76931A29DE79CE00BBC718 /* Sidewinder.swift */,
@@ -777,6 +867,7 @@
 		CE3BFFB628E573690014A752 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				CE06016A2A93646A001F8CC3 /* F35 */,
 				CE3BFFB828E573800014A752 /* Quad */,
 				CE3BFFB928E573870014A752 /* Sphere */,
 				CE3BFFB728E573730014A752 /* Skysphere */,
@@ -1095,6 +1186,20 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE06020C2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */,
+				CE06021B2A9364A5001F8CC3 /* Joint Strike Body Specular.jpg in Resources */,
+				CE0602242A9364A5001F8CC3 /* Joint Strike Body Diffuse.jpg in Resources */,
+				CE0602182A9364A5001F8CC3 /* Joint Strike Interior Diffuse.jpg in Resources */,
+				CE06021E2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */,
+				CE0602212A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */,
+				CE0602062A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */,
+				CE0602032A9364A5001F8CC3 /* F35_JSF.usdc in Resources */,
+				CE0602272A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */,
+				CE06020F2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */,
+				CE06022A2A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */,
+				CE0602152A9364A5001F8CC3 /* Joint Strike Interior Illumination.jpg in Resources */,
+				CE0602092A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */,
+				CE0602122A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1106,18 +1211,32 @@
 				CE3BFFE428E573E40014A752 /* skysphere.obj in Resources */,
 				CE2ED26C2997F02D00C81F47 /* F16s.bmp in Resources */,
 				CE3BFFD628E573D60014A752 /* normal_example.png in Resources */,
+				CE0602162A9364A5001F8CC3 /* Joint Strike Interior Diffuse.jpg in Resources */,
 				CE2ED2722997F02D00C81F47 /* F16t.bmp in Resources */,
 				CE2ED2B42998A45700C81F47 /* Specular.jpg in Resources */,
+				CE0602012A9364A5001F8CC3 /* F35_JSF.usdc in Resources */,
 				CE2ED28E2998A0D600C81F47 /* FA-18F.obj in Resources */,
+				CE0602132A9364A5001F8CC3 /* Joint Strike Interior Illumination.jpg in Resources */,
 				CE3BFFD028E573C80014A752 /* sphere.mtl in Resources */,
 				CE2ED2832997F9B700C81F47 /* f16r.mtl in Resources */,
 				CE3BFFD928E573D60014A752 /* quad.mtl in Resources */,
+				CE06021C2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */,
+				CE06020D2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */,
 				CE2ED2762997F09100C81F47 /* f16.obj in Resources */,
 				CE3BFFCD28E573C80014A752 /* sphere.obj in Resources */,
 				CE2ED2B32998A45700C81F47 /* Diffuse.jpg in Resources */,
 				CE3BFFDC28E573D60014A752 /* quad.obj in Resources */,
+				CE06020A2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */,
+				CE0602102A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
+				CE06021F2A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */,
+				CE0602222A9364A5001F8CC3 /* Joint Strike Body Diffuse.jpg in Resources */,
 				CE2ED2B52998A45700C81F47 /* UV.pdf in Resources */,
+				CE0602042A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */,
+				CE0602192A9364A5001F8CC3 /* Joint Strike Body Specular.jpg in Resources */,
+				CE0602282A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */,
 				CE2ED2B82998A45700C81F47 /* Emissive.jpg in Resources */,
+				CE0602252A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */,
+				CE0602072A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */,
 				CE2ED2B72998A45700C81F47 /* FA-18F.mtl in Resources */,
 				CE7F482728B758920082B197 /* Assets.xcassets in Resources */,
 				CE2ED2B22998A45700C81F47 /* Dirty.jpg in Resources */,
@@ -1162,6 +1281,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE06021A2A9364A5001F8CC3 /* Joint Strike Body Specular.jpg in Resources */,
 				CE2ED2742997F02D00C81F47 /* F16t.bmp in Resources */,
 				CE3BFFDE28E573D60014A752 /* quad.obj in Resources */,
 				CE3BFFD828E573D60014A752 /* normal_example.png in Resources */,
@@ -1170,20 +1290,33 @@
 				CE7F481C28B758920082B197 /* Main.storyboard in Resources */,
 				CE2ED2A82998A45500C81F47 /* UV.pdf in Resources */,
 				CE3BFFE628E573E40014A752 /* skysphere.obj in Resources */,
+				CE06020E2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */,
+				CE06021D2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */,
 				CE2ED2AA2998A45500C81F47 /* FA-18F.mtl in Resources */,
+				CE0602262A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */,
 				CE2ED2A52998A45500C81F47 /* Dirty.jpg in Resources */,
 				CE2ED29D2998A44E00C81F47 /* FA-18F.obj in Resources */,
 				CE2ED2882997F9B700C81F47 /* f16r.obj in Resources */,
 				CE3BFFCF28E573C80014A752 /* sphere.obj in Resources */,
+				CE0602292A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */,
+				CE0602052A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */,
+				CE0602112A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
+				CE06020B2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */,
 				CE2ED2782997F09100C81F47 /* f16.obj in Resources */,
 				CE3BFFE328E573E40014A752 /* clouds.png in Resources */,
 				CE7F482928B758920082B197 /* Assets.xcassets in Resources */,
+				CE0602172A9364A5001F8CC3 /* Joint Strike Interior Diffuse.jpg in Resources */,
 				CE2ED2AB2998A45500C81F47 /* Emissive.jpg in Resources */,
 				CE2ED2852997F9B700C81F47 /* f16r.mtl in Resources */,
 				CE2ED2A62998A45500C81F47 /* Diffuse.jpg in Resources */,
 				CE2ED2A72998A45500C81F47 /* Specular.jpg in Resources */,
+				CE0602232A9364A5001F8CC3 /* Joint Strike Body Diffuse.jpg in Resources */,
 				CE3BFFDB28E573D60014A752 /* quad.mtl in Resources */,
+				CE0602142A9364A5001F8CC3 /* Joint Strike Interior Illumination.jpg in Resources */,
+				CE0602202A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */,
 				CE3BFFD228E573C80014A752 /* sphere.mtl in Resources */,
+				CE0602022A9364A5001F8CC3 /* F35_JSF.usdc in Resources */,
+				CE0602082A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */,
 				CE2ED26E2997F02D00C81F47 /* F16s.bmp in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1198,6 +1331,7 @@
 				CE452FB62A7CB439001945B9 /* Keycodes.swift in Sources */,
 				CE452FEF2A7CB4A6001945B9 /* F16.swift in Sources */,
 				CE4530002A7CB4AC001945B9 /* FreeCamFlightboxScene.swift in Sources */,
+				CE06022E2A945E38001F8CC3 /* F35.swift in Sources */,
 				CE452FAF2A7CB365001945B9 /* Node.swift in Sources */,
 				CE452FF72A7CB4A6001945B9 /* FuelTank.swift in Sources */,
 				CE452FFA2A7CB4A6001945B9 /* SubMeshGameObject.swift in Sources */,
@@ -1307,6 +1441,7 @@
 				CE76931729DE75CB00BBC718 /* SingleSMMeshLibrary.swift in Sources */,
 				CE3BFFAF28E572EC0014A752 /* SkySphereShaders.metal in Sources */,
 				CE2ED2992998A14200C81F47 /* Aircraft.swift in Sources */,
+				CE06022C2A945E38001F8CC3 /* F35.swift in Sources */,
 				CE2ED2BC299CB8AA00C81F47 /* RendererType.swift in Sources */,
 				CE3BFF8628E2FD9C0014A752 /* GameObject.swift in Sources */,
 				CEFC6EC5295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
@@ -1502,6 +1637,7 @@
 				CEB84E7D2A24AC3300BEF778 /* Controller.swift in Sources */,
 				CE76931D29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
 				CE7F484028B770B00082B197 /* Colors.swift in Sources */,
+				CE06022D2A945E38001F8CC3 /* F35.swift in Sources */,
 				CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */,
 				CE085D4D2A7706B800AFD68B /* MacGameUIView.swift in Sources */,

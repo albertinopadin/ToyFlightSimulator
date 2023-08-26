@@ -61,7 +61,12 @@ class HIDDevice {
         
         let deviceMatchingCallback: IOHIDDeviceCallback = { inContext, inResult, inSender, inDeviceRef in
             print("[deviceMatchingCallback]")
-            print("inContext: \(inContext), inResult: \(inResult), inSender: \(inSender), device ref: \(inDeviceRef)")
+            print("""
+                "inContext: \(String(describing: inContext)), \
+                 inResult: \(inResult), \
+                 inSender: \(String(describing: inSender)), \
+                 device ref: \(inDeviceRef)
+            """)
             let this: HIDDevice = unsafeBitCast(inContext, to: HIDDevice.self)
             this.deviceAdded(inResult, inSender: inSender!, inIOHIDDeviceRef: inDeviceRef)
         }

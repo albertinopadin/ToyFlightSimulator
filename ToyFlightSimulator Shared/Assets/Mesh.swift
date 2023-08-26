@@ -7,6 +7,11 @@
 
 import MetalKit
 
+enum MeshExtension: String {
+    case OBJ = "obj"
+    case USDC = "usdc"
+}
+
 // Vertex Information
 class Mesh {
     public var name: String = "Mesh"
@@ -23,25 +28,30 @@ class Mesh {
         createBuffer()
     }
     
-    init(modelName: String, ext: String = "obj") {
+    init(modelName: String, ext: MeshExtension = .OBJ) {
         name = modelName
         createMeshFromModel(modelName, ext: ext)
     }
     
-    init(mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor) {
+    init(mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor, addTangentBases: Bool = true) {
+        print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
         name = mdlMesh.name
         
-        mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                                normalAttributeNamed: MDLVertexAttributeNormal,
-                                tangentAttributeNamed: MDLVertexAttributeTangent)
-        
-        mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                                tangentAttributeNamed: MDLVertexAttributeTangent,
-                                bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        if addTangentBases {
+            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                    normalAttributeNamed: MDLVertexAttributeNormal,
+                                    tangentAttributeNamed: MDLVertexAttributeTangent)
+            
+            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                    tangentAttributeNamed: MDLVertexAttributeTangent,
+                                    bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        }
         
         mdlMesh.vertexDescriptor = vertexDescriptor
         do {
+            print("[Mesh init] instantiating MTKMesh...")
             metalKitMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
+            print("[Mesh init] MTKMesh: \(String(describing: metalKitMesh))")
             if metalKitMesh!.vertexBuffers.count > 1 {
                 print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
             }
@@ -101,13 +111,13 @@ class Mesh {
         var meshes = [Mesh]()
         
         if let mesh = object as? MDLMesh {
-            print("[makeMeshes] object is MDLMesh")
+            print("[makeMeshes] object named \(object.name) is MDLMesh")
             let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
             meshes.append(newMesh)
         }
         
         if object.conforms(to: MDLObjectContainerComponent.self) {
-            print("[makeMeshes] object conforms to MDLObjectContainerComponent and has \(object.children.objects.count) children")
+            print("[makeMeshes] object named \(object.name) conforms to MDLObjectContainerComponent and has \(object.children.objects.count) children")
             for child in object.children.objects {
                 let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor)
                 meshes.append(contentsOf: childMeshes)
@@ -117,13 +127,23 @@ class Mesh {
         return meshes
     }
     
-    private func createMeshFromModel(_ modelName: String, ext: String = "obj") {
+    private func createMeshFromModel(_ modelName: String, ext: MeshExtension) {
         print("[createMeshFromModel] model name: \(modelName)")
         
-        guard let assetURL = Bundle.main.url(forResource: modelName, withExtension: ext) else {
+        guard let assetURL = Bundle.main.url(forResource: modelName, withExtension: ext.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")
         }
         
+        switch ext {
+            case .OBJ:
+                createMeshFromObjModel(modelName, assetUrl: assetURL)
+            case .USDC:
+                createMeshFromUsdcModel(modelName, assetUrl: assetURL)
+        }
+        
+    }
+    
+    private func createMdlVertexDescriptor() -> MDLVertexDescriptor {
         let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Base])
         descriptor.attribute(TFSVertexAttributePosition.rawValue).name  = MDLVertexAttributePosition
         descriptor.attribute(TFSVertexAttributeColor.rawValue).name     = MDLVertexAttributeColor
@@ -131,19 +151,27 @@ class Mesh {
         descriptor.attribute(TFSVertexAttributeNormal.rawValue).name    = MDLVertexAttributeNormal
         descriptor.attribute(TFSVertexAttributeTangent.rawValue).name   = MDLVertexAttributeTangent
         descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name = MDLVertexAttributeBitangent
-        
+        return descriptor
+    }
+    
+    private func createMeshFromObjModel(_ modelName: String, assetUrl: URL) {
+        let descriptor = createMdlVertexDescriptor()
+    
         let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
-        let asset: MDLAsset = MDLAsset(url: assetURL,
-                                       vertexDescriptor: descriptor,
-                                       bufferAllocator: bufferAllocator,
-                                       preserveTopology: false,
-                                       error: nil)
-        print("[createMeshFromModel] Created asset: \(asset)")
+    
+        let asset = MDLAsset(url: assetUrl,
+                             vertexDescriptor: descriptor,
+                             bufferAllocator: bufferAllocator,
+                             preserveTopology: false,
+                             error: nil)
+        
+        print("[createMeshFromObjModel] Created asset: \(asset)")
         asset.loadTextures()
-        print("[createMeshFromModel] Loaded asset textures")
+        print("[createMeshFromObjModel] Loaded asset textures")
         
         for child in asset.childObjects(of: MDLObject.self) {
-            print("[createMeshFromModel] \(modelName) child name: \(child.name)")
+            print("[createMeshFromObjModel] \(modelName) child name: \(child.name)")
+            // TODO: Should be append() here ???
             _childMeshes = Mesh.makeMeshes(object: child, vertexDescriptor: descriptor)
         }
         
@@ -154,6 +182,54 @@ class Mesh {
                 print("Child mesh \(cm.name); Submesh name: \(sm.name)")
             }
         }
+    }
+    
+    private func createMeshFromUsdcModel(_ modelName: String, assetUrl: URL) {
+        let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
+//        let vertexDescriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Base])
+//        let asset = MDLAsset(url: assetUrl, vertexDescriptor: vertexDescriptor, bufferAllocator: bufferAllocator)
+        
+        let asset = MDLAsset(url: assetUrl, vertexDescriptor: nil, bufferAllocator: bufferAllocator)
+        
+        print("[createMeshFromUsdcModel] Created asset: \(asset)")
+        asset.loadTextures()
+        print("[createMeshFromUsdcModel] Loaded asset textures")
+        
+//        for child in asset.childObjects(of: MDLObject.self) {
+//            print("[createMeshFromUsdcModel] \(modelName) child name: \(child.name)")
+//            _childMeshes = Mesh.makeMeshes(object: child)
+//        }
+        
+        print("[createMeshFromUsdcModel] MDLAsset.canImportFileExtension USDC: \(MDLAsset.canImportFileExtension("usdc"))")
+        
+        let descriptor = createMdlVertexDescriptor()
+        for child in asset.childObjects(of: MDLMesh.self) as! [MDLMesh] {
+//            child.vertexDescriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Base])
+            child.vertexDescriptor = descriptor
+        }
+        
+//        var mdlMeshes: [MDLMesh]
+//        var mtkMeshes: [MTKMesh]
+        guard let (mdlMeshes, mtkMeshes) = try? MTKMesh.newMeshes(asset: asset, device: Engine.Device) else {
+            fatalError("Could not convert ModelIO meshes to MetalKit meshes")
+        }
+        
+        print("[createMeshFromUsdcModel] Got \(mdlMeshes.count) mdlMeshes and \(mtkMeshes.count) mtkMeshes")
+        
+        for (mdlMesh, mtkMesh) in zip(mdlMeshes, mtkMeshes) {
+            print("[createMeshFromUsdcModel] \(modelName) mesh name: \(mdlMesh.name)")
+//            _childMeshes.append(Mesh(mtkMesh: mtkMesh, mdlMesh: mdlMesh, addTangentBases: false))
+            _childMeshes.append(Mesh(mtkMesh: mtkMesh, mdlMesh: mdlMesh, addTangentBases: true))
+        }
+        
+//        for mdlMesh in mdlMeshes {
+//            print("[createMeshFromUsdcModel] \(modelName) mesh name: \(mdlMesh.name)")
+////            let mtkMesh = try! MTKMesh(mesh: mdlMesh, device: Engine.Device)
+////            _childMeshes.append(Mesh(mtkMesh: mtkMesh, mdlMesh: mdlMesh, addTangentBases: false))
+//            _childMeshes.append(Mesh(mdlMesh: mdlMesh, vertexDescriptor: mdlMesh.vertexDescriptor, addTangentBases: false))
+//        }
+        
+        print("Num child meshes for \(modelName): \(_childMeshes.count)")
     }
     
     func setInstanceCount(_ count: Int) {

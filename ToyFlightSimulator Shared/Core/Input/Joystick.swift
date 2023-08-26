@@ -84,7 +84,7 @@ class Joystick: HIDDevice {
             for elem in hidElements {
 //                let elemType: IOHIDElementType = IOHIDElementGetType(elem)
 //                print("[Hotas read] element type: \(elemType)")
-                var valuePtr: UnsafeMutablePointer<Unmanaged<IOHIDValue>> = UnsafeMutablePointer<Unmanaged<IOHIDValue>>.allocate(capacity: 1)
+                let valuePtr: UnsafeMutablePointer<Unmanaged<IOHIDValue>> = UnsafeMutablePointer<Unmanaged<IOHIDValue>>.allocate(capacity: 1)
                 let elemUsagePage: UInt32 = IOHIDElementGetUsagePage(elem)
                 let elemUsage: UInt32 = IOHIDElementGetUsage(elem)
                 let ioReturn: IOReturn = IOHIDDeviceGetValue(hidDevice!, elem, valuePtr)
@@ -102,87 +102,100 @@ class Joystick: HIDDevice {
                     let hidElemPhysicalMin: Int = IOHIDElementGetPhysicalMin(elem)
                     let hidElemPhysicalMax: Int = IOHIDElementGetPhysicalMax(elem)
                     
-                    if let hidElemPage = hidElementPagesUsages[elemUsagePage] {
-                        if let hidElemVal = hidElemPage[elemUsage] {
-                            let isNoise = elemUsagePage == 255 && (elemUsage == 1 || elemUsage == 2)
-//                            let isXYJoystick = elemUsagePage == 1 && (elemUsage == 48 || elemUsage == 49)
-                            let isDesktopPage = elemUsagePage == kHIDPage_GenericDesktop
-                            let isXYJoystick = isDesktopPage && (elemUsage == kHIDUsage_GD_X || elemUsage == kHIDUsage_GD_Y)
-                            let isJoystickX = isDesktopPage && elemUsage == kHIDUsage_GD_X
-                            let isJoystickY = isDesktopPage && elemUsage == kHIDUsage_GD_Y
-                            let isButtonPage = elemUsagePage == kHIDPage_Button
-                            let isRedButton = isButtonPage && elemUsage == kHIDUsage_Button_2
-                            let isTriggerFirstDetent = isButtonPage && elemUsage == kHIDUsage_Button_1
-                            let isTriggerSecondDetent = isButtonPage && elemUsage == kHIDUsage_Button_6
-                            if hidElemVal != intValue && !isNoise {
-                                print("[Joystick] HID Element changed, elem: \(elem), page: \(elemUsagePage), usage: \(elemUsage), value: \(intValue)")
-                                
-                                if !isXYJoystick {
-                                    hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
-                                    if isRedButton {
-                                        print("PRESSED RED BUTTON")
-                                        dQueue.sync {
+                    dQueue.sync {
+                        if let hidElemPage = hidElementPagesUsages[elemUsagePage] {
+                            if let hidElemVal = hidElemPage[elemUsage] {
+                                let isNoise = elemUsagePage == 255 && (elemUsage == 1 || elemUsage == 2)
+    //                            let isXYJoystick = elemUsagePage == 1 && (elemUsage == 48 || elemUsage == 49)
+                                let isDesktopPage = elemUsagePage == kHIDPage_GenericDesktop
+                                let isXYJoystick = isDesktopPage && (elemUsage == kHIDUsage_GD_X || elemUsage == kHIDUsage_GD_Y)
+                                let isJoystickX = isDesktopPage && elemUsage == kHIDUsage_GD_X
+                                let isJoystickY = isDesktopPage && elemUsage == kHIDUsage_GD_Y
+                                let isButtonPage = elemUsagePage == kHIDPage_Button
+                                let isRedButton = isButtonPage && elemUsage == kHIDUsage_Button_2
+                                let isTriggerFirstDetent = isButtonPage && elemUsage == kHIDUsage_Button_1
+                                let isTriggerSecondDetent = isButtonPage && elemUsage == kHIDUsage_Button_6
+                                if hidElemVal != intValue && !isNoise {
+                                    print("[Joystick] HID Element changed, elem: \(elem), page: \(elemUsagePage), usage: \(elemUsage), value: \(intValue)")
+                                    
+                                    if !isXYJoystick {
+                                        hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
+                                        if isRedButton {
+                                            print("PRESSED RED BUTTON")
+//                                            dQueue.sync {
+//                                                joystickDiscreteStateMapping[.RedButton] = intValue == 1
+//                                            }
+                                            
                                             joystickDiscreteStateMapping[.RedButton] = intValue == 1
                                         }
-                                    }
-                                    
-                                    if isTriggerFirstDetent {
-                                        print("TRIGGER FIRST DETENT")
-                                        dQueue.sync {
+                                        
+                                        if isTriggerFirstDetent {
+                                            print("TRIGGER FIRST DETENT")
+//                                            dQueue.sync {
+//                                                joystickDiscreteStateMapping[.TriggerSemi] = intValue == 1
+//                                            }
+                                            
                                             joystickDiscreteStateMapping[.TriggerSemi] = intValue == 1
                                         }
-                                    }
-                                    
-                                    if isTriggerSecondDetent {
-                                        print("TRIGGER FULLY PRESSED")
-                                        dQueue.sync {
+                                        
+                                        if isTriggerSecondDetent {
+                                            print("TRIGGER FULLY PRESSED")
+//                                            dQueue.sync {
+//                                                joystickDiscreteStateMapping[.TriggerFull] = intValue == 1
+//                                            }
+                                            
                                             joystickDiscreteStateMapping[.TriggerFull] = intValue == 1
                                         }
                                     }
-                                }
-                                
-                                if isXYJoystick {
-                                    print("XY Joystick scaled value: \(scaledValue)")
                                     
-                                    print("XY Joystick Logical MIN: \(hidElemLogicalMin)")
-                                    print("XY Joystick Physical MIN: \(hidElemPhysicalMin)")
-                                    print("XY Joystick Logical MAX: \(hidElemLogicalMax)")
-                                    print("XY Joystick Physical MAX: \(hidElemPhysicalMax)")
-                                    
-                                    if isJoystickX {
-                                        let normalizedValue = getNormalizedAxisValue(rawValue: intValue,
-                                                                                     minPhysicalValue: hidElemPhysicalMin,
-                                                                                     maxPhysicalValue: hidElemPhysicalMax,
-                                                                                     axis: "x")
-                                        print("X Joystick normalized value: \(normalizedValue)")
-                                        dQueue.sync {
+                                    if isXYJoystick {
+                                        print("XY Joystick scaled value: \(scaledValue)")
+                                        
+                                        print("XY Joystick Logical MIN: \(hidElemLogicalMin)")
+                                        print("XY Joystick Physical MIN: \(hidElemPhysicalMin)")
+                                        print("XY Joystick Logical MAX: \(hidElemLogicalMax)")
+                                        print("XY Joystick Physical MAX: \(hidElemPhysicalMax)")
+                                        
+                                        if isJoystickX {
+                                            let normalizedValue = getNormalizedAxisValue(rawValue: intValue,
+                                                                                         minPhysicalValue: hidElemPhysicalMin,
+                                                                                         maxPhysicalValue: hidElemPhysicalMax,
+                                                                                         axis: "x")
+                                            print("X Joystick normalized value: \(normalizedValue)")
+//                                            dQueue.sync {
+//                                                joystickContinuousStateMapping[.JoystickX] = normalizedValue
+//                                            }
+                                            
                                             joystickContinuousStateMapping[.JoystickX] = normalizedValue
                                         }
-                                    }
-                                    
-                                    if isJoystickY {
-                                        let normalizedValue = getNormalizedAxisValue(rawValue: intValue,
-                                                                                     minPhysicalValue: hidElemPhysicalMin,
-                                                                                     maxPhysicalValue: hidElemPhysicalMax)
-                                        print("Y Joystick normalized value: \(normalizedValue)")
-                                        dQueue.sync {
+                                        
+                                        if isJoystickY {
+                                            let normalizedValue = getNormalizedAxisValue(rawValue: intValue,
+                                                                                         minPhysicalValue: hidElemPhysicalMin,
+                                                                                         maxPhysicalValue: hidElemPhysicalMax)
+                                            print("Y Joystick normalized value: \(normalizedValue)")
+//                                            dQueue.sync {
+//                                                joystickContinuousStateMapping[.JoystickY] = normalizedValue
+//                                            }
+                                            
                                             joystickContinuousStateMapping[.JoystickY] = normalizedValue
                                         }
                                     }
+                                    
+                                    hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
                                 }
-                                
+                            } else {
                                 hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
                             }
+                            
                         } else {
+                            hidElementPagesUsages[elemUsagePage] = [:]
                             hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
                         }
                         
-                    } else {
-                        hidElementPagesUsages[elemUsagePage] = [:]
-                        hidElementPagesUsages[elemUsagePage]![elemUsage] = intValue
+    //                    valuePtr.pointee.release()
                     }
                     
-//                    valuePtr.pointee.release()
                 } else {
 //                    print("ERROR :: Call to IOHIDDeviceGetValue failed!")
 //                    print("ioReturn: \(ioReturn); Page: \(elemUsagePage); Usage: \(elemUsage)")
