@@ -11,13 +11,13 @@ class F35: Aircraft {
     static let NAME: String = "F-35"
     
     init() {
-        super.init(name: Self.NAME, meshType: .F35, renderPipelineStateType: .OpaqueMaterial)
+        super.init(name: Self.NAME, meshType: .Sketchfab_F35, renderPipelineStateType: .OpaqueMaterial)
         self.shouldUpdate = false  // Don't update when user moves camera
     }
     
     init(camera: AttachedCamera, scale: Float = 1.0) {
         super.init(name: Self.NAME,
-                   meshType: .F35,
+                   meshType: .CGTrader_F35,
                    renderPipelineStateType: .OpaqueMaterial,
                    camera: camera,
                    cameraOffset: _cameraPositionOffset,

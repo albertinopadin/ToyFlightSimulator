@@ -12,8 +12,11 @@ class FlightboxScene: GameScene {
     var capsule = CapsuleObject()
     
     override func buildScene() {
-//        let jet = F18(camera: attachedCamera, scale: 0.25)
-        let jet = F35(camera: attachedCamera, scale: 0.1)
+//        let jet = F16(camera: attachedCamera)
+        let jet = F18(camera: attachedCamera, scale: 1.0)
+//        let jet = F18Usdz(camera: attachedCamera, scale: 1.0)
+//        let jet = F35(camera: attachedCamera, scale: 0.1)
+//        let jet = F35(camera: attachedCamera, scale: 1.0)
         addCamera(attachedCamera)
         jet.setPositionZ(4)
         jet.setPositionY(10)

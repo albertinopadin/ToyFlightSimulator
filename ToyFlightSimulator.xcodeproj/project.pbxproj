@@ -58,6 +58,12 @@
 		CE06022C2A945E38001F8CC3 /* F35.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE06022B2A945E38001F8CC3 /* F35.swift */; };
 		CE06022D2A945E38001F8CC3 /* F35.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE06022B2A945E38001F8CC3 /* F35.swift */; };
 		CE06022E2A945E38001F8CC3 /* F35.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE06022B2A945E38001F8CC3 /* F35.swift */; };
+		CE0602322A9B480A001F8CC3 /* F-35A_Lightning_II.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602312A9B480A001F8CC3 /* F-35A_Lightning_II.usdz */; };
+		CE0602332A9B480A001F8CC3 /* F-35A_Lightning_II.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602312A9B480A001F8CC3 /* F-35A_Lightning_II.usdz */; };
+		CE0602342A9B480A001F8CC3 /* F-35A_Lightning_II.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602312A9B480A001F8CC3 /* F-35A_Lightning_II.usdz */; };
+		CE0602382A9C5686001F8CC3 /* FA-18F.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602372A9C5686001F8CC3 /* FA-18F.usdz */; };
+		CE0602392A9C5686001F8CC3 /* FA-18F.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602372A9C5686001F8CC3 /* FA-18F.usdz */; };
+		CE06023A2A9C5686001F8CC3 /* FA-18F.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602372A9C5686001F8CC3 /* FA-18F.usdz */; };
 		CE085D4D2A7706B800AFD68B /* MacGameUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */; };
 		CE085D4F2A7735AE00AFD68B /* MacMetalViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */; };
 		CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */; };
@@ -384,6 +390,9 @@
 		CE76931B29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
 		CE76931C29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
 		CE76931D29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
+		CE7BAC942A9F19A4007B8AAF /* F18_usdz.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */; };
+		CE7BAC952A9F19A4007B8AAF /* F18_usdz.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */; };
+		CE7BAC962A9F19A4007B8AAF /* F18_usdz.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */; };
 		CE7C3D292A2F377B009C1E6F /* Joystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7C3D282A2F377B009C1E6F /* Joystick.swift */; };
 		CE7F480728B758920082B197 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F480628B758920082B197 /* AppDelegate.swift */; };
 		CE7F480928B758920082B197 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F480828B758920082B197 /* GameViewController.swift */; };
@@ -507,6 +516,8 @@
 		CE06019C2A9364A4001F8CC3 /* Pilot Diffuse .jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Pilot Diffuse .jpg"; sourceTree = "<group>"; };
 		CE06019D2A9364A4001F8CC3 /* Pilot Specular.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Pilot Specular.jpg"; sourceTree = "<group>"; };
 		CE06022B2A945E38001F8CC3 /* F35.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F35.swift; sourceTree = "<group>"; };
+		CE0602312A9B480A001F8CC3 /* F-35A_Lightning_II.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = "F-35A_Lightning_II.usdz"; sourceTree = "<group>"; };
+		CE0602372A9C5686001F8CC3 /* FA-18F.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = "FA-18F.usdz"; sourceTree = "<group>"; };
 		CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacGameUIView.swift; sourceTree = "<group>"; };
 		CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMetalViewWrapper.swift; sourceTree = "<group>"; };
 		CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotasConfig.swift; sourceTree = "<group>"; };
@@ -597,6 +608,7 @@
 		CE76931229DD5F5500BBC718 /* SingleSMMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleSMMesh.swift; sourceTree = "<group>"; };
 		CE76931629DE75CB00BBC718 /* SingleSMMeshLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleSMMeshLibrary.swift; sourceTree = "<group>"; };
 		CE76931A29DE79CE00BBC718 /* Sidewinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidewinder.swift; sourceTree = "<group>"; };
+		CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F18_usdz.swift; sourceTree = "<group>"; };
 		CE7C3D272A2F303D009C1E6F /* ToyFlightSimulator-iOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ToyFlightSimulator-iOS-Info.plist"; sourceTree = SOURCE_ROOT; };
 		CE7C3D282A2F377B009C1E6F /* Joystick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Joystick.swift; sourceTree = "<group>"; };
 		CE7C3D2A2A30400A009C1E6F /* ToyFlightSimulator-macOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ToyFlightSimulator-macOS-Info.plist"; sourceTree = SOURCE_ROOT; };
@@ -679,6 +691,14 @@
 			isa = PBXGroup;
 			children = (
 				CE06018F2A9364A3001F8CC3 /* F35_JSF.usdc */,
+				CE0601902A9364A4001F8CC3 /* textures */,
+			);
+			path = F35;
+			sourceTree = "<group>";
+		};
+		CE0601902A9364A4001F8CC3 /* textures */ = {
+			isa = PBXGroup;
+			children = (
 				CE0601912A9364A4001F8CC3 /* Pilot Normal.jpg */,
 				CE0601922A9364A4001F8CC3 /* Joint Strike Body Reflection.jpg */,
 				CE0601932A9364A4001F8CC3 /* Joint Strike Body Normal.jpg */,
@@ -692,16 +712,32 @@
 				CE06019B2A9364A4001F8CC3 /* Joint Strike Body Diffuse.jpg */,
 				CE06019C2A9364A4001F8CC3 /* Pilot Diffuse .jpg */,
 				CE06019D2A9364A4001F8CC3 /* Pilot Specular.jpg */,
-				CE0601902A9364A4001F8CC3 /* textures */,
-			);
-			path = F35;
-			sourceTree = "<group>";
-		};
-		CE0601902A9364A4001F8CC3 /* textures */ = {
-			isa = PBXGroup;
-			children = (
 			);
 			path = textures;
+			sourceTree = "<group>";
+		};
+		CE06022F2A9B47C1001F8CC3 /* Sketchfab */ = {
+			isa = PBXGroup;
+			children = (
+				CE0602312A9B480A001F8CC3 /* F-35A_Lightning_II.usdz */,
+			);
+			path = Sketchfab;
+			sourceTree = "<group>";
+		};
+		CE0602302A9B47E0001F8CC3 /* CGTrader */ = {
+			isa = PBXGroup;
+			children = (
+				CE06016A2A93646A001F8CC3 /* F35 */,
+			);
+			path = CGTrader;
+			sourceTree = "<group>";
+		};
+		CE0602352A9C5655001F8CC3 /* RealityConverter */ = {
+			isa = PBXGroup;
+			children = (
+				CE0602372A9C5686001F8CC3 /* FA-18F.usdz */,
+			);
+			path = RealityConverter;
 			sourceTree = "<group>";
 		};
 		CE2ED260299394C900C81F47 /* Utils */ = {
@@ -789,6 +825,7 @@
 				CE3DD2F02A02309300787E53 /* GBU16.swift */,
 				CE3DD2F42A039B0700787E53 /* FuelTank.swift */,
 				CE0601652A83796B001F8CC3 /* CapsuleObject.swift */,
+				CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -867,7 +904,9 @@
 		CE3BFFB628E573690014A752 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				CE06016A2A93646A001F8CC3 /* F35 */,
+				CE0602352A9C5655001F8CC3 /* RealityConverter */,
+				CE0602302A9B47E0001F8CC3 /* CGTrader */,
+				CE06022F2A9B47C1001F8CC3 /* Sketchfab */,
 				CE3BFFB828E573800014A752 /* Quad */,
 				CE3BFFB928E573870014A752 /* Sphere */,
 				CE3BFFB728E573730014A752 /* Skysphere */,
@@ -1188,10 +1227,12 @@
 			files = (
 				CE06020C2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */,
 				CE06021B2A9364A5001F8CC3 /* Joint Strike Body Specular.jpg in Resources */,
+				CE06023A2A9C5686001F8CC3 /* FA-18F.usdz in Resources */,
 				CE0602242A9364A5001F8CC3 /* Joint Strike Body Diffuse.jpg in Resources */,
 				CE0602182A9364A5001F8CC3 /* Joint Strike Interior Diffuse.jpg in Resources */,
 				CE06021E2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */,
 				CE0602212A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */,
+				CE0602342A9B480A001F8CC3 /* F-35A_Lightning_II.usdz in Resources */,
 				CE0602062A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */,
 				CE0602032A9364A5001F8CC3 /* F35_JSF.usdc in Resources */,
 				CE0602272A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */,
@@ -1229,6 +1270,7 @@
 				CE06020A2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */,
 				CE0602102A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
 				CE06021F2A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */,
+				CE0602322A9B480A001F8CC3 /* F-35A_Lightning_II.usdz in Resources */,
 				CE0602222A9364A5001F8CC3 /* Joint Strike Body Diffuse.jpg in Resources */,
 				CE2ED2B52998A45700C81F47 /* UV.pdf in Resources */,
 				CE0602042A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */,
@@ -1240,6 +1282,7 @@
 				CE2ED2B72998A45700C81F47 /* FA-18F.mtl in Resources */,
 				CE7F482728B758920082B197 /* Assets.xcassets in Resources */,
 				CE2ED2B22998A45700C81F47 /* Dirty.jpg in Resources */,
+				CE0602382A9C5686001F8CC3 /* FA-18F.usdz in Resources */,
 				CE2ED2B62998A45700C81F47 /* Bumpmap.jpg in Resources */,
 				CE3BFFE128E573E40014A752 /* clouds.png in Resources */,
 				CE2ED26F2997F02D00C81F47 /* f16.mtl in Resources */,
@@ -1281,6 +1324,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE0602392A9C5686001F8CC3 /* FA-18F.usdz in Resources */,
 				CE06021A2A9364A5001F8CC3 /* Joint Strike Body Specular.jpg in Resources */,
 				CE2ED2742997F02D00C81F47 /* F16t.bmp in Resources */,
 				CE3BFFDE28E573D60014A752 /* quad.obj in Resources */,
@@ -1300,6 +1344,7 @@
 				CE3BFFCF28E573C80014A752 /* sphere.obj in Resources */,
 				CE0602292A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */,
 				CE0602052A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */,
+				CE0602332A9B480A001F8CC3 /* F-35A_Lightning_II.usdz in Resources */,
 				CE0602112A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
 				CE06020B2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */,
 				CE2ED2782997F09100C81F47 /* f16.obj in Resources */,
@@ -1341,6 +1386,7 @@
 				CE452FF62A7CB4A6001945B9 /* AircraftStore.swift in Sources */,
 				CE452FED2A7CB4A6001945B9 /* SkyBox.swift in Sources */,
 				CE452FF02A7CB4A6001945B9 /* F18.swift in Sources */,
+				CE7BAC962A9F19A4007B8AAF /* F18_usdz.swift in Sources */,
 				CE452FCE2A7CB47F001945B9 /* DirectionalLight.metal in Sources */,
 				CE452FDB2A7CB489001945B9 /* SingleSMMesh.swift in Sources */,
 				CE452FB82A7CB440001945B9 /* Controller.swift in Sources */,
@@ -1489,6 +1535,7 @@
 				CE3BFF5428E1B29C0014A752 /* ShaderLibrary.swift in Sources */,
 				CEFC6E2D2952EA44009B692B /* Cube.swift in Sources */,
 				CE3DD2ED2A020F4900787E53 /* Droppable.swift in Sources */,
+				CE7BAC942A9F19A4007B8AAF /* F18_usdz.swift in Sources */,
 				CE886A4B298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */,
 				CE3BFF7228E1B4E10014A752 /* TextureLibrary.swift in Sources */,
 				CE3BFF9628E451F00014A752 /* LightManager.swift in Sources */,
@@ -1642,6 +1689,7 @@
 				CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */,
 				CE085D4D2A7706B800AFD68B /* MacGameUIView.swift in Sources */,
 				CE7F485028B771550082B197 /* TimeIt.swift in Sources */,
+				CE7BAC952A9F19A4007B8AAF /* F18_usdz.swift in Sources */,
 				CE2ED29B2998A38000C81F47 /* Aircraft.swift in Sources */,
 				CE3BFF5A28E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
 				CE886A3C2983BF1B0013062D /* Skybox.metal in Sources */,

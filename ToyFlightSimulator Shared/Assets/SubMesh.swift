@@ -39,17 +39,35 @@ class Submesh {
         createIndexBuffer()
     }
     
-    init(mtkSubmesh: MTKSubmesh, mdlSubmesh: MDLSubmesh) {
+    init(mtkSubmesh: MTKSubmesh, mdlSubmesh: MDLSubmesh, name: String? = nil) {
         _indexBuffer = mtkSubmesh.indexBuffer.buffer
         _indexBufferOffset = mtkSubmesh.indexBuffer.offset
         _indexCount = mtkSubmesh.indexCount
         _indexType = mtkSubmesh.indexType
         _primitiveType = mtkSubmesh.primitiveType
         
-        name = mtkSubmesh.name
-        print("[Submesh init] Creating textures and material for \(mtkSubmesh.name)")
+        if let name {
+            self.name = name
+        } else {
+            self.name = mtkSubmesh.name
+        }
+        print("[Submesh init] Creating textures and material for \(self.name)")
         createTextures(mdlSubmesh.material!)
         createMaterial(mdlSubmesh.material!)
+    }
+    
+    private func createTextures(_ mdlMaterial: MDLMaterial) {
+        print("[Submesh createTextures] mdlMaterial for \(name): \(mdlMaterial)")
+        _baseColorTexture = texture(for: .baseColor, in: mdlMaterial, textureOrigin: .bottomLeft)
+        _normalMapTexture = texture(for: .tangentSpaceNormal, in: mdlMaterial, textureOrigin: .bottomLeft)
+        _specularTexture = texture(for: .specular, in: mdlMaterial, textureOrigin: .bottomLeft)
+    }
+    
+    private func createMaterial(_ mdlMaterial: MDLMaterial) {
+        if let ambient = mdlMaterial.property(with: .emission)?.float3Value { _material.ambient = ambient }
+        if let diffuse = mdlMaterial.property(with: .baseColor)?.float3Value { _material.diffuse = diffuse }
+        if let specular = mdlMaterial.property(with: .specular)?.float3Value { _material.specular = specular }
+        if let shininess = mdlMaterial.property(with: .specularExponent)?.floatValue { _material.shininess = shininess }
     }
     
     private func texture(for semantic: MDLMaterialSemantic,
@@ -61,10 +79,21 @@ class Submesh {
         
         var newTexture: MTLTexture!
         
+        if semantic == .baseColor {
+            print("\(material.name) num of properties with semantic baseColor: \(material.properties(with: semantic).count)")
+        }
+        
         for property in material.properties(with: semantic) {
+//            let options: [MTKTextureLoader.Option: Any] = [
+//                .origin: textureOrigin as Any,
+//                .generateMipmaps: true,
+//                .textureUsage: MTLTextureUsage.shaderRead.rawValue,
+//                .textureStorageMode: MTLStorageMode.private.rawValue
+//            ]
+            
             let options: [MTKTextureLoader.Option: Any] = [
                 .origin: textureOrigin as Any,
-                .generateMipmaps: true,
+//                .generateMipmaps: true,
                 .textureUsage: MTLTextureUsage.shaderRead.rawValue,
                 .textureStorageMode: MTLStorageMode.private.rawValue
             ]
@@ -82,16 +111,29 @@ class Submesh {
                 }
             case .URL:
 //                print("Material property is url!")
+                if let newTexture {
+                    print("[Submesh texture] Material prop is URL; newTexture has already been set: \(newTexture)")
+                }
+                
                 if let textureURL = property.urlValue {
                     newTexture = try? textureLoader.newTexture(URL: textureURL, options: options)
                 }
             case .texture:
 //                print("Material property is texture!")
+                if let newTexture {
+                    print("[Submesh texture] Material prop is texture; newTexture has already been set: \(newTexture)")
+                }
+                
                 let sourceTexture = property.textureSamplerValue!.texture!
 //                print("sourceTexture: \(sourceTexture.debugDescription)")
                 newTexture = try? textureLoader.newTexture(texture: sourceTexture, options: options)
             case .color:
 //                print("Material property is color!")
+                if let newTexture {
+                    print("[Submesh texture] Material prop is color; newTexture has already been set: \(newTexture)")
+                    break
+                }
+                
                 let color = float4(Float(property.color!.components![0]),
                                    Float(property.color!.components![1]),
                                    Float(property.color!.components![2]),
@@ -146,19 +188,6 @@ class Submesh {
             texture.replace(region: region, mipmapLevel: 0, withBytes: ptr.baseAddress!, bytesPerRow: 32)
         }
         return texture
-    }
-    
-    private func createTextures(_ mdlMaterial: MDLMaterial) {
-        _baseColorTexture = texture(for: .baseColor, in: mdlMaterial, textureOrigin: .bottomLeft)
-        _normalMapTexture = texture(for: .tangentSpaceNormal, in: mdlMaterial, textureOrigin: .bottomLeft)
-        _specularTexture = texture(for: .specular, in: mdlMaterial, textureOrigin: .bottomLeft)
-    }
-    
-    private func createMaterial(_ mdlMaterial: MDLMaterial) {
-        if let ambient = mdlMaterial.property(with: .emission)?.float3Value { _material.ambient = ambient }
-        if let diffuse = mdlMaterial.property(with: .baseColor)?.float3Value { _material.diffuse = diffuse }
-        if let specular = mdlMaterial.property(with: .specular)?.float3Value { _material.specular = specular }
-        if let shininess = mdlMaterial.property(with: .specularExponent)?.floatValue { _material.shininess = shininess }
     }
     
     private func createIndexBuffer() {
