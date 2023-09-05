@@ -270,6 +270,10 @@
 		CE3E526328E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
 		CE3E526428E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
 		CE3E526528E9B15C00BBE8A0 /* SkySphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */; };
+		CE3EA73C2AA5DB9400219015 /* F-35.glb in Resources */ = {isa = PBXBuildFile; fileRef = CE3EA73B2AA5DB9400219015 /* F-35.glb */; };
+		CE3EA73D2AA5DB9400219015 /* F-35.glb in Resources */ = {isa = PBXBuildFile; fileRef = CE3EA73B2AA5DB9400219015 /* F-35.glb */; };
+		CE3EA73E2AA5DB9400219015 /* F-35.glb in Resources */ = {isa = PBXBuildFile; fileRef = CE3EA73B2AA5DB9400219015 /* F-35.glb */; };
+		CE3EA75F2AA5E0DD00219015 /* GLTFKit2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE3EA75E2AA5E0AC00219015 /* GLTFKit2.framework */; };
 		CE452FAE2A7CAC0F001945B9 /* NodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE452FAD2A7CAC0F001945B9 /* NodeTests.swift */; };
 		CE452FAF2A7CB365001945B9 /* Node.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7D28E2FCF50014A752 /* Node.swift */; };
 		CE452FB02A7CB3FF001945B9 /* RenderPipelineStateLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF5728E1B2AD0014A752 /* RenderPipelineStateLibrary.swift */; };
@@ -489,6 +493,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		CE3EA75D2AA5E0AC00219015 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CE3EA7532AA5E0AC00219015 /* GLTFKit2.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 834FF1C425C27938001887C2;
+			remoteInfo = GLTFKit2;
+		};
 		CE452FA82A7CA810001945B9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CE7F47E628B758900082B197 /* Project object */;
@@ -595,6 +606,28 @@
 		CE3DD2F02A02309300787E53 /* GBU16.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GBU16.swift; sourceTree = "<group>"; };
 		CE3DD2F42A039B0700787E53 /* FuelTank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelTank.swift; sourceTree = "<group>"; };
 		CE3E526228E9B15C00BBE8A0 /* SkySphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkySphere.swift; sourceTree = "<group>"; };
+		CE3EA73B2AA5DB9400219015 /* F-35.glb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "F-35.glb"; sourceTree = "<group>"; };
+		CE3EA7432AA5E0AC00219015 /* GLTFLogging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFLogging.h; sourceTree = "<group>"; };
+		CE3EA7442AA5E0AC00219015 /* GLTFWorkflowHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GLTFWorkflowHelper.m; sourceTree = "<group>"; };
+		CE3EA7452AA5E0AC00219015 /* WorkflowShaders.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = WorkflowShaders.txt; sourceTree = "<group>"; };
+		CE3EA7462AA5E0AC00219015 /* GLTFAssetReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFAssetReader.h; sourceTree = "<group>"; };
+		CE3EA7472AA5E0AC00219015 /* GLTFWorkflowHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFWorkflowHelper.h; sourceTree = "<group>"; };
+		CE3EA7482AA5E0AC00219015 /* GLTFAssetReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GLTFAssetReader.m; sourceTree = "<group>"; };
+		CE3EA7492AA5E0AC00219015 /* GLTFAsset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFAsset.h; sourceTree = "<group>"; };
+		CE3EA74A2AA5E0AC00219015 /* GLTFSceneKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFSceneKit.h; sourceTree = "<group>"; };
+		CE3EA74B2AA5E0AC00219015 /* GLTFKit2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFKit2.h; sourceTree = "<group>"; };
+		CE3EA74C2AA5E0AC00219015 /* GLTFModelIO.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GLTFModelIO.m; sourceTree = "<group>"; };
+		CE3EA74D2AA5E0AC00219015 /* GLTFRealityKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLTFRealityKit.swift; sourceTree = "<group>"; };
+		CE3EA74E2AA5E0AC00219015 /* GLTFAsset.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GLTFAsset.m; sourceTree = "<group>"; };
+		CE3EA74F2AA5E0AC00219015 /* GLTFSceneKit.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GLTFSceneKit.m; sourceTree = "<group>"; };
+		CE3EA7502AA5E0AC00219015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CE3EA7512AA5E0AC00219015 /* GLTFModelIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFModelIO.h; sourceTree = "<group>"; };
+		CE3EA7522AA5E0AC00219015 /* GLTFTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFTypes.h; sourceTree = "<group>"; };
+		CE3EA7532AA5E0AC00219015 /* GLTFKit2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = GLTFKit2.xcodeproj; sourceTree = "<group>"; };
+		CE3EA7582AA5E0AC00219015 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		CE3EA7592AA5E0AC00219015 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		CE3EA75A2AA5E0AC00219015 /* cgltf_write.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cgltf_write.h; sourceTree = "<group>"; };
+		CE3EA75B2AA5E0AC00219015 /* cgltf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cgltf.h; sourceTree = "<group>"; };
 		CE452FA42A7CA810001945B9 /* ToyFlightSimulatorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ToyFlightSimulatorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE452FAD2A7CAC0F001945B9 /* NodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeTests.swift; sourceTree = "<group>"; };
 		CE4530492A7F3823001945B9 /* ToyFlightSimulatorIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToyFlightSimulatorIOSApp.swift; sourceTree = "<group>"; };
@@ -681,6 +714,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE3EA75F2AA5E0DD00219015 /* GLTFKit2.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -690,6 +724,7 @@
 		CE06016A2A93646A001F8CC3 /* F35 */ = {
 			isa = PBXGroup;
 			children = (
+				CE3EA73B2AA5DB9400219015 /* F-35.glb */,
 				CE06018F2A9364A3001F8CC3 /* F35_JSF.usdc */,
 				CE0601902A9364A4001F8CC3 /* textures */,
 			);
@@ -817,6 +852,7 @@
 				CEED93A629E3B2600020DC53 /* AircraftStore.swift */,
 				CE3BFFE728E6A0F40014A752 /* F16.swift */,
 				CE2ED2962998A10400C81F47 /* F18.swift */,
+				CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */,
 				CE06022B2A945E38001F8CC3 /* F35.swift */,
 				CE3DD2E829F37FE500787E53 /* Missile.swift */,
 				CE3DD2EC2A020F4900787E53 /* Droppable.swift */,
@@ -825,7 +861,6 @@
 				CE3DD2F02A02309300787E53 /* GBU16.swift */,
 				CE3DD2F42A039B0700787E53 /* FuelTank.swift */,
 				CE0601652A83796B001F8CC3 /* CapsuleObject.swift */,
-				CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -957,6 +992,83 @@
 			path = F16;
 			sourceTree = "<group>";
 		};
+		CE3EA6D92AA5D84800219015 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CE3EA7402AA5E0AC00219015 /* GLTFKit2 */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CE3EA7402AA5E0AC00219015 /* GLTFKit2 */ = {
+			isa = PBXGroup;
+			children = (
+				CE3EA7412AA5E0AC00219015 /* GLTFKit2 */,
+				CE3EA7532AA5E0AC00219015 /* GLTFKit2.xcodeproj */,
+				CE3EA7562AA5E0AC00219015 /* deps */,
+			);
+			name = GLTFKit2;
+			path = ../../../warrenm/GLTFKit2/GLTFKit2;
+			sourceTree = "<group>";
+		};
+		CE3EA7412AA5E0AC00219015 /* GLTFKit2 */ = {
+			isa = PBXGroup;
+			children = (
+				CE3EA7422AA5E0AC00219015 /* impl */,
+				CE3EA7492AA5E0AC00219015 /* GLTFAsset.h */,
+				CE3EA74A2AA5E0AC00219015 /* GLTFSceneKit.h */,
+				CE3EA74B2AA5E0AC00219015 /* GLTFKit2.h */,
+				CE3EA74C2AA5E0AC00219015 /* GLTFModelIO.m */,
+				CE3EA74D2AA5E0AC00219015 /* GLTFRealityKit.swift */,
+				CE3EA74E2AA5E0AC00219015 /* GLTFAsset.m */,
+				CE3EA74F2AA5E0AC00219015 /* GLTFSceneKit.m */,
+				CE3EA7502AA5E0AC00219015 /* Info.plist */,
+				CE3EA7512AA5E0AC00219015 /* GLTFModelIO.h */,
+				CE3EA7522AA5E0AC00219015 /* GLTFTypes.h */,
+			);
+			path = GLTFKit2;
+			sourceTree = "<group>";
+		};
+		CE3EA7422AA5E0AC00219015 /* impl */ = {
+			isa = PBXGroup;
+			children = (
+				CE3EA7432AA5E0AC00219015 /* GLTFLogging.h */,
+				CE3EA7442AA5E0AC00219015 /* GLTFWorkflowHelper.m */,
+				CE3EA7452AA5E0AC00219015 /* WorkflowShaders.txt */,
+				CE3EA7462AA5E0AC00219015 /* GLTFAssetReader.h */,
+				CE3EA7472AA5E0AC00219015 /* GLTFWorkflowHelper.h */,
+				CE3EA7482AA5E0AC00219015 /* GLTFAssetReader.m */,
+			);
+			path = impl;
+			sourceTree = "<group>";
+		};
+		CE3EA7542AA5E0AC00219015 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CE3EA75E2AA5E0AC00219015 /* GLTFKit2.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE3EA7562AA5E0AC00219015 /* deps */ = {
+			isa = PBXGroup;
+			children = (
+				CE3EA7572AA5E0AC00219015 /* cgltf */,
+			);
+			path = deps;
+			sourceTree = "<group>";
+		};
+		CE3EA7572AA5E0AC00219015 /* cgltf */ = {
+			isa = PBXGroup;
+			children = (
+				CE3EA7582AA5E0AC00219015 /* LICENSE */,
+				CE3EA7592AA5E0AC00219015 /* README.md */,
+				CE3EA75A2AA5E0AC00219015 /* cgltf_write.h */,
+				CE3EA75B2AA5E0AC00219015 /* cgltf.h */,
+			);
+			path = cgltf;
+			sourceTree = "<group>";
+		};
 		CE452FA52A7CA810001945B9 /* ToyFlightSimulatorTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -974,6 +1086,7 @@
 				CE7F481528B758920082B197 /* ToyFlightSimulator macOS */,
 				CE452FA52A7CA810001945B9 /* ToyFlightSimulatorTests */,
 				CE7F47F428B758920082B197 /* Products */,
+				CE3EA6D92AA5D84800219015 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -1208,8 +1321,16 @@
 				Base,
 			);
 			mainGroup = CE7F47E528B758900082B197;
+			packageReferences = (
+			);
 			productRefGroup = CE7F47F428B758920082B197 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = CE3EA7542AA5E0AC00219015 /* Products */;
+					ProjectRef = CE3EA7532AA5E0AC00219015 /* GLTFKit2.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				CE7F47F228B758920082B197 /* ToyFlightSimulator iOS */,
@@ -1219,6 +1340,16 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		CE3EA75E2AA5E0AC00219015 /* GLTFKit2.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = GLTFKit2.framework;
+			remoteRef = CE3EA75D2AA5E0AC00219015 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		CE452FA22A7CA810001945B9 /* Resources */ = {
@@ -1239,6 +1370,7 @@
 				CE06020F2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */,
 				CE06022A2A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */,
 				CE0602152A9364A5001F8CC3 /* Joint Strike Interior Illumination.jpg in Resources */,
+				CE3EA73E2AA5DB9400219015 /* F-35.glb in Resources */,
 				CE0602092A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */,
 				CE0602122A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
 			);
@@ -1281,6 +1413,7 @@
 				CE0602072A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */,
 				CE2ED2B72998A45700C81F47 /* FA-18F.mtl in Resources */,
 				CE7F482728B758920082B197 /* Assets.xcassets in Resources */,
+				CE3EA73C2AA5DB9400219015 /* F-35.glb in Resources */,
 				CE2ED2B22998A45700C81F47 /* Dirty.jpg in Resources */,
 				CE0602382A9C5686001F8CC3 /* FA-18F.usdz in Resources */,
 				CE2ED2B62998A45700C81F47 /* Bumpmap.jpg in Resources */,
@@ -1346,6 +1479,7 @@
 				CE0602052A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */,
 				CE0602332A9B480A001F8CC3 /* F-35A_Lightning_II.usdz in Resources */,
 				CE0602112A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
+				CE3EA73D2AA5DB9400219015 /* F-35.glb in Resources */,
 				CE06020B2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */,
 				CE2ED2782997F09100C81F47 /* f16.obj in Resources */,
 				CE3BFFE328E573E40014A752 /* clouds.png in Resources */,
@@ -2087,6 +2221,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "ToyFlightSimulator macOS/ToyFlightSimulator_macOS.entitlements";
 				CODE_SIGN_IDENTITY = "-";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -2122,6 +2257,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "ToyFlightSimulator macOS/ToyFlightSimulator_macOS.entitlements";
 				CODE_SIGN_IDENTITY = "-";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;

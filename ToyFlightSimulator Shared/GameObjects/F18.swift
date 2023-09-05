@@ -146,10 +146,10 @@ class F18: Aircraft {
         "IntakeL_Paint": true,
         "IntakeR_Paint": true,
         "Inlets_Paint": true,
-        "ElevatorL_Paint": false,  // L Elevon
-        "ElevatorR_Paint": false,  // R Elevon
-        "RudderL_Paint": true,
-        "RudderR_Paint": true,
+        "ElevatorL_Paint": false,       // L Elevon
+        "ElevatorR_Paint": false,       // R Elevon
+        "RudderL_Paint": false,         // L Rudder
+        "RudderR_Paint": false,         // R Rudder
         "TailL_Paint": true,
         "TailR_Paint": true,
         "HookBox_Paint": true,
@@ -160,10 +160,10 @@ class F18: Aircraft {
         "SlatsInnerR_Paint": true,
         "SlatsOuterL_Paint": true,
         "SlatsOuterR_Paint": true,
-        "FlapsL_Paint": false,  // L Flap
-        "FlapsR_Paint": false,  // R Flap
-        "EleronsL_Paint": false,  // L Aileron
-        "EleronsR_Paint": false,  // R Aileron
+        "FlapsL_Paint": false,          // L Flap
+        "FlapsR_Paint": false,          // R Flap
+        "EleronsL_Paint": false,        // L Aileron
+        "EleronsR_Paint": false,        // R Aileron
         "EngineNozzles_Paint": true,
         "EleronGearBox_Paint": true,
         "Cockpit_Paint": true,
@@ -264,6 +264,16 @@ class F18: Aircraft {
                                       submeshName: "FlapsR_Paint",
                                       renderPipelineStateType: .OpaqueMaterial)
     
+    let leftRudder = SubMeshGameObject(name: "Left_Rudder",
+                                       modelName: F18_ModelName,
+                                       submeshName: "RudderL_Paint",
+                                       renderPipelineStateType: .OpaqueMaterial)
+    
+    let rightRudder = SubMeshGameObject(name: "Right_Rudder",
+                                        modelName: F18_ModelName,
+                                        submeshName: "RudderR_Paint",
+                                        renderPipelineStateType: .OpaqueMaterial)
+    
     var flapsDeployed: Bool = false
     var flapsDegrees: Float = 0.0
     var flapsBeganExtending: Bool = false
@@ -273,6 +283,9 @@ class F18: Aircraft {
     
     let leftWingRearControlSurfaceRotationAxis = float3(-1, 0, 0.15)
     let rightWingRearControlSurfaceRotationAxis = float3(1, 0, 0.15)
+    
+    let leftRudderControlSurfaceRotationAxis = float3(-0.40, 1, 0.50)
+    let rightRudderControlSurfaceRotationAxis = float3(0.40, 1, 0.50)
     
     var landingGearDeployed: Bool = false
     var landingGearDegrees: Float = 0.0
@@ -313,6 +326,11 @@ class F18: Aircraft {
         leftFlap.setSubmeshOrigin(newFlapsOrigin)
         rightFlap.setSubmeshOrigin(newFlapsOrigin)
         
+        // Rudders:
+        let newRuddersOrigin = float3(0, 0, 0.50)
+        leftRudder.setSubmeshOrigin(newRuddersOrigin)
+        rightRudder.setSubmeshOrigin(newRuddersOrigin)
+        
         // Set ailerons as children:
         let leftAileronMeshMetadata = leftAileron.getSubmeshVertexMetadata()
         let leftAileronPosition = leftAileronMeshMetadata.initialPositionInParentMesh - newAileronOrigin
@@ -345,6 +363,17 @@ class F18: Aircraft {
         let rightFlapPosition = rightFlapMeshMetadata.initialPositionInParentMesh - newFlapsOrigin
         rightFlap.setPosition(rightFlapPosition)
         addChild(rightFlap)
+        
+        // Set rudders as children:
+        let leftRudderMeshMetadata = leftRudder.getSubmeshVertexMetadata()
+        let leftRudderPosition = leftRudderMeshMetadata.initialPositionInParentMesh - newFlapsOrigin
+        leftRudder.setPosition(leftRudderPosition)
+        addChild(leftRudder)
+        
+        let rightRudderMeshMetadata = rightRudder.getSubmeshVertexMetadata()
+        let rightRudderPosition = rightRudderMeshMetadata.initialPositionInParentMesh - newFlapsOrigin
+        rightRudder.setPosition(rightRudderPosition)
+        addChild(rightRudder)
     }
     
     func weaponReleaseSetup(submeshGameObject: SubMeshGameObject) {
@@ -433,13 +462,17 @@ class F18: Aircraft {
         rightAileron.setRotation(angle: -roll, axis: rightWingRearControlSurfaceRotationAxis)
         
         let pitch = InputManager.ContinuousCommand(.Pitch)
+        leftElevon.setRotation(angle: -pitch, axis: X_AXIS)
+        rightElevon.setRotation(angle: -pitch, axis: X_AXIS)
         
         // TODO: This results in really wonky visuals:
 //        leftElevon.setRotationX(-pitch)
 //        rightElevon.setRotationX(-pitch)
         
-        leftElevon.setRotation(angle: -pitch, axis: X_AXIS)
-        rightElevon.setRotation(angle: -pitch, axis: X_AXIS)
+        let yaw = InputManager.ContinuousCommand(.Yaw)
+        leftRudder.setRotation(angle: -yaw, axis: leftRudderControlSurfaceRotationAxis)
+        rightRudder.setRotation(angle: -yaw, axis: rightRudderControlSurfaceRotationAxis)
+        
         
         InputManager.HasDiscreteCommandDebounced(command: .ToggleFlaps) {
             if !flapsDeployed {

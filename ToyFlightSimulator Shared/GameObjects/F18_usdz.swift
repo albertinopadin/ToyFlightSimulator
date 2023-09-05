@@ -271,14 +271,14 @@ class F18Usdz: Aircraft {
     var landingGearFinishedRetracting: Bool = false
     
     init() {
-        super.init(name: "F-18", meshType: .RC_F18, renderPipelineStateType: .OpaqueMaterial)
+        super.init(name: "F-18", meshType: .RealityConverter_F18_USDZ, renderPipelineStateType: .OpaqueMaterial)
         self.shouldUpdate = false  // Don't update when user moves camera
         setupControlSurfaces()
     }
     
     init(camera: AttachedCamera, scale: Float = 1.0) {
         super.init(name: "F-18",
-                   meshType: .RC_F18,
+                   meshType: .RealityConverter_F18_USDZ,
                    renderPipelineStateType: .OpaqueMaterial,
                    camera: camera,
                    cameraOffset: _cameraPositionOffset,

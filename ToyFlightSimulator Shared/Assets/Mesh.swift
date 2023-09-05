@@ -6,9 +6,12 @@
 //
 
 import MetalKit
+import GLTFKit2
 
 enum MeshExtension: String {
     case OBJ = "obj"
+    case GLTF = "gltf"
+    case GLB = "glb"
     case USDC = "usdc"
     case USDZ = "usdz"
 }
@@ -127,33 +130,45 @@ class Mesh {
         
         print("[makeMeshes] object named \(object.name): \(object)")
         
-        if fileExtension == .OBJ {
-            if let mesh = object as? MDLMesh {
-                print("[makeMeshes] object named \(object.name) is MDLMesh")
-                let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
-                meshes.append(newMesh)
-            }
-            
-            if object.conforms(to: MDLObjectContainerComponent.self) {
-                print("[makeMeshes] object named \(object.name) conforms to MDLObjectContainerComponent and has \(object.children.objects.count) children")
+        switch fileExtension {
+            case .OBJ:
+                if let mesh = object as? MDLMesh {
+                    print("[makeMeshes] object named \(object.name) is MDLMesh")
+                    let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
+                    meshes.append(newMesh)
+                }
+                
+                if object.conforms(to: MDLObjectContainerComponent.self) {
+                    print("[makeMeshes] object named \(object.name) conforms to MDLObjectContainerComponent and has \(object.children.objects.count) children")
+                    for child in object.children.objects {
+                        let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor, fileExtension: fileExtension)
+                        meshes.append(contentsOf: childMeshes)
+                    }
+                } else {
+                    print("[makeMeshes] object \(object.name) does not conform to MDLObjectContainerComponent")
+                }
+            case .USDC, .USDZ:
+                if let mesh = object as? MDLMesh {
+                    print("[makeMeshes] object named \(object.name) is MDLMesh")
+                    let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
+                    meshes.append(newMesh)
+                }
+                
                 for child in object.children.objects {
                     let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor, fileExtension: fileExtension)
                     meshes.append(contentsOf: childMeshes)
                 }
-            } else {
-                print("[makeMeshes] object \(object.name) does not conform to MDLObjectContainerComponent")
-            }
-        } else if fileExtension == .USDC || fileExtension == .USDZ {
-            if let mesh = object as? MDLMesh {
-                print("[makeMeshes] object named \(object.name) is MDLMesh")
-                let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
-                meshes.append(newMesh)
-            }
-            
-            for child in object.children.objects {
-                let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor, fileExtension: fileExtension)
-                meshes.append(contentsOf: childMeshes)
-            }
+            case .GLB, .GLTF:
+                if let mesh = object as? MDLMesh {
+                    print("[makeMeshes] object named \(object.name) is MDLMesh")
+                    let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
+                    meshes.append(newMesh)
+                }
+                
+                for child in object.children.objects {
+                    let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor, fileExtension: fileExtension)
+                    meshes.append(contentsOf: childMeshes)
+                }
         }
         
         return meshes
@@ -170,6 +185,8 @@ class Mesh {
             switch ext {
                 case .OBJ:
                     self?.createMeshFromObjModel(modelName, assetUrl: assetURL)
+                case .GLB, .GLTF:
+                    self?.createMeshFromGlbModel(modelName, assetUrl: assetURL)
                 case .USDC, .USDZ:
                     self?.createMeshFromUsdModel(modelName, assetUrl: assetURL)
             }
@@ -222,8 +239,6 @@ class Mesh {
         let descriptor = createMdlVertexDescriptor()
         let asset = MDLAsset(url: assetUrl, vertexDescriptor: descriptor, bufferAllocator: bufferAllocator)
         
-//        let asset = MDLAsset(url: assetUrl, vertexDescriptor: nil, bufferAllocator: bufferAllocator)
-        
         asset.loadTextures()
         
         let assetChildren = asset.childObjects(of: MDLObject.self)
@@ -234,6 +249,32 @@ class Mesh {
         }
         
         print("Num child meshes for \(modelName): \(_childMeshes.count)")
+    }
+    
+    private func createMeshFromGlbModel(_ modelName: String, assetUrl: URL) {
+        GLTFAsset.load(with: assetUrl) { (progress, status, maybeAsset, maybeError, _) in
+            DispatchQueue.main.async {
+                if status == .complete, let maybeAsset {
+//                    let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
+//                    let asset = MDLAsset(gltfAsset: maybeAsset, bufferAllocator: bufferAllocator)
+//                    maybeAsset.
+                    let asset = MDLAsset(gltfAsset: maybeAsset)
+                    asset.loadTextures()
+                    print("[createMeshFromGlbModel] asset: \(asset)")
+                    
+                    let descriptor = self.createMdlVertexDescriptor()
+                    let assetChildren = asset.childObjects(of: MDLObject.self)
+                    print("[createMeshFromGlbModel] \(modelName) child count: \(assetChildren.count)")
+                    for child in assetChildren {
+                        (child as? MDLMesh)?.vertexDescriptor = descriptor
+                        print("[createMeshFromGlbModel] \(modelName) child name: \(child.name)")
+                        self._childMeshes.append(contentsOf: Mesh.makeMeshes(object: child, vertexDescriptor: descriptor, fileExtension: .GLB))
+                    }
+                    
+                    print("[createMeshFromGlbModel] Num child meshes for \(modelName): \(self._childMeshes.count)")
+                }
+            }
+        }
     }
     
     func setInstanceCount(_ count: Int) {

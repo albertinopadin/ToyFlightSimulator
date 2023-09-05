@@ -24,9 +24,11 @@ enum MeshType {
     case F16
     case F18
     
-    case RC_F18
-    case CGTrader_F35
-    case Sketchfab_F35
+    case RealityConverter_F18_USDZ
+    case CGTrader_F35_USDC
+    case Sketchfab_F35_USDZ
+    
+    case CGTrader_F35_GLB
 }
 
 class MeshLibrary: Library<MeshType, Mesh> {
@@ -48,9 +50,11 @@ class MeshLibrary: Library<MeshType, Mesh> {
         _library.updateValue(Mesh(modelName: "f16r"), forKey: .F16)
         _library.updateValue(Mesh(modelName: "FA-18F", ext: .OBJ), forKey: .F18)
 //        _library.updateValue(Mesh(modelName: "FA-18F", ext: .USDZ), forKey: .RC_F18)
-        
+//
 //        _library.updateValue(Mesh(modelName: "F35_JSF", ext: .USDC), forKey: .CGTrader_F35)
 //        _library.updateValue(Mesh(modelName: "F-35A_Lightning_II", ext: .USDZ), forKey: .Sketchfab_F35)
+        
+        _library.updateValue(Mesh(modelName: "F-35", ext: .GLB), forKey: .CGTrader_F35_GLB)
     }
     
     override subscript(type: MeshType) -> Mesh {

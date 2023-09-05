@@ -7,7 +7,7 @@
 
 class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
-    var jet = F35()
+    var jet = F18()
     var sun = Sun(meshType: .Sphere)
     var ground = Quad()
     var sidewinderMissile = Sidewinder()
@@ -43,7 +43,7 @@ class FreeCamFlightboxScene: GameScene {
         
 //        f18.setScale(0.25)  // TODO: setScale doesn't work
         jet.setPosition(0, 10, 0)
-        jet.setScale(0.025)
+//        jet.setScale(0.025)
         addChild(jet)
         
         sidewinderMissile.setScale(4.0)
