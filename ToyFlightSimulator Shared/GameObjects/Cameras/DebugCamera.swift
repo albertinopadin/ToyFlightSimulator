@@ -8,8 +8,8 @@
 import simd
 
 class DebugCamera: Camera {
-    private var _moveSpeed: Float = 10.0
-    private var _turnSpeed: Float = 0.1
+    private var _moveSpeed: Float = 25.0
+    private var _turnSpeed: Float = 0.4
     
     init() {
         super.init(name: "Debug", cameraType: .Debug, aspectRatio: Renderer.AspectRatio)

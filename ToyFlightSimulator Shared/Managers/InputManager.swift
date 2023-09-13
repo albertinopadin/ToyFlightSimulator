@@ -128,7 +128,8 @@ class InputManager {
         .Roll: .RightStickX,
         .Pitch: .RightStickY,
         .MoveFwd: .LeftStickY,
-        .MoveSide: .LeftStickX
+//        .MoveSide: .LeftStickX,
+        .Yaw: .LeftStickX
     ]
     
     static var controllerMappingsDiscrete: [DiscreteCommand: ControllerState] = [

@@ -284,8 +284,8 @@ class F18: Aircraft {
     let leftWingRearControlSurfaceRotationAxis = float3(-1, 0, 0.15)
     let rightWingRearControlSurfaceRotationAxis = float3(1, 0, 0.15)
     
-    let leftRudderControlSurfaceRotationAxis = float3(-0.40, 1, 0.50)
-    let rightRudderControlSurfaceRotationAxis = float3(0.40, 1, 0.50)
+    let leftRudderControlSurfaceRotationAxis = normalize(float3(-0.25, 0.8, 0.30))
+    let rightRudderControlSurfaceRotationAxis = normalize(float3(0.25, 0.8, 0.30))
     
     var landingGearDeployed: Bool = false
     var landingGearDegrees: Float = 0.0
@@ -327,7 +327,7 @@ class F18: Aircraft {
         rightFlap.setSubmeshOrigin(newFlapsOrigin)
         
         // Rudders:
-        let newRuddersOrigin = float3(0, 0, 0.50)
+        let newRuddersOrigin = float3(0, 0, 0.25)
         leftRudder.setSubmeshOrigin(newRuddersOrigin)
         rightRudder.setSubmeshOrigin(newRuddersOrigin)
         
@@ -366,12 +366,12 @@ class F18: Aircraft {
         
         // Set rudders as children:
         let leftRudderMeshMetadata = leftRudder.getSubmeshVertexMetadata()
-        let leftRudderPosition = leftRudderMeshMetadata.initialPositionInParentMesh - newFlapsOrigin
+        let leftRudderPosition = leftRudderMeshMetadata.initialPositionInParentMesh - newRuddersOrigin
         leftRudder.setPosition(leftRudderPosition)
         addChild(leftRudder)
         
         let rightRudderMeshMetadata = rightRudder.getSubmeshVertexMetadata()
-        let rightRudderPosition = rightRudderMeshMetadata.initialPositionInParentMesh - newFlapsOrigin
+        let rightRudderPosition = rightRudderMeshMetadata.initialPositionInParentMesh - newRuddersOrigin
         rightRudder.setPosition(rightRudderPosition)
         addChild(rightRudder)
     }

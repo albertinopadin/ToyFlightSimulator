@@ -8,17 +8,19 @@
 class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
     var jet = F18()
+//    var jet = F35()
     var sun = Sun(meshType: .Sphere)
     var ground = Quad()
     var sidewinderMissile = Sidewinder()
     var aim120 = AIM120()
     
     override func buildScene() {
-        sun.setPosition(1, 25, 5)
-        sun.setLightColor(1, 1, 1)
+//        sun.setPosition(1, 25, 5)
+        sun.setPosition(-50, 14, 50)
+        sun.setLightColor(WHITE_COLOR.xyz)
         addLight(sun)
         
-        print("Sun light type: \(sun.type)")
+//        print("Sun light type: \(sun.type)")
         
         if _rendererType == .OrderIndependentTransparency {
             let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
@@ -36,15 +38,30 @@ class FreeCamFlightboxScene: GameScene {
         addChild(ground)
         
 //        camera.setPosition(4, 12, 20)
-        camera.setPosition(12, 14, 5)
+//        camera.setPosition(12, 14, 5)
+//        camera.setPosition(12, 14, 5)
+        camera.setPosition(-12, 14, 7)
 //        camera.setRotationX(Float(15).toRadians)
-        camera.setRotationY(Float(75).toRadians)
+//        camera.setRotationY(Float(75).toRadians)
+        camera.setRotationY(Float(-75).toRadians)
         addCamera(camera)
         
 //        f18.setScale(0.25)  // TODO: setScale doesn't work
         jet.setPosition(0, 10, 0)
 //        jet.setScale(0.025)
         addChild(jet)
+        
+        // TODO: Other lights don't work:
+//        let sLight = LightObject(name: "sLight", type: .Directional, meshType: .Sphere)
+//        sLight.setLightColor(WHITE_COLOR.xyz)
+//        sLight.setLightBrightness(100)
+//        sLight.setPosition(-5, 14, 0)
+//        addLight(sLight)
+        
+        let rudderLineAxis = jet.leftRudderControlSurfaceRotationAxis
+        let rudderOrigin = jet.leftRudder.getPosition() + jet.getPosition() + float3(-0.2, 0, 0)
+        let rudderLine = Line(startPoint: rudderOrigin, endPoint: rudderLineAxis * 100, color: RED_COLOR)
+        addChild(rudderLine)
         
         sidewinderMissile.setScale(4.0)
         sidewinderMissile.setPosition(0, 2, -12)
