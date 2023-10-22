@@ -90,7 +90,7 @@ deferred_directional_lighting_fragment_common(QuadInOut             in,
 // and the iOS version of the shading language can use the GBufferData structure an an input.
 fragment AccumLightBuffer
 deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_in ]],
-                                       constant LightData & lightData [[ buffer(TFSBufferLightData) ]],
+                                       constant LightData & lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                        GBufferData          GBuffer)
 {
     AccumLightBuffer output;

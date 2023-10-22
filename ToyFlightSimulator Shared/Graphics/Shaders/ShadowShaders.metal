@@ -26,7 +26,7 @@ struct ShadowOutput
 //}
 
 vertex ShadowOutput shadow_vertex(const VertexIn in [[ stage_in ]],
-                                  constant LightData &lightData [[ buffer(TFSBufferLightData) ]],
+                                  constant LightData &lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                   constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]])
 {
     ShadowOutput out;

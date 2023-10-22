@@ -609,7 +609,7 @@
 		CE3EA73B2AA5DB9400219015 /* F-35.glb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "F-35.glb"; sourceTree = "<group>"; };
 		CE3EA7432AA5E0AC00219015 /* GLTFLogging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFLogging.h; sourceTree = "<group>"; };
 		CE3EA7442AA5E0AC00219015 /* GLTFWorkflowHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GLTFWorkflowHelper.m; sourceTree = "<group>"; };
-		CE3EA7452AA5E0AC00219015 /* WorkflowShaders.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = WorkflowShaders.txt; sourceTree = "<group>"; };
+		CE3EA7452AA5E0AC00219015 /* WorkflowShaders.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = WorkflowShaders.txt; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
 		CE3EA7462AA5E0AC00219015 /* GLTFAssetReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFAssetReader.h; sourceTree = "<group>"; };
 		CE3EA7472AA5E0AC00219015 /* GLTFWorkflowHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLTFWorkflowHelper.h; sourceTree = "<group>"; };
 		CE3EA7482AA5E0AC00219015 /* GLTFAssetReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GLTFAssetReader.m; sourceTree = "<group>"; };

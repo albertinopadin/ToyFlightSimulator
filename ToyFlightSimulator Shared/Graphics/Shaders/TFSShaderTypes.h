@@ -26,9 +26,9 @@ typedef enum TFSBufferIndices
     TFSBufferIndexMeshPositions     = 0,
     TFSBufferIndexMeshGenerics      = 1,
     TFSBufferFrameData              = 2,
-    TFSBufferIndexLightsData        = 3,
-    TFSBufferIndexLightsPosition    = 4,
-    TFSBufferLightData              = 5,
+    TFSBufferPointLightsData        = 3,
+    TFSBufferPointLightsPosition    = 4,
+    TFSBufferDirectionalLightData   = 5,
     TFSBufferModelConstants         = 6,
     TFSBufferIndexSceneConstants    = 7,
     TFSBufferIndexMaterial          = 8
@@ -46,6 +46,28 @@ typedef enum TFSVertexAttributes
     TFSVertexAttributeTangent   = 4,
     TFSVertexAttributeBitangent = 5
 } TFSVertexAttributes;
+
+// Works for USD:
+//typedef enum TFSVertexAttributes
+//{
+//    TFSVertexAttributePosition  = 0,
+//    TFSVertexAttributeTexcoord  = 1,
+//    TFSVertexAttributeNormal    = 2,
+//    TFSVertexAttributeColor     = 3,
+//    TFSVertexAttributeTangent   = 4,
+//    TFSVertexAttributeBitangent = 5
+//} TFSVertexAttributes;
+
+// Should work for (my) GLTF...???
+//typedef enum TFSVertexAttributes
+//{
+//    TFSVertexAttributeNormal    = 0,
+//    TFSVertexAttributeTexcoord  = 1,
+//    TFSVertexAttributePosition  = 2,
+//    TFSVertexAttributeColor     = 3,
+//    TFSVertexAttributeTangent   = 4,
+//    TFSVertexAttributeBitangent = 5
+//} TFSVertexAttributes;
 
 // Texture index values shared between shader and C code to ensure Metal shader texture indices
 // match indices of Metal API texture set calls

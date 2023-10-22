@@ -49,7 +49,7 @@ class MeshLibrary: Library<MeshType, Mesh> {
         
         _library.updateValue(Mesh(modelName: "f16r"), forKey: .F16)
         _library.updateValue(Mesh(modelName: "FA-18F", ext: .OBJ), forKey: .F18)
-//        _library.updateValue(Mesh(modelName: "FA-18F", ext: .USDZ), forKey: .RC_F18)
+//        _library.updateValue(Mesh(modelName: "FA-18F", ext: .USDZ), forKey: .RealityConverter_F18_USDZ)
 //
 //        _library.updateValue(Mesh(modelName: "F35_JSF", ext: .USDC), forKey: .CGTrader_F35)
 //        _library.updateValue(Mesh(modelName: "F-35A_Lightning_II", ext: .USDZ), forKey: .Sketchfab_F35)

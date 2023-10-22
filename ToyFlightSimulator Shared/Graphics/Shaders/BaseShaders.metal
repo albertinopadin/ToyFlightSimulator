@@ -40,7 +40,7 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
 
 fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]],
                                       constant int &lightCount [[ buffer(2) ]],
-                                      constant LightData *lightDatas [[ buffer(3) ]],
+                                      constant LightData *lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                       sampler sampler2d [[ sampler(0) ]],
                                       texture2d<float> baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
                                       texture2d<float> normalMap [[ texture(TFSTextureIndexNormal) ]]) {
@@ -57,7 +57,7 @@ fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]],
 fragment FragmentOutput material_fragment(RasterizerData rd [[ stage_in ]],
                                           constant Material &material [[ buffer(TFSBufferIndexMaterial) ]],
                                           constant int &lightCount [[ buffer(2) ]],
-                                          constant LightData *lightDatas [[ buffer(3) ]],
+                                          constant LightData *lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                           sampler sampler2d [[ sampler(0) ]],
                                           texture2d<float> baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
                                           texture2d<float> normalMap [[ texture(TFSTextureIndexNormal) ]]) {
@@ -84,7 +84,7 @@ fragment FragmentOutput material_fragment(RasterizerData rd [[ stage_in ]],
         float3 unitToCameraVector = normalize(rd.toCameraVector);
         
         float3 phongIntensity = Lighting::GetPhongIntensity(material,
-                                                            lightDatas,
+                                                            lightData,
                                                             lightCount,
                                                             rd.worldPosition,
                                                             unitNormal,

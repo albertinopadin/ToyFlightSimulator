@@ -85,10 +85,10 @@ class GameScene: Node {
         var directionalLight = _lightManager.getDirectionalLightData()!
         renderCommandEncoder.setVertexBytes(&directionalLight,
                                             length: LightData.stride,
-                                            index: Int(TFSBufferLightData.rawValue))
+                                            index: Int(TFSBufferDirectionalLightData.rawValue))
         renderCommandEncoder.setFragmentBytes(&directionalLight,
                                               length: LightData.stride,
-                                              index: Int(TFSBufferLightData.rawValue))
+                                              index: Int(TFSBufferDirectionalLightData.rawValue))
     }
     
     func setPointLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
@@ -102,7 +102,7 @@ class GameScene: Node {
         
         renderCommandEncoder.setVertexBytes(&pointLights,
                                             length: LightData.stride(pointLights.count),
-                                            index: Int(TFSBufferIndexLightsData.rawValue))
+                                            index: Int(TFSBufferPointLightsData.rawValue))
     }
     
     func setLightData(renderCommandEncoder: MTLRenderCommandEncoder) {

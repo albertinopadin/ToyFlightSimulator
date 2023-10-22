@@ -52,8 +52,13 @@ class Submesh {
             self.name = mtkSubmesh.name
         }
         print("[Submesh init] Creating textures and material for \(self.name)")
-        createTextures(mdlSubmesh.material!)
-        createMaterial(mdlSubmesh.material!)
+//        createTextures(mdlSubmesh.material!)
+//        createMaterial(mdlSubmesh.material!)
+        
+        if let submeshMaterial = mdlSubmesh.material {
+            createTextures(submeshMaterial)
+            createMaterial(submeshMaterial)
+        }
     }
     
     private func createTextures(_ mdlMaterial: MDLMaterial) {

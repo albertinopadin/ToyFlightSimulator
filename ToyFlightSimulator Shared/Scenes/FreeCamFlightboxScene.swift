@@ -9,14 +9,15 @@ class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
     var jet = F18()
 //    var jet = F35()
+//    var jet = F18Usdz()
     var sun = Sun(meshType: .Sphere)
     var ground = Quad()
     var sidewinderMissile = Sidewinder()
     var aim120 = AIM120()
     
     override func buildScene() {
-//        sun.setPosition(1, 25, 5)
-        sun.setPosition(-50, 14, 50)
+        sun.setPosition(1, 25, 5)
+//        sun.setPosition(-50, 14, 50)
         sun.setLightColor(WHITE_COLOR.xyz)
         addLight(sun)
         
@@ -58,10 +59,18 @@ class FreeCamFlightboxScene: GameScene {
 //        sLight.setPosition(-5, 14, 0)
 //        addLight(sLight)
         
-        let rudderLineAxis = jet.leftRudderControlSurfaceRotationAxis
-        let rudderOrigin = jet.leftRudder.getPosition() + jet.getPosition() + float3(-0.2, 0, 0)
-        let rudderLine = Line(startPoint: rudderOrigin, endPoint: rudderLineAxis * 100, color: RED_COLOR)
-        addChild(rudderLine)
+//        let rudderLineAxis = jet.leftRudderControlSurfaceRotationAxis
+//        let rudderOrigin = jet.leftRudder.getPosition() + jet.getPosition() + float3(-0.2, 0, 0)
+//        let rudderLine = Line(startPoint: rudderOrigin, endPoint: rudderLineAxis * 100, color: RED_COLOR)
+//        addChild(rudderLine)
+        
+        let ball = Sphere()
+        var ballMaterial = Material()
+        ballMaterial.color = BLUE_COLOR
+        ball.useMaterial(ballMaterial)
+        ball.setScale(0.5)
+        ball.setPosition(jet.getPosition())
+        addChild(ball)
         
         sidewinderMissile.setScale(4.0)
         sidewinderMissile.setPosition(0, 2, -12)

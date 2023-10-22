@@ -43,7 +43,7 @@ typedef struct
 vertex ColorInOut gbuffer_vertex(VertexIn in [[ stage_in ]],
                                  constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                  constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]],
-                                 constant LightData &lightData [[ buffer(TFSBufferLightData) ]])
+                                 constant LightData &lightData [[ buffer(TFSBufferDirectionalLightData) ]])
 {
     ColorInOut out;
     out.color = in.color;

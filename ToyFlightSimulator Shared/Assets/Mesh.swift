@@ -43,6 +43,8 @@ class Mesh {
         print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
         name = mdlMesh.name
         
+//        mdlMesh.vertexDescriptor = vertexDescriptor
+        
         if addTangentBases {
             mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
                                     normalAttributeNamed: MDLVertexAttributeNormal,
@@ -193,19 +195,26 @@ class Mesh {
         }
     }
     
-    private func createMdlVertexDescriptor() -> MDLVertexDescriptor {
-        let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Base])
+    private func createMdlVertexDescriptor(descriptorType: VertexDescriptorType) -> MDLVertexDescriptor {
+        let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[descriptorType])
         descriptor.attribute(TFSVertexAttributePosition.rawValue).name  = MDLVertexAttributePosition
-        descriptor.attribute(TFSVertexAttributeColor.rawValue).name     = MDLVertexAttributeColor
         descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).name  = MDLVertexAttributeTextureCoordinate
         descriptor.attribute(TFSVertexAttributeNormal.rawValue).name    = MDLVertexAttributeNormal
-        descriptor.attribute(TFSVertexAttributeTangent.rawValue).name   = MDLVertexAttributeTangent
-        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name = MDLVertexAttributeBitangent
+        
+//        descriptor.attribute(TFSVertexAttributeColor.rawValue).name     = MDLVertexAttributeColor
+//        descriptor.attribute(TFSVertexAttributeTangent.rawValue).name   = MDLVertexAttributeTangent
+//        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name = MDLVertexAttributeBitangent
+        
+        if descriptorType != .USD {
+            descriptor.attribute(TFSVertexAttributeColor.rawValue).name     = MDLVertexAttributeColor
+            descriptor.attribute(TFSVertexAttributeTangent.rawValue).name   = MDLVertexAttributeTangent
+            descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name = MDLVertexAttributeBitangent
+        }
         return descriptor
     }
     
     private func createMeshFromObjModel(_ modelName: String, assetUrl: URL) {
-        let descriptor = createMdlVertexDescriptor()
+        let descriptor = createMdlVertexDescriptor(descriptorType: .Base)
     
         let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
     
@@ -236,7 +245,7 @@ class Mesh {
     private func createMeshFromUsdModel(_ modelName: String, assetUrl: URL) {
         let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
         
-        let descriptor = createMdlVertexDescriptor()
+        let descriptor = createMdlVertexDescriptor(descriptorType: .USD)
         let asset = MDLAsset(url: assetUrl, vertexDescriptor: descriptor, bufferAllocator: bufferAllocator)
         
         asset.loadTextures()
@@ -262,7 +271,7 @@ class Mesh {
                     asset.loadTextures()
                     print("[createMeshFromGlbModel] asset: \(asset)")
                     
-                    let descriptor = self.createMdlVertexDescriptor()
+                    let descriptor = self.createMdlVertexDescriptor(descriptorType: .GLTF)
                     let assetChildren = asset.childObjects(of: MDLObject.self)
                     print("[createMeshFromGlbModel] \(modelName) child count: \(assetChildren.count)")
                     for child in assetChildren {
@@ -334,7 +343,7 @@ class Mesh {
                                                                        indexBufferOffset: submesh.indexBufferOffset,
                                                                        instanceCount: _instanceCount)
                         } else {
-                            if submeshesToDisplay[submesh.name]! {
+                            if submeshesToDisplay[submesh.name] ?? false {
                                 if applyMaterials {
                                     submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
                                                           customBaseColorTextureType: baseColorTextureType,
@@ -411,7 +420,7 @@ class Mesh {
     }
     
     func drawShadowPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToDisplay: [String: Bool]? = nil) {
-        if let _vertexBuffer = _vertexBuffer {
+        if let _vertexBuffer {
             renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
             if _submeshes.count > 0 {
                 if let submeshesToDisplay {
@@ -426,7 +435,7 @@ class Mesh {
                                                                        instanceCount: _instanceCount)
                         }
                         else {
-                            if submeshesToDisplay[submesh.name]! {
+                            if submeshesToDisplay[submesh.name] ?? false {
                                 renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
                                                                            indexCount: submesh.indexCount,
                                                                            indexType: submesh.indexType,
@@ -447,6 +456,8 @@ class Mesh {
                     }
                 } else {
                     for submesh in _submeshes {
+                        // TODO: FIX:
+                        // Vertex Function(shadow_vertex): argument vertexBuffer.0[0] from buffer(0) with offset(0) and length(64) has space for 64 bytes, but argument has a length(96).
                         renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
                                                                    indexCount: submesh.indexCount,
                                                                    indexType: submesh.indexType,
