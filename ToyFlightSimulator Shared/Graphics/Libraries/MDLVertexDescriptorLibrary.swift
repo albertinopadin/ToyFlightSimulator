@@ -54,6 +54,30 @@ public struct BaseMDLVertexDescriptor {
         (mdlVertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride = Vertex.stride
     }
     
+//    init() {
+//        mdlVertexDescriptor = MDLVertexDescriptor()
+//        
+//        // Normal
+//        addAttribute(name: MDLVertexAttributeNormal, format: .float3, bufferIndex: 0)
+//        
+//        // Texture Coordinate
+//        addAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, bufferIndex: 0)
+//        
+//        // Position
+//        addAttribute(name: MDLVertexAttributePosition, format: .float3, bufferIndex: 0)
+//        
+//        // Color
+//        addAttribute(name: MDLVertexAttributeColor, format: .float4, bufferIndex: 0)
+//        
+//        // Tangent
+//        addAttribute(name: MDLVertexAttributeTangent, format: .float3, bufferIndex: 0)
+//        
+//        // Bitangent
+//        addAttribute(name: MDLVertexAttributeBitangent, format: .float3, bufferIndex: 0)
+//        
+//        (mdlVertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride = Vertex.stride
+//    }
+    
     mutating func addAttribute(name: String, format: MDLVertexFormat, bufferIndex: Int) {
         (mdlVertexDescriptor.attributes[attributeIndex] as! MDLVertexAttribute).name = name
         (mdlVertexDescriptor.attributes[attributeIndex] as! MDLVertexAttribute).format = format

@@ -163,6 +163,92 @@ class Mesh {
             case .GLB, .GLTF:
                 if let mesh = object as? MDLMesh {
                     print("[makeMeshes] object named \(object.name) is MDLMesh")
+                    
+                    // Perhaps we can move around the data in the vertex buffers to correspond to
+                    // the BASE vertex format the engine was built around...
+//                    mesh.submeshes
+//                    mesh.vertexDescriptor
+//                    mesh.vertexBuffers
+//                    mesh.vertexAttributeData(forAttributeNamed: <#T##String#>)
+//                    mesh.addAttribute(withName: <#T##String#>, format: <#T##MDLVertexFormat#>)
+//                    mesh.addAttribute(withName: <#T##String#>, format: <#T##MDLVertexFormat#>, type: <#T##String#>, data: <#T##Data#>, stride: <#T##Int#>)
+//                    mesh.addNormals(withAttributeNamed: <#T##String?#>, creaseThreshold: <#T##Float#>)
+                    
+//                    let positionVertexAttrData: MDLVertexAttributeData =
+//                        mesh.vertexAttributeData(forAttributeNamed: MDLVertexAttributePosition)!
+//                    let texcoordVertexAttrData = 
+//                        mesh.vertexAttributeData(forAttributeNamed: MDLVertexAttributeTextureCoordinate)!
+//                    let normalVertexAttrData = mesh.vertexAttributeData(forAttributeNamed: MDLVertexAttributeNormal)!
+                    
+//                    let normalVertexBuffer: MDLMeshBuffer = mesh.vertexBuffers[0]
+//                    let texcoordVertexBuffer: MDLMeshBuffer = mesh.vertexBuffers[1]
+//                    let positionVertexBuffer: MDLMeshBuffer = mesh.vertexBuffers[2]
+                    
+//                    print("[makeMeshes] removing attribute named: \(MDLVertexAttributeTextureCoordinate)")
+//                    mesh.removeAttributeNamed(MDLVertexAttributeTextureCoordinate)
+//                    
+//                    print("[makeMeshes] removing attribute named: \(MDLVertexAttributeNormal)")
+//                    mesh.removeAttributeNamed(MDLVertexAttributeNormal)
+                    
+//                    print("[makeMeshes] removing attribute named: \(MDLVertexAttributePosition)")
+//                    mesh.removeAttributeNamed(MDLVertexAttributePosition)
+                    
+                    // Which to use? The buffer, or the Attribute Data?
+                    
+//                    let reorderedVertexBuffers = [
+//                        mesh.vertexBuffers[0],
+//                        mesh.vertexBuffers[2],
+//                        mesh.vertexBuffers[1]
+//                    ]
+//                    
+//                    let reorderedMesh = MDLMesh(vertexBuffers: reorderedVertexBuffers,
+//                                                vertexCount: mesh.vertexCount,
+//                                                descriptor: vertexDescriptor,
+//                                                submeshes: mesh.submeshes as! [MDLSubmesh])
+                    
+                    // Position
+//                    mesh.addAttribute(withName: MDLVertexAttributePosition,
+//                                      format: .float3,
+//                                      type: MDLVertexAttributePosition,
+//                                      data: Data(bytes: positionVertexBuffer.map().bytes, count: positionVertexBuffer.length),
+//                                      stride: float3.stride)
+                    
+//                    mesh.addAttribute(withName: MDLVertexAttributePosition,
+//                                      format: .float3,
+//                                      type: MDLVertexAttributePosition,
+//                                      data: Data(bytes: positionVertexAttrData.dataStart,
+//                                                 count: positionVertexAttrData.bufferSize),
+//                                      stride: float3.stride)
+                    
+                    // Texture Coordinate
+//                    mesh.addAttribute(withName: MDLVertexAttributeTextureCoordinate,
+//                                      format: .float3,
+//                                      type: MDLVertexAttributeTextureCoordinate,
+//                                      data: Data(bytes: texcoordVertexBuffer.map().bytes, count: texcoordVertexBuffer.length),
+//                                      stride: float3.stride)
+                    
+//                    mesh.addAttribute(withName: MDLVertexAttributeTextureCoordinate,
+//                                      format: .float3,
+//                                      type: MDLVertexAttributeTextureCoordinate,
+//                                      data: Data(bytes: texcoordVertexAttrData.dataStart,
+//                                                 count: texcoordVertexAttrData.bufferSize),
+//                                      stride: float3.stride)
+                    
+                    // Normal
+//                    mesh.addAttribute(withName: MDLVertexAttributeNormal,
+//                                      format: .float3,
+//                                      type: MDLVertexAttributeNormal,
+//                                      data: Data(bytes: normalVertexBuffer.map().bytes, count: normalVertexBuffer.length),
+//                                      stride: float3.stride)
+                    
+//                    mesh.addAttribute(withName: MDLVertexAttributeNormal,
+//                                      format: .float3,
+//                                      type: MDLVertexAttributeNormal,
+//                                      data: Data(bytes: normalVertexAttrData.dataStart,
+//                                                 count: normalVertexAttrData.bufferSize),
+//                                      stride: float3.stride)
+                    
+                    
                     let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
                     meshes.append(newMesh)
                 }
@@ -196,20 +282,35 @@ class Mesh {
     }
     
     private func createMdlVertexDescriptor(descriptorType: VertexDescriptorType) -> MDLVertexDescriptor {
-        let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[descriptorType])
-        descriptor.attribute(TFSVertexAttributePosition.rawValue).name  = MDLVertexAttributePosition
-        descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).name  = MDLVertexAttributeTextureCoordinate
+        let mtlDescriptor: MTLVertexDescriptor = Graphics.VertexDescriptors[descriptorType]
+        let descriptor = MTKModelIOVertexDescriptorFromMetal(mtlDescriptor)
         descriptor.attribute(TFSVertexAttributeNormal.rawValue).name    = MDLVertexAttributeNormal
+        descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).name  = MDLVertexAttributeTextureCoordinate
+        descriptor.attribute(TFSVertexAttributePosition.rawValue).name  = MDLVertexAttributePosition
         
-//        descriptor.attribute(TFSVertexAttributeColor.rawValue).name     = MDLVertexAttributeColor
-//        descriptor.attribute(TFSVertexAttributeTangent.rawValue).name   = MDLVertexAttributeTangent
-//        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name = MDLVertexAttributeBitangent
+        descriptor.attribute(TFSVertexAttributeColor.rawValue).name     = MDLVertexAttributeColor
+        descriptor.attribute(TFSVertexAttributeTangent.rawValue).name   = MDLVertexAttributeTangent
+        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name = MDLVertexAttributeBitangent
         
-        if descriptorType != .USD {
-            descriptor.attribute(TFSVertexAttributeColor.rawValue).name     = MDLVertexAttributeColor
-            descriptor.attribute(TFSVertexAttributeTangent.rawValue).name   = MDLVertexAttributeTangent
-            descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name = MDLVertexAttributeBitangent
+//        if descriptorType != .USD {
+//            descriptor.attribute(TFSVertexAttributeColor.rawValue).name     = MDLVertexAttributeColor
+//            descriptor.attribute(TFSVertexAttributeTangent.rawValue).name   = MDLVertexAttributeTangent
+//            descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name = MDLVertexAttributeBitangent
+//        }
+        
+        switch descriptorType {
+            case .Base:
+                (descriptor.layouts[0] as! MDLVertexBufferLayout).stride = Vertex.stride
+            case .USD:
+                (descriptor.layouts[0] as! MDLVertexBufferLayout).stride = Vertex.stride
+            case .GLTF:
+                (descriptor.layouts[Int(TFSVertexAttributeNormal.rawValue)] as! MDLVertexBufferLayout).stride = float3.stride
+                (descriptor.layouts[Int(TFSVertexAttributeTexcoord.rawValue)] as! MDLVertexBufferLayout).stride = float2.stride
+                (descriptor.layouts[Int(TFSVertexAttributePosition.rawValue)] as! MDLVertexBufferLayout).stride = float3.stride
+            default:
+                (descriptor.layouts[0] as! MDLVertexBufferLayout).stride = Vertex.stride
         }
+        
         return descriptor
     }
     
@@ -277,7 +378,9 @@ class Mesh {
                     for child in assetChildren {
                         (child as? MDLMesh)?.vertexDescriptor = descriptor
                         print("[createMeshFromGlbModel] \(modelName) child name: \(child.name)")
-                        self._childMeshes.append(contentsOf: Mesh.makeMeshes(object: child, vertexDescriptor: descriptor, fileExtension: .GLB))
+                        self._childMeshes.append(contentsOf: Mesh.makeMeshes(object: child, 
+                                                                             vertexDescriptor: descriptor,
+                                                                             fileExtension: .GLB))
                     }
                     
                     print("[createMeshFromGlbModel] Num child meshes for \(modelName): \(self._childMeshes.count)")

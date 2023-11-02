@@ -54,7 +54,7 @@ class MeshLibrary: Library<MeshType, Mesh> {
 //        _library.updateValue(Mesh(modelName: "F35_JSF", ext: .USDC), forKey: .CGTrader_F35)
 //        _library.updateValue(Mesh(modelName: "F-35A_Lightning_II", ext: .USDZ), forKey: .Sketchfab_F35)
         
-        _library.updateValue(Mesh(modelName: "F-35", ext: .GLB), forKey: .CGTrader_F35_GLB)
+//        _library.updateValue(Mesh(modelName: "F-35", ext: .GLB), forKey: .CGTrader_F35_GLB)
     }
     
     override subscript(type: MeshType) -> Mesh {

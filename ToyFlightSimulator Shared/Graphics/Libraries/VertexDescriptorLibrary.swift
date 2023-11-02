@@ -7,6 +7,33 @@
 
 import MetalKit
 
+extension TFSBaseVertexAttributes: CaseIterable {
+    // allCases must return sorted to make adding vertex attributes easy:
+    public static var allCases: [TFSBaseVertexAttributes] {
+        return [
+            TFSVertexAttributePosition,
+            TFSVertexAttributeTexcoord,
+            TFSVertexAttributeNormal,
+            TFSVertexAttributeTangent,
+            TFSVertexAttributeBitangent,
+            TFSVertexAttributeColor
+        ].sorted(by: { $0.rawValue < $1.rawValue })
+    }
+}
+
+extension TFSGltfVertexAttributes: CaseIterable {
+    public static var allCases: [TFSGltfVertexAttributes] {
+        return [
+            TFSGltfVertexAttributePosition,
+            TFSGltfVertexAttributeTexcoord,
+            TFSGltfVertexAttributeNormal,
+            TFSGltfVertexAttributeTangent,
+            TFSGltfVertexAttributeBitangent,
+            TFSGltfVertexAttributeColor
+        ].sorted(by: { $0.rawValue < $1.rawValue })
+    }
+}
+
 enum VertexDescriptorType {
     case Base
     case USD
@@ -41,6 +68,12 @@ protocol VertexDescriptor {
 // Structs can't inherit defined methods, they can only implement protocols,
 // so extracting out common functionality into an extension. Definitely feels janky tho...
 extension VertexDescriptor {
+    mutating func addAttribute(attributeIdx: Int, format: MTLVertexFormat, bufferIndex: Int, m_offset: Int) {
+        vertexDescriptor.attributes[attributeIdx].format = format
+        vertexDescriptor.attributes[attributeIdx].bufferIndex = bufferIndex
+        vertexDescriptor.attributes[attributeIdx].offset = m_offset
+    }
+    
     mutating func addAttributeWithOffset(format: MTLVertexFormat, bufferIndex: Int) {
         vertexDescriptor.attributes[attributeIndex].format = format
         vertexDescriptor.attributes[attributeIndex].bufferIndex = bufferIndex
@@ -49,18 +82,38 @@ extension VertexDescriptor {
         attributeIndex += 1
     }
     
-    mutating func addAttribute(attributeIdx: Int, format: MTLVertexFormat, bufferIndex: Int, m_offset: Int) {
-        vertexDescriptor.attributes[attributeIdx].format = format
-        vertexDescriptor.attributes[attributeIdx].bufferIndex = bufferIndex
-        vertexDescriptor.attributes[attributeIdx].offset = m_offset
-    }
-    
     mutating func addAttributeWithLayoutStride(format: MTLVertexFormat) {
         self.addAttribute(attributeIdx: attributeIndex, format: format, bufferIndex: bufferIndex, m_offset: 0)
 //        vertexDescriptor.layouts[bufferIndex].stride = getOffsetForFormat(format)
         vertexDescriptor.layouts[bufferIndex].stride = getStrideForFormat(format)
         attributeIndex += 1
         bufferIndex += 1
+    }
+    
+    func getFormatForBaseVertexAttribute(_ vertexAttribute: TFSBaseVertexAttributes) -> MTLVertexFormat {
+        switch vertexAttribute {
+            case TFSVertexAttributeTexcoord:
+                return .float2
+            case TFSVertexAttributePosition, TFSVertexAttributeNormal, TFSVertexAttributeTangent, TFSVertexAttributeBitangent:
+                return .float3
+            case TFSVertexAttributeColor:
+                return .float4
+            default:
+                return .float3
+        }
+    }
+    
+    func getFormatForGltfVertexAttribute(_ vertexAttribute: TFSGltfVertexAttributes) -> MTLVertexFormat {
+        switch vertexAttribute {
+            case TFSGltfVertexAttributeTexcoord:
+                return .float2
+            case TFSGltfVertexAttributePosition, TFSGltfVertexAttributeNormal, TFSGltfVertexAttributeTangent, TFSGltfVertexAttributeBitangent:
+                return .float3
+            case TFSGltfVertexAttributeColor:
+                return .float4
+            default:
+                return .float3
+        }
     }
     
     func getOffsetForFormat(_ format: MTLVertexFormat) -> Int {
@@ -97,26 +150,85 @@ public struct BaseVertexDescriptor: VertexDescriptor {
     var bufferIndex: Int = 0
     var offset: Int = 0
     
+//    init() {
+//        vertexDescriptor = MTLVertexDescriptor()
+//        
+//        // Position
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        // Color
+//        addAttributeWithOffset(format: .float4, bufferIndex: 0)
+//        
+//        // Texture Coordinate
+//        addAttributeWithOffset(format: .float2, bufferIndex: 0)
+//        
+//        // Normal
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        // Tangent
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        // Bitangent
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        vertexDescriptor.layouts[0].stride = Vertex.stride
+//    }
+    
+//    init() {
+//        vertexDescriptor = MTLVertexDescriptor()
+//        
+//        // Normal
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        // Texture Coordinate
+//        addAttributeWithOffset(format: .float2, bufferIndex: 0)
+//        
+//        // Position
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        // Color
+//        addAttributeWithOffset(format: .float4, bufferIndex: 0)
+//        
+//        // Tangent
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        // Bitangent
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        vertexDescriptor.layouts[0].stride = Vertex.stride
+//    }
+    
+//    init() {
+//        vertexDescriptor = MTLVertexDescriptor()
+//        
+//        // Position
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        // Texture Coordinate
+//        addAttributeWithOffset(format: .float2, bufferIndex: 0)
+//        
+//        // Normal
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        // Tangent
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        // Bitangent
+//        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+//        
+//        // Color
+//        addAttributeWithOffset(format: .float4, bufferIndex: 0)
+//        
+//        vertexDescriptor.layouts[0].stride = Vertex.stride
+//    }
+    
     init() {
         vertexDescriptor = MTLVertexDescriptor()
         
-        // Position
-        addAttributeWithOffset(format: .float3, bufferIndex: 0)
-        
-        // Color
-        addAttributeWithOffset(format: .float4, bufferIndex: 0)
-        
-        // Texture Coordinate
-        addAttributeWithOffset(format: .float2, bufferIndex: 0)
-        
-        // Normal
-        addAttributeWithOffset(format: .float3, bufferIndex: 0)
-        
-        // Tangent
-        addAttributeWithOffset(format: .float3, bufferIndex: 0)
-        
-        // Bitangent
-        addAttributeWithOffset(format: .float3, bufferIndex: 0)
+        print("[BaseVertexDescriptor init] TFSBaseVertexAttributes.allCases: \(TFSBaseVertexAttributes.allCases)")
+        for vertexAttribute in TFSBaseVertexAttributes.allCases {
+            addAttributeWithOffset(format: getFormatForBaseVertexAttribute(vertexAttribute), bufferIndex: 0)
+        }
         
         vertexDescriptor.layouts[0].stride = Vertex.stride
     }
@@ -149,16 +261,43 @@ public struct GltfVertexDescriptor: VertexDescriptor {
     var bufferIndex: Int = 0
     var offset: Int = 0
     
+//    init() {
+//        vertexDescriptor = MTLVertexDescriptor()
+//        // Normal
+//        addAttributeWithLayoutStride(format: .float3)
+//        
+//        // Texcoord
+//        addAttributeWithLayoutStride(format: .float2)
+//        
+//        // Position
+//        addAttributeWithLayoutStride(format: .float3)
+//    }
+    
+//    init() {
+//        vertexDescriptor = MTLVertexDescriptor()
+//        
+//        // Position
+//        addAttributeWithLayoutStride(format: .float3)
+//        
+//        // Normal
+//        addAttributeWithLayoutStride(format: .float3)
+//        
+//        // Texcoord
+//        addAttributeWithLayoutStride(format: .float2)
+//    }
+    
     init() {
         vertexDescriptor = MTLVertexDescriptor()
-        // Normal
-        addAttributeWithLayoutStride(format: .float3)
         
-        // Texcoord
-        addAttributeWithLayoutStride(format: .float2)
-        
-        // Position
-        addAttributeWithLayoutStride(format: .float3)
+        for vertexAttribute in TFSGltfVertexAttributes.allCases {
+            let idx = Int(vertexAttribute.rawValue)
+            let format = getFormatForGltfVertexAttribute(vertexAttribute)
+            addAttribute(attributeIdx: idx,
+                         format: format,
+                         bufferIndex: idx,
+                         m_offset: 0)
+            vertexDescriptor.layouts[idx].stride = getStrideForFormat(format)
+        }
     }
 }
 

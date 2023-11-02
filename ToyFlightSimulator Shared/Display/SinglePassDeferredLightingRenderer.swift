@@ -74,9 +74,9 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //            renderEncoder.setCullMode(.back)  // TODO: Set this on ???
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setStencilReferenceValue(128)
+            renderEncoder.setFragmentTexture(shadowMap, index: Int(TFSTextureIndexShadow.rawValue))
             SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetDirectionalLightConstants(renderCommandEncoder: renderEncoder)
-            renderEncoder.setFragmentTexture(shadowMap, index: Int(TFSTextureIndexShadow.rawValue))
             SceneManager.RenderGBuffer(renderCommandEncoder: renderEncoder)
         }
     }
@@ -224,7 +224,6 @@ class SinglePassDeferredLightingRenderer: Renderer {
             
             encodePass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
                 renderEncoder in
-                
                 encodeGBufferStage(using: renderEncoder)
                 encodeDirectionalLightingStage(using: renderEncoder)
 //                encodeLightMaskStage(using: renderEncoder)

@@ -26,6 +26,7 @@ class Preferences {
     
     public static var MainDepthStencilPixelFormat: MTLPixelFormat = .depth32Float_stencil8
     
-    public static var StartingSceneType: SceneType = .FreeCamFlightbox
+    public static var StartingSceneType: SceneType = .Sandbox
+//    public static var StartingSceneType: SceneType = .FreeCamFlightbox
 //    public static var StartingSceneType: SceneType = .Flightbox
 }

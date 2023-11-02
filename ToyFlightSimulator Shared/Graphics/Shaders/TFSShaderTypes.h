@@ -21,14 +21,28 @@ typedef struct __attribute__ ((packed)) packed_float3 {
 
 // Buffer index values shared between shader and C code to ensure Metal shader buffer inputs match
 // Metal API buffer set calls
+//typedef enum TFSBufferIndices
+//{
+//    TFSBufferIndexMeshPositions     = 0,
+//    TFSBufferIndexMeshGenerics      = 1,
+//    TFSBufferFrameData              = 2,
+//    TFSBufferPointLightsData        = 3,
+//    TFSBufferPointLightsPosition    = 4,
+//    TFSBufferDirectionalLightData   = 5,
+//    TFSBufferModelConstants         = 6,
+//    TFSBufferIndexSceneConstants    = 7,
+//    TFSBufferIndexMaterial          = 8
+//    
+//} TFSBufferIndices;
+
 typedef enum TFSBufferIndices
 {
     TFSBufferIndexMeshPositions     = 0,
     TFSBufferIndexMeshGenerics      = 1,
     TFSBufferFrameData              = 2,
-    TFSBufferPointLightsData        = 3,
-    TFSBufferPointLightsPosition    = 4,
-    TFSBufferDirectionalLightData   = 5,
+    TFSBufferDirectionalLightData   = 3,
+    TFSBufferPointLightsData        = 4,
+    TFSBufferPointLightsPosition    = 5,
     TFSBufferModelConstants         = 6,
     TFSBufferIndexSceneConstants    = 7,
     TFSBufferIndexMaterial          = 8
@@ -37,7 +51,17 @@ typedef enum TFSBufferIndices
 
 // Attribute index values shared between shader and C code to ensure Metal shader vertex
 // attribute indices match the Metal API vertex descriptor attribute indices
-typedef enum TFSVertexAttributes
+//typedef enum TFSVertexAttributes
+//{
+//    TFSVertexAttributePosition  = 0,
+//    TFSVertexAttributeColor     = 1,
+//    TFSVertexAttributeTexcoord  = 2,
+//    TFSVertexAttributeNormal    = 3,
+//    TFSVertexAttributeTangent   = 4,
+//    TFSVertexAttributeBitangent = 5
+//} TFSVertexAttributes;
+
+typedef enum TFSBaseVertexAttributes
 {
     TFSVertexAttributePosition  = 0,
     TFSVertexAttributeColor     = 1,
@@ -45,7 +69,31 @@ typedef enum TFSVertexAttributes
     TFSVertexAttributeNormal    = 3,
     TFSVertexAttributeTangent   = 4,
     TFSVertexAttributeBitangent = 5
-} TFSVertexAttributes;
+} TFSBaseVertexAttributes;
+
+//typedef enum TFSBaseVertexAttributes
+//{
+//    TFSVertexAttributePosition  = 0,
+//    TFSVertexAttributeTexcoord  = 1,
+//    TFSVertexAttributeNormal    = 2,
+//    TFSVertexAttributeTangent   = 3,
+//    TFSVertexAttributeBitangent = 4,
+//    TFSVertexAttributeColor     = 5,
+//} TFSBaseVertexAttributes;
+
+typedef enum TFSGltfVertexAttributes
+{
+    TFSGltfVertexAttributePosition  = 0,
+    TFSGltfVertexAttributeTexcoord  = 1,
+    TFSGltfVertexAttributeNormal    = 2,
+    TFSGltfVertexAttributeTangent   = 3,
+    TFSGltfVertexAttributeBitangent = 4,
+    TFSGltfVertexAttributeColor     = 5,
+} TFSGltfVertexAttributes;
+
+//union VertexAttributes {
+//    <#union fields#>
+//};
 
 // Works for USD:
 //typedef enum TFSVertexAttributes
@@ -140,4 +188,4 @@ typedef struct {
 } TFSShadowVertex;
 
     
-#endif /* AAPLShaderTypes_h */
+#endif /* TFSShaderTypes_h */
