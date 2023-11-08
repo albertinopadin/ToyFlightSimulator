@@ -178,12 +178,18 @@ class Mesh {
     
     private func createMdlVertexDescriptor() -> MDLVertexDescriptor {
         let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Base])
-        descriptor.attribute(TFSVertexAttributePosition.rawValue).name  = MDLVertexAttributePosition
-        descriptor.attribute(TFSVertexAttributeColor.rawValue).name     = MDLVertexAttributeColor
-        descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).name  = MDLVertexAttributeTextureCoordinate
-        descriptor.attribute(TFSVertexAttributeNormal.rawValue).name    = MDLVertexAttributeNormal
-        descriptor.attribute(TFSVertexAttributeTangent.rawValue).name   = MDLVertexAttributeTangent
-        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name = MDLVertexAttributeBitangent
+        descriptor.attribute(TFSVertexAttributePosition.rawValue).name      = MDLVertexAttributePosition
+        descriptor.attribute(TFSVertexAttributePosition.rawValue).format    = .float3
+        descriptor.attribute(TFSVertexAttributeColor.rawValue).name         = MDLVertexAttributeColor
+        descriptor.attribute(TFSVertexAttributeColor.rawValue).format       = .float4
+        descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).name      = MDLVertexAttributeTextureCoordinate
+        descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).format    = .float2
+        descriptor.attribute(TFSVertexAttributeNormal.rawValue).name        = MDLVertexAttributeNormal
+        descriptor.attribute(TFSVertexAttributeNormal.rawValue).format      = .float3
+        descriptor.attribute(TFSVertexAttributeTangent.rawValue).name       = MDLVertexAttributeTangent
+        descriptor.attribute(TFSVertexAttributeTangent.rawValue).format     = .float3
+        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name     = MDLVertexAttributeBitangent
+        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).format   = .float3
         return descriptor
     }
     
@@ -293,7 +299,7 @@ class Mesh {
                                                                        indexBufferOffset: submesh.indexBufferOffset,
                                                                        instanceCount: _instanceCount)
                         } else {
-                            if submeshesToDisplay[submesh.name]! {
+                            if submeshesToDisplay[submesh.name] ?? false {
                                 if applyMaterials {
                                     submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
                                                           customBaseColorTextureType: baseColorTextureType,
@@ -370,7 +376,7 @@ class Mesh {
     }
     
     func drawShadowPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToDisplay: [String: Bool]? = nil) {
-        if let _vertexBuffer = _vertexBuffer {
+        if let _vertexBuffer {
             renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
             if _submeshes.count > 0 {
                 if let submeshesToDisplay {
@@ -385,7 +391,7 @@ class Mesh {
                                                                        instanceCount: _instanceCount)
                         }
                         else {
-                            if submeshesToDisplay[submesh.name]! {
+                            if submeshesToDisplay[submesh.name] ?? false {
                                 renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
                                                                            indexCount: submesh.indexCount,
                                                                            indexType: submesh.indexType,

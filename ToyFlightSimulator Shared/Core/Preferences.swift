@@ -18,7 +18,7 @@ public enum ClearColors {
 }
 
 class Preferences {
-    public static var ClearColor: MTLClearColor = ClearColors.SkyBlue
+    public static var ClearColor: MTLClearColor = ClearColors.Black
     
     public static var MainPixelFormat: MTLPixelFormat = .bgra8Unorm_srgb
     
@@ -26,6 +26,7 @@ class Preferences {
     
     public static var MainDepthStencilPixelFormat: MTLPixelFormat = .depth32Float_stencil8
     
+//    public static var StartingSceneType: SceneType = .Sandbox
 //    public static var StartingSceneType: SceneType = .FreeCamFlightbox
     public static var StartingSceneType: SceneType = .Flightbox
 }

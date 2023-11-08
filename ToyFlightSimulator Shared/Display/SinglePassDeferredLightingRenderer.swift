@@ -26,6 +26,10 @@ class SinglePassDeferredLightingRenderer: Renderer {
         descriptor.colorAttachments[Int(TFSRenderTargetAlbedo.rawValue)].storeAction = .dontCare
         descriptor.colorAttachments[Int(TFSRenderTargetNormal.rawValue)].storeAction = .dontCare
         descriptor.colorAttachments[Int(TFSRenderTargetDepth.rawValue)].storeAction = .dontCare
+        
+        // To make empty space (no nodes/skybox) look black instead of Snow...
+        descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].loadAction = .clear
+        descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].clearColor = Preferences.ClearColor
         return descriptor
     }()
     
@@ -74,9 +78,9 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //            renderEncoder.setCullMode(.back)  // TODO: Set this on ???
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setStencilReferenceValue(128)
+            renderEncoder.setFragmentTexture(shadowMap, index: Int(TFSTextureIndexShadow.rawValue))
             SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetDirectionalLightConstants(renderCommandEncoder: renderEncoder)
-            renderEncoder.setFragmentTexture(shadowMap, index: Int(TFSTextureIndexShadow.rawValue))
             SceneManager.RenderGBuffer(renderCommandEncoder: renderEncoder)
         }
     }
