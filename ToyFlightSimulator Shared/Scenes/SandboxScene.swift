@@ -21,6 +21,14 @@ class SandboxScene: GameScene {
         
         addCamera(f16Camera)
         
+//        if _rendererType == .OrderIndependentTransparency {
+//            let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+//            addChild(sky)
+//        } else {
+//            let sky = SkyBox(skyBoxTextureType: .SkyMap)
+//            addChild(sky)
+//        }
+        
         sun.setPosition(0, 5, 5)
         sun.setLightBrightness(1.0)
         sun.setLightColor(1, 1, 1)

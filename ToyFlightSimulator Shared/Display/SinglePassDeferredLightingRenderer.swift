@@ -26,6 +26,10 @@ class SinglePassDeferredLightingRenderer: Renderer {
         descriptor.colorAttachments[Int(TFSRenderTargetAlbedo.rawValue)].storeAction = .dontCare
         descriptor.colorAttachments[Int(TFSRenderTargetNormal.rawValue)].storeAction = .dontCare
         descriptor.colorAttachments[Int(TFSRenderTargetDepth.rawValue)].storeAction = .dontCare
+        
+        // To make empty space (no nodes/skybox) look black instead of Snow...
+        descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].loadAction = .clear
+        descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].clearColor = Preferences.ClearColor
         return descriptor
     }()
     
@@ -177,8 +181,9 @@ class SinglePassDeferredLightingRenderer: Renderer {
         encodeStage(using: renderEncoder, label: "Skybox Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Skybox])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
+//            renderEncoder.setCullMode(.none)
 //            renderEncoder.setCullMode(.front)
-//            renderEncoder.setCullMode(.back)  <-- This or not setting the cull mode works. WTF?
+//            renderEncoder.setCullMode(.back)   <-- This or not setting the cull mode works. WTF?
             
             SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
             SceneManager.Render(renderCommandEncoder: renderEncoder, renderPipelineStateType: .Skybox, applyMaterials: false)
@@ -219,6 +224,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
         
         if let drawableTexture = view.currentDrawable?.texture {
             _gBufferAndLightingRenderPassDescriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].texture = drawableTexture
+//            _gBufferAndLightingRenderPassDescriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].clearColor = Preferences.ClearColor
             _gBufferAndLightingRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
             _gBufferAndLightingRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
             

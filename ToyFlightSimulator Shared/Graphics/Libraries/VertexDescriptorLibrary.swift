@@ -261,31 +261,6 @@ public struct GltfVertexDescriptor: VertexDescriptor {
     var bufferIndex: Int = 0
     var offset: Int = 0
     
-//    init() {
-//        vertexDescriptor = MTLVertexDescriptor()
-//        // Normal
-//        addAttributeWithLayoutStride(format: .float3)
-//        
-//        // Texcoord
-//        addAttributeWithLayoutStride(format: .float2)
-//        
-//        // Position
-//        addAttributeWithLayoutStride(format: .float3)
-//    }
-    
-//    init() {
-//        vertexDescriptor = MTLVertexDescriptor()
-//        
-//        // Position
-//        addAttributeWithLayoutStride(format: .float3)
-//        
-//        // Normal
-//        addAttributeWithLayoutStride(format: .float3)
-//        
-//        // Texcoord
-//        addAttributeWithLayoutStride(format: .float2)
-//    }
-    
     init() {
         vertexDescriptor = MTLVertexDescriptor()
         
