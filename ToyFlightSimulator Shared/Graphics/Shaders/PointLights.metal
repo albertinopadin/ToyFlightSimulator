@@ -19,8 +19,8 @@ struct LightMaskOut
 
 vertex LightMaskOut
 light_mask_vertex(const device float4         * vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
-                  const device TFSPointLight  * light_data      [[ buffer(TFSBufferIndexLightsData) ]],
-                  const device vector_float4  * light_positions [[ buffer(TFSBufferIndexLightsPosition) ]],
+                  const device TFSPointLight  * light_data      [[ buffer(TFSBufferPointLightsData) ]],
+                  const device vector_float4  * light_positions [[ buffer(TFSBufferPointLightsPosition) ]],
                   constant SceneConstants     & sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                   uint                          iid             [[ instance_id ]],
                   uint                          vid             [[ vertex_id ]])
@@ -45,8 +45,8 @@ struct LightInOut
 
 vertex LightInOut
 deferred_point_lighting_vertex(const device float4         * vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
-                               const device TFSPointLight  * light_data      [[ buffer(TFSBufferIndexLightsData) ]],
-                               const device vector_float4  * light_positions [[ buffer(TFSBufferIndexLightsPosition) ]],
+                               const device TFSPointLight  * light_data      [[ buffer(TFSBufferPointLightsData) ]],
+                               const device vector_float4  * light_positions [[ buffer(TFSBufferPointLightsPosition) ]],
                                constant TFSFrameData       & frameData       [[ buffer(TFSBufferFrameData) ]],
                                uint                          iid             [[ instance_id ]],
                                uint                          vid             [[ vertex_id ]])
@@ -121,8 +121,8 @@ fragment AccumLightBuffer
 deferred_point_lighting_fragment(
     LightInOut               in              [[ stage_in ]],
     constant TFSFrameData  & frameData       [[ buffer(TFSBufferFrameData) ]],
-    device TFSPointLight   * light_data      [[ buffer(TFSBufferIndexLightsData) ]],
-    device vector_float4   * light_positions [[ buffer(TFSBufferIndexLightsPosition) ]],
+    device TFSPointLight   * light_data      [[ buffer(TFSBufferPointLightsData) ]],
+    device vector_float4   * light_positions [[ buffer(TFSBufferPointLightsPosition) ]],
     GBufferData              GBuffer)
 {
     AccumLightBuffer output;

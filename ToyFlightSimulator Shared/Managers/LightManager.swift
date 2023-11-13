@@ -26,7 +26,9 @@ class LightManager {
         var lightDatas = gatherLightData()
         var lightCount = lightDatas.count
         renderCommandEncoder.setFragmentBytes(&lightCount, length: Int32.size, index: 2)
-        renderCommandEncoder.setFragmentBytes(&lightDatas, length: LightData.stride(lightCount), index: 3)
+        renderCommandEncoder.setFragmentBytes(&lightDatas,
+                                              length: LightData.stride(lightCount),
+                                              index: Int(TFSBufferDirectionalLightData.rawValue))
     }
     
     func getDirectionalLightData() -> LightData? {

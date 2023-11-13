@@ -76,7 +76,7 @@ fragment TransparentFragmentStore transparent_material_fragment(
                         RasterizerData rd [[ stage_in ]],
                         constant Material &material [[ buffer(TFSBufferIndexMaterial) ]],
                         constant int &lightCount [[ buffer(2) ]],
-                        constant LightData *lightDatas [[ buffer(3) ]],
+                        constant LightData *lightData [[ buffer(3) ]],
                         sampler sampler2d [[ sampler(0) ]],
                         texture2d<float> baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
                         texture2d<float> normalMap [[ texture(TFSTextureIndexNormal) ]],
@@ -105,7 +105,7 @@ fragment TransparentFragmentStore transparent_material_fragment(
         float3 unitToCameraVector = normalize(rd.toCameraVector);
         
         float3 phongIntensity = Lighting::GetPhongIntensity(material,
-                                                            lightDatas,
+                                                            lightData,
                                                             lightCount,
                                                             rd.worldPosition,
                                                             unitNormal,
