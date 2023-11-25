@@ -7,8 +7,8 @@
 
 class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
-//    var jet = F18()
-    var jet = F35()
+    var jet = F18()
+//    var jet = F35()
 //    var jet = F18Usdz()
     var sun = Sun(meshType: .Sphere)
     var ground = Quad()

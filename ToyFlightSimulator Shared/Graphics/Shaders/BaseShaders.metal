@@ -39,7 +39,7 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
 }
 
 fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]],
-                                      constant int &lightCount [[ buffer(2) ]],
+                                      constant int &lightCount [[ buffer(TFSBufferDirectionalLightsNum) ]],
                                       constant LightData *lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                       sampler sampler2d [[ sampler(0) ]],
                                       texture2d<float> baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
@@ -56,7 +56,7 @@ fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]],
 
 fragment FragmentOutput material_fragment(RasterizerData rd [[ stage_in ]],
                                           constant Material &material [[ buffer(TFSBufferIndexMaterial) ]],
-                                          constant int &lightCount [[ buffer(2) ]],
+                                          constant int &lightCount [[ buffer(TFSBufferDirectionalLightsNum) ]],
                                           constant LightData *lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                           sampler sampler2d [[ sampler(0) ]],
                                           texture2d<float> baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],

@@ -25,8 +25,12 @@ class LightManager {
     func setLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
         var lightDatas = gatherLightData()
         var lightCount = lightDatas.count
-        renderCommandEncoder.setFragmentBytes(&lightCount, length: Int32.size, index: 2)
-        renderCommandEncoder.setFragmentBytes(&lightDatas, length: LightData.stride(lightCount), index: Int(TFSBufferDirectionalLightData.rawValue))
+        renderCommandEncoder.setFragmentBytes(&lightCount,
+                                              length: Int32.size,
+                                              index: Int(TFSBufferDirectionalLightsNum.rawValue))
+        renderCommandEncoder.setFragmentBytes(&lightDatas,
+                                              length: LightData.stride(lightCount),
+                                              index: Int(TFSBufferDirectionalLightData.rawValue))
     }
     
     func getDirectionalLightData() -> LightData? {

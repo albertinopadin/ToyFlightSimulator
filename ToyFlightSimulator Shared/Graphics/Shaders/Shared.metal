@@ -22,15 +22,6 @@ struct VertexIn {
     float3 bitangent [[ attribute(TFSVertexAttributeBitangent) ]];
 };
 
-//struct VertexIn {
-//    float3 normal [[ attribute(TFSVertexAttributeNormal) ]];
-//    float2 textureCoordinate [[ attribute(TFSVertexAttributeTexcoord) ]];
-//    float3 position [[ attribute(TFSVertexAttributePosition) ]];
-//    float4 color [[ attribute(TFSVertexAttributeColor) ]];
-//    float3 tangent [[ attribute(TFSVertexAttributeTangent) ]];
-//    float3 bitangent [[ attribute(TFSVertexAttributeBitangent) ]];
-//};
-
 struct RasterizerData {
     float4 position [[ position ]];
     float4 color;
