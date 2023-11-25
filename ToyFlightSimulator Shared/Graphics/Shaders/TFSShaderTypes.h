@@ -26,12 +26,13 @@ typedef enum TFSBufferIndices
     TFSBufferIndexMeshPositions     = 0,
     TFSBufferIndexMeshGenerics      = 1,
     TFSBufferFrameData              = 2,
-    TFSBufferDirectionalLightData   = 3,
-    TFSBufferPointLightsData        = 4,
-    TFSBufferPointLightsPosition    = 5,
-    TFSBufferModelConstants         = 6,
-    TFSBufferIndexSceneConstants    = 7,
-    TFSBufferIndexMaterial          = 8
+    TFSBufferDirectionalLightsNum   = 3,
+    TFSBufferDirectionalLightData   = 4,
+    TFSBufferPointLightsData        = 5,
+    TFSBufferPointLightsPosition    = 6,
+    TFSBufferModelConstants         = 7,
+    TFSBufferIndexSceneConstants    = 8,
+    TFSBufferIndexMaterial          = 9
     
 } TFSBufferIndices;
 
