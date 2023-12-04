@@ -11,6 +11,7 @@ import MetalKit
 class Renderer: NSObject, MTKViewDelegate {
     public static var ScreenSize = float2(100, 100)
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
+    public static let ShadowMapSize: Int = 16_384
     
     // The max number of command buffers in flight
     let maxFramesInFlight = 3
@@ -20,7 +21,6 @@ class Renderer: NSObject, MTKViewDelegate {
     var baseRenderPassDescriptor: MTLRenderPassDescriptor!
     
     let shadowMap: MTLTexture!
-    let shadowMapSize: Int = 16_384
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor!
     
     public let rendererType: RendererType
@@ -40,19 +40,12 @@ class Renderer: NSObject, MTKViewDelegate {
         }
     }
     
-    init (type: RendererType) {
+    init(type: RendererType) {
         self.rendererType = type
         
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
         
-        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
-                                                                               width: shadowMapSize,
-                                                                               height: shadowMapSize,
-                                                                               mipmapped: false)
-        shadowTextureDescriptor.resourceOptions = .storageModePrivate
-        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
-        shadowMap = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor)!
-        shadowMap.label = "Shadow Map"
+        shadowMap = Renderer.makeShadowMap(label: "Shadow Map")
         
         super.init()
         createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
@@ -63,19 +56,25 @@ class Renderer: NSObject, MTKViewDelegate {
         
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
         
-        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
-                                                                               width: shadowMapSize,
-                                                                               height: shadowMapSize,
-                                                                               mipmapped: false)
-        shadowTextureDescriptor.resourceOptions = .storageModePrivate
-        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
-        shadowMap = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor)!
-        shadowMap.label = "Shadow Map"
+        shadowMap = Renderer.makeShadowMap(label: "Shadow Map")
         
         super.init()
         
         metalView = mtkView
         createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
+    }
+    
+    static func makeShadowMap(label: String) -> MTLTexture! {
+        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
+                                                                               width: Renderer.ShadowMapSize,
+                                                                               height: Renderer.ShadowMapSize,
+                                                                               mipmapped: false)
+        shadowTextureDescriptor.resourceOptions = .storageModePrivate
+        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
+        let sm = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor)!
+        sm.label = label
+        
+        return sm
     }
     
     // Heavily inspired by:

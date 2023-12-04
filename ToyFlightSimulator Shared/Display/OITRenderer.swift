@@ -22,12 +22,10 @@ class OITRenderer: Renderer {
     }
     
     init() {
-        print("[OIT Renderer init]")
         super.init(type: .OrderIndependentTransparency)
     }
     
     init(_ mtkView: MTKView) {
-        print("[OIT Renderer init]")
         super.init(mtkView, type: .OrderIndependentTransparency)
         createForwardRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
                                           screenHeight: Int(Renderer.ScreenSize.y))
@@ -131,6 +129,7 @@ class OITRenderer: Renderer {
         SceneManager.Update(deltaTime: 1.0 / Float(view.preferredFramesPerSecond))
         
         let commandBuffer = Engine.CommandQueue.makeCommandBuffer()
+//        let commandBuffer = beginFrame()
         commandBuffer?.label = "Order Independent Transparency Render Command Buffer"
         
         orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer!)
