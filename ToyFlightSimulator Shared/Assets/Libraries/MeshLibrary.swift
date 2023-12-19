@@ -27,6 +27,8 @@ enum MeshType {
     case RC_F18
     case CGTrader_F35
     case Sketchfab_F35
+    
+    case Icosahedron
 }
 
 class MeshLibrary: Library<MeshType, Mesh> {
@@ -51,6 +53,8 @@ class MeshLibrary: Library<MeshType, Mesh> {
         
 //        _library.updateValue(Mesh(modelName: "F35_JSF", ext: .USDC), forKey: .CGTrader_F35)
 //        _library.updateValue(Mesh(modelName: "F-35A_Lightning_II", ext: .USDZ), forKey: .Sketchfab_F35)
+        
+        _library.updateValue(IcosahedronMesh(), forKey: .Icosahedron)
     }
     
     override subscript(type: MeshType) -> Mesh {
@@ -317,8 +321,26 @@ class CapsuleMesh: Mesh {
     }
 }
 
-class Icosahedron: Mesh {
-    
+class IcosahedronMesh: Mesh {
+    override init() {
+        let icoRadius = sqrtf(3.0) / 12.0 * (3.0 + sqrtf(5.0))
+        let allocator = MTKMeshBufferAllocator(device: Engine.Device)
+        let mdlIcosahedron = MDLMesh.newIcosahedron(withRadius: icoRadius, inwardNormals: false, allocator: allocator)
+        
+        let vertDesc = MDLVertexDescriptor()
+        let positionAttr = vertDesc.attribute(TFSVertexAttributePosition.rawValue)
+        positionAttr.name = MDLVertexAttributePosition
+        positionAttr.format = .float4
+        positionAttr.offset = 0
+        positionAttr.bufferIndex = Int(TFSBufferIndexMeshPositions.rawValue)
+        
+        vertDesc.layout(TFSVertexAttributePosition.rawValue).stride = float4.stride
+        
+        mdlIcosahedron.vertexDescriptor = vertDesc
+        
+        let mtkIcosahedron = try! MTKMesh(mesh: mdlIcosahedron, device: Engine.Device)
+        super.init(mtkMesh: mtkIcosahedron, mdlMesh: mdlIcosahedron, addTangentBases: false)
+    }
 }
 
 class SkyboxMesh: Mesh {

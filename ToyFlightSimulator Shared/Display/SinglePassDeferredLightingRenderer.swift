@@ -111,28 +111,9 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setCullMode(.front)
             
-//            renderEncoder.setVertexBuffer(scene.frameData,
-//                                          offset: 0,
-//                                          index: Int(AAPLBufferFrameData.rawValue))
-//
-//            renderEncoder.setVertexBuffer(scene.pointLights,
-//                                          offset: 0,
-//                                          index: Int(AAPLBufferIndexLightsData.rawValue))
-//
-//            renderEncoder.setVertexBuffer(scene.lightPositions,
-//                                          offset: 0,
-//                                          index: Int(AAPLBufferIndexLightsPosition.rawValue))
-//
-//            renderEncoder.setFragmentBuffer(scene.frameData,
-//                                            offset: 0,
-//                                            index: Int(AAPLBufferFrameData.rawValue))
-//
-//            renderEncoder.draw(meshes: [scene.icosahedron],
-//                               instanceCount: scene.numberOfLights,
-//                               requiresMaterials: false)
-            
             SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
+            SceneManager.RenderPointLightMeshes(renderCommandEncoder: renderEncoder)
         }
     }
     
@@ -144,36 +125,10 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setCullMode(.back)
             
-//            renderEncoder.setVertexBuffer(scene.frameData,
-//                                          offset: 0,
-//                                          index: Int(AAPLBufferFrameData.rawValue))
-//
-//            renderEncoder.setVertexBuffer(scene.pointLights,
-//                                          offset: 0,
-//                                          index: Int(AAPLBufferIndexLightsData.rawValue))
-//
-//            renderEncoder.setVertexBuffer(scene.lightPositions,
-//                                          offset: 0,
-//                                          index: Int(AAPLBufferIndexLightsPosition.rawValue))
-//
-//            renderEncoder.setFragmentBuffer(scene.frameData,
-//                                            offset: 0,
-//                                            index: Int(AAPLBufferFrameData.rawValue))
-//
-//            renderEncoder.setFragmentBuffer(scene.pointLights,
-//                                            offset: 0,
-//                                            index: Int(AAPLBufferIndexLightsData.rawValue))
-//
-//            renderEncoder.setFragmentBuffer(scene.lightPositions,
-//                                            offset: 0,
-//                                            index: Int(AAPLBufferIndexLightsPosition.rawValue))
-//
-//            renderEncoder.draw(meshes: [scene.icosahedron],
-//                               instanceCount: scene.numberOfLights,
-//                               requiresMaterials: false)
-            
             SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
-            SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
+//            SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
+            SceneManager.SetPointLightData(renderCommandEncoder: renderEncoder)
+            SceneManager.RenderPointLights(renderCommandEncoder: renderEncoder)
         }
     }
     
@@ -182,7 +137,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Skybox])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
 //            renderEncoder.setCullMode(.front)
-//            renderEncoder.setCullMode(.back)  <-- This or not setting the cull mode works. WTF?
+            renderEncoder.setCullMode(.back)  //<-- This or not setting the cull mode works. WTF?
             
             SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
             SceneManager.Render(renderCommandEncoder: renderEncoder, renderPipelineStateType: .Skybox, applyMaterials: false)
@@ -231,7 +186,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
                 
                 encodeGBufferStage(using: renderEncoder)
                 encodeDirectionalLightingStage(using: renderEncoder)
-//                encodeLightMaskStage(using: renderEncoder)
+                encodeLightMaskStage(using: renderEncoder)
 //                encodePointLightStage(using: renderEncoder)
                 encodeSkyboxStage(using: renderEncoder)
             }

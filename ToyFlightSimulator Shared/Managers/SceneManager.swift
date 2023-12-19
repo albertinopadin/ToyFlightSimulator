@@ -60,8 +60,12 @@ class SceneManager {
         currentScene?.setPointLightConstants(renderCommandEncoder: renderCommandEncoder)
     }
     
-    public static func SetLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
-        currentScene?.setLightData(renderCommandEncoder: renderCommandEncoder)
+    public static func SetDirectionalLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.setDirectionalLightData(renderCommandEncoder: renderCommandEncoder)
+    }
+    
+    public static func SetPointLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.setPointLightData(renderCommandEncoder: renderCommandEncoder)
     }
     
     public static func Render(renderCommandEncoder: MTLRenderCommandEncoder,
@@ -83,6 +87,14 @@ class SceneManager {
     
     public static func RenderShadows(renderCommandEncoder: MTLRenderCommandEncoder) {
         currentScene?.renderShadows(renderCommandEncoder: renderCommandEncoder)
+    }
+    
+    public static func RenderPointLightMeshes(renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.renderPointLightMeshes(renderCommandEncoder: renderCommandEncoder)
+    }
+    
+    public static func RenderPointLights(renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.renderPointLights(renderCommandEncoder: renderCommandEncoder)
     }
     
     public static func SetAspectRatio(_ aspectRatio: Float) {

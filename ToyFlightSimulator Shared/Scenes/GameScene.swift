@@ -82,7 +82,7 @@ class GameScene: Node {
     }
     
     func setDirectionalLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
-        var directionalLight = _lightManager.getDirectionalLightData()!
+        var directionalLight = _lightManager.getDirectionalLightData().first!
         renderCommandEncoder.setVertexBytes(&directionalLight,
                                             length: LightData.stride,
                                             index: Int(TFSBufferDirectionalLightData.rawValue))
@@ -105,8 +105,25 @@ class GameScene: Node {
                                             index: Int(TFSBufferPointLightsData.rawValue))
     }
     
-    func setLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
-        _lightManager.setLightData(renderCommandEncoder)
+    // TODO: This method could possibly be merged/unified with setDirectionalLightConstants
+    func setDirectionalLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
+        _lightManager.setDirectionalLightData(renderCommandEncoder)
+    }
+    
+    func setPointLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
+        _lightManager.setPointLightData(renderCommandEncoder)
+    }
+    
+    func renderPointLightMeshes(renderCommandEncoder: MTLRenderCommandEncoder) {
+        for pointLight in _lightManager.getLightObjects(lightType: .Point) {
+            pointLight.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .LightMask)
+        }
+    }
+    
+    func renderPointLights(renderCommandEncoder: MTLRenderCommandEncoder) {
+        for pointLight in _lightManager.getLightObjects(lightType: .Point) {
+            pointLight.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .PointLight)
+        }
     }
     
     override func render(renderCommandEncoder: MTLRenderCommandEncoder,

@@ -15,7 +15,7 @@ enum LightType: UInt32 {
 }
 
 class LightObject: GameObject {
-    var type: LightType = .Directional
+    var lightType: LightType
     var lightData = LightData()
     let projectionMatrix: float4x4 = Transform.orthographicProjection(-100, 100, -100, 100, -100, 100)
     var viewMatrix: float4x4 {
@@ -30,20 +30,27 @@ class LightObject: GameObject {
     
     private var _meshType: MeshType = .None
     
-    init(name: String, type: LightType = .Directional) {
-        super.init(name: name, meshType: .None)
+    // TODO: What RPS is appropriate for a LightObject ???
+    init(name: String, lightType: LightType = .Directional, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
+        self.lightType = lightType
+        super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
         self.lightData.shadowTransformMatrix = shadowTranslate * shadowScale
     }
     
-    init(name: String, type: LightType = .Directional, meshType: MeshType = .Sphere) {
+    // TODO: What RPS is appropriate for a LightObject ???
+    init(name: String,
+         lightType: LightType = .Directional,
+         meshType: MeshType = .Sphere,
+         renderPipelineStateType: RenderPipelineStateType = .Opaque) {
+        self.lightType = lightType
         self._meshType = meshType
-        super.init(name: name, meshType: meshType)
+        super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
         self.lightData.shadowTransformMatrix = shadowTranslate * shadowScale
     }
     
     override func update() {
         super.update()
-        self.lightData.type = self.type.rawValue
+        self.lightData.type = self.lightType.rawValue
         self.lightData.viewProjectionMatrix = projectionMatrix * viewMatrix
         let position = self.modelMatrix.columns.3.xyz
         let shadowViewMatrix = Transform.look(eye: position, target: .zero, up: Y_AXIS)

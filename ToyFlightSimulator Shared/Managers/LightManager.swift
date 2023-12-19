@@ -10,41 +10,64 @@ import MetalKit
 class LightManager {
     private var _lightObjects: [LightObject] = []
     
-    func addLightObject(_ lightObject: LightObject) {
+    public func addLightObject(_ lightObject: LightObject) {
         self._lightObjects.append(lightObject)
     }
     
-    private func gatherLightData() -> [LightData] {
-        var result: [LightData] = []
-        for lightObject in _lightObjects {
-            result.append(lightObject.lightData)
-        }
-        return result
+//    private func gatherLightData() -> [LightData] {
+//        var result: [LightData] = []
+//        for lightObject in _lightObjects {
+//            result.append(lightObject.lightData)
+//        }
+//        return result
+//    }
+    
+    public func getLightObjects(lightType: LightType) -> [LightObject] {
+        return _lightObjects.filter { $0.lightType == lightType }
     }
     
-    func setLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
-        var lightDatas = gatherLightData()
-        var lightCount = lightDatas.count
+//    func getDirectionalLightData() -> [LightData] {
+//        var result: [LightData] = []
+//        for _lightObject in _lightObjects {
+//            if _lightObject.type == .Directional {
+//                result.append(_lightObject.lightData)
+//            }
+//        }
+//        return result
+//    }
+
+    public func getDirectionalLightData() -> [LightData] {
+        return getLightObjects(lightType: .Directional).map { $0.lightData }
+    }
+    
+    public func getPointLightData() -> [LightData] {
+        return getLightObjects(lightType: .Point).map { $0.lightData }
+    }
+    
+    public func setDirectionalLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+        var lightData = getDirectionalLightData()
+        var lightCount = lightData.count
         renderCommandEncoder.setFragmentBytes(&lightCount, 
                                               length: Int32.size,
                                               index: Int(TFSBufferDirectionalLightsNum.rawValue))
-        renderCommandEncoder.setFragmentBytes(&lightDatas,
+        renderCommandEncoder.setFragmentBytes(&lightData,
                                               length: LightData.stride(lightCount),
                                               index: Int(TFSBufferDirectionalLightData.rawValue))
     }
     
-    func getDirectionalLightData() -> LightData? {
-//        print("[getDirectionalLightData] number of light objects: \(_lightObjects.count)")
-        for _lightObject in _lightObjects {
-            if _lightObject.type == .Directional {
-                return _lightObject.lightData
-            }
-        }
+    public func setPointLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+        var pointLightData = getPointLightData()
+//        var lightCount = lightData.count
+//        renderCommandEncoder.setFragmentBytes(&lightCount,
+//                                              length: Int32.size,
+//                                              index: Int(TFSBufferPointLightsData.rawValue))
         
-        return nil
-    }
-    
-    func getPointLightData() -> [LightData] {
-        _lightObjects.filter({ $0.type == .Point }).map { $0.lightData }
+        renderCommandEncoder.setVertexBytes(&pointLightData,
+                                            length: LightData.stride(pointLightData.count),
+                                            index: Int(TFSBufferPointLightsData.rawValue))
+        
+        renderCommandEncoder.setFragmentBytes(&pointLightData,
+                                              length: LightData.stride(pointLightData.count),
+                                              index: Int(TFSBufferPointLightsData.rawValue))
     }
 }

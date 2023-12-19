@@ -465,6 +465,12 @@
 		CEB84E7B2A24AC3300BEF778 /* Controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB84E7A2A24AC3300BEF778 /* Controller.swift */; };
 		CEB84E7C2A24AC3300BEF778 /* Controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB84E7A2A24AC3300BEF778 /* Controller.swift */; };
 		CEB84E7D2A24AC3300BEF778 /* Controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB84E7A2A24AC3300BEF778 /* Controller.swift */; };
+		CEC2312F2B22F3E50081A26A /* Icosahedron.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC2312E2B22F3E50081A26A /* Icosahedron.swift */; };
+		CEC231302B22F3E50081A26A /* Icosahedron.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC2312E2B22F3E50081A26A /* Icosahedron.swift */; };
+		CEC231312B22F3E50081A26A /* Icosahedron.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC2312E2B22F3E50081A26A /* Icosahedron.swift */; };
+		CEC231332B25AC650081A26A /* PointLightObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC231322B25AC650081A26A /* PointLightObject.swift */; };
+		CEC231342B25AC650081A26A /* PointLightObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC231322B25AC650081A26A /* PointLightObject.swift */; };
+		CEC231352B25AC650081A26A /* PointLightObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC231322B25AC650081A26A /* PointLightObject.swift */; };
 		CEED93A329E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A429E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
@@ -646,6 +652,8 @@
 		CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreeCamFlightboxScene.swift; sourceTree = "<group>"; };
 		CEB84E762A24A76400BEF778 /* InputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputManager.swift; sourceTree = "<group>"; };
 		CEB84E7A2A24AC3300BEF778 /* Controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controller.swift; sourceTree = "<group>"; };
+		CEC2312E2B22F3E50081A26A /* Icosahedron.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icosahedron.swift; sourceTree = "<group>"; };
+		CEC231322B25AC650081A26A /* PointLightObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointLightObject.swift; sourceTree = "<group>"; };
 		CEED93A229E2B3EE0020DC53 /* AIM120.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIM120.swift; sourceTree = "<group>"; };
 		CEED93A629E3B2600020DC53 /* AircraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftStore.swift; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
@@ -826,6 +834,8 @@
 				CE3DD2F42A039B0700787E53 /* FuelTank.swift */,
 				CE0601652A83796B001F8CC3 /* CapsuleObject.swift */,
 				CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */,
+				CEC2312E2B22F3E50081A26A /* Icosahedron.swift */,
+				CEC231322B25AC650081A26A /* PointLightObject.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -1447,7 +1457,9 @@
 				CE452FBF2A7CB459001945B9 /* Graphics.swift in Sources */,
 				CE0601642A7FA158001F8CC3 /* MotionDevice.swift in Sources */,
 				CE452FD82A7CB489001945B9 /* Submesh.swift in Sources */,
+				CEC231352B25AC650081A26A /* PointLightObject.swift in Sources */,
 				CE452FC42A7CB46F001945B9 /* DepthStencilStateLibrary.swift in Sources */,
+				CEC231312B22F3E50081A26A /* Icosahedron.swift in Sources */,
 				CE452FB32A7CB42E001945B9 /* GameTime.swift in Sources */,
 				CE452FB72A7CB43D001945B9 /* Mouse.swift in Sources */,
 				CE452FCC2A7CB47F001945B9 /* BaseShaders.metal in Sources */,
@@ -1490,6 +1502,7 @@
 				CE06022C2A945E38001F8CC3 /* F35.swift in Sources */,
 				CE2ED2BC299CB8AA00C81F47 /* RendererType.swift in Sources */,
 				CE3BFF8628E2FD9C0014A752 /* GameObject.swift in Sources */,
+				CEC231332B25AC650081A26A /* PointLightObject.swift in Sources */,
 				CEFC6EC5295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
 				CE3BFF3228E058C30014A752 /* Mouse.swift in Sources */,
 				CE2ED25D299223E900C81F47 /* Submesh.swift in Sources */,
@@ -1551,6 +1564,7 @@
 				CE76930B29DD5A4400BBC718 /* ObjModel.swift in Sources */,
 				CE56921828EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
 				CE3BFF9F28E452480014A752 /* DebugCamera.swift in Sources */,
+				CEC2312F2B22F3E50081A26A /* Icosahedron.swift in Sources */,
 				CE3BFF3428E058CE0014A752 /* Keycodes.swift in Sources */,
 				CEAB3840297CDE770087F7CB /* ShadowShaders.metal in Sources */,
 				CE2ED2972998A10400C81F47 /* F18.swift in Sources */,
@@ -1666,6 +1680,7 @@
 				CE452FD32A7CB489001945B9 /* Submesh.swift in Sources */,
 				CE3BFFB528E572FB0014A752 /* FinalShaders.metal in Sources */,
 				CE3DD2F72A039B0700787E53 /* FuelTank.swift in Sources */,
+				CEC231302B22F3E50081A26A /* Icosahedron.swift in Sources */,
 				CE76931129DD5DF600BBC718 /* SubMeshGameObject.swift in Sources */,
 				CEB84E792A24A76400BEF778 /* InputManager.swift in Sources */,
 				CE7F484828B770EB0082B197 /* MathUtils.swift in Sources */,
@@ -1747,6 +1762,7 @@
 				CE452FD62A7CB489001945B9 /* SingleSMMesh.swift in Sources */,
 				CE3BFFA928E453260014A752 /* Sun.swift in Sources */,
 				CEED93A929E3B2600020DC53 /* AircraftStore.swift in Sources */,
+				CEC231342B25AC650081A26A /* PointLightObject.swift in Sources */,
 				CE3BFF4028E059B60014A752 /* Lighting.metal in Sources */,
 				CE7F48D528BCB4DD0082B197 /* GameView.swift in Sources */,
 				CE3DD2F32A02309300787E53 /* GBU16.swift in Sources */,

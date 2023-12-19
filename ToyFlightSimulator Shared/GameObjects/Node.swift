@@ -102,9 +102,15 @@ class Node {
         }
     }
     
+    // TODO: Smells off to manually set these conditions...
+    private func shouldRenderGBuffer(gBufferRPS: RenderPipelineStateType) -> Bool {
+        return _gBufferRenderPipelineStateType == gBufferRPS &&
+               _renderPipelineStateType != .Skybox &&
+               !(self is LightObject)
+    }
+    
     func renderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
-        if _gBufferRenderPipelineStateType == gBufferRPS, _renderPipelineStateType != .Skybox,
-            let renderable = self as? Renderable {
+        if shouldRenderGBuffer(gBufferRPS: gBufferRPS), let renderable = self as? Renderable {
             renderable.doRender(renderCommandEncoder, applyMaterials: true, submeshesToRender: nil)
         }
         
@@ -113,8 +119,13 @@ class Node {
         }
     }
     
+    // TODO: Smells off to manually set these conditions...
+    private func shouldRenderShadows() -> Bool {
+        return _renderPipelineStateType != .Skybox && !(self is LightObject)
+    }
+    
     func renderShadows(renderCommandEncoder: MTLRenderCommandEncoder) {
-        if _renderPipelineStateType != .Skybox, let renderable = self as? Renderable {
+        if shouldRenderShadows(), let renderable = self as? Renderable {
             renderable.doRenderShadow(renderCommandEncoder, submeshesToRender: nil)
         }
         

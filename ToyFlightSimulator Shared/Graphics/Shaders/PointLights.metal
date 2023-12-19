@@ -47,7 +47,7 @@ vertex LightInOut
 deferred_point_lighting_vertex(const device float4         * vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
                                const device TFSPointLight  * light_data      [[ buffer(TFSBufferPointLightsData) ]],
                                const device vector_float4  * light_positions [[ buffer(TFSBufferPointLightsPosition) ]],
-                               constant TFSFrameData       & frameData       [[ buffer(TFSBufferFrameData) ]],
+                               constant SceneConstants     & sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                                uint                          iid             [[ instance_id ]],
                                uint                          vid             [[ vertex_id ]])
 {
@@ -56,7 +56,7 @@ deferred_point_lighting_vertex(const device float4         * vertices        [[ 
     // Transform light to position relative to the temple
     float3 vertex_eye_position = vertices[vid].xyz * light_data[iid].light_radius + light_positions[iid].xyz;
 
-    out.position = frameData.projection_matrix * float4(vertex_eye_position, 1);
+    out.position = sceneConstants.projectionMatrix * float4(vertex_eye_position, 1);
 
     // Sending light position in view space to next stage
     out.eye_position = vertex_eye_position;
@@ -70,7 +70,7 @@ half4
 deferred_point_lighting_fragment_common(LightInOut               in,
                                         device TFSPointLight   * light_data,
                                         device vector_float4   * light_positions,
-                                        constant TFSFrameData  & frameData,
+//                                        constant TFSFrameData  & frameData,
                                         half4                    lighting,
                                         float                    depth,
                                         half4                    normal_shadow,
@@ -99,9 +99,12 @@ deferred_point_lighting_fragment_common(LightInOut               in,
         // Specular Contribution
         float3 halfway_vector = normalize(eye_space_fragment_to_light - eye_space_fragment_pos);
 
-        half specular_intensity = half(frameData.fairy_specular_intensity);
-
-        half specular_shininess = normal_shadow.w * half(frameData.shininess_factor);
+//        half specular_intensity = half(frameData.fairy_specular_intensity);
+//        half specular_shininess = normal_shadow.w * half(frameData.shininess_factor);
+        
+        // Hardcoding for now:
+        half specular_intensity = half(32.0f);
+        half specular_shininess = normal_shadow.w * half(1.0f);
 
         half specular_factor = powr(max(dot(half3(normal_shadow.xyz),half3(halfway_vector)),0.0h), specular_intensity);
 
@@ -120,15 +123,21 @@ deferred_point_lighting_fragment_common(LightInOut               in,
 fragment AccumLightBuffer
 deferred_point_lighting_fragment(
     LightInOut               in              [[ stage_in ]],
-    constant TFSFrameData  & frameData       [[ buffer(TFSBufferFrameData) ]],
+//    constant TFSFrameData  & frameData       [[ buffer(TFSBufferFrameData) ]],
     device TFSPointLight   * light_data      [[ buffer(TFSBufferPointLightsData) ]],
     device vector_float4   * light_positions [[ buffer(TFSBufferPointLightsPosition) ]],
     GBufferData              GBuffer)
 {
     AccumLightBuffer output;
     output.lighting =
-        deferred_point_lighting_fragment_common(in, light_data, light_positions, frameData,
-                                                GBuffer.lighting, GBuffer.depth, GBuffer.normal_shadow, GBuffer.albedo_specular);
+        deferred_point_lighting_fragment_common(in, 
+                                                light_data,
+                                                light_positions,
+//                                                frameData,
+                                                GBuffer.lighting, 
+                                                GBuffer.depth,
+                                                GBuffer.normal_shadow,
+                                                GBuffer.albedo_specular);
 
     return output;
 }

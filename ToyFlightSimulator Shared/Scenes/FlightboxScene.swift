@@ -51,6 +51,11 @@ class FlightboxScene: GameScene {
         sun.setLightAmbientIntensity(0.04)
         addLight(sun)
         
+        let pl = PointLightObject()
+        pl.setPosition(0, 5, 10)
+        pl.setLightColor(BLUE_COLOR.xyz)
+        addLight(pl)
+        
         var groundMaterial = Material()
         groundMaterial.color = float4(0.3, 0.7, 0.1, 1.0)
         let ground = Quad()
