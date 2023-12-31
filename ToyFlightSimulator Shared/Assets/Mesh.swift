@@ -7,6 +7,30 @@
 
 import MetalKit
 
+enum MeshType: CaseIterable {
+    case None
+    case Triangle_Custom
+    case Quad_Custom
+    case Cube_Custom
+    case Sphere_Custom
+    case Capsule_Custom
+    
+    case Sphere
+    case Quad
+    
+    case SkySphere
+    case Skybox
+    
+    case F16
+    case F18
+    
+    case RC_F18
+    case CGTrader_F35
+    case Sketchfab_F35
+    
+    case Icosahedron
+}
+
 enum MeshExtension: String {
     case OBJ = "obj"
     case USDC = "usdc"
@@ -18,6 +42,7 @@ class Mesh {
     private static let loadingQueue = DispatchQueue(label: "mesh-model-loading-queue")
     
     public var name: String = "Mesh"
+    public let type: MeshType
     private var _vertices: [Vertex] = []
     private var _vertexCount: Int = 0
     private var _vertexBuffer: MTLBuffer! = nil
@@ -26,19 +51,22 @@ class Mesh {
     internal var _childMeshes: [Mesh] = []
     var metalKitMesh: MTKMesh? = nil
     
-    init() {
+    init(type: MeshType) {
+        self.type = type
         createMesh()
         createBuffer()
     }
     
-    init(modelName: String, ext: MeshExtension = .OBJ) {
+    init(modelName: String, type: MeshType, ext: MeshExtension = .OBJ) {
         name = modelName
-        createMeshFromModel(modelName, ext: ext)
+        self.type = type
+        createMeshFromModel(modelName, type: type, ext: ext)
     }
     
-    init(mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor, addTangentBases: Bool = true) {
+    init(type: MeshType, mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor, addTangentBases: Bool = true) {
         print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
         name = mdlMesh.name
+        self.type = type
         
         if addTangentBases {
             mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
@@ -78,8 +106,9 @@ class Mesh {
         print("Num submeshes for \(mdlMesh.name): \(_submeshes.count)")
     }
     
-    init(mtkMesh: MTKMesh, mdlMesh: MDLMesh, addTangentBases: Bool = true) {
+    init(type: MeshType, mtkMesh: MTKMesh, mdlMesh: MDLMesh, addTangentBases: Bool = true) {
         name = mtkMesh.name
+        self.type = type
         
         if addTangentBases {
             mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
@@ -120,7 +149,8 @@ class Mesh {
         }
     }
     
-    private static func makeMeshes(object: MDLObject,
+    private static func makeMeshes(type: MeshType,
+                                   object: MDLObject,
                                    vertexDescriptor: MDLVertexDescriptor,
                                    fileExtension: MeshExtension = .OBJ) -> [Mesh] {
         var meshes = [Mesh]()
@@ -130,14 +160,17 @@ class Mesh {
         if fileExtension == .OBJ {
             if let mesh = object as? MDLMesh {
                 print("[makeMeshes] object named \(object.name) is MDLMesh")
-                let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
+                let newMesh = Mesh(type: type, mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
                 meshes.append(newMesh)
             }
             
             if object.conforms(to: MDLObjectContainerComponent.self) {
                 print("[makeMeshes] object named \(object.name) conforms to MDLObjectContainerComponent and has \(object.children.objects.count) children")
                 for child in object.children.objects {
-                    let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor, fileExtension: fileExtension)
+                    let childMeshes = makeMeshes(type: type, 
+                                                 object: child,
+                                                 vertexDescriptor: vertexDescriptor,
+                                                 fileExtension: fileExtension)
                     meshes.append(contentsOf: childMeshes)
                 }
             } else {
@@ -146,12 +179,15 @@ class Mesh {
         } else if fileExtension == .USDC || fileExtension == .USDZ {
             if let mesh = object as? MDLMesh {
                 print("[makeMeshes] object named \(object.name) is MDLMesh")
-                let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
+                let newMesh = Mesh(type: type, mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
                 meshes.append(newMesh)
             }
             
             for child in object.children.objects {
-                let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor, fileExtension: fileExtension)
+                let childMeshes = makeMeshes(type: type,
+                                             object: child,
+                                             vertexDescriptor: vertexDescriptor,
+                                             fileExtension: fileExtension)
                 meshes.append(contentsOf: childMeshes)
             }
         }
@@ -159,7 +195,7 @@ class Mesh {
         return meshes
     }
     
-    private func createMeshFromModel(_ modelName: String, ext: MeshExtension) {
+    private func createMeshFromModel(_ modelName: String, type: MeshType, ext: MeshExtension) {
         print("[createMeshFromModel] model name: \(modelName)")
         
         guard let assetURL = Bundle.main.url(forResource: modelName, withExtension: ext.rawValue) else {
@@ -169,9 +205,9 @@ class Mesh {
         Mesh.loadingQueue.async { [weak self] in
             switch ext {
                 case .OBJ:
-                    self?.createMeshFromObjModel(modelName, assetUrl: assetURL)
+                    self?.createMeshFromObjModel(modelName, type: type, assetUrl: assetURL)
                 case .USDC, .USDZ:
-                    self?.createMeshFromUsdModel(modelName, assetUrl: assetURL)
+                    self?.createMeshFromUsdModel(modelName, type: type, assetUrl: assetURL)
             }
         }
     }
@@ -193,7 +229,7 @@ class Mesh {
         return descriptor
     }
     
-    private func createMeshFromObjModel(_ modelName: String, assetUrl: URL) {
+    private func createMeshFromObjModel(_ modelName: String, type: MeshType, assetUrl: URL) {
         let descriptor = createMdlVertexDescriptor()
     
         let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
@@ -210,7 +246,10 @@ class Mesh {
         
         for child in asset.childObjects(of: MDLObject.self) {
             print("[createMeshFromObjModel] \(modelName) child name: \(child.name)")
-            _childMeshes.append(contentsOf: Mesh.makeMeshes(object: child, vertexDescriptor: descriptor, fileExtension: .OBJ))
+            _childMeshes.append(contentsOf: Mesh.makeMeshes(type: type, 
+                                                            object: child,
+                                                            vertexDescriptor: descriptor,
+                                                            fileExtension: .OBJ))
         }
         
         print("Num child meshes for \(modelName): \(_childMeshes.count)")
@@ -222,7 +261,7 @@ class Mesh {
         }
     }
     
-    private func createMeshFromUsdModel(_ modelName: String, assetUrl: URL) {
+    private func createMeshFromUsdModel(_ modelName: String, type: MeshType, assetUrl: URL) {
         let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
         
         let descriptor = createMdlVertexDescriptor()
@@ -236,7 +275,10 @@ class Mesh {
         print("[createMeshFromUsdModel] \(modelName) child count: \(assetChildren.count)")
         for child in assetChildren {
             print("[createMeshFromUsdModel] \(modelName) child name: \(child.name)")
-            _childMeshes.append(contentsOf: Mesh.makeMeshes(object: child, vertexDescriptor: descriptor, fileExtension: .USDC))
+            _childMeshes.append(contentsOf: Mesh.makeMeshes(type: type,
+                                                            object: child, 
+                                                            vertexDescriptor: descriptor,
+                                                            fileExtension: .USDC))
         }
         
         print("Num child meshes for \(modelName): \(_childMeshes.count)")
@@ -282,8 +324,7 @@ class Mesh {
             if _submeshes.count > 0 {
                 if let submeshesToDisplay {
                     for submesh in _submeshes {
-                        // Hack to work with USDZ file:
-                        if submesh.name == "submesh" {
+                        if submeshesToDisplay[submesh.name] ?? false {
                             if applyMaterials {
                                 submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
                                                       customBaseColorTextureType: baseColorTextureType,
@@ -298,41 +339,7 @@ class Mesh {
                                                                        indexBuffer: submesh.indexBuffer,
                                                                        indexBufferOffset: submesh.indexBufferOffset,
                                                                        instanceCount: _instanceCount)
-                        } else {
-                            if submeshesToDisplay[submesh.name] ?? false {
-                                if applyMaterials {
-                                    submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
-                                                          customBaseColorTextureType: baseColorTextureType,
-                                                          customNormalMapTextureType: normalMapTextureType,
-                                                          customSpecularTextureType: specularTextureType)
-                                    submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
-                                }
-
-                                renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                                           indexCount: submesh.indexCount,
-                                                                           indexType: submesh.indexType,
-                                                                           indexBuffer: submesh.indexBuffer,
-                                                                           indexBufferOffset: submesh.indexBufferOffset,
-                                                                           instanceCount: _instanceCount)
-                            }
                         }
-                        
-//                        if submeshesToDisplay[submesh.name]! {
-//                            if applyMaterials {
-//                                submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
-//                                                      customBaseColorTextureType: baseColorTextureType,
-//                                                      customNormalMapTextureType: normalMapTextureType,
-//                                                      customSpecularTextureType: specularTextureType)
-//                                submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
-//                            }
-//
-//                            renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-//                                                                       indexCount: submesh.indexCount,
-//                                                                       indexType: submesh.indexType,
-//                                                                       indexBuffer: submesh.indexBuffer,
-//                                                                       indexBufferOffset: submesh.indexBufferOffset,
-//                                                                       instanceCount: _instanceCount)
-//                        }
                     }
                 } else {
                     for submesh in _submeshes {
@@ -381,8 +388,7 @@ class Mesh {
             if _submeshes.count > 0 {
                 if let submeshesToDisplay {
                     for submesh in _submeshes {
-                        // Hack to work with USDZ file:
-                        if submesh.name == "submesh" {
+                        if submeshesToDisplay[submesh.name] ?? false {
                             renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
                                                                        indexCount: submesh.indexCount,
                                                                        indexType: submesh.indexType,
@@ -390,25 +396,6 @@ class Mesh {
                                                                        indexBufferOffset: submesh.indexBufferOffset,
                                                                        instanceCount: _instanceCount)
                         }
-                        else {
-                            if submeshesToDisplay[submesh.name] ?? false {
-                                renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                                           indexCount: submesh.indexCount,
-                                                                           indexType: submesh.indexType,
-                                                                           indexBuffer: submesh.indexBuffer,
-                                                                           indexBufferOffset: submesh.indexBufferOffset,
-                                                                           instanceCount: _instanceCount)
-                            }
-                        }
-                        
-//                        if submeshesToDisplay[submesh.name]! {
-//                            renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-//                                                                       indexCount: submesh.indexCount,
-//                                                                       indexType: submesh.indexType,
-//                                                                       indexBuffer: submesh.indexBuffer,
-//                                                                       indexBufferOffset: submesh.indexBufferOffset,
-//                                                                       instanceCount: _instanceCount)
-//                        }
                     }
                 } else {
                     for submesh in _submeshes {

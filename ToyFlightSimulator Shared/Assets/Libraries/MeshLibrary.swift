@@ -7,48 +7,24 @@
 
 import MetalKit
 
-enum MeshType {
-    case None
-    case Triangle_Custom
-    case Quad_Custom
-    case Cube_Custom
-    case Sphere_Custom
-    case Capsule_Custom
-    
-    case Sphere
-    case Quad
-    
-    case SkySphere
-    case Skybox
-    
-    case F16
-    case F18
-    
-    case RC_F18
-    case CGTrader_F35
-    case Sketchfab_F35
-    
-    case Icosahedron
-}
-
 class MeshLibrary: Library<MeshType, Mesh> {
     private var _library: [MeshType: Mesh] = [:]
     
     override func makeLibrary() {
-        _library.updateValue(NoMesh(), forKey: .None)
-        _library.updateValue(TriangleMesh(), forKey: .Triangle_Custom)
-        _library.updateValue(QuadMesh(), forKey: .Quad_Custom)
-        _library.updateValue(CubeMesh(), forKey: .Cube_Custom)
+        _library.updateValue(NoMesh(type: .None), forKey: .None)
+        _library.updateValue(TriangleMesh(type: .Triangle_Custom), forKey: .Triangle_Custom)
+        _library.updateValue(QuadMesh(type: .Quad_Custom), forKey: .Quad_Custom)
+        _library.updateValue(CubeMesh(type: .Cube_Custom), forKey: .Cube_Custom)
         _library.updateValue(SphereMesh(), forKey: .Sphere_Custom)
         _library.updateValue(CapsuleMesh(), forKey: .Capsule_Custom)
         _library.updateValue(SkyboxMesh(), forKey: .Skybox)
         
-        _library.updateValue(Mesh(modelName: "sphere"), forKey: .Sphere)
-        _library.updateValue(Mesh(modelName: "quad"), forKey: .Quad)
-        _library.updateValue(Mesh(modelName: "skysphere"), forKey: .SkySphere)
+        _library.updateValue(Mesh(modelName: "sphere", type: .Sphere), forKey: .Sphere)
+        _library.updateValue(Mesh(modelName: "quad", type: .Quad), forKey: .Quad)
+        _library.updateValue(Mesh(modelName: "skysphere", type: .SkySphere), forKey: .SkySphere)
         
-        _library.updateValue(Mesh(modelName: "f16r"), forKey: .F16)
-        _library.updateValue(Mesh(modelName: "FA-18F", ext: .OBJ), forKey: .F18)
+        _library.updateValue(Mesh(modelName: "f16r", type: .F16), forKey: .F16)
+        _library.updateValue(Mesh(modelName: "FA-18F", type: .F18, ext: .OBJ), forKey: .F18)
 //        _library.updateValue(Mesh(modelName: "FA-18F", ext: .USDZ), forKey: .RC_F18)
         
 //        _library.updateValue(Mesh(modelName: "F35_JSF", ext: .USDC), forKey: .CGTrader_F35)
@@ -288,7 +264,7 @@ class SphereMesh: Mesh {
             }
         }
         
-        super.init(mtkMesh: mtkMesh, mdlMesh: mdlSphere)
+        super.init(type: .Sphere_Custom, mtkMesh: mtkMesh, mdlMesh: mdlSphere)
     }
 }
 
@@ -317,12 +293,12 @@ class CapsuleMesh: Mesh {
             }
         }
         
-        super.init(mtkMesh: mtkMesh, mdlMesh: mdlCapsule)
+        super.init(type: .Capsule_Custom, mtkMesh: mtkMesh, mdlMesh: mdlCapsule)
     }
 }
 
 class IcosahedronMesh: Mesh {
-    override init() {
+    init() {
         let icoRadius = sqrtf(3.0) / 12.0 * (3.0 + sqrtf(5.0))
         let allocator = MTKMeshBufferAllocator(device: Engine.Device)
         let mdlIcosahedron = MDLMesh.newIcosahedron(withRadius: icoRadius, inwardNormals: false, allocator: allocator)
@@ -339,12 +315,12 @@ class IcosahedronMesh: Mesh {
         mdlIcosahedron.vertexDescriptor = vertDesc
         
         let mtkIcosahedron = try! MTKMesh(mesh: mdlIcosahedron, device: Engine.Device)
-        super.init(mtkMesh: mtkIcosahedron, mdlMesh: mdlIcosahedron, addTangentBases: false)
+        super.init(type: .Icosahedron, mtkMesh: mtkIcosahedron, mdlMesh: mdlIcosahedron, addTangentBases: false)
     }
 }
 
 class SkyboxMesh: Mesh {
-    override init() {
+    init() {
         let allocator = MTKMeshBufferAllocator(device: Engine.Device)
         let sphereMDLMesh = MDLMesh.newEllipsoid(withRadii: float3(repeating: 150),  // 150
                                                  radialSegments: 20,
@@ -359,6 +335,6 @@ class SkyboxMesh: Mesh {
         
         sphereMDLMesh.vertexDescriptor = sphereDescriptor
         let mtkMesh = try! MTKMesh(mesh: sphereMDLMesh, device: Engine.Device)
-        super.init(mtkMesh: mtkMesh, mdlMesh: sphereMDLMesh, addTangentBases: false)
+        super.init(type: .Skybox, mtkMesh: mtkMesh, mdlMesh: sphereMDLMesh, addTangentBases: false)
     }
 }
