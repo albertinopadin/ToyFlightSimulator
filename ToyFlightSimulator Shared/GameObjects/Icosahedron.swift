@@ -7,6 +7,6 @@
 
 class Icosahedron: GameObject {
     init() {
-        super.init(name: "Icosahedron", meshType: .Icosahedron)
+        super.init(name: "Icosahedron", meshType: .Icosahedron, renderPipelineStateType: .Icosahedron)
     }
 }

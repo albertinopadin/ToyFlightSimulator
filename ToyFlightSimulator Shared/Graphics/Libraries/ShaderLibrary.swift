@@ -36,6 +36,9 @@ enum ShaderType {
     case SkyboxFragment
     
     case TileKernel
+    
+    case IcosahedronVertex
+    case IcosahedronFragment
 }
 
 
@@ -73,6 +76,10 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "skybox_fragment"), forKey: .SkyboxFragment)
         
         _library.updateValue(Shader(functionName: "init_transparent_fragment_store"), forKey: .TileKernel)
+        
+        // For testing:
+        _library.updateValue(Shader(functionName: "icosahedron_vertex"), forKey: .IcosahedronVertex)
+        _library.updateValue(Shader(functionName: "icosahedron_fragment"), forKey: .IcosahedronFragment)
     }
     
     override subscript(_ type: ShaderType) -> MTLFunction {

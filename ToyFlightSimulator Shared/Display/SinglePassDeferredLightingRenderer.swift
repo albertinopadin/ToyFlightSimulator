@@ -79,7 +79,6 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setFragmentTexture(shadowMap, index: Int(TFSTextureIndexShadow.rawValue))
-            SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetDirectionalLightConstants(renderCommandEncoder: renderEncoder)
             SceneManager.RenderGBuffer(renderCommandEncoder: renderEncoder)
         }
@@ -91,12 +90,9 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DirectionalLighting])
             renderEncoder.setCullMode(.back)
             renderEncoder.setStencilReferenceValue(128)
-            
             renderEncoder.setVertexBuffer(_quadVertexBuffer,
                                           offset: 0,
                                           index: Int(TFSBufferIndexMeshPositions.rawValue))
-            
-            SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetDirectionalLightConstants(renderCommandEncoder: renderEncoder)
             
             // Draw full screen quad
@@ -110,8 +106,6 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LightMask])
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setCullMode(.front)
-            
-            SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
             SceneManager.RenderPointLightMeshes(renderCommandEncoder: renderEncoder)
         }
@@ -120,12 +114,10 @@ class SinglePassDeferredLightingRenderer: Renderer {
     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeStage(using: renderEncoder, label: "Point Light Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.PointLight])
-            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])
-            setGBufferTextures(renderEncoder: renderEncoder)
+//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])  <--- This is causing issues
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setCullMode(.back)
-            
-            SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
 //            SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetPointLightData(renderCommandEncoder: renderEncoder)
             SceneManager.RenderPointLights(renderCommandEncoder: renderEncoder)
@@ -138,8 +130,6 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setCullMode(.back)  //<-- This or not setting the cull mode works. WTF?
-            
-            SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
             SceneManager.Render(renderCommandEncoder: renderEncoder, renderPipelineStateType: .Skybox, applyMaterials: false)
         }
     }
@@ -154,13 +144,23 @@ class SinglePassDeferredLightingRenderer: Renderer {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ShadowGeneration])
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.ShadowGeneration])
                 renderEncoder.setCullMode(.back)
-//                renderEncoder.setDepthBias(0.015, slopeScale: 7, clamp: 0.02)
+                renderEncoder.setDepthBias(0.015, slopeScale: 7, clamp: 0.02)
 //                renderEncoder.setDepthBias(0.015, slopeScale: 1, clamp: 0.02)
 //                renderEncoder.setDepthBias(0.001, slopeScale: 2, clamp: 1)
-                renderEncoder.setDepthBias(0.001, slopeScale: 1, clamp: 0.02)
+//                renderEncoder.setDepthBias(0.001, slopeScale: 1, clamp: 0.02)
                 SceneManager.SetDirectionalLightConstants(renderCommandEncoder: renderEncoder)
                 SceneManager.RenderShadows(renderCommandEncoder: renderEncoder)
             }
+        }
+    }
+    
+    // For testing:
+    func encodeIcosahedronStage(using renderEncoder: MTLRenderCommandEncoder) {
+        encodeStage(using: renderEncoder, label: "Icosahedron Stage") {
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Icosahedron])
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
+            renderEncoder.setStencilReferenceValue(128)
+            SceneManager.Render(renderCommandEncoder: renderEncoder, renderPipelineStateType: .Icosahedron)
         }
     }
     
@@ -183,11 +183,13 @@ class SinglePassDeferredLightingRenderer: Renderer {
             
             encodePass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
                 renderEncoder in
+                SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
                 
                 encodeGBufferStage(using: renderEncoder)
                 encodeDirectionalLightingStage(using: renderEncoder)
                 encodeLightMaskStage(using: renderEncoder)
-//                encodePointLightStage(using: renderEncoder)
+                encodePointLightStage(using: renderEncoder)
+                encodeIcosahedronStage(using: renderEncoder)
                 encodeSkyboxStage(using: renderEncoder)
             }
         }
@@ -208,6 +210,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     func updateDrawableSize(size: CGSize) {
         gBufferTextures.makeTextures(device: Engine.Device, size: size, storageMode: .memoryless)
+        
         // Re-set GBuffer textures in the view render pass descriptor after they have been reallocated by a resize
         setGBufferTextures(_gBufferAndLightingRenderPassDescriptor)
         updateScreenSize(size: size)

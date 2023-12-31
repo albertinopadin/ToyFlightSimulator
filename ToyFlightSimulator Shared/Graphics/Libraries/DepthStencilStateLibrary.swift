@@ -19,6 +19,8 @@ enum DepthStencilStateType {
     case LightMask
     case PointLight
     case Skybox
+    
+    
 }
 
 class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilState> {

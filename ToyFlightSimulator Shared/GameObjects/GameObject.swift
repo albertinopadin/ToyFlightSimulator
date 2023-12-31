@@ -93,7 +93,10 @@ extension GameObject {
         if material.color.w < 1.0 {
             _renderPipelineStateType = .OrderIndependentTransparent
         } else {
-            _renderPipelineStateType = .OpaqueMaterial
+            // TODO: This smells...
+            if !(self is LightObject) && !(self is Icosahedron) {
+                _renderPipelineStateType = .OpaqueMaterial
+            }
         }
         
         _gBufferRenderPipelineStateType = .GBufferGenerationMaterial

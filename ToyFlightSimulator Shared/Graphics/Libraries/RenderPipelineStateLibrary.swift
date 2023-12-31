@@ -29,6 +29,9 @@ enum RenderPipelineStateType {
     case LightMask
     case PointLight
     case Skybox
+    
+    // For testing:
+    case Icosahedron
 }
 
 class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState> {
@@ -54,6 +57,8 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(LightMaskRenderPipelineState(), forKey: .LightMask)
         _library.updateValue(PointLightingRenderPipelineState(), forKey: .PointLight)
         _library.updateValue(SkyboxRenderPipelineState(), forKey: .Skybox)
+        
+        _library.updateValue(IcosahedronRenderPipelineState(), forKey: .Icosahedron)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {
@@ -287,6 +292,7 @@ class ShadowGenerationRenderPipelineState: RenderPipelineState {
             descriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]  // ???
             descriptor.depthAttachmentPixelFormat = .depth32Float
+            // TODO: Should I set the render target pixel formats here?
         }
     }
 }
@@ -352,6 +358,8 @@ class PointLightingRenderPipelineState: RenderPipelineState {
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat
+//            print("[PointLightingRenderPipelineState init] Main Pixel Fmt: \(Preferences.MainPixelFormat)")
+//            print("[PointLightingRenderPipelineState init] Depth Stencil Pixel Fmt: \(Preferences.MainDepthStencilPixelFormat)")
             RenderPipelineState.setRenderTargetPixelFormats(descriptor: descriptor)
         }
     }
@@ -363,6 +371,19 @@ class SkyboxRenderPipelineState: RenderPipelineState {
             descriptor.vertexFunction = Graphics.Shaders[.SkyboxVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.SkyboxFragment]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Skybox]
+            descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
+            descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
+            descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat
+            RenderPipelineState.setRenderTargetPixelFormats(descriptor: descriptor)
+        }
+    }
+}
+
+class IcosahedronRenderPipelineState: RenderPipelineState {
+    init() {
+        super.init(label: "Icosahedron Stage") { descriptor in
+            descriptor.vertexFunction = Graphics.Shaders[.IcosahedronVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.IcosahedronFragment]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat

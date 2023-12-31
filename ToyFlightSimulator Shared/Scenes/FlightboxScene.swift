@@ -44,7 +44,7 @@ class FlightboxScene: GameScene {
             addChild(sky)
         }
         
-        sun.setPosition(1, 25, 5)
+        sun.setPosition(1, 50, 5)
         sun.setLightBrightness(1.0)
 //        sun.setLightBrightness(0.2)
         sun.setLightColor(1, 1, 1)
@@ -52,9 +52,46 @@ class FlightboxScene: GameScene {
         addLight(sun)
         
         let pl = PointLightObject()
-        pl.setPosition(0, 5, 10)
+        pl.setPosition(capsule.getPositionX(), 0, capsule.getPositionZ())
         pl.setLightColor(BLUE_COLOR.xyz)
+        pl.setLightBrightness(1.0)
+//        pl.setLightRadius(10.0)
+        pl.setScale(2.0)
         addLight(pl)
+        
+//        let pl2 = PointLightObject()
+//        pl2.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
+//        pl2.setLightColor(RED_COLOR.xyz)
+//        pl2.setLightBrightness(1.0)
+//        addLight(pl2)
+        
+        var icoMaterial = Material()
+        icoMaterial.color = RED_COLOR
+        
+        let ico = Icosahedron()
+        ico.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
+        ico.setScale(2.0)
+        ico.useMaterial(icoMaterial)
+        addChild(ico)
+        
+        var sphereGreenMaterial = Material()
+        sphereGreenMaterial.color = float4(0.0, 1.0, 0.2, 1.0)
+        
+        let sphereGreen = Sphere()
+        sphereGreen.setPosition(pl.getPositionX() + 2.0, pl.getPositionY(), pl.getPositionZ())
+        sphereGreen.setScale(1.0)
+        sphereGreen.useMaterial(sphereGreenMaterial)
+        addChild(sphereGreen)
+        
+//        var sphereBluishMaterial = Material()
+//        sphereBluishMaterial.color = float4(0.0, 0.2, 1.0, 1.0)
+//        
+//        let bluishSphere = Sphere()
+//        bluishSphere.setPosition(float3.zero)
+//        bluishSphere.setScale(1.0)
+//        bluishSphere.useMaterial(sphereBluishMaterial)
+//        addChild(bluishSphere)
+        
         
         var groundMaterial = Material()
         groundMaterial.color = float4(0.3, 0.7, 0.1, 1.0)

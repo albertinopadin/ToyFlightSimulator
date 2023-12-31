@@ -51,12 +51,13 @@ class LightObject: GameObject {
     override func update() {
         super.update()
         self.lightData.type = self.lightType.rawValue
+        self.lightData.modelMatrix = self.modelMatrix
         self.lightData.viewProjectionMatrix = projectionMatrix * viewMatrix
         let position = self.modelMatrix.columns.3.xyz
+        self.lightData.position = position
+        self.lightData.eyeDirection = normalize(float4(-position, 0))
         let shadowViewMatrix = Transform.look(eye: position, target: .zero, up: Y_AXIS)
         self.lightData.shadowViewProjectionMatrix = projectionMatrix * shadowViewMatrix
-        self.lightData.eyeDirection = normalize(float4(-position, 0))
-        self.lightData.position = position
     }
 }
 
@@ -65,7 +66,7 @@ extension LightObject {
         self.lightData.color = color
         if _meshType != .None {
             var material = Material()
-            material.color = float4(color, 0)
+            material.color = float4(color, 1.0)  // TODO: Why are we setting the material color alpha to zero?
             self.useMaterial(material)
         }
     }
@@ -83,4 +84,7 @@ extension LightObject {
     
     public func setLightSpecularIntensity(_ intensity: Float) { self.lightData.specularIntensity = intensity }
     public func getLightSpecularIntensity() -> Float { return self.lightData.specularIntensity }
+    
+    public func setLightRadius(_ radius: Float) { self.lightData.radius = radius }
+    public func getLightRadius() -> Float { return self.lightData.radius }
 }

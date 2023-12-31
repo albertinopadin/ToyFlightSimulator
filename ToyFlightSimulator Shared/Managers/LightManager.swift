@@ -42,6 +42,9 @@ class LightManager {
     
     public func getPointLightData() -> [LightData] {
         return getLightObjects(lightType: .Point).map { $0.lightData }
+//        let pointLights = getLightObjects(lightType: .Point)
+//        print("Num point lights: \(pointLights.count)")
+//        return pointLights.map { $0.lightData }
     }
     
     public func setDirectionalLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {

@@ -121,7 +121,9 @@ class GameScene: Node {
     }
     
     func renderPointLights(renderCommandEncoder: MTLRenderCommandEncoder) {
+//        print("[GameScene renderPointLights]")
         for pointLight in _lightManager.getLightObjects(lightType: .Point) {
+//            print("[renderPointLights] rendering...")
             pointLight.render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .PointLight)
         }
     }

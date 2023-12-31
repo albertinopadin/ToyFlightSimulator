@@ -8,34 +8,6 @@
 import simd
 
 
-// --- OLD ---
-//struct NodeConstants {
-//    var modelMatrix: float4x4
-//    var color: float4
-//}
-//
-//struct LightConstants {
-//    var viewProjectionMatrix: float4x4
-//    var intensity: simd_float3
-//    var position: simd_float3
-//    var direction: simd_float3
-//    var type: UInt32
-//}
-//
-//struct FrameConstants {
-//    var projectionMatrix: float4x4
-//    var viewMatrix: float4x4
-//    var inverseViewDirectionMatrix: float3x3
-//    var lightCount: UInt32
-//}
-//
-//struct InstanceConstants {
-//    var modelMatrix: float4x4
-//    var color: float4
-//}
-
-
-// --- NEW ---
 public typealias float2 = SIMD2<Float>
 public typealias float3 = SIMD3<Float>
 public typealias float4 = SIMD4<Float>
@@ -119,6 +91,7 @@ struct Material: sizeable {
 
 struct LightData: sizeable {
     var type: UInt32 = 0
+    var modelMatrix: float4x4 = matrix_identity_float4x4
     var viewProjectionMatrix: float4x4 = matrix_identity_float4x4
     var shadowViewProjectionMatrix: float4x4 = matrix_identity_float4x4
     var shadowTransformMatrix: float4x4 = matrix_identity_float4x4
@@ -127,6 +100,7 @@ struct LightData: sizeable {
     var position: float3 = float3(0, 0, 0)
     var color: float3 = float3(0, 0, 0)
     var brightness: Float = 1.0
+    var radius: Float = 1.0
     
     var ambientIntensity: Float = 1.0
     var diffuseIntensity: Float = 1.0

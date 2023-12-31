@@ -74,6 +74,7 @@ enum LightType: uint {
 
 struct LightData {
     LightType type;
+    float4x4 modelMatrix;
     float4x4 viewProjectionMatrix;
     float4x4 shadowViewProjectionMatrix;
     float4x4 shadowTransformMatrix;
@@ -82,6 +83,7 @@ struct LightData {
     float3 position;
     float3 color;
     float brightness;
+    float radius;  // TODO: This only applies to point lights; perhaps should have Directional/PointLightData
     
     float ambientIntensity;
     float diffuseIntensity;
