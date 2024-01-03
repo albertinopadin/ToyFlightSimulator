@@ -17,9 +17,10 @@ struct ShadowOutput
 
 vertex ShadowOutput shadow_vertex(const VertexIn in [[ stage_in ]],
                                   constant LightData &lightData [[ buffer(TFSBufferDirectionalLightData) ]],
-                                  constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]])
+                                  const device ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                                  uint iid [[ instance_id ]])
 {
     ShadowOutput out;
-    out.position = lightData.shadowViewProjectionMatrix * modelConstants.modelMatrix * float4(in.position, 1.0);
+    out.position = lightData.shadowViewProjectionMatrix * modelConstants[iid].modelMatrix * float4(in.position, 1.0);
     return out;
 }

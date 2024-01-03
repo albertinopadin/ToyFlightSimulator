@@ -41,16 +41,17 @@ typedef struct
 } ColorInOut;
 
 vertex ColorInOut gbuffer_vertex(VertexIn in [[ stage_in ]],
-                                 constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-                                 constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]],
-                                 constant LightData &lightData [[ buffer(TFSBufferDirectionalLightData) ]])
+                                 constant       SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                 const device   ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                                 constant       LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+                                 uint                           iid            [[ instance_id ]])
 {
     ColorInOut out;
     out.color = in.color;
     out.tex_coord = in.textureCoordinate;
     
     float4 modelPosition = float4(in.position, 1.0);
-    float4 worldPosition = modelConstants.modelMatrix * modelPosition;
+    float4 worldPosition = modelConstants[iid].modelMatrix * modelPosition;
     // Make position a float4 to perform 4x4 matrix math on it
     float4 eyePosition = sceneConstants.viewMatrix * worldPosition;
     out.position = sceneConstants.projectionMatrix * eyePosition;

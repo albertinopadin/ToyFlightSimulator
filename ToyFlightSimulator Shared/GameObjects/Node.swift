@@ -43,6 +43,12 @@ class Node {
         }
     }
     
+    var normalMatrix: matrix_float3x3 {
+        get {
+            return Transform.normalMatrix(from: self.modelMatrix)
+        }
+    }
+    
     var rotationMatrix: matrix_float4x4 {
         get {
             return _rotationMatrix
@@ -97,57 +103,57 @@ class Node {
         }
     }
     
-    func render(renderCommandEncoder: MTLRenderCommandEncoder,
-                renderPipelineStateType: RenderPipelineStateType,
-                applyMaterials: Bool = true) {
-//        if renderPipelineStateType == .LightMask {
-////            print("[Node render] got rps for point light")
-//            print("[Node render] got rps for mask light")
-//            print("[Node render] self rps: \(_renderPipelineStateType)")
+//    func render(renderCommandEncoder: MTLRenderCommandEncoder,
+//                renderPipelineStateType: RenderPipelineStateType,
+//                applyMaterials: Bool = true) {
+////        if renderPipelineStateType == .LightMask {
+//////            print("[Node render] got rps for point light")
+////            print("[Node render] got rps for mask light")
+////            print("[Node render] self rps: \(_renderPipelineStateType)")
+////        }
+//        
+////        if self is Icosahedron && renderPipelineStateType == .Icosahedron {
+////            print("[Node render] In icosahedron render")
+////            print("Given RPS: \(renderPipelineStateType)")
+////            print("Internal RPS: \(_renderPipelineStateType)")
+////        }
+//        
+//        if shouldRender(with: renderPipelineStateType), let renderable = self as? Renderable {
+////            if renderPipelineStateType == .LightMask {
+////                print("[Node render] calling doRender for light mask")
+////            }
+////            if self is Icosahedron {
+////                print("[Node render] rendering icosahedron, given rps: \(renderPipelineStateType)")
+////            }
+//            renderable.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: nil)
 //        }
-        
-//        if self is Icosahedron && renderPipelineStateType == .Icosahedron {
-//            print("[Node render] In icosahedron render")
-//            print("Given RPS: \(renderPipelineStateType)")
-//            print("Internal RPS: \(_renderPipelineStateType)")
+//        
+//        for child in children {
+//            child.render(renderCommandEncoder: renderCommandEncoder,
+//                         renderPipelineStateType: renderPipelineStateType,
+//                         applyMaterials: applyMaterials)
 //        }
-        
-        if shouldRender(with: renderPipelineStateType), let renderable = self as? Renderable {
-//            if renderPipelineStateType == .LightMask {
-//                print("[Node render] calling doRender for light mask")
-//            }
-//            if self is Icosahedron {
-//                print("[Node render] rendering icosahedron, given rps: \(renderPipelineStateType)")
-//            }
-            renderable.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: nil)
-        }
-        
-        for child in children {
-            child.render(renderCommandEncoder: renderCommandEncoder,
-                         renderPipelineStateType: renderPipelineStateType,
-                         applyMaterials: applyMaterials)
-        }
-    }
+//    }
     
-    // TODO: Smells off to manually set these conditions...
-    private func shouldRenderGBuffer(gBufferRPS: RenderPipelineStateType) -> Bool {
+//    // TODO: Smells off to manually set these conditions...
+    func shouldRenderGBuffer(gBufferRPS: RenderPipelineStateType) -> Bool {
         return _gBufferRenderPipelineStateType == gBufferRPS &&
                _renderPipelineStateType != .Skybox &&
                !(self is LightObject) && !(self is Icosahedron)
     }
     
-    func renderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
-        if shouldRenderGBuffer(gBufferRPS: gBufferRPS), let renderable = self as? Renderable {
-            renderable.doRender(renderCommandEncoder, applyMaterials: true, submeshesToRender: nil)
-        }
-        
-        for child in children {
-            child.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: gBufferRPS)
-        }
-    }
+//    func renderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
+//        if shouldRenderGBuffer(gBufferRPS: gBufferRPS), let renderable = self as? Renderable {
+//            renderable.doRender(renderCommandEncoder, applyMaterials: true, submeshesToRender: nil)
+//        }
+//        
+//        for child in children {
+//            child.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: gBufferRPS)
+//        }
+//    }
     
     // TODO: Smells off to manually set these conditions...
-    private func shouldRenderShadows() -> Bool {
+    func shouldRenderShadows() -> Bool {
         return _renderPipelineStateType != .Skybox && !(self is LightObject) && !(self is Icosahedron)
     }
     

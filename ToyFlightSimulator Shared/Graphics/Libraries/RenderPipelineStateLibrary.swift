@@ -7,7 +7,7 @@
 
 import MetalKit
 
-enum RenderPipelineStateType {
+enum RenderPipelineStateType: CaseIterable {
     case Base
     case Material
     case Instanced

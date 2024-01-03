@@ -60,6 +60,7 @@ class LightManager {
     
     public func setPointLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
         var pointLightData = getPointLightData()
+        // TODO: Set point light count:
 //        var lightCount = lightData.count
 //        renderCommandEncoder.setFragmentBytes(&lightCount,
 //                                              length: Int32.size,

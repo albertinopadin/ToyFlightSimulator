@@ -37,7 +37,8 @@ class GameObject: Node, Renderable {
     override func update() {
         super.update()
         _modelConstants.modelMatrix = self.modelMatrix
-        _modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
+//        _modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
+        _modelConstants.normalMatrix = self.normalMatrix
     }
     
     func encodeRender(using renderEncoder: MTLRenderCommandEncoder, label: String, _ encodingBlock: () -> Void) {

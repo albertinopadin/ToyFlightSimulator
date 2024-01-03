@@ -19,10 +19,11 @@ struct FragmentOutput {
 
 vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
                                   constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-                                  constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]]) {
+                                  const device ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                                  uint iid [[ instance_id ]]) {
     RasterizerData rd;
     
-    float4 worldPosition = modelConstants.modelMatrix * float4(vIn.position, 1);
+    float4 worldPosition = modelConstants[iid].modelMatrix * float4(vIn.position, 1);
     // Order of matrix multiplication is important here:
     rd.position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
     rd.color = vIn.color;
@@ -31,9 +32,9 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
     rd.worldPosition = worldPosition.xyz;
     rd.toCameraVector = sceneConstants.cameraPosition - worldPosition.xyz;
 
-    rd.surfaceNormal = normalize(modelConstants.modelMatrix * float4(vIn.normal, 0.0)).xyz;
-    rd.surfaceTangent = normalize(modelConstants.modelMatrix * float4(vIn.tangent, 0.0)).xyz;
-    rd.surfaceBitangent = normalize(modelConstants.modelMatrix * float4(vIn.bitangent, 0.0)).xyz;
+    rd.surfaceNormal = normalize(modelConstants[iid].modelMatrix * float4(vIn.normal, 0.0)).xyz;
+    rd.surfaceTangent = normalize(modelConstants[iid].modelMatrix * float4(vIn.tangent, 0.0)).xyz;
+    rd.surfaceBitangent = normalize(modelConstants[iid].modelMatrix * float4(vIn.bitangent, 0.0)).xyz;
     
     return rd;
 }
