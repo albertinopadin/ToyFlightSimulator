@@ -132,7 +132,7 @@ class GameScene: Node {
     func renderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
         for meshTypesNodes in _meshesForRenderPipelineStates.values {
             for (_, nodes) in meshTypesNodes {
-                var modelConstants = [ModelConstants]()
+                var modelConstants = [ModelConstants]()  // <--- Don't allocate here
                 
                 // Collect node ModelConstants
                 for node in nodes {

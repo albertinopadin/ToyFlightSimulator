@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 55;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -471,6 +471,10 @@
 		CEC231332B25AC650081A26A /* PointLightObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC231322B25AC650081A26A /* PointLightObject.swift */; };
 		CEC231342B25AC650081A26A /* PointLightObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC231322B25AC650081A26A /* PointLightObject.swift */; };
 		CEC231352B25AC650081A26A /* PointLightObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC231322B25AC650081A26A /* PointLightObject.swift */; };
+		CEC6B4852B45CE42004A5AC7 /* TFSCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6B4842B45CE42004A5AC7 /* TFSCache.swift */; };
+		CEC6B4862B45CE42004A5AC7 /* TFSCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6B4842B45CE42004A5AC7 /* TFSCache.swift */; };
+		CEC6B4872B45CE42004A5AC7 /* TFSCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6B4842B45CE42004A5AC7 /* TFSCache.swift */; };
+		CEC6B4882B45CE42004A5AC7 /* TFSCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6B4842B45CE42004A5AC7 /* TFSCache.swift */; };
 		CEED93A329E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A429E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
@@ -654,6 +658,7 @@
 		CEB84E7A2A24AC3300BEF778 /* Controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controller.swift; sourceTree = "<group>"; };
 		CEC2312E2B22F3E50081A26A /* Icosahedron.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icosahedron.swift; sourceTree = "<group>"; };
 		CEC231322B25AC650081A26A /* PointLightObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointLightObject.swift; sourceTree = "<group>"; };
+		CEC6B4842B45CE42004A5AC7 /* TFSCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSCache.swift; sourceTree = "<group>"; };
 		CEED93A229E2B3EE0020DC53 /* AIM120.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIM120.swift; sourceTree = "<group>"; };
 		CEED93A629E3B2600020DC53 /* AircraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftStore.swift; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
@@ -752,6 +757,7 @@
 			isa = PBXGroup;
 			children = (
 				CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */,
+				CEC6B4842B45CE42004A5AC7 /* TFSCache.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -1193,7 +1199,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1430;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 1510;
 				TargetAttributes = {
 					CE452FA32A7CA810001945B9 = {
 						CreatedOnToolsVersion = 14.3.1;
@@ -1210,7 +1216,7 @@
 				};
 			};
 			buildConfigurationList = CE7F47E928B758900082B197 /* Build configuration list for PBXProject "ToyFlightSimulator" */;
-			compatibilityVersion = "Xcode 13.0";
+			compatibilityVersion = "Xcode 15.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -1409,6 +1415,7 @@
 				CE0601692A89F039001F8CC3 /* Joystick.swift in Sources */,
 				CE452FDD2A7CB48E001945B9 /* TextureLibrary.swift in Sources */,
 				CE452FEE2A7CB4A6001945B9 /* Triangle.swift in Sources */,
+				CEC6B4882B45CE42004A5AC7 /* TFSCache.swift in Sources */,
 				CE45300B2A7CB4BA001945B9 /* Shaders.metal in Sources */,
 				CE452FE62A7CB4A6001945B9 /* Sun.swift in Sources */,
 				CE452FCB2A7CB47F001945B9 /* Skybox.metal in Sources */,
@@ -1536,6 +1543,7 @@
 				CE3BFF6E28E1B4D70014A752 /* MeshLibrary.swift in Sources */,
 				CE3DD2E929F37FE500787E53 /* Missile.swift in Sources */,
 				CE3BFF5028E1B2230014A752 /* Library.swift in Sources */,
+				CEC6B4852B45CE42004A5AC7 /* TFSCache.swift in Sources */,
 				CE3BFF4328E1AEF80014A752 /* Preferences.swift in Sources */,
 				CEAB38502981024E0087F7CB /* Transform.swift in Sources */,
 				CE3BFF8E28E2FE140014A752 /* Math.swift in Sources */,
@@ -1655,6 +1663,7 @@
 				CE7F484F28B771550082B197 /* TimeIt.swift in Sources */,
 				CEFC6EC6295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
 				CEFC6F23296B4200009B692B /* Sphere.swift in Sources */,
+				CEC6B4862B45CE42004A5AC7 /* TFSCache.swift in Sources */,
 				CE886A4C298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */,
 				CE3BFF9328E451E50014A752 /* CameraManager.swift in Sources */,
 				CE7F480728B758920082B197 /* AppDelegate.swift in Sources */,
@@ -1742,6 +1751,7 @@
 				CE0EF7292A46CF9F00F54A2C /* HIDDevice.swift in Sources */,
 				CE3DD2EF2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE886A4D298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */,
+				CEC6B4872B45CE42004A5AC7 /* TFSCache.swift in Sources */,
 				CE3BFF9828E451F00014A752 /* LightManager.swift in Sources */,
 				CE4530532A7F3EBF001945B9 /* FPS.swift in Sources */,
 				CE56921E28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
@@ -1859,6 +1869,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
@@ -1922,6 +1933,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";

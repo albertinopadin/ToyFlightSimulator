@@ -267,8 +267,6 @@ class Mesh {
         let descriptor = createMdlVertexDescriptor()
         let asset = MDLAsset(url: assetUrl, vertexDescriptor: descriptor, bufferAllocator: bufferAllocator)
         
-//        let asset = MDLAsset(url: assetUrl, vertexDescriptor: nil, bufferAllocator: bufferAllocator)
-        
         asset.loadTextures()
         
         let assetChildren = asset.childObjects(of: MDLObject.self)
