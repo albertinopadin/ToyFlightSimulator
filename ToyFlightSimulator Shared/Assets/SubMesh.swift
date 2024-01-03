@@ -7,8 +7,16 @@
 
 import MetalKit
 
+struct TextureParameters: Equatable, Hashable {
+    let material: MDLMaterial
+    let semantic: MDLMaterialSemantic
+    let origin: MTKTextureLoader.Origin
+}
+
 // Index Information
 class Submesh {
+    private static let TextureCache = TFSCache<TextureParameters, MTLTexture>()
+    
     public var name: String = "Submesh"
     
     private var _indices: [UInt32] = []
@@ -60,9 +68,9 @@ class Submesh {
     
     private func createTextures(_ mdlMaterial: MDLMaterial) {
         print("[Submesh createTextures] mdlMaterial for \(name): \(mdlMaterial)")
-        _baseColorTexture = texture(for: .baseColor, in: mdlMaterial, textureOrigin: .bottomLeft)
-        _normalMapTexture = texture(for: .tangentSpaceNormal, in: mdlMaterial, textureOrigin: .bottomLeft)
-        _specularTexture = texture(for: .specular, in: mdlMaterial, textureOrigin: .bottomLeft)
+        _baseColorTexture = cachedTexture(for: .baseColor, in: mdlMaterial, textureOrigin: .bottomLeft)
+        _normalMapTexture = cachedTexture(for: .tangentSpaceNormal, in: mdlMaterial, textureOrigin: .bottomLeft)
+        _specularTexture = cachedTexture(for: .specular, in: mdlMaterial, textureOrigin: .bottomLeft)
     }
     
     private func createMaterial(_ mdlMaterial: MDLMaterial) {
@@ -72,10 +80,26 @@ class Submesh {
         if let shininess = mdlMaterial.property(with: .specularExponent)?.floatValue { _material.shininess = shininess }
     }
     
+    private func cachedTexture(for semantic: MDLMaterialSemantic,
+                               in material: MDLMaterial?,
+                               textureOrigin: MTKTextureLoader.Origin) -> MTLTexture? {
+        guard let material else { return nil }
+
+        let parameters = TextureParameters(material: material, semantic: semantic, origin: textureOrigin)
+
+        if let cachedTexture = Submesh.TextureCache[parameters] {
+            return cachedTexture
+        } else {
+            let newTexture = texture(for: semantic, in: material, textureOrigin: textureOrigin)
+            Submesh.TextureCache[parameters] = newTexture
+            return newTexture
+        }
+    }
+    
     private func texture(for semantic: MDLMaterialSemantic,
                          in material: MDLMaterial?,
                          textureOrigin: MTKTextureLoader.Origin) -> MTLTexture? {
-        guard let material = material else { return nil }
+        guard let material else { return nil }
         
         let textureLoader = MTKTextureLoader(device: Engine.Device)
         
@@ -86,16 +110,9 @@ class Submesh {
         }
         
         for property in material.properties(with: semantic) {
-//            let options: [MTKTextureLoader.Option: Any] = [
-//                .origin: textureOrigin as Any,
-//                .generateMipmaps: true,
-//                .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-//                .textureStorageMode: MTLStorageMode.private.rawValue
-//            ]
-            
             let options: [MTKTextureLoader.Option: Any] = [
                 .origin: textureOrigin as Any,
-//                .generateMipmaps: true,
+                .generateMipmaps: true,
                 .textureUsage: MTLTextureUsage.shaderRead.rawValue,
                 .textureStorageMode: MTLStorageMode.private.rawValue
             ]
@@ -107,9 +124,9 @@ class Submesh {
 //                print("Material property is string!")
                 if let stringValue = property.stringValue {
                     newTexture = try? textureLoader.newTexture(name: stringValue,
-                                                                scaleFactor: 1.0,
-                                                                bundle: nil,
-                                                                options: options)
+                                                               scaleFactor: 1.0,
+                                                               bundle: nil,
+                                                               options: options)
                 }
             case .URL:
 //                print("Material property is url!")

@@ -1,8 +1,24 @@
 # ToyFlightSimulator
 
-Toy Flight Simulator implemented with Swift, SwiftUI and Metal
+### Toy Flight Simulator implemented with Swift, SwiftUI and Metal
 
 ## Devlog
+
+1/3/24 - Lowered Texture memory usage by ~50% by using a cache.
+
+Before caching textures:
+
+![Before](images/BeforeTextureCache.png)
+
+After caching textures:
+
+![After](images/AfterTextureCache.png)
+
+Also, app now has a simple menu implemented in SwiftUI, accessible by pressing Escape on Mac or by swiping down from the top in iOS:
+
+![Menu](images/Menu.png)
+
+---
 
 7/20/23 - Hack to implement "skeletal animation" / movement of control surfaces by moving submeshes.
 
