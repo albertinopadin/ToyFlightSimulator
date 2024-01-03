@@ -16,11 +16,11 @@ class SkySphere: GameObject {
         setScale(1000)
     }
     
-    override func render(renderCommandEncoder: MTLRenderCommandEncoder,
+    override func render(with renderCommandEncoder: MTLRenderCommandEncoder,
                          renderPipelineStateType: RenderPipelineStateType,
                          applyMaterials: Bool = true) {
         renderCommandEncoder.setFragmentTexture(Assets.Textures[_skySphereTextureType], index: 10)
-        super.render(renderCommandEncoder: renderCommandEncoder,
+        super.render(with: renderCommandEncoder,
                      renderPipelineStateType: renderPipelineStateType,
                      applyMaterials: applyMaterials)
     }

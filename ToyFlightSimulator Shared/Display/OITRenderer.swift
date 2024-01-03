@@ -69,25 +69,24 @@ class OITRenderer: Renderer {
         _forwardRenderPassDescriptor.imageblockSampleLength = Graphics.RenderPipelineStates[.OrderIndependentTransparent].imageblockSampleLength
     }
     
-    func drawOpaqueObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
+    func drawOpaqueObjects(with renderCommandEncoder: MTLRenderCommandEncoder) {
         encodeStage(using: renderCommandEncoder, label: "Opaque Object Rendering") {
             renderCommandEncoder.setCullMode(.none)
             renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
-            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Base)
-            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Material)
-            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Instanced)
-            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .Opaque)
-            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .OpaqueMaterial)
-            SceneManager.Render(renderCommandEncoder: renderCommandEncoder, renderPipelineStateType: .SkySphere)
+            SceneManager.Render(with: renderCommandEncoder, renderPipelineStateType: .Base)
+            SceneManager.Render(with: renderCommandEncoder, renderPipelineStateType: .Material)
+            SceneManager.Render(with: renderCommandEncoder, renderPipelineStateType: .Instanced)
+            SceneManager.Render(with: renderCommandEncoder, renderPipelineStateType: .Opaque)
+            SceneManager.Render(with: renderCommandEncoder, renderPipelineStateType: .OpaqueMaterial)
+            SceneManager.Render(with: renderCommandEncoder, renderPipelineStateType: .SkySphere)
         }
     }
     
-    func drawTransparentObjects(renderCommandEncoder: MTLRenderCommandEncoder) {
+    func drawTransparentObjects(with renderCommandEncoder: MTLRenderCommandEncoder) {
         encodeStage(using: renderCommandEncoder, label: "Transparent Object Rendering") {
             renderCommandEncoder.setCullMode(.none)
             renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
-            SceneManager.Render(renderCommandEncoder: renderCommandEncoder,
-                                renderPipelineStateType: .OrderIndependentTransparent)
+            SceneManager.Render(with: renderCommandEncoder, renderPipelineStateType: .OrderIndependentTransparent)
         }
     }
     
@@ -100,10 +99,10 @@ class OITRenderer: Renderer {
                 renderEncoder.dispatchThreadsPerTile(_optimalTileSize)
             }
             
-            SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
-            SceneManager.SetDirectionalLightData(renderCommandEncoder: renderEncoder)
-            drawOpaqueObjects(renderCommandEncoder: renderEncoder)
-            drawTransparentObjects(renderCommandEncoder: renderEncoder)
+            SceneManager.SetSceneConstants(with: renderEncoder)
+            SceneManager.SetDirectionalLightData(with: renderEncoder)
+            drawOpaqueObjects(with: renderEncoder)
+            drawTransparentObjects(with: renderEncoder)
             
             encodeStage(using: renderEncoder, label: "Blend Fragments") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Blend])

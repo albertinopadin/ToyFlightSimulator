@@ -79,8 +79,8 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setFragmentTexture(shadowMap, index: Int(TFSTextureIndexShadow.rawValue))
-            SceneManager.SetDirectionalLightConstants(renderCommandEncoder: renderEncoder)
-            SceneManager.RenderGBuffer(renderCommandEncoder: renderEncoder)
+            SceneManager.SetDirectionalLightConstants(with: renderEncoder)
+            SceneManager.RenderGBuffer(with: renderEncoder)
         }
     }
     
@@ -93,7 +93,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setVertexBuffer(_quadVertexBuffer,
                                           offset: 0,
                                           index: Int(TFSBufferIndexMeshPositions.rawValue))
-            SceneManager.SetDirectionalLightConstants(renderCommandEncoder: renderEncoder)
+            SceneManager.SetDirectionalLightConstants(with: renderEncoder)
             
             // Draw full screen quad
             renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
@@ -106,8 +106,8 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LightMask])
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setCullMode(.front)
-            SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
-            SceneManager.RenderPointLightMeshes(renderCommandEncoder: renderEncoder)
+            SceneManager.SetPointLightConstants(with: renderEncoder)
+            SceneManager.RenderPointLightMeshes(with: renderEncoder)
         }
     }
     
@@ -119,8 +119,8 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setCullMode(.back)
 //            SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
-            SceneManager.SetPointLightData(renderCommandEncoder: renderEncoder)
-            SceneManager.RenderPointLights(renderCommandEncoder: renderEncoder)
+            SceneManager.SetPointLightData(with: renderEncoder)
+            SceneManager.RenderPointLights(with: renderEncoder)
         }
     }
     
@@ -130,7 +130,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setCullMode(.back)  //<-- This or not setting the cull mode works. WTF?
-            SceneManager.Render(renderCommandEncoder: renderEncoder, renderPipelineStateType: .Skybox, applyMaterials: false)
+            SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Skybox, applyMaterials: false)
         }
     }
     
@@ -148,8 +148,8 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //                renderEncoder.setDepthBias(0.015, slopeScale: 1, clamp: 0.02)
 //                renderEncoder.setDepthBias(0.001, slopeScale: 2, clamp: 1)
 //                renderEncoder.setDepthBias(0.001, slopeScale: 1, clamp: 0.02)
-                SceneManager.SetDirectionalLightConstants(renderCommandEncoder: renderEncoder)
-                SceneManager.RenderShadows(renderCommandEncoder: renderEncoder)
+                SceneManager.SetDirectionalLightConstants(with: renderEncoder)
+                SceneManager.RenderShadows(with: renderEncoder)
             }
         }
     }
@@ -160,7 +160,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Icosahedron])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
             renderEncoder.setStencilReferenceValue(128)
-            SceneManager.Render(renderCommandEncoder: renderEncoder, renderPipelineStateType: .Icosahedron)
+            SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Icosahedron)
         }
     }
     
@@ -183,7 +183,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             
             encodePass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
                 renderEncoder in
-                SceneManager.SetSceneConstants(renderCommandEncoder: renderEncoder)
+                SceneManager.SetSceneConstants(with: renderEncoder)
                 
                 encodeGBufferStage(using: renderEncoder)
                 encodeDirectionalLightingStage(using: renderEncoder)

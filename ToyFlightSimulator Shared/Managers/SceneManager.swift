@@ -48,53 +48,53 @@ class SceneManager {
         }
     }
     
-    public static func SetSceneConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
-        currentScene?.setSceneConstants(renderCommandEncoder: renderCommandEncoder)
+    public static func SetSceneConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.setSceneConstants(with: renderCommandEncoder)
     }
     
-    public static func SetDirectionalLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
-        currentScene?.setDirectionalLightConstants(renderCommandEncoder: renderCommandEncoder)
+    public static func SetDirectionalLightConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.setDirectionalLightConstants(with: renderCommandEncoder)
     }
     
-    public static func SetPointLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
-        currentScene?.setPointLightConstants(renderCommandEncoder: renderCommandEncoder)
+    public static func SetPointLightConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.setPointLightConstants(with: renderCommandEncoder)
     }
     
-    public static func SetDirectionalLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
-        currentScene?.setDirectionalLightData(renderCommandEncoder: renderCommandEncoder)
+    public static func SetDirectionalLightData(with renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.setDirectionalLightData(with: renderCommandEncoder)
     }
     
-    public static func SetPointLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
-        currentScene?.setPointLightData(renderCommandEncoder: renderCommandEncoder)
+    public static func SetPointLightData(with renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.setPointLightData(with: renderCommandEncoder)
     }
     
-    public static func Render(renderCommandEncoder: MTLRenderCommandEncoder,
+    public static func Render(with renderCommandEncoder: MTLRenderCommandEncoder,
                               renderPipelineStateType: RenderPipelineStateType,
                               applyMaterials: Bool = true) {
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
-        currentScene?.render(renderCommandEncoder: renderCommandEncoder,
+        currentScene?.render(with: renderCommandEncoder,
                              renderPipelineStateType: renderPipelineStateType,
                              applyMaterials: applyMaterials)
     }
     
-    public static func RenderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder) {
+    public static func RenderGBuffer(with renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.GBufferGenerationBase])
-        currentScene?.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: .GBufferGenerationBase)
+        currentScene?.renderGBuffer(with: renderCommandEncoder, gBufferRPS: .GBufferGenerationBase)
         
         renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.GBufferGenerationMaterial])
-        currentScene?.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: .GBufferGenerationMaterial)
+        currentScene?.renderGBuffer(with: renderCommandEncoder, gBufferRPS: .GBufferGenerationMaterial)
     }
     
-    public static func RenderShadows(renderCommandEncoder: MTLRenderCommandEncoder) {
-        currentScene?.renderShadows(renderCommandEncoder: renderCommandEncoder)
+    public static func RenderShadows(with renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.renderShadows(with: renderCommandEncoder)
     }
     
-    public static func RenderPointLightMeshes(renderCommandEncoder: MTLRenderCommandEncoder) {
-        currentScene?.renderPointLightMeshes(renderCommandEncoder: renderCommandEncoder)
+    public static func RenderPointLightMeshes(with renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.renderPointLightMeshes(with: renderCommandEncoder)
     }
     
-    public static func RenderPointLights(renderCommandEncoder: MTLRenderCommandEncoder) {
-        currentScene?.renderPointLights(renderCommandEncoder: renderCommandEncoder)
+    public static func RenderPointLights(with renderCommandEncoder: MTLRenderCommandEncoder) {
+        currentScene?.renderPointLights(with: renderCommandEncoder)
     }
     
     public static func SetAspectRatio(_ aspectRatio: Float) {

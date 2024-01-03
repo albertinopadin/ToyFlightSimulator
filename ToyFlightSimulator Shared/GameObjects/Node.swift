@@ -97,7 +97,7 @@ class Node {
         }
     }
     
-    func render(renderCommandEncoder: MTLRenderCommandEncoder,
+    func render(with renderCommandEncoder: MTLRenderCommandEncoder,
                 renderPipelineStateType: RenderPipelineStateType,
                 applyMaterials: Bool = true) {
 //        if renderPipelineStateType == .LightMask {
@@ -123,7 +123,7 @@ class Node {
         }
         
         for child in children {
-            child.render(renderCommandEncoder: renderCommandEncoder,
+            child.render(with: renderCommandEncoder,
                          renderPipelineStateType: renderPipelineStateType,
                          applyMaterials: applyMaterials)
         }
@@ -136,13 +136,13 @@ class Node {
                !(self is LightObject) && !(self is Icosahedron)
     }
     
-    func renderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
+    func renderGBuffer(with renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
         if shouldRenderGBuffer(gBufferRPS: gBufferRPS), let renderable = self as? Renderable {
             renderable.doRender(renderCommandEncoder, applyMaterials: true, submeshesToRender: nil)
         }
         
         for child in children {
-            child.renderGBuffer(renderCommandEncoder: renderCommandEncoder, gBufferRPS: gBufferRPS)
+            child.renderGBuffer(with: renderCommandEncoder, gBufferRPS: gBufferRPS)
         }
     }
     
@@ -151,13 +151,13 @@ class Node {
         return _renderPipelineStateType != .Skybox && !(self is LightObject) && !(self is Icosahedron)
     }
     
-    func renderShadows(renderCommandEncoder: MTLRenderCommandEncoder) {
+    func renderShadows(with renderCommandEncoder: MTLRenderCommandEncoder) {
         if shouldRenderShadows(), let renderable = self as? Renderable {
             renderable.doRenderShadow(renderCommandEncoder, submeshesToRender: nil)
         }
         
         for child in children {
-            child.renderShadows(renderCommandEncoder: renderCommandEncoder)
+            child.renderShadows(with: renderCommandEncoder)
         }
     }
     
