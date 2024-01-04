@@ -269,6 +269,15 @@ class Mesh {
         renderCommandEncoder.setFragmentBytes(&mat, length: Material.stride, index: Int(TFSBufferIndexMaterial.rawValue))
     }
     
+    func drawIndexedPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder, submesh: Submesh, instanceCount: Int) {
+        renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                   indexCount: submesh.indexCount,
+                                                   indexType: submesh.indexType,
+                                                   indexBuffer: submesh.indexBuffer,
+                                                   indexBufferOffset: submesh.indexBufferOffset,
+                                                   instanceCount: instanceCount)
+    }
+    
     func drawPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder,
                         material: Material? = nil,
                         applyMaterials: Bool = true,
@@ -282,8 +291,7 @@ class Mesh {
             if _submeshes.count > 0 {
                 if let submeshesToDisplay {
                     for submesh in _submeshes {
-                        // Hack to work with USDZ file:
-                        if submesh.name == "submesh" {
+                        if submeshesToDisplay[submesh.name] ?? false {
                             if applyMaterials {
                                 submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
                                                       customBaseColorTextureType: baseColorTextureType,
@@ -292,47 +300,8 @@ class Mesh {
                                 submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
                             }
 
-                            renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                                       indexCount: submesh.indexCount,
-                                                                       indexType: submesh.indexType,
-                                                                       indexBuffer: submesh.indexBuffer,
-                                                                       indexBufferOffset: submesh.indexBufferOffset,
-                                                                       instanceCount: _instanceCount)
-                        } else {
-                            if submeshesToDisplay[submesh.name] ?? false {
-                                if applyMaterials {
-                                    submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
-                                                          customBaseColorTextureType: baseColorTextureType,
-                                                          customNormalMapTextureType: normalMapTextureType,
-                                                          customSpecularTextureType: specularTextureType)
-                                    submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
-                                }
-
-                                renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                                           indexCount: submesh.indexCount,
-                                                                           indexType: submesh.indexType,
-                                                                           indexBuffer: submesh.indexBuffer,
-                                                                           indexBufferOffset: submesh.indexBufferOffset,
-                                                                           instanceCount: _instanceCount)
-                            }
+                            drawIndexedPrimitives(renderCommandEncoder, submesh: submesh, instanceCount: _instanceCount)
                         }
-                        
-//                        if submeshesToDisplay[submesh.name]! {
-//                            if applyMaterials {
-//                                submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
-//                                                      customBaseColorTextureType: baseColorTextureType,
-//                                                      customNormalMapTextureType: normalMapTextureType,
-//                                                      customSpecularTextureType: specularTextureType)
-//                                submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
-//                            }
-//
-//                            renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-//                                                                       indexCount: submesh.indexCount,
-//                                                                       indexType: submesh.indexType,
-//                                                                       indexBuffer: submesh.indexBuffer,
-//                                                                       indexBufferOffset: submesh.indexBufferOffset,
-//                                                                       instanceCount: _instanceCount)
-//                        }
                     }
                 } else {
                     for submesh in _submeshes {
@@ -344,12 +313,7 @@ class Mesh {
                             submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
                         }
                         
-                        renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                                   indexCount: submesh.indexCount,
-                                                                   indexType: submesh.indexType,
-                                                                   indexBuffer: submesh.indexBuffer,
-                                                                   indexBufferOffset: submesh.indexBufferOffset,
-                                                                   instanceCount: _instanceCount)
+                        drawIndexedPrimitives(renderCommandEncoder, submesh: submesh, instanceCount: _instanceCount)
                     }
                 }
             } else {
@@ -381,43 +345,13 @@ class Mesh {
             if _submeshes.count > 0 {
                 if let submeshesToDisplay {
                     for submesh in _submeshes {
-                        // Hack to work with USDZ file:
-                        if submesh.name == "submesh" {
-                            renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                                       indexCount: submesh.indexCount,
-                                                                       indexType: submesh.indexType,
-                                                                       indexBuffer: submesh.indexBuffer,
-                                                                       indexBufferOffset: submesh.indexBufferOffset,
-                                                                       instanceCount: _instanceCount)
+                        if submeshesToDisplay[submesh.name] ?? false {
+                            drawIndexedPrimitives(renderCommandEncoder, submesh: submesh, instanceCount: _instanceCount)
                         }
-                        else {
-                            if submeshesToDisplay[submesh.name] ?? false {
-                                renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                                           indexCount: submesh.indexCount,
-                                                                           indexType: submesh.indexType,
-                                                                           indexBuffer: submesh.indexBuffer,
-                                                                           indexBufferOffset: submesh.indexBufferOffset,
-                                                                           instanceCount: _instanceCount)
-                            }
-                        }
-                        
-//                        if submeshesToDisplay[submesh.name]! {
-//                            renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-//                                                                       indexCount: submesh.indexCount,
-//                                                                       indexType: submesh.indexType,
-//                                                                       indexBuffer: submesh.indexBuffer,
-//                                                                       indexBufferOffset: submesh.indexBufferOffset,
-//                                                                       instanceCount: _instanceCount)
-//                        }
                     }
                 } else {
                     for submesh in _submeshes {
-                        renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                                   indexCount: submesh.indexCount,
-                                                                   indexType: submesh.indexType,
-                                                                   indexBuffer: submesh.indexBuffer,
-                                                                   indexBufferOffset: submesh.indexBufferOffset,
-                                                                   instanceCount: _instanceCount)
+                        drawIndexedPrimitives(renderCommandEncoder, submesh: submesh, instanceCount: _instanceCount)
                     }
                 }
             } else {
