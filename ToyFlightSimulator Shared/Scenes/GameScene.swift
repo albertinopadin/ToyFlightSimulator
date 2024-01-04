@@ -90,13 +90,13 @@ class GameScene: Node {
         super.update()
     }
     
-    func setSceneConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
+    func setSceneConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.setVertexBytes(&_sceneConstants,
                                             length: SceneConstants.stride,
                                             index: Int(TFSBufferIndexSceneConstants.rawValue))
     }
     
-    func setDirectionalLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
+    func setDirectionalLightConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
         var directionalLight = _lightManager.getDirectionalLightData().first!
         renderCommandEncoder.setVertexBytes(&directionalLight,
                                             length: LightData.stride,
@@ -106,7 +106,7 @@ class GameScene: Node {
                                               index: Int(TFSBufferDirectionalLightData.rawValue))
     }
     
-    func setPointLightConstants(renderCommandEncoder: MTLRenderCommandEncoder) {
+    func setPointLightConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
         var pointLights = _lightManager.getPointLightData()
         // Avoid allocating memory in game loop
         // (if you use more than 4KB of data, allocate the buffer on init, instead of creating a new one every frame):
@@ -121,103 +121,78 @@ class GameScene: Node {
     }
     
     // TODO: This method could possibly be merged/unified with setDirectionalLightConstants
-    func setDirectionalLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
+    func setDirectionalLightData(with renderCommandEncoder: MTLRenderCommandEncoder) {
         _lightManager.setDirectionalLightData(renderCommandEncoder)
     }
     
-    func setPointLightData(renderCommandEncoder: MTLRenderCommandEncoder) {
+    func setPointLightData(with renderCommandEncoder: MTLRenderCommandEncoder) {
         _lightManager.setPointLightData(renderCommandEncoder)
     }
     
-    func renderGBuffer(renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
-        for meshTypesNodes in _meshesForRenderPipelineStates.values {
-            for (_, nodes) in meshTypesNodes {
-                var modelConstants = [ModelConstants]()  // <--- Don't allocate here
-                
-                // Collect node ModelConstants
-                for node in nodes {
-                    if node.shouldRenderGBuffer(gBufferRPS: gBufferRPS) {
-                        modelConstants.append(ModelConstants(modelMatrix: node.modelMatrix, normalMatrix: node.normalMatrix))
-                    }
+    func renderNodes(with renderCommandEncoder: MTLRenderCommandEncoder,
+                     meshTypesNodes: [MeshType : [Node]],
+                     applyMaterials: Bool,
+                     filterFunc: (Node) -> Bool,
+                     gameObjectFunc: (GameObject) -> Void = {_ in }){
+        for (_, nodes) in meshTypesNodes {
+            var modelConstants = [ModelConstants]()  // <--- Don't allocate here
+            
+            // Collect node ModelConstants
+            for node in nodes {
+                if filterFunc(node) {
+                    modelConstants.append(ModelConstants(modelMatrix: node.modelMatrix, normalMatrix: node.normalMatrix))
                 }
-                
-                renderCommandEncoder.setVertexBytes(&modelConstants,
-                                                    length: ModelConstants.size(modelConstants.count),
-                                                    index: Int(TFSBufferModelConstants.rawValue))
-                
-                if modelConstants.count > 0, let anObject = nodes.first as? GameObject {
-                    // Ugh, hack:
-                    anObject._mesh.setInstanceCount(modelConstants.count)
-                    anObject._mesh.drawPrimitives(renderCommandEncoder,
-                                                  material: anObject._material,
-                                                  applyMaterials: true,
-                                                  baseColorTextureType: anObject._baseColorTextureType,
-                                                  normalMapTextureType: anObject._normalMapTextureType,
-                                                  specularTextureType: anObject._specularTextureType)
-                }
-                
             }
-
+            
+            renderCommandEncoder.setVertexBytes(&modelConstants,
+                                                length: ModelConstants.size(modelConstants.count),
+                                                index: Int(TFSBufferModelConstants.rawValue))
+            
+            if modelConstants.count > 0, let anObject = nodes.first as? GameObject {
+                gameObjectFunc(anObject)
+                
+                // Ugh, hack:
+                anObject._mesh.setInstanceCount(modelConstants.count)
+                anObject._mesh.drawPrimitives(renderCommandEncoder,
+                                              material: anObject._material,
+                                              applyMaterials: applyMaterials,
+                                              baseColorTextureType: anObject._baseColorTextureType,
+                                              normalMapTextureType: anObject._normalMapTextureType,
+                                              specularTextureType: anObject._specularTextureType)
+            }
+            
         }
     }
     
-    func render(renderCommandEncoder: MTLRenderCommandEncoder,
+    func renderGBuffer(with renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
+        for meshTypesNodes in _meshesForRenderPipelineStates.values {
+            renderNodes(with: renderCommandEncoder, meshTypesNodes: meshTypesNodes, applyMaterials: true) { node in
+                return node.shouldRenderGBuffer(gBufferRPS: gBufferRPS)
+            }
+        }
+    }
+    
+    func render(with renderCommandEncoder: MTLRenderCommandEncoder,
                 renderPipelineStateType: RenderPipelineStateType,
                 applyMaterials: Bool = true) {
         renderCommandEncoder.pushDebugGroup("Rendering \(renderPipelineStateType) Scene")
         
-        // TODO:
         if let meshTypesNodes = _meshesForRenderPipelineStates[renderPipelineStateType] {
-            for (_, nodes) in meshTypesNodes {
-                var modelConstants = [ModelConstants]()
-                
-                // Collect node ModelConstants
-                for node in nodes {
-                    if node.shouldRender(with: renderPipelineStateType) {
-                        modelConstants.append(ModelConstants(modelMatrix: node.modelMatrix, normalMatrix: node.normalMatrix))
-                    }
-                }
-                
-    //            renderCommandEncoder.setVertexBuffer(<#T##buffer: MTLBuffer?##MTLBuffer?#>, offset: <#T##Int#>, index: <#T##Int#>)
-                
-                renderCommandEncoder.setVertexBytes(&modelConstants,
-                                                    length: ModelConstants.size(modelConstants.count),
-                                                    index: Int(TFSBufferModelConstants.rawValue))
-                
-    //            if let anObject = nodes.first as? GameObject {
-    //                renderIndexed(with: renderCommandEncoder,
-    //                              mesh: anObject._mesh,
-    //                              count: nodes.count,
-    //                              applyMaterials: applyMaterials)
-    //            }
-                
-                // Or:
-                
-                if modelConstants.count > 0, let anObject = nodes.first as? GameObject {
-                    // Another freakin' hack, jeez:
-                    if anObject is SkyBox {
-                        renderCommandEncoder.setFragmentTexture(Assets.Textures[.SkyMap],
-                                                                index: Int(TFSTextureIndexBaseColor.rawValue))
-                    }
-                    
-                    if anObject is SkySphere {
-//                        renderCommandEncoder.setFragmentTexture(Assets.Textures[.Clouds_Skysphere],
-//                                                                index: Int(TFSTextureIndexBaseColor.rawValue))
-                        renderCommandEncoder.setFragmentTexture(Assets.Textures[.Clouds_Skysphere],
-                                                                index: 10)
-                    }
-                    
-                    // Ugh, hack:
-                    anObject._mesh.setInstanceCount(modelConstants.count)
-                    anObject._mesh.drawPrimitives(renderCommandEncoder,
-                                                  material: anObject._material,
-                                                  applyMaterials: applyMaterials,
-                                                  baseColorTextureType: anObject._baseColorTextureType,
-                                                  normalMapTextureType: anObject._normalMapTextureType,
-                                                  specularTextureType: anObject._specularTextureType)
-                }
-                
-            }
+            renderNodes(with: renderCommandEncoder, 
+                        meshTypesNodes: meshTypesNodes,
+                        applyMaterials: applyMaterials,
+                        filterFunc: { node in return node.shouldRender(with: renderPipelineStateType) },
+                        gameObjectFunc: { gameObject in
+                            if gameObject is SkyBox {
+                                renderCommandEncoder.setFragmentTexture(Assets.Textures[.SkyMap],
+                                                                        index: Int(TFSTextureIndexBaseColor.rawValue))
+                            }
+                            
+                            if gameObject is SkySphere {
+                                renderCommandEncoder.setFragmentTexture(Assets.Textures[.Clouds_Skysphere],
+                                                                        index: 10)
+                            }
+                        })
         }
         
         renderCommandEncoder.popDebugGroup()
@@ -225,33 +200,9 @@ class GameScene: Node {
     
     func renderShadows(with renderCommandEncoder: MTLRenderCommandEncoder) {
         for meshTypesNodes in _meshesForRenderPipelineStates.values {
-            for (_, nodes) in meshTypesNodes {
-                var modelConstants = [ModelConstants]()
-                
-                // Collect node ModelConstants
-                for node in nodes {
-                    if node.shouldRenderShadows() {
-                        modelConstants.append(ModelConstants(modelMatrix: node.modelMatrix, normalMatrix: node.normalMatrix))
-                    }
-                }
-                
-                renderCommandEncoder.setVertexBytes(&modelConstants,
-                                                    length: ModelConstants.size(modelConstants.count),
-                                                    index: Int(TFSBufferModelConstants.rawValue))
-                
-                if modelConstants.count > 0, let anObject = nodes.first as? GameObject {
-                    // Ugh, hack:
-                    anObject._mesh.setInstanceCount(modelConstants.count)
-                    anObject._mesh.drawPrimitives(renderCommandEncoder,
-                                                  material: anObject._material,
-                                                  applyMaterials: true,
-                                                  baseColorTextureType: anObject._baseColorTextureType,
-                                                  normalMapTextureType: anObject._normalMapTextureType,
-                                                  specularTextureType: anObject._specularTextureType)
-                }
-                
+            renderNodes(with: renderCommandEncoder, meshTypesNodes: meshTypesNodes, applyMaterials: false) { node in
+                return node.shouldRenderShadows()
             }
-
         }
     }
 }
