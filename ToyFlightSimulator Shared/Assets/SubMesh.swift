@@ -37,9 +37,9 @@ class Submesh {
     public var indexBufferOffset: Int { return _indexBufferOffset }
     
     private var _material = Material()
-    private var _baseColorTexture: MTLTexture!
-    private var _normalMapTexture: MTLTexture!
-    private var _specularTexture: MTLTexture!
+    public var _baseColorTexture: MTLTexture!
+    public var _normalMapTexture: MTLTexture!
+    public var _specularTexture: MTLTexture!
     
     init(indices: [UInt32]) {
         self._indices = indices

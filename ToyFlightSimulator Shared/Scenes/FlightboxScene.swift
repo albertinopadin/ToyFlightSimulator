@@ -65,6 +65,12 @@ class FlightboxScene: GameScene {
 //        pl2.setLightBrightness(1.0)
 //        addLight(pl2)
         
+        let f16 = F16()
+        f16.setPosition(0, jet.getPositionY() + 10, jet.getPositionZ() - 15)
+        f16.rotateY(Float(-90).toRadians)
+        f16.setScale(4.0)
+        addChild(f16)
+        
         var icoMaterial = Material()
         icoMaterial.color = RED_COLOR
         

@@ -132,14 +132,26 @@ class GameScene: Node {
     func renderNodes(with renderCommandEncoder: MTLRenderCommandEncoder,
                      meshTypesNodes: [MeshType : [Node]],
                      applyMaterials: Bool,
-                     filterFunc: (Node) -> Bool,
+                     shouldRender: (Node) -> Bool,
                      gameObjectFunc: (GameObject) -> Void = {_ in }){
         for (_, nodes) in meshTypesNodes {
             var modelConstants = [ModelConstants]()  // <--- Don't allocate here
+            var textureIdxs = [String : (Int, MTLTexture)]()
             
             // Collect node ModelConstants
             for node in nodes {
-                if filterFunc(node) {
+                if shouldRender(node) {
+//                    if let gameObj = node as? GameObject {
+//                        let submeshes = gameObj._mesh._submeshes
+//                        for submesh in submeshes {
+//                            if let textureIdxTuple = textureIdxs[submesh._baseColorTexture.debugDescription] {
+//                                
+//                            } else {
+//                                let newIdx = textureIdxs.count
+//                                textureIdxs[submesh._baseColorTexture.debugDescription] = (newIdx, submesh._baseColorTexture)
+//                            }
+//                        }
+//                    }
                     modelConstants.append(ModelConstants(modelMatrix: node.modelMatrix, normalMatrix: node.normalMatrix))
                 }
             }
@@ -181,7 +193,7 @@ class GameScene: Node {
             renderNodes(with: renderCommandEncoder, 
                         meshTypesNodes: meshTypesNodes,
                         applyMaterials: applyMaterials,
-                        filterFunc: { node in return node.shouldRender(with: renderPipelineStateType) },
+                        shouldRender: { node in return node.shouldRender(with: renderPipelineStateType) },
                         gameObjectFunc: { gameObject in
                             if gameObject is SkyBox {
                                 renderCommandEncoder.setFragmentTexture(Assets.Textures[.SkyMap],

@@ -165,6 +165,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     override func draw(in view: MTKView) {
+        // FIXME - this should be set independent of the frame rate:
         SceneManager.Update(deltaTime: 1.0 / Float(view.preferredFramesPerSecond))
         
         var commandBuffer = beginFrame()
