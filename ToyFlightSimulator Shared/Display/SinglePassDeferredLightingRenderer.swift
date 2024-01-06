@@ -165,6 +165,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     override func draw(in view: MTKView) {
+        // FIXME - this should be set independent of the frame rate:
         SceneManager.Update(deltaTime: 1.0 / Float(view.preferredFramesPerSecond))
         
         var commandBuffer = beginFrame()
@@ -194,10 +195,9 @@ class SinglePassDeferredLightingRenderer: Renderer {
             }
         }
         
-        commandBuffer.present(view.currentDrawable!)
-//        if let drawable = view.currentDrawable {
-//            commandBuffer.present(drawable)
-//        }
+        if let drawable = view.currentDrawable {
+            commandBuffer.present(drawable)
+        }
         commandBuffer.commit()
     }
     
