@@ -11,7 +11,8 @@ import MetalKit
 class Renderer: NSObject, MTKViewDelegate {
     public static var ScreenSize = float2(100, 100)
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
-    public static let ShadowMapSize: Int = 16_384
+//    public static let ShadowMapSize: Int = 16_384
+    public static let ShadowMapSize: Int = 8_192
     
     // The max number of command buffers in flight
     let maxFramesInFlight = 3
@@ -20,7 +21,7 @@ class Renderer: NSObject, MTKViewDelegate {
     
     var baseRenderPassDescriptor: MTLRenderPassDescriptor!
     
-    let shadowMap: MTLTexture!
+    let shadowMap: MTLTexture?
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor!
     
     public let rendererType: RendererType
@@ -45,10 +46,14 @@ class Renderer: NSObject, MTKViewDelegate {
         
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
         
-        shadowMap = Renderer.makeShadowMap(label: "Shadow Map")
+        if type == .SinglePassDeferredLighting {
+            shadowMap = Renderer.makeShadowMap(label: "Shadow Map")
+            shadowRenderPassDescriptor = Renderer.createShadowRenderPassDescriptor(shadowMapTexture: shadowMap!)
+        } else {
+            shadowMap = nil
+        }
         
         super.init()
-        createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
     }
     
     init(_ mtkView: MTKView, type: RendererType) {
@@ -56,12 +61,16 @@ class Renderer: NSObject, MTKViewDelegate {
         
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
         
-        shadowMap = Renderer.makeShadowMap(label: "Shadow Map")
+        if type == .SinglePassDeferredLighting {
+            shadowMap = Renderer.makeShadowMap(label: "Shadow Map")
+            shadowRenderPassDescriptor = Renderer.createShadowRenderPassDescriptor(shadowMapTexture: shadowMap!)
+        } else {
+            shadowMap = nil
+        }
         
         super.init()
         
         metalView = mtkView
-        createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
     }
     
     static func makeShadowMap(label: String) -> MTLTexture! {
@@ -195,10 +204,11 @@ class Renderer: NSObject, MTKViewDelegate {
         baseRenderPassDescriptor.depthAttachment.loadAction = .clear
     }
     
-    private func createShadowRenderPassDescriptor(shadowMapTexture: MTLTexture) {
-        shadowRenderPassDescriptor = MTLRenderPassDescriptor()
-        shadowRenderPassDescriptor.depthAttachment.texture = shadowMapTexture
-        shadowRenderPassDescriptor.depthAttachment.storeAction = .store
+    private static func createShadowRenderPassDescriptor(shadowMapTexture: MTLTexture) -> MTLRenderPassDescriptor {
+        let mShadowRenderPassDescriptor = MTLRenderPassDescriptor()
+        mShadowRenderPassDescriptor.depthAttachment.texture = shadowMapTexture
+        mShadowRenderPassDescriptor.depthAttachment.storeAction = .store
+        return mShadowRenderPassDescriptor
     }
     
     

@@ -11,7 +11,7 @@ class GameObject: Node, Renderable {
     internal var _modelConstants = ModelConstants()
     internal var _mesh: Mesh!
     
-    internal var _material: Material? = nil
+    internal var _material: ShaderMaterial? = nil
     internal var _baseColorTextureType: TextureType = .None
     internal var _normalMapTextureType: TextureType = .None
     internal var _specularTextureType: TextureType = .None
@@ -89,7 +89,7 @@ extension GameObject {
         _specularTextureType = textureType
     }
     
-    public func useMaterial(_ material: Material) {
+    public func useMaterial(_ material: ShaderMaterial) {
         if material.color.w < 1.0 {
             _renderPipelineStateType = .OrderIndependentTransparent
         } else {

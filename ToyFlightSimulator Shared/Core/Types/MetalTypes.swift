@@ -62,7 +62,7 @@ struct SceneConstants: sizeable {
     var cameraPosition = float3(0, 0, 0)
 }
 
-struct Material: sizeable {
+struct ShaderMaterial: sizeable {
     private var _color = float4(0, 0, 0, 0)
     var color: float4 {
         get {

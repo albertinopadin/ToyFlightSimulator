@@ -71,7 +71,7 @@ class FlightboxScene: GameScene {
         f16.setScale(4.0)
         addChild(f16)
         
-        var icoMaterial = Material()
+        var icoMaterial = ShaderMaterial()
         icoMaterial.color = RED_COLOR
         
         let ico = Icosahedron()
@@ -80,7 +80,7 @@ class FlightboxScene: GameScene {
         ico.useMaterial(icoMaterial)
         addChild(ico)
         
-        var sphereGreenMaterial = Material()
+        var sphereGreenMaterial = ShaderMaterial()
         sphereGreenMaterial.color = float4(0.0, 1.0, 0.2, 1.0)
         
         let sphereGreen = Sphere()
@@ -89,7 +89,7 @@ class FlightboxScene: GameScene {
         sphereGreen.useMaterial(sphereGreenMaterial)
         addChild(sphereGreen)
         
-//        var sphereBluishMaterial = Material()
+//        var sphereBluishMaterial = ShaderMaterial()
 //        sphereBluishMaterial.color = float4(0.0, 0.2, 1.0, 1.0)
 //        
 //        let bluishSphere = Sphere()
@@ -99,7 +99,7 @@ class FlightboxScene: GameScene {
 //        addChild(bluishSphere)
         
         
-        var groundMaterial = Material()
+        var groundMaterial = ShaderMaterial()
         groundMaterial.color = float4(0.3, 0.7, 0.1, 1.0)
         let ground = Quad()
         ground.useMaterial(groundMaterial)
@@ -107,7 +107,7 @@ class FlightboxScene: GameScene {
         ground.setScale(float3(100, 100, 100))
         addChild(ground)
         
-        var quadMaterial = Material()
+        var quadMaterial = ShaderMaterial()
         quadMaterial.color = float4(0, 0.4, 1.0, 1.0)
         quadMaterial.shininess = 10
         quad.useMaterial(quadMaterial)
@@ -122,7 +122,7 @@ class FlightboxScene: GameScene {
         
         let jetPos = jet.getPosition()
         
-        var sphereBlueMaterial = Material()
+        var sphereBlueMaterial = ShaderMaterial()
         sphereBlueMaterial.color = float4(0.0, 0.0, 1.0, 0.4)
         
         let sphereBluePos = float3(x: jetPos.x + 1, y: jetPos.y, z: jetPos.z - 2)
@@ -132,7 +132,7 @@ class FlightboxScene: GameScene {
         sphereBlue.useMaterial(sphereBlueMaterial)
         addChild(sphereBlue)
         
-        var sphereRedMaterial = Material()
+        var sphereRedMaterial = ShaderMaterial()
         sphereRedMaterial.color = float4(1.0, 0.0, 0.0, 0.4)
         
         let sphereRedPos = float3(x: jetPos.x - 1, y: jetPos.y, z: jetPos.z - 2)
@@ -144,7 +144,7 @@ class FlightboxScene: GameScene {
         
         
         let testQuad = Quad()
-        var testQuadMaterial = Material()
+        var testQuadMaterial = ShaderMaterial()
         testQuadMaterial.isLit = true
         testQuadMaterial.color = float4(1, 0, 0, 0.5)
         testQuadMaterial.shininess = 100000
@@ -157,7 +157,7 @@ class FlightboxScene: GameScene {
         testQuad.setPositionX(5)
         addChild(testQuad)
         
-        var testCubeMaterial = Material()
+        var testCubeMaterial = ShaderMaterial()
         testCubeMaterial.isLit = true
         testCubeMaterial.color = GRABBER_BLUE_COLOR
         testCubeMaterial.diffuse = float3(0.1,0.4,1)

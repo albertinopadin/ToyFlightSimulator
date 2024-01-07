@@ -179,7 +179,8 @@ class SingleSMMesh {
                 let metalKitMesh = try! MTKMesh(mesh: mdlMesh, device: Engine.Device)
                 let mtkSubmesh = metalKitMesh.submeshes.filter({ $0.name == submeshName })[0]
                 print("[SingleSMMesh makeSingleSMMeshWithSubmeshNamed] Creating Submesh...")
-                let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh)
+                let textureLoader = MTKTextureLoader(device: Engine.Device)
+                let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh, textureLoader: textureLoader)
                 return SingleSMMesh(mtkMesh: metalKitMesh, submesh: submesh)
             }
         }
@@ -236,13 +237,13 @@ class SingleSMMesh {
         self._instanceCount = count
     }
 
-    func applyMaterial(renderCommandEncoder: MTLRenderCommandEncoder, material: Material?) {
+    func applyMaterial(renderCommandEncoder: MTLRenderCommandEncoder, material: ShaderMaterial?) {
         var mat = material
-        renderCommandEncoder.setFragmentBytes(&mat, length: Material.stride, index: Int(TFSBufferIndexMaterial.rawValue))
+        renderCommandEncoder.setFragmentBytes(&mat, length: ShaderMaterial.stride, index: Int(TFSBufferIndexMaterial.rawValue))
     }
 
     func drawPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder,
-                        material: Material? = nil,
+                        material: ShaderMaterial? = nil,
                         applyMaterials: Bool = true,
                         baseColorTextureType: TextureType = .None,
                         normalMapTextureType: TextureType = .None,
@@ -251,11 +252,11 @@ class SingleSMMesh {
             renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
 
             if applyMaterials {
-                _submesh.applyTextures(renderCommandEncoder: renderCommandEncoder,
-                                       customBaseColorTextureType: baseColorTextureType,
-                                       customNormalMapTextureType: normalMapTextureType,
-                                       customSpecularTextureType: specularTextureType)
-                _submesh.applyMaterials(renderCommandEncoder: renderCommandEncoder, customMaterial: material)
+                _submesh.material?.applyTextures(with: renderCommandEncoder,
+                                                 baseColorTextureType: baseColorTextureType,
+                                                 normalMapTextureType: normalMapTextureType,
+                                                 specularTextureType: specularTextureType)
+                _submesh.applyMaterial(with: renderCommandEncoder, customMaterial: material)
             }
 
             renderCommandEncoder.drawIndexedPrimitives(type: _submesh.primitiveType,
