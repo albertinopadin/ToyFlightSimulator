@@ -897,8 +897,8 @@
 				CE2ED25C299223E900C81F47 /* Submesh.swift */,
 				CE76931229DD5F5500BBC718 /* SingleSMMesh.swift */,
 				CE76930A29DD5A4400BBC718 /* ObjModel.swift */,
-				CE3BFF6C28E1B4C60014A752 /* Libraries */,
 				CEC0C5932B4B2D3100863C38 /* Material.swift */,
+				CE3BFF6C28E1B4C60014A752 /* Libraries */,
 			);
 			path = Assets;
 			sourceTree = "<group>";
