@@ -43,16 +43,16 @@ class MeshLibrary: Library<MeshType, Mesh> {
         _library.updateValue(CapsuleMesh(), forKey: .Capsule_Custom)
         _library.updateValue(SkyboxMesh(), forKey: .Skybox)
         
-        _library.updateValue(Mesh(modelName: "sphere"), forKey: .Sphere)
-        _library.updateValue(Mesh(modelName: "quad"), forKey: .Quad)
-        _library.updateValue(Mesh(modelName: "skysphere"), forKey: .SkySphere)
+        _library.updateValue(ObjMesh("sphere"), forKey: .Sphere)
+        _library.updateValue(ObjMesh("quad"), forKey: .Quad)
+        _library.updateValue(ObjMesh("skysphere"), forKey: .SkySphere)
         
-        _library.updateValue(Mesh(modelName: "f16r"), forKey: .F16)
-        _library.updateValue(Mesh(modelName: "FA-18F", ext: .OBJ), forKey: .F18)
-//        _library.updateValue(Mesh(modelName: "FA-18F", ext: .USDZ), forKey: .RC_F18)
+        _library.updateValue(ObjMesh("f16r"), forKey: .F16)
+        _library.updateValue(ObjMesh("FA-18F"), forKey: .F18)
         
-//        _library.updateValue(Mesh(modelName: "F35_JSF", ext: .USDC), forKey: .CGTrader_F35)
-//        _library.updateValue(Mesh(modelName: "F-35A_Lightning_II", ext: .USDZ), forKey: .Sketchfab_F35)
+//        _library.updateValue(UsdMesh(modelName: "FA-18F", ext: .USDZ), forKey: .RC_F18)
+//        _library.updateValue(UsdMesh(modelName: "F35_JSF", ext: .USDC), forKey: .CGTrader_F35)
+//        _library.updateValue(UsdMesh(modelName: "F-35A_Lightning_II", ext: .USDZ), forKey: .Sketchfab_F35)
         
         _library.updateValue(IcosahedronMesh(), forKey: .Icosahedron)
     }

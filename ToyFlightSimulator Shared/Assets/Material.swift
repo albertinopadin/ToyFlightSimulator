@@ -44,18 +44,15 @@ struct Material {
         
         renderCommandEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
         
-        let baseColorTex = baseColorTextureType == .None ? baseColorTexture : Assets.Textures[baseColorTextureType]
-        if baseColorTex != nil {
+        if let baseColorTex = baseColorTextureType == .None ? baseColorTexture : Assets.Textures[baseColorTextureType] {
             renderCommandEncoder.setFragmentTexture(baseColorTex, index: Int(TFSTextureIndexBaseColor.rawValue))
         }
         
-        let normalMapTex = normalMapTextureType == .None ? normalMapTexture : Assets.Textures[normalMapTextureType]
-        if normalMapTex != nil {
+        if let normalMapTex = normalMapTextureType == .None ? normalMapTexture : Assets.Textures[normalMapTextureType] {
             renderCommandEncoder.setFragmentTexture(normalMapTex, index: Int(TFSTextureIndexNormal.rawValue))
         }
         
-        let specularTex = specularTextureType == .None ? specularTexture : Assets.Textures[specularTextureType]
-        if specularTex != nil {
+        if let specularTex = specularTextureType == .None ? specularTexture : Assets.Textures[specularTextureType] {
             renderCommandEncoder.setFragmentTexture(specularTex, index: Int(TFSTextureIndexSpecular.rawValue))
         }
     }

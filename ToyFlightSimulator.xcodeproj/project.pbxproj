@@ -469,6 +469,14 @@
 		CEC0C5952B4B2D3100863C38 /* Material.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C5932B4B2D3100863C38 /* Material.swift */; };
 		CEC0C5962B4B2D3100863C38 /* Material.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C5932B4B2D3100863C38 /* Material.swift */; };
 		CEC0C5972B4B2D3100863C38 /* Material.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C5932B4B2D3100863C38 /* Material.swift */; };
+		CEC0C5992B53BB7400863C38 /* ObjMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C5982B53BB7400863C38 /* ObjMesh.swift */; };
+		CEC0C59A2B53BB7400863C38 /* ObjMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C5982B53BB7400863C38 /* ObjMesh.swift */; };
+		CEC0C59B2B53BB7400863C38 /* ObjMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C5982B53BB7400863C38 /* ObjMesh.swift */; };
+		CEC0C59C2B53BB7400863C38 /* ObjMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C5982B53BB7400863C38 /* ObjMesh.swift */; };
+		CEC0C59E2B53BEDF00863C38 /* UsdMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C59D2B53BEDF00863C38 /* UsdMesh.swift */; };
+		CEC0C59F2B53BEDF00863C38 /* UsdMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C59D2B53BEDF00863C38 /* UsdMesh.swift */; };
+		CEC0C5A02B53BEDF00863C38 /* UsdMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C59D2B53BEDF00863C38 /* UsdMesh.swift */; };
+		CEC0C5A12B53BEDF00863C38 /* UsdMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC0C59D2B53BEDF00863C38 /* UsdMesh.swift */; };
 		CEC2312F2B22F3E50081A26A /* Icosahedron.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC2312E2B22F3E50081A26A /* Icosahedron.swift */; };
 		CEC231302B22F3E50081A26A /* Icosahedron.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC2312E2B22F3E50081A26A /* Icosahedron.swift */; };
 		CEC231312B22F3E50081A26A /* Icosahedron.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC2312E2B22F3E50081A26A /* Icosahedron.swift */; };
@@ -661,6 +669,8 @@
 		CEB84E762A24A76400BEF778 /* InputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputManager.swift; sourceTree = "<group>"; };
 		CEB84E7A2A24AC3300BEF778 /* Controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controller.swift; sourceTree = "<group>"; };
 		CEC0C5932B4B2D3100863C38 /* Material.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Material.swift; sourceTree = "<group>"; };
+		CEC0C5982B53BB7400863C38 /* ObjMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjMesh.swift; sourceTree = "<group>"; };
+		CEC0C59D2B53BEDF00863C38 /* UsdMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsdMesh.swift; sourceTree = "<group>"; };
 		CEC2312E2B22F3E50081A26A /* Icosahedron.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icosahedron.swift; sourceTree = "<group>"; };
 		CEC231322B25AC650081A26A /* PointLightObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointLightObject.swift; sourceTree = "<group>"; };
 		CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSCache.swift; sourceTree = "<group>"; };
@@ -894,11 +904,13 @@
 				CE7F47EE28B758920082B197 /* Assets.xcassets */,
 				CE3BFF6828E1B4C10014A752 /* Assets.swift */,
 				CE2ED258299223A900C81F47 /* Mesh.swift */,
+				CEC0C5982B53BB7400863C38 /* ObjMesh.swift */,
 				CE2ED25C299223E900C81F47 /* Submesh.swift */,
 				CE76931229DD5F5500BBC718 /* SingleSMMesh.swift */,
 				CE76930A29DD5A4400BBC718 /* ObjModel.swift */,
 				CEC0C5932B4B2D3100863C38 /* Material.swift */,
 				CE3BFF6C28E1B4C60014A752 /* Libraries */,
+				CEC0C59D2B53BEDF00863C38 /* UsdMesh.swift */,
 			);
 			path = Assets;
 			sourceTree = "<group>";
@@ -1489,8 +1501,10 @@
 				CE452FC52A7CB46F001945B9 /* SamplerStateLibrary.swift in Sources */,
 				CE452FE52A7CB4A0001945B9 /* AttachedCamera.swift in Sources */,
 				CE452FD02A7CB47F001945B9 /* Lighting.metal in Sources */,
+				CEC0C59C2B53BB7400863C38 /* ObjMesh.swift in Sources */,
 				CE452FBA2A7CB44A001945B9 /* HotasConfig.swift in Sources */,
 				CE452FBC2A7CB451001945B9 /* Throttle.swift in Sources */,
+				CEC0C5A12B53BEDF00863C38 /* UsdMesh.swift in Sources */,
 				CE452FDF2A7CB499001945B9 /* LightManager.swift in Sources */,
 				CE452FDC2A7CB48E001945B9 /* SingleSMMeshLibrary.swift in Sources */,
 			);
@@ -1547,6 +1561,7 @@
 				CE3BFF7628E2FC0A0014A752 /* GameScene.swift in Sources */,
 				CE3BFF7A28E2FC270014A752 /* SandboxScene.swift in Sources */,
 				CE3BFF2428E056230014A752 /* Graphics.swift in Sources */,
+				CEC0C5992B53BB7400863C38 /* ObjMesh.swift in Sources */,
 				CE3BFF6E28E1B4D70014A752 /* MeshLibrary.swift in Sources */,
 				CE3DD2E929F37FE500787E53 /* Missile.swift in Sources */,
 				CE3BFF5028E1B2230014A752 /* Library.swift in Sources */,
@@ -1594,6 +1609,7 @@
 				CE45304F2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift in Sources */,
 				CE886A472985007A0013062D /* DirectionalLight.metal in Sources */,
 				CEFC6F22296B4200009B692B /* Sphere.swift in Sources */,
+				CEC0C59E2B53BEDF00863C38 /* UsdMesh.swift in Sources */,
 				CE7F483628B76FE30082B197 /* Shaders.metal in Sources */,
 				CE2ED262299394E500C81F47 /* ModelIO+Extensions.swift in Sources */,
 			);
@@ -1626,6 +1642,7 @@
 				CE3BFF6528E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE3BFFAC28E453310014A752 /* Quad.swift in Sources */,
 				CE2ED263299394E500C81F47 /* ModelIO+Extensions.swift in Sources */,
+				CEC0C59A2B53BB7400863C38 /* ObjMesh.swift in Sources */,
 				CE3BFFA828E453260014A752 /* Sun.swift in Sources */,
 				CEFC6F27296B61CA009B692B /* Line.swift in Sources */,
 				CE2ED25A299223A900C81F47 /* Mesh.swift in Sources */,
@@ -1683,6 +1700,7 @@
 				CE3BFFA428E452F00014A752 /* LightObject.swift in Sources */,
 				CE7F483B28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE7F48D428BCB4DD0082B197 /* GameView.swift in Sources */,
+				CEC0C59F2B53BEDF00863C38 /* UsdMesh.swift in Sources */,
 				CE7F483728B76FE30082B197 /* Shaders.metal in Sources */,
 				CE886A442984FFB00013062D /* GBuffer.metal in Sources */,
 			);
@@ -1707,6 +1725,7 @@
 				CE3BFF8828E2FD9C0014A752 /* GameObject.swift in Sources */,
 				CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */,
 				CE76931929DE75CB00BBC718 /* SingleSMMeshLibrary.swift in Sources */,
+				CEC0C5A02B53BEDF00863C38 /* UsdMesh.swift in Sources */,
 				CE3BFF8428E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CEFC6EC7295B55EA009B692B /* OrderIndependentTransparencyShaders.metal in Sources */,
 				CE2ED2BE299CB91200C81F47 /* RendererType.swift in Sources */,
@@ -1769,6 +1788,7 @@
 				CEFC6E3329531C0C009B692B /* Triangle.swift in Sources */,
 				CE3BFF6628E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE886A452984FFB00013062D /* GBuffer.metal in Sources */,
+				CEC0C59B2B53BB7400863C38 /* ObjMesh.swift in Sources */,
 				CE3BFF8028E2FCF50014A752 /* Node.swift in Sources */,
 				CE2ED2C229A2522A00C81F47 /* SkyBox.swift in Sources */,
 				CE3BFF3A28E0599F0014A752 /* MetalTypes.swift in Sources */,

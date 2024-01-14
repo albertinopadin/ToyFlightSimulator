@@ -31,10 +31,11 @@ class Mesh {
         createBuffer()
     }
     
-    init(modelName: String, ext: MeshExtension = .OBJ) {
-        name = modelName
-        createMeshFromModel(modelName, ext: ext)
-    }
+    // TODO: Implement loading function based on examples from Alloy or Satin
+//    init(modelName: String, ext: MeshExtension = .OBJ) {
+//        name = modelName
+//        createMeshFromModel(modelName, ext: ext)
+//    }
     
     init(mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor, addTangentBases: Bool = true) {
         print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
@@ -114,63 +115,7 @@ class Mesh {
         }
     }
     
-    private static func makeMeshes(object: MDLObject,
-                                   vertexDescriptor: MDLVertexDescriptor,
-                                   fileExtension: MeshExtension = .OBJ) -> [Mesh] {
-        var meshes = [Mesh]()
-        
-        print("[makeMeshes] object named \(object.name): \(object)")
-        
-        if fileExtension == .OBJ {
-            if let mesh = object as? MDLMesh {
-                print("[makeMeshes] object named \(object.name) is MDLMesh")
-                let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
-                meshes.append(newMesh)
-            }
-            
-            if object.conforms(to: MDLObjectContainerComponent.self) {
-                print("[makeMeshes] object named \(object.name) conforms to MDLObjectContainerComponent and has \(object.children.objects.count) children")
-                for child in object.children.objects {
-                    let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor, fileExtension: fileExtension)
-                    meshes.append(contentsOf: childMeshes)
-                }
-            } else {
-                print("[makeMeshes] object \(object.name) does not conform to MDLObjectContainerComponent")
-            }
-        } else if fileExtension == .USDC || fileExtension == .USDZ {
-            if let mesh = object as? MDLMesh {
-                print("[makeMeshes] object named \(object.name) is MDLMesh")
-                let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
-                meshes.append(newMesh)
-            }
-            
-            for child in object.children.objects {
-                let childMeshes = makeMeshes(object: child, vertexDescriptor: vertexDescriptor, fileExtension: fileExtension)
-                meshes.append(contentsOf: childMeshes)
-            }
-        }
-        
-        return meshes
-    }
-    
-    private func createMeshFromModel(_ modelName: String, ext: MeshExtension) {
-        print("[createMeshFromModel] model name: \(modelName)")
-        
-        guard let assetURL = Bundle.main.url(forResource: modelName, withExtension: ext.rawValue) else {
-            fatalError("Asset \(modelName) does not exist.")
-        }
-        
-        Mesh.loadingQueue.async { [weak self] in
-            switch ext {
-                case .OBJ:
-                    self?.createMeshFromObjModel(modelName, assetUrl: assetURL)
-                case .USDC, .USDZ:
-                    self?.createMeshFromUsdModel(modelName, assetUrl: assetURL)
-            }
-        }
-    }
-    
-    private func createMdlVertexDescriptor() -> MDLVertexDescriptor {
+    internal static func createMdlVertexDescriptor() -> MDLVertexDescriptor {
         let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Base])
         descriptor.attribute(TFSVertexAttributePosition.rawValue).name      = MDLVertexAttributePosition
         descriptor.attribute(TFSVertexAttributePosition.rawValue).format    = .float3
@@ -185,55 +130,6 @@ class Mesh {
         descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name     = MDLVertexAttributeBitangent
         descriptor.attribute(TFSVertexAttributeBitangent.rawValue).format   = .float3
         return descriptor
-    }
-    
-    private func createMeshFromObjModel(_ modelName: String, assetUrl: URL) {
-        let descriptor = createMdlVertexDescriptor()
-    
-        let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
-    
-        let asset = MDLAsset(url: assetUrl,
-                             vertexDescriptor: descriptor,
-                             bufferAllocator: bufferAllocator,
-                             preserveTopology: false,
-                             error: nil)
-        
-        print("[createMeshFromObjModel] Created asset: \(asset)")
-        asset.loadTextures()
-        print("[createMeshFromObjModel] Loaded asset textures")
-        
-        for child in asset.childObjects(of: MDLObject.self) {
-            print("[createMeshFromObjModel] \(modelName) child name: \(child.name)")
-            _childMeshes.append(contentsOf: Mesh.makeMeshes(object: child, vertexDescriptor: descriptor, fileExtension: .OBJ))
-        }
-        
-        print("Num child meshes for \(modelName): \(_childMeshes.count)")
-        for cm in _childMeshes {
-            print("Mesh named \(name); Child mesh name: \(cm.name)")
-            for sm in cm._submeshes {
-                print("Child mesh \(cm.name); Submesh name: \(sm.name)")
-            }
-        }
-    }
-    
-    private func createMeshFromUsdModel(_ modelName: String, assetUrl: URL) {
-        let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
-        
-        let descriptor = createMdlVertexDescriptor()
-        let asset = MDLAsset(url: assetUrl, vertexDescriptor: descriptor, bufferAllocator: bufferAllocator)
-        
-//        let asset = MDLAsset(url: assetUrl, vertexDescriptor: nil, bufferAllocator: bufferAllocator)
-        
-        asset.loadTextures()
-        
-        let assetChildren = asset.childObjects(of: MDLObject.self)
-        print("[createMeshFromUsdModel] \(modelName) child count: \(assetChildren.count)")
-        for child in assetChildren {
-            print("[createMeshFromUsdModel] \(modelName) child name: \(child.name)")
-            _childMeshes.append(contentsOf: Mesh.makeMeshes(object: child, vertexDescriptor: descriptor, fileExtension: .USDC))
-        }
-        
-        print("Num child meshes for \(modelName): \(_childMeshes.count)")
     }
     
     func setInstanceCount(_ count: Int) {
