@@ -65,7 +65,7 @@ class GameObject: Node, Renderable {
         }
     }
     
-    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]?) {
+    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
         encodeRender(using: renderCommandEncoder, label: "Shadow Rendering \(self.getName())") {
             renderCommandEncoder.setVertexBytes(&_modelConstants,
                                                 length: ModelConstants.stride,

@@ -13,9 +13,9 @@ class FlightboxScene: GameScene {
     
     override func buildScene() {
 //        let jet = F16(camera: attachedCamera)
-        let jet = F18(camera: attachedCamera, scale: 1.0)
+//        let jet = F18(camera: attachedCamera, scale: 1.0)
 //        let jet = F18Usdz(camera: attachedCamera, scale: 1.0)
-//        let jet = F35(camera: attachedCamera, scale: 0.1)
+        let jet = F35(camera: attachedCamera, scale: 0.1)
 //        let jet = F35(camera: attachedCamera, scale: 1.0)
         addCamera(attachedCamera)
         jet.setPositionZ(4)
@@ -194,6 +194,8 @@ class FlightboxScene: GameScene {
         for child in children {
             print(child.getName())
         }
+        
+        print("Material.TextureCache.count: \(Material.TextureCache.count)")
     }
     
     override func doUpdate() {

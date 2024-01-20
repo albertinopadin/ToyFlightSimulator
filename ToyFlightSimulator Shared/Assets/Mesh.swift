@@ -18,24 +18,18 @@ class Mesh {
     private static let loadingQueue = DispatchQueue(label: "mesh-model-loading-queue")
     
     public var name: String = "Mesh"
-    private var _vertices: [Vertex] = []
-    private var _vertexCount: Int = 0
-    private var _vertexBuffer: MTLBuffer! = nil
-    private var _instanceCount: Int = 1
+    internal var _vertices: [Vertex] = []
+    internal var _vertexCount: Int = 0
+    internal var _vertexBuffer: MTLBuffer! = nil
+    internal var _instanceCount: Int = 1
     internal var _submeshes: [Submesh] = []
     internal var _childMeshes: [Mesh] = []
-    var metalKitMesh: MTKMesh? = nil
+    internal var _metalKitMesh: MTKMesh? = nil
     
     init() {
         createMesh()
         createBuffer()
     }
-    
-    // TODO: Implement loading function based on examples from Alloy or Satin
-//    init(modelName: String, ext: MeshExtension = .OBJ) {
-//        name = modelName
-//        createMeshFromModel(modelName, ext: ext)
-//    }
     
     init(mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor, addTangentBases: Bool = true) {
         print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
@@ -54,16 +48,16 @@ class Mesh {
         mdlMesh.vertexDescriptor = vertexDescriptor
         do {
             print("[Mesh init] instantiating MTKMesh...")
-            metalKitMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
-            print("[Mesh init] MTKMesh: \(String(describing: metalKitMesh))")
-            if metalKitMesh!.vertexBuffers.count > 1 {
+            _metalKitMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
+            print("[Mesh init] MTKMesh: \(String(describing: _metalKitMesh))")
+            if _metalKitMesh!.vertexBuffers.count > 1 {
                 print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
             }
-            self._vertexBuffer = metalKitMesh!.vertexBuffers[0].buffer
-            self._vertexCount = metalKitMesh!.vertexCount
+            self._vertexBuffer = _metalKitMesh!.vertexBuffers[0].buffer
+            self._vertexCount = _metalKitMesh!.vertexCount
             let textureLoader = MTKTextureLoader(device: Engine.Device)
-            for i in 0..<metalKitMesh!.submeshes.count {
-                let mtkSubmesh = metalKitMesh!.submeshes[i]
+            for i in 0..<_metalKitMesh!.submeshes.count {
+                let mtkSubmesh = _metalKitMesh!.submeshes[i]
                 let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
                 let submesh: Submesh
                 submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh, textureLoader: textureLoader)
@@ -89,8 +83,8 @@ class Mesh {
                                     bitangentAttributeNamed: MDLVertexAttributeBitangent)
         }
         
-        self.metalKitMesh = mtkMesh
-        if metalKitMesh!.vertexBuffers.count > 1 {
+        self._metalKitMesh = mtkMesh
+        if _metalKitMesh!.vertexBuffers.count > 1 {
             print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
         }
         self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer

@@ -7,14 +7,8 @@
 
 import MetalKit
 
-struct TextureParameters: Equatable, Hashable {
-    let material: MDLMaterial
-    let semantic: MDLMaterialSemantic
-    let origin: MTKTextureLoader.Origin
-}
-
 struct Material {
-    private static let TextureCache = TFSCache<TextureParameters, MTLTexture>()
+    public static let TextureCache = TFSCache<MDLTexture, MTLTexture>()
     
     public var name: String
     public var shaderMaterial = ShaderMaterial()
@@ -29,9 +23,9 @@ struct Material {
         if let specular = mdlMaterial.property(with: .specular)?.float3Value { shaderMaterial.specular = specular }
         if let shininess = mdlMaterial.property(with: .specularExponent)?.floatValue { shaderMaterial.shininess = shininess }
         
-        baseColorTexture = Material.CachedTexture(for: .baseColor, in: mdlMaterial, textureLoader: textureLoader)
-        normalMapTexture = Material.CachedTexture(for: .tangentSpaceNormal, in: mdlMaterial, textureLoader: textureLoader)
-        specularTexture = Material.CachedTexture(for: .specular, in: mdlMaterial, textureLoader: textureLoader)
+        baseColorTexture = Material.Texture(for: .baseColor, in: mdlMaterial, textureLoader: textureLoader)
+        normalMapTexture = Material.Texture(for: .tangentSpaceNormal, in: mdlMaterial, textureLoader: textureLoader)
+        specularTexture = Material.Texture(for: .specular, in: mdlMaterial, textureLoader: textureLoader)
     }
     
     public mutating func applyTextures(with renderCommandEncoder: MTLRenderCommandEncoder,
@@ -54,26 +48,6 @@ struct Material {
         
         if let specularTex = specularTextureType == .None ? specularTexture : Assets.Textures[specularTextureType] {
             renderCommandEncoder.setFragmentTexture(specularTex, index: Int(TFSTextureIndexSpecular.rawValue))
-        }
-    }
-    
-    private static func CachedTexture(for semantic: MDLMaterialSemantic,
-                                      in material: MDLMaterial?,
-                                      textureLoader: MTKTextureLoader,
-                                      textureOrigin: MTKTextureLoader.Origin = .bottomLeft) -> MTLTexture? {
-        guard let material else { return nil }
-
-        let parameters = TextureParameters(material: material, semantic: semantic, origin: textureOrigin)
-
-        if let cachedTexture = Material.TextureCache[parameters] {
-            return cachedTexture
-        } else {
-            let newTexture = Material.Texture(for: semantic,
-                                              in: material,
-                                              textureLoader: textureLoader,
-                                              textureOrigin: textureOrigin)
-            Material.TextureCache[parameters] = newTexture
-            return newTexture
         }
     }
     
@@ -100,56 +74,66 @@ struct Material {
 //            print("Property type: \(property.type)")
             
             switch property.type {
-            case .string:
-//                print("Material property is string!")
-                if let stringValue = property.stringValue {
-                    newTexture = try? textureLoader.newTexture(name: stringValue,
-                                                               scaleFactor: 1.0,
-                                                               bundle: nil,
-                                                               options: options)
-                }
-            case .URL:
-//                print("Material property is url!")
-                if let newTexture {
-                    print("[Submesh texture] Material prop is URL; newTexture has already been set: \(newTexture)")
-                }
+                case .string:
+                    // TODO: cache texture here
+                    print("Material property is string!")
+                    if let stringValue = property.stringValue {
+                        newTexture = try? textureLoader.newTexture(name: stringValue,
+                                                                   scaleFactor: 1.0,
+                                                                   bundle: nil,
+                                                                   options: options)
+                    }
+                case .URL:
+                    // TODO: cache texture here
+                    print("Material property is url!")
+                    if let newTexture {
+                        print("[Material texture] Material prop is URL; newTexture has already been set: \(newTexture)")
+                    }
+                    
+                    if let textureURL = property.urlValue {
+                        newTexture = try? textureLoader.newTexture(URL: textureURL, options: options)
+                    }
+                case .texture:
+                    print("Material property is texture!")
+                    if let newTexture {
+                        print("[Material texture] Material prop is texture; newTexture has already been set: \(newTexture)")
+                    }
+                    
+                    let sourceTexture = property.textureSamplerValue!.texture!
+    //                print("sourceTexture: \(sourceTexture.debugDescription)")
                 
-                if let textureURL = property.urlValue {
-                    newTexture = try? textureLoader.newTexture(URL: textureURL, options: options)
-                }
-            case .texture:
-//                print("Material property is texture!")
-                if let newTexture {
-                    print("[Submesh texture] Material prop is texture; newTexture has already been set: \(newTexture)")
-                }
+                    if let cachedTexture = Material.TextureCache[sourceTexture] {
+                        newTexture = cachedTexture
+                    } else {
+                        newTexture = try? textureLoader.newTexture(texture: sourceTexture, options: options)
+                        Material.TextureCache[sourceTexture] = newTexture
+                    }
                 
-                let sourceTexture = property.textureSamplerValue!.texture!
-//                print("sourceTexture: \(sourceTexture.debugDescription)")
-                newTexture = try? textureLoader.newTexture(texture: sourceTexture, options: options)
-            case .color:
-//                print("Material property is color!")
-                if let newTexture {
-                    print("[Submesh texture] Material prop is color; newTexture has already been set: \(newTexture)")
-                    break
-                }
-                
-                let color = float4(Float(property.color!.components![0]),
-                                   Float(property.color!.components![1]),
-                                   Float(property.color!.components![2]),
-                                   Float(property.color!.components![3]))
-                
-                newTexture = Material.MakeSolid2DTexture(device: Engine.Device, color: color)
-            case .buffer:
-                print("Material property is a buffer!")
-            case .matrix44:
-                print("Material property is 4x4 matrix!")
-            case .float, .float2, .float3, .float4:
-                print("Material property is float!")
-            case .none:
-                print("Material property is none!")
-            default:
-//                fatalError("Texture data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription)")
-                print("In default block")
+                case .color:
+                    // TODO: cache texture here
+                    print("Material property is color!")
+                    if let newTexture {
+                        print("[Material texture] Material prop is color; newTexture has already been set: \(newTexture)")
+                        break
+                    }
+                    
+                    let color = float4(Float(property.color!.components![0]),
+                                       Float(property.color!.components![1]),
+                                       Float(property.color!.components![2]),
+                                       Float(property.color!.components![3]))
+                    
+                    newTexture = Material.MakeSolid2DTexture(device: Engine.Device, color: color)
+                case .buffer:
+                    print("Material property is a buffer!")
+                case .matrix44:
+                    print("Material property is 4x4 matrix!")
+                case .float, .float2, .float3, .float4:
+                    print("Material property is float!")
+                case .none:
+                    print("Material property is none!")
+                default:
+    //                fatalError("Texture data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription)")
+                    print("In default block")
             }
         }
         

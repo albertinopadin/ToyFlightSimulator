@@ -9,6 +9,45 @@ import Foundation
 import MetalKit
 
 class ObjMesh: Mesh {
+//    init(_ modelName: String) {
+//        super.init()
+//        
+//        guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: MeshExtension.OBJ.rawValue) else {
+//            fatalError("Asset \(modelName) does not exist.")
+//        }
+//        
+//        let descriptor = Mesh.createMdlVertexDescriptor()
+//    
+//        let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
+//    
+//        let asset = MDLAsset(url: assetUrl,
+//                             vertexDescriptor: descriptor,
+//                             bufferAllocator: bufferAllocator,
+//                             preserveTopology: false,
+//                             error: nil)
+//        
+//        asset.loadTextures()
+//        
+//        let object0 = asset.object(at: 0)
+//        if let objMesh = object0 as? MDLMesh {
+//            objMesh.addNormals(withAttributeNamed: MDLVertexAttributeNormal, creaseThreshold: 0.0)
+//            
+//            let vertexData = objMesh.vertexBuffers[0].map().bytes.bindMemory(to: Vertex.self, capacity: objMesh.vertexCount)
+//            _vertices = Array(UnsafeBufferPointer(start: vertexData, count: objMesh.vertexCount))
+//            _vertexBuffer = (objMesh.vertexBuffers[0] as! MTKMeshBuffer).buffer
+//            
+//            _childMeshes.append(contentsOf: ObjMesh.makeMeshes(object: objMesh, vertexDescriptor: descriptor))
+//
+////            guard let submeshes = objMesh.submeshes,
+////                    let first = submeshes.firstObject,
+////                    let sub: MDLSubmesh = first as? MDLSubmesh else { return }
+////            let indexDataPtr = sub.indexBuffer(asIndexType: .uInt32).map().bytes.bindMemory(to: UInt32.self,
+////                                                                                            capacity: sub.indexCount)
+////            let indexData = Array(UnsafeBufferPointer(start: indexDataPtr, count: sub.indexCount))
+//            
+//        }
+//    }
+    
     init(_ modelName: String) {
         super.init()
         
@@ -30,7 +69,17 @@ class ObjMesh: Mesh {
         asset.loadTextures()
         print("[ObjMesh init] Loaded asset textures")
         
-        for child in asset.childObjects(of: MDLObject.self) {
+//        let model = asset.object(at: 0)
+//        print("[ObjMesh init] Top level objects in asset: \(asset.count)")
+//        _childMeshes.append(contentsOf: ObjMesh.makeMeshes(object: model, vertexDescriptor: descriptor))
+
+//        for child in asset.childObjects(of: MDLObject.self) {
+//            print("[ObjMesh init] \(modelName) child name: \(child.name)")
+//            _childMeshes.append(contentsOf: ObjMesh.makeMeshes(object: child, vertexDescriptor: descriptor))
+//        }
+        
+        for i in 0..<asset.count {
+            let child = asset.object(at: i)
             print("[ObjMesh init] \(modelName) child name: \(child.name)")
             _childMeshes.append(contentsOf: ObjMesh.makeMeshes(object: child, vertexDescriptor: descriptor))
         }

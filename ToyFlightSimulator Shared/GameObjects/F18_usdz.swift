@@ -501,69 +501,17 @@ class F18Usdz: Aircraft {
             landingGearBeganRetracting = false
             landingGearFinishedRetracting = false
         }
-        
-        // TODO: Figure out how to move individual submesh without re-instantiating it:
-//        InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) {
-//            print("Toggling gear \(gearDown ? "up": "down")")
-//
-//            for noseGearSubmeshName in noseWheelGearSubmeshNames {
-//                if let submesh = self._mesh._childMeshes.map({
-//                    $0._submeshes.filter({ $0.name == noseGearSubmeshName })
-//                }).first?.first {
-//                    print("Found \(noseGearSubmeshName)")
-//                    if gearDown {
-////                        submesh.submeshConstants.submeshModelMatrix = Transform.rotationMatrix(radians: Float(1.0).toRadians,
-////                                                                                               axis: X_AXIS)
-//                        submesh.submeshConstants.submeshModelMatrix = simd_float4x4(simd_quatf(angle: Float(-10.0).toRadians,
-//                                                                                               axis: getRightVector()))
-//
-//                    } else {
-////                        submesh.submeshConstants.submeshModelMatrix = Transform.rotationMatrix(radians: Float(-1.0).toRadians,
-////                                                                                               axis: X_AXIS)
-//                        submesh.submeshConstants.submeshModelMatrix = matrix_identity_float4x4
-//                    }
-//                }
-//            }
-//
-//            gearDown.toggle()
-//        }
-        
-        
-//        let noseGearRotation = simd_float4x4(simd_quatf(angle: Float(-0.25).toRadians, axis: getRightVector()))
-//        let noseGearRotation = simd_float4x4(simd_quatf(angle: Float(-0.5).toRadians, axis: X_AXIS))
-//        let noseGearTranslationToOrigin = Transform.translationMatrix(-self.getPosition())
-//        let noseGearTranslationBack = Transform.translationMatrix(self.getPosition())
-        
-
-//        for noseGearSubmeshName in noseWheelGearSubmeshNames {
-//            if let submesh = self._mesh._childMeshes.map({
-//                $0._submeshes.filter({ $0.name == noseGearSubmeshName })
-//            }).first?.first {
-////                if appliedTranslation {
-////                    submesh.submeshConstants.submeshModelMatrix = noseGearRotation * submesh.submeshConstants.submeshModelMatrix
-////                } else {
-////                    submesh.submeshConstants.submeshModelMatrix = noseGearTranslation * noseGearRotation * submesh.submeshConstants.submeshModelMatrix
-////                }
-//
-////                submesh.submeshConstants.submeshModelMatrix = submesh.submeshConstants.submeshModelMatrix * noseGearRotation
-//
-////                submesh.submeshConstants.submeshModelMatrix = noseGearTranslationBack * noseGearRotation * noseGearTranslationToOrigin * submesh.submeshConstants.submeshModelMatrix
-//
-//                submesh.submeshConstants.submeshModelMatrix = noseGearRotation * submesh.submeshConstants.submeshModelMatrix
-//            }
-//        }
-//
-//        appliedTranslation = true
-        
     }
     
     override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
                            submeshesToRender: [String : Bool]? = nil) {
-        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToDisplay)
+//        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToDisplay)
+        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials)
     }
     
     override func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String : Bool]?) {
-        super.doRenderShadow(renderCommandEncoder, submeshesToRender: submeshesToDisplay)
+//        super.doRenderShadow(renderCommandEncoder, submeshesToRender: submeshesToDisplay)
+        super.doRenderShadow(renderCommandEncoder)
     }
 }
