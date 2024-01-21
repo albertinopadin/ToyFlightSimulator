@@ -69,15 +69,6 @@ class ObjMesh: Mesh {
         asset.loadTextures()
         print("[ObjMesh init] Loaded asset textures")
         
-//        let model = asset.object(at: 0)
-//        print("[ObjMesh init] Top level objects in asset: \(asset.count)")
-//        _childMeshes.append(contentsOf: ObjMesh.makeMeshes(object: model, vertexDescriptor: descriptor))
-
-//        for child in asset.childObjects(of: MDLObject.self) {
-//            print("[ObjMesh init] \(modelName) child name: \(child.name)")
-//            _childMeshes.append(contentsOf: ObjMesh.makeMeshes(object: child, vertexDescriptor: descriptor))
-//        }
-        
         for i in 0..<asset.count {
             let child = asset.object(at: i)
             print("[ObjMesh init] \(modelName) child name: \(child.name)")

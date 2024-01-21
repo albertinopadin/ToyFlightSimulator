@@ -7,7 +7,7 @@
 
 class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
-    var jet = F35()
+    var jet = F22()
     var sun = Sun(meshType: .Sphere)
     var ground = Quad()
     var sidewinderMissile = Sidewinder()
@@ -43,7 +43,12 @@ class FreeCamFlightboxScene: GameScene {
         
 //        f18.setScale(0.25)  // TODO: setScale doesn't work
         jet.setPosition(0, 10, 0)
-        jet.setScale(0.025)
+        
+        // For F-22:
+        jet.rotateX(Float(90).toRadians)
+        jet.rotateZ(Float(90).toRadians)
+        
+        jet.setScale(0.125)
         addChild(jet)
         
         sidewinderMissile.setScale(4.0)
@@ -58,6 +63,10 @@ class FreeCamFlightboxScene: GameScene {
         aim120.setPosition(0, 4, -24)
         aim120.rotateY(Float(90).toRadians)
         addChild(aim120)
+        
+        print("Material.StringToTextureCache.count: \(Material.StringToTextureCache.count)")
+        print("Material.UrlToTextureCache.count: \(Material.UrlToTextureCache.count)")
+        print("Material.MdlToTextureCache.count: \(Material.MdlToTextureCache.count)")
     }
     
     override func doUpdate() {

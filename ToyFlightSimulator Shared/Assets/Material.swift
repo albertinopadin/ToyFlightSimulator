@@ -8,7 +8,9 @@
 import MetalKit
 
 struct Material {
-    public static let TextureCache = TFSCache<MDLTexture, MTLTexture>()
+    public static let StringToTextureCache = TFSCache<String, MTLTexture>()
+    public static let UrlToTextureCache = TFSCache<URL, MTLTexture>()
+    public static let MdlToTextureCache = TFSCache<MDLTexture, MTLTexture>()
     
     public var name: String
     public var shaderMaterial = ShaderMaterial()
@@ -75,23 +77,31 @@ struct Material {
             
             switch property.type {
                 case .string:
-                    // TODO: cache texture here
                     print("Material property is string!")
                     if let stringValue = property.stringValue {
-                        newTexture = try? textureLoader.newTexture(name: stringValue,
-                                                                   scaleFactor: 1.0,
-                                                                   bundle: nil,
-                                                                   options: options)
+                        if let cachedTexture = Material.StringToTextureCache[stringValue] {
+                            newTexture = cachedTexture
+                        } else {
+                            newTexture = try? textureLoader.newTexture(name: stringValue,
+                                                                       scaleFactor: 1.0,
+                                                                       bundle: nil,
+                                                                       options: options)
+                            Material.StringToTextureCache[stringValue] = newTexture
+                        }
                     }
                 case .URL:
-                    // TODO: cache texture here
                     print("Material property is url!")
                     if let newTexture {
                         print("[Material texture] Material prop is URL; newTexture has already been set: \(newTexture)")
                     }
-                    
+                
                     if let textureURL = property.urlValue {
-                        newTexture = try? textureLoader.newTexture(URL: textureURL, options: options)
+                        if let cachedTexture = Material.UrlToTextureCache[textureURL] {
+                            newTexture = cachedTexture
+                        } else {
+                            newTexture = try? textureLoader.newTexture(URL: textureURL, options: options)
+                            Material.UrlToTextureCache[textureURL] = newTexture
+                        }
                     }
                 case .texture:
                     print("Material property is texture!")
@@ -102,11 +112,11 @@ struct Material {
                     let sourceTexture = property.textureSamplerValue!.texture!
     //                print("sourceTexture: \(sourceTexture.debugDescription)")
                 
-                    if let cachedTexture = Material.TextureCache[sourceTexture] {
+                    if let cachedTexture = Material.MdlToTextureCache[sourceTexture] {
                         newTexture = cachedTexture
                     } else {
                         newTexture = try? textureLoader.newTexture(texture: sourceTexture, options: options)
-                        Material.TextureCache[sourceTexture] = newTexture
+                        Material.MdlToTextureCache[sourceTexture] = newTexture
                     }
                 
                 case .color:

@@ -487,6 +487,15 @@
 		CEC6B48B2B45F8BD004A5AC7 /* TFSCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */; };
 		CEC6B48C2B45F8BD004A5AC7 /* TFSCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */; };
 		CEC6B48D2B45F8BD004A5AC7 /* TFSCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */; };
+		CED3AA772B5D005700191002 /* F-22_Raptor.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA762B5D005700191002 /* F-22_Raptor.usdz */; };
+		CED3AA782B5D005700191002 /* F-22_Raptor.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA762B5D005700191002 /* F-22_Raptor.usdz */; };
+		CED3AA792B5D005700191002 /* F-22_Raptor.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA762B5D005700191002 /* F-22_Raptor.usdz */; };
+		CED3AA7B2B5D008200191002 /* F22.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA7A2B5D008200191002 /* F22.swift */; };
+		CED3AA7C2B5D008200191002 /* F22.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA7A2B5D008200191002 /* F22.swift */; };
+		CED3AA7D2B5D008200191002 /* F22.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA7A2B5D008200191002 /* F22.swift */; };
+		CED3AA832B5D355200191002 /* F-22.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA822B5D355200191002 /* F-22.usdz */; };
+		CED3AA842B5D355200191002 /* F-22.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA822B5D355200191002 /* F-22.usdz */; };
+		CED3AA852B5D355200191002 /* F-22.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA822B5D355200191002 /* F-22.usdz */; };
 		CEED93A329E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A429E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
@@ -674,6 +683,9 @@
 		CEC2312E2B22F3E50081A26A /* Icosahedron.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icosahedron.swift; sourceTree = "<group>"; };
 		CEC231322B25AC650081A26A /* PointLightObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointLightObject.swift; sourceTree = "<group>"; };
 		CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSCache.swift; sourceTree = "<group>"; };
+		CED3AA762B5D005700191002 /* F-22_Raptor.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = "F-22_Raptor.usdz"; sourceTree = "<group>"; };
+		CED3AA7A2B5D008200191002 /* F22.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F22.swift; sourceTree = "<group>"; };
+		CED3AA822B5D355200191002 /* F-22.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = "F-22.usdz"; sourceTree = "<group>"; };
 		CEED93A229E2B3EE0020DC53 /* AIM120.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIM120.swift; sourceTree = "<group>"; };
 		CEED93A629E3B2600020DC53 /* AircraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftStore.swift; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
@@ -747,6 +759,8 @@
 		CE06022F2A9B47C1001F8CC3 /* Sketchfab */ = {
 			isa = PBXGroup;
 			children = (
+				CED3AA822B5D355200191002 /* F-22.usdz */,
+				CED3AA762B5D005700191002 /* F-22_Raptor.usdz */,
 				CE0602312A9B480A001F8CC3 /* F-35A_Lightning_II.usdz */,
 			);
 			path = Sketchfab;
@@ -846,7 +860,9 @@
 				CEED93A629E3B2600020DC53 /* AircraftStore.swift */,
 				CE3BFFE728E6A0F40014A752 /* F16.swift */,
 				CE2ED2962998A10400C81F47 /* F18.swift */,
+				CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */,
 				CE06022B2A945E38001F8CC3 /* F35.swift */,
+				CED3AA7A2B5D008200191002 /* F22.swift */,
 				CE3DD2E829F37FE500787E53 /* Missile.swift */,
 				CE3DD2EC2A020F4900787E53 /* Droppable.swift */,
 				CE76931A29DE79CE00BBC718 /* Sidewinder.swift */,
@@ -854,7 +870,6 @@
 				CE3DD2F02A02309300787E53 /* GBU16.swift */,
 				CE3DD2F42A039B0700787E53 /* FuelTank.swift */,
 				CE0601652A83796B001F8CC3 /* CapsuleObject.swift */,
-				CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */,
 				CEC2312E2B22F3E50081A26A /* Icosahedron.swift */,
 				CEC231322B25AC650081A26A /* PointLightObject.swift */,
 			);
@@ -1267,12 +1282,14 @@
 				CE06021E2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */,
 				CE0602212A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */,
 				CE0602342A9B480A001F8CC3 /* F-35A_Lightning_II.usdz in Resources */,
+				CED3AA792B5D005700191002 /* F-22_Raptor.usdz in Resources */,
 				CE0602062A9364A5001F8CC3 /* Pilot Normal.jpg in Resources */,
 				CE0602032A9364A5001F8CC3 /* F35_JSF.usdc in Resources */,
 				CE0602272A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */,
 				CE06020F2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */,
 				CE06022A2A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */,
 				CE0602152A9364A5001F8CC3 /* Joint Strike Interior Illumination.jpg in Resources */,
+				CED3AA852B5D355200191002 /* F-22.usdz in Resources */,
 				CE0602092A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */,
 				CE0602122A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
 			);
@@ -1301,6 +1318,7 @@
 				CE3BFFCD28E573C80014A752 /* sphere.obj in Resources */,
 				CE2ED2B32998A45700C81F47 /* Diffuse.jpg in Resources */,
 				CE3BFFDC28E573D60014A752 /* quad.obj in Resources */,
+				CED3AA832B5D355200191002 /* F-22.usdz in Resources */,
 				CE06020A2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */,
 				CE0602102A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
 				CE06021F2A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */,
@@ -1312,6 +1330,7 @@
 				CE0602282A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */,
 				CE2ED2B82998A45700C81F47 /* Emissive.jpg in Resources */,
 				CE0602252A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */,
+				CED3AA772B5D005700191002 /* F-22_Raptor.usdz in Resources */,
 				CE0602072A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */,
 				CE2ED2B72998A45700C81F47 /* FA-18F.mtl in Resources */,
 				CE7F482728B758920082B197 /* Assets.xcassets in Resources */,
@@ -1358,6 +1377,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CED3AA782B5D005700191002 /* F-22_Raptor.usdz in Resources */,
 				CE0602392A9C5686001F8CC3 /* FA-18F.usdz in Resources */,
 				CE06021A2A9364A5001F8CC3 /* Joint Strike Body Specular.jpg in Resources */,
 				CE2ED2742997F02D00C81F47 /* F16t.bmp in Resources */,
@@ -1371,6 +1391,7 @@
 				CE06020E2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */,
 				CE06021D2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */,
 				CE2ED2AA2998A45500C81F47 /* FA-18F.mtl in Resources */,
+				CED3AA842B5D355200191002 /* F-22.usdz in Resources */,
 				CE0602262A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */,
 				CE2ED2A52998A45500C81F47 /* Dirty.jpg in Resources */,
 				CE2ED29D2998A44E00C81F47 /* FA-18F.obj in Resources */,
@@ -1472,6 +1493,7 @@
 				CE452FB92A7CB445001945B9 /* HIDDevice.swift in Sources */,
 				CE452FBD2A7CB453001945B9 /* Engine.swift in Sources */,
 				CE452FF32A7CB4A6001945B9 /* Droppable.swift in Sources */,
+				CED3AA7D2B5D008200191002 /* F22.swift in Sources */,
 				CE0601682A83796B001F8CC3 /* CapsuleObject.swift in Sources */,
 				CE452FBE2A7CB456001945B9 /* Preferences.swift in Sources */,
 				CE452FC02A7CB45C001945B9 /* GBufferTextures.swift in Sources */,
@@ -1583,6 +1605,7 @@
 				CE3BFF7228E1B4E10014A752 /* TextureLibrary.swift in Sources */,
 				CE3BFF9628E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6928E1B4C10014A752 /* Assets.swift in Sources */,
+				CED3AA7B2B5D008200191002 /* F22.swift in Sources */,
 				CE56921C28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
 				CEFC6E3129531C0C009B692B /* Triangle.swift in Sources */,
 				CE886A432984FFB00013062D /* GBuffer.metal in Sources */,
@@ -1764,6 +1787,7 @@
 				CE3BFF3B28E0599F0014A752 /* Engine.swift in Sources */,
 				CE3DD2EB29F37FE500787E53 /* Missile.swift in Sources */,
 				CE3BFF4428E1AF490014A752 /* Preferences.swift in Sources */,
+				CED3AA7C2B5D008200191002 /* F22.swift in Sources */,
 				CE3BFF9028E2FE140014A752 /* Math.swift in Sources */,
 				CEAB38522981024E0087F7CB /* Transform.swift in Sources */,
 				CE3BFF4D28E1B20D0014A752 /* GameTime.swift in Sources */,
