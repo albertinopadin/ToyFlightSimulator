@@ -13,20 +13,19 @@ class FlightboxScene: GameScene {
     
     override func buildScene() {
 //        let jet = F16(camera: attachedCamera)
-//        let jet = F18(camera: attachedCamera, scale: 1.0)
+        let jet = F18(scale: 1.0)
 //        let jet = F18Usdz(camera: attachedCamera, scale: 1.0)
 //        let jet = F35(camera: attachedCamera, scale: 0.1)
 //        let jet = F35(camera: attachedCamera, scale: 1.0)
-        let jet = F22(camera: attachedCamera, scale: 0.125)
+//        let jet = F22(scale: 0.125)
+        
         addCamera(attachedCamera)
-        jet.setPositionZ(4)
-        jet.setPositionY(10)
         
-        // For F-22:
-//        jet.rotateX(Float(90).toRadians)
-//        jet.rotateZ(Float(90).toRadians)
-        
-        addChild(jet)
+        let container = ContainerNode(camera: attachedCamera, cameraOffset: float3(0, 8, 18))
+        container.addChild(jet)
+        container.setPositionZ(4)
+        container.setPositionY(10)
+        addChild(container)
         
         capsule.setPosition(-8, 10, -10)
         capsule.rotateZ(Float(90).toRadians)
@@ -71,7 +70,7 @@ class FlightboxScene: GameScene {
 //        pl2.setLightBrightness(1.0)
 //        addLight(pl2)
         
-        let f16 = F16()
+        let f16 = F16(shouldUpdate: false)
         f16.setPosition(0, jet.getPositionY() + 10, jet.getPositionZ() - 15)
         f16.rotateY(Float(-90).toRadians)
         f16.setScale(4.0)

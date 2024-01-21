@@ -19,13 +19,11 @@ class Store {
 
 
 class F18: Aircraft {
-    private let _cameraPositionOffset = float3(0, 10, 20)
+//    private let _cameraPositionOffset = float3(0, 10, 20)
     private var _spacePressed: Bool = false
     private var _mKeyPressed: Bool = false
     private var _nKeyPressed: Bool = false
     private var _jKeyPressed: Bool = false
-    
-    var shouldUpdate: Bool = true
     
     static let F18_ModelName = "FA-18F"
     
@@ -294,19 +292,12 @@ class F18: Aircraft {
     var landingGearBeganRetracting: Bool = false
     var landingGearFinishedRetracting: Bool = false
     
-    init() {
-        super.init(name: "F-18", meshType: .F18, renderPipelineStateType: .OpaqueMaterial)
-        self.shouldUpdate = false  // Don't update when user moves camera
-        setupControlSurfaces()
-    }
-    
-    init(camera: AttachedCamera, scale: Float = 1.0) {
+    init(scale: Float = 1.0, shouldUpdate: Bool = true) {
         super.init(name: "F-18",
                    meshType: .F18,
                    renderPipelineStateType: .OpaqueMaterial,
-                   camera: camera,
-                   cameraOffset: _cameraPositionOffset,
-                   scale: scale)
+                   scale: scale,
+                   shouldUpdate: shouldUpdate)
         setupControlSurfaces()
     }
     

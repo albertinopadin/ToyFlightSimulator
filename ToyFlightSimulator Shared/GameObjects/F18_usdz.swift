@@ -14,8 +14,6 @@ class F18Usdz: Aircraft {
     private var _nKeyPressed: Bool = false
     private var _jKeyPressed: Bool = false
     
-    var shouldUpdate: Bool = true
-    
     static let F18_ModelName = "FA-18F"
     
     static let AIM9Name = "AIM-9"
@@ -270,19 +268,12 @@ class F18Usdz: Aircraft {
     var landingGearBeganRetracting: Bool = false
     var landingGearFinishedRetracting: Bool = false
     
-    init() {
-        super.init(name: "F-18", meshType: .RC_F18, renderPipelineStateType: .OpaqueMaterial)
-        self.shouldUpdate = false  // Don't update when user moves camera
-        setupControlSurfaces()
-    }
-    
-    init(camera: AttachedCamera, scale: Float = 1.0) {
+    init(scale: Float = 1.0, shouldUpdate: Bool = true) {
         super.init(name: "F-18",
                    meshType: .RC_F18,
                    renderPipelineStateType: .OpaqueMaterial,
-                   camera: camera,
-                   cameraOffset: _cameraPositionOffset,
-                   scale: scale)
+                   scale: scale,
+                   shouldUpdate: shouldUpdate)
         setupControlSurfaces()
     }
     
