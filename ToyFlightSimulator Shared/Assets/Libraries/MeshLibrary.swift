@@ -51,11 +51,10 @@ class MeshLibrary: Library<MeshType, Mesh> {
         _library.updateValue(ObjMesh("f16r"), forKey: .F16)
         _library.updateValue(ObjMesh("FA-18F"), forKey: .F18)
         
-//        _library.updateValue(UsdMesh("FA-18F"), forKey: .RC_F18)
+        _library.updateValue(UsdMesh("FA-18F"), forKey: .RC_F18)
 //        _library.updateValue(UsdMesh("F35_JSF", fileExtension: .USDC), forKey: .CGTrader_F35)
-//        _library.updateValue(UsdMesh("F-35A_Lightning_II"), forKey: .Sketchfab_F35)
+        _library.updateValue(UsdMesh("F-35A_Lightning_II"), forKey: .Sketchfab_F35)
         _library.updateValue(UsdMesh("F-22_Raptor"), forKey: .Sketchfab_F22)
-//        _library.updateValue(UsdMesh("F-22"), forKey: .Sketchfab_F22)
         
         _library.updateValue(IcosahedronMesh(), forKey: .Icosahedron)
     }

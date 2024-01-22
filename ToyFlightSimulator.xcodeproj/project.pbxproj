@@ -493,9 +493,6 @@
 		CED3AA7B2B5D008200191002 /* F22.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA7A2B5D008200191002 /* F22.swift */; };
 		CED3AA7C2B5D008200191002 /* F22.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA7A2B5D008200191002 /* F22.swift */; };
 		CED3AA7D2B5D008200191002 /* F22.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA7A2B5D008200191002 /* F22.swift */; };
-		CED3AA832B5D355200191002 /* F-22.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA822B5D355200191002 /* F-22.usdz */; };
-		CED3AA842B5D355200191002 /* F-22.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA822B5D355200191002 /* F-22.usdz */; };
-		CED3AA852B5D355200191002 /* F-22.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA822B5D355200191002 /* F-22.usdz */; };
 		CED3AA872B5D4DA300191002 /* ContainerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA862B5D4DA300191002 /* ContainerNode.swift */; };
 		CED3AA882B5D4DA300191002 /* ContainerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA862B5D4DA300191002 /* ContainerNode.swift */; };
 		CED3AA892B5D4DA300191002 /* ContainerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA862B5D4DA300191002 /* ContainerNode.swift */; };
@@ -688,7 +685,6 @@
 		CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSCache.swift; sourceTree = "<group>"; };
 		CED3AA762B5D005700191002 /* F-22_Raptor.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = "F-22_Raptor.usdz"; sourceTree = "<group>"; };
 		CED3AA7A2B5D008200191002 /* F22.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F22.swift; sourceTree = "<group>"; };
-		CED3AA822B5D355200191002 /* F-22.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = "F-22.usdz"; sourceTree = "<group>"; };
 		CED3AA862B5D4DA300191002 /* ContainerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerNode.swift; sourceTree = "<group>"; };
 		CEED93A229E2B3EE0020DC53 /* AIM120.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIM120.swift; sourceTree = "<group>"; };
 		CEED93A629E3B2600020DC53 /* AircraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftStore.swift; sourceTree = "<group>"; };
@@ -763,7 +759,6 @@
 		CE06022F2A9B47C1001F8CC3 /* Sketchfab */ = {
 			isa = PBXGroup;
 			children = (
-				CED3AA822B5D355200191002 /* F-22.usdz */,
 				CED3AA762B5D005700191002 /* F-22_Raptor.usdz */,
 				CE0602312A9B480A001F8CC3 /* F-35A_Lightning_II.usdz */,
 			);
@@ -1294,7 +1289,6 @@
 				CE06020F2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */,
 				CE06022A2A9364A5001F8CC3 /* Pilot Specular.jpg in Resources */,
 				CE0602152A9364A5001F8CC3 /* Joint Strike Interior Illumination.jpg in Resources */,
-				CED3AA852B5D355200191002 /* F-22.usdz in Resources */,
 				CE0602092A9364A5001F8CC3 /* Joint Strike Body Reflection.jpg in Resources */,
 				CE0602122A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
 			);
@@ -1323,7 +1317,6 @@
 				CE3BFFCD28E573C80014A752 /* sphere.obj in Resources */,
 				CE2ED2B32998A45700C81F47 /* Diffuse.jpg in Resources */,
 				CE3BFFDC28E573D60014A752 /* quad.obj in Resources */,
-				CED3AA832B5D355200191002 /* F-22.usdz in Resources */,
 				CE06020A2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */,
 				CE0602102A9364A5001F8CC3 /* Joint Strike Interior Reflection.jpg in Resources */,
 				CE06021F2A9364A5001F8CC3 /* Joint Strike Body Illumination.jpg in Resources */,
@@ -1396,7 +1389,6 @@
 				CE06020E2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */,
 				CE06021D2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */,
 				CE2ED2AA2998A45500C81F47 /* FA-18F.mtl in Resources */,
-				CED3AA842B5D355200191002 /* F-22.usdz in Resources */,
 				CE0602262A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */,
 				CE2ED2A52998A45500C81F47 /* Dirty.jpg in Resources */,
 				CE2ED29D2998A44E00C81F47 /* FA-18F.obj in Resources */,

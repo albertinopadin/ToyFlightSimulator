@@ -66,15 +66,6 @@ struct Material {
         }
         
         for property in material.properties(with: semantic) {
-            let options: [MTKTextureLoader.Option: Any] = [
-                .origin: textureOrigin as Any,
-                .generateMipmaps: true,
-                .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-                .textureStorageMode: MTLStorageMode.private.rawValue
-            ]
-            
-//            print("Property type: \(property.type)")
-            
             switch property.type {
                 case .string:
                     print("Material property is string!")
@@ -82,6 +73,8 @@ struct Material {
                         if let cachedTexture = Material.StringToTextureCache[stringValue] {
                             newTexture = cachedTexture
                         } else {
+                            let options = Material.MakeTextureLoaderOptions(textureOrigin: textureOrigin, 
+                                                                            generateMipmaps: true)
                             newTexture = try? textureLoader.newTexture(name: stringValue,
                                                                        scaleFactor: 1.0,
                                                                        bundle: nil,
@@ -99,6 +92,8 @@ struct Material {
                         if let cachedTexture = Material.UrlToTextureCache[textureURL] {
                             newTexture = cachedTexture
                         } else {
+                            let options = Material.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
+                                                                            generateMipmaps: true)
                             newTexture = try? textureLoader.newTexture(URL: textureURL, options: options)
                             Material.UrlToTextureCache[textureURL] = newTexture
                         }
@@ -115,6 +110,8 @@ struct Material {
                     if let cachedTexture = Material.MdlToTextureCache[sourceTexture] {
                         newTexture = cachedTexture
                     } else {
+                        let options = Material.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
+                                                                        generateMipmaps: sourceTexture.mipLevelCount > 1)
                         newTexture = try? textureLoader.newTexture(texture: sourceTexture, options: options)
                         Material.MdlToTextureCache[sourceTexture] = newTexture
                     }
@@ -148,6 +145,16 @@ struct Material {
         }
         
         return newTexture
+    }
+    
+    public static func MakeTextureLoaderOptions(textureOrigin: MTKTextureLoader.Origin,
+                                                generateMipmaps: Bool) -> [MTKTextureLoader.Option: Any] {
+        return [
+            .origin: textureOrigin as Any,
+            .generateMipmaps: generateMipmaps,
+            .textureUsage: MTLTextureUsage.shaderRead.rawValue,
+            .textureStorageMode: MTLStorageMode.private.rawValue
+        ]
     }
     
     public static func MakeSolid2DTexture(device: MTLDevice,

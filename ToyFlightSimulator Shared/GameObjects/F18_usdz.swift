@@ -8,7 +8,6 @@
 import MetalKit
 
 class F18Usdz: Aircraft {
-    private let _cameraPositionOffset = float3(0, 10, 20)
     private var _spacePressed: Bool = false
     private var _mKeyPressed: Bool = false
     private var _nKeyPressed: Bool = false

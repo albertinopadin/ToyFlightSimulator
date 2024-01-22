@@ -6,7 +6,6 @@
 //
 
 class F35: Aircraft {
-    private let _cameraPositionOffset = float3(0, 10, 40)
     static let NAME: String = "F-35"
     
     init(scale: Float = 1.0, shouldUpdate: Bool = true) {

@@ -37,8 +37,10 @@ class Aircraft: GameObject {
                 containerNode.rotateX(deltaTurn * InputManager.ContinuousCommand(.Pitch))
                 containerNode.rotateY(deltaTurn * InputManager.ContinuousCommand(.Yaw))
                 
-                containerNode.moveAlongVector(getFwdVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveFwd))
-                containerNode.moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
+                containerNode.moveAlongVector(containerNode.getFwdVector(), 
+                                              distance: deltaMove * InputManager.ContinuousCommand(.MoveFwd))
+                containerNode.moveAlongVector(containerNode.getRightVector(), 
+                                              distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
             } else {
                 self.rotateZ(deltaTurn * InputManager.ContinuousCommand(.Roll))
                 self.rotateX(deltaTurn * InputManager.ContinuousCommand(.Pitch))
