@@ -13,15 +13,14 @@ class FlightboxScene: GameScene {
     
     override func buildScene() {
 //        let jet = F16(scale: 6.0)
-        let jet = F18()
+//        let jet = F18()
 //        let jet = F18Usdz()
-//        let jet = F35(scale: 0.1)
-//        let jet = F35()
-//        let jet = F22(scale: 0.125)
+//        let jet = F35(scale: 0.8)
+        let jet = F22(scale: 0.125)
         
         addCamera(attachedCamera)
         
-        let container = ContainerNode(camera: attachedCamera, cameraOffset: float3(0, 10, 20))
+        let container = ContainerNode(camera: attachedCamera, cameraOffset: jet.cameraOffset)
         container.addChild(jet)
         container.setPositionZ(4)
         container.setPositionY(10)
@@ -71,7 +70,7 @@ class FlightboxScene: GameScene {
 //        addLight(pl2)
         
         let f16 = F16(shouldUpdate: false)
-        f16.setPosition(0, jet.getPositionY() + 10, jet.getPositionZ() - 15)
+        f16.setPosition(0, container.getPositionY() + 10, container.getPositionZ() - 15)
         f16.rotateY(Float(-90).toRadians)
         f16.setScale(4.0)
         addChild(f16)
@@ -125,7 +124,7 @@ class FlightboxScene: GameScene {
                              color: float4(1, 0, 0, 1))
         addChild(debugLine)
         
-        let jetPos = jet.getPosition()
+        let jetPos = container.getPosition()
         
         var sphereBlueMaterial = ShaderMaterial()
         sphereBlueMaterial.color = float4(0.0, 0.0, 1.0, 0.4)

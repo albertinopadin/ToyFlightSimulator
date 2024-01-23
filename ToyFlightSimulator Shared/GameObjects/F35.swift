@@ -8,11 +8,17 @@
 class F35: Aircraft {
     static let NAME: String = "F-35"
     
+    override var cameraOffset: float3 {
+        return float3(0, 10, 24)
+    }
+    
     init(scale: Float = 1.0, shouldUpdate: Bool = true) {
         super.init(name: Self.NAME,
-                   meshType: .CGTrader_F35,
+                   meshType: .Sketchfab_F35,
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)
+        rotateY(Float(180).toRadians)
+        rotateX(Float(-90).toRadians)
     }
 }

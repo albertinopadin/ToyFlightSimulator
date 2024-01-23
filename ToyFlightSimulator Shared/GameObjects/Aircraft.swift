@@ -16,6 +16,10 @@ class Aircraft: GameObject {
     
     internal var gearDown: Bool = true
     
+    public var cameraOffset: float3 {
+        return float3(0, 10, 20)
+    }
+    
     init(name: String,
          meshType: MeshType,
          renderPipelineStateType: RenderPipelineStateType,

@@ -20,14 +20,41 @@ struct Material {
     
     init(_ mdlMaterial: MDLMaterial, textureLoader: MTKTextureLoader) {
         name = mdlMaterial.name
-        if let ambient = mdlMaterial.property(with: .emission)?.float3Value { shaderMaterial.ambient = ambient }
-        if let diffuse = mdlMaterial.property(with: .baseColor)?.float3Value { shaderMaterial.diffuse = diffuse }
-        if let specular = mdlMaterial.property(with: .specular)?.float3Value { shaderMaterial.specular = specular }
-        if let shininess = mdlMaterial.property(with: .specularExponent)?.floatValue { shaderMaterial.shininess = shininess }
-        
+        setShaderMaterialProperties(with: mdlMaterial, semantics: [.emission, .baseColor, .specular, .specularExponent])
         baseColorTexture = Material.Texture(for: .baseColor, in: mdlMaterial, textureLoader: textureLoader)
         normalMapTexture = Material.Texture(for: .tangentSpaceNormal, in: mdlMaterial, textureLoader: textureLoader)
         specularTexture = Material.Texture(for: .specular, in: mdlMaterial, textureLoader: textureLoader)
+    }
+    
+    private mutating func setShaderMaterialProperties(with mdlMaterial: MDLMaterial, semantics: [MDLMaterialSemantic]) {
+        for semantic in semantics {
+            if let materialProp = mdlMaterial.property(with: semantic) {
+                switch semantic {
+                    case .emission:
+                        let ambient = materialProp.float3Value
+                        if ambient != .zero {
+                            shaderMaterial.ambient = ambient
+                        }
+                    case .baseColor:
+                        let diffuse = materialProp.float3Value
+                        if diffuse != .zero {
+                            shaderMaterial.diffuse = diffuse
+                        }
+                    case .specular:
+                        let specular = materialProp.float3Value
+                        if specular != .zero {
+                            shaderMaterial.specular = specular
+                        }
+                    case .specularExponent:
+                        let shininess = materialProp.floatValue
+                        if shininess != .zero {
+                            shaderMaterial.shininess = shininess
+                        }
+                    default:
+                        print("[Material setShaderMaterialProperty] Unused semantic: \(semantic)")
+                }
+            }
+        }
     }
     
     public mutating func applyTextures(with renderCommandEncoder: MTLRenderCommandEncoder,
