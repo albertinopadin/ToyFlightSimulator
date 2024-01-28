@@ -34,14 +34,17 @@ deferred_directional_lighting_vertex(constant TFSSimpleVertex * vertices       [
     return out;
 }
 
-half4
-deferred_directional_lighting_fragment_common(QuadInOut             in,
-                                              constant LightData  & lightData,
-                                              float                 depth,
-                                              half4                 normal_shadow,
-                                              half4                 albedo_specular)
+// Only Version 2.3 of the macOS Metal shading language, where Apple Silicon was introduced,
+// and the iOS version of the shading language can use the GBufferData structure an an input.
+fragment AccumLightBuffer
+deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_in ]],
+                                       constant LightData & lightData [[ buffer(TFSBufferDirectionalLightData) ]],
+                                       GBufferData          GBuffer)
 {
-
+    float depth = GBuffer.depth;
+    half4 normal_shadow = GBuffer.normal_shadow;
+    half4 albedo_specular = GBuffer.albedo_specular;
+    
     half sun_diffuse_intensity = dot(normal_shadow.xyz, half3(lightData.eyeDirection.xyz));
 
     sun_diffuse_intensity = max(sun_diffuse_intensity, 0.h);
@@ -82,23 +85,8 @@ deferred_directional_lighting_fragment_common(QuadInOut             in,
     shadowSample = saturate(shadowSample);
 
     color *= shadowSample;
-
-    return half4(color, 1);
-}
-
-// Only Version 2.3 of the macOS Metal shading language, where Apple Silicon was introduced,
-// and the iOS version of the shading language can use the GBufferData structure an an input.
-fragment AccumLightBuffer
-deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_in ]],
-                                       constant LightData & lightData [[ buffer(TFSBufferDirectionalLightData) ]],
-                                       GBufferData          GBuffer)
-{
+    
     AccumLightBuffer output;
-    output.lighting =
-        deferred_directional_lighting_fragment_common(in,
-                                                      lightData,
-                                                      GBuffer.depth,
-                                                      GBuffer.normal_shadow,
-                                                      GBuffer.albedo_specular);
+    output.lighting = half4(color, 1);
     return output;
 }

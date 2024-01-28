@@ -98,7 +98,7 @@ struct LightData: sizeable {
     var eyeDirection: float4 = float4(0, 0, 0, 0)
     
     var position: float3 = float3(0, 0, 0)
-    var color: float3 = float3(0, 0, 0)
+    var color: float3 = float3(1, 1, 1)
     var brightness: Float = 1.0
     var radius: Float = 1.0
     

@@ -51,25 +51,33 @@ vertex ColorInOut gbuffer_vertex(VertexIn in [[ stage_in ]],
     
     float4 modelPosition = float4(in.position, 1.0);
     float4 worldPosition = modelConstants.modelMatrix * modelPosition;
-    // Make position a float4 to perform 4x4 matrix math on it
     float4 eyePosition = sceneConstants.viewMatrix * worldPosition;
+//    float4 eyePosition = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
     out.position = sceneConstants.projectionMatrix * eyePosition;
+//    out.position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
     out.eye_position = eyePosition.xyz;
     out.shadow_coord = (lightData.shadowTransformMatrix *
                         lightData.shadowViewProjectionMatrix *
                         worldPosition).xyz;
     
-//    // Rotate tangents, bitangents, and normals by the normal matrix
-//    half3x3 normalMatrix = half3x3(modelConstants.normalMatrix);
-//    // Calculate tangent, bitangent and normal in eye's space
-//    out.tangent = normalize(normalMatrix * half3(in.tangent));
-//    out.bitangent = -normalize(normalMatrix * half3(in.bitangent));
-//    out.normal = normalize(normalMatrix * half3(in.normal));
+    // Rotate tangents, bitangents, and normals by the normal matrix
+    half3x3 normalMatrix = half3x3(modelConstants.normalMatrix);
+    // Calculate tangent, bitangent and normal in eye's space
+    out.tangent = normalize(normalMatrix * half3(in.tangent));
+    out.bitangent = -normalize(normalMatrix * half3(in.bitangent));
+    out.normal = normalize(normalMatrix * half3(in.normal));
     
-    // Seems to look better:
-    out.tangent = normalize(half3(in.tangent));
-    out.bitangent = -normalize(half3(in.bitangent));
-    out.normal = normalize(half3(in.normal));
+//    float4 tangentWorldPosition = modelConstants.modelMatrix * float4(in.tangent, 0);
+//    float4 bitangentWorldPosition = modelConstants.modelMatrix * float4(in.bitangent, 0);
+//    float4 normalWorldPosition = modelConstants.modelMatrix * float4(in.normal, 0);
+//    
+//    out.tangent = normalize(half3(tangentWorldPosition.xyz));
+//    out.bitangent = -normalize(half3(bitangentWorldPosition.xyz));
+//    out.normal = normalize(half3(normalWorldPosition.xyz));
+    
+//    out.tangent = normalize(normalMatrix * half3(tangentWorldPosition.xyz));
+//    out.bitangent = -normalize(normalMatrix * half3(bitangentWorldPosition.xyz));
+//    out.normal = normalize(normalMatrix * half3(normalWorldPosition.xyz));
 
     return out;
 }
@@ -85,11 +93,11 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
     GBufferData gBuffer;
     
     // Calculate normal in eye space
-    half3 tangent_normal = normalize((normal.rgb * 2.0) - 1.0);
+    half3 tangent_normal = normalize((normal.xyz * 2.0) - 1.0);
 
-    half3 eye_normal = (tangent_normal.x * half3(in.tangent) +
-                        tangent_normal.y * half3(in.bitangent) +
-                        tangent_normal.z * half3(in.normal));
+    half3 eye_normal = (tangent_normal.x * in.tangent +
+                        tangent_normal.y * in.bitangent +
+                        tangent_normal.z * in.normal);
     
     eye_normal = normalize(eye_normal);
     
@@ -126,28 +134,20 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut        in           [[
     half4 normal_sample;
     half specular_contrib;
     
-    // Testing
-    constexpr sampler linearSampler(mip_filter::linear,
-                                    mag_filter::linear,
-                                    min_filter::linear);
-    
     if (material.useMaterialColor) {
         base_color_sample = half4(material.color);
     } else if (material.useBaseTexture) {
-//        base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord);
-        base_color_sample = baseColorMap.sample(linearSampler, in.tex_coord);
+        base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord.xy);
     }
     
     if (material.useNormalMapTexture) {
-//        normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
-        normal_sample = normalMap.sample(linearSampler, in.tex_coord.xy);
+        normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
     } else {
         normal_sample = half4(in.normal, 0.0);
     }
     
     if (material.useSpecularTexture) {
-//        specular_contrib = specularMap.sample(sampler2d, in.tex_coord).r;
-        specular_contrib = specularMap.sample(linearSampler, in.tex_coord).r;
+        specular_contrib = specularMap.sample(sampler2d, in.tex_coord.xy).r;
     } else {
         specular_contrib = 1.0;
     }
@@ -156,7 +156,7 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut        in           [[
     GBufferData gBuffer;
     
     // Calculate normal in eye space
-    half3 tangent_normal = normalize((normal_sample.rgb * 2.0) - 1.0);
+    half3 tangent_normal = normalize((normal_sample.xyz * 2.0) - 1.0);
     half3 eye_normal = (tangent_normal.x * in.tangent +
                         tangent_normal.y * in.bitangent +
                         tangent_normal.z * in.normal);
@@ -180,6 +180,7 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut        in           [[
     gBuffer.normal_shadow = half4(eye_normal.xyz, shadow_sample);
     
     gBuffer.depth = in.eye_position.z;
+//    gBuffer.depth = in.position.z;
     
     return gBuffer;
 }

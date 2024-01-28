@@ -42,8 +42,9 @@ vertex SkyboxInOut skybox_vertex(SkyboxVertex in [[ stage_in ]],
 
 fragment half4 skybox_fragment(SkyboxInOut in [[ stage_in ]],
                                texturecube<float> skyboxTexture [[ texture(TFSTextureIndexBaseColor) ]]) {
-    constexpr sampler linearSampler(mip_filter::linear, mag_filter::linear, min_filter::linear);
-    
+    constexpr sampler linearSampler(mip_filter::linear, 
+                                    mag_filter::linear,
+                                    min_filter::linear);
     float4 color = skyboxTexture.sample(linearSampler, in.texcoord);
     return half4(color);
 }

@@ -6,7 +6,9 @@
 //
 
 class FlightboxScene: GameScene {
-    var attachedCamera = AttachedCamera()
+    var attachedCamera = AttachedCamera(fieldOfView: 60.0,
+                                        near: 0.01,
+                                        far: 1000000.0)
     var sun = Sun(meshType: .Sphere)
     var quad = Quad()
     var capsule = CapsuleObject()
@@ -48,7 +50,7 @@ class FlightboxScene: GameScene {
             addChild(sky)
         }
         
-        sun.setPosition(1, 50, 5)
+        sun.setPosition(0, 25, 4)
         sun.setLightBrightness(1.0)
 //        sun.setLightBrightness(0.2)
         sun.setLightColor(1, 1, 1)

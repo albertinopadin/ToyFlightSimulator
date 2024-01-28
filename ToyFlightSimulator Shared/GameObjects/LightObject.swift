@@ -17,7 +17,9 @@ enum LightType: UInt32 {
 class LightObject: GameObject {
     var lightType: LightType
     var lightData = LightData()
-    let projectionMatrix: float4x4 = Transform.orthographicProjection(-100, 100, -100, 100, -100, 100)
+    // TODO: What should the light projection matrix be ???
+//    let projectionMatrix: float4x4 = Transform.orthographicProjection(-100, 100, -100, 100, -100, 100)
+    let projectionMatrix: float4x4 = Transform.orthographicProjection(-100, 100, -100, 100, 0.01, 1000)
     var viewMatrix: float4x4 {
         Transform.look(eye: self.modelMatrix.columns.3.xyz, target: .zero, up: Y_AXIS)
     }
@@ -56,7 +58,8 @@ class LightObject: GameObject {
         let position = self.modelMatrix.columns.3.xyz
         self.lightData.position = position
         self.lightData.eyeDirection = normalize(float4(-position, 0))
-        let shadowViewMatrix = Transform.look(eye: position, target: .zero, up: Y_AXIS)
+//        let shadowViewMatrix = Transform.look(eye: position, target: .zero, up: Y_AXIS)
+        let shadowViewMatrix = Transform.look(eye: position, target: self.lightData.eyeDirection.xyz * 10.0, up: Y_AXIS)
         self.lightData.shadowViewProjectionMatrix = projectionMatrix * shadowViewMatrix
     }
 }

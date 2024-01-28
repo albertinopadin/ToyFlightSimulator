@@ -29,5 +29,5 @@ fragment half4 skysphere_fragment(RasterizerData rd [[ stage_in ]],
                                   texture2d<float> skySphereTexture [[ texture(10) ]]) {
     float2 texCoord = rd.textureCoordinate;
     float4 color = skySphereTexture.sample(sampler2d, texCoord, level(0));
-    return half4(color.r, color.g, color.b, color.a);
+    return half4(color);
 }

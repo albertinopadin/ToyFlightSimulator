@@ -14,6 +14,7 @@ class SkyBox: GameObject {
         super.init(name: "SkyBox", meshType: .Skybox, renderPipelineStateType: .Skybox)
         _skyBoxTextureType = skyBoxTextureType
         setPosition(0, 0, -10)
+        setScale(1000)
     }
     
     override func render(with renderCommandEncoder: MTLRenderCommandEncoder,
