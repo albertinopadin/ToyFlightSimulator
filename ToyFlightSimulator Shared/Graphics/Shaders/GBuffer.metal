@@ -61,16 +61,30 @@ vertex ColorInOut gbuffer_vertex(VertexIn in [[ stage_in ]],
                         worldPosition).xyz;
     
     // Rotate tangents, bitangents, and normals by the normal matrix
-    half3x3 normalMatrix = half3x3(modelConstants.normalMatrix);
-    // Calculate tangent, bitangent and normal in eye's space
-    out.tangent = normalize(normalMatrix * half3(in.tangent));
-    out.bitangent = -normalize(normalMatrix * half3(in.bitangent));
-    out.normal = normalize(normalMatrix * half3(in.normal));
+//    half3x3 normalMatrix = half3x3(modelConstants.normalMatrix);
+//    // Calculate tangent, bitangent and normal in eye's space
+//    out.tangent = normalize(normalMatrix * half3(in.tangent));
+//    out.bitangent = -normalize(normalMatrix * half3(in.bitangent));
+//    out.normal = normalize(normalMatrix * half3(in.normal));
     
-//    float4 tangentWorldPosition = modelConstants.modelMatrix * float4(in.tangent, 0);
-//    float4 bitangentWorldPosition = modelConstants.modelMatrix * float4(in.bitangent, 0);
-//    float4 normalWorldPosition = modelConstants.modelMatrix * float4(in.normal, 0);
-//    
+//    // Calculate tangent, bitangent and normal in eye's space
+//    out.tangent = normalize(half3(modelConstants.normalMatrix * in.tangent));
+//    out.bitangent = -normalize(half3(modelConstants.normalMatrix * in.bitangent));
+//    out.normal = normalize(half3(modelConstants.normalMatrix * in.normal));
+    
+    // Calculate tangent, bitangent and normal in eye's space
+    out.tangent = half3(normalize(modelConstants.normalMatrix * in.tangent));
+    out.bitangent = half3(-normalize(modelConstants.normalMatrix * in.bitangent));
+    out.normal = half3(normalize(modelConstants.normalMatrix * in.normal));
+    
+//    out.tangent = half3(1, 0, 0);
+//    out.bitangent = half3(0, 0, 1);
+//    out.normal = half3(0, 1, 0);
+    
+//    float4 tangentWorldPosition = modelConstants.modelMatrix * float4(in.tangent, 1);
+//    float4 bitangentWorldPosition = modelConstants.modelMatrix * float4(in.bitangent, 1);
+//    float4 normalWorldPosition = modelConstants.modelMatrix * float4(in.normal, 1);
+    
 //    out.tangent = normalize(half3(tangentWorldPosition.xyz));
 //    out.bitangent = -normalize(half3(bitangentWorldPosition.xyz));
 //    out.normal = normalize(half3(normalWorldPosition.xyz));
@@ -86,7 +100,7 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
                                            depth2d<float> shadowMap [[ texture(TFSTextureIndexShadow) ]])
 {
     half4 base_color = half4(in.color);
-    half4 normal = half4(in.normal, 0);
+    half4 normal = half4(in.normal, 1.0);
     half specularContribution = 1.0;  // Hardcoded for base
     
     // Fill in on-chip geometry buffer data
@@ -143,7 +157,7 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut        in           [[
     if (material.useNormalMapTexture) {
         normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
     } else {
-        normal_sample = half4(in.normal, 0.0);
+        normal_sample = half4(in.normal, 1.0);
     }
     
     if (material.useSpecularTexture) {
@@ -157,11 +171,9 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut        in           [[
     
     // Calculate normal in eye space
     half3 tangent_normal = normalize((normal_sample.xyz * 2.0) - 1.0);
-    half3 eye_normal = (tangent_normal.x * in.tangent +
-                        tangent_normal.y * in.bitangent +
-                        tangent_normal.z * in.normal);
-
-    eye_normal = normalize(eye_normal);
+    half3 eye_normal = normalize(tangent_normal.x * in.tangent +
+                                 tangent_normal.y * in.bitangent +
+                                 tangent_normal.z * in.normal);
     
     constexpr sampler shadowSampler(coord::normalized,
                                     filter::linear,

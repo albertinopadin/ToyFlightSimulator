@@ -30,6 +30,7 @@ enum MeshType {
     case Sketchfab_F22
     
     case Icosahedron
+    case Temple
 }
 
 class MeshLibrary: Library<MeshType, Mesh> {
@@ -57,6 +58,7 @@ class MeshLibrary: Library<MeshType, Mesh> {
         _library.updateValue(UsdMesh("F-22_Raptor"), forKey: .Sketchfab_F22)
         
         _library.updateValue(IcosahedronMesh(), forKey: .Icosahedron)
+        _library.updateValue(ObjMesh("Temple"), forKey: .Temple)
     }
     
     override subscript(type: MeshType) -> Mesh {

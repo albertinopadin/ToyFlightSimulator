@@ -44,10 +44,13 @@ deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_i
     float depth = GBuffer.depth;
     half4 normal_shadow = GBuffer.normal_shadow;
     half4 albedo_specular = GBuffer.albedo_specular;
+    half3 light_eye_direction = half3(lightData.eyeDirection.xyz);
     
-    half sun_diffuse_intensity = dot(normal_shadow.xyz, half3(lightData.eyeDirection.xyz));
-
-    sun_diffuse_intensity = max(sun_diffuse_intensity, 0.h);
+    // TODO: This calculation seems off:
+    half sun_diffuse_intensity = dot(normal_shadow.xyz, light_eye_direction);
+//    sun_diffuse_intensity = max(sun_diffuse_intensity, 0.h);
+//    sun_diffuse_intensity = max(sun_diffuse_intensity, 1.h);
+    sun_diffuse_intensity = max(sun_diffuse_intensity, half(lightData.diffuseIntensity));
 
     half3 sun_color = half3(lightData.color.xyz);
 
@@ -70,6 +73,7 @@ deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_i
     half specular_shininess = albedo_specular.w * shininess;
 
     half specular_factor = powr(max(dot(half3(normal_shadow.xyz), half3(halfway_vector)), 0.0h), specular_intensity);
+//    half specular_factor = powr(max(dot(half3(normal_shadow.xyz), half3(halfway_vector)), 0.1h), specular_intensity);
 
     half3 specular_contribution = specular_factor * half3(albedo_specular.xyz) * specular_shininess * sun_color;
 

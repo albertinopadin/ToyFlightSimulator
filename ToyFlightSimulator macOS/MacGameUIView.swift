@@ -12,6 +12,7 @@ struct MacGameUIView: View {
     
     @State private var viewSize: CGSize = .zero
     @State private var shouldDisplayMenu: Bool = false
+    @State private var shouldDisplayGameStats: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
     
     var body: some View {
@@ -24,7 +25,9 @@ struct MacGameUIView: View {
                     ZStack(alignment: .top) {
                         RoundedRectangle(cornerRadius: 25.0).overlay {
                             Label("Menu", systemImage: "airplane")
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                                .frame(maxWidth: .infinity, 
+                                       maxHeight: .infinity,
+                                       alignment: .topLeading)
                                 .foregroundColor(.white)
                                 .padding(10.0)
                             
@@ -62,13 +65,40 @@ struct MacGameUIView: View {
                     .transition(.move(edge: .top))
                     .zIndex(100)  // Setting zIndex so transition is always on top
                 }
+                
+                if shouldDisplayGameStats {
+                    ZStack(alignment: .top) {
+                        RoundedRectangle(cornerRadius: 15.0).overlay {
+                            Label("Game Stats", systemImage: "airplane")
+                                .frame(maxWidth: .infinity,
+                                       maxHeight: .infinity,
+                                       alignment: .top)
+                                .foregroundColor(.white)
+                                .padding(10.0)
+                            
+                            Text("Aspect Ratio: \(Renderer.AspectRatio)")
+                                .foregroundColor(.white)
+                                .padding(10)
+                        }
+                        .frame(width: 200,
+                               height: 100,
+                               alignment: .topTrailing)
+                        .padding(10)
+                        .foregroundColor(.black.opacity(0.80))
+                    }
+                    .frame(width: viewSize.width,
+                           height: viewSize.height,
+                           alignment: .topTrailing)
+                    .transition(.move(edge: .trailing))
+                    .zIndex(90)
+                }
             }
             .onAppear {
                 print("On Appear geometry size: \(geometry.size)")
                 viewSize = getViewSize(geometrySize: geometry.size)
                 print("On Appear viewSize: \(viewSize)")
             }
-            .onChange(of: geometry.size) { newSize in
+            .onChange(of: geometry.size) { oldSize, newSize in
                 viewSize = newSize
                 print("Geometry changed size: \(newSize)")
             }
@@ -80,6 +110,13 @@ struct MacGameUIView: View {
                     SceneManager.paused.toggle()
                     withAnimation {
                         shouldDisplayMenu.toggle()
+                    }
+                }
+                
+                // TODO: Certain keys (like shift) aren't detected:
+                InputManager.handleKeyPressedDebounced(keyCode: .y) {
+                    withAnimation {
+                        shouldDisplayGameStats.toggle()
                     }
                 }
             }

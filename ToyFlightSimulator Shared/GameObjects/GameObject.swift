@@ -37,7 +37,10 @@ class GameObject: Node, Renderable {
     override func update() {
         super.update()
         _modelConstants.modelMatrix = self.modelMatrix
-        _modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
+//        _modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
+        // TODO: Why does this look better (more appropriate model lighting) for
+        //       some models (F-22, F-35) but not others (F-18) ???
+        _modelConstants.normalMatrix = -Transform.normalMatrix(from: self.modelMatrix)
     }
     
     func encodeRender(using renderEncoder: MTLRenderCommandEncoder, label: String, _ encodingBlock: () -> Void) {

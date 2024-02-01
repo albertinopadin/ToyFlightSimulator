@@ -19,6 +19,7 @@ class FlightboxScene: GameScene {
 //        let jet = F18Usdz()
 //        let jet = F35(scale: 0.8)
         let jet = F22(scale: 0.125)
+//        let jet = Temple(scale: 0.02)
         
         addCamera(attachedCamera)
         
@@ -50,11 +51,13 @@ class FlightboxScene: GameScene {
             addChild(sky)
         }
         
-        sun.setPosition(0, 25, 4)
+        // TODO: Why does position with z = 0 result in much darker lighting ???
+        sun.setPosition(0, 100, 4)
         sun.setLightBrightness(1.0)
 //        sun.setLightBrightness(0.2)
         sun.setLightColor(1, 1, 1)
         sun.setLightAmbientIntensity(0.04)
+        sun.setLightDiffuseIntensity(0.25)
         addLight(sun)
         
         let pl = PointLightObject()
