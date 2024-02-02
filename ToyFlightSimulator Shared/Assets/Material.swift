@@ -12,11 +12,15 @@ struct Material {
     public static let UrlToTextureCache = TFSCache<URL, MTLTexture>()
     public static let MdlToTextureCache = TFSCache<MDLTexture, MTLTexture>()
     
-    public var name: String
+    public var name: String = "material"
     public var shaderMaterial = ShaderMaterial()
     public var baseColorTexture: MTLTexture?
     public var normalMapTexture: MTLTexture?
     public var specularTexture: MTLTexture?
+    
+    init(_ shaderMaterial: ShaderMaterial) {
+        self.shaderMaterial = shaderMaterial
+    }
     
     init(_ mdlMaterial: MDLMaterial, textureLoader: MTKTextureLoader) {
         name = mdlMaterial.name
@@ -97,16 +101,19 @@ struct Material {
                 case .string:
                     print("Material property is string!")
                     if let stringValue = property.stringValue {
+                        print("Material property string value: \(stringValue)")
                         if let cachedTexture = Material.StringToTextureCache[stringValue] {
                             newTexture = cachedTexture
                         } else {
                             let options = Material.MakeTextureLoaderOptions(textureOrigin: textureOrigin, 
                                                                             generateMipmaps: true)
-                            newTexture = try? textureLoader.newTexture(name: stringValue,
-                                                                       scaleFactor: 1.0,
-                                                                       bundle: nil,
-                                                                       options: options)
-                            Material.StringToTextureCache[stringValue] = newTexture
+                            if let tex = try? textureLoader.newTexture(name: stringValue,
+                                                                      scaleFactor: 1.0,
+                                                                      bundle: nil,
+                                                                      options: options) {
+                                newTexture = tex
+                                Material.StringToTextureCache[stringValue] = newTexture
+                            }
                         }
                     }
                 case .URL:
@@ -121,8 +128,10 @@ struct Material {
                         } else {
                             let options = Material.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
                                                                             generateMipmaps: true)
-                            newTexture = try? textureLoader.newTexture(URL: textureURL, options: options)
-                            Material.UrlToTextureCache[textureURL] = newTexture
+                            if let tex = try? textureLoader.newTexture(URL: textureURL, options: options) {
+                                newTexture = tex
+                                Material.UrlToTextureCache[textureURL] = newTexture
+                            }
                         }
                     }
                 case .texture:
@@ -132,15 +141,16 @@ struct Material {
                     }
                     
                     let sourceTexture = property.textureSamplerValue!.texture!
-    //                print("sourceTexture: \(sourceTexture.debugDescription)")
                 
                     if let cachedTexture = Material.MdlToTextureCache[sourceTexture] {
                         newTexture = cachedTexture
                     } else {
                         let options = Material.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
                                                                         generateMipmaps: sourceTexture.mipLevelCount > 1)
-                        newTexture = try? textureLoader.newTexture(texture: sourceTexture, options: options)
-                        Material.MdlToTextureCache[sourceTexture] = newTexture
+                        if let tex = try? textureLoader.newTexture(texture: sourceTexture, options: options) {
+                            newTexture = tex
+                            Material.MdlToTextureCache[sourceTexture] = newTexture
+                        }
                     }
                 
                 case .color:

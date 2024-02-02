@@ -78,7 +78,7 @@ struct LightData {
     float4x4 viewProjectionMatrix;
     float4x4 shadowViewProjectionMatrix;
     float4x4 shadowTransformMatrix;
-    float4 eyeDirection;
+    float3 lightEyeDirection;
     
     float3 position;
     float3 color;

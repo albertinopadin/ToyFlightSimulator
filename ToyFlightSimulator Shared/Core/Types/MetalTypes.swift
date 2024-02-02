@@ -95,7 +95,7 @@ struct LightData: sizeable {
     var viewProjectionMatrix: float4x4 = matrix_identity_float4x4
     var shadowViewProjectionMatrix: float4x4 = matrix_identity_float4x4
     var shadowTransformMatrix: float4x4 = matrix_identity_float4x4
-    var eyeDirection: float4 = float4(0, 0, 0, 0)
+    var lightEyeDirection: float3 = float3(0, 0, 0)
     
     var position: float3 = float3(0, 0, 0)
     var color: float3 = float3(1, 1, 1)

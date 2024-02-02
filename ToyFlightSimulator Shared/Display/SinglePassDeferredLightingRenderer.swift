@@ -93,6 +93,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setVertexBuffer(_quadVertexBuffer,
                                           offset: 0,
                                           index: Int(TFSBufferIndexMeshPositions.rawValue))
+            SceneManager.SetSceneConstants(with: renderEncoder)
             SceneManager.SetDirectionalLightConstants(with: renderEncoder)
             
             // Draw full screen quad
@@ -144,7 +145,8 @@ class SinglePassDeferredLightingRenderer: Renderer {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ShadowGeneration])
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.ShadowGeneration])
                 renderEncoder.setCullMode(.back)
-                renderEncoder.setDepthBias(0.015, slopeScale: 7, clamp: 0.02)
+//                renderEncoder.setDepthBias(0.015, slopeScale: 7, clamp: 0.02)
+                renderEncoder.setDepthBias(0.000015, slopeScale: 1, clamp: 0.02)
 //                renderEncoder.setDepthBias(0.015, slopeScale: 1, clamp: 0.02)
 //                renderEncoder.setDepthBias(0.001, slopeScale: 2, clamp: 1)
 //                renderEncoder.setDepthBias(0.001, slopeScale: 1, clamp: 0.02)

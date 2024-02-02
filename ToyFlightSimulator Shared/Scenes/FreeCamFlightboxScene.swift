@@ -44,10 +44,6 @@ class FreeCamFlightboxScene: GameScene {
 //        f18.setScale(0.25)  // TODO: setScale doesn't work
         jet.setPosition(0, 10, 0)
         
-        // For F-22:
-        jet.rotateX(Float(90).toRadians)
-        jet.rotateZ(Float(90).toRadians)
-        
         jet.setScale(0.125)
         addChild(jet)
         

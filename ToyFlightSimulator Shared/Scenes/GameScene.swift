@@ -71,7 +71,8 @@ class GameScene: Node {
         _sceneConstants.projectionMatrix = _cameraManager.currentCamera.projectionMatrix
         _sceneConstants.projectionMatrixInverse = _cameraManager.currentCamera.projectionMatrix.inverse
         _sceneConstants.totalGameTime = GameTime.TotalGameTime
-        _sceneConstants.cameraPosition = _cameraManager.currentCamera.getPosition()
+//        _sceneConstants.cameraPosition = _cameraManager.currentCamera.getPosition()
+        _sceneConstants.cameraPosition = _cameraManager.currentCamera.modelMatrix.columns.3.xyz
         super.update()
     }
     
@@ -82,7 +83,11 @@ class GameScene: Node {
     }
     
     func setDirectionalLightConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
-        var directionalLight = _lightManager.getDirectionalLightData().first!
+//        let cameraPosition = _cameraManager.currentCamera.getPosition()
+        let cameraPosition = _cameraManager.currentCamera.modelMatrix.columns.3.xyz
+        let cameraViewMatrix = _cameraManager.currentCamera.viewMatrix
+        var directionalLight = _lightManager.getDirectionalLightData(cameraPosition: cameraPosition,
+                                                                     viewMatrix: cameraViewMatrix).first!
         renderCommandEncoder.setVertexBytes(&directionalLight,
                                             length: LightData.stride,
                                             index: Int(TFSBufferDirectionalLightData.rawValue))
@@ -107,7 +112,12 @@ class GameScene: Node {
     
     // TODO: This method could possibly be merged/unified with setDirectionalLightConstants
     func setDirectionalLightData(with renderCommandEncoder: MTLRenderCommandEncoder) {
-        _lightManager.setDirectionalLightData(renderCommandEncoder)
+//        _lightManager.setDirectionalLightData(renderCommandEncoder,
+//                                              cameraPosition: _cameraManager.currentCamera.getPosition())
+        
+        _lightManager.setDirectionalLightData(renderCommandEncoder,
+                                              cameraPosition: _cameraManager.currentCamera.modelMatrix.columns.3.xyz,
+                                              viewMatrix: _cameraManager.currentCamera.viewMatrix)
     }
     
     func setPointLightData(with renderCommandEncoder: MTLRenderCommandEncoder) {

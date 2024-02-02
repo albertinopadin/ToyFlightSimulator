@@ -14,41 +14,25 @@ class LightManager {
         self._lightObjects.append(lightObject)
     }
     
-//    private func gatherLightData() -> [LightData] {
-//        var result: [LightData] = []
-//        for lightObject in _lightObjects {
-//            result.append(lightObject.lightData)
-//        }
-//        return result
-//    }
-    
     public func getLightObjects(lightType: LightType) -> [LightObject] {
         return _lightObjects.filter { $0.lightType == lightType }
     }
-    
-//    func getDirectionalLightData() -> [LightData] {
-//        var result: [LightData] = []
-//        for _lightObject in _lightObjects {
-//            if _lightObject.type == .Directional {
-//                result.append(_lightObject.lightData)
-//            }
-//        }
-//        return result
-//    }
 
-    public func getDirectionalLightData() -> [LightData] {
-        return getLightObjects(lightType: .Directional).map { $0.lightData }
+    public func getDirectionalLightData(cameraPosition: float3, viewMatrix: float4x4) -> [LightData] {
+        let lightObjs = getLightObjects(lightType: .Directional)
+//        lightObjs.forEach { $0.lightData.lightEyeDirection = normalize(cameraPosition - $0.getPosition()) }
+        lightObjs.forEach { $0.lightData.lightEyeDirection = normalize(viewMatrix * float4(-$0.getPosition(), 1)).xyz }
+        return lightObjs.map { $0.lightData }
     }
     
     public func getPointLightData() -> [LightData] {
         return getLightObjects(lightType: .Point).map { $0.lightData }
-//        let pointLights = getLightObjects(lightType: .Point)
-//        print("Num point lights: \(pointLights.count)")
-//        return pointLights.map { $0.lightData }
     }
     
-    public func setDirectionalLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
-        var lightData = getDirectionalLightData()
+    public func setDirectionalLightData(_ renderCommandEncoder: MTLRenderCommandEncoder,
+                                        cameraPosition: float3,
+                                        viewMatrix: float4x4) {
+        var lightData = getDirectionalLightData(cameraPosition: cameraPosition, viewMatrix: viewMatrix)
         var lightCount = lightData.count
         renderCommandEncoder.setFragmentBytes(&lightCount, 
                                               length: Int32.size,

@@ -21,7 +21,8 @@ class LightObject: GameObject {
 //    let projectionMatrix: float4x4 = Transform.orthographicProjection(-100, 100, -100, 100, -100, 100)
     let projectionMatrix: float4x4 = Transform.orthographicProjection(-100, 100, -100, 100, 0.01, 1000)
     var viewMatrix: float4x4 {
-        Transform.look(eye: self.modelMatrix.columns.3.xyz, target: .zero, up: Y_AXIS)
+//        Transform.look(eye: self.modelMatrix.columns.3.xyz, target: .zero, up: Y_AXIS)
+        Transform.look(eye: self.getPosition(), target: .zero, up: Y_AXIS)
     }
     
     // When calculating texture coordinates to sample from shadow map, flip the y/t coordinate and
@@ -55,11 +56,19 @@ class LightObject: GameObject {
         self.lightData.type = self.lightType.rawValue
         self.lightData.modelMatrix = self.modelMatrix
         self.lightData.viewProjectionMatrix = projectionMatrix * viewMatrix
-        let position = self.modelMatrix.columns.3.xyz
-        self.lightData.position = position
-        self.lightData.eyeDirection = normalize(float4(-position, 0))
+//        let position = self.modelMatrix.columns.3.xyz
+//        self.lightData.position = position
+//        self.lightData.eyeDirection = normalize(float4(-position, 1))
+        
+//        print("[LightObject update]")
+//        print("self.getPosition: \(self.getPosition())")
+//        print("self.modelMatrix.columns.3.xyz: \(self.modelMatrix.columns.3.xyz)")
+        
+        self.lightData.position = self.getPosition()
+//        self.lightData.eyeDirection = normalize(float4(-self.getPosition(), 1))
 //        let shadowViewMatrix = Transform.look(eye: position, target: .zero, up: Y_AXIS)
-        let shadowViewMatrix = Transform.look(eye: position, target: self.lightData.eyeDirection.xyz * 10.0, up: Y_AXIS)
+//        let shadowViewMatrix = Transform.look(eye: position, target: self.lightData.eyeDirection.xyz * 10.0, up: Y_AXIS)
+        let shadowViewMatrix = Transform.look(eye: self.getPosition(), target: .zero, up: Y_AXIS)
         self.lightData.shadowViewProjectionMatrix = projectionMatrix * shadowViewMatrix
     }
 }
