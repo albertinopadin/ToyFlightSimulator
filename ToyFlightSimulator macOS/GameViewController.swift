@@ -23,15 +23,6 @@ import SwiftUI
 
 // Our macOS specific view controller
 class GameViewController: NSHostingController<MacGameUIView> {
-    var gameView: GameView!
-    var renderer: Renderer!
-    // TODO:
-    // - Create Metal device (& set it on GameView)
-    // - Set view prefs (clearColor, colorPixelFormat, depthStencilPixelFormat (?), framebufferOnly)
-    // - Start Engine
-    // - Instantiate Renderer -> pass GameView as param so it can set itself as MtkViewDelegate
-    // - Set initial scene
-    
     required init?(coder: NSCoder) {
         print("GameViewController init with coder")
         super.init(coder: coder, rootView: MacGameUIView())

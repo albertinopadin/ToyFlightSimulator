@@ -50,13 +50,16 @@ struct MacGameUIView: View {
                                     }
                                     .background(.blue)
                                 }
-                                .frame(width: geometry.size.width - 10, height: geometry.size.height - 10, alignment: .top)
+                                .frame(width: geometry.size.width - 10, 
+                                       height: geometry.size.height - 10,
+                                       alignment: .top)
                                 .foregroundColor(.white)
                                 .padding(10)
                             }
                         }
                         .frame(width: viewSize.width - (viewSize.width * 0.10),
-                                height: viewSize.height - (viewSize.height * 0.10))                        .foregroundColor(.black.opacity(0.95))
+                               height: viewSize.height - (viewSize.height * 0.10))
+                        .foregroundColor(.black.opacity(0.95))
                         
                     }
                     .frame(width: viewSize.width,

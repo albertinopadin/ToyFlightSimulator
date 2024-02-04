@@ -18,9 +18,8 @@ class LightManager {
         return _lightObjects.filter { $0.lightType == lightType }
     }
 
-    public func getDirectionalLightData(cameraPosition: float3, viewMatrix: float4x4) -> [LightData] {
+    public func getDirectionalLightData(viewMatrix: float4x4) -> [LightData] {
         let lightObjs = getLightObjects(lightType: .Directional)
-//        lightObjs.forEach { $0.lightData.lightEyeDirection = normalize(cameraPosition - $0.getPosition()) }
         lightObjs.forEach { $0.lightData.lightEyeDirection = normalize(viewMatrix * float4(-$0.getPosition(), 1)).xyz }
         return lightObjs.map { $0.lightData }
     }
@@ -32,7 +31,7 @@ class LightManager {
     public func setDirectionalLightData(_ renderCommandEncoder: MTLRenderCommandEncoder,
                                         cameraPosition: float3,
                                         viewMatrix: float4x4) {
-        var lightData = getDirectionalLightData(cameraPosition: cameraPosition, viewMatrix: viewMatrix)
+        var lightData = getDirectionalLightData(viewMatrix: viewMatrix)
         var lightCount = lightData.count
         renderCommandEncoder.setFragmentBytes(&lightCount, 
                                               length: Int32.size,

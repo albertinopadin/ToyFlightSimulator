@@ -1,5 +1,5 @@
 //
-//  ShaderTypes.metal
+//  ShaderTypes.h
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 1/21/23.

@@ -225,7 +225,7 @@ class Renderer: NSObject, MTKViewDelegate {
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         print("[Renderer drawableSizeWillChange]")
         // When window is resized
-        if size.width.isNaN && !size.height.isNaN {
+        if !size.width.isNaN && !size.height.isNaN {
             updateScreenSize(size: size)
         }
     }

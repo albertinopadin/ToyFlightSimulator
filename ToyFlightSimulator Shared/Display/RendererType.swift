@@ -8,4 +8,5 @@
 enum RendererType {
     case OrderIndependentTransparency
     case SinglePassDeferredLighting
+    case ForwardPlusTileShading
 }

@@ -139,6 +139,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     //       - Seeing shadow of bombs and landing gear through aircraft
     //       - Shadows on 'back side' of jet look odd
     //       - If I pitch or roll jet, shadows look very different on adjacent panels in mesh.
+    // ADDENDUM: Might fix issues if I implement soft shadows...
     func encodeShadowMapPass(into commandBuffer: MTLCommandBuffer) {
         encodePass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Map Pass") { renderEncoder in
             encodeStage(using: renderEncoder, label: "Shadow Generation Stage") {
@@ -146,10 +147,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.ShadowGeneration])
                 renderEncoder.setCullMode(.back)
 //                renderEncoder.setDepthBias(0.015, slopeScale: 7, clamp: 0.02)
-                renderEncoder.setDepthBias(0.000015, slopeScale: 1, clamp: 0.02)
-//                renderEncoder.setDepthBias(0.015, slopeScale: 1, clamp: 0.02)
-//                renderEncoder.setDepthBias(0.001, slopeScale: 2, clamp: 1)
-//                renderEncoder.setDepthBias(0.001, slopeScale: 1, clamp: 0.02)
+                renderEncoder.setDepthBias(0.1, slopeScale: 1, clamp: 0.0)
                 SceneManager.SetDirectionalLightConstants(with: renderEncoder)
                 SceneManager.RenderShadows(with: renderEncoder)
             }

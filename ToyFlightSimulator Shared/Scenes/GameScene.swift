@@ -83,11 +83,7 @@ class GameScene: Node {
     }
     
     func setDirectionalLightConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
-//        let cameraPosition = _cameraManager.currentCamera.getPosition()
-        let cameraPosition = _cameraManager.currentCamera.modelMatrix.columns.3.xyz
-        let cameraViewMatrix = _cameraManager.currentCamera.viewMatrix
-        var directionalLight = _lightManager.getDirectionalLightData(cameraPosition: cameraPosition,
-                                                                     viewMatrix: cameraViewMatrix).first!
+        var directionalLight = _lightManager.getDirectionalLightData(viewMatrix: _sceneConstants.skyViewMatrix).first!
         renderCommandEncoder.setVertexBytes(&directionalLight,
                                             length: LightData.stride,
                                             index: Int(TFSBufferDirectionalLightData.rawValue))

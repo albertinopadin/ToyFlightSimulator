@@ -282,6 +282,10 @@
 		CE41279E2B6B66D200B01AEA /* Temple.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE4127932B6B3F0300B01AEA /* Temple.obj */; };
 		CE41279F2B6B66D300B01AEA /* Temple.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE4127932B6B3F0300B01AEA /* Temple.obj */; };
 		CE4127A02B6B66D300B01AEA /* Temple.obj in Resources */ = {isa = PBXBuildFile; fileRef = CE4127932B6B3F0300B01AEA /* Temple.obj */; };
+		CE4127A92B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */; };
+		CE4127AA2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */; };
+		CE4127AB2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */; };
+		CE4127AC2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */; };
 		CE452FAE2A7CAC0F001945B9 /* NodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE452FAD2A7CAC0F001945B9 /* NodeTests.swift */; };
 		CE452FAF2A7CB365001945B9 /* Node.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7D28E2FCF50014A752 /* Node.swift */; };
 		CE452FB02A7CB3FF001945B9 /* RenderPipelineStateLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF5728E1B2AD0014A752 /* RenderPipelineStateLibrary.swift */; };
@@ -637,6 +641,7 @@
 		CE4127922B6B3F0300B01AEA /* Temple.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Temple.mtl; sourceTree = "<group>"; };
 		CE4127932B6B3F0300B01AEA /* Temple.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Temple.obj; sourceTree = "<group>"; };
 		CE4127962B6B3F2900B01AEA /* Temple.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Temple.swift; sourceTree = "<group>"; };
+		CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForwardPlusTileShadingRenderer.swift; sourceTree = "<group>"; };
 		CE452FA42A7CA810001945B9 /* ToyFlightSimulatorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ToyFlightSimulatorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE452FAD2A7CAC0F001945B9 /* NodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeTests.swift; sourceTree = "<group>"; };
 		CE4530492A7F3823001945B9 /* ToyFlightSimulatorIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToyFlightSimulatorIOSApp.swift; sourceTree = "<group>"; };
@@ -1162,12 +1167,13 @@
 		CE7F48BC28BB937F0082B197 /* Display */ = {
 			isa = PBXGroup;
 			children = (
+				CE4530502A7F3EBF001945B9 /* FPS.swift */,
 				CE7F48D228BCB4DD0082B197 /* GameView.swift */,
 				CE7F483928B76FF60082B197 /* Renderer.swift */,
+				CE2ED2BB299CB8AA00C81F47 /* RendererType.swift */,
 				CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */,
 				CE886A4A298525D00013062D /* SinglePassDeferredLightingRenderer.swift */,
-				CE2ED2BB299CB8AA00C81F47 /* RendererType.swift */,
-				CE4530502A7F3EBF001945B9 /* FPS.swift */,
+				CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */,
 			);
 			path = Display;
 			sourceTree = "<group>";
@@ -1471,6 +1477,7 @@
 				CE452FDB2A7CB489001945B9 /* SingleSMMesh.swift in Sources */,
 				CE452FB82A7CB440001945B9 /* Controller.swift in Sources */,
 				CE452FD12A7CB47F001945B9 /* GBuffer.metal in Sources */,
+				CE4127AC2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */,
 				CE4530052A7CB4B5001945B9 /* Renderer.swift in Sources */,
 				CE4530042A7CB4B5001945B9 /* GameView.swift in Sources */,
 				CE452FCD2A7CB47F001945B9 /* ShadowShaders.metal in Sources */,
@@ -1584,6 +1591,7 @@
 				CE2ED25D299223E900C81F47 /* Submesh.swift in Sources */,
 				CE3BFF8228E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CE3BFF2C28E0575A0014A752 /* InstancedShaders.metal in Sources */,
+				CE4127A92B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */,
 				CEB84E7B2A24AC3300BEF778 /* Controller.swift in Sources */,
 				CE45304A2A7F3823001945B9 /* ToyFlightSimulatorIOSApp.swift in Sources */,
 				CE76931B29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
@@ -1751,6 +1759,7 @@
 				CE7F483B28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE7F48D428BCB4DD0082B197 /* GameView.swift in Sources */,
 				CEC0C59F2B53BEDF00863C38 /* UsdMesh.swift in Sources */,
+				CE4127AA2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */,
 				CE7F483728B76FE30082B197 /* Shaders.metal in Sources */,
 				CE886A442984FFB00013062D /* GBuffer.metal in Sources */,
 			);
@@ -1847,6 +1856,7 @@
 				CE3BFF3828E059950014A752 /* Keycodes.swift in Sources */,
 				CE0EF72B2A4705FE00F54A2C /* Throttle.swift in Sources */,
 				CE56921A28EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
+				CE4127AB2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */,
 				CE3BFFA128E452480014A752 /* DebugCamera.swift in Sources */,
 				CE3BFF3F28E059B60014A752 /* InstancedShaders.metal in Sources */,
 				CEAB3842297CDE770087F7CB /* ShadowShaders.metal in Sources */,
