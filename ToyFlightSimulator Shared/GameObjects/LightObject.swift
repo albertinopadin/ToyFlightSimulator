@@ -7,12 +7,12 @@
 
 import MetalKit
 
-enum LightType: UInt32 {
-    case Ambient
-    case Directional
-    case Omni
-    case Point
-}
+//enum LightType: UInt32 {
+//    case Ambient
+//    case Directional
+//    case Omni
+//    case Point
+//}
 
 class LightObject: GameObject {
     var lightType: LightType
@@ -34,7 +34,7 @@ class LightObject: GameObject {
     private var _meshType: MeshType = .None
     
     // TODO: What RPS is appropriate for a LightObject ???
-    init(name: String, lightType: LightType = .Directional, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
+    init(name: String, lightType: LightType = Directional, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         self.lightType = lightType
         super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
         self.lightData.shadowTransformMatrix = shadowTranslate * shadowScale
@@ -42,7 +42,7 @@ class LightObject: GameObject {
     
     // TODO: What RPS is appropriate for a LightObject ???
     init(name: String,
-         lightType: LightType = .Directional,
+         lightType: LightType = Directional,
          meshType: MeshType = .Sphere,
          renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         self.lightType = lightType
@@ -53,7 +53,7 @@ class LightObject: GameObject {
     
     override func update() {
         super.update()
-        self.lightData.type = self.lightType.rawValue
+        self.lightData.type = self.lightType
         self.lightData.modelMatrix = self.modelMatrix
         self.lightData.viewProjectionMatrix = projectionMatrix * viewMatrix
 //        let position = self.modelMatrix.columns.3.xyz

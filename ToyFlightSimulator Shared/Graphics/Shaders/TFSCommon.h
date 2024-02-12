@@ -50,13 +50,13 @@ typedef struct {
     simd_float3 diffuse;
     simd_float3 specular;
     float shininess;
-} Material;
+} ShaderMaterial;
 
 typedef enum {
-    LightTypeAmbient,
-    LightTypeDirectional,
-    LightTypeOmni,
-    LightTypePoint
+    Ambient,
+    Directional,
+    Omni,
+    Point
 } LightType;
 
 typedef struct {

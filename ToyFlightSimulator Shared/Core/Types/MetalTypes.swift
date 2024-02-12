@@ -48,61 +48,44 @@ struct Vertex: sizeable {
     var bitangent: float3 = float3(0, 1, 0)
 }
 
-struct ModelConstants: sizeable {
-    var modelMatrix = matrix_identity_float4x4
-    var normalMatrix = matrix_identity_float3x3
-}
+extension ModelConstants: sizeable {}
 
-struct SceneConstants: sizeable {
-    var totalGameTime: Float = 0
-    var viewMatrix = matrix_identity_float4x4
-    var skyViewMatrix = matrix_identity_float4x4
-    var projectionMatrix = matrix_identity_float4x4
-    var projectionMatrixInverse = matrix_identity_float4x4
-    var cameraPosition = float3(0, 0, 0)
-}
+extension SceneConstants: sizeable {}
 
-struct ShaderMaterial: sizeable {
-    private var _color = float4(0, 0, 0, 0)
-    var color: float4 {
-        get {
-            return _color
-        }
-        
-        set {
-            _color = newValue
-            useMaterialColor = true
-        }
+extension ShaderMaterial: sizeable {
+    init() {
+        self.init(color: BLACK_COLOR,
+                  useMaterialColor: false,
+                  isLit: true,
+                  useBaseTexture: false,
+                  useNormalMapTexture: false,
+                  useSpecularTexture: false,
+                  ambient: float3(0.1, 0.1, 0.1),
+                  diffuse: float3(1, 1, 1),
+                  specular: float3(1, 1, 1),
+                  shininess: 2)
     }
     
-    var useMaterialColor: Bool = false
-    var isLit: Bool = true
-    
-    // For GPU bugfix:
-    var useBaseTexture: Bool = false
-    var useNormalMapTexture: Bool = false
-    var useSpecularTexture: Bool = false
-    
-    var ambient: float3 = float3(0.1, 0.1, 0.1)
-    var diffuse: float3 = float3(1, 1, 1)
-    var specular: float3 = float3(1, 1, 1)
-    var shininess: Float = 2
+    mutating func setColor(_ color: float4) {
+        self.color = color
+        self.useMaterialColor = true
+    }
 }
 
-struct LightData: sizeable {
-    var type: UInt32 = 0
-    var modelMatrix: float4x4 = matrix_identity_float4x4
-    var viewProjectionMatrix: float4x4 = matrix_identity_float4x4
-    var shadowViewProjectionMatrix: float4x4 = matrix_identity_float4x4
-    var shadowTransformMatrix: float4x4 = matrix_identity_float4x4
-    var lightEyeDirection: float3 = float3(0, 0, 0)
-    
-    var position: float3 = float3(0, 0, 0)
-    var color: float3 = float3(1, 1, 1)
-    var brightness: Float = 1.0
-    var radius: Float = 1.0
-    
-    var ambientIntensity: Float = 1.0
-    var diffuseIntensity: Float = 1.0
-    var specularIntensity: Float = 1.0
+extension LightData: sizeable {
+    init() {
+        self.init(type: Directional,
+                  modelMatrix: matrix_identity_float4x4,
+                  viewProjectionMatrix: matrix_identity_float4x4,
+                  shadowViewProjectionMatrix: matrix_identity_float4x4,
+                  shadowTransformMatrix: matrix_identity_float4x4,
+                  lightEyeDirection: float3(0, 0, 0),
+                  position: float3(0, 0, 0),
+                  color: float3(1, 1, 1),
+                  brightness: 1.0,
+                  radius: 1.0,
+                  ambientIntensity: 1.0,
+                  diffuseIntensity: 1.0,
+                  specularIntensity: 1.0)
+    }
 }

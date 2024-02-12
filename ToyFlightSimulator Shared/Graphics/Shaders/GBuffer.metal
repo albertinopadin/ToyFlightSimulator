@@ -96,13 +96,13 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
     return gBuffer;
 }
 
-fragment GBufferData gbuffer_fragment_material(ColorInOut        in           [[ stage_in ]],
-                                               constant Material &material    [[ buffer(TFSBufferIndexMaterial) ]],
-                                               sampler           sampler2d    [[ sampler(0) ]],
-                                               texture2d<half>   baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
-                                               texture2d<half>   normalMap    [[ texture(TFSTextureIndexNormal) ]],
-                                               texture2d<half>   specularMap  [[ texture(TFSTextureIndexSpecular) ]],
-                                               depth2d<float>    shadowMap    [[ texture(TFSTextureIndexShadow) ]])
+fragment GBufferData gbuffer_fragment_material(ColorInOut               in           [[ stage_in ]],
+                                               constant ShaderMaterial &material     [[ buffer(TFSBufferIndexMaterial) ]],
+                                               sampler                  sampler2d    [[ sampler(0) ]],
+                                               texture2d<half>          baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
+                                               texture2d<half>          normalMap    [[ texture(TFSTextureIndexNormal) ]],
+                                               texture2d<half>          specularMap  [[ texture(TFSTextureIndexSpecular) ]],
+                                               depth2d<float>           shadowMap    [[ texture(TFSTextureIndexShadow) ]])
 {
     half4 base_color_sample;
     half4 normal_sample;

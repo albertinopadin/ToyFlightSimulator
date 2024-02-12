@@ -152,7 +152,7 @@ vertex LightInOut icosahedron_vertex(const device float4         * vertices     
 
 fragment AccumLightBuffer icosahedron_fragment(LightInOut                in              [[ stage_in ]],
                                                constant ModelConstants & modelConstants  [[ buffer(TFSBufferModelConstants) ]],
-                                               constant Material       & material        [[ buffer(TFSBufferIndexMaterial) ]],
+                                               constant ShaderMaterial & material        [[ buffer(TFSBufferIndexMaterial) ]],
                                                GBufferData               GBuffer)
 {
     AccumLightBuffer output = {

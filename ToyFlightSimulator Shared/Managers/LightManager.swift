@@ -19,13 +19,13 @@ class LightManager {
     }
 
     public func getDirectionalLightData(viewMatrix: float4x4) -> [LightData] {
-        let lightObjs = getLightObjects(lightType: .Directional)
+        let lightObjs = getLightObjects(lightType: Directional)
         lightObjs.forEach { $0.lightData.lightEyeDirection = normalize(viewMatrix * float4(-$0.getPosition(), 1)).xyz }
         return lightObjs.map { $0.lightData }
     }
     
     public func getPointLightData() -> [LightData] {
-        return getLightObjects(lightType: .Point).map { $0.lightData }
+        return getLightObjects(lightType: Point).map { $0.lightData }
     }
     
     public func setDirectionalLightData(_ renderCommandEncoder: MTLRenderCommandEncoder,

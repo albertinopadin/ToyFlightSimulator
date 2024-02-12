@@ -121,13 +121,13 @@ class GameScene: Node {
     }
     
     func renderPointLightMeshes(with renderCommandEncoder: MTLRenderCommandEncoder) {
-        for pointLight in _lightManager.getLightObjects(lightType: .Point) {
+        for pointLight in _lightManager.getLightObjects(lightType: Point) {
             pointLight.render(with: renderCommandEncoder, renderPipelineStateType: .LightMask)
         }
     }
     
     func renderPointLights(with renderCommandEncoder: MTLRenderCommandEncoder) {
-        for pointLight in _lightManager.getLightObjects(lightType: .Point) {
+        for pointLight in _lightManager.getLightObjects(lightType: Point) {
             pointLight.render(with: renderCommandEncoder, renderPipelineStateType: .PointLight)
         }
     }
