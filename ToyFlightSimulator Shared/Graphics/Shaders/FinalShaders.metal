@@ -6,9 +6,9 @@
 //
 
 #include <metal_stdlib>
-#include "Shared.metal"
-
 using namespace metal;
+
+#import "ShaderDefinitions.h"
 
 struct FinalRasterizerData {
     float4 position [[ position ]];
@@ -16,10 +16,10 @@ struct FinalRasterizerData {
 };
 
 vertex FinalRasterizerData final_vertex(const VertexIn vIn [[ stage_in ]]) {
-    FinalRasterizerData rd;
-    
-    rd.position = float4(vIn.position, 1.0);
-    rd.textureCoordinate = float2(vIn.textureCoordinate);
+    FinalRasterizerData rd = {
+        .position = float4(vIn.position, 1.0),
+        .textureCoordinate = float2(vIn.textureCoordinate)
+    };
     
     return rd;
 }

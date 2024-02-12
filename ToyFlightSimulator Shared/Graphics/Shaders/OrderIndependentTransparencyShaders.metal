@@ -6,11 +6,11 @@
 //
 
 #include <metal_stdlib>
-#include "Lighting.metal"
-#include "Shared.metal"
-#include "TFSShaderTypes.h"
-
 using namespace metal;
+
+#import "TFSCommon.h"
+#import "ShaderDefinitions.h"
+#import "Lighting.metal"
 
 // Heavily inspired from: https://developer.apple.com/documentation/metal/metal_sample_code_library/implementing_order-independent_transparency_with_image_blocksd
 
@@ -27,14 +27,15 @@ struct TransparentFragmentStore {
 
 // A vertex function that generates a full-screen quad pass:
 vertex RasterizerData quad_pass_vertex(uint vid [[ vertex_id ]]) {
-    RasterizerData out;
-    
     float4 position;
     position.x = (vid == 2) ? 3.0 : -1.0;
     position.y = (vid == 0) ? -3.0 : 1.0;
     position.zw = 1.0;
-
-    out.position = position;
+    
+    RasterizerData out = {
+        .position = position
+    };
+    
     return out;
 }
 
@@ -49,7 +50,6 @@ kernel void init_transparent_fragment_store(imageblock<TransparentFragmentValues
 
 fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stage_in ]],
                                                        TransparentFragmentValues fragmentValues [[ imageblock_data ]]) {
-    TransparentFragmentStore out;
     half4 finalColor = half4(rd.color);
     finalColor.xyz *= finalColor.w;
     
@@ -68,7 +68,10 @@ fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stag
         depth = insert ? layerDepth : depth;
     }
     
-    out.values = fragmentValues;
+    TransparentFragmentStore out = {
+        .values = fragmentValues
+    };
+    
     return out;
 }
 

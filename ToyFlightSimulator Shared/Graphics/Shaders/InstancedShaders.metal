@@ -6,32 +6,30 @@
 //
 
 #include <metal_stdlib>
-#include "Shared.metal"
-#include "TFSShaderTypes.h"
-
 using namespace metal;
+
+#import "TFSCommon.h"
+#import "ShaderDefinitions.h"
 
 vertex RasterizerData instanced_vertex(const VertexIn vIn [[ stage_in ]],
                                        constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                        constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
                                        uint instanceId [[ instance_id ]]) {
-    RasterizerData rd;
     ModelConstants modelConstant = modelConstants[instanceId];
-    // Order of matrix multiplication is important here:
-//    rd.position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * modelConstant.modelMatrix *
-//                  float4(vIn.position, 1);
-    
     float4 worldPosition = modelConstant.modelMatrix * float4(vIn.position, 1);
-    // Order of matrix multiplication is important here:
-    rd.position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
-    rd.color = vIn.color;
-    rd.textureCoordinate = vIn.textureCoordinate;
-    rd.totalGameTime = sceneConstants.totalGameTime;
-    rd.worldPosition = worldPosition.xyz;
-    rd.toCameraVector = sceneConstants.cameraPosition - worldPosition.xyz;
-
-    rd.surfaceNormal = normalize(modelConstant.modelMatrix * float4(vIn.normal, 0.0)).xyz;
-    rd.surfaceTangent = normalize(modelConstant.modelMatrix * float4(vIn.tangent, 0.0)).xyz;
-    rd.surfaceBitangent = normalize(modelConstant.modelMatrix * float4(vIn.bitangent, 0.0)).xyz;
+    
+    RasterizerData rd = {
+        // Order of matrix multiplication is important here:
+        .position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition,
+        .color = vIn.color,
+        .textureCoordinate = vIn.textureCoordinate,
+        .totalGameTime = sceneConstants.totalGameTime,
+        .worldPosition = worldPosition.xyz,
+        .toCameraVector = sceneConstants.cameraPosition - worldPosition.xyz,
+        .surfaceNormal = normalize(modelConstant.modelMatrix * float4(vIn.normal, 1.0)).xyz,
+        .surfaceTangent = normalize(modelConstant.modelMatrix * float4(vIn.tangent, 1.0)).xyz,
+        .surfaceBitangent = normalize(modelConstant.modelMatrix * float4(vIn.bitangent, 1.0)).xyz
+    };
+    
     return rd;
 }

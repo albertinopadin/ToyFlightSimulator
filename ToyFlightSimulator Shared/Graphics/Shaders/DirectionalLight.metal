@@ -8,13 +8,8 @@
 #include <metal_stdlib>
 using namespace metal;
 
-// Include header shared between this Metal shader code and C code executing Metal API commands
-#include "TFSShaderTypes.h"
-
-// Include header shared between all Metal shader code files
-#include "TFSShaderCommon.h"
-
-#include "Shared.metal"
+#import "TFSCommon.h"
+#import "ShaderDefinitions.h"
 
 struct QuadInOut
 {
@@ -27,11 +22,14 @@ deferred_directional_lighting_vertex(constant TFSSimpleVertex * vertices       [
                                      constant SceneConstants  & sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                      uint                       vid            [[ vertex_id ]])
 {
-    QuadInOut out;
-    out.position = float4(vertices[vid].position, 0, 1);
-    float4 unprojected_eye_coord = sceneConstants.projectionMatrixInverse * out.position;
-    out.eye_position = unprojected_eye_coord.xyz / unprojected_eye_coord.w;
-//    out.eye_position = sceneConstants.cameraPosition;
+    float4 position = float4(vertices[vid].position, 0, 1);
+    float4 unprojected_eye_coord = sceneConstants.projectionMatrixInverse * position;
+    
+    QuadInOut out = {
+        .position = position,
+        .eye_position = unprojected_eye_coord.xyz / unprojected_eye_coord.w
+    };
+    
     return out;
 }
 
@@ -106,7 +104,9 @@ deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_i
 
     color *= shadowSample;
     
-    AccumLightBuffer output;
-    output.lighting = half4(color, 1);
+    AccumLightBuffer output = {
+        .lighting = half4(color, 1)
+    };
+    
     return output;
 }

@@ -1,14 +1,18 @@
 //
-//  ShaderTypes.h
+//  TFSCommon.h
 //  ToyFlightSimulator
 //
-//  Created by Albertino Padin on 1/21/23.
+//  Created by Albertino Padin on 1/24/23.
 //
 
-#ifndef TFSShaderTypes_h
-#define TFSShaderTypes_h
+#ifndef TFSCommon_h
+#define TFSCommon_h
 
-#include <simd/simd.h>
+#ifndef __cplusplus
+#define bool _Bool
+#endif
+
+#import <simd/simd.h>
 
 #ifndef __METAL_VERSION__
 /// 96-bit 3 component float vector type
@@ -19,10 +23,63 @@ typedef struct __attribute__ ((packed)) packed_float3 {
 } packed_float3;
 #endif
 
+typedef struct {
+    matrix_float4x4 modelMatrix;
+    matrix_float3x3 normalMatrix;
+} ModelConstants;
+
+typedef struct {
+    float totalGameTime;
+    matrix_float4x4 viewMatrix;
+    matrix_float4x4 skyViewMatrix;
+    matrix_float4x4 projectionMatrix;
+    matrix_float4x4 projectionMatrixInverse;
+    simd_float3 cameraPosition;
+} SceneConstants;
+
+typedef struct {
+    simd_float4 color;
+    bool useMaterialColor;
+    bool isLit;
+    
+    bool useBaseTexture;
+    bool useNormalMapTexture;
+    bool useSpecularTexture;
+    
+    simd_float3 ambient;
+    simd_float3 diffuse;
+    simd_float3 specular;
+    float shininess;
+} Material;
+
+typedef enum {
+    LightTypeAmbient,
+    LightTypeDirectional,
+    LightTypeOmni,
+    LightTypePoint
+} LightType;
+
+typedef struct {
+    LightType type;
+    matrix_float4x4 modelMatrix;
+    matrix_float4x4 viewProjectionMatrix;
+    matrix_float4x4 shadowViewProjectionMatrix;
+    matrix_float4x4 shadowTransformMatrix;
+    simd_float3 lightEyeDirection;
+    
+    simd_float3 position;
+    simd_float3 color;
+    float brightness;
+    float radius;  // TODO: This only applies to point lights; perhaps should have Directional/PointLightData
+    
+    float ambientIntensity;
+    float diffuseIntensity;
+    float specularIntensity;
+} LightData;
+
 // Buffer index values shared between shader and C code to ensure Metal shader buffer inputs match
 // Metal API buffer set calls
-typedef enum TFSBufferIndices
-{
+typedef enum {
     TFSBufferIndexMeshPositions     = 0,
     TFSBufferIndexMeshGenerics      = 1,
     TFSBufferFrameData              = 2,
@@ -38,8 +95,7 @@ typedef enum TFSBufferIndices
 
 // Attribute index values shared between shader and C code to ensure Metal shader vertex
 // attribute indices match the Metal API vertex descriptor attribute indices
-typedef enum TFSVertexAttributes
-{
+typedef enum {
     TFSVertexAttributePosition  = 0,
     TFSVertexAttributeColor     = 1,
     TFSVertexAttributeTexcoord  = 2,
@@ -50,8 +106,7 @@ typedef enum TFSVertexAttributes
 
 // Texture index values shared between shader and C code to ensure Metal shader texture indices
 // match indices of Metal API texture set calls
-typedef enum TFSTextureIndices
-{
+typedef enum {
     TFSTextureIndexBaseColor = 0,
     TFSTextureIndexSpecular  = 1,
     TFSTextureIndexNormal    = 2,
@@ -62,8 +117,7 @@ typedef enum TFSTextureIndices
     
 } TFSTextureIndices;
 
-typedef enum TFSRenderTargetIndices
-{
+typedef enum {
     TFSRenderTargetLighting  = 0,
     TFSRenderTargetAlbedo    = 1,
     TFSRenderTargetNormal    = 2,
@@ -118,5 +172,4 @@ typedef struct {
     packed_float3 position;
 } TFSShadowVertex;
 
-    
-#endif /* AAPLShaderTypes_h */
+#endif /* TFSCommon_h */

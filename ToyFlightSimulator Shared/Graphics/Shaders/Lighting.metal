@@ -9,8 +9,9 @@
 #define LIGHTING_METAL
 
 #include <metal_stdlib>
-#include "Shared.metal"
 using namespace metal;
+
+#import "TFSCommon.h"
 
 class Lighting {
 public:

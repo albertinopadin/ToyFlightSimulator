@@ -6,20 +6,23 @@
 //
 
 #include <metal_stdlib>
-#include "TFSShaderTypes.h"
-#include "Shared.metal"
 using namespace metal;
+
+#import "TFSCommon.h"
+#import "ShaderDefinitions.h"
 
 struct ShadowOutput
 {
     float4 position [[ position ]];
 };
 
-vertex ShadowOutput shadow_vertex(const VertexIn in [[ stage_in ]],
-                                  constant LightData &lightData [[ buffer(TFSBufferDirectionalLightData) ]],
-                                  constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]])
+vertex ShadowOutput shadow_vertex(const     VertexIn        in              [[ stage_in ]],
+                                  constant  LightData       &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+                                  constant  ModelConstants  &modelConstants [[ buffer(TFSBufferModelConstants) ]])
 {
-    ShadowOutput out;
-    out.position = lightData.shadowViewProjectionMatrix * modelConstants.modelMatrix * float4(in.position, 1.0);
+    ShadowOutput out = {
+        .position = lightData.shadowViewProjectionMatrix * modelConstants.modelMatrix * float4(in.position, 1.0)
+    };
+    
     return out;
 }

@@ -6,20 +6,21 @@
 //
 
 #include <metal_stdlib>
-#include "Shared.metal"
-#include "TFSShaderTypes.h"
-
 using namespace metal;
 
-vertex RasterizerData skysphere_vertex(const VertexIn vIn [[ stage_in ]],
-                                       constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-                                       constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]]) {
-    RasterizerData rd;
-    
+#import "TFSCommon.h"
+#import "ShaderDefinitions.h"
+
+vertex RasterizerData skysphere_vertex(const    VertexIn        vIn             [[ stage_in ]],
+                                       constant SceneConstants &sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                       constant ModelConstants &modelConstants  [[ buffer(TFSBufferModelConstants) ]]) {
     float4 worldPosition = modelConstants.modelMatrix * float4(vIn.position, 1);
-    rd.position = sceneConstants.projectionMatrix * sceneConstants.skyViewMatrix * worldPosition;
-    rd.textureCoordinate = vIn.textureCoordinate;
-    rd.totalGameTime = sceneConstants.totalGameTime;
+    
+    RasterizerData rd = {
+        .position = sceneConstants.projectionMatrix * sceneConstants.skyViewMatrix * worldPosition,
+        .textureCoordinate = vIn.textureCoordinate,
+        .totalGameTime = sceneConstants.totalGameTime
+    };
     
     return rd;
 }
