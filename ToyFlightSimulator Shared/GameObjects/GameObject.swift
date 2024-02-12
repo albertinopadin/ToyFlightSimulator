@@ -56,7 +56,7 @@ class GameObject: Node, Renderable {
             // Vertex Shader
             renderCommandEncoder.setVertexBytes(&_modelConstants,
                                                 length: ModelConstants.stride,
-                                                index: Int(TFSBufferModelConstants.rawValue))
+                                                index: TFSBufferModelConstants.index)
             
             _mesh.drawPrimitives(renderCommandEncoder,
                                  material: _material,
@@ -72,7 +72,7 @@ class GameObject: Node, Renderable {
         encodeRender(using: renderCommandEncoder, label: "Shadow Rendering \(self.getName())") {
             renderCommandEncoder.setVertexBytes(&_modelConstants,
                                                 length: ModelConstants.stride,
-                                                index: Int(TFSBufferModelConstants.rawValue))
+                                                index: TFSBufferModelConstants.index)
             _mesh.drawShadowPrimitives(renderCommandEncoder, submeshesToDisplay: submeshesToRender)
         }
     }

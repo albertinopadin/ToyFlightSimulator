@@ -79,17 +79,17 @@ class GameScene: Node {
     func setSceneConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
         renderCommandEncoder.setVertexBytes(&_sceneConstants,
                                             length: SceneConstants.stride,
-                                            index: Int(TFSBufferIndexSceneConstants.rawValue))
+                                            index: TFSBufferIndexSceneConstants.index)
     }
     
     func setDirectionalLightConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
         var directionalLight = _lightManager.getDirectionalLightData(viewMatrix: _sceneConstants.skyViewMatrix).first!
         renderCommandEncoder.setVertexBytes(&directionalLight,
                                             length: LightData.stride,
-                                            index: Int(TFSBufferDirectionalLightData.rawValue))
+                                            index: TFSBufferDirectionalLightData.index)
         renderCommandEncoder.setFragmentBytes(&directionalLight,
                                               length: LightData.stride,
-                                              index: Int(TFSBufferDirectionalLightData.rawValue))
+                                              index: TFSBufferDirectionalLightData.index)
     }
     
     func setPointLightConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
@@ -99,11 +99,11 @@ class GameScene: Node {
 //        let buf = Engine.Device.makeBuffer(bytes: &pointLights, length: LightData.stride(pointLights.count))
 //        renderCommandEncoder.setVertexBuffer(buf,
 //                                             offset: 0,
-//                                             index: Int(TFSBufferIndexLightsData.rawValue))
+//                                             index: TFSBufferIndexLightsData.index)
         
         renderCommandEncoder.setVertexBytes(&pointLights,
                                             length: LightData.stride(pointLights.count),
-                                            index: Int(TFSBufferPointLightsData.rawValue))
+                                            index: TFSBufferPointLightsData.index)
     }
     
     // TODO: This method could possibly be merged/unified with setDirectionalLightConstants

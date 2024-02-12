@@ -89,3 +89,27 @@ extension LightData: sizeable {
                   specularIntensity: 1.0)
     }
 }
+
+extension TFSBufferIndices {
+    var index: Int {
+      return Int(self.rawValue)
+    }
+}
+
+extension TFSVertexAttributes {
+    var index: Int {
+      return Int(self.rawValue)
+    }
+}
+
+extension TFSTextureIndices {
+    var index: Int {
+      return Int(self.rawValue)
+    }
+}
+
+extension TFSRenderTargetIndices {
+    var index: Int {
+      return Int(self.rawValue)
+    }
+}

@@ -336,7 +336,7 @@ class IcosahedronMesh: Mesh {
         positionAttr.name = MDLVertexAttributePosition
         positionAttr.format = .float4
         positionAttr.offset = 0
-        positionAttr.bufferIndex = Int(TFSBufferIndexMeshPositions.rawValue)
+        positionAttr.bufferIndex = TFSBufferIndexMeshPositions.index
         
         vertDesc.layout(TFSVertexAttributePosition.rawValue).stride = float4.stride
         

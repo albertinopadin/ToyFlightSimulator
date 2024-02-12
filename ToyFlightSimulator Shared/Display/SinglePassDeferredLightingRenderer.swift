@@ -23,13 +23,13 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     private let _gBufferAndLightingRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
-        descriptor.colorAttachments[Int(TFSRenderTargetAlbedo.rawValue)].storeAction = .dontCare
-        descriptor.colorAttachments[Int(TFSRenderTargetNormal.rawValue)].storeAction = .dontCare
-        descriptor.colorAttachments[Int(TFSRenderTargetDepth.rawValue)].storeAction = .dontCare
+        descriptor.colorAttachments[TFSRenderTargetAlbedo.index].storeAction = .dontCare
+        descriptor.colorAttachments[TFSRenderTargetNormal.index].storeAction = .dontCare
+        descriptor.colorAttachments[TFSRenderTargetDepth.index].storeAction = .dontCare
         
         // To make empty space (no nodes/skybox) look black instead of Snow...
-        descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].loadAction = .clear
-        descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].clearColor = Preferences.ClearColor
+        descriptor.colorAttachments[TFSRenderTargetLighting.index].loadAction = .clear
+        descriptor.colorAttachments[TFSRenderTargetLighting.index].clearColor = Preferences.ClearColor
         return descriptor
     }()
     
@@ -59,15 +59,15 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     func setGBufferTextures(renderEncoder: MTLRenderCommandEncoder) {
-        renderEncoder.setFragmentTexture(gBufferTextures.albedoSpecular, index: Int(TFSRenderTargetAlbedo.rawValue))
-        renderEncoder.setFragmentTexture(gBufferTextures.normalShadow, index: Int(TFSRenderTargetNormal.rawValue))
-        renderEncoder.setFragmentTexture(gBufferTextures.depth, index: Int(TFSRenderTargetDepth.rawValue))
+        renderEncoder.setFragmentTexture(gBufferTextures.albedoSpecular, index: TFSRenderTargetAlbedo.index)
+        renderEncoder.setFragmentTexture(gBufferTextures.normalShadow, index: TFSRenderTargetNormal.index)
+        renderEncoder.setFragmentTexture(gBufferTextures.depth, index: TFSRenderTargetDepth.index)
     }
     
     func setGBufferTextures(_ renderPassDescriptor: MTLRenderPassDescriptor) {
-        renderPassDescriptor.colorAttachments[Int(TFSRenderTargetAlbedo.rawValue)].texture = gBufferTextures.albedoSpecular
-        renderPassDescriptor.colorAttachments[Int(TFSRenderTargetNormal.rawValue)].texture = gBufferTextures.normalShadow
-        renderPassDescriptor.colorAttachments[Int(TFSRenderTargetDepth.rawValue)].texture = gBufferTextures.depth
+        renderPassDescriptor.colorAttachments[TFSRenderTargetAlbedo.index].texture = gBufferTextures.albedoSpecular
+        renderPassDescriptor.colorAttachments[TFSRenderTargetNormal.index].texture = gBufferTextures.normalShadow
+        renderPassDescriptor.colorAttachments[TFSRenderTargetDepth.index].texture = gBufferTextures.depth
     }
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
@@ -78,7 +78,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //            renderEncoder.setCullMode(.back)  // TODO: Set this on ???
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setStencilReferenceValue(128)
-            renderEncoder.setFragmentTexture(shadowMap, index: Int(TFSTextureIndexShadow.rawValue))
+            renderEncoder.setFragmentTexture(shadowMap, index: TFSTextureIndexShadow.index)
             SceneManager.SetDirectionalLightConstants(with: renderEncoder)
             SceneManager.RenderGBuffer(with: renderEncoder)
         }
@@ -92,7 +92,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setVertexBuffer(_quadVertexBuffer,
                                           offset: 0,
-                                          index: Int(TFSBufferIndexMeshPositions.rawValue))
+                                          index: TFSBufferIndexMeshPositions.index)
             SceneManager.SetSceneConstants(with: renderEncoder)
             SceneManager.SetDirectionalLightConstants(with: renderEncoder)
             
@@ -178,7 +178,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
         commandBuffer.label = "GBuffer & Lighting Commands"
         
         if let drawableTexture = view.currentDrawable?.texture {
-            _gBufferAndLightingRenderPassDescriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].texture = drawableTexture
+            _gBufferAndLightingRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
             _gBufferAndLightingRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
             _gBufferAndLightingRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
             

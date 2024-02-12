@@ -21,7 +21,7 @@ class SkyBox: GameObject {
                          renderPipelineStateType: RenderPipelineStateType,
                          applyMaterials: Bool = false) {
         renderCommandEncoder.setFragmentTexture(Assets.Textures[_skyBoxTextureType],
-                                                index: Int(TFSTextureIndexBaseColor.rawValue))
+                                                index: TFSTextureIndexBaseColor.index)
         super.render(with: renderCommandEncoder,
                      renderPipelineStateType: renderPipelineStateType,
                      applyMaterials: applyMaterials)

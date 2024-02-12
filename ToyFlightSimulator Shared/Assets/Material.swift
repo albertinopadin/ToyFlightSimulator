@@ -72,15 +72,15 @@ struct Material {
         renderCommandEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
         
         if let baseColorTex = baseColorTextureType == .None ? baseColorTexture : Assets.Textures[baseColorTextureType] {
-            renderCommandEncoder.setFragmentTexture(baseColorTex, index: Int(TFSTextureIndexBaseColor.rawValue))
+            renderCommandEncoder.setFragmentTexture(baseColorTex, index: TFSTextureIndexBaseColor.index)
         }
         
         if let normalMapTex = normalMapTextureType == .None ? normalMapTexture : Assets.Textures[normalMapTextureType] {
-            renderCommandEncoder.setFragmentTexture(normalMapTex, index: Int(TFSTextureIndexNormal.rawValue))
+            renderCommandEncoder.setFragmentTexture(normalMapTex, index: TFSTextureIndexNormal.index)
         }
         
         if let specularTex = specularTextureType == .None ? specularTexture : Assets.Textures[specularTextureType] {
-            renderCommandEncoder.setFragmentTexture(specularTex, index: Int(TFSTextureIndexSpecular.rawValue))
+            renderCommandEncoder.setFragmentTexture(specularTex, index: TFSTextureIndexSpecular.index)
         }
     }
     

@@ -35,10 +35,10 @@ class LightManager {
         var lightCount = lightData.count
         renderCommandEncoder.setFragmentBytes(&lightCount, 
                                               length: Int32.size,
-                                              index: Int(TFSBufferDirectionalLightsNum.rawValue))
+                                              index: TFSBufferDirectionalLightsNum.index)
         renderCommandEncoder.setFragmentBytes(&lightData,
                                               length: LightData.stride(lightCount),
-                                              index: Int(TFSBufferDirectionalLightData.rawValue))
+                                              index: TFSBufferDirectionalLightData.index)
     }
     
     public func setPointLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
@@ -50,10 +50,10 @@ class LightManager {
         
         renderCommandEncoder.setVertexBytes(&pointLightData,
                                             length: LightData.stride(pointLightData.count),
-                                            index: Int(TFSBufferPointLightsData.rawValue))
+                                            index: TFSBufferPointLightsData.index)
         
         renderCommandEncoder.setFragmentBytes(&pointLightData,
                                               length: LightData.stride(pointLightData.count),
-                                              index: Int(TFSBufferPointLightsData.rawValue))
+                                              index: TFSBufferPointLightsData.index)
     }
 }

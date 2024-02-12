@@ -164,9 +164,9 @@ class RenderPipelineState {
     }
     
     class func setRenderTargetPixelFormats(descriptor: MTLRenderPipelineDescriptor) {
-        descriptor.colorAttachments[Int(TFSRenderTargetAlbedo.rawValue)].pixelFormat = GBufferTextures.albedoSpecularFormat
-        descriptor.colorAttachments[Int(TFSRenderTargetNormal.rawValue)].pixelFormat = GBufferTextures.normalShadowFormat
-        descriptor.colorAttachments[Int(TFSRenderTargetDepth.rawValue)].pixelFormat = GBufferTextures.depthFormat
+        descriptor.colorAttachments[TFSRenderTargetAlbedo.index].pixelFormat = GBufferTextures.albedoSpecularFormat
+        descriptor.colorAttachments[TFSRenderTargetNormal.index].pixelFormat = GBufferTextures.normalShadowFormat
+        descriptor.colorAttachments[TFSRenderTargetDepth.index].pixelFormat = GBufferTextures.depthFormat
     }
 }
 
@@ -305,7 +305,7 @@ class GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
-            descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             RenderPipelineState.setRenderTargetPixelFormats(descriptor: descriptor)
         }
     }
@@ -319,7 +319,7 @@ class GBufferGenerationMaterialRenderPipelineState: RenderPipelineState {
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
-            descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             RenderPipelineState.setRenderTargetPixelFormats(descriptor: descriptor)
         }
     }
@@ -332,7 +332,7 @@ class DirectionalLightingRenderPipelineState: RenderPipelineState {
             descriptor.fragmentFunction = Graphics.Shaders[.DeferredDirectionalLightingFragment]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
-            descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             RenderPipelineState.setRenderTargetPixelFormats(descriptor: descriptor)
         }
     }
@@ -344,7 +344,7 @@ class LightMaskRenderPipelineState: RenderPipelineState {
             descriptor.vertexFunction = Graphics.Shaders[.LightMaskVertex]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
-            descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             RenderPipelineState.setRenderTargetPixelFormats(descriptor: descriptor)
         }
     }
@@ -357,7 +357,7 @@ class PointLightingRenderPipelineState: RenderPipelineState {
             descriptor.fragmentFunction = Graphics.Shaders[.DeferredPointLightFragment]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
-            descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
 //            print("[PointLightingRenderPipelineState init] Main Pixel Fmt: \(Preferences.MainPixelFormat)")
 //            print("[PointLightingRenderPipelineState init] Depth Stencil Pixel Fmt: \(Preferences.MainDepthStencilPixelFormat)")
             RenderPipelineState.setRenderTargetPixelFormats(descriptor: descriptor)
@@ -373,7 +373,7 @@ class SkyboxRenderPipelineState: RenderPipelineState {
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Skybox]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
-            descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             RenderPipelineState.setRenderTargetPixelFormats(descriptor: descriptor)
         }
     }
@@ -386,7 +386,7 @@ class IcosahedronRenderPipelineState: RenderPipelineState {
             descriptor.fragmentFunction = Graphics.Shaders[.IcosahedronFragment]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
-            descriptor.colorAttachments[Int(TFSRenderTargetLighting.rawValue)].pixelFormat = Preferences.MainPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             RenderPipelineState.setRenderTargetPixelFormats(descriptor: descriptor)
         }
     }

@@ -49,7 +49,7 @@ class SubMeshGameObject: GameObject {
         encodeRender(using: renderCommandEncoder, label: "Rendering \(self.getName())") {
             renderCommandEncoder.setVertexBytes(&_modelConstants,
                                                 length: ModelConstants.stride,
-                                                index: Int(TFSBufferModelConstants.rawValue))
+                                                index: TFSBufferModelConstants.index)
             
             _singleSMMesh.drawPrimitives(renderCommandEncoder,
                                          material: _material,
@@ -64,7 +64,7 @@ class SubMeshGameObject: GameObject {
         encodeRender(using: renderCommandEncoder, label: "Shadow Rendering \(self.getName())") {
             renderCommandEncoder.setVertexBytes(&_modelConstants,
                                                 length: ModelConstants.stride,
-                                                index: Int(TFSBufferModelConstants.rawValue))
+                                                index: TFSBufferModelConstants.index)
             _singleSMMesh.drawShadowPrimitives(renderCommandEncoder)
         }
     }
