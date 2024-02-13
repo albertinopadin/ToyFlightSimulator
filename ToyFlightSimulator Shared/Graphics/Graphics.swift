@@ -5,7 +5,7 @@
 //  Created by Albertino Padin on 9/25/22.
 //
 
-class Graphics {
+struct Graphics {
     private static var _shaderLibrary: ShaderLibrary!
     public static var Shaders: ShaderLibrary { return _shaderLibrary }
     

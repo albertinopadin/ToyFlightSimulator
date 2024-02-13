@@ -29,7 +29,7 @@ protocol SamplerState {
     var samplerState: MTLSamplerState! { get }
 }
 
-class Linear_SamplerState: SamplerState {
+struct Linear_SamplerState: SamplerState {
     var name: String = "Linear Sampler State"
     var samplerState: MTLSamplerState!
     

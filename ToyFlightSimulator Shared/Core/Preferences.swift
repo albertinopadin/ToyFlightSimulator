@@ -17,7 +17,7 @@ public enum ClearColors {
     static let SkyBlue   = MTLClearColor(red: 0.3, green: 0.4, blue: 0.8, alpha: 1.0)
 }
 
-class Preferences {
+struct Preferences {
     public static var ClearColor: MTLClearColor = ClearColors.Black
     
     public static var MainPixelFormat: MTLPixelFormat = .bgra8Unorm_srgb
