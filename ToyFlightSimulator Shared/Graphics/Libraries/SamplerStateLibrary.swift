@@ -20,26 +20,24 @@ class SamplerStateLibrary: Library<SamplerStateType, MTLSamplerState> {
     }
     
     override subscript(type: SamplerStateType) -> MTLSamplerState? {
-        return (library[type]?.samplerState!)!
+        return (library[type]?.samplerState)!
     }
 }
 
 protocol SamplerState {
-    var name: String { get }
-    var samplerState: MTLSamplerState! { get }
+    static var name: String { get }
+    var samplerState: MTLSamplerState { get }
 }
 
 struct Linear_SamplerState: SamplerState {
-    var name: String = "Linear Sampler State"
-    var samplerState: MTLSamplerState!
-    
-    init() {
+    static let name: String = "Linear Sampler State"
+    var samplerState: MTLSamplerState = {
         let samplerDescriptor = MTLSamplerDescriptor()
         samplerDescriptor.minFilter = .linear
         samplerDescriptor.magFilter = .linear
         samplerDescriptor.mipFilter = .linear
         samplerDescriptor.lodMinClamp = 0
         samplerDescriptor.label = name
-        samplerState = Engine.Device.makeSamplerState(descriptor: samplerDescriptor)
-    }
+        return Engine.Device.makeSamplerState(descriptor: samplerDescriptor)!
+    }()
 }
