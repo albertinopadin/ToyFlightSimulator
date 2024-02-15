@@ -45,10 +45,12 @@ class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilSt
     }
 }
 
-class DepthStencilState {
-    var depthStencilState: MTLDepthStencilState!
-    
-    func makeDepthStencilState(label: String, block: (MTLDepthStencilDescriptor) -> Void) -> MTLDepthStencilState {
+protocol DepthStencilState {
+    var depthStencilState: MTLDepthStencilState { get set }
+}
+
+extension DepthStencilState {
+    static func makeDepthStencilState(label: String, block: (MTLDepthStencilDescriptor) -> Void) -> MTLDepthStencilState {
         let descriptor = MTLDepthStencilDescriptor()
         descriptor.label = label
         block(descriptor)
@@ -60,63 +62,57 @@ class DepthStencilState {
     }
 }
 
-class AlwaysNoWrite_DepthStencilState: DepthStencilState {
-    override init() {
-        super.init()
-        depthStencilState = makeDepthStencilState(label: "DepthCompareAlwaysAndNoWrite") { depthStencilDescriptor in
+struct AlwaysNoWrite_DepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "DepthCompareAlwaysAndNoWrite") { depthStencilDescriptor in
             depthStencilDescriptor.isDepthWriteEnabled = false
             depthStencilDescriptor.depthCompareFunction = .always
             depthStencilDescriptor.backFaceStencil = nil
             depthStencilDescriptor.frontFaceStencil = nil
         }
-    }
+    }()
 }
 
-class Less_DepthStencilState: DepthStencilState {
-    override init() {
-        super.init()
-        depthStencilState = makeDepthStencilState(label: "DepthCompareLessAndWrite") { depthStencilDescriptor in
+struct Less_DepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "DepthCompareLessAndWrite") { depthStencilDescriptor in
             depthStencilDescriptor.isDepthWriteEnabled = true
             depthStencilDescriptor.depthCompareFunction = .less
         }
-    }
+    }()
 }
 
-class LessEqualWrite_DepthStencilState: DepthStencilState {
-    override init() {
-        super.init()
-        depthStencilState = makeDepthStencilState(label: "DepthCompareLessEqualAndWrite") { depthStencilDescriptor in
+struct LessEqualWrite_DepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "DepthCompareLessEqualAndWrite") { depthStencilDescriptor in
             depthStencilDescriptor.isDepthWriteEnabled = true
             depthStencilDescriptor.depthCompareFunction = .lessEqual
         }
-    }
+    }()
 }
 
-class LessEqualNoWrite_DepthStencilState: DepthStencilState {
-    override init() {
-        super.init()
-        depthStencilState = makeDepthStencilState(label: "DepthCompareLessEqualAndNoWrite") { depthStencilDescriptor in
+struct LessEqualNoWrite_DepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "DepthCompareLessEqualAndNoWrite") { depthStencilDescriptor in
             depthStencilDescriptor.isDepthWriteEnabled = false
             depthStencilDescriptor.depthCompareFunction = .lessEqual
         }
-    }
+    }()
 }
 
 // -------------- FOR DEFERRED LIGHTING ---------------- //
-class ShadowGenerationDepthStencilState: DepthStencilState {
-    override init() {
-        super.init()
-        depthStencilState = makeDepthStencilState(label: "Shadow Generation Stage") { depthStencilDescriptor in
+struct ShadowGenerationDepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "Shadow Generation Stage") { depthStencilDescriptor in
             depthStencilDescriptor.isDepthWriteEnabled = true
             depthStencilDescriptor.depthCompareFunction = .lessEqual
         }
-    }
+    }()
 }
 
-class GBufferGenerationDepthStencilState: DepthStencilState {
-    override init() {
-        super.init()
-        depthStencilState = makeDepthStencilState(label: "GBuffer Generation Stage") { depthStencilDescriptor in
+struct GBufferGenerationDepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "GBuffer Generation Stage") { depthStencilDescriptor in
             let stencilStateDescriptor = MTLStencilDescriptor()
             stencilStateDescriptor.depthStencilPassOperation = .replace
             
@@ -125,13 +121,12 @@ class GBufferGenerationDepthStencilState: DepthStencilState {
             depthStencilDescriptor.frontFaceStencil = stencilStateDescriptor
             depthStencilDescriptor.backFaceStencil = stencilStateDescriptor
         }
-    }
+    }()
 }
 
-class DirectionalLightingDepthStencilState: DepthStencilState {
-    override init() {
-        super.init()
-        depthStencilState = makeDepthStencilState(label: "Directional Lighting Stage") { depthStencilDescriptor in
+struct DirectionalLightingDepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "Directional Lighting Stage") { depthStencilDescriptor in
             let stencilStateDescriptor = MTLStencilDescriptor()
             stencilStateDescriptor.stencilCompareFunction = .equal
             stencilStateDescriptor.readMask = 0xFF
@@ -140,13 +135,12 @@ class DirectionalLightingDepthStencilState: DepthStencilState {
             depthStencilDescriptor.frontFaceStencil = stencilStateDescriptor
             depthStencilDescriptor.backFaceStencil = stencilStateDescriptor
         }
-    }
+    }()
 }
 
-class LightMaskDepthStencilState: DepthStencilState {
-    override init() {
-        super.init()
-        depthStencilState = makeDepthStencilState(label: "Point Light Mask Stage") { depthStencilDescriptor in
+struct LightMaskDepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "Point Light Mask Stage") { depthStencilDescriptor in
             let stencilStateDescriptor = MTLStencilDescriptor()
             stencilStateDescriptor.depthFailureOperation = .incrementClamp
             
@@ -154,13 +148,12 @@ class LightMaskDepthStencilState: DepthStencilState {
             depthStencilDescriptor.frontFaceStencil = stencilStateDescriptor
             depthStencilDescriptor.backFaceStencil = stencilStateDescriptor
         }
-    }
+    }()
 }
 
-class PointLightDepthStencilState: DepthStencilState {
-    override init() {
-        super.init()
-        depthStencilState = makeDepthStencilState(label: "Point Lights Stage") { depthStencilDescriptor in
+struct PointLightDepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "Point Lights Stage") { depthStencilDescriptor in
             let stencilStateDescriptor = MTLStencilDescriptor()
             stencilStateDescriptor.stencilCompareFunction = .less
             stencilStateDescriptor.readMask = 0xFF
@@ -170,14 +163,13 @@ class PointLightDepthStencilState: DepthStencilState {
             depthStencilDescriptor.frontFaceStencil = stencilStateDescriptor
             depthStencilDescriptor.backFaceStencil = stencilStateDescriptor
         }
-    }
+    }()
 }
 
-class SkyboxDepthStencilState: DepthStencilState {
-    override init() {
-        super.init()
-        depthStencilState = makeDepthStencilState(label: "Skybox Stage") { depthStencilDescriptor in
+struct SkyboxDepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "Skybox Stage") { depthStencilDescriptor in
             depthStencilDescriptor.depthCompareFunction = .less
         }
-    }
+    }()
 }

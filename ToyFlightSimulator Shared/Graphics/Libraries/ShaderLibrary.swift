@@ -87,7 +87,7 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
     }
 }
 
-class Shader {
+struct Shader {
     var function: MTLFunction!
     init(functionName: String) {
         self.function = Engine.DefaultLibrary.makeFunction(name: functionName)

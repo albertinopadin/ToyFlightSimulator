@@ -217,7 +217,7 @@ struct SkySphereRenderPipelineState: RenderPipelineState {
 
 struct FinalRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "Final Render") { descriptor in
+        createRenderPipelineState(label: "Final Render") { descriptor in
             descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.vertexFunction = Graphics.Shaders[.FinalVertex]
@@ -228,7 +228,7 @@ struct FinalRenderPipelineState: RenderPipelineState {
 
 struct TileRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "Init Image Block Kernel") { descriptor in
+        createRenderPipelineState(label: "Init Image Block Kernel") { descriptor in
             descriptor.tileFunction = Graphics.Shaders[.TileKernel]
             descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
             descriptor.threadgroupSizeMatchesTileSize = true
@@ -260,7 +260,7 @@ struct OpaqueMaterialRenderPipelineState: RenderPipelineState {
 
 struct OrderIndependentTransparencyRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "Transparent Render") { descriptor in
+        createRenderPipelineState(label: "Transparent Render") { descriptor in
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.vertexFunction = Graphics.Shaders[.BaseVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TransparentMaterialFragment]
@@ -277,7 +277,7 @@ struct OrderIndependentTransparencyRenderPipelineState: RenderPipelineState {
 
 struct BlendRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "Transparent Fragment Blending") { descriptor in
+        createRenderPipelineState(label: "Transparent Fragment Blending") { descriptor in
             descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
             descriptor.stencilAttachmentPixelFormat = .invalid
@@ -291,7 +291,7 @@ struct BlendRenderPipelineState: RenderPipelineState {
 // -------------- FOR DEFERRED LIGHTING ---------------- //
 struct ShadowGenerationRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "Shadow Generation Stage") { descriptor in
+        createRenderPipelineState(label: "Shadow Generation Stage") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]  // ???
             descriptor.depthAttachmentPixelFormat = .depth32Float
@@ -302,7 +302,7 @@ struct ShadowGenerationRenderPipelineState: RenderPipelineState {
 
 struct GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "GBuffer Generation Stage") { descriptor in
+        createRenderPipelineState(label: "GBuffer Generation Stage") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.GBufferVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.GBufferFragmentBase]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
@@ -316,7 +316,7 @@ struct GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
 
 struct GBufferGenerationMaterialRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "GBuffer Generation Stage") { descriptor in
+        createRenderPipelineState(label: "GBuffer Generation Stage") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.GBufferVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.GBufferFragmentMaterial]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
@@ -330,7 +330,7 @@ struct GBufferGenerationMaterialRenderPipelineState: RenderPipelineState {
 
 struct DirectionalLightingRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "Directional Lighting Stage") { descriptor in
+        createRenderPipelineState(label: "Directional Lighting Stage") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.DeferredDirectionalLightingVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.DeferredDirectionalLightingFragment]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
@@ -343,7 +343,7 @@ struct DirectionalLightingRenderPipelineState: RenderPipelineState {
 
 struct LightMaskRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "Light Mask Stage") { descriptor in
+        createRenderPipelineState(label: "Light Mask Stage") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.LightMaskVertex]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
@@ -355,7 +355,7 @@ struct LightMaskRenderPipelineState: RenderPipelineState {
 
 struct PointLightingRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "Point Lights Stage") { descriptor in
+        createRenderPipelineState(label: "Point Lights Stage") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.DeferredPointLightVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.DeferredPointLightFragment]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
@@ -368,7 +368,7 @@ struct PointLightingRenderPipelineState: RenderPipelineState {
 
 struct SkyboxRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "Skybox Stage") { descriptor in
+        createRenderPipelineState(label: "Skybox Stage") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.SkyboxVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.SkyboxFragment]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Skybox]
@@ -382,7 +382,7 @@ struct SkyboxRenderPipelineState: RenderPipelineState {
 
 struct IcosahedronRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        return createRenderPipelineState(label: "Icosahedron Stage") { descriptor in
+        createRenderPipelineState(label: "Icosahedron Stage") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.IcosahedronVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.IcosahedronFragment]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
