@@ -7,7 +7,6 @@
 
 import Dispatch
 
-
 @inlinable
 @inline(__always)
 public func timeit(body: ()->()) -> UInt64 {

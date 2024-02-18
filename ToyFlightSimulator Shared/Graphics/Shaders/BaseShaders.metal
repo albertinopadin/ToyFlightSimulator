@@ -57,7 +57,7 @@ fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]],
 
 
 fragment FragmentOutput material_fragment(RasterizerData rd [[ stage_in ]],
-                                          constant Material &material [[ buffer(TFSBufferIndexMaterial) ]],
+                                          constant ShaderMaterial &material [[ buffer(TFSBufferIndexMaterial) ]],
                                           constant int &lightCount [[ buffer(TFSBufferDirectionalLightsNum) ]],
                                           constant LightData *lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                           sampler sampler2d [[ sampler(0) ]],

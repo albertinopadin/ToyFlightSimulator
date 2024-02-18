@@ -24,9 +24,8 @@ class MDLVertexDescriptorLibrary: Library<MDLVertexDescriptorType, MDLVertexDesc
 }
 
 public struct BaseMDLVertexDescriptor {
-    var name: String = "Base MDL Vertex Descriptor"
-    
-    var mdlVertexDescriptor: MDLVertexDescriptor!
+    let name: String = "Base MDL Vertex Descriptor"
+    var mdlVertexDescriptor: MDLVertexDescriptor
     var attributeIndex: Int = 0
     var offset: Int = 0
     
