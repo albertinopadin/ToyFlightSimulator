@@ -27,13 +27,13 @@ class SandboxScene: GameScene {
         sun.setLightAmbientIntensity(0.04)
         addLight(sun)
         
-        quad1 = createQuad(color: BLUE_COLOR, position: float3(0, 0, 5))
-        quad2 = createQuad(color: GREEN_COLOR, position: float3(5, 0, 0))
+        quad1 = createQuad(color: BLUE_COLOR, position: [0, 0, 5])
+        quad2 = createQuad(color: GREEN_COLOR, position: [5, 0, 0])
         quad2.rotateY(Float(90).toRadians)
-        quad3 = createQuad(color: RED_COLOR, position: float3(-5, 0, 0))
+        quad3 = createQuad(color: RED_COLOR, position: [-5, 0, 0])
         quad3.rotateY(Float(90).toRadians)
-        quad4 = createQuad(color: float4(0, 0.2, 0.8, 1.0), position: float3(0, 0, -5))
-        let quad5 = createQuad(color: RED_COLOR, position: float3(1, 1, -4))
+        quad4 = createQuad(color: float4(0, 0.2, 0.8, 1.0), position: [0, 0, -5])
+        let quad5 = createQuad(color: RED_COLOR, position: [1, 1, -4])
         quad4.addChild(quad5)
         quad4.addChild(f16Camera)
         f16Camera.setPosition(0, 0, 5)
@@ -53,8 +53,8 @@ class SandboxScene: GameScene {
         var material = ShaderMaterial()
         material.setColor(color)
         material.shininess = 100
-        material.specular = float3(10, 10, 10)
-        material.diffuse = float3(10, 10, 10)
+        material.specular = [10, 10, 10]
+        material.diffuse = [10, 10, 10]
         let quad = Quad()
         quad.useMaterial(material)
         quad.setPosition(position)

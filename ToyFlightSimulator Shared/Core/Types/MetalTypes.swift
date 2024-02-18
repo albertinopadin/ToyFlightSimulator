@@ -40,12 +40,12 @@ extension SIMD3:  sizeable {}
 extension SIMD4:  sizeable {}
 
 struct Vertex: sizeable {
-    var position: float3 = float3(0, 0, 0)
-    var color: float4 = float4(0, 0, 0, 1)
-    var textureCoordinate: float2 = float2(0, 0)
-    var normal: float3 = float3(0, 0, 1)
-    var tangent: float3 = float3(1, 0, 0)
-    var bitangent: float3 = float3(0, 1, 0)
+    var position: float3 = [0, 0, 0]
+    var color: float4 = [0, 0, 0, 1]
+    var textureCoordinate: float2 = [0, 0]
+    var normal: float3 = [0, 0, 1]
+    var tangent: float3 = [1, 0, 0]
+    var bitangent: float3 = [0, 1, 0]
 }
 
 extension ModelConstants: sizeable {}
@@ -60,9 +60,9 @@ extension ShaderMaterial: sizeable {
                   useBaseTexture: false,
                   useNormalMapTexture: false,
                   useSpecularTexture: false,
-                  ambient: float3(0.1, 0.1, 0.1),
-                  diffuse: float3(1, 1, 1),
-                  specular: float3(1, 1, 1),
+                  ambient: [0.1, 0.1, 0.1],
+                  diffuse: [1, 1, 1],
+                  specular: [1, 1, 1],
                   shininess: 2)
     }
     
@@ -79,9 +79,9 @@ extension LightData: sizeable {
                   viewProjectionMatrix: matrix_identity_float4x4,
                   shadowViewProjectionMatrix: matrix_identity_float4x4,
                   shadowTransformMatrix: matrix_identity_float4x4,
-                  lightEyeDirection: float3(0, 0, 0),
-                  position: float3(0, 0, 0),
-                  color: float3(1, 1, 1),
+                  lightEyeDirection: [0, 0, 0],
+                  position: [0, 0, 0],
+                  color: [1, 1, 1],
                   brightness: 1.0,
                   radius: 1.0,
                   ambientIntensity: 1.0,

@@ -6,7 +6,7 @@
 //
 
 class ContainerNode: Node {
-    private static let _defaultCameraPositionOffset = float3(0, 2, 4)
+    private static let _defaultCameraPositionOffset: float3 = [0, 2, 4]
     
     public var camera: AttachedCamera?
     

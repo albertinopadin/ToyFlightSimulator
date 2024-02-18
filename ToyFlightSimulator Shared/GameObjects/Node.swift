@@ -11,8 +11,8 @@ class Node {
     private var _name: String = "Node"
     private var _id: String!
     
-    private var _position = float3(0, 0, 0)
-    private var _scale = float3(1, 1, 1)
+    private var _position: float3 = [0, 0, 0]
+    private var _scale: float3 = [1, 1, 1]
     
     var parentModelMatrix = matrix_identity_float4x4
     var ignoreParentScale: Bool = false
@@ -163,17 +163,17 @@ class Node {
     
     func getFwdVector() -> float3 {
         let forward = modelMatrix.columns.2
-        return normalize(float3(-forward.x, -forward.y, -forward.z))
+        return normalize([-forward.x, -forward.y, -forward.z])
     }
     
     func getUpVector() -> float3 {
         let up = modelMatrix.columns.1
-        return normalize(float3(up.x, up.y, up.z))
+        return normalize([up.x, up.y, up.z])
     }
 
     func getRightVector() -> float3 {
         let right = modelMatrix.columns.0
-        return normalize(float3(right.x, right.y, right.z))
+        return normalize([right.x, right.y, right.z])
     }
     
     func moveAlongVector(_ vector: float3, distance: Float) {
@@ -192,7 +192,7 @@ class Node {
         updateModelMatrix()
         afterTranslation()
     }
-    func setPosition(_ x: Float, _ y: Float, _ z: Float) { setPosition(float3(x, y, z)) }
+    func setPosition(_ x: Float, _ y: Float, _ z: Float) { setPosition([x, y, z]) }
     func setPositionX(_ xPosition: Float) { setPosition(xPosition, getPositionY(), getPositionZ()) }
     func setPositionY(_ yPosition: Float) { setPosition(getPositionX(), yPosition, getPositionZ()) }
     func setPositionZ(_ zPosition: Float) { setPosition(getPositionX(), getPositionY(), zPosition) }
@@ -247,8 +247,8 @@ class Node {
         updateModelMatrix()
         afterScale()
     }
-    func setScale(_ x: Float, _ y: Float, _ z: Float) { setScale(float3(x, y, z)) }
-    func setScale(_ scale: Float) { setScale(float3(scale, scale, scale)) }
+    func setScale(_ x: Float, _ y: Float, _ z: Float) { setScale([x, y, z]) }
+    func setScale(_ scale: Float) { setScale([scale, scale, scale]) }
     func setScaleX(_ scaleX: Float) { setScale(scaleX, getScaleY(), getScaleZ()) }
     func setScaleY(_ scaleY: Float) { setScale(getScaleX(), scaleY, getScaleZ()) }
     func setScaleZ(_ scaleZ: Float) { setScale(getScaleX(), getScaleY(), scaleZ) }

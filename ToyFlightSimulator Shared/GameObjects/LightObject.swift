@@ -74,7 +74,7 @@ class LightObject: GameObject {
 }
 
 extension LightObject {
-    public func setLightColor(_ color: SIMD3<Float>) {
+    public func setLightColor(_ color: float3) {
         self.lightData.color = color
         if _meshType != .None {
             var material = ShaderMaterial()
@@ -82,7 +82,7 @@ extension LightObject {
             self.useMaterial(material)
         }
     }
-    public func setLightColor(_ r: Float, _ g: Float, _ b: Float) { setLightColor(SIMD3<Float>(r, g, b)) }
+    public func setLightColor(_ r: Float, _ g: Float, _ b: Float) { setLightColor([r, g, b]) }
     public func getLightColor() -> SIMD3<Float> { return self.lightData.color }
     
     public func setLightBrightness(_ brightness: Float) { self.lightData.brightness = brightness }

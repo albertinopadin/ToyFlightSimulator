@@ -12,7 +12,7 @@ class AttachedCamera: Camera {
     private var _turnSpeed: Float = 1.0
     private static let NAME: String = "AttachedCamera"
     
-    public var positionOffset: float3 = float3(0, 0, 0)
+    public var positionOffset: float3 = [0, 0, 0]
     
     init() {
         super.init(name: AttachedCamera.NAME, cameraType: .Attached, aspectRatio: Renderer.AspectRatio)

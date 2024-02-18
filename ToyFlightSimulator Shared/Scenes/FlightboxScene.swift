@@ -127,16 +127,16 @@ class FlightboxScene: GameScene {
         addChild(ground)
         
         var quadMaterial = ShaderMaterial()
-        quadMaterial.setColor(float4(0, 0.4, 1.0, 1.0))
+        quadMaterial.setColor([0, 0.4, 1.0, 1.0])
         quadMaterial.shininess = 10
         quad.useMaterial(quadMaterial)
         quad.setPositionZ(1)
         quad.setPositionY(14)
         addChild(quad)
         
-        let debugLine = Line(startPoint: float3(0, 0, 0),
-                             endPoint: float3(0, 50, 0),
-                             color: float4(1, 0, 0, 1))
+        let debugLine = Line(startPoint: [0, 0, 0],
+                             endPoint: [0, 50, 0],
+                             color: [1, 0, 0, 1])
         addChild(debugLine)
         
         let jetPos = container.getPosition()
@@ -152,7 +152,7 @@ class FlightboxScene: GameScene {
         addChild(sphereBlue)
         
         var sphereRedMaterial = ShaderMaterial()
-        sphereRedMaterial.setColor(float4(1.0, 0.0, 0.0, 0.4))
+        sphereRedMaterial.setColor([1.0, 0.0, 0.0, 0.4])
         
         let sphereRedPos = float3(x: jetPos.x - 1, y: jetPos.y, z: jetPos.z - 2)
         let sphereRed = Sphere()
@@ -165,10 +165,10 @@ class FlightboxScene: GameScene {
         let testQuad = Quad()
         var testQuadMaterial = ShaderMaterial()
         testQuadMaterial.isLit = true
-        testQuadMaterial.setColor(float4(1, 0, 0, 0.5))
+        testQuadMaterial.setColor([1, 0, 0, 0.5])
         testQuadMaterial.shininess = 100000
-        testQuadMaterial.diffuse = float3(1, 0.1, 0.1)
-        testQuadMaterial.specular = float3(1, 1, 1)
+        testQuadMaterial.diffuse = [1, 0.1, 0.1]
+        testQuadMaterial.specular = [1, 1, 1]
         testQuadMaterial.useNormalMapTexture = false
         testQuad.useMaterial(testQuadMaterial)
         testQuad.setPositionZ(1)
@@ -179,8 +179,8 @@ class FlightboxScene: GameScene {
         var testCubeMaterial = ShaderMaterial()
         testCubeMaterial.isLit = true
         testCubeMaterial.setColor(GRABBER_BLUE_COLOR)
-        testCubeMaterial.diffuse = float3(0.1,0.4,1)
-        testCubeMaterial.specular = float3(1,1,10)
+        testCubeMaterial.diffuse = [0.1, 0.4, 1]
+        testCubeMaterial.specular = [1, 1, 10]
         testCubeMaterial.useNormalMapTexture = false
         testCubeMaterial.shininess = 100
         

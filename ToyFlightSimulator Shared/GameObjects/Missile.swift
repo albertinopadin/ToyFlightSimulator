@@ -6,7 +6,7 @@
 //
 
 class Missile: SubMeshGameObject {
-    var direction: float3 = float3(0, 0, 0)
+    var direction: float3 = [0, 0, 0]
     var speed: Float = 0.0
     
     init(name: String,
