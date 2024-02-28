@@ -47,10 +47,11 @@ typedef struct {
     uint   iid [[ flat ]];
 } LightInOut;
 
+
 vertex LightInOut
-deferred_point_lighting_vertex(const device float4         * vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
-                               const device LightData      * light_data      [[ buffer(TFSBufferPointLightsData) ]],
-                               constant SceneConstants     & sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
+deferred_point_lighting_vertex(const device float4          *vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
+                               const device LightData       *light_data      [[ buffer(TFSBufferPointLightsData) ]],
+                               constant SceneConstants      &sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                                uint                          iid             [[ instance_id ]],
                                uint                          vid             [[ vertex_id ]]) {
     float4 modelPosition = vertices[vid];
@@ -68,7 +69,7 @@ deferred_point_lighting_vertex(const device float4         * vertices        [[ 
 
 half4
 deferred_point_lighting_fragment_common(LightInOut               in,
-                                        const device LightData * light_data,
+                                        const device LightData  *light_data,
                                         half4                    lighting,
                                         float                    depth,
                                         half4                    normal_shadow,
@@ -83,7 +84,7 @@ deferred_point_lighting_fragment_common(LightInOut               in,
 
     if (light_distance < light_radius)
     {
-        float4 eye_space_light_pos = float4(light_eye_position,1);
+        float4 eye_space_light_pos = float4(light_eye_position, 1);
 
         float3 eye_space_fragment_to_light = eye_space_light_pos.xyz - eye_space_fragment_pos;
 
@@ -92,7 +93,7 @@ deferred_point_lighting_fragment_common(LightInOut               in,
         half3 light_color = half3(light_data[in.iid].color);
 
         // Diffuse contribution
-        half4 diffuse_contribution = half4(float4(albedo_specular)*max(dot(float3(normal_shadow.xyz), light_direction),0.0f))*half4(light_color,1);
+        half4 diffuse_contribution = half4(float4(albedo_specular) * max(dot(float3(normal_shadow.xyz), light_direction), 0.0f)) * half4(light_color, 1);
 
         // Specular Contribution
         float3 halfway_vector = normalize(eye_space_fragment_to_light - eye_space_fragment_pos);
@@ -104,7 +105,7 @@ deferred_point_lighting_fragment_common(LightInOut               in,
         half specular_intensity = half(32.0f);
         half specular_shininess = normal_shadow.w * half(1.0f);
 
-        half specular_factor = powr(max(dot(half3(normal_shadow.xyz),half3(halfway_vector)),0.0h), specular_intensity);
+        half specular_factor = powr(max(dot(half3(normal_shadow.xyz),half3(halfway_vector)), 0.0h), specular_intensity);
 
         half3 specular_contribution = specular_factor * half3(albedo_specular.xyz) * specular_shininess * light_color;
 
@@ -112,21 +113,29 @@ deferred_point_lighting_fragment_common(LightInOut               in,
         float attenuation = 1.0 - (light_distance / light_radius);
         attenuation *= attenuation;
 
-        lighting += (diffuse_contribution + half4(specular_contribution, 0)) * attenuation;
+//        lighting += (diffuse_contribution + half4(specular_contribution, 0)) * attenuation;
+        lighting += (diffuse_contribution + half4(specular_contribution, 1)) * attenuation;
     }
 
-//    return lighting;
-//    return half4(float4(light_data[in.iid].color, 1));
-    return half4(1.0, 0.0, 0.0, 1.0);
+    return lighting;
+//    return half4(float4(light_data[in.iid].color, 0.5));
+//    return half4(1.0, 0.0, 0.0, 1.0);
 }
 
 fragment AccumLightBuffer
 deferred_point_lighting_fragment(LightInOut                in           [[ stage_in ]],
-                                 const device LightData  * light_data   [[ buffer(TFSBufferPointLightsData) ]],
-                                 GBufferData               GBuffer)
-{
+                                 const device LightData   *light_data   [[ buffer(TFSBufferPointLightsData) ]],
+                                 GBufferData               GBuffer) {
+    half4 lighting = deferred_point_lighting_fragment_common(in,
+                                                             light_data,
+                                                             GBuffer.lighting,
+                                                             GBuffer.depth,
+                                                             GBuffer.normal_shadow,
+                                                             GBuffer.albedo_specular);
+    
     AccumLightBuffer output = {
-        .lighting = half4(1.0, 0.0, 0.0, 1.0)
+//        .lighting = half4(1.0, 0.0, 0.0, 1.0)
+        .lighting = lighting
     };
     
     return output;
@@ -134,9 +143,9 @@ deferred_point_lighting_fragment(LightInOut                in           [[ stage
 
 
 // For testing:
-vertex LightInOut icosahedron_vertex(const device float4         * vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
-                                     constant ModelConstants     & modelConstants  [[ buffer(TFSBufferModelConstants) ]],
-                                     constant SceneConstants     & sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
+vertex LightInOut icosahedron_vertex(const device float4          *vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
+                                     constant ModelConstants      &modelConstants  [[ buffer(TFSBufferModelConstants) ]],
+                                     constant SceneConstants      &sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                                      uint                          vid             [[ vertex_id ]]) {
     float4 modelPosition = vertices[vid];
     float4 worldPosition = modelConstants.modelMatrix * modelPosition;
@@ -151,10 +160,9 @@ vertex LightInOut icosahedron_vertex(const device float4         * vertices     
 }
 
 fragment AccumLightBuffer icosahedron_fragment(LightInOut                in              [[ stage_in ]],
-                                               constant ModelConstants & modelConstants  [[ buffer(TFSBufferModelConstants) ]],
-                                               constant ShaderMaterial & material        [[ buffer(TFSBufferIndexMaterial) ]],
-                                               GBufferData               GBuffer)
-{
+                                               constant ModelConstants  &modelConstants  [[ buffer(TFSBufferModelConstants) ]],
+                                               constant ShaderMaterial  &material        [[ buffer(TFSBufferIndexMaterial) ]],
+                                               GBufferData               GBuffer) {
     AccumLightBuffer output = {
         .lighting = half4(material.color)
     };

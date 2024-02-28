@@ -20,7 +20,7 @@ enum DepthStencilStateType {
     case PointLight
     case Skybox
     
-    
+    case DepthWriteDisabled
 }
 
 class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilState> {
@@ -38,6 +38,8 @@ class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilSt
         _library.updateValue(LightMaskDepthStencilState(), forKey: .LightMask)
         _library.updateValue(PointLightDepthStencilState(), forKey: .PointLight)
         _library.updateValue(SkyboxDepthStencilState(), forKey: .Skybox)
+        
+        _library.updateValue(DepthWriteDisabledDepthStencilState(), forKey: .DepthWriteDisabled)
     }
     
     override subscript(type: DepthStencilStateType) -> MTLDepthStencilState {
@@ -155,11 +157,15 @@ struct PointLightDepthStencilState: DepthStencilState {
     var depthStencilState: MTLDepthStencilState = {
         makeDepthStencilState(label: "Point Lights Stage") { depthStencilDescriptor in
             let stencilStateDescriptor = MTLStencilDescriptor()
-            stencilStateDescriptor.stencilCompareFunction = .less
+//            stencilStateDescriptor.stencilCompareFunction = .less
+            stencilStateDescriptor.stencilCompareFunction = .lessEqual
+//            stencilStateDescriptor.stencilCompareFunction = .always
             stencilStateDescriptor.readMask = 0xFF
             stencilStateDescriptor.writeMask = 0x0
             
+//            depthStencilDescriptor.depthCompareFunction = .less
             depthStencilDescriptor.depthCompareFunction = .lessEqual
+//            depthStencilDescriptor.depthCompareFunction =  .always
             depthStencilDescriptor.frontFaceStencil = stencilStateDescriptor
             depthStencilDescriptor.backFaceStencil = stencilStateDescriptor
         }
@@ -170,6 +176,14 @@ struct SkyboxDepthStencilState: DepthStencilState {
     var depthStencilState: MTLDepthStencilState = {
         makeDepthStencilState(label: "Skybox Stage") { depthStencilDescriptor in
             depthStencilDescriptor.depthCompareFunction = .less
+        }
+    }()
+}
+
+struct DepthWriteDisabledDepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "Depth Write Disabled") { depthStencilDescriptor in
+            depthStencilDescriptor.isDepthWriteEnabled = false
         }
     }()
 }

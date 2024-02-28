@@ -1,5 +1,5 @@
 //
-//  ShadowShaders.metal
+//  Shadow.metal
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 1/21/23.

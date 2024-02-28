@@ -1,5 +1,5 @@
 //
-//  SkySphereShaders.metal
+//  SkySphere.metal
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 9/28/22.

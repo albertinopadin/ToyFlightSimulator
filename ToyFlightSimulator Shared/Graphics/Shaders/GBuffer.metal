@@ -75,7 +75,6 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
     
     constexpr sampler shadowSampler(coord::normalized,
                                     filter::linear,
-                                    mip_filter::none,
                                     address::clamp_to_edge,
                                     compare_func::less);
     

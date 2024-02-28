@@ -127,10 +127,10 @@ extension RenderPipelineState {
     }
     
     static func getRenderPipelineDescriptor(vertexDescriptorType: VertexDescriptorType,
-                                           vertexShaderType: ShaderType,
-                                           fragmentShaderType: ShaderType,
-                                           enableAlphaBlending: Bool = true,
-                                           colorAttachments: Int = 1) -> MTLRenderPipelineDescriptor {
+                                            vertexShaderType: ShaderType,
+                                            fragmentShaderType: ShaderType,
+                                            enableAlphaBlending: Bool = true,
+                                            colorAttachments: Int = 1) -> MTLRenderPipelineDescriptor {
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         for i in 0..<colorAttachments {
             renderPipelineDescriptor.colorAttachments[i].pixelFormat = Preferences.MainPixelFormat
@@ -148,8 +148,8 @@ extension RenderPipelineState {
     }
     
     static func getOpaqueRenderPipelineDescriptor(vertexDescriptorType: VertexDescriptorType,
-                                                 vertexShaderType: ShaderType,
-                                                 fragmentShaderType: ShaderType) -> MTLRenderPipelineDescriptor {
+                                                  vertexShaderType: ShaderType,
+                                                  fragmentShaderType: ShaderType) -> MTLRenderPipelineDescriptor {
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         renderPipelineDescriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
         renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
@@ -310,6 +310,11 @@ struct GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             Self.setRenderTargetPixelFormats(descriptor: descriptor)
+            
+            let attachment = descriptor.colorAttachments[TFSRenderTargetLighting.index]
+            attachment?.isBlendingEnabled = true
+            attachment?.destinationRGBBlendFactor = .one
+            attachment?.destinationAlphaBlendFactor = .zero
         }
     }()
 }
@@ -361,6 +366,15 @@ struct PointLightingRenderPipelineState: RenderPipelineState {
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
+            
+//            let attachment = descriptor.colorAttachments[0]!
+//            enableBlending(colorAttachmentDescriptor: attachment)
+            
+            let attachment = descriptor.colorAttachments[TFSRenderTargetLighting.index]
+            attachment?.isBlendingEnabled = true
+            attachment?.destinationRGBBlendFactor = .one
+            attachment?.destinationAlphaBlendFactor = .zero
+            
             Self.setRenderTargetPixelFormats(descriptor: descriptor)
         }
     }()

@@ -7,7 +7,6 @@
 
 import simd
 
-
 public typealias float2 = SIMD2<Float>
 public typealias float3 = SIMD3<Float>
 public typealias float4 = SIMD4<Float>
@@ -90,26 +89,17 @@ extension LightData: sizeable {
     }
 }
 
-extension TFSBufferIndices {
+protocol TFSIndices: RawRepresentable<UInt32> {
+    var index: Int { get }
+}
+
+extension TFSIndices {
     var index: Int {
-      return Int(self.rawValue)
+        return Int(self.rawValue)
     }
 }
 
-extension TFSVertexAttributes {
-    var index: Int {
-      return Int(self.rawValue)
-    }
-}
-
-extension TFSTextureIndices {
-    var index: Int {
-      return Int(self.rawValue)
-    }
-}
-
-extension TFSRenderTargetIndices {
-    var index: Int {
-      return Int(self.rawValue)
-    }
-}
+extension TFSBufferIndices: TFSIndices { }
+extension TFSVertexAttributes: TFSIndices { }
+extension TFSTextureIndices: TFSIndices { }
+extension TFSRenderTargetIndices: TFSIndices { }

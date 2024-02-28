@@ -1,5 +1,5 @@
 //
-//  InstancedShaders.metal
+//  Instanced.metal
 //  ToyFlightSimulator iOS
 //
 //  Created by Albertino Padin on 9/25/22.

@@ -69,13 +69,13 @@ class FlightboxScene: GameScene {
         sunBall.setPosition(sun.getPosition())
         addChild(sunBall)
         
-//        let pl = PointLightObject()
-//        pl.setPosition(capsule.getPositionX(), 0, capsule.getPositionZ())
-//        pl.setLightColor(BLUE_COLOR.xyz)
-//        pl.setLightBrightness(1.0)
-////        pl.setLightRadius(10.0)
-//        pl.setScale(2.0)
-//        addLight(pl)
+        let pl = PointLightObject()
+        pl.setPosition(capsule.getPositionX(), 0, capsule.getPositionZ())
+        pl.setLightColor(BLUE_COLOR.xyz)
+        pl.setLightBrightness(1.0)
+//        pl.setLightRadius(10.0)
+        pl.setScale(2.0)
+        addLight(pl)
         
 //        let pl2 = PointLightObject()
 //        pl2.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
@@ -89,14 +89,14 @@ class FlightboxScene: GameScene {
         f16.setScale(4.0)
         addChild(f16)
         
-        var icoMaterial = ShaderMaterial()
-        icoMaterial.setColor(RED_COLOR)
-        
-        let ico = Icosahedron()
-        ico.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
-        ico.setScale(2.0)
-        ico.useMaterial(icoMaterial)
-        addChild(ico)
+//        var icoMaterial = ShaderMaterial()
+//        icoMaterial.setColor(BLUE_COLOR)
+//        
+//        let ico = Icosahedron()
+//        ico.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
+//        ico.setScale(2.0)
+//        ico.useMaterial(icoMaterial)
+//        addChild(ico)
         
 //        var sphereGreenMaterial = ShaderMaterial()
 //        sphereGreenMaterial.color = float4(0.0, 1.0, 0.2, 1.0)

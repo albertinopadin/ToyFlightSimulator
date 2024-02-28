@@ -59,8 +59,12 @@ deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_i
 //    sun_diffuse_intensity = max(sun_diffuse_intensity, 1.h);
 //    sun_diffuse_intensity = max(sun_diffuse_intensity, half(lightData.diffuseIntensity));
 //    sun_diffuse_intensity = max(sun_diffuse_intensity, -sun_diffuse_intensity);
-    half sun_diffuse_intensity = 0.8h;
-
+//    half sun_diffuse_intensity = 0.8h;
+    half3 lightDirection = half3(-lightData.position);
+    half sun_diffuse_intensity = saturate(-dot(lightDirection, normal_shadow.xyz));
+    half minimum_sun_diffuse_intensity = 0.4h;
+    sun_diffuse_intensity = max(sun_diffuse_intensity, minimum_sun_diffuse_intensity);
+    
     half3 sun_color = half3(lightData.color.xyz);
 
     half3 diffuse_contribution = albedo_specular.xyz * sun_diffuse_intensity * sun_color;

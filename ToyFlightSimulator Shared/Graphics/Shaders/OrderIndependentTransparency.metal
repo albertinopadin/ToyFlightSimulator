@@ -1,5 +1,5 @@
 //
-//  OrderIndependentTransparencyShaders.metal
+//  OrderIndependentTransparency.metal
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 12/27/22.
