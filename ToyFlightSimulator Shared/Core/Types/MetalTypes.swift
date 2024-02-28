@@ -11,7 +11,7 @@ public typealias float2 = SIMD2<Float>
 public typealias float3 = SIMD3<Float>
 public typealias float4 = SIMD4<Float>
 
-protocol sizeable { }
+protocol sizeable {}
 
 extension sizeable {
     static var size: Int {
