@@ -441,6 +441,14 @@
 		CE79B6212B92E361009F2E49 /* BasicVertexDescriptors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B61F2B92E361009F2E49 /* BasicVertexDescriptors.swift */; };
 		CE79B6222B92E361009F2E49 /* BasicVertexDescriptors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B61F2B92E361009F2E49 /* BasicVertexDescriptors.swift */; };
 		CE79B6232B92E361009F2E49 /* BasicVertexDescriptors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B61F2B92E361009F2E49 /* BasicVertexDescriptors.swift */; };
+		CE79B6262B92E47E009F2E49 /* Texture.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B6252B92E47E009F2E49 /* Texture.swift */; };
+		CE79B6272B92E47E009F2E49 /* Texture.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B6252B92E47E009F2E49 /* Texture.swift */; };
+		CE79B6282B92E47E009F2E49 /* Texture.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B6252B92E47E009F2E49 /* Texture.swift */; };
+		CE79B6292B92E47E009F2E49 /* Texture.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B6252B92E47E009F2E49 /* Texture.swift */; };
+		CE79B62B2B92E4B8009F2E49 /* TextureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B62A2B92E4B8009F2E49 /* TextureLoader.swift */; };
+		CE79B62C2B92E4B8009F2E49 /* TextureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B62A2B92E4B8009F2E49 /* TextureLoader.swift */; };
+		CE79B62D2B92E4B8009F2E49 /* TextureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B62A2B92E4B8009F2E49 /* TextureLoader.swift */; };
+		CE79B62E2B92E4B8009F2E49 /* TextureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B62A2B92E4B8009F2E49 /* TextureLoader.swift */; };
 		CE7BAC942A9F19A4007B8AAF /* F18_usdz.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */; };
 		CE7BAC952A9F19A4007B8AAF /* F18_usdz.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */; };
 		CE7BAC962A9F19A4007B8AAF /* F18_usdz.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */; };
@@ -700,6 +708,8 @@
 		CE79B6142B92E153009F2E49 /* DepthStencilState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepthStencilState.swift; sourceTree = "<group>"; };
 		CE79B61A2B92E312009F2E49 /* VertexDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VertexDescriptor.swift; sourceTree = "<group>"; };
 		CE79B61F2B92E361009F2E49 /* BasicVertexDescriptors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicVertexDescriptors.swift; sourceTree = "<group>"; };
+		CE79B6252B92E47E009F2E49 /* Texture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Texture.swift; sourceTree = "<group>"; };
+		CE79B62A2B92E4B8009F2E49 /* TextureLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextureLoader.swift; sourceTree = "<group>"; };
 		CE7BAC932A9F19A4007B8AAF /* F18_usdz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F18_usdz.swift; sourceTree = "<group>"; };
 		CE7C3D272A2F303D009C1E6F /* ToyFlightSimulator-iOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ToyFlightSimulator-iOS-Info.plist"; sourceTree = SOURCE_ROOT; };
 		CE7C3D282A2F377B009C1E6F /* Joystick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Joystick.swift; sourceTree = "<group>"; };
@@ -992,9 +1002,9 @@
 		CE3BFF6C28E1B4C60014A752 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				CE79B6242B92E452009F2E49 /* Textures */,
 				CE3BFF6D28E1B4D70014A752 /* MeshLibrary.swift */,
 				CE76931629DE75CB00BBC718 /* SingleSMMeshLibrary.swift */,
-				CE3BFF7128E1B4E10014A752 /* TextureLibrary.swift */,
 			);
 			path = Libraries;
 			sourceTree = "<group>";
@@ -1114,6 +1124,16 @@
 				CE79B61F2B92E361009F2E49 /* BasicVertexDescriptors.swift */,
 			);
 			path = VertexDescriptors;
+			sourceTree = "<group>";
+		};
+		CE79B6242B92E452009F2E49 /* Textures */ = {
+			isa = PBXGroup;
+			children = (
+				CE3BFF7128E1B4E10014A752 /* TextureLibrary.swift */,
+				CE79B6252B92E47E009F2E49 /* Texture.swift */,
+				CE79B62A2B92E4B8009F2E49 /* TextureLoader.swift */,
+			);
+			path = Textures;
 			sourceTree = "<group>";
 		};
 		CE7F47E528B758900082B197 = {
@@ -1571,6 +1591,7 @@
 				CE452FC22A7CB468001945B9 /* VertexDescriptorLibrary.swift in Sources */,
 				CE452FF22A7CB4A6001945B9 /* InstancedGameObject.swift in Sources */,
 				CE452FF92A7CB4A6001945B9 /* Quad.swift in Sources */,
+				CE79B6292B92E47E009F2E49 /* Texture.swift in Sources */,
 				CE452FE72A7CB4A6001945B9 /* Cube.swift in Sources */,
 				CE452FE02A7CB499001945B9 /* SceneManager.swift in Sources */,
 				CE4530032A7CB4B1001945B9 /* Math.swift in Sources */,
@@ -1618,6 +1639,7 @@
 				CEC231352B25AC650081A26A /* PointLightObject.swift in Sources */,
 				CE452FC42A7CB46F001945B9 /* DepthStencilStateLibrary.swift in Sources */,
 				CEC231312B22F3E50081A26A /* Icosahedron.swift in Sources */,
+				CE79B62E2B92E4B8009F2E49 /* TextureLoader.swift in Sources */,
 				CE79B6182B92E153009F2E49 /* DepthStencilState.swift in Sources */,
 				CE452FB32A7CB42E001945B9 /* GameTime.swift in Sources */,
 				CE452FB72A7CB43D001945B9 /* Mouse.swift in Sources */,
@@ -1738,6 +1760,7 @@
 				CE3BFF6428E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE2ED2C0299CBB3C00C81F47 /* SkyBox.swift in Sources */,
 				CE3BFF7E28E2FCF50014A752 /* Node.swift in Sources */,
+				CE79B62B2B92E4B8009F2E49 /* TextureLoader.swift in Sources */,
 				CE7F484E28B771550082B197 /* TimeIt.swift in Sources */,
 				CE0601632A7FA158001F8CC3 /* MotionDevice.swift in Sources */,
 				CE56921828EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
@@ -1759,6 +1782,7 @@
 				CE45304F2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift in Sources */,
 				CE4127972B6B3F2900B01AEA /* Temple.swift in Sources */,
 				CE886A472985007A0013062D /* DirectionalLight.metal in Sources */,
+				CE79B6262B92E47E009F2E49 /* Texture.swift in Sources */,
 				CEFC6F22296B4200009B692B /* Sphere.swift in Sources */,
 				CEC0C59E2B53BEDF00863C38 /* UsdMesh.swift in Sources */,
 				CE2ED262299394E500C81F47 /* ModelIO+Extensions.swift in Sources */,
@@ -1845,6 +1869,7 @@
 				CE3BFF8F28E2FE140014A752 /* Math.swift in Sources */,
 				CE79B6012B8F160E009F2E49 /* SinglePassDeferredPipeline.swift in Sources */,
 				CE7F484F28B771550082B197 /* TimeIt.swift in Sources */,
+				CE79B6272B92E47E009F2E49 /* Texture.swift in Sources */,
 				CEFC6EC6295B55EA009B692B /* OrderIndependentTransparency.metal in Sources */,
 				CEFC6F23296B4200009B692B /* Sphere.swift in Sources */,
 				CEC6B48B2B45F8BD004A5AC7 /* TFSCache.swift in Sources */,
@@ -1854,6 +1879,7 @@
 				CE7F480728B758920082B197 /* AppDelegate.swift in Sources */,
 				CEB84E7C2A24AC3300BEF778 /* Controller.swift in Sources */,
 				CE886A482985007A0013062D /* DirectionalLight.metal in Sources */,
+				CE79B62C2B92E4B8009F2E49 /* TextureLoader.swift in Sources */,
 				CE3DD2EE2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE3BFF8728E2FD9C0014A752 /* GameObject.swift in Sources */,
 				CE3BFFA428E452F00014A752 /* LightObject.swift in Sources */,
@@ -1916,6 +1942,7 @@
 				CE3BFFAD28E453310014A752 /* Quad.swift in Sources */,
 				CE3E526528E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
 				CE3BFF5E28E1B2BC0014A752 /* VertexDescriptorLibrary.swift in Sources */,
+				CE79B62D2B92E4B8009F2E49 /* TextureLoader.swift in Sources */,
 				CE3BFF7828E2FC0A0014A752 /* GameScene.swift in Sources */,
 				CE0601672A83796B001F8CC3 /* CapsuleObject.swift in Sources */,
 				CE3BFF7C28E2FC270014A752 /* SandboxScene.swift in Sources */,
@@ -1936,6 +1963,7 @@
 				CE79B6222B92E361009F2E49 /* BasicVertexDescriptors.swift in Sources */,
 				CE7F481728B758920082B197 /* AppDelegate.swift in Sources */,
 				CEAB384C297FB3720087F7CB /* GBufferTextures.swift in Sources */,
+				CE79B6282B92E47E009F2E49 /* Texture.swift in Sources */,
 				CE3BFF9D28E4523D0014A752 /* Camera.swift in Sources */,
 				CE3BFF9428E451E50014A752 /* CameraManager.swift in Sources */,
 				CE4127982B6B667600B01AEA /* Temple.swift in Sources */,
