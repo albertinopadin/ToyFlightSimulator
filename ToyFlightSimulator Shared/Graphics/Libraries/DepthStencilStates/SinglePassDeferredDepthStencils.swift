@@ -1,5 +1,5 @@
 //
-//  SinglePassDeferredStencils.swift
+//  SinglePassDeferredDepthStencils.swift
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 3/1/24.

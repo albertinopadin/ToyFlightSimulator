@@ -121,7 +121,8 @@ typedef enum {
     TFSRenderTargetLighting  = 0,
     TFSRenderTargetAlbedo    = 1,
     TFSRenderTargetNormal    = 2,
-    TFSRenderTargetDepth     = 3
+    TFSRenderTargetDepth     = 3,
+    TFSRenderTargetPosition  = 4
 } TFSRenderTargetIndices;
    
 

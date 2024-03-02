@@ -9,9 +9,9 @@ import MetalKit
 
 extension RenderPipelineState {
     static func setRenderTargetPixelFormatsForSinglePassDeferredPipeline(descriptor: MTLRenderPipelineDescriptor) {
-        descriptor.colorAttachments[TFSRenderTargetAlbedo.index].pixelFormat = GBufferTextures.albedoSpecularFormat
-        descriptor.colorAttachments[TFSRenderTargetNormal.index].pixelFormat = GBufferTextures.normalShadowFormat
-        descriptor.colorAttachments[TFSRenderTargetDepth.index].pixelFormat = GBufferTextures.depthFormat
+        descriptor.colorAttachments[TFSRenderTargetAlbedo.index].pixelFormat = SinglePassDeferredGBufferTextures.albedoSpecularFormat
+        descriptor.colorAttachments[TFSRenderTargetNormal.index].pixelFormat = SinglePassDeferredGBufferTextures.normalShadowFormat
+        descriptor.colorAttachments[TFSRenderTargetDepth.index].pixelFormat = SinglePassDeferredGBufferTextures.depthFormat
     }
 }
 
@@ -30,8 +30,8 @@ struct ShadowGenerationRenderPipelineState: RenderPipelineState {
 struct GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "GBuffer Generation Stage") { descriptor in
-            descriptor.vertexFunction = Graphics.Shaders[.GBufferVertex]
-            descriptor.fragmentFunction = Graphics.Shaders[.GBufferFragmentBase]
+            descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredGBufferVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredGBufferFragmentBase]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
@@ -49,8 +49,8 @@ struct GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
 struct GBufferGenerationMaterialRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "GBuffer Generation Stage") { descriptor in
-            descriptor.vertexFunction = Graphics.Shaders[.GBufferVertex]
-            descriptor.fragmentFunction = Graphics.Shaders[.GBufferFragmentMaterial]
+            descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredGBufferVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredGBufferFragmentMaterial]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
@@ -63,8 +63,8 @@ struct GBufferGenerationMaterialRenderPipelineState: RenderPipelineState {
 struct DirectionalLightingRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Directional Lighting Stage") { descriptor in
-            descriptor.vertexFunction = Graphics.Shaders[.DeferredDirectionalLightingVertex]
-            descriptor.fragmentFunction = Graphics.Shaders[.DeferredDirectionalLightingFragment]
+            descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredDirectionalLightVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredDirectionalLightFragment]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
@@ -88,8 +88,8 @@ struct LightMaskRenderPipelineState: RenderPipelineState {
 struct PointLightingRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Point Lights Stage") { descriptor in
-            descriptor.vertexFunction = Graphics.Shaders[.DeferredPointLightVertex]
-            descriptor.fragmentFunction = Graphics.Shaders[.DeferredPointLightFragment]
+            descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredPointLightVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredPointLightFragment]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat

@@ -20,7 +20,7 @@ class GameObject: Node, Renderable {
         super.init(name: name)
         self._renderPipelineStateType = renderPipelineStateType
         if renderPipelineStateType == .OpaqueMaterial {
-            self._gBufferRenderPipelineStateType = .GBufferGenerationMaterial
+            self._gBufferRenderPipelineStateType = .SinglePassDeferredGBufferMaterial
         }
         _mesh = Assets.Meshes[meshType]
         print("GameObject named \(self.getName()) render pipeline state type: \(self._renderPipelineStateType)")
@@ -29,7 +29,7 @@ class GameObject: Node, Renderable {
     convenience init(name: String,
                      meshType: MeshType,
                      renderPipelineStateType: RenderPipelineStateType = .Opaque,
-                     gBufferRPS: RenderPipelineStateType = .GBufferGenerationBase) {
+                     gBufferRPS: RenderPipelineStateType = .SinglePassDeferredGBufferBase) {
         self.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
         self._gBufferRenderPipelineStateType = gBufferRPS
     }
@@ -102,7 +102,7 @@ extension GameObject {
             }
         }
         
-        _gBufferRenderPipelineStateType = .GBufferGenerationMaterial
+        _gBufferRenderPipelineStateType = .SinglePassDeferredGBufferMaterial
         
         _material = material
         _mesh._submeshes.forEach { $0.material = Material(material) }

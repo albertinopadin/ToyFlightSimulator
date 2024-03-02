@@ -78,11 +78,11 @@ class SceneManager {
     }
     
     public static func RenderGBuffer(with renderCommandEncoder: MTLRenderCommandEncoder) {
-        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.GBufferGenerationBase])
-        currentScene?.renderGBuffer(with: renderCommandEncoder, gBufferRPS: .GBufferGenerationBase)
+        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredGBufferBase])
+        currentScene?.renderGBuffer(with: renderCommandEncoder, gBufferRPS: .SinglePassDeferredGBufferBase)
         
-        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.GBufferGenerationMaterial])
-        currentScene?.renderGBuffer(with: renderCommandEncoder, gBufferRPS: .GBufferGenerationMaterial)
+        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredGBufferMaterial])
+        currentScene?.renderGBuffer(with: renderCommandEncoder, gBufferRPS: .SinglePassDeferredGBufferMaterial)
     }
     
     public static func RenderShadows(with renderCommandEncoder: MTLRenderCommandEncoder) {

@@ -15,10 +15,10 @@ enum ShaderType {
     case QuadPassVertex
     
     case ShadowVertex
-    case GBufferVertex
-    case DeferredDirectionalLightingVertex
+    case SinglePassDeferredGBufferVertex
+    case SinglePassDeferredDirectionalLightVertex
     case LightMaskVertex
-    case DeferredPointLightVertex
+    case SinglePassDeferredPointLightVertex
     case SkyboxVertex
     
     case BaseFragment
@@ -29,16 +29,23 @@ enum ShaderType {
     case TransparentMaterialFragment
     case BlendFragment
     
-    case GBufferFragmentBase
-    case GBufferFragmentMaterial
-    case DeferredDirectionalLightingFragment
-    case DeferredPointLightFragment
+    case SinglePassDeferredGBufferFragmentBase
+    case SinglePassDeferredGBufferFragmentMaterial
+    case SinglePassDeferredDirectionalLightFragment
+    case SinglePassDeferredPointLightFragment
     case SkyboxFragment
     
     case TileKernel
     
     case IcosahedronVertex
     case IcosahedronFragment
+    
+    case TiledDeferredGBufferVertex
+    case TiledDeferredGBufferFragment
+    case TiledDeferredDirectionalLightVertex
+    case TiledDeferredDirectionalLightFragment
+    case TiledDeferredPointLightVertex
+    case TiledDeferredPointLightFragment
 }
 
 
@@ -53,11 +60,12 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "quad_pass_vertex"), forKey: .QuadPassVertex)
         
         _library.updateValue(Shader(functionName: "shadow_vertex"), forKey: .ShadowVertex)
-        _library.updateValue(Shader(functionName: "gbuffer_vertex"), forKey: .GBufferVertex)
+        _library.updateValue(Shader(functionName: "gbuffer_vertex"), forKey: .SinglePassDeferredGBufferVertex)
         _library.updateValue(Shader(functionName: "deferred_directional_lighting_vertex"),
-                             forKey: .DeferredDirectionalLightingVertex)
+                             forKey: .SinglePassDeferredDirectionalLightVertex)
         _library.updateValue(Shader(functionName: "light_mask_vertex"), forKey: .LightMaskVertex)
-        _library.updateValue(Shader(functionName: "deferred_point_lighting_vertex"), forKey: .DeferredPointLightVertex)
+        _library.updateValue(Shader(functionName: "deferred_point_lighting_vertex"), 
+                             forKey: .SinglePassDeferredPointLightVertex)
         _library.updateValue(Shader(functionName: "skybox_vertex"), forKey: .SkyboxVertex)
         
         _library.updateValue(Shader(functionName: "base_fragment"), forKey: .BaseFragment)
@@ -68,11 +76,11 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "transparent_material_fragment"), forKey: .TransparentMaterialFragment)
         _library.updateValue(Shader(functionName: "blend_fragments"), forKey: .BlendFragment)
         
-        _library.updateValue(Shader(functionName: "gbuffer_fragment_base"), forKey: .GBufferFragmentBase)
-        _library.updateValue(Shader(functionName: "gbuffer_fragment_material"), forKey: .GBufferFragmentMaterial)
+        _library.updateValue(Shader(functionName: "gbuffer_fragment_base"), forKey: .SinglePassDeferredGBufferFragmentBase)
+        _library.updateValue(Shader(functionName: "gbuffer_fragment_material"), forKey: .SinglePassDeferredGBufferFragmentMaterial)
         _library.updateValue(Shader(functionName: "deferred_directional_lighting_fragment"),
-                             forKey: .DeferredDirectionalLightingFragment)
-        _library.updateValue(Shader(functionName: "deferred_point_lighting_fragment"), forKey: .DeferredPointLightFragment)
+                             forKey: .SinglePassDeferredDirectionalLightFragment)
+        _library.updateValue(Shader(functionName: "deferred_point_lighting_fragment"), forKey: .SinglePassDeferredPointLightFragment)
         _library.updateValue(Shader(functionName: "skybox_fragment"), forKey: .SkyboxFragment)
         
         _library.updateValue(Shader(functionName: "init_transparent_fragment_store"), forKey: .TileKernel)
@@ -80,6 +88,13 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         // For testing:
         _library.updateValue(Shader(functionName: "icosahedron_vertex"), forKey: .IcosahedronVertex)
         _library.updateValue(Shader(functionName: "icosahedron_fragment"), forKey: .IcosahedronFragment)
+        
+        // TiledDeferred:
+        _library.updateValue(Shader(functionName: "tiled_deferred_gbuffer_vertex"), forKey: .TiledDeferredGBufferVertex)
+        _library.updateValue(Shader(functionName: "tiled_deferred_gbuffer_fragment"), forKey: .TiledDeferredGBufferFragment)
+//        _library.updateValue(Shader(functionName: ""), forKey: <#T##ShaderType#>)
+//        _library.updateValue(Shader(functionName: ""), forKey: <#T##ShaderType#>)
+//        _library.updateValue(Shader(functionName: ""), forKey: <#T##ShaderType#>)
     }
     
     override subscript(_ type: ShaderType) -> MTLFunction {

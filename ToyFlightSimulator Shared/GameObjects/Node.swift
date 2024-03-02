@@ -21,7 +21,7 @@ class Node {
     private var _rotationMatrix = matrix_identity_float4x4
     
     internal var _renderPipelineStateType: RenderPipelineStateType = .Opaque
-    internal var _gBufferRenderPipelineStateType: RenderPipelineStateType = .GBufferGenerationBase
+    internal var _gBufferRenderPipelineStateType: RenderPipelineStateType = .SinglePassDeferredGBufferBase
     
     var parent: Node? = nil
     var children: [Node] = []
@@ -90,8 +90,8 @@ class Node {
     
     func shouldRender(with renderPipelineStateType: RenderPipelineStateType) -> Bool {
         if self is PointLightObject {
-            return (renderPipelineStateType == .LightMask || renderPipelineStateType == .PointLight) && 
-                   (_renderPipelineStateType == .LightMask || _renderPipelineStateType == .PointLight)
+            return (renderPipelineStateType == .LightMask || renderPipelineStateType == .SinglePassDeferredPointLight) &&
+                   (_renderPipelineStateType == .LightMask || _renderPipelineStateType == .SinglePassDeferredPointLight)
         } else {
             return _renderPipelineStateType == renderPipelineStateType
         }

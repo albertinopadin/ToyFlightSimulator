@@ -33,7 +33,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
         return descriptor
     }()
     
-    private var gBufferTextures = GBufferTextures()
+    private var gBufferTextures = SinglePassDeferredGBufferTextures()
     
     override var metalView: MTKView {
         didSet {
@@ -72,7 +72,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeStage(using: renderEncoder, label: "GBuffer Generation Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.GBufferGenerationMaterial])
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredGBufferMaterial])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.GBufferGeneration])
             // NOTE: For some reason, setting cull mode to back makes meshes appear 'extruded' or turned inside out.
 //            renderEncoder.setCullMode(.back)  // TODO: Set this on ???
@@ -86,7 +86,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     func encodeDirectionalLightingStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeStage(using: renderEncoder, label: "Directional Lighting Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.DirectionalLighting])
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredDirectionalLighting])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DirectionalLighting])
             renderEncoder.setCullMode(.back)
             renderEncoder.setStencilReferenceValue(128)
@@ -114,7 +114,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeStage(using: renderEncoder, label: "Point Light Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.PointLight])
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredPointLight])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])  // <--- This is causing issues
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
             renderEncoder.setStencilReferenceValue(128)

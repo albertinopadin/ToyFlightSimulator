@@ -21,14 +21,19 @@ enum RenderPipelineStateType {
     case OrderIndependentTransparent
     case Blend
     
-    // For Deferred Lighting:
+    // For Deferred Single-Pass Lighting:
     case ShadowGeneration
-    case GBufferGenerationBase
-    case GBufferGenerationMaterial
-    case DirectionalLighting
+    case SinglePassDeferredGBufferBase
+    case SinglePassDeferredGBufferMaterial
+    case SinglePassDeferredDirectionalLighting
     case LightMask
-    case PointLight
+    case SinglePassDeferredPointLight
     case Skybox
+    
+    // For Tiled Deferred:
+    case TiledDeferredGBuffer
+    case TiledDeferredDirectionalLight
+    case TiledDeferredPointLight
     
     // For testing:
     case Icosahedron
@@ -51,11 +56,11 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(BlendRenderPipelineState(), forKey: .Blend)
         
         _library.updateValue(ShadowGenerationRenderPipelineState(), forKey: .ShadowGeneration)
-        _library.updateValue(GBufferGenerationBaseRenderPipelineState(), forKey: .GBufferGenerationBase)
-        _library.updateValue(GBufferGenerationMaterialRenderPipelineState(), forKey: .GBufferGenerationMaterial)
-        _library.updateValue(DirectionalLightingRenderPipelineState(), forKey: .DirectionalLighting)
+        _library.updateValue(GBufferGenerationBaseRenderPipelineState(), forKey: .SinglePassDeferredGBufferBase)
+        _library.updateValue(GBufferGenerationMaterialRenderPipelineState(), forKey: .SinglePassDeferredGBufferMaterial)
+        _library.updateValue(DirectionalLightingRenderPipelineState(), forKey: .SinglePassDeferredDirectionalLighting)
         _library.updateValue(LightMaskRenderPipelineState(), forKey: .LightMask)
-        _library.updateValue(PointLightingRenderPipelineState(), forKey: .PointLight)
+        _library.updateValue(PointLightingRenderPipelineState(), forKey: .SinglePassDeferredPointLight)
         _library.updateValue(SkyboxRenderPipelineState(), forKey: .Skybox)
         
         _library.updateValue(IcosahedronRenderPipelineState(), forKey: .Icosahedron)
