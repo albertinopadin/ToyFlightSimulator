@@ -85,6 +85,11 @@ class SceneManager {
         currentScene?.renderGBuffer(with: renderCommandEncoder, gBufferRPS: .SinglePassDeferredGBufferMaterial)
     }
     
+    public static func RenderTiledDeferredGBuffer(with renderCommandEncoder: MTLRenderCommandEncoder) {
+        // TODO: Take material into account:
+        currentScene?.renderTiledDeferredGBuffer(with: renderCommandEncoder)
+    }
+    
     public static func RenderShadows(with renderCommandEncoder: MTLRenderCommandEncoder) {
         currentScene?.renderShadows(with: renderCommandEncoder)
     }

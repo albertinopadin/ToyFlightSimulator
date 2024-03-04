@@ -146,6 +146,21 @@ class Node {
         }
     }
     
+    // TODO: God noooo...
+    private func shouldRenderTiledGBuffer() -> Bool {
+        return _renderPipelineStateType != .Skybox && !(self is LightObject)
+    }
+    
+    func renderTiledDeferredGBuffer(with renderCommandEncoder: MTLRenderCommandEncoder) {
+        if shouldRenderTiledGBuffer(), let renderable = self as? Renderable {
+            renderable.doRender(renderCommandEncoder, applyMaterials: true, submeshesToRender: nil)
+        }
+        
+        for child in children {
+            child.renderTiledDeferredGBuffer(with: renderCommandEncoder)
+        }
+    }
+    
     // TODO: Smells off to manually set these conditions...
     private func shouldRenderShadows() -> Bool {
         return _renderPipelineStateType != .Skybox && !(self is LightObject) && !(self is Icosahedron)

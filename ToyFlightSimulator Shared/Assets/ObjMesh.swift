@@ -75,13 +75,7 @@ class ObjMesh: Mesh {
             _childMeshes.append(contentsOf: ObjMesh.makeMeshes(object: child, vertexDescriptor: descriptor))
         }
         
-//        print("Num child meshes for \(modelName): \(_childMeshes.count)")
-//        for cm in _childMeshes {
-//            print("Mesh named \(name); Child mesh name: \(cm.name)")
-//            for sm in cm._submeshes {
-//                print("Child mesh \(cm.name); Submesh name: \(sm.name)")
-//            }
-//        }
+        invertMeshZ()
     }
     
     private static func makeMeshes(object: MDLObject, vertexDescriptor: MDLVertexDescriptor) -> [Mesh] {
@@ -101,5 +95,17 @@ class ObjMesh: Mesh {
         }
         
         return meshes
+    }
+    
+    private func invertMeshZ() {
+        for mesh in _childMeshes {
+            let vertexBuffer = mesh._vertexBuffer!
+            let count = vertexBuffer.length / Vertex.stride
+            var pointer = vertexBuffer.contents().bindMemory(to: Vertex.self, capacity: count)
+            for _ in 0..<count {
+                pointer.pointee.position.z = -pointer.pointee.position.z
+                pointer = pointer.advanced(by: 1)
+            }
+        }
     }
 }

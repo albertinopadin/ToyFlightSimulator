@@ -13,12 +13,25 @@ class FlightboxScene: GameScene {
     var quad = Quad()
     var capsule = CapsuleObject()
     
+    private func addGround() {
+        var groundMaterial = ShaderMaterial()
+        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
+        groundMaterial.setColor(groundColor)
+        let ground = Quad()
+        ground.useMaterial(groundMaterial)
+        ground.rotateX(Float(90).toRadians)
+        ground.setScale(float3(100, 100, 100))
+        addChild(ground)
+    }
+    
     override func buildScene() {
+        addGround()
+        
 //        let jet = F16(scale: 6.0)
-//        let jet = F18()
+        let jet = F18()
 //        let jet = F18Usdz()
 //        let jet = F35(scale: 0.8)
-        let jet = F22(scale: 0.125)
+//        let jet = F22(scale: 0.125)
 //        let jet = Temple(scale: 0.02)
         
         addCamera(attachedCamera)
@@ -116,15 +129,7 @@ class FlightboxScene: GameScene {
 //        bluishSphere.useMaterial(sphereBluishMaterial)
 //        addChild(bluishSphere)
         
-        
-        var groundMaterial = ShaderMaterial()
-        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        groundMaterial.setColor(groundColor)
-        let ground = Quad()
-        ground.useMaterial(groundMaterial)
-        ground.rotateX(Float(90).toRadians)
-        ground.setScale(float3(100, 100, 100))
-        addChild(ground)
+//        addGround()
         
         var quadMaterial = ShaderMaterial()
         quadMaterial.setColor([0, 0.4, 1.0, 1.0])

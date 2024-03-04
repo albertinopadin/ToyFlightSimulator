@@ -296,6 +296,7 @@ class F18: Aircraft {
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)
+        self.rotateY(Float(180).toRadians)
         setupControlSurfaces()
     }
     

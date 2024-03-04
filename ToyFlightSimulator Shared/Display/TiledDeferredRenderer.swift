@@ -8,7 +8,7 @@
 import MetalKit
 
 class TiledDeferredRenderer: Renderer {
-    private static var ShadowTextureSize: Int = 2048
+    private static var ShadowTextureSize: Int = 4096
     
     private var gBufferTextures = TiledDeferredGBufferTextures()
     
@@ -29,13 +29,6 @@ class TiledDeferredRenderer: Renderer {
             descriptor.colorAttachments[renderTarget.index].storeAction = .dontCare
         }
         
-//        descriptor.colorAttachments[TFSRenderTargetAlbedo.index].loadAction = .clear
-//        descriptor.colorAttachments[TFSRenderTargetAlbedo.index].storeAction = .dontCare
-//        descriptor.colorAttachments[TFSRenderTargetNormal.index].loadAction = .clear
-//        descriptor.colorAttachments[TFSRenderTargetNormal.index].storeAction = .dontCare
-//        descriptor.colorAttachments[TFSRenderTargetPosition.index].loadAction = .clear
-//        descriptor.colorAttachments[TFSRenderTargetPosition.index].storeAction = .dontCare
-        
         // To make empty space (no nodes/skybox) look black instead of Snow...
         descriptor.colorAttachments[TFSRenderTargetLighting.index].loadAction = .clear
         descriptor.colorAttachments[TFSRenderTargetLighting.index].clearColor = Preferences.ClearColor
@@ -45,6 +38,8 @@ class TiledDeferredRenderer: Renderer {
     override var metalView: MTKView {
         didSet {
 //            metalView.depthStencilPixelFormat = .depth32Float_stencil8  // ???
+//            metalView.depthStencilPixelFormat = TiledDeferredGBufferTextures.depthPixelFormat
+            metalView.depthStencilPixelFormat = .depth32Float
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
             updateDrawableSize(size: drawableSize)
         }
@@ -98,12 +93,6 @@ class TiledDeferredRenderer: Renderer {
         renderPassDescriptor.stencilAttachment.storeAction = .dontCare
     }
     
-    override func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        if !size.width.isNaN && !size.height.isNaN && !size.width.isInfinite && !size.height.isInfinite {
-            updateDrawableSize(size: size)
-        }
-    }
-    
     func encodeShadowPass(into commandBuffer: MTLCommandBuffer) {
         encodePass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Pass") { renderEncoder in
             encodeStage(using: renderEncoder, label: "Shadow Texture Stage") {
@@ -121,7 +110,7 @@ class TiledDeferredRenderer: Renderer {
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             renderEncoder.setFragmentTexture(shadowTexture, index: TFSTextureIndexShadow.index)
             SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-            SceneManager.RenderGBuffer(with: renderEncoder)
+            SceneManager.RenderTiledDeferredGBuffer(with: renderEncoder)
         }
     }
     
@@ -136,17 +125,11 @@ class TiledDeferredRenderer: Renderer {
         }
     }
     
-    func updateDrawableSize(size: CGSize) {
-        gBufferTextures.makeTextures(device: Engine.Device, size: size, storageMode: .memoryless)
-        // Re-set GBuffer textures in the view render pass descriptor after they have been reallocated by a resize
-        setGBufferTextures(tiledDeferredRenderPassDescriptor)
-        updateScreenSize(size: size)
-    }
-    
     override func draw(in view: MTKView) {
         // FIXME - this should be set independent of the frame rate:
         SceneManager.Update(deltaTime: 1.0 / Float(view.preferredFramesPerSecond))
         
+//        let commandBuffer = beginDrawableCommands()
         var commandBuffer = beginFrame()
         commandBuffer.label = "Shadow Commands"
         
@@ -158,8 +141,12 @@ class TiledDeferredRenderer: Renderer {
         
         if let drawableTexture = view.currentDrawable?.texture {
             tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
-            tiledDeferredRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
-            tiledDeferredRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
+//            tiledDeferredRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
+//            tiledDeferredRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
+            
+            // Possible redundant binding:
+//            tiledDeferredRenderPassDescriptor.depthAttachment.texture = gBufferTextures.depthTexture
+//            tiledDeferredRenderPassDescriptor.stencilAttachment.texture = gBufferTextures.depthTexture
             
             encodePass(into: commandBuffer,
                        using: tiledDeferredRenderPassDescriptor,
@@ -177,5 +164,18 @@ class TiledDeferredRenderer: Renderer {
         }
         
         commandBuffer.commit()
+    }
+    
+    override func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+        if !size.width.isNaN && !size.height.isNaN && !size.width.isInfinite && !size.height.isInfinite {
+            updateDrawableSize(size: size)
+        }
+    }
+    
+    func updateDrawableSize(size: CGSize) {
+        gBufferTextures.makeTextures(device: Engine.Device, size: size, storageMode: .memoryless)
+        // Re-set GBuffer textures in the view render pass descriptor after they have been reallocated by a resize
+        setGBufferTextures(tiledDeferredRenderPassDescriptor)
+        updateScreenSize(size: size)
     }
 }

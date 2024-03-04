@@ -5,6 +5,8 @@
 //  Created by Albertino Padin on 1/20/24.
 //
 
+import MetalKit
+
 class F22: Aircraft {
     static let NAME: String = "F-22"
     
@@ -14,7 +16,7 @@ class F22: Aircraft {
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)
-        rotateX(Float(90).toRadians)
-        rotateZ(Float(90).toRadians)
+        rotateX(Float(-90).toRadians)
+        rotateZ(Float(-90).toRadians)
     }
 }

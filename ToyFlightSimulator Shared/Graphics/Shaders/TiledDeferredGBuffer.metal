@@ -55,6 +55,11 @@ tiled_deferred_gbuffer_fragment(VertexOut               in            [[ stage_i
                                 texture2d<half>         normalMap     [[ texture(TFSTextureIndexNormal) ]],
                                 texture2d<half>         specularMap   [[ texture(TFSTextureIndexSpecular) ]]) {
     float4 color = material.color;
+    
+    if (material.useBaseTexture) {
+        color = float4(baseColorMap.sample(sampler2d, in.uv));
+    }
+    
     color.a = calculateShadow(in.shadowPosition, shadowTexture);
     
     GBufferOut out {

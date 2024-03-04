@@ -107,8 +107,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredGBufferMaterial])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.GBufferGeneration])
             // NOTE: For some reason, setting cull mode to back makes meshes appear 'extruded' or turned inside out.
-//            renderEncoder.setCullMode(.back)  // TODO: Set this on ???
-//            renderEncoder.setCullMode(.front)
+            renderEncoder.setCullMode(.back)
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setFragmentTexture(shadowMap, index: TFSTextureIndexShadow.index)
             SceneManager.SetDirectionalLightConstants(with: renderEncoder)
@@ -177,7 +176,8 @@ class SinglePassDeferredLightingRenderer: Renderer {
             encodeStage(using: renderEncoder, label: "Shadow Generation Stage") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ShadowGeneration])
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.ShadowGeneration])
-                renderEncoder.setCullMode(.back)
+//                renderEncoder.setCullMode(.back)
+//                renderEncoder.setCullMode(.front)
 //                renderEncoder.setDepthBias(0.015, slopeScale: 7, clamp: 0.02)
                 renderEncoder.setDepthBias(0.1, slopeScale: 1, clamp: 0.0)
                 SceneManager.SetDirectionalLightConstants(with: renderEncoder)

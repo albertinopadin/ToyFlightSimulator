@@ -18,7 +18,7 @@ class UsdMesh: Mesh {
         
         let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
         
-        let descriptor = Mesh.createMdlVertexDescriptor()
+        let descriptor = Self.createMdlVertexDescriptor()
         let asset = MDLAsset(url: assetUrl, vertexDescriptor: descriptor, bufferAllocator: bufferAllocator)
         
         asset.loadTextures()
@@ -26,8 +26,11 @@ class UsdMesh: Mesh {
         for i in 0..<asset.count {
             let child = asset.object(at: i)
             print("[UsdMesh init] \(modelName) child name: \(child.name)")
-            _childMeshes.append(contentsOf: UsdMesh.makeMeshes(object: child, vertexDescriptor: descriptor))
+            _childMeshes.append(contentsOf: Self.makeMeshes(object: child, vertexDescriptor: descriptor))
         }
+        
+        // Invert Z in meshes due to USD being right handed coord system:
+        invertMeshZ()
         
         print("[UsdMesh init] Num child meshes for \(modelName): \(_childMeshes.count)")
     }
@@ -44,10 +47,22 @@ class UsdMesh: Mesh {
         }
         
         for child in object.children.objects {
-            let childMeshes = UsdMesh.makeMeshes(object: child, vertexDescriptor: vertexDescriptor)
+            let childMeshes = Self.makeMeshes(object: child, vertexDescriptor: vertexDescriptor)
             meshes.append(contentsOf: childMeshes)
         }
         
         return meshes
+    }
+    
+    private func invertMeshZ() {
+        for mesh in _childMeshes {
+            let vertexBuffer = mesh._vertexBuffer!
+            let count = vertexBuffer.length / Vertex.stride
+            var pointer = vertexBuffer.contents().bindMemory(to: Vertex.self, capacity: count)
+            for _ in 0..<count {
+                pointer.pointee.position.z = -pointer.pointee.position.z
+                pointer = pointer.advanced(by: 1)
+            }
+        }
     }
 }

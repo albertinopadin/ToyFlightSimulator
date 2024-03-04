@@ -18,7 +18,7 @@ class F35: Aircraft {
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)
-        rotateY(Float(180).toRadians)
-        rotateX(Float(-90).toRadians)
+//        rotateY(Float(180).toRadians)
+        rotateX(Float(90).toRadians)
     }
 }
