@@ -7,6 +7,15 @@
 
 import MetalKit
 
+struct TiledDeferredShadowDepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "Tiled Deferred Shadow") { depthStencilDescriptor in
+            depthStencilDescriptor.depthCompareFunction = .less
+            depthStencilDescriptor.isDepthWriteEnabled = true
+        }
+    }()
+}
+
 struct TiledDeferredGBufferDepthStencilState: DepthStencilState {
     var depthStencilState: MTLDepthStencilState = {
         makeDepthStencilState(label: "Tiled Deferred GBuffer") { depthStencilDescriptor in

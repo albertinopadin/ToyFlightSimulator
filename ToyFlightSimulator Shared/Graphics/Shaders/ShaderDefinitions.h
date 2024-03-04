@@ -54,3 +54,21 @@ typedef struct {
 } AccumLightBuffer;
 
 #endif
+
+// For Tiled Deferred Renderer:
+struct GBufferOut {
+    float4 albedo   [[ color(TFSRenderTargetAlbedo) ]];
+    float4 normal   [[ color(TFSRenderTargetNormal) ]];
+    float4 position [[ color(TFSRenderTargetPosition) ]];
+};
+
+struct VertexOut {
+    float4 position [[ position ]];
+    float3 normal;
+    float2 uv;
+    float3 worldPosition;
+    float3 worldNormal;
+    float3 worldTangent;
+    float3 worldBitangent;
+    float4 shadowPosition;
+};

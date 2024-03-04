@@ -21,6 +21,10 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     private let _quadVertexBuffer: MTLBuffer!
     
+    private static var ShadowMapSize: Int = 8_192
+    var shadowMap: MTLTexture?
+    var shadowRenderPassDescriptor: MTLRenderPassDescriptor!
+    
     private let _gBufferAndLightingRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
         descriptor.colorAttachments[TFSRenderTargetAlbedo.index].storeAction = .dontCare
@@ -43,19 +47,47 @@ class SinglePassDeferredLightingRenderer: Renderer {
         }
     }
     
+    public static func makeShadowMap(label: String) -> MTLTexture! {
+        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
+                                                                               width: Self.ShadowMapSize,
+                                                                               height: Self.ShadowMapSize,
+                                                                               mipmapped: false)
+        shadowTextureDescriptor.resourceOptions = .storageModePrivate
+        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
+        let sm = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor)!
+        sm.label = label
+        
+        return sm
+    }
+    
+    public static func createShadowRenderPassDescriptor(shadowMapTexture: MTLTexture) -> MTLRenderPassDescriptor {
+        let mShadowRenderPassDescriptor = MTLRenderPassDescriptor()
+        mShadowRenderPassDescriptor.depthAttachment.texture = shadowMapTexture
+        mShadowRenderPassDescriptor.depthAttachment.loadAction = .clear
+        mShadowRenderPassDescriptor.depthAttachment.storeAction = .store
+        return mShadowRenderPassDescriptor
+    }
+    
     init() {
         _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
                                                      length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
         super.init(type: .SinglePassDeferredLighting)
+        createShadowMap()
     }
     
     init(_ mtkView: MTKView) {
         _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
                                                      length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
         super.init(mtkView, type: .SinglePassDeferredLighting)
+        createShadowMap()
         let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
         print("[SPDL Renderer init] drawable size: \(drawableSize)")
         updateDrawableSize(size: drawableSize)
+    }
+    
+    func createShadowMap() {
+        shadowMap = Self.makeShadowMap(label: "Shadow Map")
+        shadowRenderPassDescriptor = Self.createShadowRenderPassDescriptor(shadowMapTexture: shadowMap!)
     }
     
     func setGBufferTextures(renderEncoder: MTLRenderCommandEncoder) {

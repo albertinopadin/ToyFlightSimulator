@@ -42,7 +42,7 @@ enum ShaderType {
     
     case TiledDeferredGBufferVertex
     case TiledDeferredGBufferFragment
-    case TiledDeferredDirectionalLightVertex
+    case TiledDeferredQuadVertex
     case TiledDeferredDirectionalLightFragment
     case TiledDeferredPointLightVertex
     case TiledDeferredPointLightFragment
@@ -92,9 +92,13 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         // TiledDeferred:
         _library.updateValue(Shader(functionName: "tiled_deferred_gbuffer_vertex"), forKey: .TiledDeferredGBufferVertex)
         _library.updateValue(Shader(functionName: "tiled_deferred_gbuffer_fragment"), forKey: .TiledDeferredGBufferFragment)
-//        _library.updateValue(Shader(functionName: ""), forKey: <#T##ShaderType#>)
-//        _library.updateValue(Shader(functionName: ""), forKey: <#T##ShaderType#>)
-//        _library.updateValue(Shader(functionName: ""), forKey: <#T##ShaderType#>)
+        _library.updateValue(Shader(functionName: "tiled_deferred_vertex_quad"), forKey: .TiledDeferredQuadVertex)
+        _library.updateValue(Shader(functionName: "tiled_deferred_directional_light_fragment"),
+                             forKey: .TiledDeferredDirectionalLightFragment)
+        _library.updateValue(Shader(functionName: "tiled_deferred_point_light_vertex"), 
+                             forKey: .TiledDeferredPointLightVertex)
+        _library.updateValue(Shader(functionName: "tiled_deferred_point_light_fragment"), 
+                             forKey: .TiledDeferredPointLightFragment)
     }
     
     override subscript(_ type: ShaderType) -> MTLFunction {

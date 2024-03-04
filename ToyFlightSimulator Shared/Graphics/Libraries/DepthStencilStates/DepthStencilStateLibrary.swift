@@ -21,6 +21,10 @@ enum DepthStencilStateType {
     case Skybox
     
     case DepthWriteDisabled
+    
+    case TiledDeferredShadow
+    case TiledDeferredGBuffer
+    case TiledDeferredLight
 }
 
 class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilState> {
@@ -40,6 +44,10 @@ class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilSt
         _library.updateValue(SkyboxDepthStencilState(), forKey: .Skybox)
         
         _library.updateValue(DepthWriteDisabledDepthStencilState(), forKey: .DepthWriteDisabled)
+        
+        _library.updateValue(TiledDeferredShadowDepthStencilState(), forKey: .TiledDeferredShadow)
+        _library.updateValue(TiledDeferredGBufferDepthStencilState(), forKey: .TiledDeferredGBuffer)
+        _library.updateValue(TiledDeferredLightingDepthStencilState(), forKey: .TiledDeferredLight)
     }
     
     override subscript(type: DepthStencilStateType) -> MTLDepthStencilState {
