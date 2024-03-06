@@ -15,7 +15,6 @@ struct TiledDeferredGBufferTextures {
         case Depth
     }
     
-//    static let albedoPixelFormat: MTLPixelFormat = .rgba8Unorm_srgb
     static let albedoPixelFormat: MTLPixelFormat = .bgra8Unorm
     static let normalPixelFormat: MTLPixelFormat = .rgba16Float
     static let positionPixelFormat: MTLPixelFormat = .rgba16Float

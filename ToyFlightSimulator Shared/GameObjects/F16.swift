@@ -14,5 +14,14 @@ class F16: Aircraft {
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)
+//        self.rotateY(Float(180).toRadians)
+    }
+    
+    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, 
+                           applyMaterials: Bool = true,
+                           submeshesToRender: [String : Bool]? = nil) {
+        renderCommandEncoder.setFrontFacing(.counterClockwise)
+        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
+        renderCommandEncoder.setFrontFacing(.clockwise)
     }
 }

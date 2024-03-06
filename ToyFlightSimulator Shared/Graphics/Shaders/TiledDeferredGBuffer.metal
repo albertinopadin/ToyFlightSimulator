@@ -37,7 +37,7 @@ tiled_deferred_gbuffer_vertex(VertexIn                in              [[ stage_i
         .position = position,
         .normal = in.normal,
         .uv = in.textureCoordinate,
-        .worldPosition = worldPosition.xyz / worldPosition.z,
+        .worldPosition = worldPosition.xyz / worldPosition.w,
         .worldNormal = modelConstants.normalMatrix * in.normal,
         .worldTangent = modelConstants.normalMatrix * in.tangent,
         .worldBitangent = modelConstants.normalMatrix * in.bitangent,
@@ -47,24 +47,29 @@ tiled_deferred_gbuffer_vertex(VertexIn                in              [[ stage_i
 }
 
 fragment GBufferOut 
-tiled_deferred_gbuffer_fragment(VertexOut               in            [[ stage_in ]],
-                                depth2d<float>          shadowTexture [[ texture(TFSTextureIndexShadow) ]],
-                                constant ShaderMaterial &material     [[ buffer(TFSBufferIndexMaterial) ]],
-                                sampler                 sampler2d     [[ sampler(0) ]],
-                                texture2d<half>         baseColorMap  [[ texture(TFSTextureIndexBaseColor) ]],
-                                texture2d<half>         normalMap     [[ texture(TFSTextureIndexNormal) ]],
-                                texture2d<half>         specularMap   [[ texture(TFSTextureIndexSpecular) ]]) {
+tiled_deferred_gbuffer_fragment(VertexOut               in                  [[ stage_in ]],
+                                constant ShaderMaterial &material           [[ buffer(TFSBufferIndexMaterial) ]],
+                                sampler                 sampler2d           [[ sampler(0) ]],
+                                texture2d<half>         baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
+                                texture2d<half>         normalTexture       [[ texture(TFSTextureIndexNormal) ]],
+                                depth2d<float>          shadowTexture       [[ texture(TFSTextureIndexShadow) ]]) {
     float4 color = material.color;
     
     if (material.useBaseTexture) {
-        color = float4(baseColorMap.sample(sampler2d, in.uv));
+        color = float4(baseColorTexture.sample(sampler2d, in.uv));
     }
     
     color.a = calculateShadow(in.shadowPosition, shadowTexture);
     
+    float4 normal = float4(normalize(in.worldNormal), 1.0);
+    
+    if (material.useNormalMapTexture) {
+        normal = float4(normalTexture.sample(sampler2d, in.uv));
+    }
+    
     GBufferOut out {
         .albedo = color,
-        .normal = float4(normalize(in.worldNormal), 1.0),
+        .normal = normal,
         .position = float4(in.worldPosition, 1.0)
     };
     return out;

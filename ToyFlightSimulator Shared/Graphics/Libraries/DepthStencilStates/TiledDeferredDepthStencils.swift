@@ -39,7 +39,8 @@ struct TiledDeferredLightingDepthStencilState: DepthStencilState {
             depthStencilDescriptor.isDepthWriteEnabled = false
             
             let frontFaceStencil = MTLStencilDescriptor()
-            frontFaceStencil.stencilCompareFunction = .notEqual
+//            frontFaceStencil.stencilCompareFunction = .notEqual  // This prevents the groung from rendering
+            frontFaceStencil.stencilCompareFunction = .always
             frontFaceStencil.stencilFailureOperation = .keep
             frontFaceStencil.depthFailureOperation = .keep
             frontFaceStencil.depthStencilPassOperation = .keep

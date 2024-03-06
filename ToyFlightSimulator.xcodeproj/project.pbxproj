@@ -521,6 +521,14 @@
 		CE886A4B298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE886A4A298525D00013062D /* SinglePassDeferredLightingRenderer.swift */; };
 		CE886A4C298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE886A4A298525D00013062D /* SinglePassDeferredLightingRenderer.swift */; };
 		CE886A4D298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE886A4A298525D00013062D /* SinglePassDeferredLightingRenderer.swift */; };
+		CE8A7A372B9818FA00C024EA /* BasicMeshes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8A7A362B9818FA00C024EA /* BasicMeshes.swift */; };
+		CE8A7A382B9818FA00C024EA /* BasicMeshes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8A7A362B9818FA00C024EA /* BasicMeshes.swift */; };
+		CE8A7A392B9818FA00C024EA /* BasicMeshes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8A7A362B9818FA00C024EA /* BasicMeshes.swift */; };
+		CE8A7A3A2B9818FA00C024EA /* BasicMeshes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8A7A362B9818FA00C024EA /* BasicMeshes.swift */; };
+		CE8A7A3C2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8A7A3B2B98190600C024EA /* ProgrammaticMeshes.swift */; };
+		CE8A7A3D2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8A7A3B2B98190600C024EA /* ProgrammaticMeshes.swift */; };
+		CE8A7A3E2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8A7A3B2B98190600C024EA /* ProgrammaticMeshes.swift */; };
+		CE8A7A3F2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8A7A3B2B98190600C024EA /* ProgrammaticMeshes.swift */; };
 		CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
@@ -772,6 +780,8 @@
 		CE886A422984FFB00013062D /* GBuffer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = GBuffer.metal; sourceTree = "<group>"; };
 		CE886A462985007A0013062D /* DirectionalLight.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DirectionalLight.metal; sourceTree = "<group>"; };
 		CE886A4A298525D00013062D /* SinglePassDeferredLightingRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePassDeferredLightingRenderer.swift; sourceTree = "<group>"; };
+		CE8A7A362B9818FA00C024EA /* BasicMeshes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicMeshes.swift; sourceTree = "<group>"; };
+		CE8A7A3B2B98190600C024EA /* ProgrammaticMeshes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgrammaticMeshes.swift; sourceTree = "<group>"; };
 		CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDLVertexDescriptorLibrary.swift; sourceTree = "<group>"; };
 		CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OITRenderer.swift; sourceTree = "<group>"; };
 		CEAB383F297CDE770087F7CB /* Shadow.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shadow.metal; sourceTree = "<group>"; };
@@ -1036,8 +1046,8 @@
 		CE3BFF6C28E1B4C60014A752 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				CE8A7A352B9818E500C024EA /* Meshes */,
 				CE79B6242B92E452009F2E49 /* Textures */,
-				CE3BFF6D28E1B4D70014A752 /* MeshLibrary.swift */,
 				CE76931629DE75CB00BBC718 /* SingleSMMeshLibrary.swift */,
 			);
 			path = Libraries;
@@ -1320,6 +1330,16 @@
 				CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */,
 			);
 			path = Display;
+			sourceTree = "<group>";
+		};
+		CE8A7A352B9818E500C024EA /* Meshes */ = {
+			isa = PBXGroup;
+			children = (
+				CE3BFF6D28E1B4D70014A752 /* MeshLibrary.swift */,
+				CE8A7A362B9818FA00C024EA /* BasicMeshes.swift */,
+				CE8A7A3B2B98190600C024EA /* ProgrammaticMeshes.swift */,
+			);
+			path = Meshes;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1655,6 +1675,7 @@
 				CE452FC12A7CB460001945B9 /* ShaderLibrary.swift in Sources */,
 				CE452FC72A7CB47F001945B9 /* SkySphere.metal in Sources */,
 				CE452FFE2A7CB4AC001945B9 /* GameScene.swift in Sources */,
+				CE8A7A3F2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */,
 				CE452FB02A7CB3FF001945B9 /* RenderPipelineStateLibrary.swift in Sources */,
 				CE452FC82A7CB47F001945B9 /* OrderIndependentTransparency.metal in Sources */,
 				CE452FC92A7CB47F001945B9 /* PointLights.metal in Sources */,
@@ -1702,6 +1723,7 @@
 				CE452FCC2A7CB47F001945B9 /* Base.metal in Sources */,
 				CE452FF52A7CB4A6001945B9 /* LightObject.swift in Sources */,
 				CE452FB42A7CB431001945B9 /* Library.swift in Sources */,
+				CE8A7A3A2B9818FA00C024EA /* BasicMeshes.swift in Sources */,
 				CE452FC32A7CB46F001945B9 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CE452FF82A7CB4A6001945B9 /* Missile.swift in Sources */,
 				CE4530012A7CB4B1001945B9 /* MathUtils.swift in Sources */,
@@ -1746,6 +1768,7 @@
 				CE3BFFAF28E572EC0014A752 /* SkySphere.metal in Sources */,
 				CE79B64A2B951000009F2E49 /* TiledDeferredDirectionalLight.metal in Sources */,
 				CE2ED2992998A14200C81F47 /* Aircraft.swift in Sources */,
+				CE8A7A3C2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */,
 				CE06022C2A945E38001F8CC3 /* F35.swift in Sources */,
 				CE2ED2BC299CB8AA00C81F47 /* RendererType.swift in Sources */,
 				CE3BFF8628E2FD9C0014A752 /* GameObject.swift in Sources */,
@@ -1846,6 +1869,7 @@
 				CE45304F2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift in Sources */,
 				CE4127972B6B3F2900B01AEA /* Temple.swift in Sources */,
 				CE886A472985007A0013062D /* DirectionalLight.metal in Sources */,
+				CE8A7A372B9818FA00C024EA /* BasicMeshes.swift in Sources */,
 				CE79B6262B92E47E009F2E49 /* Texture.swift in Sources */,
 				CEFC6F22296B4200009B692B /* Sphere.swift in Sources */,
 				CEC0C59E2B53BEDF00863C38 /* UsdMesh.swift in Sources */,
@@ -1876,6 +1900,7 @@
 				CE3E526428E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
 				CE4530522A7F3EBF001945B9 /* FPS.swift in Sources */,
 				CE3BFF5928E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
+				CE8A7A382B9818FA00C024EA /* BasicMeshes.swift in Sources */,
 				CE3BFF7728E2FC0A0014A752 /* GameScene.swift in Sources */,
 				CE3BFF6128E1B2D10014A752 /* DepthStencilStateLibrary.swift in Sources */,
 				CE3BFF5D28E1B2BC0014A752 /* VertexDescriptorLibrary.swift in Sources */,
@@ -1884,6 +1909,7 @@
 				CE3BFF6528E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE3BFFAC28E453310014A752 /* Quad.swift in Sources */,
 				CE2ED263299394E500C81F47 /* ModelIO+Extensions.swift in Sources */,
+				CE8A7A3D2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */,
 				CEC0C59A2B53BB7400863C38 /* ObjMesh.swift in Sources */,
 				CE3BFFA828E453260014A752 /* Sun.swift in Sources */,
 				CEFC6F27296B61CA009B692B /* Line.swift in Sources */,
@@ -1990,6 +2016,7 @@
 				CE3BFF8428E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CEFC6EC7295B55EA009B692B /* OrderIndependentTransparency.metal in Sources */,
 				CE2ED2BE299CB91200C81F47 /* RendererType.swift in Sources */,
+				CE8A7A3E2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */,
 				CE7F481928B758920082B197 /* GameViewController.swift in Sources */,
 				CE3BFFEA28E6A0F40014A752 /* F16.swift in Sources */,
 				CE3BFF4828E1B0CE0014A752 /* SceneManager.swift in Sources */,
@@ -1998,6 +2025,7 @@
 				CE79B6172B92E153009F2E49 /* DepthStencilState.swift in Sources */,
 				CE76931D29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
 				CE7F484028B770B00082B197 /* Colors.swift in Sources */,
+				CE8A7A392B9818FA00C024EA /* BasicMeshes.swift in Sources */,
 				CE06022D2A945E38001F8CC3 /* F35.swift in Sources */,
 				CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */,

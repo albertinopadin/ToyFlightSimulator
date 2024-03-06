@@ -20,8 +20,8 @@ struct MacMetalViewWrapper: NSViewRepresentable {
         
         Engine.Start(device: defaultDevice)
 //        let rendererType: RendererType = .OrderIndependentTransparency
-        let rendererType: RendererType = .SinglePassDeferredLighting
-//        let rendererType: RendererType = .TiledDeferred
+//        let rendererType: RendererType = .SinglePassDeferredLighting
+        let rendererType: RendererType = .TiledDeferred
         let renderer = initRenderer(type: rendererType)
         return renderer
     }

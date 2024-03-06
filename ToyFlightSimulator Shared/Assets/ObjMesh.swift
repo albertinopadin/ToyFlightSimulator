@@ -57,11 +57,9 @@ class ObjMesh: Mesh {
         
         let descriptor = Mesh.createMdlVertexDescriptor()
     
-        let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
-    
         let asset = MDLAsset(url: assetUrl,
                              vertexDescriptor: descriptor,
-                             bufferAllocator: bufferAllocator,
+                             bufferAllocator: Self.mtkMeshBufferAllocator,
                              preserveTopology: false,
                              error: nil)
         
@@ -75,7 +73,7 @@ class ObjMesh: Mesh {
             _childMeshes.append(contentsOf: ObjMesh.makeMeshes(object: child, vertexDescriptor: descriptor))
         }
         
-        invertMeshZ()
+//        invertMeshZ()
     }
     
     private static func makeMeshes(object: MDLObject, vertexDescriptor: MDLVertexDescriptor) -> [Mesh] {

@@ -16,10 +16,10 @@ class UsdMesh: Mesh {
             fatalError("Asset \(modelName) does not exist.")
         }
         
-        let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
-        
         let descriptor = Self.createMdlVertexDescriptor()
-        let asset = MDLAsset(url: assetUrl, vertexDescriptor: descriptor, bufferAllocator: bufferAllocator)
+        let asset = MDLAsset(url: assetUrl,
+                             vertexDescriptor: descriptor,
+                             bufferAllocator: Self.mtkMeshBufferAllocator)
         
         asset.loadTextures()
         

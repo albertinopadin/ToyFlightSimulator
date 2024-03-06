@@ -296,7 +296,7 @@ class F18: Aircraft {
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)
-        self.rotateY(Float(180).toRadians)
+//        self.rotateY(Float(180).toRadians)
         setupControlSurfaces()
     }
     
@@ -605,8 +605,16 @@ class F18: Aircraft {
     override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
                            submeshesToRender: [String : Bool]? = nil) {
-        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToDisplay)
+        renderCommandEncoder.setFrontFacing(.counterClockwise)
+        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
+        renderCommandEncoder.setFrontFacing(.clockwise)
     }
+    
+//    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
+//                           applyMaterials: Bool = true,
+//                           submeshesToRender: [String : Bool]? = nil) {
+//        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToDisplay)
+//    }
     
     override func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String : Bool]?) {
         super.doRenderShadow(renderCommandEncoder, submeshesToRender: submeshesToDisplay)

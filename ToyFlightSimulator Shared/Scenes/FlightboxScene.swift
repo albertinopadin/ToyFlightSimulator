@@ -19,8 +19,9 @@ class FlightboxScene: GameScene {
         groundMaterial.setColor(groundColor)
         let ground = Quad()
         ground.useMaterial(groundMaterial)
-        ground.rotateX(Float(90).toRadians)
-        ground.setScale(float3(100, 100, 100))
+        ground.rotateZ(Float(90).toRadians)
+//        ground.rotateZ(Float(270).toRadians)
+        ground.setScale(100)
         addChild(ground)
     }
     
@@ -28,10 +29,10 @@ class FlightboxScene: GameScene {
         addGround()
         
 //        let jet = F16(scale: 6.0)
-        let jet = F18()
+//        let jet = F18()
 //        let jet = F18Usdz()
 //        let jet = F35(scale: 0.8)
-//        let jet = F22(scale: 0.125)
+        let jet = F22(scale: 0.125)
 //        let jet = Temple(scale: 0.02)
         
         addCamera(attachedCamera)

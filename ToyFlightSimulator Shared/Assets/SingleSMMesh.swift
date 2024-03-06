@@ -213,10 +213,9 @@ class SingleSMMesh {
         descriptor.attribute(TFSVertexAttributeTangent.rawValue).name   = MDLVertexAttributeTangent
         descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name = MDLVertexAttributeBitangent
 
-        let bufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
         let asset: MDLAsset = MDLAsset(url: assetURL,
                                        vertexDescriptor: descriptor,
-                                       bufferAllocator: bufferAllocator,
+                                       bufferAllocator: Mesh.mtkMeshBufferAllocator,
                                        preserveTopology: false,
                                        error: nil)
         asset.loadTextures()

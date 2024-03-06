@@ -8,7 +8,7 @@
 import MetalKit
 
 class TiledDeferredRenderer: Renderer {
-    private static var ShadowTextureSize: Int = 4096
+    private static var ShadowTextureSize: Int = 8_192
     
     private var gBufferTextures = TiledDeferredGBufferTextures()
     
@@ -37,8 +37,6 @@ class TiledDeferredRenderer: Renderer {
     
     override var metalView: MTKView {
         didSet {
-//            metalView.depthStencilPixelFormat = .depth32Float_stencil8  // ???
-//            metalView.depthStencilPixelFormat = TiledDeferredGBufferTextures.depthPixelFormat
             metalView.depthStencilPixelFormat = .depth32Float
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
             updateDrawableSize(size: drawableSize)

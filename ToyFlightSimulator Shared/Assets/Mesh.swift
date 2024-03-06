@@ -15,6 +15,9 @@ enum MeshExtension: String {
 
 // Vertex Information
 class Mesh {
+    // Trying out only declaring this once...
+    public static let mtkMeshBufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
+    
     private static let loadingQueue = DispatchQueue(label: "mesh-model-loading-queue")
     
     public var name: String = "Mesh"

@@ -54,10 +54,12 @@ tiled_deferred_directional_light_fragment(VertexQuadOut           in         [[ 
     
     ShaderMaterial material;
     material.color = albedo;
-    material.shininess = 1.0;
-    material.ambient = 1.0;  // Should be ambient occlusion
+    material.shininess = 0.1;   // Shininess == 1 results in all black screen
+    material.ambient = 1.0;     // Should be ambient occlusion
     
     float3 color = 0;
+//    float3 color = albedo.xyz;
+    
     // TODO: Add to shader input:
     uint lightCount = 1;
     
@@ -66,7 +68,6 @@ tiled_deferred_directional_light_fragment(VertexQuadOut           in         [[ 
     }
     
     color *= albedo.a;
-//    color = float3(0, 0, 1);
 //    color = albedo.xyz;
     return float4(color, 1);
 }
