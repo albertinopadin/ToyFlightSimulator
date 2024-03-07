@@ -21,18 +21,27 @@ class PlaneMesh: Mesh {
                                  bitangentAttributeNamed: MDLVertexAttributeBitangent)
         let mtkMesh = try! MTKMesh(mesh: mdlPlane, device: Engine.Device)
         
-//        let vertexLayoutStride = (mtkMesh.vertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride
-//        for meshBuffer in mtkMesh.vertexBuffers {
-//            for i in 0..<mtkMesh.vertexCount {
-//                let vertexPosition = (i * vertexLayoutStride)
-//                let vertexValue: Vertex = meshBuffer.buffer.contents()
-//                                                           .advanced(by: vertexPosition)
-//                                                           .bindMemory(to: Vertex.self, capacity: 1).pointee
-//                print("Plane mesh vertex = \(vertexValue)")
-//            }
-//        }
+        // TODO: Figure out why mesh seems to have normals opposite of front faces, which
+        //       causes stencil depth test failures when rendering directional lights.
+        Self.invertMeshNormals(mtkMesh: mtkMesh)
         
         super.init(mtkMesh: mtkMesh, mdlMesh: mdlPlane, addTangentBases: false)
+    }
+    
+    static func invertMeshNormals(mtkMesh: MTKMesh) {
+        let vertexLayoutStride = (mtkMesh.vertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride
+        for meshBuffer in mtkMesh.vertexBuffers {
+            for i in 0..<mtkMesh.vertexCount {
+                let vertexPosition = (i * vertexLayoutStride)
+                let vertexPtr = meshBuffer.buffer.contents()
+                                                 .advanced(by: vertexPosition)
+                                                 .bindMemory(to: Vertex.self, capacity: 1)
+                var vertexValue: Vertex = vertexPtr.pointee
+//                print("Plane mesh vertex = \(vertexValue)")
+                vertexValue.normal = -vertexValue.normal
+                vertexPtr.pointee = vertexValue
+            }
+        }
     }
 }
 
