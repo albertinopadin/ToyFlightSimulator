@@ -37,7 +37,6 @@ class PlaneMesh: Mesh {
                                                  .advanced(by: vertexPosition)
                                                  .bindMemory(to: Vertex.self, capacity: 1)
                 var vertexValue: Vertex = vertexPtr.pointee
-//                print("Plane mesh vertex = \(vertexValue)")
                 vertexValue.normal = -vertexValue.normal
                 vertexPtr.pointee = vertexValue
             }

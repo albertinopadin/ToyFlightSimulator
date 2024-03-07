@@ -179,8 +179,9 @@ class SingleSMMesh {
                 let metalKitMesh = try! MTKMesh(mesh: mdlMesh, device: Engine.Device)
                 let mtkSubmesh = metalKitMesh.submeshes.filter({ $0.name == submeshName })[0]
                 print("[SingleSMMesh makeSingleSMMeshWithSubmeshNamed] Creating Submesh...")
-                let textureLoader = MTKTextureLoader(device: Engine.Device)
-                let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh, textureLoader: textureLoader)
+                let submesh = Submesh(mtkSubmesh: mtkSubmesh, 
+                                      mdlSubmesh: mdlSubmesh,
+                                      textureLoader: TextureLoader.textureLoader)
                 return SingleSMMesh(mtkMesh: metalKitMesh, submesh: submesh)
             }
         }

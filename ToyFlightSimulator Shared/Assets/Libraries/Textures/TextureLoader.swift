@@ -8,6 +8,9 @@
 import MetalKit
 
 class TextureLoader {
+    // TODO: This is meant to start a bigger refactoring around providing a single Texture Loader:
+    public static let textureLoader = MTKTextureLoader(device: Engine.Device)
+    
     private var _textureName: String!
     private var _textureExtension: String!
     private var _origin: MTKTextureLoader.Origin!
@@ -21,7 +24,6 @@ class TextureLoader {
     public func loadTextureFromBundle() -> MTLTexture {
         var result: MTLTexture!
         if let url = Bundle.main.url(forResource: _textureName, withExtension: _textureExtension) {
-            let textureLoader = MTKTextureLoader(device: Engine.Device)
             let options: [MTKTextureLoader.Option: Any] = [
                 .origin: _origin as Any,
                 .generateMipmaps: true,  // Unoptimized
@@ -30,7 +32,7 @@ class TextureLoader {
             ]
             
             do {
-                result = try textureLoader.newTexture(URL: url, options: options)
+                result = try Self.textureLoader.newTexture(URL: url, options: options)
                 result.label = _textureName
             } catch let error as NSError {
                 print("ERROR::CREATING::TEXTURE::__\(_textureName!)__::\(error)")

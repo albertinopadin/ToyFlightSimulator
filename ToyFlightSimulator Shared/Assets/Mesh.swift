@@ -58,11 +58,12 @@ class Mesh {
             }
             self._vertexBuffer = _metalKitMesh!.vertexBuffers[0].buffer
             self._vertexCount = _metalKitMesh!.vertexCount
-            let textureLoader = MTKTextureLoader(device: Engine.Device)
             for i in 0..<_metalKitMesh!.submeshes.count {
                 let mtkSubmesh = _metalKitMesh!.submeshes[i]
                 let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
-                let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh, textureLoader: textureLoader)
+                let submesh = Submesh(mtkSubmesh: mtkSubmesh, 
+                                      mdlSubmesh: mdlSubmesh,
+                                      textureLoader: TextureLoader.textureLoader)
                 addSubmesh(submesh)
             }
         } catch {
@@ -91,11 +92,12 @@ class Mesh {
         }
         self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
         self._vertexCount = mtkMesh.vertexCount
-        let textureLoader = MTKTextureLoader(device: Engine.Device)
         for i in 0..<mtkMesh.submeshes.count {
             let mtkSubmesh = mtkMesh.submeshes[i]
             let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
-            let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh, textureLoader: textureLoader)
+            let submesh = Submesh(mtkSubmesh: mtkSubmesh, 
+                                  mdlSubmesh: mdlSubmesh,
+                                  textureLoader: TextureLoader.textureLoader)
             addSubmesh(submesh)
         }
     }
