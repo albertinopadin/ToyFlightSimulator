@@ -14,7 +14,6 @@ class F16: Aircraft {
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)
-//        self.rotateY(Float(180).toRadians)
     }
     
     override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, 

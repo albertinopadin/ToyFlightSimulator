@@ -35,7 +35,7 @@ class Submesh {
         createIndexBuffer()
     }
     
-    init(mtkSubmesh: MTKSubmesh, mdlSubmesh: MDLSubmesh, textureLoader: MTKTextureLoader, name: String? = nil) {
+    init(mtkSubmesh: MTKSubmesh, mdlSubmesh: MDLSubmesh, name: String? = nil) {
         _indexBuffer = mtkSubmesh.indexBuffer.buffer
         _indexBufferOffset = mtkSubmesh.indexBuffer.offset
         _indexCount = mtkSubmesh.indexCount
@@ -49,7 +49,7 @@ class Submesh {
         }
         print("[Submesh init] Creating textures and material for \(self.name)")
         if let submeshMaterial = mdlSubmesh.material {
-            material = Material(submeshMaterial, textureLoader: textureLoader)
+            material = Material(submeshMaterial)
         }
     }
     

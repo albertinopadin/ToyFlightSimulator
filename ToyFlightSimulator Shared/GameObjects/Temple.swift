@@ -5,6 +5,8 @@
 //  Created by Albertino Padin on 1/31/24.
 //
 
+import MetalKit
+
 //class Temple: GameObject {
 //    let cameraOffset: float3 = float3(0, 10, 10)
 //    init(scale: Float) {
@@ -17,5 +19,13 @@
 class Temple: Aircraft {
     init(scale: Float) {
         super.init(name: "Temple", meshType: .Temple, renderPipelineStateType: .OpaqueMaterial, scale: scale)
+    }
+    
+    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, 
+                           applyMaterials: Bool = true,
+                           submeshesToRender: [String : Bool]? = nil) {
+        renderCommandEncoder.setFrontFacing(.counterClockwise)
+        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
+        renderCommandEncoder.setFrontFacing(.clockwise)
     }
 }

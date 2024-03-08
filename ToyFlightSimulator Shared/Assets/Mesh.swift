@@ -62,8 +62,7 @@ class Mesh {
                 let mtkSubmesh = _metalKitMesh!.submeshes[i]
                 let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
                 let submesh = Submesh(mtkSubmesh: mtkSubmesh, 
-                                      mdlSubmesh: mdlSubmesh,
-                                      textureLoader: TextureLoader.textureLoader)
+                                      mdlSubmesh: mdlSubmesh)
                 addSubmesh(submesh)
             }
         } catch {
@@ -96,8 +95,7 @@ class Mesh {
             let mtkSubmesh = mtkMesh.submeshes[i]
             let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
             let submesh = Submesh(mtkSubmesh: mtkSubmesh, 
-                                  mdlSubmesh: mdlSubmesh,
-                                  textureLoader: TextureLoader.textureLoader)
+                                  mdlSubmesh: mdlSubmesh)
             addSubmesh(submesh)
         }
     }
