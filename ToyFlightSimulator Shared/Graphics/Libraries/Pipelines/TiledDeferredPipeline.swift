@@ -75,7 +75,7 @@ struct TiledDeferredPointLightPipelineState: RenderPipelineState {
             Self.setGBufferPixelFormatsForTiledDeferredPipeline(descriptor: descriptor)
             descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.PositionOnly]
             Self.enableBlending(colorAttachment: descriptor.colorAttachments[TFSRenderTargetLighting.index])
         }
     }()

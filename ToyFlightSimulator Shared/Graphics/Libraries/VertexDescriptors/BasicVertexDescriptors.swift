@@ -25,6 +25,20 @@ public struct BaseVertexDescriptor: VertexDescriptor {
     }
 }
 
+public struct PositionOnlyVertexDescriptor: VertexDescriptor {
+    var name: String = "Position Only Vertex Descriptor"
+    var vertexDescriptor: MTLVertexDescriptor!
+    var attributeIndex: Int = 0
+    var bufferIndex: Int = 0
+    var offset: Int = 0
+    
+    init() {
+        vertexDescriptor = MTLVertexDescriptor()
+        addAttributeWithOffset(format: getFormatForVertexAttribute(TFSVertexAttributePosition), bufferIndex: 0)
+        vertexDescriptor.layouts[0].stride = float4.stride
+    }
+}
+
 public struct SkyboxVertexDescriptor: VertexDescriptor {
     var name: String = "Skybox Vertex Descriptor"
     var vertexDescriptor: MTLVertexDescriptor!

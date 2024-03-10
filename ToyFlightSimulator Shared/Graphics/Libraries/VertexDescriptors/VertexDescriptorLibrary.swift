@@ -23,6 +23,7 @@ extension TFSVertexAttributes: CaseIterable {
 
 enum VertexDescriptorType {
     case Base
+    case PositionOnly
     case Skybox
 }
 
@@ -31,6 +32,7 @@ class VertexDescriptorLibrary: Library<VertexDescriptorType, MTLVertexDescriptor
     
     override func makeLibrary() {
         _library.updateValue(BaseVertexDescriptor(), forKey: .Base)
+        _library.updateValue(PositionOnlyVertexDescriptor(), forKey: .PositionOnly)
         _library.updateValue(SkyboxVertexDescriptor(), forKey: .Skybox)
     }
     

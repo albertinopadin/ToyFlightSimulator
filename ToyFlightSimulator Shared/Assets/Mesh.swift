@@ -87,6 +87,7 @@ class Mesh {
         
         self._metalKitMesh = mtkMesh
         if _metalKitMesh!.vertexBuffers.count > 1 {
+            // TODO: Figure out how to handle multiple vertex layouts with potentially multiple buffers
             print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
         }
         self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
