@@ -71,6 +71,7 @@ typedef struct {
     simd_float3 color;
     float brightness;
     float radius;  // TODO: This only applies to point lights; perhaps should have Directional/PointLightData
+    simd_float3 attenuation;
     
     float ambientIntensity;
     float diffuseIntensity;

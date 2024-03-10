@@ -8,7 +8,6 @@
 #include <metal_stdlib>
 using namespace metal;
 
-#import "TFSCommon.h"
 #import "ShaderDefinitions.h"
 
 vertex RasterizerData instanced_vertex(const VertexIn vIn [[ stage_in ]],

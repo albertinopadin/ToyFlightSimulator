@@ -11,9 +11,7 @@ using namespace metal;
 #import "ShaderDefinitions.h"
 
 // TODO: Move to lighting file:
-float3 calculateDirectionalLighting(LightData light,
-                                    float3 normal,
-                                    ShaderMaterial material) {
+float3 calculateDirectionalLighting(LightData light, float3 normal, ShaderMaterial material) {
     float4 baseColor = material.color;
     float3 metallic = material.shininess;
     float3 ambientOcclusion = material.ambient;
@@ -46,9 +44,9 @@ vertex VertexQuadOut tiled_deferred_vertex_quad(uint vertexId [[ vertex_id ]]) {
 }
 
 fragment float4
-tiled_deferred_directional_light_fragment(VertexQuadOut           in         [[ stage_in ]],
+tiled_deferred_directional_light_fragment(         VertexQuadOut  in         [[ stage_in ]],
                                           constant LightData      &lightData [[ buffer(TFSBufferDirectionalLightData) ]],
-                                          GBufferOut              gBuffer) {
+                                                   GBufferOut     gBuffer) {
     float4 albedo = gBuffer.albedo;
     float3 normal = gBuffer.normal.xyz;
     
@@ -58,7 +56,6 @@ tiled_deferred_directional_light_fragment(VertexQuadOut           in         [[ 
     material.ambient = 1.0;     // Should be ambient occlusion
     
     float3 color = 0;
-//    float3 color = albedo.xyz;
     
     // TODO: Add to shader input:
     uint lightCount = 1;
@@ -68,6 +65,5 @@ tiled_deferred_directional_light_fragment(VertexQuadOut           in         [[ 
     }
     
     color *= albedo.a;
-//    color = albedo.xyz;
     return float4(color, 1);
 }

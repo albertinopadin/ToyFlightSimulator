@@ -8,7 +8,6 @@
 #include <metal_stdlib>
 using namespace metal;
 
-#import "TFSCommon.h"
 #import "ShaderDefinitions.h"
 
 struct ShadowOutput

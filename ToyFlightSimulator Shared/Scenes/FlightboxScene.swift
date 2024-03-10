@@ -84,7 +84,7 @@ class FlightboxScene: GameScene {
         addChild(sunBall)
         
         let pl = PointLightObject()
-        pl.setPosition(capsule.getPositionX(), 0, capsule.getPositionZ())
+        pl.setPosition(capsule.getPositionX(), 0.5, capsule.getPositionZ())
         pl.setLightColor(BLUE_COLOR.xyz)
         pl.setLightBrightness(1.0)
 //        pl.setLightRadius(10.0)

@@ -10,6 +10,8 @@ import MetalKit
 class TiledDeferredRenderer: Renderer {
     private static var ShadowTextureSize: Int = 8_192
     
+    private let icosahedron = IcosahedronMesh()
+    
     private var gBufferTextures = TiledDeferredGBufferTextures()
     
     private var shadowTexture: MTLTexture
@@ -112,14 +114,41 @@ class TiledDeferredRenderer: Renderer {
         }
     }
     
+    func encodeLightingStage(using renderEncoder: MTLRenderCommandEncoder) {
+        encodeStage(using: renderEncoder, label: "Lighting Stage") {
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredLight])
+            encodeDirectionalLightStage(using: renderEncoder)
+            encodePointLightStage(using: renderEncoder)
+        }
+    }
+    
     func encodeDirectionalLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeStage(using: renderEncoder, label: "Directional Light Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredDirectionalLight])
-            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredLight])
-            SceneManager.SetSceneConstants(with: renderEncoder)
             SceneManager.SetDirectionalLightConstants(with: renderEncoder)
             // Draw full screen quad
             renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+        }
+    }
+    
+    func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
+        encodeStage(using: renderEncoder, label: "Point Light Stage") {
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredPointLight])
+            SceneManager.SetPointLightData(with: renderEncoder)
+            guard let mesh = self.icosahedron._metalKitMesh,
+                  let submesh = self.icosahedron._submeshes.first else {
+                print("No icosahedron mesh or submesh found.")
+                return
+            }
+            for (index, vertexBuffer) in mesh.vertexBuffers.enumerated() {
+                renderEncoder.setVertexBuffer(vertexBuffer.buffer, offset: 0, index: index)
+            }
+            renderEncoder.drawIndexedPrimitives(type: .triangle,
+                                                indexCount: submesh.indexCount,
+                                                indexType: submesh.indexType,
+                                                indexBuffer: submesh.indexBuffer,
+                                                indexBufferOffset: submesh.indexBufferOffset,
+                                                instanceCount: 1)
         }
     }
     
@@ -139,12 +168,6 @@ class TiledDeferredRenderer: Renderer {
         
         if let drawableTexture = view.currentDrawable?.texture {
             tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
-//            tiledDeferredRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
-//            tiledDeferredRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
-            
-            // Possible redundant binding:
-//            tiledDeferredRenderPassDescriptor.depthAttachment.texture = gBufferTextures.depthTexture
-//            tiledDeferredRenderPassDescriptor.stencilAttachment.texture = gBufferTextures.depthTexture
             
             encodePass(into: commandBuffer,
                        using: tiledDeferredRenderPassDescriptor,
@@ -152,8 +175,7 @@ class TiledDeferredRenderer: Renderer {
                 SceneManager.SetSceneConstants(with: renderEncoder)
                 
                 encodeGBufferStage(using: renderEncoder)
-                encodeDirectionalLightStage(using: renderEncoder)
-//                encodePointLightStage(using: renderEncoder)
+                encodeLightingStage(using: renderEncoder)
             }
         }
         

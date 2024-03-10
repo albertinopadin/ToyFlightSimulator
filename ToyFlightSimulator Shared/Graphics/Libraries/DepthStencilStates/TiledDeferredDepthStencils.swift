@@ -29,6 +29,7 @@ struct TiledDeferredGBufferDepthStencilState: DepthStencilState {
             frontFaceStencil.depthStencilPassOperation = .incrementClamp
             
             depthStencilDescriptor.frontFaceStencil = frontFaceStencil
+            depthStencilDescriptor.backFaceStencil = frontFaceStencil
         }
     }()
 }
@@ -41,13 +42,21 @@ struct TiledDeferredLightingDepthStencilState: DepthStencilState {
             let frontFaceStencil = MTLStencilDescriptor()
             // This prevents the ground from rendering unless we invert the normals
             // TODO: figure out why this happens
-            frontFaceStencil.stencilCompareFunction = .notEqual
-//            frontFaceStencil.stencilCompareFunction = .always
+//            frontFaceStencil.stencilCompareFunction = .notEqual
+            frontFaceStencil.stencilCompareFunction = .always
             frontFaceStencil.stencilFailureOperation = .keep
             frontFaceStencil.depthFailureOperation = .keep
             frontFaceStencil.depthStencilPassOperation = .keep
             
+            let backFaceStencil = MTLStencilDescriptor()
+            backFaceStencil.stencilCompareFunction = .notEqual
+            backFaceStencil.stencilFailureOperation = .keep
+            backFaceStencil.depthFailureOperation = .keep
+            backFaceStencil.depthStencilPassOperation = .keep
+            
             depthStencilDescriptor.frontFaceStencil = frontFaceStencil
+//            depthStencilDescriptor.backFaceStencil = backFaceStencil
+            depthStencilDescriptor.backFaceStencil = frontFaceStencil
         }
     }()
 }

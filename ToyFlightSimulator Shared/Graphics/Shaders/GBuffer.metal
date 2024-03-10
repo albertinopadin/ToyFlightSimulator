@@ -8,7 +8,6 @@
 #include <metal_stdlib>
 using namespace metal;
 
-#import "TFSCommon.h"
 #import "ShaderDefinitions.h"
 
 // Per-vertex inputs fed by vertex buffer laid out with MTLVertexDescriptor in Metal API

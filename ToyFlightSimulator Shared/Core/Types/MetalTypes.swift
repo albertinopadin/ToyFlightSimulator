@@ -83,6 +83,7 @@ extension LightData: sizeable {
                   color: [1, 1, 1],
                   brightness: 1.0,
                   radius: 1.0,
+                  attenuation: [1, 1, 1],
                   ambientIntensity: 1.0,
                   diffuseIntensity: 1.0,
                   specularIntensity: 1.0)
