@@ -40,7 +40,7 @@ class SceneManager {
         }
     }
     
-    public static func Update(deltaTime: Float) {
+    public static func Update(deltaTime: Double) {
         if !paused {
             GameTime.UpdateTime(deltaTime)
             currentScene?.updateCameras(deltaTime: deltaTime)

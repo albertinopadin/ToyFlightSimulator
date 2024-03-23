@@ -71,7 +71,7 @@ class SandboxScene: GameScene {
 //            }
 //        }
         
-        quad4.rotateY(GameTime.DeltaTime)
+        quad4.rotateY(Float(GameTime.DeltaTime))
         
         // TODO: Odd behavior, can only rotate one quad at a time (???)
         if (Mouse.IsMouseButtonPressed(button: .LEFT)) {
@@ -84,32 +84,32 @@ class SandboxScene: GameScene {
 //            quad3.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
 //            quad3.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
             
-            quad4.rotateX(Mouse.GetDY() * GameTime.DeltaTime)
-            quad4.rotateY(Mouse.GetDX() * GameTime.DeltaTime)
+            quad4.rotateX(Mouse.GetDY() * Float(GameTime.DeltaTime))
+            quad4.rotateY(Mouse.GetDX() * Float(GameTime.DeltaTime))
         }
         
         if Keyboard.IsKeyPressed(.q) {
-            quad4.rotateY(GameTime.DeltaTime * 4)
+            quad4.rotateY(Float(GameTime.DeltaTime) * 4)
         }
         
         if Keyboard.IsKeyPressed(.e) {
-            quad4.rotateY(-GameTime.DeltaTime * 4)
+            quad4.rotateY(-Float(GameTime.DeltaTime) * 4)
         }
         
         if Keyboard.IsKeyPressed(.a) {
-            quad4.moveX(-GameTime.DeltaTime * 4)
+            quad4.moveX(-Float(GameTime.DeltaTime) * 4)
         }
         
         if Keyboard.IsKeyPressed(.d) {
-            quad4.moveX(GameTime.DeltaTime * 4)
+            quad4.moveX(Float(GameTime.DeltaTime) * 4)
         }
         
         if Keyboard.IsKeyPressed(.w) {
-            quad4.moveZ(-GameTime.DeltaTime * 4)
+            quad4.moveZ(-Float(GameTime.DeltaTime) * 4)
         }
         
         if Keyboard.IsKeyPressed(.s) {
-            quad4.moveZ(GameTime.DeltaTime * 4)
+            quad4.moveZ(Float(GameTime.DeltaTime) * 4)
         }
     }
 }

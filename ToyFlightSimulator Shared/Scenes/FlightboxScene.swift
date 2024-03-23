@@ -232,7 +232,7 @@ class FlightboxScene: GameScene {
 //            paused.toggle()
 //        }
         
-        quad.rotateZ(GameTime.DeltaTime)
+        quad.rotateZ(Float(GameTime.DeltaTime))
     }
 }
 

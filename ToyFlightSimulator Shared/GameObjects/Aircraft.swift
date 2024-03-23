@@ -33,8 +33,8 @@ class Aircraft: GameObject {
     
     override func doUpdate() {
         if shouldUpdate {
-            let deltaMove = GameTime.DeltaTime * _moveSpeed
-            let deltaTurn = GameTime.DeltaTime * _turnSpeed
+            let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
+            let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
             
             if let containerNode {
                 containerNode.rotateZ(deltaTurn * InputManager.ContinuousCommand(.Roll))

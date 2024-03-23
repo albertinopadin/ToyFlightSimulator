@@ -68,7 +68,7 @@ class FreeCamFlightboxScene: GameScene {
     override func doUpdate() {
         super.doUpdate()
         
-        sidewinderMissile.rotateY(GameTime.DeltaTime)
-        aim120.rotateY(GameTime.DeltaTime)
+        sidewinderMissile.rotateY(Float(GameTime.DeltaTime))
+        aim120.rotateY(Float(GameTime.DeltaTime))
     }
 }

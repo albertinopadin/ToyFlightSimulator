@@ -46,7 +46,7 @@ class GameScene: Node {
         _lightManager.addLightObject(lightObject)
     }
     
-    func updateCameras(deltaTime: Float) {
+    func updateCameras(deltaTime: Double) {
         _cameraManager.update(deltaTime: deltaTime)
     }
     
@@ -70,7 +70,7 @@ class GameScene: Node {
         _sceneConstants.skyViewMatrix[3][2] = 0  // Remove z translation
         _sceneConstants.projectionMatrix = _cameraManager.currentCamera.projectionMatrix
         _sceneConstants.projectionMatrixInverse = _cameraManager.currentCamera.projectionMatrix.inverse
-        _sceneConstants.totalGameTime = GameTime.TotalGameTime
+        _sceneConstants.totalGameTime = Float(GameTime.TotalGameTime)
 //        _sceneConstants.cameraPosition = _cameraManager.currentCamera.getPosition()
         _sceneConstants.cameraPosition = _cameraManager.currentCamera.modelMatrix.columns.3.xyz
         super.update()

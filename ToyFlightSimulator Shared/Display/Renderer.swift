@@ -12,6 +12,8 @@ class Renderer: NSObject, MTKViewDelegate {
     public static var ScreenSize = float2(100, 100)
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
     
+    private var previousTime: CFAbsoluteTime = 0
+    
     // The max number of command buffers in flight
     let maxFramesInFlight = 3
     // The semaphore used to control GPU-CPU synchronization of frames.
@@ -186,6 +188,9 @@ class Renderer: NSObject, MTKViewDelegate {
     }
     
     func draw(in view: MTKView) {
-        
+        let currentTime = CACurrentMediaTime()
+        let deltaTime = Double(currentTime - previousTime)
+        SceneManager.Update(deltaTime: deltaTime)
+        previousTime = currentTime
     }
 }

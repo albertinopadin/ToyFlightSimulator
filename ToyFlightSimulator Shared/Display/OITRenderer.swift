@@ -125,7 +125,7 @@ class OITRenderer: Renderer {
     }
     
     override func draw(in view: MTKView) {
-        SceneManager.Update(deltaTime: 1.0 / Float(view.preferredFramesPerSecond))
+        super.draw(in: view)
         
         let commandBuffer = Engine.CommandQueue.makeCommandBuffer()
 //        let commandBuffer = beginFrame()

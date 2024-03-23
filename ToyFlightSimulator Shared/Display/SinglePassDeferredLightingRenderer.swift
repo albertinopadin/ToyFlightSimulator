@@ -199,8 +199,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     override func draw(in view: MTKView) {
-        // FIXME - this should be set independent of the frame rate:
-        SceneManager.Update(deltaTime: 1.0 / Float(view.preferredFramesPerSecond))
+        super.draw(in: view)
         
         var commandBuffer = beginFrame()
         commandBuffer.label = "Shadow Commands"

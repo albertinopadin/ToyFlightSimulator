@@ -21,7 +21,7 @@ class CameraManager {
         self.currentCamera.setAspectRatio(aspectRatio)
     }
     
-    internal func update(deltaTime: Float) {
+    internal func update(deltaTime: Double) {
         // Update all cameras so we can easily switch
         for camera in _cameras.values {
             camera.update()
