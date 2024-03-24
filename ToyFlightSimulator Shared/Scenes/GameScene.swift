@@ -10,7 +10,6 @@ import MetalKit
 // Scene is head node of scene graph
 class GameScene: Node {
     private var _cameraManager = CameraManager()
-    private var _lightManager = LightManager()
     private var _sceneConstants = SceneConstants()
     
     private var _cmdPressed: Bool = false
@@ -43,7 +42,7 @@ class GameScene: Node {
     
     func addLight(_ lightObject: LightObject) {
         self.addChild(lightObject)
-        _lightManager.addLightObject(lightObject)
+        LightManager.addLightObject(lightObject)
     }
     
     func updateCameras(deltaTime: Double) {
@@ -63,6 +62,7 @@ class GameScene: Node {
     }
     
     override func update() {
+        super.update()
         _sceneConstants.viewMatrix = _cameraManager.currentCamera.viewMatrix
         _sceneConstants.skyViewMatrix = _sceneConstants.viewMatrix
         _sceneConstants.skyViewMatrix[3][0] = 0  // Remove x translation
@@ -71,9 +71,7 @@ class GameScene: Node {
         _sceneConstants.projectionMatrix = _cameraManager.currentCamera.projectionMatrix
         _sceneConstants.projectionMatrixInverse = _cameraManager.currentCamera.projectionMatrix.inverse
         _sceneConstants.totalGameTime = Float(GameTime.TotalGameTime)
-//        _sceneConstants.cameraPosition = _cameraManager.currentCamera.getPosition()
         _sceneConstants.cameraPosition = _cameraManager.currentCamera.modelMatrix.columns.3.xyz
-        super.update()
     }
     
     func setSceneConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
@@ -83,7 +81,7 @@ class GameScene: Node {
     }
     
     func setDirectionalLightConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
-        var directionalLight = _lightManager.getDirectionalLightData(viewMatrix: _sceneConstants.skyViewMatrix).first!
+        var directionalLight = LightManager.getDirectionalLightData(viewMatrix: _sceneConstants.skyViewMatrix).first!
         renderCommandEncoder.setVertexBytes(&directionalLight,
                                             length: LightData.stride,
                                             index: TFSBufferDirectionalLightData.index)
@@ -93,7 +91,7 @@ class GameScene: Node {
     }
     
     func setPointLightConstants(with renderCommandEncoder: MTLRenderCommandEncoder) {
-        var pointLights = _lightManager.getPointLightData()
+        var pointLights = LightManager.getPointLightData()
         // Avoid allocating memory in game loop
         // (if you use more than 4KB of data, allocate the buffer on init, instead of creating a new one every frame):
 //        let buf = Engine.Device.makeBuffer(bytes: &pointLights, length: LightData.stride(pointLights.count))
@@ -111,23 +109,23 @@ class GameScene: Node {
 //        _lightManager.setDirectionalLightData(renderCommandEncoder,
 //                                              cameraPosition: _cameraManager.currentCamera.getPosition())
         
-        _lightManager.setDirectionalLightData(renderCommandEncoder,
-                                              cameraPosition: _cameraManager.currentCamera.modelMatrix.columns.3.xyz,
-                                              viewMatrix: _cameraManager.currentCamera.viewMatrix)
+        LightManager.setDirectionalLightData(renderCommandEncoder,
+                                             cameraPosition: _cameraManager.currentCamera.modelMatrix.columns.3.xyz,
+                                             viewMatrix: _cameraManager.currentCamera.viewMatrix)
     }
     
     func setPointLightData(with renderCommandEncoder: MTLRenderCommandEncoder) {
-        _lightManager.setPointLightData(renderCommandEncoder)
+        LightManager.setPointLightData(renderCommandEncoder)
     }
     
     func renderPointLightMeshes(with renderCommandEncoder: MTLRenderCommandEncoder) {
-        for pointLight in _lightManager.getLightObjects(lightType: Point) {
+        for pointLight in LightManager.getLightObjects(lightType: Point) {
             pointLight.render(with: renderCommandEncoder, renderPipelineStateType: .LightMask)
         }
     }
     
     func renderPointLights(with renderCommandEncoder: MTLRenderCommandEncoder) {
-        for pointLight in _lightManager.getLightObjects(lightType: Point) {
+        for pointLight in LightManager.getLightObjects(lightType: Point) {
             pointLight.render(with: renderCommandEncoder, renderPipelineStateType: .SinglePassDeferredPointLight)
         }
     }

@@ -16,7 +16,7 @@ class F22: Aircraft {
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)
-        rotateX(Float(-90).toRadians)
-        rotateZ(Float(-90).toRadians)
+        rotateX(Float(90).toRadians)
+        rotateZ(Float(90).toRadians)
     }
 }

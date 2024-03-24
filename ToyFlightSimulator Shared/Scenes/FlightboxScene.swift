@@ -19,7 +19,6 @@ class FlightboxScene: GameScene {
         groundMaterial.setColor(groundColor)
         let ground = Quad()
         ground.useMaterial(groundMaterial)
-//        ground.rotateZ(Float(90).toRadians)
         ground.rotateZ(Float(270).toRadians)
         ground.setScale(100)
         addChild(ground)

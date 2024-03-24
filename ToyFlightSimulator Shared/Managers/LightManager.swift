@@ -7,31 +7,31 @@
 
 import MetalKit
 
-class LightManager {
-    private var _lightObjects: [LightObject] = []
+struct LightManager {
+    private static var _lightObjects: [LightObject] = []
     
-    public func addLightObject(_ lightObject: LightObject) {
-        self._lightObjects.append(lightObject)
+    public static func addLightObject(_ lightObject: LightObject) {
+        Self._lightObjects.append(lightObject)
     }
     
-    public func getLightObjects(lightType: LightType) -> [LightObject] {
-        return _lightObjects.filter { $0.lightType == lightType }
+    public static func getLightObjects(lightType: LightType) -> [LightObject] {
+        return Self._lightObjects.filter { $0.lightType == lightType }
     }
 
-    public func getDirectionalLightData(viewMatrix: float4x4) -> [LightData] {
-        let lightObjs = getLightObjects(lightType: Directional)
+    public static func getDirectionalLightData(viewMatrix: float4x4) -> [LightData] {
+        let lightObjs = Self.getLightObjects(lightType: Directional)
         lightObjs.forEach { $0.lightData.lightEyeDirection = normalize(viewMatrix * float4(-$0.getPosition(), 1)).xyz }
         return lightObjs.map { $0.lightData }
     }
     
-    public func getPointLightData() -> [LightData] {
-        return getLightObjects(lightType: Point).map { $0.lightData }
+    public static func getPointLightData() -> [LightData] {
+        return Self.getLightObjects(lightType: Point).map { $0.lightData }
     }
     
-    public func setDirectionalLightData(_ renderCommandEncoder: MTLRenderCommandEncoder,
-                                        cameraPosition: float3,
-                                        viewMatrix: float4x4) {
-        var lightData = getDirectionalLightData(viewMatrix: viewMatrix)
+    public static func setDirectionalLightData(_ renderCommandEncoder: MTLRenderCommandEncoder,
+                                               cameraPosition: float3,
+                                               viewMatrix: float4x4) {
+        var lightData = Self.getDirectionalLightData(viewMatrix: viewMatrix)
         var lightCount = lightData.count
         renderCommandEncoder.setFragmentBytes(&lightCount, 
                                               length: Int32.size,
@@ -41,8 +41,8 @@ class LightManager {
                                               index: TFSBufferDirectionalLightData.index)
     }
     
-    public func setPointLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
-        var pointLightData = getPointLightData()
+    public static func setPointLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+        var pointLightData = Self.getPointLightData()
 //        var lightCount = lightData.count
 //        renderCommandEncoder.setFragmentBytes(&lightCount,
 //                                              length: Int32.size,

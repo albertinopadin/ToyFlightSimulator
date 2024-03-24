@@ -20,5 +20,6 @@ class F35: Aircraft {
                    shouldUpdate: shouldUpdate)
 //        rotateY(Float(180).toRadians)
         rotateX(Float(90).toRadians)
+        rotateY(Float(180).toRadians)
     }
 }

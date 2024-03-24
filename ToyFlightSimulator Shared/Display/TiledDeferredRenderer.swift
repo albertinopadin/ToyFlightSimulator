@@ -132,23 +132,26 @@ class TiledDeferredRenderer: Renderer {
     }
     
     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "Point Light Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredPointLight])
-            SceneManager.SetPointLightData(with: renderEncoder)
-            guard let mesh = self.icosahedron._metalKitMesh,
-                  let submesh = self.icosahedron._submeshes.first else {
-                print("No icosahedron mesh or submesh found.")
-                return
+        let pointLights = LightManager.getPointLightData()
+        if !pointLights.isEmpty {
+            encodeStage(using: renderEncoder, label: "Point Light Stage") {
+                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredPointLight])
+                SceneManager.SetPointLightData(with: renderEncoder)
+                guard let mesh = self.icosahedron._metalKitMesh,
+                      let submesh = self.icosahedron._submeshes.first else {
+                    print("No icosahedron mesh or submesh found.")
+                    return
+                }
+                for (index, vertexBuffer) in mesh.vertexBuffers.enumerated() {
+                    renderEncoder.setVertexBuffer(vertexBuffer.buffer, offset: 0, index: index)
+                }
+                renderEncoder.drawIndexedPrimitives(type: .triangle,
+                                                    indexCount: submesh.indexCount,
+                                                    indexType: submesh.indexType,
+                                                    indexBuffer: submesh.indexBuffer,
+                                                    indexBufferOffset: submesh.indexBufferOffset,
+                                                    instanceCount: 1)
             }
-            for (index, vertexBuffer) in mesh.vertexBuffers.enumerated() {
-                renderEncoder.setVertexBuffer(vertexBuffer.buffer, offset: 0, index: index)
-            }
-            renderEncoder.drawIndexedPrimitives(type: .triangle,
-                                                indexCount: submesh.indexCount,
-                                                indexType: submesh.indexType,
-                                                indexBuffer: submesh.indexBuffer,
-                                                indexBufferOffset: submesh.indexBufferOffset,
-                                                instanceCount: 1)
         }
     }
     

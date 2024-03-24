@@ -107,7 +107,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredGBufferMaterial])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.GBufferGeneration])
             // NOTE: For some reason, setting cull mode to back makes meshes appear 'extruded' or turned inside out.
-            renderEncoder.setCullMode(.back)
+//            renderEncoder.setCullMode(.back)
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setFragmentTexture(shadowMap, index: TFSTextureIndexShadow.index)
             SceneManager.SetDirectionalLightConstants(with: renderEncoder)

@@ -32,6 +32,8 @@ class Aircraft: GameObject {
     }
     
     override func doUpdate() {
+        super.doUpdate()
+        
         if shouldUpdate {
             let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
             let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed

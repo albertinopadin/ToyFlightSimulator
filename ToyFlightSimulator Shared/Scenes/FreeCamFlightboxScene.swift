@@ -31,8 +31,8 @@ class FreeCamFlightboxScene: GameScene {
         var groundMaterial = ShaderMaterial()
         groundMaterial.color = [0.3, 0.7, 0.1, 1.0]
         ground.useMaterial(groundMaterial)
-        ground.rotateX(Float(90).toRadians)
-        ground.setScale([100, 100, 100])
+        ground.rotateZ(Float(270).toRadians)
+        ground.setScale(100)
         addChild(ground)
         
 //        camera.setPosition(4, 12, 20)

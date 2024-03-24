@@ -30,7 +30,7 @@ class UsdMesh: Mesh {
         }
         
         // Invert Z in meshes due to USD being right handed coord system:
-        invertMeshZ()
+//        invertMeshZ()  // Not needed for F-22
         
         print("[UsdMesh init] Num child meshes for \(modelName): \(_childMeshes.count)")
     }

@@ -955,6 +955,7 @@
 				CE3BFF9928E452290014A752 /* Cameras */,
 				CE3BFF8128E2FD6F0014A752 /* Renderable.swift */,
 				CE3BFF7D28E2FCF50014A752 /* Node.swift */,
+				CED3AA862B5D4DA300191002 /* ContainerNode.swift */,
 				CE3BFF8528E2FD9C0014A752 /* GameObject.swift */,
 				CE3BFF8928E2FDB20014A752 /* InstancedGameObject.swift */,
 				CE76930E29DD5DF600BBC718 /* SubMeshGameObject.swift */,
@@ -983,7 +984,6 @@
 				CE0601652A83796B001F8CC3 /* CapsuleObject.swift */,
 				CEC2312E2B22F3E50081A26A /* Icosahedron.swift */,
 				CEC231322B25AC650081A26A /* PointLightObject.swift */,
-				CED3AA862B5D4DA300191002 /* ContainerNode.swift */,
 				CE4127962B6B3F2900B01AEA /* Temple.swift */,
 			);
 			path = GameObjects;

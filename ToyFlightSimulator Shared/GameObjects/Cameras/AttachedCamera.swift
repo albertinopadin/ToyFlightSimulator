@@ -16,7 +16,6 @@ class AttachedCamera: Camera {
     
     init() {
         super.init(name: AttachedCamera.NAME, cameraType: .Attached, aspectRatio: Renderer.AspectRatio)
-        self.ignoreParentScale = true
     }
     
     init(fieldOfView: Float = 45.0, near: Float = 0.1, far: Float = 1000) {
