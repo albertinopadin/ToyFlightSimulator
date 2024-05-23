@@ -16,11 +16,11 @@ class F16: Aircraft {
                    shouldUpdate: shouldUpdate)
     }
     
-    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, 
+    override func doRender(_ renderEncoder: MTLRenderCommandEncoder, 
                            applyMaterials: Bool = true,
                            submeshesToRender: [String : Bool]? = nil) {
-        renderCommandEncoder.setFrontFacing(.counterClockwise)
-        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
-        renderCommandEncoder.setFrontFacing(.clockwise)
+        renderEncoder.setFrontFacing(.counterClockwise)
+        super.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
+        renderEncoder.setFrontFacing(.clockwise)
     }
 }

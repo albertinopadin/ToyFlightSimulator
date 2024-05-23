@@ -38,6 +38,8 @@ extension SIMD2:  sizeable {}
 extension SIMD3:  sizeable {}
 extension SIMD4:  sizeable {}
 
+extension Particle: sizeable {}
+
 struct Vertex: sizeable {
     var position: float3 = [0, 0, 0]
     var color: float4 = [0, 0, 0, 1]

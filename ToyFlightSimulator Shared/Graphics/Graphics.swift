@@ -15,6 +15,9 @@ class Graphics {
     private static var _renderPipelineStateLibrary: RenderPipelineStateLibrary!
     public static var RenderPipelineStates: RenderPipelineStateLibrary { return _renderPipelineStateLibrary }
     
+    private static var _computePipelineStateLibrary: ComputePipelineStateLibrary!
+    public static var ComputePipelineStates: ComputePipelineStateLibrary { return _computePipelineStateLibrary }
+    
     private static var _depthStencilStateLibrary: DepthStencilStateLibrary!
     public static var DepthStencilStates: DepthStencilStateLibrary { return _depthStencilStateLibrary }
     
@@ -28,6 +31,7 @@ class Graphics {
         _shaderLibrary = ShaderLibrary()
         _vertexDescriptorLibrary = VertexDescriptorLibrary()
         _renderPipelineStateLibrary = RenderPipelineStateLibrary()
+        _computePipelineStateLibrary = ComputePipelineStateLibrary()
         _depthStencilStateLibrary = DepthStencilStateLibrary()
         _samplerStateLibrary = SamplerStateLibrary()
         _mdlVertexDescriptorLibrary = MDLVertexDescriptorLibrary()

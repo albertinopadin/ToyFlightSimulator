@@ -46,6 +46,10 @@ class FlightboxScene: GameScene {
         capsule.rotateZ(Float(90).toRadians)
         addChild(capsule)
         
+        let fire = Fire(name: "Fire", meshType: .None)
+        fire.setPosition(8, 10, -10)
+        addChild(fire)
+        
 //        let f16Sphere = Sphere()
 //        var f16SphereMaterial = Material()
 //        f16SphereMaterial.color = GRABBER_BLUE_COLOR

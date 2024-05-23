@@ -150,21 +150,21 @@ class Mesh {
                                 bitangent: bitangent))
     }
     
-    func applyMaterial(with renderCommandEncoder: MTLRenderCommandEncoder, material: ShaderMaterial?) {
+    func applyMaterial(with renderEncoder: MTLRenderCommandEncoder, material: ShaderMaterial?) {
         var mat = material
-        renderCommandEncoder.setFragmentBytes(&mat, length: ShaderMaterial.stride, index: Int(TFSBufferIndexMaterial.rawValue))
+        renderEncoder.setFragmentBytes(&mat, length: ShaderMaterial.stride, index: Int(TFSBufferIndexMaterial.rawValue))
     }
     
-    func drawIndexedPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder, submesh: Submesh, instanceCount: Int) {
-        renderCommandEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                   indexCount: submesh.indexCount,
-                                                   indexType: submesh.indexType,
-                                                   indexBuffer: submesh.indexBuffer,
-                                                   indexBufferOffset: submesh.indexBufferOffset,
-                                                   instanceCount: instanceCount)
+    func drawIndexedPrimitives(_ renderEncoder: MTLRenderCommandEncoder, submesh: Submesh, instanceCount: Int) {
+        renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                            indexCount: submesh.indexCount,
+                                            indexType: submesh.indexType,
+                                            indexBuffer: submesh.indexBuffer,
+                                            indexBufferOffset: submesh.indexBufferOffset,
+                                            instanceCount: instanceCount)
     }
     
-    func drawPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder,
+    func drawPrimitives(_ renderEncoder: MTLRenderCommandEncoder,
                         material: ShaderMaterial? = nil,
                         applyMaterials: Bool = true,
                         baseColorTextureType: TextureType = .None,
@@ -172,42 +172,42 @@ class Mesh {
                         specularTextureType: TextureType = .None,
                         submeshesToDisplay: [String: Bool]? = nil) {
         if let _vertexBuffer {
-            renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
+            renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
             
             if _submeshes.count > 0 {
                 if let submeshesToDisplay {
                     for submesh in _submeshes {
                         if submeshesToDisplay[submesh.name] ?? false {
                             if applyMaterials {
-                                submesh.material?.applyTextures(with: renderCommandEncoder,
+                                submesh.material?.applyTextures(with: renderEncoder,
                                                                 baseColorTextureType: baseColorTextureType,
                                                                 normalMapTextureType: normalMapTextureType,
                                                                 specularTextureType: specularTextureType)
-                                submesh.applyMaterial(with: renderCommandEncoder, customMaterial: material)
+                                submesh.applyMaterial(with: renderEncoder, customMaterial: material)
                             }
 
-                            drawIndexedPrimitives(renderCommandEncoder, submesh: submesh, instanceCount: _instanceCount)
+                            drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
                         }
                     }
                 } else {
                     for submesh in _submeshes {
                         if applyMaterials {
-                            submesh.material?.applyTextures(with: renderCommandEncoder,
+                            submesh.material?.applyTextures(with: renderEncoder,
                                                             baseColorTextureType: baseColorTextureType,
                                                             normalMapTextureType: normalMapTextureType,
                                                             specularTextureType: specularTextureType)
-                            submesh.applyMaterial(with: renderCommandEncoder, customMaterial: material)
+                            submesh.applyMaterial(with: renderEncoder, customMaterial: material)
                         }
                         
-                        drawIndexedPrimitives(renderCommandEncoder, submesh: submesh, instanceCount: _instanceCount)
+                        drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
                     }
                 }
             } else {
                 if applyMaterials, let material {
-                    applyMaterial(with: renderCommandEncoder, material: material)
+                    applyMaterial(with: renderEncoder, material: material)
                 }
                 
-                renderCommandEncoder.drawPrimitives(type: .triangle,
+                renderEncoder.drawPrimitives(type: .triangle,
                                                     vertexStart: 0,
                                                     vertexCount: _vertices.count,
                                                     instanceCount: _instanceCount)
@@ -215,7 +215,7 @@ class Mesh {
         }
         
         for child in _childMeshes {
-            child.drawPrimitives(renderCommandEncoder,
+            child.drawPrimitives(renderEncoder,
                                  material: material,
                                  applyMaterials: applyMaterials,
                                  baseColorTextureType: baseColorTextureType,
@@ -225,23 +225,23 @@ class Mesh {
         }
     }
     
-    func drawShadowPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToDisplay: [String: Bool]? = nil) {
+    func drawShadowPrimitives(_ renderEncoder: MTLRenderCommandEncoder, submeshesToDisplay: [String: Bool]? = nil) {
         if let _vertexBuffer {
-            renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
+            renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
             if _submeshes.count > 0 {
                 if let submeshesToDisplay {
                     for submesh in _submeshes {
                         if submeshesToDisplay[submesh.name] ?? false {
-                            drawIndexedPrimitives(renderCommandEncoder, submesh: submesh, instanceCount: _instanceCount)
+                            drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
                         }
                     }
                 } else {
                     for submesh in _submeshes {
-                        drawIndexedPrimitives(renderCommandEncoder, submesh: submesh, instanceCount: _instanceCount)
+                        drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
                     }
                 }
             } else {
-                renderCommandEncoder.drawPrimitives(type: .triangle,
+                renderEncoder.drawPrimitives(type: .triangle,
                                                     vertexStart: 0,
                                                     vertexCount: _vertices.count,
                                                     instanceCount: _instanceCount)
@@ -249,7 +249,7 @@ class Mesh {
         }
         
         for child in _childMeshes {
-            child.drawShadowPrimitives(renderCommandEncoder, submeshesToDisplay: submeshesToDisplay)
+            child.drawShadowPrimitives(renderEncoder, submeshesToDisplay: submeshesToDisplay)
         }
     }
 }

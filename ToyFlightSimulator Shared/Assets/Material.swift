@@ -57,7 +57,7 @@ struct Material {
         }
     }
     
-    public mutating func applyTextures(with renderCommandEncoder: MTLRenderCommandEncoder,
+    public mutating func applyTextures(with renderEncoder: MTLRenderCommandEncoder,
                                        baseColorTextureType: TextureType,
                                        normalMapTextureType: TextureType,
                                        specularTextureType: TextureType) {
@@ -65,18 +65,18 @@ struct Material {
         shaderMaterial.useNormalMapTexture = normalMapTextureType != .None || normalMapTexture != nil
         shaderMaterial.useSpecularTexture = specularTextureType != .None || specularTexture != nil
         
-        renderCommandEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
+        renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
         
         if let baseColorTex = baseColorTextureType == .None ? baseColorTexture : Assets.Textures[baseColorTextureType] {
-            renderCommandEncoder.setFragmentTexture(baseColorTex, index: TFSTextureIndexBaseColor.index)
+            renderEncoder.setFragmentTexture(baseColorTex, index: TFSTextureIndexBaseColor.index)
         }
         
         if let normalMapTex = normalMapTextureType == .None ? normalMapTexture : Assets.Textures[normalMapTextureType] {
-            renderCommandEncoder.setFragmentTexture(normalMapTex, index: TFSTextureIndexNormal.index)
+            renderEncoder.setFragmentTexture(normalMapTex, index: TFSTextureIndexNormal.index)
         }
         
         if let specularTex = specularTextureType == .None ? specularTexture : Assets.Textures[specularTextureType] {
-            renderCommandEncoder.setFragmentTexture(specularTex, index: TFSTextureIndexSpecular.index)
+            renderEncoder.setFragmentTexture(specularTex, index: TFSTextureIndexSpecular.index)
         }
     }
 }

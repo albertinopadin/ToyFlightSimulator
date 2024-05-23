@@ -493,15 +493,15 @@ class F18Usdz: Aircraft {
         }
     }
     
-    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
+    override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
                            submeshesToRender: [String : Bool]? = nil) {
 //        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToDisplay)
-        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials)
+        super.doRender(renderEncoder, applyMaterials: applyMaterials)
     }
     
-    override func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String : Bool]?) {
+    override func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String : Bool]?) {
 //        super.doRenderShadow(renderCommandEncoder, submeshesToRender: submeshesToDisplay)
-        super.doRenderShadow(renderCommandEncoder)
+        super.doRenderShadow(renderEncoder)
     }
 }

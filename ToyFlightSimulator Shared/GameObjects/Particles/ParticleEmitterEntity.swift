@@ -5,4 +5,10 @@
 //  Created by Albertino Padin on 4/27/24.
 //
 
-import Foundation
+import MetalKit
+
+protocol ParticleEmitterEntity: GameObject {
+    var emitter: ParticleEmitter { get }
+    
+    func computeUpdate(_ computeEncoder: MTLComputeCommandEncoder, threadsPerGroup: MTLSize)
+}

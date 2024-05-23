@@ -103,7 +103,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "GBuffer Generation Stage") {
+        encodeRenderStage(using: renderEncoder, label: "GBuffer Generation Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredGBufferMaterial])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.GBufferGeneration])
             // NOTE: For some reason, setting cull mode to back makes meshes appear 'extruded' or turned inside out.
@@ -116,7 +116,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     func encodeDirectionalLightingStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "Directional Lighting Stage") {
+        encodeRenderStage(using: renderEncoder, label: "Directional Lighting Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredDirectionalLighting])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DirectionalLighting])
             renderEncoder.setCullMode(.back)
@@ -133,7 +133,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     func encodeLightMaskStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "Point Light Mask Stage") {
+        encodeRenderStage(using: renderEncoder, label: "Point Light Mask Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.LightMask])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LightMask])
             renderEncoder.setStencilReferenceValue(128)
@@ -144,7 +144,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "Point Light Stage") {
+        encodeRenderStage(using: renderEncoder, label: "Point Light Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredPointLight])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])  // <--- This is causing issues
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
@@ -157,7 +157,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     func encodeSkyboxStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "Skybox Stage") {
+        encodeRenderStage(using: renderEncoder, label: "Skybox Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Skybox])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
 //            renderEncoder.setCullMode(.front)
@@ -172,8 +172,8 @@ class SinglePassDeferredLightingRenderer: Renderer {
     //       - If I pitch or roll jet, shadows look very different on adjacent panels in mesh.
     // ADDENDUM: Might fix issues if I implement soft shadows...
     func encodeShadowMapPass(into commandBuffer: MTLCommandBuffer) {
-        encodePass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Map Pass") { renderEncoder in
-            encodeStage(using: renderEncoder, label: "Shadow Generation Stage") {
+        encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Map Pass") { renderEncoder in
+            encodeRenderStage(using: renderEncoder, label: "Shadow Generation Stage") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ShadowGeneration])
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.ShadowGeneration])
 //                renderEncoder.setCullMode(.back)
@@ -188,7 +188,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     // For testing:
     func encodeIcosahedronStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeStage(using: renderEncoder, label: "Icosahedron Stage") {
+        encodeRenderStage(using: renderEncoder, label: "Icosahedron Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Icosahedron])
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DepthWriteDisabled])
@@ -215,7 +215,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             _gBufferAndLightingRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
             _gBufferAndLightingRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
             
-            encodePass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
+            encodeRenderPass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
                 renderEncoder in
                 SceneManager.SetSceneConstants(with: renderEncoder)
                 

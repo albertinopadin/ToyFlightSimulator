@@ -28,32 +28,32 @@ struct LightManager {
         return Self.getLightObjects(lightType: Point).map { $0.lightData }
     }
     
-    public static func setDirectionalLightData(_ renderCommandEncoder: MTLRenderCommandEncoder,
+    public static func setDirectionalLightData(_ renderEncoder: MTLRenderCommandEncoder,
                                                cameraPosition: float3,
                                                viewMatrix: float4x4) {
         var lightData = Self.getDirectionalLightData(viewMatrix: viewMatrix)
         var lightCount = lightData.count
-        renderCommandEncoder.setFragmentBytes(&lightCount, 
-                                              length: Int32.size,
-                                              index: TFSBufferDirectionalLightsNum.index)
-        renderCommandEncoder.setFragmentBytes(&lightData,
-                                              length: LightData.stride(lightCount),
-                                              index: TFSBufferDirectionalLightData.index)
+        renderEncoder.setFragmentBytes(&lightCount, 
+                                       length: Int32.size,
+                                       index: TFSBufferDirectionalLightsNum.index)
+        renderEncoder.setFragmentBytes(&lightData,
+                                       length: LightData.stride(lightCount),
+                                       index: TFSBufferDirectionalLightData.index)
     }
     
-    public static func setPointLightData(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+    public static func setPointLightData(_ renderEncoder: MTLRenderCommandEncoder) {
         var pointLightData = Self.getPointLightData()
 //        var lightCount = lightData.count
 //        renderCommandEncoder.setFragmentBytes(&lightCount,
 //                                              length: Int32.size,
 //                                              index: Int(TFSBufferPointLightsData.rawValue))
         
-        renderCommandEncoder.setVertexBytes(&pointLightData,
-                                            length: LightData.stride(pointLightData.count),
-                                            index: TFSBufferPointLightsData.index)
+        renderEncoder.setVertexBytes(&pointLightData,
+                                     length: LightData.stride(pointLightData.count),
+                                     index: TFSBufferPointLightsData.index)
         
-        renderCommandEncoder.setFragmentBytes(&pointLightData,
-                                              length: LightData.stride(pointLightData.count),
-                                              index: TFSBufferPointLightsData.index)
+        renderEncoder.setFragmentBytes(&pointLightData,
+                                       length: LightData.stride(pointLightData.count),
+                                       index: TFSBufferPointLightsData.index)
     }
 }

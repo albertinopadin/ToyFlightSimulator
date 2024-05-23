@@ -236,47 +236,47 @@ class SingleSMMesh {
         self._instanceCount = count
     }
 
-    func applyMaterial(renderCommandEncoder: MTLRenderCommandEncoder, material: ShaderMaterial?) {
+    func applyMaterial(renderEncoder: MTLRenderCommandEncoder, material: ShaderMaterial?) {
         var mat = material
-        renderCommandEncoder.setFragmentBytes(&mat, length: ShaderMaterial.stride, index: TFSBufferIndexMaterial.index)
+        renderEncoder.setFragmentBytes(&mat, length: ShaderMaterial.stride, index: TFSBufferIndexMaterial.index)
     }
 
-    func drawPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder,
+    func drawPrimitives(_ renderEncoder: MTLRenderCommandEncoder,
                         material: ShaderMaterial? = nil,
                         applyMaterials: Bool = true,
                         baseColorTextureType: TextureType = .None,
                         normalMapTextureType: TextureType = .None,
                         specularTextureType: TextureType = .None) {
         if let _vertexBuffer {
-            renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
+            renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
 
             if applyMaterials {
-                _submesh.material?.applyTextures(with: renderCommandEncoder,
+                _submesh.material?.applyTextures(with: renderEncoder,
                                                  baseColorTextureType: baseColorTextureType,
                                                  normalMapTextureType: normalMapTextureType,
                                                  specularTextureType: specularTextureType)
-                _submesh.applyMaterial(with: renderCommandEncoder, customMaterial: material)
+                _submesh.applyMaterial(with: renderEncoder, customMaterial: material)
             }
 
-            renderCommandEncoder.drawIndexedPrimitives(type: _submesh.primitiveType,
-                                                       indexCount: _submesh.indexCount,
-                                                       indexType: _submesh.indexType,
-                                                       indexBuffer: _submesh.indexBuffer,
-                                                       indexBufferOffset: _submesh.indexBufferOffset,
-                                                       instanceCount: _instanceCount)
+            renderEncoder.drawIndexedPrimitives(type: _submesh.primitiveType,
+                                                indexCount: _submesh.indexCount,
+                                                indexType: _submesh.indexType,
+                                                indexBuffer: _submesh.indexBuffer,
+                                                indexBufferOffset: _submesh.indexBufferOffset,
+                                                instanceCount: _instanceCount)
         }
     }
 
-    func drawShadowPrimitives(_ renderCommandEncoder: MTLRenderCommandEncoder) {
+    func drawShadowPrimitives(_ renderEncoder: MTLRenderCommandEncoder) {
         if let _vertexBuffer = _vertexBuffer {
-            renderCommandEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
+            renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
 
-            renderCommandEncoder.drawIndexedPrimitives(type: _submesh.primitiveType,
-                                                       indexCount: _submesh.indexCount,
-                                                       indexType: _submesh.indexType,
-                                                       indexBuffer: _submesh.indexBuffer,
-                                                       indexBufferOffset: _submesh.indexBufferOffset,
-                                                       instanceCount: _instanceCount)
+            renderEncoder.drawIndexedPrimitives(type: _submesh.primitiveType,
+                                                indexCount: _submesh.indexCount,
+                                                indexType: _submesh.indexType,
+                                                indexBuffer: _submesh.indexBuffer,
+                                                indexBufferOffset: _submesh.indexBufferOffset,
+                                                instanceCount: _instanceCount)
         }
     }
 }

@@ -17,12 +17,12 @@ class SkyBox: GameObject {
         setScale(1000)
     }
     
-    override func render(with renderCommandEncoder: MTLRenderCommandEncoder,
+    override func render(with renderEncoder: MTLRenderCommandEncoder,
                          renderPipelineStateType: RenderPipelineStateType,
                          applyMaterials: Bool = false) {
-        renderCommandEncoder.setFragmentTexture(Assets.Textures[_skyBoxTextureType],
-                                                index: TFSTextureIndexBaseColor.index)
-        super.render(with: renderCommandEncoder,
+        renderEncoder.setFragmentTexture(Assets.Textures[_skyBoxTextureType],
+                                         index: TFSTextureIndexBaseColor.index)
+        super.render(with: renderEncoder,
                      renderPipelineStateType: renderPipelineStateType,
                      applyMaterials: applyMaterials)
     }

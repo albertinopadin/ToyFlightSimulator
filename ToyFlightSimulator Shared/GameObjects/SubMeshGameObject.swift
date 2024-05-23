@@ -43,15 +43,15 @@ class SubMeshGameObject: GameObject {
         return _singleSMMesh.vertexMetadata
     }
     
-    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
+    override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
                            submeshesToRender: [String: Bool]? = nil) {
-        encodeRender(using: renderCommandEncoder, label: "Rendering \(self.getName())") {
-            renderCommandEncoder.setVertexBytes(&_modelConstants,
-                                                length: ModelConstants.stride,
-                                                index: TFSBufferModelConstants.index)
+        encodeRender(using: renderEncoder, label: "Rendering \(self.getName())") {
+            renderEncoder.setVertexBytes(&_modelConstants,
+                                         length: ModelConstants.stride,
+                                         index: TFSBufferModelConstants.index)
             
-            _singleSMMesh.drawPrimitives(renderCommandEncoder,
+            _singleSMMesh.drawPrimitives(renderEncoder,
                                          material: _material,
                                          applyMaterials: applyMaterials,
                                          baseColorTextureType: _baseColorTextureType,
@@ -60,12 +60,12 @@ class SubMeshGameObject: GameObject {
         }
     }
     
-    override func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
-        encodeRender(using: renderCommandEncoder, label: "Shadow Rendering \(self.getName())") {
-            renderCommandEncoder.setVertexBytes(&_modelConstants,
-                                                length: ModelConstants.stride,
-                                                index: TFSBufferModelConstants.index)
-            _singleSMMesh.drawShadowPrimitives(renderCommandEncoder)
+    override func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
+        encodeRender(using: renderEncoder, label: "Shadow Rendering \(self.getName())") {
+            renderEncoder.setVertexBytes(&_modelConstants,
+                                         length: ModelConstants.stride,
+                                         index: TFSBufferModelConstants.index)
+            _singleSMMesh.drawShadowPrimitives(renderEncoder)
         }
     }
 }

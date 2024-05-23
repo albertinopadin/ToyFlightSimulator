@@ -8,6 +8,6 @@
 import MetalKit
 
 protocol Renderable {
-    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder, applyMaterials: Bool, submeshesToRender: [String: Bool]?)
-    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]?)
+    func doRender(_ renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool, submeshesToRender: [String: Bool]?)
+    func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]?)
 }

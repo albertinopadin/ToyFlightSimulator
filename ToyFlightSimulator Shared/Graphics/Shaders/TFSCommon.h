@@ -113,6 +113,7 @@ typedef enum {
     TFSTextureIndexNormal    = 2,
     TFSTextureIndexShadow    = 3,
     TFSTextureIndexAlpha     = 4,
+    TFSTextureIndexParticle  = 5,
     
     TFSNumMeshTextures = TFSTextureIndexNormal + 1
     
@@ -173,5 +174,19 @@ typedef struct {
 typedef struct {
     packed_float3 position;
 } TFSShadowVertex;
+
+struct Particle {
+    vector_float3 position;
+    float direction;
+    float speed;
+    vector_float4 color;
+    float life;
+    float age;
+    float size;
+    float scale;
+    float startScale;
+    float endScale;
+    vector_float3 startPosition;
+};
 
 #endif /* TFSCommon_h */

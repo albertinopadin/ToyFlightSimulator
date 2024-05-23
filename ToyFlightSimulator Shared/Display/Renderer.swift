@@ -103,10 +103,22 @@ class Renderer: NSObject, MTKViewDelegate {
 //        commandBuffer.commit()
 //    }
     
-    func encodePass(into commandBuffer: MTLCommandBuffer,
-                    using descriptor: MTLRenderPassDescriptor,
-                    label: String,
-                    _ encodingBlock: (MTLRenderCommandEncoder) -> Void) {
+    func encodeComputePass(into commandBuffer: MTLCommandBuffer,
+                           label: String,
+                           _ encodingBlock: (MTLComputeCommandEncoder) -> Void) {
+        guard let computeEncoder = commandBuffer.makeComputeCommandEncoder() else {
+            fatalError("Failed to make compute command encoder.")
+        }
+        
+        computeEncoder.label = label
+        encodingBlock(computeEncoder)
+        computeEncoder.endEncoding()
+    }
+    
+    func encodeRenderPass(into commandBuffer: MTLCommandBuffer,
+                          using descriptor: MTLRenderPassDescriptor,
+                          label: String,
+                          _ encodingBlock: (MTLRenderCommandEncoder) -> Void) {
         guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor) else {
             fatalError("Failed to make render command encoder with: \(descriptor.description)")
         }
@@ -116,7 +128,7 @@ class Renderer: NSObject, MTKViewDelegate {
         renderEncoder.endEncoding()
     }
     
-    func encodeStage(using renderEncoder: MTLRenderCommandEncoder, label: String, _ encodingBlock: () -> Void) {
+    func encodeRenderStage(using renderEncoder: MTLRenderCommandEncoder, label: String, _ encodingBlock: () -> Void) {
         renderEncoder.pushDebugGroup(label)
         encodingBlock()
         renderEncoder.popDebugGroup()
@@ -189,7 +201,7 @@ class Renderer: NSObject, MTKViewDelegate {
     
     func draw(in view: MTKView) {
         let currentTime = DispatchTime.now().uptimeNanoseconds
-        let deltaTime = Double(currentTime - previousTime) / 1_000_000_000
+        let deltaTime = Double(currentTime - previousTime) / 1e9
         SceneManager.Update(deltaTime: deltaTime)
         previousTime = currentTime
     }

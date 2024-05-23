@@ -51,22 +51,22 @@ class InstancedGameObject: Node {
 }
 
 extension InstancedGameObject: Renderable {
-    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
+    func doRender(_ renderEncoder: MTLRenderCommandEncoder,
                   applyMaterials: Bool = true,
                   submeshesToRender: [String: Bool]? = nil) {
-        renderCommandEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Instanced])
-        renderCommandEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
+        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Instanced])
+        renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
         
         // Vertex Shader
-        renderCommandEncoder.setVertexBuffer(_modelConstantBuffer, offset: 0, index: 2)
+        renderEncoder.setVertexBuffer(_modelConstantBuffer, offset: 0, index: 2)
         
         // Fragment Shader
-        renderCommandEncoder.setFragmentBytes(&_material, length: ShaderMaterial.stride, index: 1)
+        renderEncoder.setFragmentBytes(&_material, length: ShaderMaterial.stride, index: 1)
         
-        _mesh.drawPrimitives(renderCommandEncoder, submeshesToDisplay: submeshesToRender)
+        _mesh.drawPrimitives(renderEncoder, submeshesToDisplay: submeshesToRender)
     }
     
-    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
+    func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
         // NOT IMPLEMENTED
         fatalError("NOT IMPLEMENTED")
     }

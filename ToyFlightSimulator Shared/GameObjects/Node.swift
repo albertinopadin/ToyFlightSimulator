@@ -89,7 +89,7 @@ class Node {
         }
     }
     
-    func render(with renderCommandEncoder: MTLRenderCommandEncoder,
+    func render(with renderEncoder: MTLRenderCommandEncoder,
                 renderPipelineStateType: RenderPipelineStateType,
                 applyMaterials: Bool = true) {
 //        if renderPipelineStateType == .LightMask {
@@ -111,11 +111,11 @@ class Node {
 //            if self is Icosahedron {
 //                print("[Node render] rendering icosahedron, given rps: \(renderPipelineStateType)")
 //            }
-            renderable.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: nil)
+            renderable.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: nil)
         }
         
         for child in children {
-            child.render(with: renderCommandEncoder,
+            child.render(with: renderEncoder,
                          renderPipelineStateType: renderPipelineStateType,
                          applyMaterials: applyMaterials)
         }
@@ -128,28 +128,28 @@ class Node {
                !(self is LightObject) && !(self is Icosahedron)
     }
     
-    func renderGBuffer(with renderCommandEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
+    func renderGBuffer(with renderEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
         if shouldRenderGBuffer(gBufferRPS: gBufferRPS), let renderable = self as? Renderable {
-            renderable.doRender(renderCommandEncoder, applyMaterials: true, submeshesToRender: nil)
+            renderable.doRender(renderEncoder, applyMaterials: true, submeshesToRender: nil)
         }
         
         for child in children {
-            child.renderGBuffer(with: renderCommandEncoder, gBufferRPS: gBufferRPS)
+            child.renderGBuffer(with: renderEncoder, gBufferRPS: gBufferRPS)
         }
     }
     
     // TODO: God noooo...
     private func shouldRenderTiledGBuffer() -> Bool {
-        return _renderPipelineStateType != .Skybox && !(self is LightObject)
+        return _renderPipelineStateType != .Skybox && !(self is LightObject) && !(self is ParticleEmitterEntity)
     }
     
-    func renderTiledDeferredGBuffer(with renderCommandEncoder: MTLRenderCommandEncoder) {
+    func renderTiledDeferredGBuffer(with renderEncoder: MTLRenderCommandEncoder) {
         if shouldRenderTiledGBuffer(), let renderable = self as? Renderable {
-            renderable.doRender(renderCommandEncoder, applyMaterials: true, submeshesToRender: nil)
+            renderable.doRender(renderEncoder, applyMaterials: true, submeshesToRender: nil)
         }
         
         for child in children {
-            child.renderTiledDeferredGBuffer(with: renderCommandEncoder)
+            child.renderTiledDeferredGBuffer(with: renderEncoder)
         }
     }
     
@@ -158,15 +158,28 @@ class Node {
         return _renderPipelineStateType != .Skybox && !(self is LightObject) && !(self is Icosahedron)
     }
     
-    func renderShadows(with renderCommandEncoder: MTLRenderCommandEncoder) {
+    func renderShadows(with renderEncoder: MTLRenderCommandEncoder) {
         if shouldRenderShadows(), let renderable = self as? Renderable {
-            renderable.doRenderShadow(renderCommandEncoder, submeshesToRender: nil)
+            renderable.doRenderShadow(renderEncoder, submeshesToRender: nil)
         }
         
         for child in children {
-            child.renderShadows(with: renderCommandEncoder)
+            child.renderShadows(with: renderEncoder)
         }
     }
+    
+    // ---------------
+    func compute(with commandEncoder: MTLComputeCommandEncoder, threadsPerGroup: MTLSize) {
+        // TODO: Either generalize this or make specific functions for each type of compute type
+        if let entity = self as? ParticleEmitterEntity {
+            entity.computeUpdate(commandEncoder, threadsPerGroup: threadsPerGroup)
+        }
+        
+        for child in children {
+            child.compute(with: commandEncoder, threadsPerGroup: threadsPerGroup)
+        }
+    }
+    // ---------------
     
     func getFwdVector() -> float3 {
         let forward = modelMatrix.columns.2

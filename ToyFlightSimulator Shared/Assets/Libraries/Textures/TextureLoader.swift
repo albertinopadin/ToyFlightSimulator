@@ -25,26 +25,56 @@ struct TextureLoader {
     }
     
     public func loadTextureFromBundle() -> MTLTexture {
-        var result: MTLTexture!
-        if let url = Bundle.main.url(forResource: _textureName, withExtension: _textureExtension) {
+        if let cachedTexture = Self.StringToTextureCache[_textureName] {
+            return cachedTexture
+        } else {
+            guard let url = Bundle.main.url(forResource: _textureName, withExtension: _textureExtension) else {
+                fatalError("ERROR::CREATING::TEXTURE::__\(_textureName!) does not exist")
+            }
+            
             let options: [MTKTextureLoader.Option: Any] = [
                 .origin: _origin as Any,
-                .generateMipmaps: true,  // Unoptimized
+                .generateMipmaps: true,
                 .textureUsage: MTLTextureUsage.shaderRead.rawValue,
                 .textureStorageMode: MTLStorageMode.private.rawValue
             ]
             
             do {
-                result = try Self.textureLoader.newTexture(URL: url, options: options)
-                result.label = _textureName
-            } catch let error as NSError {
-                print("ERROR::CREATING::TEXTURE::__\(_textureName!)__::\(error)")
+                let texture = try Self.textureLoader.newTexture(URL: url, options: options)
+                texture.label = _textureName
+                Self.StringToTextureCache[_textureName] = texture
+                return texture
+            } catch {
+                fatalError("ERROR::CREATING::TEXTURE::__\(_textureName!)__::\(error)")
             }
-        } else {
-            print("ERROR::CREATING::TEXTURE::__\(_textureName!) does not exist")
         }
-        
-        return result
+    }
+    
+    public static func LoadTexture(name: String,
+                                   scale: CGFloat = 1.0,
+                                   origin: MTKTextureLoader.Origin = .topLeft) -> MTLTexture? {
+        if let cachedTexture = Self.StringToTextureCache[name] {
+            return cachedTexture
+        } else {
+            let options: [MTKTextureLoader.Option: Any] = [
+                .origin: origin as Any,
+                .generateMipmaps: true,
+                .textureUsage: MTLTextureUsage.shaderRead.rawValue,
+                .textureStorageMode: MTLStorageMode.private.rawValue
+            ]
+            
+            do {
+                let texture = try Self.textureLoader.newTexture(name: name,
+                                                                scaleFactor: scale,
+                                                                bundle: Bundle.main,
+                                                                options: options)
+                texture.label = name
+                Self.StringToTextureCache[name] = texture
+                return texture
+            } catch {
+                fatalError("ERROR::CREATING::TEXTURE::__\(name)__::\(error)")
+            }
+        }
     }
     
     public static func Texture(for semantic: MDLMaterialSemantic,

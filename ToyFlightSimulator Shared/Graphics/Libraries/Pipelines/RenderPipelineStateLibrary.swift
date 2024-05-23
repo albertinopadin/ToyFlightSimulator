@@ -38,6 +38,8 @@ enum RenderPipelineStateType {
     
     // For testing:
     case Icosahedron
+    
+    case Particle
 }
 
 class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState> {
@@ -70,6 +72,8 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(TiledDeferredGBufferPipelineState(), forKey: .TiledDeferredGBuffer)
         _library.updateValue(TiledDeferredDirectionalLightPipelineState(), forKey: .TiledDeferredDirectionalLight)
         _library.updateValue(TiledDeferredPointLightPipelineState(), forKey: .TiledDeferredPointLight)
+        
+        _library.updateValue(ParticleRenderPipelineState(), forKey: .Particle)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {

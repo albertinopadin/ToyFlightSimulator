@@ -20,23 +20,9 @@ public class Texture {
         setTexture(texture)
     }
     
-    // TODO: Clean this up later
     init(name: String, label: String, scale: CGFloat = 1.0) {
-        let textureLoader = MTKTextureLoader(device: Engine.Device)
-        let options: [MTKTextureLoader.Option: Any] = [
-            .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-            .textureStorageMode: MTLStorageMode.private.rawValue
-        ]
-        
-        var result: MTLTexture!
-        do {
-            result = try textureLoader.newTexture(name: name, scaleFactor: scale, bundle: nil, options: options)
-            result.label = label
-        } catch {
-            fatalError("Failed to create texture: \(error.localizedDescription)")
-        }
-        
-        self.texture = result
+        self.texture = TextureLoader.LoadTexture(name: name, scale: scale)
+        self.texture.label = label
     }
             
     func setTexture(_ texture: MTLTexture) {

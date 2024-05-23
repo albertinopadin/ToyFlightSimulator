@@ -46,16 +46,16 @@ class GameObject: Node, Renderable {
         renderEncoder.popDebugGroup()
     }
     
-    func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
+    func doRender(_ renderEncoder: MTLRenderCommandEncoder,
                   applyMaterials: Bool = true,
                   submeshesToRender: [String: Bool]? = nil) {
-        encodeRender(using: renderCommandEncoder, label: "Rendering \(self.getName())") {
+        encodeRender(using: renderEncoder, label: "Rendering \(self.getName())") {
             // Vertex Shader
-            renderCommandEncoder.setVertexBytes(&_modelConstants,
-                                                length: ModelConstants.stride,
-                                                index: TFSBufferModelConstants.index)
+            renderEncoder.setVertexBytes(&_modelConstants,
+                                         length: ModelConstants.stride,
+                                         index: TFSBufferModelConstants.index)
             
-            _mesh.drawPrimitives(renderCommandEncoder,
+            _mesh.drawPrimitives(renderEncoder,
                                  material: _material,
                                  applyMaterials: applyMaterials,
                                  baseColorTextureType: _baseColorTextureType,
@@ -65,12 +65,12 @@ class GameObject: Node, Renderable {
         }
     }
     
-    func doRenderShadow(_ renderCommandEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
-        encodeRender(using: renderCommandEncoder, label: "Shadow Rendering \(self.getName())") {
-            renderCommandEncoder.setVertexBytes(&_modelConstants,
-                                                length: ModelConstants.stride,
-                                                index: TFSBufferModelConstants.index)
-            _mesh.drawShadowPrimitives(renderCommandEncoder, submeshesToDisplay: submeshesToRender)
+    func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
+        encodeRender(using: renderEncoder, label: "Shadow Rendering \(self.getName())") {
+            renderEncoder.setVertexBytes(&_modelConstants,
+                                         length: ModelConstants.stride,
+                                         index: TFSBufferModelConstants.index)
+            _mesh.drawShadowPrimitives(renderEncoder, submeshesToDisplay: submeshesToRender)
         }
     }
 }
