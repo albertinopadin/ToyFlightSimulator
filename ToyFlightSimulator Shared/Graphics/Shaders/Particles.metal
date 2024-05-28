@@ -60,31 +60,14 @@ vertex ParticleVertexOut vertex_particle(const device Particle *particles [[ buf
     return out;
 }
 
-//fragment float4 fragment_particle(ParticleVertexOut in [[ stage_in ]],
-//                                  texture2d<float> particleTexture [[ texture(0) ]],
-//                                  float2 point [[ point_coord ]]) {
-//    constexpr sampler defaultSampler;
-//    float4 color = particleTexture.sample(defaultSampler, point);
-//    
-//    if (color.a < 0.1) {
-//        discard_fragment();
-//    }
-//    
-//    color = float4(color.xyz, 0.5);
-//    color *= in.color;
-//    return color;
-//}
-
 fragment float4 fragment_particle(ParticleVertexOut in [[ stage_in ]],
-                                  texture2d<float> baseTexture [[ texture(TFSTextureIndexBaseColor) ]],
-                                  texture2d<float> particleTexture [[ texture(TFSTextureIndexParticle) ]],
+                                  texture2d<float> particleTexture [[ texture(0) ]],
                                   float2 point [[ point_coord ]]) {
     constexpr sampler defaultSampler;
     float4 color = particleTexture.sample(defaultSampler, point);
-    float4 baseColor = baseTexture.sample(defaultSampler, point);
     
     if (color.a < 0.1) {
-        return baseColor;
+        discard_fragment();
     }
     
     color = float4(color.xyz, 0.5);

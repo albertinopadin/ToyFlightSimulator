@@ -11,7 +11,7 @@ class Fire: GameObject, ParticleEmitterEntity {
     var emitter: ParticleEmitter
     
     override init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .Particle) {
-        self.emitter = ParticleEmitter.fire(size: CGSize(width: 50, height: 50))
+        self.emitter = ParticleEmitter.fire(size: CGSize(width: 100, height: 100))
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
     }
     

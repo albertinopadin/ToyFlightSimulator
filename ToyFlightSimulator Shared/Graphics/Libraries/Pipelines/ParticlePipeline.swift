@@ -20,10 +20,10 @@ struct ParticleRenderPipelineState: RenderPipelineState {
         createRenderPipelineState(label: "Particle Render") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.ParticlesVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.ParticlesFragment]
-            descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat  // Check this
-            descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-//            descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat  // Check this (NEW)
-//            descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthPixelFormat
+            descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
+            Self.setGBufferPixelFormatsForTiledDeferredPipeline(descriptor: descriptor)
+            descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
+            descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
             
             if enableBlending {
                 descriptor.colorAttachments[0].isBlendingEnabled = true
