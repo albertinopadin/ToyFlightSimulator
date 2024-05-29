@@ -78,7 +78,7 @@ class ParticleEmitter {
         descriptor.direction = .pi / 2
         descriptor.directionRange = -0.3...0.3
         descriptor.speed = 3
-        descriptor.pointSize = 80
+        descriptor.pointSize = Float(size.width)
         descriptor.startScale = 0
         descriptor.startScaleRange = 0.5...1.0
         descriptor.endScaleRange = 0...0

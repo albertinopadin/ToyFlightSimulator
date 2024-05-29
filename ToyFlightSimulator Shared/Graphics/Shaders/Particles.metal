@@ -42,17 +42,10 @@ vertex ParticleVertexOut vertex_particle(const device Particle *particles [[ buf
                                          constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                          constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]],
                                          uint instance [[ instance_id ]]) {
-//    float3 position = particles[instance].position + emitterPosition;
-//    ParticleVertexOut out {
-//        .position = float4(position.xyz / size * 2.0 - 1.0, 1),
-//        .pointSize = particles[instance].size * particles[instance].scale,
-//        .color = particles[instance].color
-//    };
-    
     float4 particlePosition = float4(particles[instance].position + emitterPosition, 1);
     float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * modelConstants.modelMatrix * particlePosition;
     ParticleVertexOut out {
-        .position = (position / float4(size, 1)) * 2.0 - 1.0,
+        .position = position,
         .pointSize = particles[instance].size * particles[instance].scale,
         .color = particles[instance].color
     };

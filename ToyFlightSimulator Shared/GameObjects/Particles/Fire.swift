@@ -11,7 +11,7 @@ class Fire: GameObject, ParticleEmitterEntity {
     var emitter: ParticleEmitter
     
     override init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .Particle) {
-        self.emitter = ParticleEmitter.fire(size: CGSize(width: 100, height: 100))
+        self.emitter = ParticleEmitter.fire(size: CGSize(width: 10, height: 10))
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
     }
     
@@ -35,10 +35,6 @@ class Fire: GameObject, ParticleEmitterEntity {
         renderEncoder.setVertexBytes(&size, length: float3.stride, index: 1)
         
         if emitter.currentParticles > 0 {
-//            renderEncoder.setRenderPipelineState(emitter.blending ? blendingPSO : renderPSO)
-//            print("emitter particle buffer size in bytes: \(emitter.particleBuffer!.length)")
-//            print("Particle.size: \(Particle.size)")
-//            print("Particle.stride: \(Particle.stride)")
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Particle])
             renderEncoder.setVertexBuffer(emitter.particleBuffer, offset: 0, index: 0)
             renderEncoder.setVertexBytes(&emitter.position, length: float3.stride, index: 2)
