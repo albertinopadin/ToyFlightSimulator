@@ -47,7 +47,7 @@ class FlightboxScene: GameScene {
         addChild(capsule)
         
         let fire = Fire(name: "Fire", meshType: .None)
-        fire.setPosition(8, 10, -10)
+        fire.setPosition(8, 5, -10)
         addChild(fire)
         
 //        let f16Sphere = Sphere()

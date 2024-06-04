@@ -77,7 +77,8 @@ class ParticleEmitter {
         descriptor.positionYRange = 0...10
         descriptor.direction = .pi / 2
         descriptor.directionRange = -0.3...0.3
-        descriptor.speed = 3
+//        descriptor.speed = 3
+        descriptor.speed = 0.2
         descriptor.pointSize = Float(size.width)
         descriptor.startScale = 0
         descriptor.startScaleRange = 0.5...1.0
@@ -85,6 +86,7 @@ class ParticleEmitter {
         descriptor.life = 180
         descriptor.lifeRange = -50...70
         descriptor.color = float4(1.0, 0.392, 0.1, 0.5)
+//        descriptor.color = BLUE_COLOR
         return Self.fire(descriptor: descriptor)
     }
     

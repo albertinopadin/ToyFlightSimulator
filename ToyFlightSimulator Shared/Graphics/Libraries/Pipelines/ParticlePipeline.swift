@@ -14,7 +14,7 @@ struct ParticleComputePipelineState: ComputePipelineState {
 }
 
 struct ParticleRenderPipelineState: RenderPipelineState {
-    static var enableBlending: Bool = false
+    static var enableBlending: Bool = true
     
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Particle Render") { descriptor in
@@ -30,6 +30,8 @@ struct ParticleRenderPipelineState: RenderPipelineState {
                 descriptor.colorAttachments[0].rgbBlendOperation = .add
                 descriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
                 descriptor.colorAttachments[0].destinationRGBBlendFactor = .one
+                
+//                Self.enableBlending(colorAttachmentDescriptor: descriptor.colorAttachments[0])
             }
         }
     }()

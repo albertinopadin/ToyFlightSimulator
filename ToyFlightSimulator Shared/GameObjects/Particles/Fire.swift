@@ -11,7 +11,7 @@ class Fire: GameObject, ParticleEmitterEntity {
     var emitter: ParticleEmitter
     
     override init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .Particle) {
-        self.emitter = ParticleEmitter.fire(size: CGSize(width: 10, height: 10))
+        self.emitter = ParticleEmitter.fire(size: CGSize(width: 80, height: 80))
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
     }
     
@@ -31,9 +31,6 @@ class Fire: GameObject, ParticleEmitterEntity {
     override func doRender(_ renderEncoder: any MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
                            submeshesToRender: [String : Bool]? = nil) {
-        var size: float3 = [Renderer.ScreenSize.x, Renderer.ScreenSize.y, 1]
-        renderEncoder.setVertexBytes(&size, length: float3.stride, index: 1)
-        
         if emitter.currentParticles > 0 {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Particle])
             renderEncoder.setVertexBuffer(emitter.particleBuffer, offset: 0, index: 0)
@@ -43,7 +40,11 @@ class Fire: GameObject, ParticleEmitterEntity {
                                          length: ModelConstants.stride,
                                          index: TFSBufferModelConstants.index)
             
-            renderEncoder.setFragmentTexture(emitter.particleTexture, index: TFSTextureIndexParticle.index)
+            if let emitterTexture = emitter.particleTexture {
+//                print("Setting emitter texture")
+                renderEncoder.setFragmentTexture(emitterTexture, index: TFSTextureIndexParticle.index)
+            }
+            
             renderEncoder.drawPrimitives(type: .point,
                                          vertexStart: 0,
                                          vertexCount: 1,

@@ -108,43 +108,6 @@ class TiledDeferredRenderer: Renderer {
         }
     }
     
-//    func encodeParticlePass(into commandBuffer: MTLCommandBuffer, using renderPassDescriptor: MTLRenderPassDescriptor) {
-//        encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
-//            computeEncoder.setComputePipelineState(particleComputePipelineState)
-//            let threadsPerGroup = MTLSize(width: particleComputePipelineState.threadExecutionWidth,
-//                                          height: 1,
-//                                          depth: 1)
-//            SceneManager.Compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
-//        }
-//        
-//        encodeRenderPass(into: commandBuffer, using: renderPassDescriptor, label: "Particle Render Pass") { renderEncoder in
-//            encodeRenderStage(using: renderEncoder, label: "Particle Render Stage") {
-//                SceneManager.SetSceneConstants(with: renderEncoder)
-//                SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Particle)
-//            }
-//        }
-//    }
-    
-//    func encodeParticlePass(into commandBuffer: MTLCommandBuffer, using renderPassDescriptor: MTLRenderPassDescriptor) {
-//        encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
-//            computeEncoder.setComputePipelineState(particleComputePipelineState)
-//            let threadsPerGroup = MTLSize(width: particleComputePipelineState.threadExecutionWidth,
-//                                          height: 1,
-//                                          depth: 1)
-//            SceneManager.Compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
-//        }
-//        
-//        encodeRenderPass(into: commandBuffer, using: renderPassDescriptor, label: "Particle Render Pass") { renderEncoder in
-//            encodeRenderStage(using: renderEncoder, label: "Particle Render Stage") {
-//                SceneManager.SetSceneConstants(with: renderEncoder)
-//                if let renderTargetTexture = renderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture {
-//                    renderEncoder.setFragmentTexture(renderTargetTexture, index: TFSTextureIndexBaseColor.index)
-//                }
-//                SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Particle)
-//            }
-//        }
-//    }
-    
     func encodeParticleComputePass(into commandBuffer: MTLCommandBuffer) {
         encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
             computeEncoder.setComputePipelineState(particleComputePipelineState)
@@ -224,12 +187,6 @@ class TiledDeferredRenderer: Renderer {
         encodeShadowPass(into: commandBuffer)
         commandBuffer.commit()
         
-        // --------- NOT SURE IF THIS WILL WORK -----------
-//        commandBuffer = beginDrawableCommands()
-//        encodeParticlePass(into: commandBuffer, using: view.currentRenderPassDescriptor!)
-//        commandBuffer.commit()
-        // ------------------------------------------------
-        
         commandBuffer = beginDrawableCommands()
         commandBuffer.label = "GBuffer & Lighting Commands"
         
@@ -242,26 +199,13 @@ class TiledDeferredRenderer: Renderer {
                              using: tiledDeferredRenderPassDescriptor,
                              label: "GBuffer & Lighting Pass") { renderEncoder in
                 SceneManager.SetSceneConstants(with: renderEncoder)
+//                encodeParticleRenderStage(using: renderEncoder)
                 encodeGBufferStage(using: renderEncoder)
+//                encodeParticleRenderStage(using: renderEncoder)
                 encodeLightingStage(using: renderEncoder)
                 encodeParticleRenderStage(using: renderEncoder)
             }
-            
-//            encodeParticlePass(into: commandBuffer, using: view.currentRenderPassDescriptor!)
-//            encodeParticlePass(into: commandBuffer, using: tiledDeferredRenderPassDescriptor)
-            
-//            if let currentRenderPassDescriptor = view.currentRenderPassDescriptor {
-//                currentRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture
-//                encodeParticlePass(into: commandBuffer, using: currentRenderPassDescriptor)
-//            }
         }
-        
-        // MAYBE...?
-//        commandBuffer.commit()
-//        
-//        commandBuffer = beginDrawableCommands()
-//        encodeParticlePass(into: commandBuffer, using: view.currentRenderPassDescriptor!)
-//        commandBuffer.commit()
         
         if let drawable = view.currentDrawable {
             commandBuffer.present(drawable)

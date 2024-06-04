@@ -37,7 +37,6 @@ kernel void compute_particle(device Particle *particles [[ buffer(0) ]],
 }
 
 vertex ParticleVertexOut vertex_particle(const device Particle *particles [[ buffer(0) ]],
-                                         constant float3 &size [[ buffer(1) ]],
                                          constant float3 &emitterPosition [[ buffer(2) ]],
                                          constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                          constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]],
@@ -54,12 +53,12 @@ vertex ParticleVertexOut vertex_particle(const device Particle *particles [[ buf
 }
 
 fragment float4 fragment_particle(ParticleVertexOut in [[ stage_in ]],
-                                  texture2d<float> particleTexture [[ texture(0) ]],
+                                  texture2d<float> particleTexture [[ texture(TFSTextureIndexParticle) ]],
                                   float2 point [[ point_coord ]]) {
     constexpr sampler defaultSampler;
     float4 color = particleTexture.sample(defaultSampler, point);
     
-    if (color.a < 0.1) {
+    if (color.a < 0.5) {
         discard_fragment();
     }
     
