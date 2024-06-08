@@ -62,7 +62,11 @@ fragment float4 fragment_particle(ParticleVertexOut in [[ stage_in ]],
         discard_fragment();
     }
     
-    color = float4(color.xyz, 0.5);
+//    color = float4(color.xyz, 0.5);
+//    color *= in.color;
+    
     color *= in.color;
+    color = float4(color.xyz * 0.9, 1);
+    
     return color;
 }

@@ -13,6 +13,8 @@ class FlightboxScene: GameScene {
     var quad = Quad()
     var capsule = CapsuleObject()
     
+    var pl2 = PointLightObject()
+    
     private func addGround() {
         var groundMaterial = ShaderMaterial()
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
@@ -46,9 +48,9 @@ class FlightboxScene: GameScene {
         capsule.rotateZ(Float(90).toRadians)
         addChild(capsule)
         
-        let fire = Fire(name: "Fire", meshType: .None)
-        fire.setPosition(8, 5, -10)
-        addChild(fire)
+//        let fire = Fire(name: "Fire", meshType: .None)
+//        fire.setPosition(1, 1, -10)
+//        addChild(fire)
         
 //        let f16Sphere = Sphere()
 //        var f16SphereMaterial = Material()
@@ -94,11 +96,12 @@ class FlightboxScene: GameScene {
         pl.setScale(2.0)
         addLight(pl)
         
-//        let pl2 = PointLightObject()
-//        pl2.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
-//        pl2.setLightColor(RED_COLOR.xyz)
-//        pl2.setLightBrightness(1.0)
-//        addLight(pl2)
+//        pl2.setPosition(-capsule.getPositionX(), capsule.getPositionY(), capsule.getPositionZ())
+        pl2.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
+        pl2.setLightColor(RED_COLOR.xyz)
+        pl2.setLightBrightness(1.0)
+        pl2.setScale(3.0)
+        addLight(pl2)
         
         let f16 = F16(shouldUpdate: false)
         f16.setPosition(0, container.getPositionY() + 10, container.getPositionZ() - 15)
@@ -235,7 +238,14 @@ class FlightboxScene: GameScene {
 //            paused.toggle()
 //        }
         
-        quad.rotateZ(Float(GameTime.DeltaTime))
+        let fdTime = Float(GameTime.DeltaTime)
+        
+        quad.rotateZ(fdTime)
+        
+        let ftTime = Float(GameTime.TotalGameTime)
+        pl2.moveX(cos(ftTime * 10))
+//        pl2.moveY(cos(ftTime))
+        pl2.moveZ(sin(ftTime * 10))
     }
 }
 

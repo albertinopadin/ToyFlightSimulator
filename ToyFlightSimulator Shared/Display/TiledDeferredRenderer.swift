@@ -108,23 +108,6 @@ class TiledDeferredRenderer: Renderer {
         }
     }
     
-    func encodeParticleComputePass(into commandBuffer: MTLCommandBuffer) {
-        encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
-            computeEncoder.setComputePipelineState(particleComputePipelineState)
-            let threadsPerGroup = MTLSize(width: particleComputePipelineState.threadExecutionWidth,
-                                          height: 1,
-                                          depth: 1)
-            SceneManager.Compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
-        }
-    }
-    
-    func encodeParticleRenderStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeRenderStage(using: renderEncoder, label: "Particle Render Stage") {
-            SceneManager.SetSceneConstants(with: renderEncoder)
-            SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Particle)
-        }
-    }
-    
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredGBuffer])
@@ -171,8 +154,26 @@ class TiledDeferredRenderer: Renderer {
                                                     indexType: submesh.indexType,
                                                     indexBuffer: submesh.indexBuffer,
                                                     indexBufferOffset: submesh.indexBufferOffset,
-                                                    instanceCount: 1)
+                                                    instanceCount: pointLights.count)
             }
+        }
+    }
+    
+    func encodeParticleComputePass(into commandBuffer: MTLCommandBuffer) {
+        encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
+            computeEncoder.setComputePipelineState(particleComputePipelineState)
+            let threadsPerGroup = MTLSize(width: particleComputePipelineState.threadExecutionWidth,
+                                          height: 1,
+                                          depth: 1)
+            SceneManager.Compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
+        }
+    }
+    
+    func encodeParticleRenderStage(using renderEncoder: MTLRenderCommandEncoder) {
+        encodeRenderStage(using: renderEncoder, label: "Particle Render Stage") {
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredLight])
+            SceneManager.SetSceneConstants(with: renderEncoder)
+            SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Particle)
         }
     }
     
