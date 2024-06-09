@@ -171,7 +171,7 @@ class TiledDeferredRenderer: Renderer {
     
     func encodeParticleRenderStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Particle Render Stage") {
-            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredLight])
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             SceneManager.SetSceneConstants(with: renderEncoder)
             SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Particle)
         }
