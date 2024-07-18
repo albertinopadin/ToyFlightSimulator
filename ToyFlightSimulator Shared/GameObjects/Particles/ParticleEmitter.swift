@@ -75,9 +75,9 @@ class ParticleEmitter {
         descriptor.position = position
         descriptor.positionXRange = 0...10
         descriptor.positionYRange = 0...10
+        descriptor.positionZRange = 0...10
         descriptor.direction = .pi / 2
         descriptor.directionRange = -0.3...0.3
-//        descriptor.speed = 3
         descriptor.speed = 0.2
         descriptor.pointSize = Float(size.width)
         descriptor.startScale = 0
@@ -86,8 +86,37 @@ class ParticleEmitter {
         descriptor.life = 180
         descriptor.lifeRange = -50...70
         descriptor.color = float4(1.0, 0.392, 0.1, 0.5)
-//        descriptor.color = BLUE_COLOR
         return Self.fire(descriptor: descriptor)
+    }
+    
+    static func afterburner(descriptor: ParticleDescriptor) -> ParticleEmitter {
+        return ParticleEmitter(descriptor,
+                               //texture: "afterburner",
+                               texture: "fire",
+                               particleCount: 1200,
+                               birthRate: 5,
+                               birthDelay: 0,
+                               blending: true)
+    }
+    
+    static func afterburner(size: CGSize, position: float3 = [0, 0, 0]) -> ParticleEmitter {
+        var descriptor = ParticleDescriptor()
+        descriptor.position = position
+        descriptor.positionXRange = 0...1
+        descriptor.positionYRange = 0...1
+        descriptor.positionZRange = 0...1
+        descriptor.direction = .pi / 2
+        descriptor.directionRange = -0.3...0.3
+        descriptor.speed = 1.0
+        descriptor.pointSize = Float(size.width)
+        descriptor.startScale = 0
+        descriptor.startScaleRange = 0.2...1.0
+        descriptor.endScaleRange = 0...0
+        descriptor.life = 100
+        descriptor.lifeRange = -50...70
+//        descriptor.color = float4(1.0, 0.392, 0.1, 0.5)
+        descriptor.color = BLUE_COLOR
+        return Self.afterburner(descriptor: descriptor)
     }
     
     func emit() {
