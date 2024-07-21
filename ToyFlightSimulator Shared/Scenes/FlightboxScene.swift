@@ -49,13 +49,13 @@ class FlightboxScene: GameScene {
         capsule.rotateZ(Float(90).toRadians)
         addChild(capsule)
         
-        let fire = Fire(name: "Fire")
-        fire.setPosition(8, 1, -10)
-        addChild(fire)
+//        let fire = Fire(name: "Fire")
+//        fire.setPosition(8, 1, -10)
+//        addChild(fire)
         
         // AFTERBURNER
-        afterburner.setPosition(-8, 1, -10)
-        addChild(afterburner)
+//        afterburner.setPosition(-8, 1, -10)
+//        addChild(afterburner)
         
 //        let f16Sphere = Sphere()
 //        var f16SphereMaterial = Material()

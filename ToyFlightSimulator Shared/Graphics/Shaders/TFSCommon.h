@@ -177,7 +177,8 @@ typedef struct {
 
 struct Particle {
     vector_float3 position;
-    float direction;
+//    float direction;
+    vector_float3 direction;
     float speed;
     vector_float4 color;
     float life;

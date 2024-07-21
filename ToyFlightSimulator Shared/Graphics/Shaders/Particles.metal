@@ -18,12 +18,16 @@ struct ParticleVertexOut {
 
 kernel void compute_particle(device Particle *particles [[ buffer(0) ]],
                              uint id [[ thread_position_in_grid ]]) {
-    float xVelocity = particles[id].speed * cos(particles[id].direction);
-    float yVelocity = particles[id].speed * sin(particles[id].direction);
+//    float xVelocity = particles[id].speed * cos(particles[id].direction.x);
+//    float yVelocity = particles[id].speed * sin(particles[id].direction.y);
+//    float zVelocity = particles[id].speed * sin(particles[id].direction.z);
+    float xVelocity = particles[id].speed * particles[id].direction.x;
+    float yVelocity = particles[id].speed * particles[id].direction.y;
+    float zVelocity = particles[id].speed * particles[id].direction.z;
     
     particles[id].position.x += xVelocity;
     particles[id].position.y += yVelocity;
-    particles[id].position.z += xVelocity;  // TODO
+    particles[id].position.z += zVelocity;
     particles[id].age += 1.0;
     
     float age = particles[id].age / particles[id].life;
@@ -61,9 +65,6 @@ fragment float4 fragment_particle(ParticleVertexOut in [[ stage_in ]],
     if (color.a < 0.5) {
         discard_fragment();
     }
-    
-//    color = float4(color.xyz, 0.5);
-//    color *= in.color;
     
     color *= in.color;
     color = float4(color.xyz * 0.9, 1);
