@@ -14,6 +14,7 @@ class FlightboxScene: GameScene {
     var capsule = CapsuleObject()
     
     var pl2 = PointLightObject()
+    let afterburner = Afterburner(name: "Afterburner")
     
     private func addGround() {
         var groundMaterial = ShaderMaterial()
@@ -52,7 +53,7 @@ class FlightboxScene: GameScene {
         fire.setPosition(8, 1, -10)
         addChild(fire)
         
-        let afterburner = Afterburner(name: "Afterburner")
+        // AFTERBURNER
         afterburner.setPosition(-8, 1, -10)
         addChild(afterburner)
         
@@ -250,6 +251,11 @@ class FlightboxScene: GameScene {
         pl2.moveX(cos(ftTime * 10))
 //        pl2.moveY(cos(ftTime))
         pl2.moveZ(sin(ftTime * 10))
+        
+//        afterburner.rotateZ(fdTime)
+        
+//        afterburner.moveX(cos(ftTime / 100))
+//        afterburner.moveZ(sin(fdTime * 10))
     }
 }
 

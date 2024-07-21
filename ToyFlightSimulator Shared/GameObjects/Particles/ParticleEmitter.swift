@@ -28,7 +28,17 @@ struct ParticleDescriptor {
 }
 
 class ParticleEmitter {
-    var position: float3 = [0, 0, 0]
+    static let FIRE_COLOR = float4(1.0, 0.392, 0.1, 0.5)
+    
+    private var _position: float3 = [0, 0, 0]
+    
+    var position: float3 {
+        get { _position }
+        set {
+            _position = newValue
+            self.particleDescriptor.position = _position
+        }
+    }
     var currentParticles: Int = 0
     var particleCount: Int = 0
     var birthRate: Int
@@ -47,6 +57,7 @@ class ParticleEmitter {
          birthDelay: Int,
          blending: Bool = false) {
         self.particleDescriptor = descriptor
+        self._position = particleDescriptor.position
         self.birthRate = birthRate
         self.birthDelay = birthDelay
         self.birthTimer = birthDelay
@@ -85,7 +96,7 @@ class ParticleEmitter {
         descriptor.endScaleRange = 0...0
         descriptor.life = 180
         descriptor.lifeRange = -50...70
-        descriptor.color = float4(1.0, 0.392, 0.1, 0.5)
+        descriptor.color = Self.FIRE_COLOR
         return Self.fire(descriptor: descriptor)
     }
     
@@ -106,7 +117,7 @@ class ParticleEmitter {
         descriptor.positionYRange = 0...1
         descriptor.positionZRange = 0...1
         descriptor.direction = .pi / 2
-        descriptor.directionRange = -0.3...0.3
+        descriptor.directionRange = -0.15...0.15
         descriptor.speed = 1.0
         descriptor.pointSize = Float(size.width)
         descriptor.startScale = 0
@@ -114,8 +125,7 @@ class ParticleEmitter {
         descriptor.endScaleRange = 0...0
         descriptor.life = 100
         descriptor.lifeRange = -50...70
-//        descriptor.color = float4(1.0, 0.392, 0.1, 0.5)
-        descriptor.color = BLUE_COLOR
+        descriptor.color = Self.FIRE_COLOR
         return Self.afterburner(descriptor: descriptor)
     }
     
