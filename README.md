@@ -4,6 +4,12 @@
 
 ## Devlog
 
+7/21/24 - First attempt at afterburner using particle effects.
+
+[Toy Flight Sim 7-21-24 Afterburner Particle Effect (YouTube demo)](https://www.youtube.com/watch?v=6hNesEF7Tbk)
+
+---
+
 1/3/24 - Lowered Texture memory usage by ~50% by using a cache.
 
 Before caching textures:
