@@ -54,31 +54,17 @@ class Renderer: NSObject, MTKViewDelegate {
     // Heavily inspired by:
     // https://developer.apple.com/documentation/metal/metal_sample_code_library/rendering_a_scene_with_deferred_lighting_in_swift
     
-    /// Perform operations necessary at the beginning of the frame.  Wait on the in flight semaphore,
-    /// and get a command buffer to encode intial commands for this frame.
-    func beginFrame() -> MTLCommandBuffer {
+    func runDrawableCommands(_ commandBlock: (MTLCommandBuffer) -> ()) {
         // Wait to ensure only maxFramesInFlight are getting processed by any stage in the Metal
-        //   pipeline (App, Metal, Drivers, GPU, etc)
-        inFlightSemaphore.wait()
+        // pipeline (App, Metal, Drivers, GPU, etc)
+        //inFlightSemaphore.wait()
+        _ = inFlightSemaphore.wait(timeout: .distantFuture)
         
-        // Create a new command buffer for each render pass to the current drawable
-        guard let commandBuffer = Engine.CommandQueue.makeCommandBuffer() else {
-            fatalError("Failed to create a command new command buffer.")
-        }
-        
-//        didBeginFrame()
-        
-        return commandBuffer
-    }
-    
-    /// Perform operations necessary to obtain a command buffer for rendering to the drawable.  By
-    /// endoding commands that are not dependant on the drawable in a separate command buffer, Metal
-    /// can begin executing encoded commands for the frame (commands from the previous command buffer)
-    /// before a drawable for this frame becomes avaliable.
-    func beginDrawableCommands() -> MTLCommandBuffer {
         guard let commandBuffer = Engine.CommandQueue.makeCommandBuffer() else {
             fatalError("Failed to make command buffer from command queue")
         }
+        
+        commandBlock(commandBuffer)
         
         // Add completion hander which signals inFlightSemaphore
         // when Metal and the GPU has fully finished processing the commands encoded for this frame.
@@ -87,21 +73,8 @@ class Renderer: NSObject, MTKViewDelegate {
             self?.inFlightSemaphore.signal()
         }
         
-        return commandBuffer
+        commandBuffer.commit()
     }
-    
-    /// Perform cleanup operations including presenting the drawable and committing the command buffer
-    /// for the current frame.  Also, when enabled, draw buffer examination elements before all this.
-//    func endFrame(_ commandBuffer: MTLCommandBuffer) {
-//        // Schedule a present once the framebuffer is complete using the current drawable
-//        
-//        if let drawable = getCurrentDrawable?() {
-//            commandBuffer.present(drawable)
-//        }
-//        
-//        // Finalize rendering here & push the command buffer to the GPU
-//        commandBuffer.commit()
-//    }
     
     func encodeComputePass(into commandBuffer: MTLCommandBuffer,
                            label: String,

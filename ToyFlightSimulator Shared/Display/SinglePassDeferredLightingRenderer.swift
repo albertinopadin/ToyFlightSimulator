@@ -201,37 +201,36 @@ class SinglePassDeferredLightingRenderer: Renderer {
     override func draw(in view: MTKView) {
         super.draw(in: view)
         
-        var commandBuffer = beginFrame()
-        commandBuffer.label = "Shadow Commands"
+        runDrawableCommands { commandBuffer in
+            commandBuffer.label = "Shadow Commands"
+            encodeShadowMapPass(into: commandBuffer)
+        }
         
-        encodeShadowMapPass(into: commandBuffer)
-        commandBuffer.commit()
-        
-        commandBuffer = beginDrawableCommands()
-        commandBuffer.label = "GBuffer & Lighting Commands"
-        
-        if let drawableTexture = view.currentDrawable?.texture {
-            _gBufferAndLightingRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
-            _gBufferAndLightingRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
-            _gBufferAndLightingRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
+        runDrawableCommands { commandBuffer in
+            commandBuffer.label = "GBuffer & Lighting Commands"
             
-            encodeRenderPass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
-                renderEncoder in
-                SceneManager.SetSceneConstants(with: renderEncoder)
+            if let drawableTexture = view.currentDrawable?.texture {
+                _gBufferAndLightingRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
+                _gBufferAndLightingRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
+                _gBufferAndLightingRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
                 
-                encodeGBufferStage(using: renderEncoder)
-                encodeDirectionalLightingStage(using: renderEncoder)
-                encodeLightMaskStage(using: renderEncoder)
-                encodePointLightStage(using: renderEncoder)
-                encodeIcosahedronStage(using: renderEncoder)
-                encodeSkyboxStage(using: renderEncoder)
+                encodeRenderPass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
+                    renderEncoder in
+                    SceneManager.SetSceneConstants(with: renderEncoder)
+                    
+                    encodeGBufferStage(using: renderEncoder)
+                    encodeDirectionalLightingStage(using: renderEncoder)
+                    encodeLightMaskStage(using: renderEncoder)
+                    encodePointLightStage(using: renderEncoder)
+                    encodeIcosahedronStage(using: renderEncoder)
+                    encodeSkyboxStage(using: renderEncoder)
+                }
+            }
+            
+            if let drawable = view.currentDrawable {
+                commandBuffer.present(drawable)
             }
         }
-        
-        if let drawable = view.currentDrawable {
-            commandBuffer.present(drawable)
-        }
-        commandBuffer.commit()
     }
     
     override func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {

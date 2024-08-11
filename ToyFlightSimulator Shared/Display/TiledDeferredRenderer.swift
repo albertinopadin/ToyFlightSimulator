@@ -177,42 +177,75 @@ class TiledDeferredRenderer: Renderer {
         }
     }
     
+//    override func draw(in view: MTKView) {
+//        // Updates scene:
+//        super.draw(in: view)
+//        
+////        let commandBuffer = beginDrawableCommands()
+//        var commandBuffer = beginFrame()
+//        commandBuffer.label = "Shadow Commands"
+//        
+//        encodeShadowPass(into: commandBuffer)
+//        commandBuffer.commit()
+//        
+//        commandBuffer = beginDrawableCommands()
+//        commandBuffer.label = "GBuffer & Lighting Commands"
+//        
+//        if let drawableTexture = view.currentDrawable?.texture {
+//            tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
+//            
+//            encodeParticleComputePass(into: commandBuffer)
+//            
+//            encodeRenderPass(into: commandBuffer,
+//                             using: tiledDeferredRenderPassDescriptor,
+//                             label: "GBuffer & Lighting Pass") { renderEncoder in
+//                SceneManager.SetSceneConstants(with: renderEncoder)
+////                encodeParticleRenderStage(using: renderEncoder)
+//                encodeGBufferStage(using: renderEncoder)
+////                encodeParticleRenderStage(using: renderEncoder)
+//                encodeLightingStage(using: renderEncoder)
+//                encodeParticleRenderStage(using: renderEncoder)
+//            }
+//        }
+//        
+//        if let drawable = view.currentDrawable {
+//            commandBuffer.present(drawable)
+//        }
+//        
+//        commandBuffer.commit()
+//    }
+    
     override func draw(in view: MTKView) {
         // Updates scene:
         super.draw(in: view)
         
-//        let commandBuffer = beginDrawableCommands()
-        var commandBuffer = beginFrame()
-        commandBuffer.label = "Shadow Commands"
+        runDrawableCommands { commandBuffer in
+            commandBuffer.label = "Shadow Commands"
+            encodeShadowPass(into: commandBuffer)
+        }
         
-        encodeShadowPass(into: commandBuffer)
-        commandBuffer.commit()
-        
-        commandBuffer = beginDrawableCommands()
-        commandBuffer.label = "GBuffer & Lighting Commands"
-        
-        if let drawableTexture = view.currentDrawable?.texture {
-            tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
+        runDrawableCommands { commandBuffer in
+            commandBuffer.label = "GBuffer & Lighting Commands"
             
-            encodeParticleComputePass(into: commandBuffer)
+            if let drawableTexture = view.currentDrawable?.texture {
+                tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
+                
+                encodeParticleComputePass(into: commandBuffer)
+                
+                encodeRenderPass(into: commandBuffer,
+                                 using: tiledDeferredRenderPassDescriptor,
+                                 label: "GBuffer & Lighting Pass") { renderEncoder in
+                    SceneManager.SetSceneConstants(with: renderEncoder)
+                    encodeGBufferStage(using: renderEncoder)
+                    encodeLightingStage(using: renderEncoder)
+                    encodeParticleRenderStage(using: renderEncoder)
+                }
+            }
             
-            encodeRenderPass(into: commandBuffer,
-                             using: tiledDeferredRenderPassDescriptor,
-                             label: "GBuffer & Lighting Pass") { renderEncoder in
-                SceneManager.SetSceneConstants(with: renderEncoder)
-//                encodeParticleRenderStage(using: renderEncoder)
-                encodeGBufferStage(using: renderEncoder)
-//                encodeParticleRenderStage(using: renderEncoder)
-                encodeLightingStage(using: renderEncoder)
-                encodeParticleRenderStage(using: renderEncoder)
+            if let drawable = view.currentDrawable {
+                commandBuffer.present(drawable)
             }
         }
-        
-        if let drawable = view.currentDrawable {
-            commandBuffer.present(drawable)
-        }
-        
-        commandBuffer.commit()
     }
     
     override func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {

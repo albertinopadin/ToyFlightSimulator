@@ -127,16 +127,15 @@ class OITRenderer: Renderer {
     override func draw(in view: MTKView) {
         super.draw(in: view)
         
-        let commandBuffer = Engine.CommandQueue.makeCommandBuffer()
-//        let commandBuffer = beginFrame()
-        commandBuffer?.label = "Order Independent Transparency Render Command Buffer"
-        
-        orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer!)
-        // Intermediate renders go here
-        finalRenderPass(view: view, commandBuffer: commandBuffer!)
-        
-        commandBuffer?.present(view.currentDrawable!)
-        commandBuffer?.commit()
+        runDrawableCommands { commandBuffer in
+            commandBuffer.label = "Order Independent Transparency Render Command Buffer"
+            
+            orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer)
+            // Intermediate renders go here
+            finalRenderPass(view: view, commandBuffer: commandBuffer)
+            
+            commandBuffer.present(view.currentDrawable!)
+        }
     }
     
     override func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
