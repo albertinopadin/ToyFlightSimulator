@@ -8,7 +8,18 @@
 import MetalKit
 
 class Afterburner: ParticleEmitterObject {
+    static let afterburnerEmitter = ParticleEmitter.afterburner(size: CGSize(width: 40, height: 40))
+                                                                
     init(name: String) {
-        super.init(name: name, emitter: ParticleEmitter.afterburner(size: CGSize(width: 40, height: 40)))
+        super.init(name: name, emitter: Self.afterburnerEmitter)
+    }
+    
+    func on() {
+        self.shouldEmit = true
+    }
+    
+    func off() {
+        self.shouldEmit = false
+        self.emitter.reset()
     }
 }

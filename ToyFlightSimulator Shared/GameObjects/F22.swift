@@ -22,12 +22,28 @@ class F22: Aircraft {
         rotateX(Float(90).toRadians)
         rotateZ(Float(90).toRadians)
         
+        afterburnerLeft.off()
         afterburnerLeft.rotate(deltaAngle: Float(-90).toRadians, axis: Y_AXIS)
         afterburnerLeft.setPosition(-23, -7, 1)
         addChild(afterburnerLeft)
         
+        afterburnerRight.off()
         afterburnerRight.rotate(deltaAngle: Float(-90).toRadians, axis: Y_AXIS)
         afterburnerRight.setPosition(-23, 7, 1)
         addChild(afterburnerRight)
+    }
+    
+    override func doUpdate() {
+        super.doUpdate()
+        
+        let fwdValue = InputManager.ContinuousCommand(.MoveFwd)
+        
+        if fwdValue > 0.8 {
+            afterburnerLeft.on()
+            afterburnerRight.on()
+        } else {
+            afterburnerLeft.off()
+            afterburnerRight.off()
+        }
     }
 }

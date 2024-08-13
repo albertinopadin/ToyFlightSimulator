@@ -133,6 +133,10 @@ class ParticleEmitter {
         return Self.afterburner(descriptor: descriptor)
     }
     
+    func reset() {
+        currentParticles = 0
+    }
+    
     func emit() {
         if currentParticles >= particleCount {
             return

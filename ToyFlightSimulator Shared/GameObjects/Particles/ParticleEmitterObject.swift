@@ -9,6 +9,8 @@ import MetalKit
 class ParticleEmitterObject: GameObject, ParticleEmitterEntity {
     let emitter: ParticleEmitter
     
+    var shouldEmit: Bool = true
+    
     init(name: String,
          emitter: ParticleEmitter,
          meshType: MeshType = .None,
@@ -19,11 +21,14 @@ class ParticleEmitterObject: GameObject, ParticleEmitterEntity {
     
     override func update() {
         super.update()
-        emitter.emit()
+        
+        if shouldEmit {
+            emitter.emit()
+        }
     }
     
     func computeUpdate(_ computeEncoder: any MTLComputeCommandEncoder, threadsPerGroup: MTLSize) {
-        if emitter.currentParticles > 0 {
+        if shouldEmit && emitter.currentParticles > 0 {
             let threadsPerGrid = MTLSize(width: emitter.particleCount, height: 1, depth: 1)
             computeEncoder.setBuffer(emitter.particleBuffer, offset: 0, index: 0)
             computeEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
@@ -33,7 +38,7 @@ class ParticleEmitterObject: GameObject, ParticleEmitterEntity {
     override func doRender(_ renderEncoder: any MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
                            submeshesToRender: [String : Bool]? = nil) {
-        if emitter.currentParticles > 0 {
+        if shouldEmit && emitter.currentParticles > 0 {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Particle])
             renderEncoder.setVertexBuffer(emitter.particleBuffer, offset: 0, index: 0)
             renderEncoder.setVertexBytes(&emitter.position, length: float3.stride, index: 2)

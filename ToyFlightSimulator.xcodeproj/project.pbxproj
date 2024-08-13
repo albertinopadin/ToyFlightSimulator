@@ -968,9 +968,9 @@
 			children = (
 				CE387B362BCBDDE700F51DC4 /* ParticleEmitter.swift */,
 				CE387B422BDE273B00F51DC4 /* ParticleEmitterEntity.swift */,
+				CE327B732C490D09004AF2D0 /* ParticleEmitterObject.swift */,
 				CE387B3D2BDA316900F51DC4 /* Fire.swift */,
 				CE327B6E2C47670D004AF2D0 /* Afterburner.swift */,
-				CE327B732C490D09004AF2D0 /* ParticleEmitterObject.swift */,
 			);
 			path = Particles;
 			sourceTree = "<group>";
