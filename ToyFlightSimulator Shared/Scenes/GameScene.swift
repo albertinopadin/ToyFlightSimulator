@@ -54,6 +54,22 @@ class GameScene: Node {
     }
     
     override func doUpdate() {
+        InputManager.handleMouseClickDebounced(command: .ClickSelect) {
+            for node in children {
+                if node.clickedOnNode(mousePosition: Mouse.GetMouseViewportPosition(),
+                                      viewMatrix: _cameraManager.currentCamera.viewMatrix,
+                                      projectionMatrix: _cameraManager.currentCamera.projectionMatrix) {
+                    print("[GameScene doUpdate] Node \(node.getName()) got focus!")
+                    node.hasFocus = true
+                } else {
+                    if node.hasFocus {
+                        print("[GameScene doUpdate] Node \(node.getName()) lost focus!")
+                        node.hasFocus = false
+                    }
+                }
+            }
+        }
+        
         InputManager.HasMultiInputCommand(command: .ResetScene) {
             print("Commanded to reset scene!")
             // TODO: tear down old scene first

@@ -11,6 +11,11 @@ enum MOUSE_BUTTON_CODES: Int {
     case CENTER = 2
 }
 
+enum MouseState: Int, CaseIterable {
+    case leftClick = 0
+    case rightClick = 1
+}
+
 class Mouse {
     private static var MOUSE_BUTTON_COUNT = 12
     private static var mouseButtonList = [Bool](repeating: false, count: MOUSE_BUTTON_COUNT)

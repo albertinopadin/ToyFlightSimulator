@@ -568,6 +568,10 @@
 		CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
+		CEAA40272C746EE100009894 /* ClickSelectable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAA40262C746EE100009894 /* ClickSelectable.swift */; };
+		CEAA40282C746F3800009894 /* ClickSelectable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAA40262C746EE100009894 /* ClickSelectable.swift */; };
+		CEAA40292C746F3800009894 /* ClickSelectable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAA40262C746EE100009894 /* ClickSelectable.swift */; };
+		CEAA402A2C746F3900009894 /* ClickSelectable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAA40262C746EE100009894 /* ClickSelectable.swift */; };
 		CEAB3838297CCB2F0087F7CB /* OITRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */; };
 		CEAB3839297CCB2F0087F7CB /* OITRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */; };
 		CEAB383A297CCB2F0087F7CB /* OITRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */; };
@@ -828,6 +832,7 @@
 		CE8A7A362B9818FA00C024EA /* BasicMeshes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicMeshes.swift; sourceTree = "<group>"; };
 		CE8A7A3B2B98190600C024EA /* ProgrammaticMeshes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgrammaticMeshes.swift; sourceTree = "<group>"; };
 		CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDLVertexDescriptorLibrary.swift; sourceTree = "<group>"; };
+		CEAA40262C746EE100009894 /* ClickSelectable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickSelectable.swift; sourceTree = "<group>"; };
 		CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OITRenderer.swift; sourceTree = "<group>"; };
 		CEAB383F297CDE770087F7CB /* Shadow.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shadow.metal; sourceTree = "<group>"; };
 		CEAB3849297FB3720087F7CB /* SinglePassDeferredGBufferTextures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePassDeferredGBufferTextures.swift; sourceTree = "<group>"; };
@@ -1012,6 +1017,7 @@
 				CE387B352BCBDDD100F51DC4 /* Particles */,
 				CE3BFF9928E452290014A752 /* Cameras */,
 				CE3BFF8128E2FD6F0014A752 /* Renderable.swift */,
+				CEAA40262C746EE100009894 /* ClickSelectable.swift */,
 				CE3BFF7D28E2FCF50014A752 /* Node.swift */,
 				CED3AA862B5D4DA300191002 /* ContainerNode.swift */,
 				CE3BFF8528E2FD9C0014A752 /* GameObject.swift */,
@@ -1817,6 +1823,7 @@
 				CE452FDF2A7CB499001945B9 /* LightManager.swift in Sources */,
 				CE452FDC2A7CB48E001945B9 /* SingleSMMeshLibrary.swift in Sources */,
 				CE387B342BCBA5B300F51DC4 /* Particles.metal in Sources */,
+				CEAA402A2C746F3900009894 /* ClickSelectable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1951,6 +1958,7 @@
 				CE886A472985007A0013062D /* DirectionalLight.metal in Sources */,
 				CE8A7A372B9818FA00C024EA /* BasicMeshes.swift in Sources */,
 				CE79B6262B92E47E009F2E49 /* Texture.swift in Sources */,
+				CEAA40272C746EE100009894 /* ClickSelectable.swift in Sources */,
 				CEFC6F22296B4200009B692B /* Sphere.swift in Sources */,
 				CEC0C59E2B53BEDF00863C38 /* UsdMesh.swift in Sources */,
 				CE2ED262299394E500C81F47 /* ModelIO+Extensions.swift in Sources */,
@@ -1964,6 +1972,7 @@
 				CEAB38562981081E0087F7CB /* ShaderDefinitions.h in Sources */,
 				CEAB38572981081E0087F7CB /* Lighting.metal in Sources */,
 				CE79B5F72B8F15BE009F2E49 /* BasicPipeline.swift in Sources */,
+				CEAA40282C746F3800009894 /* ClickSelectable.swift in Sources */,
 				CEAB38582981081E0087F7CB /* Base.metal in Sources */,
 				CEAB38592981081E0087F7CB /* Instanced.metal in Sources */,
 				CE327B752C490D09004AF2D0 /* ParticleEmitterObject.swift in Sources */,
@@ -2150,6 +2159,7 @@
 				CE3BFF7028E1B4D70014A752 /* MeshLibrary.swift in Sources */,
 				CE3BFF5228E1B2230014A752 /* Library.swift in Sources */,
 				CE3BFF3B28E0599F0014A752 /* Engine.swift in Sources */,
+				CEAA40292C746F3800009894 /* ClickSelectable.swift in Sources */,
 				CE3DD2EB29F37FE500787E53 /* Missile.swift in Sources */,
 				CE3BFF4428E1AF490014A752 /* Preferences.swift in Sources */,
 				CED3AA7C2B5D008200191002 /* F22.swift in Sources */,

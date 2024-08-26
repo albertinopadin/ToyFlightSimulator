@@ -17,6 +17,7 @@ enum DiscreteCommand {
     case ToggleGear
     
     case Pause
+    case ClickSelect
 }
 
 enum ContinuousCommand {
@@ -67,7 +68,7 @@ class InputManager {
     // TODO: These three computed properties follow the same initialization pattern.
     //       Wonder if there is a generic way to do this...
     static var keysPressed: [Keycodes: Bool] = {
-        var kp: [Keycodes: Bool] = [Keycodes: Bool]()
+        var kp = [Keycodes: Bool]()
         for kc in Keycodes.allCases {
             kp[kc] = false
         }
@@ -75,22 +76,35 @@ class InputManager {
     }()
     
     static var controllerDiscreteState: [ControllerState: Bool] = {
-        var cds: [ControllerState: Bool] = [ControllerState: Bool]()
+        var cds = [ControllerState: Bool]()
         for cs in ControllerState.allCases {
             cds[cs] = false
         }
         return cds
     }()
     
+    // Perhaps instead of 'Discrete States' should name this 'Key Pressed' ???
+    static var mouseDiscreteState: [MouseState: Bool] = {
+        var mds = [MouseState: Bool]()
+        for mouseState in MouseState.allCases {
+            mds[mouseState] = false
+        }
+        return mds
+    }()
+    
     #if os(macOS)
     static var joystickDiscreteState: [JoystickDiscreteState: Bool] = {
-        var jbp: [JoystickDiscreteState: Bool] = [JoystickDiscreteState: Bool]()
+        var jbp = [JoystickDiscreteState: Bool]()
         for jb in JoystickDiscreteState.allCases {
             jbp[jb] = false
         }
         return jbp
     }()
     #endif
+    
+    static var mouseMappingsDiscrete: [DiscreteCommand: MouseState] = [
+        .ClickSelect: .leftClick
+    ]
     
     static var keyboardMappingsContinuous: [ContinuousCommand: [KeycodeValue]] = [
         .MoveFwd: [KeycodeValue(keyCode: .w, value: 1.0), KeycodeValue(keyCode: .s, value: -1.0)],
@@ -168,6 +182,22 @@ class InputManager {
     ]
     #endif
     
+    static func handleMouseClickDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
+        guard let mouseState = mouseMappingsDiscrete[command] else { return }
+        guard let mouseCommandState = mouseDiscreteState[mouseState] else { return }
+        let mouseButtonClicked = Mouse.IsMouseButtonPressed(button: MOUSE_BUTTON_CODES(rawValue: mouseState.rawValue)!)
+        if mouseButtonClicked {
+            if !mouseCommandState {
+                mouseDiscreteState[mouseState] = true
+                handleBlock()
+            }
+        } else {
+            if mouseCommandState {
+                mouseDiscreteState[mouseState] = false
+            }
+        }
+    }
+    
     static func handleKeyPressedDebounced(keyCode: Keycodes, _ handleBlock: () -> Void) {
         guard let _ = keysPressed[keyCode] else {
             print("[InputManager handleKeyPressedDebounced] WARNING: Unknown Key Code: \(keyCode)")
@@ -233,7 +263,6 @@ class InputManager {
         hasCommand = hasCommand || Keyboard.IsKeyPressed(key)
         
         if controller.present {
-//            guard let controllerState = controllerMappingsDiscrete[command] else { return false }
             guard let controllerState = controllerMappingsDiscrete[command] else { return hasCommand }
             let controllerValue = controller.getState(controllerState)
             hasCommand = hasCommand || controllerValue > .zero

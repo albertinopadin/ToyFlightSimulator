@@ -13,6 +13,10 @@ class F22: Aircraft {
     let afterburnerLeft = Afterburner(name: "F-22 Left Afterburner")
     let afterburnerRight = Afterburner(name: "F-22 Right Afterburner")
     
+    override var cameraOffset: float3 {
+        [0, 10, 25]
+    }
+    
     init(scale: Float = 1.0, shouldUpdate: Bool = true) {
         super.init(name: Self.NAME,
                    meshType: .Sketchfab_F22,
@@ -36,14 +40,16 @@ class F22: Aircraft {
     override func doUpdate() {
         super.doUpdate()
         
-        let fwdValue = InputManager.ContinuousCommand(.MoveFwd)
-        
-        if fwdValue > 0.8 {
-            afterburnerLeft.on()
-            afterburnerRight.on()
-        } else {
-            afterburnerLeft.off()
-            afterburnerRight.off()
+        if hasFocus {
+            let fwdValue = InputManager.ContinuousCommand(.MoveFwd)
+            
+            if fwdValue > 0.8 {
+                afterburnerLeft.on()
+                afterburnerRight.on()
+            } else {
+                afterburnerLeft.off()
+                afterburnerRight.off()
+            }
         }
     }
 }

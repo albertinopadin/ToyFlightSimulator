@@ -7,7 +7,9 @@
 
 import MetalKit
 
-class Node {
+class Node: ClickSelectable {
+    var hasFocus: Bool = false
+    
     private var _name: String = "Node"
     private var _id: String!
     
@@ -78,6 +80,40 @@ class Node {
             child.parentModelMatrix = self.modelMatrix
             child.update()
         }
+        
+        // TODO: A more efficient approach might be to get the click location in the scene and
+        //       then figure out what object has focus, instead of every node checking itself
+        // WEIRD: This only fires for the Attached Camera node...
+//        InputManager.handleMouseClickDebounced(command: .ClickSelect) {
+//            print("[Node update] Node name: \(getName()), position: \(getPosition())")
+//            if clickedOnNode() {
+//                let childHasFocus = children.reduce(false) { $0 || $1.hasFocus }
+//                if !childHasFocus {
+//                    hasFocus = true
+//                }
+//            }
+//        }
+    }
+    
+    func clickedOnNode(mousePosition: float2, viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Bool {
+        // TODO: Need to get node position in screen space, I think...
+        let worldPosition = modelMatrix.columns.3
+        let clipSpacePosition = projectionMatrix * viewMatrix * worldPosition
+        let normalizedDeviceCoordPosition = clipSpacePosition / clipSpacePosition.w
+        
+        let posX = normalizedDeviceCoordPosition.x
+        let posY = normalizedDeviceCoordPosition.y
+        
+        let minBoundX = posX - 0.1
+        let maxBoundX = posX + 0.1
+        let minBoundY = posY - 0.1
+        let maxBoundY = posY + 0.1
+        
+//        print("[Node clickedOnNode] Node name: \(getName()), NDC position: \(normalizedDeviceCoordPosition)")
+//        print("[Node clickedOnNode] mouse X: \(mousePosition.x), mouse Y: \(mousePosition.y)")
+        
+        return mousePosition.x >= minBoundX && mousePosition.x <= maxBoundX &&
+               mousePosition.y >= minBoundY && mousePosition.y <= maxBoundY
     }
     
     func shouldRender(with renderPipelineStateType: RenderPipelineStateType) -> Bool {
@@ -92,25 +128,7 @@ class Node {
     func render(with renderEncoder: MTLRenderCommandEncoder,
                 renderPipelineStateType: RenderPipelineStateType,
                 applyMaterials: Bool = true) {
-//        if renderPipelineStateType == .LightMask {
-////            print("[Node render] got rps for point light")
-//            print("[Node render] got rps for mask light")
-//            print("[Node render] self rps: \(_renderPipelineStateType)")
-//        }
-        
-//        if self is Icosahedron && renderPipelineStateType == .Icosahedron {
-//            print("[Node render] In icosahedron render")
-//            print("Given RPS: \(renderPipelineStateType)")
-//            print("Internal RPS: \(_renderPipelineStateType)")
-//        }
-        
         if shouldRender(with: renderPipelineStateType), let renderable = self as? Renderable {
-//            if renderPipelineStateType == .LightMask {
-//                print("[Node render] calling doRender for light mask")
-//            }
-//            if self is Icosahedron {
-//                print("[Node render] rendering icosahedron, given rps: \(renderPipelineStateType)")
-//            }
             renderable.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: nil)
         }
         

@@ -29,12 +29,13 @@ class Aircraft: GameObject {
         super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
         self.setScale(scale)
         print("[Aircraft init] name: \(name), scale: \(scale)")
+        self.hasFocus = true
     }
     
     override func doUpdate() {
         super.doUpdate()
         
-        if shouldUpdate {
+        if shouldUpdate && hasFocus {
             let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
             let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
             

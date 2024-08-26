@@ -53,10 +53,6 @@ class FlightboxScene: GameScene {
 //        fire.setPosition(8, 1, -10)
 //        addChild(fire)
         
-        // AFTERBURNER
-//        afterburner.setPosition(-8, 1, -10)
-//        addChild(afterburner)
-        
 //        let f16Sphere = Sphere()
 //        var f16SphereMaterial = Material()
 //        f16SphereMaterial.color = GRABBER_BLUE_COLOR
@@ -249,13 +245,12 @@ class FlightboxScene: GameScene {
         
         let ftTime = Float(GameTime.TotalGameTime)
         pl2.moveX(cos(ftTime * 10))
-//        pl2.moveY(cos(ftTime))
         pl2.moveZ(sin(ftTime * 10))
         
-//        afterburner.rotateZ(fdTime)
-        
-//        afterburner.moveX(cos(ftTime / 100))
-//        afterburner.moveZ(sin(fdTime * 10))
+//        InputManager.handleMouseClickDebounced(command: .ClickSelect) {
+//            print("Mouse position in window: \(Mouse.GetMouseWindowPosition())")
+//            print("Mouse position in viewport: \(Mouse.GetMouseViewportPosition())")
+//        }
     }
 }
 
