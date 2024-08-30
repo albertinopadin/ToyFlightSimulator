@@ -32,6 +32,8 @@ class GameViewController: NSHostingController<MacGameUIView> {
         print("GameViewController viewDidLoad")
         super.viewDidLoad()
 
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: Keyboard.KeyDown(with:))
+        NSEvent.addLocalMonitorForEvents(matching: .keyUp, handler: Keyboard.KeyUp(with:))
         NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: Keyboard.SetCommandKeyPressed(event:))
     }
 }

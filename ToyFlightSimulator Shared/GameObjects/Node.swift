@@ -58,7 +58,13 @@ class Node: ClickSelectable {
     }
     
     func removeChild(_ child: Node) {
+        child.parent = nil
         children.removeAll(where: { $0.getID() == child.getID() })
+    }
+    
+    func removeAllChildren() {
+        children.forEach { $0.parent = nil }
+        children.removeAll()
     }
     
     func updateModelMatrix() {
@@ -95,11 +101,15 @@ class Node: ClickSelectable {
 //        }
     }
     
-    func clickedOnNode(mousePosition: float2, viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Bool {
-        // TODO: Need to get node position in screen space, I think...
+    func getNormalizedDeviceCoordinatePosition(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> float4 {
         let worldPosition = modelMatrix.columns.3
         let clipSpacePosition = projectionMatrix * viewMatrix * worldPosition
-        let normalizedDeviceCoordPosition = clipSpacePosition / clipSpacePosition.w
+        return clipSpacePosition / clipSpacePosition.w
+    }
+    
+    func clickedOnNode(mousePosition: float2, viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Bool {
+        let normalizedDeviceCoordPosition = getNormalizedDeviceCoordinatePosition(viewMatrix: viewMatrix,
+                                                                                  projectionMatrix: projectionMatrix)
         
         let posX = normalizedDeviceCoordPosition.x
         let posY = normalizedDeviceCoordPosition.y

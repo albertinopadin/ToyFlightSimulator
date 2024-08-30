@@ -23,6 +23,16 @@ class Keyboard {
         keys[Int(keyCode)] = pressed
     }
     
+    public static func KeyDown(with event: NSEvent) -> Event {
+        SetKeyPressed(event.keyCode, pressed: true)
+        return event
+    }
+    
+    public static func KeyUp(with event: NSEvent) -> Event {
+        SetKeyPressed(event.keyCode, pressed: false)
+        return event
+    }
+    
     public static func SetCommandKeyPressed(event: Event) -> Event {
 //        print("[SetCommandKeyPressed] event modifier flags: \(event.modifierFlags)")
         if event.modifierFlags.contains(.command) {

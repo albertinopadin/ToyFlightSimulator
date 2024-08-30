@@ -33,6 +33,10 @@ class GameScene: Node {
     
     func buildScene() { }
     
+    func teardownScene() {
+        removeAllChildren()
+    }
+    
     func addCamera(_ camera: Camera, _ isCurrentCamera: Bool = true) {
         _cameraManager.registerCamera(camera: camera)
         if (isCurrentCamera) {
@@ -72,8 +76,8 @@ class GameScene: Node {
         
         InputManager.HasMultiInputCommand(command: .ResetScene) {
             print("Commanded to reset scene!")
-            // TODO: tear down old scene first
-//            buildScene()
+            teardownScene()
+            buildScene()
         }
     }
     
