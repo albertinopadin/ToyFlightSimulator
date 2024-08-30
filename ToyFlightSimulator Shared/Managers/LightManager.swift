@@ -17,6 +17,10 @@ struct LightManager {
     public static func getLightObjects(lightType: LightType) -> [LightObject] {
         return Self._lightObjects.filter { $0.lightType == lightType }
     }
+    
+    public static func removeAllLights() {
+        Self._lightObjects.removeAll()
+    }
 
     public static func getDirectionalLightData(viewMatrix: float4x4) -> [LightData] {
         let lightObjs = Self.getLightObjects(lightType: Directional)
@@ -43,10 +47,6 @@ struct LightManager {
     
     public static func setPointLightData(_ renderEncoder: MTLRenderCommandEncoder) {
         var pointLightData = Self.getPointLightData()
-//        var lightCount = lightData.count
-//        renderCommandEncoder.setFragmentBytes(&lightCount,
-//                                              length: Int32.size,
-//                                              index: Int(TFSBufferPointLightsData.rawValue))
         
         renderEncoder.setVertexBytes(&pointLightData,
                                      length: LightData.stride(pointLightData.count),

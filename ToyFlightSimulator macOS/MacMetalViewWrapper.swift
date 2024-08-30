@@ -50,7 +50,7 @@ struct MacMetalViewWrapper: NSViewRepresentable {
         gameView.drawableSize = viewSize
         
         context.coordinator.metalView = gameView
-        SceneManager.SetScene(Preferences.StartingSceneType, rendererType: context.coordinator.rendererType)
+        SceneManager.SetScene(Preferences.StartingSceneType, mtkView: gameView, rendererType: context.coordinator.rendererType)
         
         return gameView
     }

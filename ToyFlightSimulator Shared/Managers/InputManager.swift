@@ -383,9 +383,6 @@ class InputManager {
         
         let allKeysPressed: Bool = keyboardCommands.reduce(into: true) { resultBool, keyCode in
             resultBool = resultBool && Keyboard.IsKeyPressed(keyCode)
-            if Keyboard.IsKeyPressed(keyCode) {
-                print("[HasMultiInputCommand] \(keyCode) is pressed")
-            }
         }
         
 //        print("[HasMultiInputCommand] All keys (\(keyboardCommandws)) pressed: \(allKeysPressed)")

@@ -21,19 +21,37 @@ class GameScene: Node {
         print("[Scene init] Initilizing scene named: \(name)")
         super.init(name: name)
         self._rendererType = .SinglePassDeferredLighting  // Set default
-        buildScene()
+        initScene()
     }
     
     init(name: String, rendererType: RendererType) {
         print("[Scene init] Initilizing scene named: \(name)")
         super.init(name: name)
         self._rendererType = rendererType
-        buildScene()
+        initScene()
     }
     
+    func initScene() {
+        preBuildScene()
+        buildScene()
+        postBuildScene()
+    }
+    
+    func preBuildScene() {
+        SceneManager.paused = true
+    }
+    
+    // To be overriden by subclasses:
     func buildScene() { }
     
+    func postBuildScene() {
+        SceneManager.paused = false
+    }
+    
     func teardownScene() {
+        SceneManager.paused = true
+        LightManager.removeAllLights()
+        _cameraManager.removeAllCameras()
         removeAllChildren()
     }
     
@@ -57,6 +75,7 @@ class GameScene: Node {
         _cameraManager.setAspectRatio(aspectRatio)
     }
     
+    // TODO: Refactor to maybe get rid of this doUpdate method...
     override func doUpdate() {
         InputManager.handleMouseClickDebounced(command: .ClickSelect) {
             for node in children {
@@ -75,9 +94,8 @@ class GameScene: Node {
         }
         
         InputManager.HasMultiInputCommand(command: .ResetScene) {
-            print("Commanded to reset scene!")
             teardownScene()
-            buildScene()
+            initScene()
         }
     }
     

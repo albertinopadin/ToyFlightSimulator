@@ -15,13 +15,26 @@ enum SceneType {
 
 class SceneManager {
     public static var currentScene: GameScene?
-    public static var paused: Bool = false
+    
+    private static var _paused: Bool = false
+    public static var paused: Bool {
+        get {
+            return _paused
+        }
+        
+        set {
+            _paused = newValue
+            _view?.isPaused = newValue
+        }
+    }
     
     private static var _sceneType: SceneType?
+    private static var _view: MTKView?
     private static var _rendererType: RendererType?
     
-    public static func SetScene(_ sceneType: SceneType, rendererType: RendererType) {
+    public static func SetScene(_ sceneType: SceneType, mtkView: MTKView, rendererType: RendererType) {
         _sceneType = sceneType
+        _view = mtkView
         _rendererType = rendererType
         
         switch sceneType {
@@ -35,8 +48,8 @@ class SceneManager {
     }
     
     public static func ResetScene() {
-        if let _sceneType, let _rendererType {
-            SetScene(_sceneType, rendererType: _rendererType)
+        if let _sceneType, let _view, let _rendererType {
+            SetScene(_sceneType, mtkView: _view, rendererType: _rendererType)
         }
     }
     
