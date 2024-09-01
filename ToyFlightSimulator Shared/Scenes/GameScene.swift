@@ -9,7 +9,6 @@ import MetalKit
 
 // Scene is head node of scene graph
 class GameScene: Node {
-    private var _cameraManager = CameraManager()
     private var _sceneConstants = SceneConstants()
     
     private var _cmdPressed: Bool = false
@@ -38,50 +37,50 @@ class GameScene: Node {
     }
     
     func preBuildScene() {
-        SceneManager.paused = true
+        SceneManager.Paused = true
     }
     
     // To be overriden by subclasses:
     func buildScene() { }
     
     func postBuildScene() {
-        SceneManager.paused = false
+        SceneManager.Paused = false
     }
     
     func teardownScene() {
-        SceneManager.paused = true
-        LightManager.removeAllLights()
-        _cameraManager.removeAllCameras()
+        SceneManager.Paused = true
+        LightManager.RemoveAllLights()
+        CameraManager.RemoveAllCameras()
         removeAllChildren()
     }
     
     func addCamera(_ camera: Camera, _ isCurrentCamera: Bool = true) {
-        _cameraManager.registerCamera(camera: camera)
+        CameraManager.RegisterCamera(camera: camera)
         if (isCurrentCamera) {
-            _cameraManager.setCamera(camera.cameraType)
+            CameraManager.SetCamera(camera.cameraType)
         }
     }
     
     func addLight(_ lightObject: LightObject) {
         self.addChild(lightObject)
-        LightManager.addLightObject(lightObject)
+        LightManager.AddLightObject(lightObject)
     }
     
     func updateCameras(deltaTime: Double) {
-        _cameraManager.update(deltaTime: deltaTime)
+        CameraManager.Update(deltaTime: deltaTime)
     }
     
     func setAspectRatio(_ aspectRatio: Float) {
-        _cameraManager.setAspectRatio(aspectRatio)
+        CameraManager.SetAspectRatio(aspectRatio)
     }
     
     // TODO: Refactor to maybe get rid of this doUpdate method...
     override func doUpdate() {
-        InputManager.handleMouseClickDebounced(command: .ClickSelect) {
+        InputManager.HandleMouseClickDebounced(command: .ClickSelect) {
             for node in children {
                 if node.clickedOnNode(mousePosition: Mouse.GetMouseViewportPosition(),
-                                      viewMatrix: _cameraManager.currentCamera.viewMatrix,
-                                      projectionMatrix: _cameraManager.currentCamera.projectionMatrix) {
+                                      viewMatrix: CameraManager.CurrentCamera.viewMatrix,
+                                      projectionMatrix: CameraManager.CurrentCamera.projectionMatrix) {
                     print("[GameScene doUpdate] Node \(node.getName()) got focus!")
                     node.hasFocus = true
                 } else {
@@ -101,15 +100,15 @@ class GameScene: Node {
     
     override func update() {
         super.update()
-        _sceneConstants.viewMatrix = _cameraManager.currentCamera.viewMatrix
+        _sceneConstants.viewMatrix = CameraManager.CurrentCamera.viewMatrix
         _sceneConstants.skyViewMatrix = _sceneConstants.viewMatrix
         _sceneConstants.skyViewMatrix[3][0] = 0  // Remove x translation
         _sceneConstants.skyViewMatrix[3][1] = 0  // Remove y translation
         _sceneConstants.skyViewMatrix[3][2] = 0  // Remove z translation
-        _sceneConstants.projectionMatrix = _cameraManager.currentCamera.projectionMatrix
-        _sceneConstants.projectionMatrixInverse = _cameraManager.currentCamera.projectionMatrix.inverse
+        _sceneConstants.projectionMatrix = CameraManager.CurrentCamera.projectionMatrix
+        _sceneConstants.projectionMatrixInverse = CameraManager.CurrentCamera.projectionMatrix.inverse
         _sceneConstants.totalGameTime = Float(GameTime.TotalGameTime)
-        _sceneConstants.cameraPosition = _cameraManager.currentCamera.modelMatrix.columns.3.xyz
+        _sceneConstants.cameraPosition = CameraManager.CurrentCamera.modelMatrix.columns.3.xyz
     }
     
     func setSceneConstants(with renderEncoder: MTLRenderCommandEncoder) {
@@ -119,7 +118,7 @@ class GameScene: Node {
     }
     
     func setDirectionalLightConstants(with renderEncoder: MTLRenderCommandEncoder) {
-        var directionalLight = LightManager.getDirectionalLightData(viewMatrix: _sceneConstants.skyViewMatrix).first!
+        var directionalLight = LightManager.GetDirectionalLightData(viewMatrix: _sceneConstants.skyViewMatrix).first!
         renderEncoder.setVertexBytes(&directionalLight,
                                      length: LightData.stride,
                                      index: TFSBufferDirectionalLightData.index)
@@ -129,7 +128,7 @@ class GameScene: Node {
     }
     
     func setPointLightConstants(with renderEncoder: MTLRenderCommandEncoder) {
-        var pointLights = LightManager.getPointLightData()
+        var pointLights = LightManager.GetPointLightData()
         // Avoid allocating memory in game loop
         // (if you use more than 4KB of data, allocate the buffer on init, instead of creating a new one every frame):
 //        let buf = Engine.Device.makeBuffer(bytes: &pointLights, length: LightData.stride(pointLights.count))
@@ -144,26 +143,23 @@ class GameScene: Node {
     
     // TODO: This method could possibly be merged/unified with setDirectionalLightConstants
     func setDirectionalLightData(with renderEncoder: MTLRenderCommandEncoder) {
-//        _lightManager.setDirectionalLightData(renderCommandEncoder,
-//                                              cameraPosition: _cameraManager.currentCamera.getPosition())
-        
-        LightManager.setDirectionalLightData(renderEncoder,
-                                             cameraPosition: _cameraManager.currentCamera.modelMatrix.columns.3.xyz,
-                                             viewMatrix: _cameraManager.currentCamera.viewMatrix)
+        LightManager.SetDirectionalLightData(renderEncoder,
+                                             cameraPosition: CameraManager.CurrentCamera.modelMatrix.columns.3.xyz,
+                                             viewMatrix: CameraManager.CurrentCamera.viewMatrix)
     }
     
     func setPointLightData(with renderEncoder: MTLRenderCommandEncoder) {
-        LightManager.setPointLightData(renderEncoder)
+        LightManager.SetPointLightData(renderEncoder)
     }
     
     func renderPointLightMeshes(with renderEncoder: MTLRenderCommandEncoder) {
-        for pointLight in LightManager.getLightObjects(lightType: Point) {
+        for pointLight in LightManager.GetLightObjects(lightType: Point) {
             pointLight.render(with: renderEncoder, renderPipelineStateType: .LightMask)
         }
     }
     
     func renderPointLights(with renderEncoder: MTLRenderCommandEncoder) {
-        for pointLight in LightManager.getLightObjects(lightType: Point) {
+        for pointLight in LightManager.GetLightObjects(lightType: Point) {
             pointLight.render(with: renderEncoder, renderPipelineStateType: .SinglePassDeferredPointLight)
         }
     }

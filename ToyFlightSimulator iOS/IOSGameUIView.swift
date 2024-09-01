@@ -141,7 +141,7 @@ struct IOSGameUIView: View {
             InputManager.ZeroMotionDevice()
             
             Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { _ in
-                InputManager.handleKeyPressedDebounced(keyCode: .escape) {
+                InputManager.HandleKeyPressedDebounced(keyCode: .escape) {
                     toggleMenu()
                 }
             }
@@ -167,14 +167,14 @@ struct IOSGameUIView: View {
     
     // TODO: Figure out how to combine toggleMenu and showMenu into single function:
     func toggleMenu() {
-        SceneManager.paused.toggle()
+        SceneManager.Paused.toggle()
         withAnimation {
             shouldDisplayMenu.toggle()
         }
     }
     
     func showMenu(_ shouldDisplay: Bool) {
-        SceneManager.paused = shouldDisplay
+        SceneManager.Paused = shouldDisplay
         withAnimation {
             shouldDisplayMenu = shouldDisplay
         }

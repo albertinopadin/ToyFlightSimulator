@@ -5,6 +5,6 @@
 //  Created by Albertino Padin on 2/5/24.
 //
 
-class GameStatsManager {
+final class GameStatsManager {
     
 }

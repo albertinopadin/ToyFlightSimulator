@@ -38,18 +38,18 @@ struct KeycodeValue {
     let value: Float
 }
 
-class InputManager {
-    static var controller: Controller!
-    static var pitchAxisFlipped: Bool = true
+final class InputManager {
+    private static var controller: Controller!
+    private static var pitchAxisFlipped: Bool = true
     
     #if os(macOS)
-    static var joystick: Joystick!
-    static var throttle: Throttle!
+    private static var joystick: Joystick!
+    private static var throttle: Throttle!
     #endif
     
     #if os(iOS)
-    static var motion: MotionDevice!
-    static var useMotion: Bool = true
+    private static var motion: MotionDevice!
+    public static var useMotion: Bool = true
     #endif
     
     public static func Initialize() {
@@ -67,7 +67,7 @@ class InputManager {
     
     // TODO: These three computed properties follow the same initialization pattern.
     //       Wonder if there is a generic way to do this...
-    static var keysPressed: [Keycodes: Bool] = {
+    private static var keysPressed: [Keycodes: Bool] = {
         var kp = [Keycodes: Bool]()
         for kc in Keycodes.allCases {
             kp[kc] = false
@@ -75,7 +75,7 @@ class InputManager {
         return kp
     }()
     
-    static var controllerDiscreteState: [ControllerState: Bool] = {
+    private static var controllerDiscreteState: [ControllerState: Bool] = {
         var cds = [ControllerState: Bool]()
         for cs in ControllerState.allCases {
             cds[cs] = false
@@ -84,7 +84,7 @@ class InputManager {
     }()
     
     // Perhaps instead of 'Discrete States' should name this 'Key Pressed' ???
-    static var mouseDiscreteState: [MouseState: Bool] = {
+    private static var mouseDiscreteState: [MouseState: Bool] = {
         var mds = [MouseState: Bool]()
         for mouseState in MouseState.allCases {
             mds[mouseState] = false
@@ -93,7 +93,7 @@ class InputManager {
     }()
     
     #if os(macOS)
-    static var joystickDiscreteState: [JoystickDiscreteState: Bool] = {
+    private static var joystickDiscreteState: [JoystickDiscreteState: Bool] = {
         var jbp = [JoystickDiscreteState: Bool]()
         for jb in JoystickDiscreteState.allCases {
             jbp[jb] = false
@@ -102,11 +102,11 @@ class InputManager {
     }()
     #endif
     
-    static var mouseMappingsDiscrete: [DiscreteCommand: MouseState] = [
+    private static var mouseMappingsDiscrete: [DiscreteCommand: MouseState] = [
         .ClickSelect: .leftClick
     ]
     
-    static var keyboardMappingsContinuous: [ContinuousCommand: [KeycodeValue]] = [
+    private static var keyboardMappingsContinuous: [ContinuousCommand: [KeycodeValue]] = [
         .MoveFwd: [KeycodeValue(keyCode: .w, value: 1.0), KeycodeValue(keyCode: .s, value: -1.0)],
         .MoveSide: [KeycodeValue(keyCode: .d, value: 1.0), KeycodeValue(keyCode: .a, value: -1.0)],
         .Pitch: [KeycodeValue(keyCode: .upArrow, value: pitchAxisFlipped ? -1.0 : 1.0),
@@ -115,7 +115,7 @@ class InputManager {
         .Yaw: [KeycodeValue(keyCode: .e, value: -1.0), KeycodeValue(keyCode: .q, value: 1.0)]
     ]
     
-    static var keyboardMappingsDiscrete: [DiscreteCommand: Keycodes] = [
+    private static var keyboardMappingsDiscrete: [DiscreteCommand: Keycodes] = [
         .Pause: .p,
         .ResetLoadout: .l,
         .FireMissileAIM9: .space,
@@ -126,11 +126,11 @@ class InputManager {
         .ToggleGear: .g
     ]
     
-    static var multiKeyInputMappings: [SpecialUserCommand: [Keycodes]] = [
+    private static var multiKeyInputMappings: [SpecialUserCommand: [Keycodes]] = [
         .ResetScene: [.command, .r]
     ]
     
-    static var specialCommandsActive: [SpecialUserCommand: Bool] = {
+    private static var specialCommandsActive: [SpecialUserCommand: Bool] = {
         var sca: [SpecialUserCommand: Bool] = [SpecialUserCommand: Bool]()
         for suc in SpecialUserCommand.allCases {
             sca[suc] = false
@@ -138,42 +138,42 @@ class InputManager {
         return sca
     }()
     
-    static var controllerMappingsContinuous: [ContinuousCommand: ControllerState] = [
+    private static var controllerMappingsContinuous: [ContinuousCommand: ControllerState] = [
         .Roll: .RightStickX,
         .Pitch: .RightStickY,
         .MoveFwd: .LeftStickY,
         .MoveSide: .LeftStickX
     ]
     
-    static var controllerMappingsDiscrete: [DiscreteCommand: ControllerState] = [
+    private static var controllerMappingsDiscrete: [DiscreteCommand: ControllerState] = [
         .FireMissileAIM9: .RightTrigger,
         .DropBomb: .LeftTrigger
     ]
     
     #if os(macOS)
-    static var joystickMappingsContinuous: [ContinuousCommand: JoystickContinuousState] = [
+    private static var joystickMappingsContinuous: [ContinuousCommand: JoystickContinuousState] = [
         .Pitch: .JoystickY,
         .Roll: .JoystickX
     ]
     
-    static var joystickMappingsDiscrete: [DiscreteCommand: JoystickDiscreteState] = [
+    private static var joystickMappingsDiscrete: [DiscreteCommand: JoystickDiscreteState] = [
         .FireMissileAIM9: .TriggerFull,
         .FireMissileAIM120: .RedButton
     ]
     
-    static var throttleMappingContinuous: [ContinuousCommand: ThrottleContinuousState] = [
+    private static var throttleMappingContinuous: [ContinuousCommand: ThrottleContinuousState] = [
         .MoveFwd: .ThrottleRight
     ]
     #endif
     
     #if os(iOS)
-    static var motionMappingContinuous: [ContinuousCommand: MotionContinuousState] = [
+    private static var motionMappingContinuous: [ContinuousCommand: MotionContinuousState] = [
         .Pitch: .MotionPitch,
         .Roll: .MotionRoll,
         .Yaw: .MotionYaw
     ]
     
-    static var touchContinuousState: [ContinuousCommand: Float] = [
+    private static var touchContinuousState: [ContinuousCommand: Float] = [
         .MoveFwd: 0.0,
         .MoveSide: 0.0,
         .Pitch: 0.0,
@@ -182,7 +182,7 @@ class InputManager {
     ]
     #endif
     
-    static func handleMouseClickDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
+    static func HandleMouseClickDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
         guard let mouseState = mouseMappingsDiscrete[command] else { return }
         guard let mouseCommandState = mouseDiscreteState[mouseState] else { return }
         let mouseButtonClicked = Mouse.IsMouseButtonPressed(button: MOUSE_BUTTON_CODES(rawValue: mouseState.rawValue)!)
@@ -198,7 +198,7 @@ class InputManager {
         }
     }
     
-    static func handleKeyPressedDebounced(keyCode: Keycodes, _ handleBlock: () -> Void) {
+    static func HandleKeyPressedDebounced(keyCode: Keycodes, _ handleBlock: () -> Void) {
         guard let _ = keysPressed[keyCode] else {
             print("[InputManager handleKeyPressedDebounced] WARNING: Unknown Key Code: \(keyCode)")
             return
@@ -216,7 +216,7 @@ class InputManager {
         }
     }
     
-    static func handleControllerDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
+    static func HandleControllerDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
         guard let controllerState = controllerMappingsDiscrete[command] else { return }
         guard let controllerCommandState = controllerDiscreteState[controllerState] else { return }
         let controllerValue = controller.getState(controllerState)
@@ -233,7 +233,7 @@ class InputManager {
     }
     
     #if os(macOS)
-    static func handleJoystickDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
+    static func HandleJoystickDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
         guard let joystickState = joystickMappingsDiscrete[command] else { return }
         
         guard let joystickCommandState = joystickDiscreteState[joystickState] else {
@@ -362,15 +362,15 @@ class InputManager {
     
     static func HasDiscreteCommandDebounced(command: DiscreteCommand, _ handleBlock: () -> Void) {
         guard let key = keyboardMappingsDiscrete[command] else { return }
-        handleKeyPressedDebounced(keyCode: key, handleBlock)
+        HandleKeyPressedDebounced(keyCode: key, handleBlock)
         
         if controller.present {
-            handleControllerDiscreteCommandDebounced(command: command, handleBlock)
+            HandleControllerDiscreteCommandDebounced(command: command, handleBlock)
         }
         
         #if os(macOS)
         if joystick.present {
-            handleJoystickDiscreteCommandDebounced(command: command, handleBlock)
+            HandleJoystickDiscreteCommandDebounced(command: command, handleBlock)
         }
         #endif
     }

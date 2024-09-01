@@ -136,7 +136,7 @@ class TiledDeferredRenderer: Renderer {
     }
     
     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
-        let pointLights = LightManager.getPointLightData()
+        let pointLights = LightManager.GetPointLightData()
         if !pointLights.isEmpty {
             encodeRenderStage(using: renderEncoder, label: "Point Light Stage") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredPointLight])
