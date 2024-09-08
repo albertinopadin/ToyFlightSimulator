@@ -14,6 +14,7 @@ struct MacGameUIView: View {
     @State private var shouldDisplayMenu: Bool = false
     @State private var shouldDisplayGameStats: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
+    @State private var renderer: RendererType = .TiledDeferred
     
     var body: some View {
         GeometryReader { geometry in
@@ -42,6 +43,14 @@ struct MacGameUIView: View {
                                         }
                                     }
                                     .pickerStyle(.segmented)
+                                    .frame(maxWidth: geometry.size.width * 0.35)
+                                    
+                                    Picker("Renderer: ", selection: $renderer) {
+                                        ForEach(RendererType.allCases) { rendererType in
+                                            Text("\(rendererType.rawValue)").tag(rendererType).padding()
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
                                     .frame(maxWidth: geometry.size.width * 0.35)
                                     
                                     Button("Reset Scene") {
@@ -97,13 +106,10 @@ struct MacGameUIView: View {
                 }
             }
             .onAppear {
-                print("On Appear geometry size: \(geometry.size)")
                 viewSize = getViewSize(geometrySize: geometry.size)
-                print("On Appear viewSize: \(viewSize)")
             }
             .onChange(of: geometry.size) { oldSize, newSize in
                 viewSize = newSize
-                print("Geometry changed size: \(newSize)")
             }
         }
         .frame(minWidth: minViewSize.width, minHeight: minViewSize.height)

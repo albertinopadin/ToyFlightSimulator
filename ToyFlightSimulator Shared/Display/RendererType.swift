@@ -5,9 +5,11 @@
 //  Created by Albertino Padin on 2/14/23.
 //
 
-enum RendererType {
-    case OrderIndependentTransparency
-    case SinglePassDeferredLighting
-    case TiledDeferred
-    case ForwardPlusTileShading
+enum RendererType: String, CaseIterable, Identifiable {
+    case OrderIndependentTransparency = "Order Independent Transparency"
+    case SinglePassDeferredLighting = "Single-Pass Deferred Lighting"
+    case TiledDeferred = "Tile Deferred"
+    case ForwardPlusTileShading = "Forward+"
+    
+    var id: String { rawValue }
 }
