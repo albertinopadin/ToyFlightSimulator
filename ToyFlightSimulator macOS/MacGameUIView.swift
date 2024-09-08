@@ -14,7 +14,8 @@ struct MacGameUIView: View {
     @State private var shouldDisplayMenu: Bool = false
     @State private var shouldDisplayGameStats: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
-    @State private var renderer: RendererType = .TiledDeferred
+    @State private var rendererType: RendererType = .TiledDeferred
+    @ObservedObject var gameStatsMgr = GameStatsManager.sharedInstance
     
     var body: some View {
         GeometryReader { geometry in
@@ -45,7 +46,7 @@ struct MacGameUIView: View {
                                     .pickerStyle(.segmented)
                                     .frame(maxWidth: geometry.size.width * 0.35)
                                     
-                                    Picker("Renderer: ", selection: $renderer) {
+                                    Picker("Renderer: ", selection: $rendererType) {
                                         ForEach(RendererType.allCases) { rendererType in
                                             Text("\(rendererType.rawValue)").tag(rendererType).padding()
                                         }
@@ -88,9 +89,16 @@ struct MacGameUIView: View {
                                 .foregroundColor(.white)
                                 .padding(10.0)
                             
-                            Text("Aspect Ratio: \(Renderer.AspectRatio)")
-                                .foregroundColor(.white)
-                                .padding(10)
+                            VStack {
+                                Text("Aspect Ratio: \(String(format: "%.2f", Renderer.AspectRatio))")
+                                    .foregroundColor(.white)
+                                    .padding(5)
+                                
+                                Text("FPS: \(String(format: "%.2f", gameStatsMgr.rollingAverageFPS))")
+                                    .foregroundColor(.white)
+                                    .padding(5)
+                            }
+                            .padding(10)
                         }
                         .frame(width: 200,
                                height: 100,

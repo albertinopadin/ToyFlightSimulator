@@ -177,5 +177,6 @@ class Renderer: NSObject, MTKViewDelegate {
         let deltaTime = Double(currentTime - previousTime) / 1e9
         SceneManager.Update(deltaTime: deltaTime)
         previousTime = currentTime
+        GameStatsManager.sharedInstance.recordDeltaTime(deltaTime)
     }
 }
