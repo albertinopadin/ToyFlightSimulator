@@ -27,8 +27,12 @@ class Mouse {
     private static var lastWheelPosition: Float = 0.0
     private static var scrollWheelChange: Float = 0.0
     
-    public static func SetMouseButtonPressed(button: Int, isOn: Bool) {
-        mouseButtonList[button] = isOn
+    public static func SetMouseButtonPressed(button: Int) {
+        mouseButtonList[button] = true
+    }
+    
+    public static func SetMouseButtonReleased(button: Int) {
+        mouseButtonList[button] = false
     }
     
     public static func IsMouseButtonPressed(button: MOUSE_BUTTON_CODES) -> Bool {

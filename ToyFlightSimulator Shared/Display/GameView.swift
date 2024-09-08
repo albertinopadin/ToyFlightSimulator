@@ -26,27 +26,27 @@ extension GameView {
 // Mouse input
 extension GameView {
     override func mouseDown(with event: NSEvent) {
-        Mouse.SetMouseButtonPressed(button: event.buttonNumber, isOn: true)
+        Mouse.SetMouseButtonPressed(button: event.buttonNumber)
     }
     
     override func mouseUp(with event: NSEvent) {
-        Mouse.SetMouseButtonPressed(button: event.buttonNumber, isOn: false)
+        Mouse.SetMouseButtonReleased(button: event.buttonNumber)
     }
     
     override func rightMouseDown(with event: NSEvent) {
-        Mouse.SetMouseButtonPressed(button: event.buttonNumber, isOn: true)
+        Mouse.SetMouseButtonPressed(button: event.buttonNumber)
     }
     
     override func rightMouseUp(with event: NSEvent) {
-        Mouse.SetMouseButtonPressed(button: event.buttonNumber, isOn: false)
+        Mouse.SetMouseButtonReleased(button: event.buttonNumber)
     }
     
     override func otherMouseDown(with event: NSEvent) {
-        Mouse.SetMouseButtonPressed(button: event.buttonNumber, isOn: true)
+        Mouse.SetMouseButtonPressed(button: event.buttonNumber)
     }
     
     override func otherMouseUp(with event: NSEvent) {
-        Mouse.SetMouseButtonPressed(button: event.buttonNumber, isOn: false)
+        Mouse.SetMouseButtonReleased(button: event.buttonNumber)
     }
 }
 

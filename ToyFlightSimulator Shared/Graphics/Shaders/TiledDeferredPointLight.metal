@@ -9,21 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
-
-// TODO: Move to lighting file:
-float3 calculatePointLighting(LightData light, float3 fragmentWorldPosition, float3 normal, ShaderMaterial material) {
-    float d = distance(light.position, fragmentWorldPosition);
-    float3 lightDirection = normalize(light.position - fragmentWorldPosition);
-    
-    float attenuation = 1.0 / (light.attenuation.x + light.attenuation.y * d + light.attenuation.z * d * d);
-    float diffuseIntensity = saturate(dot(normal, lightDirection));
-    float3 color = light.color * material.color.xyz * diffuseIntensity;
-    color *= attenuation;
-    if (color.r + color.g + color.b < 0.01) {
-        color = 0;
-    }
-    return color;
-}
+#import "Lighting.metal"
 
 struct PointLightIn {
     float4 position [[ attribute(TFSVertexAttributePosition) ]];
@@ -65,7 +51,7 @@ tiled_deferred_point_light_fragment(         PointLightOut  in              [[ s
     };
     
     LightData light = lightDatas[in.instanceId];
-    float3 color = calculatePointLighting(light, worldPosition, normal, material);
+    float3 color = Lighting::CalculatePointLighting(light, worldPosition, normal, material);
     color *= 0.9;
     return float4(color, 1);
 }

@@ -23,7 +23,7 @@ class FlightboxScene: GameScene {
         let ground = Quad()
         ground.useMaterial(groundMaterial)
         ground.rotateZ(Float(270).toRadians)
-        ground.setScale(100)
+        ground.setScale(1000)
         addChild(ground)
     }
     
@@ -89,20 +89,22 @@ class FlightboxScene: GameScene {
         sunBall.setPosition(sun.getPosition())
         addChild(sunBall)
         
-        let pl = PointLightObject()
-        pl.setPosition(capsule.getPositionX(), 0.5, capsule.getPositionZ())
-        pl.setLightColor(BLUE_COLOR.xyz)
-        pl.setLightBrightness(1.0)
-//        pl.setLightRadius(10.0)
-        pl.setScale(2.0)
-        addLight(pl)
-        
-//        pl2.setPosition(-capsule.getPositionX(), capsule.getPositionY(), capsule.getPositionZ())
-        pl2.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
-        pl2.setLightColor(RED_COLOR.xyz)
-        pl2.setLightBrightness(1.0)
-        pl2.setScale(3.0)
-        addLight(pl2)
+        if _rendererType == .TiledDeferred {
+            let pl = PointLightObject()
+            pl.setPosition(capsule.getPositionX(), 0.5, capsule.getPositionZ())
+            pl.setLightColor(BLUE_COLOR.xyz)
+            pl.setLightBrightness(1.0)
+            //        pl.setLightRadius(10.0)
+            pl.setScale(2.0)
+            addLight(pl)
+            
+            //        pl2.setPosition(-capsule.getPositionX(), capsule.getPositionY(), capsule.getPositionZ())
+            pl2.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
+            pl2.setLightColor(RED_COLOR.xyz)
+            pl2.setLightBrightness(1.0)
+            pl2.setScale(3.0)
+            addLight(pl2)
+        }
         
         let f16 = F16(shouldUpdate: false)
         f16.setPosition(0, container.getPositionY() + 10, container.getPositionZ() - 15)
