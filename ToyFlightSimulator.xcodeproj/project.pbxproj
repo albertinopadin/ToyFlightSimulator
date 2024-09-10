@@ -633,6 +633,10 @@
 		CED798402C8FE2D8003B6559 /* TFSMenuMobile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED7983F2C8FE2D8003B6559 /* TFSMenuMobile.swift */; };
 		CED798422C8FE66F003B6559 /* TFSTouchJoystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED798412C8FE66F003B6559 /* TFSTouchJoystick.swift */; };
 		CED798442C8FE702003B6559 /* TFSTouchThrottle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED798432C8FE702003B6559 /* TFSTouchThrottle.swift */; };
+		CED798482C905303003B6559 /* MTKMesh+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED798472C905303003B6559 /* MTKMesh+Extensions.swift */; };
+		CED798492C9055D3003B6559 /* MTKMesh+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED798472C905303003B6559 /* MTKMesh+Extensions.swift */; };
+		CED7984A2C9055D3003B6559 /* MTKMesh+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED798472C905303003B6559 /* MTKMesh+Extensions.swift */; };
+		CED7984B2C9055D4003B6559 /* MTKMesh+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED798472C905303003B6559 /* MTKMesh+Extensions.swift */; };
 		CEED93A329E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A429E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
@@ -859,6 +863,7 @@
 		CED7983F2C8FE2D8003B6559 /* TFSMenuMobile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSMenuMobile.swift; sourceTree = "<group>"; };
 		CED798412C8FE66F003B6559 /* TFSTouchJoystick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSTouchJoystick.swift; sourceTree = "<group>"; };
 		CED798432C8FE702003B6559 /* TFSTouchThrottle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSTouchThrottle.swift; sourceTree = "<group>"; };
+		CED798472C905303003B6559 /* MTKMesh+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MTKMesh+Extensions.swift"; sourceTree = "<group>"; };
 		CEED93A229E2B3EE0020DC53 /* AIM120.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIM120.swift; sourceTree = "<group>"; };
 		CEED93A629E3B2600020DC53 /* AircraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftStore.swift; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
@@ -959,6 +964,7 @@
 			children = (
 				CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */,
 				CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */,
+				CED798472C905303003B6559 /* MTKMesh+Extensions.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -1214,15 +1220,9 @@
 		CE79B5F42B8F1591009F2E49 /* Pipelines */ = {
 			isa = PBXGroup;
 			children = (
-				CE3BFF5728E1B2AD0014A752 /* RenderPipelineStateLibrary.swift */,
-				CE79B6042B8F164E009F2E49 /* RenderPipelineState.swift */,
-				CE79B5F52B8F15BE009F2E49 /* BasicPipeline.swift */,
-				CE79B5FA2B8F15E2009F2E49 /* OrderIndependentTransparencyPipeline.swift */,
-				CE79B5FF2B8F160E009F2E49 /* SinglePassDeferredPipeline.swift */,
-				CE79B63A2B931F19009F2E49 /* TiledDeferredPipeline.swift */,
 				CE387B472BE22FF000F51DC4 /* ParticlePipeline.swift */,
-				CE387B4C2BE230BD00F51DC4 /* ComputePipelineState.swift */,
-				CE387B512BE230FE00F51DC4 /* ComputePipelineStateLibrary.swift */,
+				CED798452C9050A2003B6559 /* Render */,
+				CED798462C9050CF003B6559 /* Compute */,
 			);
 			path = Pipelines;
 			sourceTree = "<group>";
@@ -1423,6 +1423,28 @@
 				CE8A7A3B2B98190600C024EA /* ProgrammaticMeshes.swift */,
 			);
 			path = Meshes;
+			sourceTree = "<group>";
+		};
+		CED798452C9050A2003B6559 /* Render */ = {
+			isa = PBXGroup;
+			children = (
+				CE3BFF5728E1B2AD0014A752 /* RenderPipelineStateLibrary.swift */,
+				CE79B6042B8F164E009F2E49 /* RenderPipelineState.swift */,
+				CE79B5F52B8F15BE009F2E49 /* BasicPipeline.swift */,
+				CE79B5FA2B8F15E2009F2E49 /* OrderIndependentTransparencyPipeline.swift */,
+				CE79B5FF2B8F160E009F2E49 /* SinglePassDeferredPipeline.swift */,
+				CE79B63A2B931F19009F2E49 /* TiledDeferredPipeline.swift */,
+			);
+			path = Render;
+			sourceTree = "<group>";
+		};
+		CED798462C9050CF003B6559 /* Compute */ = {
+			isa = PBXGroup;
+			children = (
+				CE387B4C2BE230BD00F51DC4 /* ComputePipelineState.swift */,
+				CE387B512BE230FE00F51DC4 /* ComputePipelineStateLibrary.swift */,
+			);
+			path = Compute;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1771,6 +1793,7 @@
 				CE452FFD2A7CB4AC001945B9 /* SandboxScene.swift in Sources */,
 				CE452FB22A7CB42A001945B9 /* MetalTypes.swift in Sources */,
 				CE452FF12A7CB4A6001945B9 /* Renderable.swift in Sources */,
+				CED7984B2C9055D4003B6559 /* MTKMesh+Extensions.swift in Sources */,
 				CE4530062A7CB4B5001945B9 /* SinglePassDeferredLightingRenderer.swift in Sources */,
 				CE79B5F92B8F15BE009F2E49 /* BasicPipeline.swift in Sources */,
 				CE452FCF2A7CB47F001945B9 /* Instanced.metal in Sources */,
@@ -1912,6 +1935,7 @@
 				CE3BFF2428E056230014A752 /* Graphics.swift in Sources */,
 				CEC0C5992B53BB7400863C38 /* ObjMesh.swift in Sources */,
 				CE3BFF6E28E1B4D70014A752 /* MeshLibrary.swift in Sources */,
+				CED798482C905303003B6559 /* MTKMesh+Extensions.swift in Sources */,
 				CE3DD2E929F37FE500787E53 /* Missile.swift in Sources */,
 				CE3BFF5028E1B2230014A752 /* Library.swift in Sources */,
 				CEC6B48A2B45F8BD004A5AC7 /* TFSCache.swift in Sources */,
@@ -2018,6 +2042,7 @@
 				CE3BFFAC28E453310014A752 /* Quad.swift in Sources */,
 				CE2ED263299394E500C81F47 /* ModelIO+Extensions.swift in Sources */,
 				CE8A7A3D2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */,
+				CED798492C9055D3003B6559 /* MTKMesh+Extensions.swift in Sources */,
 				CEC0C59A2B53BB7400863C38 /* ObjMesh.swift in Sources */,
 				CE3BFFA828E453260014A752 /* Sun.swift in Sources */,
 				CE387B442BDE273B00F51DC4 /* ParticleEmitterEntity.swift in Sources */,
@@ -2124,6 +2149,7 @@
 				CEB84E792A24A76400BEF778 /* InputManager.swift in Sources */,
 				CE7F484828B770EB0082B197 /* MathUtils.swift in Sources */,
 				CE452FD42A7CB489001945B9 /* Assets.swift in Sources */,
+				CED7984A2C9055D3003B6559 /* MTKMesh+Extensions.swift in Sources */,
 				CE387B332BCBA5B300F51DC4 /* Particles.metal in Sources */,
 				CE3BFFB128E572EC0014A752 /* SkySphere.metal in Sources */,
 				CE3BFF8828E2FD9C0014A752 /* GameObject.swift in Sources */,

@@ -18,6 +18,7 @@ final class GameStatsManager: ObservableObject {
     
     private init() {}
     
+    // TODO: Optimize this method using a true ring buffer (or better data structure)
     public func recordDeltaTime(_ deltaTime: Double) {
         if lastXFrameDeltaTime.count >= maxFrames {
             lastXFrameDeltaTime.removeFirst()

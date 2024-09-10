@@ -38,12 +38,6 @@ struct ParticleRenderPipelineState: RenderPipelineState {
             descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
             
             if enableBlending {
-//                descriptor.colorAttachments[0].isBlendingEnabled = true
-//                descriptor.colorAttachments[0].rgbBlendOperation = .add
-//                descriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
-//                descriptor.colorAttachments[0].destinationRGBBlendFactor = .one
-                
-//                Self.enableBlending(colorAttachmentDescriptor: descriptor.colorAttachments[0])
                 Self.enableBlending(colorAttachment: descriptor.colorAttachments[TFSRenderTargetLighting.index])
             }
         }

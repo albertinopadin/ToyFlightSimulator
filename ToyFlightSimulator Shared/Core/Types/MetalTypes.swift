@@ -40,7 +40,11 @@ extension SIMD4:  sizeable {}
 
 extension Particle: sizeable {}
 
-struct Vertex: sizeable {
+public protocol HasNormal {
+    var normal: float3 { get set }
+}
+
+struct Vertex: HasNormal, sizeable {
     var position: float3 = [0, 0, 0]
     var color: float4 = [0, 0, 0, 1]
     var textureCoordinate: float2 = [0, 0]
