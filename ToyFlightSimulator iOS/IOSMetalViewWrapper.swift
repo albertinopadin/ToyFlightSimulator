@@ -33,6 +33,10 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
                 return OITRenderer()
             case .SinglePassDeferredLighting:
                 return SinglePassDeferredLightingRenderer()
+            case .TiledDeferred:
+                return TiledDeferredRenderer()
+            case .ForwardPlusTileShading:
+                return TiledDeferredRenderer()  // TODO Change this out for actual Forward+ when it's ready
         }
     }
     

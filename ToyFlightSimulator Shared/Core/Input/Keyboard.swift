@@ -22,7 +22,8 @@ class Keyboard {
     public static func SetKeyPressed(_ keyCode: UInt16, pressed: Bool) {
         keys[Int(keyCode)] = pressed
     }
-    
+
+#if os(macOS)
     public static func KeyDown(with event: NSEvent) -> Event {
         SetKeyPressed(event.keyCode, pressed: true)
         return event
@@ -32,6 +33,7 @@ class Keyboard {
         SetKeyPressed(event.keyCode, pressed: false)
         return event
     }
+#endif
     
     public static func SetCommandKeyPressed(event: Event) -> Event {
 //        print("[SetCommandKeyPressed] event modifier flags: \(event.modifierFlags)")

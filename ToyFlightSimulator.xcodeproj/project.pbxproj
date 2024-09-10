@@ -628,6 +628,11 @@
 		CED3AA872B5D4DA300191002 /* ContainerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA862B5D4DA300191002 /* ContainerNode.swift */; };
 		CED3AA882B5D4DA300191002 /* ContainerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA862B5D4DA300191002 /* ContainerNode.swift */; };
 		CED3AA892B5D4DA300191002 /* ContainerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA862B5D4DA300191002 /* ContainerNode.swift */; };
+		CED7983C2C8FDE21003B6559 /* GameStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED7983B2C8FDE21003B6559 /* GameStats.swift */; };
+		CED7983E2C8FE0BA003B6559 /* TFSMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED7983D2C8FE0BA003B6559 /* TFSMenu.swift */; };
+		CED798402C8FE2D8003B6559 /* TFSMenuMobile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED7983F2C8FE2D8003B6559 /* TFSMenuMobile.swift */; };
+		CED798422C8FE66F003B6559 /* TFSTouchJoystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED798412C8FE66F003B6559 /* TFSTouchJoystick.swift */; };
+		CED798442C8FE702003B6559 /* TFSTouchThrottle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED798432C8FE702003B6559 /* TFSTouchThrottle.swift */; };
 		CEED93A329E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A429E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CEED93A529E2B3EE0020DC53 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
@@ -849,6 +854,11 @@
 		CED3AA762B5D005700191002 /* F-22_Raptor.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = "F-22_Raptor.usdz"; sourceTree = "<group>"; };
 		CED3AA7A2B5D008200191002 /* F22.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F22.swift; sourceTree = "<group>"; };
 		CED3AA862B5D4DA300191002 /* ContainerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerNode.swift; sourceTree = "<group>"; };
+		CED7983B2C8FDE21003B6559 /* GameStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStats.swift; sourceTree = "<group>"; };
+		CED7983D2C8FE0BA003B6559 /* TFSMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSMenu.swift; sourceTree = "<group>"; };
+		CED7983F2C8FE2D8003B6559 /* TFSMenuMobile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSMenuMobile.swift; sourceTree = "<group>"; };
+		CED798412C8FE66F003B6559 /* TFSTouchJoystick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSTouchJoystick.swift; sourceTree = "<group>"; };
+		CED798432C8FE702003B6559 /* TFSTouchThrottle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSTouchThrottle.swift; sourceTree = "<group>"; };
 		CEED93A229E2B3EE0020DC53 /* AIM120.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIM120.swift; sourceTree = "<group>"; };
 		CEED93A629E3B2600020DC53 /* AircraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AircraftStore.swift; sourceTree = "<group>"; };
 		CEFC6E2C2952EA44009B692B /* Cube.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cube.swift; sourceTree = "<group>"; };
@@ -1306,6 +1316,9 @@
 				CE4530492A7F3823001945B9 /* ToyFlightSimulatorIOSApp.swift */,
 				CE45304C2A7F3E36001945B9 /* IOSGameUIView.swift */,
 				CE45304E2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift */,
+				CED7983F2C8FE2D8003B6559 /* TFSMenuMobile.swift */,
+				CED798412C8FE66F003B6559 /* TFSTouchJoystick.swift */,
+				CED798432C8FE702003B6559 /* TFSTouchThrottle.swift */,
 			);
 			path = "ToyFlightSimulator iOS";
 			sourceTree = "<group>";
@@ -1331,6 +1344,8 @@
 				CE7F481D28B758920082B197 /* ToyFlightSimulator_macOS.entitlements */,
 				CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */,
 				CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */,
+				CED7983B2C8FDE21003B6559 /* GameStats.swift */,
+				CED7983D2C8FE0BA003B6559 /* TFSMenu.swift */,
 			);
 			path = "ToyFlightSimulator macOS";
 			sourceTree = "<group>";
@@ -1927,6 +1942,7 @@
 				CE3BFF9628E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6928E1B4C10014A752 /* Assets.swift in Sources */,
 				CED3AA7B2B5D008200191002 /* F22.swift in Sources */,
+				CED798402C8FE2D8003B6559 /* TFSMenuMobile.swift in Sources */,
 				CE56921C28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
 				CEFC6E3129531C0C009B692B /* Triangle.swift in Sources */,
 				CE79B6452B932B29009F2E49 /* TiledDeferredGBuffer.metal in Sources */,
@@ -1935,8 +1951,10 @@
 				CE2ED2C0299CBB3C00C81F47 /* SkyBox.swift in Sources */,
 				CE3BFF7E28E2FCF50014A752 /* Node.swift in Sources */,
 				CE79B62B2B92E4B8009F2E49 /* TextureLoader.swift in Sources */,
+				CED798442C8FE702003B6559 /* TFSTouchThrottle.swift in Sources */,
 				CE7F484E28B771550082B197 /* TimeIt.swift in Sources */,
 				CE0601632A7FA158001F8CC3 /* MotionDevice.swift in Sources */,
+				CED798422C8FE66F003B6559 /* TFSTouchJoystick.swift in Sources */,
 				CE56921828EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
 				CE3BFF9F28E452480014A752 /* DebugCamera.swift in Sources */,
 				CE79B5F62B8F15BE009F2E49 /* BasicPipeline.swift in Sources */,
@@ -2109,7 +2127,9 @@
 				CE387B332BCBA5B300F51DC4 /* Particles.metal in Sources */,
 				CE3BFFB128E572EC0014A752 /* SkySphere.metal in Sources */,
 				CE3BFF8828E2FD9C0014A752 /* GameObject.swift in Sources */,
+				CED7983E2C8FE0BA003B6559 /* TFSMenu.swift in Sources */,
 				CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */,
+				CED7983C2C8FDE21003B6559 /* GameStats.swift in Sources */,
 				CE76931929DE75CB00BBC718 /* SingleSMMeshLibrary.swift in Sources */,
 				CEC0C5A02B53BEDF00863C38 /* UsdMesh.swift in Sources */,
 				CE3BFF8428E2FD6F0014A752 /* Renderable.swift in Sources */,
@@ -2457,7 +2477,7 @@
 				PRODUCT_NAME = ToyFlightSimulator;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "ToyFlightSimulator Shared/Graphics/Shaders/TFSBridgingHeader.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "ToyFlightSimulator Shared/Graphics/Shaders/TFSCommon.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -2490,7 +2510,7 @@
 				PRODUCT_NAME = ToyFlightSimulator;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "ToyFlightSimulator Shared/Graphics/Shaders/TFSBridgingHeader.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "ToyFlightSimulator Shared/Graphics/Shaders/TFSCommon.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
