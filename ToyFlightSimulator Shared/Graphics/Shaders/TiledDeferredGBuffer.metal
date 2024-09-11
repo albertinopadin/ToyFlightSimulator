@@ -41,7 +41,7 @@ tiled_deferred_gbuffer_fragment(VertexOut               in                  [[ s
                                 depth2d<float>          shadowTexture       [[ texture(TFSTextureIndexShadow) ]]) {
     float4 color = material.color;
     
-    if (material.useBaseTexture) {
+    if (material.useBaseTexture && !is_null_texture(baseColorTexture)) {
         color = float4(baseColorTexture.sample(sampler2d, in.uv));
     }
     
@@ -49,7 +49,7 @@ tiled_deferred_gbuffer_fragment(VertexOut               in                  [[ s
     
     float4 normal = float4(normalize(in.worldNormal), 1.0);
     
-    if (material.useNormalMapTexture) {
+    if (material.useNormalMapTexture && !is_null_texture(normalTexture)) {
         normal = float4(normalTexture.sample(sampler2d, in.uv));
     }
     

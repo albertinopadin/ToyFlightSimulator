@@ -229,9 +229,7 @@ class FlightboxScene: GameScene {
             print(child.getName())
         }
         
-        print("TextureLoader.StringToTextureCache.count: \(TextureLoader.StringToTextureCache.count)")
-        print("TextureLoader.UrlToTextureCache.count: \(TextureLoader.UrlToTextureCache.count)")
-        print("TextureLoader.MdlToTextureCache.count: \(TextureLoader.MdlToTextureCache.count)")
+        TextureLoader.PrintCacheInfo()
     }
     
     override func doUpdate() {

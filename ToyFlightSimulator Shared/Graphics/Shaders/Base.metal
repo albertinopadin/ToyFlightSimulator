@@ -37,12 +37,7 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
     return rd;
 }
 
-fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]],
-                                      constant int &lightCount [[ buffer(TFSBufferDirectionalLightsNum) ]],
-                                      constant LightData *lightData [[ buffer(TFSBufferDirectionalLightData) ]],
-                                      sampler sampler2d [[ sampler(0) ]],
-                                      texture2d<float> baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
-                                      texture2d<float> normalMap [[ texture(TFSTextureIndexNormal) ]]) {
+fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]]) {
     float4 color = rd.color;
     float3 unitNormal = normalize(rd.surfaceNormal);
     
@@ -69,14 +64,14 @@ fragment FragmentOutput material_fragment(RasterizerData rd [[ stage_in ]],
         color = material.color;
     }
     
-    if (material.useBaseTexture) {
+    if (material.useBaseTexture && !is_null_texture(baseColorMap)) {
         color = baseColorMap.sample(sampler2d, texCoord);
     }
     
     float3 unitNormal;
     if (material.isLit) {
         unitNormal = normalize(rd.surfaceNormal);
-        if (material.useNormalMapTexture) {
+        if (material.useNormalMapTexture && !is_null_texture(normalMap)) {
             float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
             float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
             unitNormal = TBN * sampleNormal;

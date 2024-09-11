@@ -60,9 +60,7 @@ class FreeCamFlightboxScene: GameScene {
         aim120.rotateY(Float(90).toRadians)
         addChild(aim120)
         
-        print("TextureLoader.StringToTextureCache.count: \(TextureLoader.StringToTextureCache.count)")
-        print("TextureLoader.UrlToTextureCache.count: \(TextureLoader.UrlToTextureCache.count)")
-        print("TextureLoader.MdlToTextureCache.count: \(TextureLoader.MdlToTextureCache.count)")
+        TextureLoader.PrintCacheInfo()
     }
     
     override func doUpdate() {

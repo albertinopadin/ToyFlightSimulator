@@ -37,6 +37,9 @@ struct TiledDeferredGBufferPipelineState: RenderPipelineState {
             descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            
+            // Testing
+//            Self.enableBlending(colorAttachmentDescriptor: descriptor.colorAttachments[TFSRenderTargetLighting.index])
         }
     }()
 }
@@ -50,6 +53,9 @@ struct TiledDeferredDirectionalLightPipelineState: RenderPipelineState {
             Self.setGBufferPixelFormatsForTiledDeferredPipeline(descriptor: descriptor)
             descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
+            
+            // Testing
+//            Self.enableBlending(colorAttachmentDescriptor: descriptor.colorAttachments[TFSRenderTargetLighting.index])
         }
     }()
 }

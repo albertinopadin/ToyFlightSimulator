@@ -13,6 +13,10 @@ struct Material {
     public var baseColorTexture: MTLTexture?
     public var normalMapTexture: MTLTexture?
     public var specularTexture: MTLTexture?
+    public var roughnessTexture: MTLTexture?
+    public var metallicTexture: MTLTexture?
+    public var ambientOcclusionTexture: MTLTexture?
+    public var opacityTexture: MTLTexture?
     
     init(_ shaderMaterial: ShaderMaterial) {
         self.shaderMaterial = shaderMaterial
@@ -24,6 +28,10 @@ struct Material {
         baseColorTexture = TextureLoader.Texture(for: .baseColor, in: mdlMaterial)
         normalMapTexture = TextureLoader.Texture(for: .tangentSpaceNormal, in: mdlMaterial)
         specularTexture = TextureLoader.Texture(for: .specular, in: mdlMaterial)
+        roughnessTexture = TextureLoader.Texture(for: .roughness, in: mdlMaterial)
+        metallicTexture = TextureLoader.Texture(for: .metallic, in: mdlMaterial)
+        ambientOcclusionTexture = TextureLoader.Texture(for: .ambientOcclusion, in: mdlMaterial)
+        opacityTexture = TextureLoader.Texture(for: .opacity, in: mdlMaterial)
     }
     
     private mutating func setShaderMaterialProperties(with mdlMaterial: MDLMaterial, semantics: [MDLMaterialSemantic]) {

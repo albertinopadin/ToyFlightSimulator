@@ -10,9 +10,10 @@ import MetalKit
 struct TextureLoader {
     public static let textureLoader = MTKTextureLoader(device: Engine.Device)
     
-    public static let StringToTextureCache = TFSCache<String, MTLTexture>()
-    public static let UrlToTextureCache = TFSCache<URL, MTLTexture>()
-    public static let MdlToTextureCache = TFSCache<MDLTexture, MTLTexture>()
+    private static let StringToTextureCache = TFSCache<String, MTLTexture>()
+    private static let UrlToTextureCache = TFSCache<URL, MTLTexture>()
+    private static let MdlToTextureCache = TFSCache<MDLTexture, MTLTexture>()
+    private static let ColorToTextureCache = TFSCache<float4, MTLTexture>()
     
     private var _textureName: String!
     private var _textureExtension: String!
@@ -146,7 +147,6 @@ struct TextureLoader {
                     }
                 
                 case .color:
-                    // TODO: cache texture here
                     print("Material property is color!")
                     if let newTexture {
                         print("[Material texture] Material prop is color; newTexture has already been set: \(newTexture)")
@@ -158,7 +158,13 @@ struct TextureLoader {
                                        Float(property.color!.components![2]),
                                        Float(property.color!.components![3]))
                     
-                    newTexture = Self.MakeSolid2DTexture(device: Engine.Device, color: color)
+                    if let cachedTexture = Self.ColorToTextureCache[color] {
+                        newTexture = cachedTexture
+                    } else {
+                        newTexture = Self.MakeSolid2DTexture(device: Engine.Device, color: color)
+                        Self.ColorToTextureCache[color] = newTexture
+                    }
+                    
                 case .buffer:
                     print("Material property is a buffer!")
                 case .matrix44:
@@ -168,8 +174,8 @@ struct TextureLoader {
                 case .none:
                     print("Material property is none!")
                 default:
-    //                fatalError("Texture data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription)")
-                    print("In default block")
+                    fatalError("Texture data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription)")
+//                    print("In default block")
             }
         }
         
@@ -216,5 +222,12 @@ struct TextureLoader {
             texture.replace(region: region, mipmapLevel: 0, withBytes: ptr.baseAddress!, bytesPerRow: 32)
         }
         return texture
+    }
+    
+    public static func PrintCacheInfo() {
+        print("[TextureLoader] StringToTextureCache.count: \(StringToTextureCache.count)")
+        print("[TextureLoader] UrlToTextureCache.count: \(UrlToTextureCache.count)")
+        print("[TextureLoader] MdlToTextureCache.count: \(MdlToTextureCache.count)")
+        print("[TextureLoader] ColorToTextureCache.count: \(ColorToTextureCache.count)")
     }
 }
