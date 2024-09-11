@@ -166,15 +166,21 @@ struct TextureLoader {
                     }
                     
                 case .buffer:
-                    print("Material property is a buffer!")
+                    print("Material \(material.name) property is a buffer for semantic: \(semantic.toString())")
                 case .matrix44:
-                    print("Material property is 4x4 matrix!")
-                case .float, .float2, .float3, .float4:
-                    print("Material property is float!")
+                    print("Material \(material.name) property is 4x4 matrix for semantic: \(semantic.toString())")
+                case .float:
+                    print("Material \(material.name) property is float for semantic: \(semantic.toString())")
+                case .float2:
+                    print("Material \(material.name) property is float2 for semantic: \(semantic.toString())")
+                case .float3:
+                    print("Material \(material.name) property is float3 for semantic: \(semantic.toString())")
+                case .float4:
+                    print("Material \(material.name) property is float4 for semantic: \(semantic.toString())")
                 case .none:
-                    print("Material property is none!")
+                    print("Material \(material.name) property is none for semantic: \(semantic.toString())")
                 default:
-                    fatalError("Texture data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription)")
+                    fatalError("Texture data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription), for semantic: \(semantic.toString())")
 //                    print("In default block")
             }
         }
