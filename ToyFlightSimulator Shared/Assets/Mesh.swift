@@ -150,9 +150,9 @@ class Mesh {
                                 bitangent: bitangent))
     }
     
-    func applyMaterial(with renderEncoder: MTLRenderCommandEncoder, material: ShaderMaterial?) {
+    func applyMaterial(with renderEncoder: MTLRenderCommandEncoder, material: MaterialProperties?) {
         var mat = material
-        renderEncoder.setFragmentBytes(&mat, length: ShaderMaterial.stride, index: Int(TFSBufferIndexMaterial.rawValue))
+        renderEncoder.setFragmentBytes(&mat, length: MaterialProperties.stride, index: Int(TFSBufferIndexMaterial.rawValue))
     }
     
     func drawIndexedPrimitives(_ renderEncoder: MTLRenderCommandEncoder, submesh: Submesh, instanceCount: Int) {
@@ -165,7 +165,7 @@ class Mesh {
     }
     
     func drawPrimitives(_ renderEncoder: MTLRenderCommandEncoder,
-                        material: ShaderMaterial? = nil,
+                        material: MaterialProperties? = nil,
                         applyMaterials: Bool = true,
                         baseColorTextureType: TextureType = .None,
                         normalMapTextureType: TextureType = .None,

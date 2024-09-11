@@ -28,7 +28,7 @@ class FreeCamFlightboxScene: GameScene {
             addChild(sky)
         }
         
-        var groundMaterial = ShaderMaterial()
+        var groundMaterial = MaterialProperties()
         groundMaterial.color = [0.3, 0.7, 0.1, 1.0]
         ground.useMaterial(groundMaterial)
         ground.rotateZ(Float(270).toRadians)

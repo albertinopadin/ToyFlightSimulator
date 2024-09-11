@@ -77,7 +77,7 @@ extension LightObject {
     public func setLightColor(_ color: float3) {
         self.lightData.color = color
         if _meshType != .None {
-            var material = ShaderMaterial()
+            var material = MaterialProperties()
             material.color = float4(color, 1.0)  // TODO: Why are we setting the material color alpha to zero?
             self.useMaterial(material)
         }

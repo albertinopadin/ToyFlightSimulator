@@ -13,7 +13,6 @@ struct TextureLoader {
     private static let StringToTextureCache = TFSCache<String, MTLTexture>()
     private static let UrlToTextureCache = TFSCache<URL, MTLTexture>()
     private static let MdlToTextureCache = TFSCache<MDLTexture, MTLTexture>()
-    private static let ColorToTextureCache = TFSCache<float4, MTLTexture>()
     
     private var _textureName: String!
     private var _textureExtension: String!
@@ -78,114 +77,52 @@ struct TextureLoader {
         }
     }
     
-    public static func Texture(for semantic: MDLMaterialSemantic,
-                               in material: MDLMaterial?,
-                               textureOrigin: MTKTextureLoader.Origin = .bottomLeft) -> MTLTexture? {
-        guard let material else { return nil }
-        
-        var newTexture: MTLTexture!
-        
-        if semantic == .baseColor {
-            print("\(material.name) num of properties with semantic baseColor: \(material.properties(with: semantic).count)")
-        }
-        
-        for property in material.properties(with: semantic) {
-            switch property.type {
-                case .string:
-                    print("Material property is string!")
-                    if let stringValue = property.stringValue {
-                        print("Material property string value: \(stringValue)")
-                        if let cachedTexture = Self.StringToTextureCache[stringValue] {
-                            newTexture = cachedTexture
-                        } else {
-                            let options = Self.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
-                                                                        generateMipmaps: true)
-                            if let tex = try? Self.textureLoader.newTexture(name: stringValue,
-                                                                            scaleFactor: 1.0,
-                                                                            bundle: nil,
-                                                                            options: options) {
-                                newTexture = tex
-                                Self.StringToTextureCache[stringValue] = newTexture
-                            }
-                        }
-                    }
-                case .URL:
-                    print("Material property is url!")
-                    if let newTexture {
-                        print("[Material texture] Material prop is URL; newTexture has already been set: \(newTexture)")
-                    }
-                
-                    if let textureURL = property.urlValue {
-                        if let cachedTexture = Self.UrlToTextureCache[textureURL] {
-                            newTexture = cachedTexture
-                        } else {
-                            let options = Self.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
-                                                                        generateMipmaps: true)
-                            if let tex = try? Self.textureLoader.newTexture(URL: textureURL, options: options) {
-                                newTexture = tex
-                                Self.UrlToTextureCache[textureURL] = newTexture
-                            }
-                        }
-                    }
-                case .texture:
-                    print("Material property is texture!")
-                    if let newTexture {
-                        print("[TextureLoader texture] Material prop is texture; newTexture has already been set: \(newTexture)")
-                    }
-                    
-                    let sourceTexture = property.textureSamplerValue!.texture!
-                
-                    if let cachedTexture = Self.MdlToTextureCache[sourceTexture] {
-                        newTexture = cachedTexture
-                    } else {
-                        let options = Self.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
-                                                                    generateMipmaps: sourceTexture.mipLevelCount > 1)
-                        if let tex = try? Self.textureLoader.newTexture(texture: sourceTexture, options: options) {
-                            newTexture = tex
-                            Self.MdlToTextureCache[sourceTexture] = newTexture
-                        }
-                    }
-                
-                case .color:
-                    print("Material property is color!")
-                    if let newTexture {
-                        print("[Material texture] Material prop is color; newTexture has already been set: \(newTexture)")
-                        break
-                    }
-                    
-                    let color = float4(Float(property.color!.components![0]),
-                                       Float(property.color!.components![1]),
-                                       Float(property.color!.components![2]),
-                                       Float(property.color!.components![3]))
-                    
-                    if let cachedTexture = Self.ColorToTextureCache[color] {
-                        newTexture = cachedTexture
-                    } else {
-                        newTexture = Self.MakeSolid2DTexture(device: Engine.Device, color: color)
-                        Self.ColorToTextureCache[color] = newTexture
-                    }
-                    
-                case .buffer:
-                    print("Material \(material.name) property is a buffer for semantic: \(semantic.toString())")
-                case .matrix44:
-                    print("Material \(material.name) property is 4x4 matrix for semantic: \(semantic.toString())")
-                case .float:
-                    print("Material \(material.name) property is float for semantic: \(semantic.toString())")
-                case .float2:
-                    print("Material \(material.name) property is float2 for semantic: \(semantic.toString())")
-                case .float3:
-                    print("Material \(material.name) property is float3 for semantic: \(semantic.toString())")
-                case .float4:
-                    print("Material \(material.name) property is float4 for semantic: \(semantic.toString())")
-                case .none:
-                    print("Material \(material.name) property is none for semantic: \(semantic.toString())")
-                default:
-                    fatalError("Texture data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription), for semantic: \(semantic.toString())")
-//                    print("In default block")
+    public static func Texture(name: String, textureOrigin: MTKTextureLoader.Origin = .bottomLeft) -> MTLTexture? {
+        if let cachedTexture = Self.StringToTextureCache[name] {
+            return cachedTexture
+        } else {
+            let options = Self.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
+                                                        generateMipmaps: true)
+            if let newTexture = try? Self.textureLoader.newTexture(name: name,
+                                                                   scaleFactor: 1.0,
+                                                                   bundle: nil,
+                                                                   options: options) {
+                Self.StringToTextureCache[name] = newTexture
+                return newTexture
             }
         }
         
-        return newTexture
+        return nil
+    }
+    
+    public static func Texture(url: URL, textureOrigin: MTKTextureLoader.Origin = .bottomLeft) -> MTLTexture? {
+        if let cachedTexture = Self.UrlToTextureCache[url] {
+            return cachedTexture
+        } else {
+            let options = Self.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
+                                                        generateMipmaps: true)
+            if let newTexture = try? Self.textureLoader.newTexture(URL: url, options: options) {
+                Self.UrlToTextureCache[url] = newTexture
+                return newTexture
+            }
+        }
+        
+        return nil
+    }
+    
+    public static func Texture(mdlTexture: MDLTexture, textureOrigin: MTKTextureLoader.Origin = .bottomLeft) -> MTLTexture? {
+        if let cachedTexture = Self.MdlToTextureCache[mdlTexture] {
+            return cachedTexture
+        } else {
+            let options = Self.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
+                                                        generateMipmaps: mdlTexture.mipLevelCount > 1)
+            if let newTexture = try? Self.textureLoader.newTexture(texture: mdlTexture, options: options) {
+                Self.MdlToTextureCache[mdlTexture] = newTexture
+                return newTexture
+            }
+        }
+        
+        return nil
     }
     
     public static func MakeTextureLoaderOptions(textureOrigin: MTKTextureLoader.Origin,
@@ -234,6 +171,5 @@ struct TextureLoader {
         print("[TextureLoader] StringToTextureCache.count: \(StringToTextureCache.count)")
         print("[TextureLoader] UrlToTextureCache.count: \(UrlToTextureCache.count)")
         print("[TextureLoader] MdlToTextureCache.count: \(MdlToTextureCache.count)")
-        print("[TextureLoader] ColorToTextureCache.count: \(ColorToTextureCache.count)")
     }
 }

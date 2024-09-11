@@ -94,13 +94,13 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
     return gBuffer;
 }
 
-fragment GBufferData gbuffer_fragment_material(ColorInOut               in           [[ stage_in ]],
-                                               constant ShaderMaterial &material     [[ buffer(TFSBufferIndexMaterial) ]],
-                                               sampler                  sampler2d    [[ sampler(0) ]],
-                                               texture2d<half>          baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
-                                               texture2d<half>          normalMap    [[ texture(TFSTextureIndexNormal) ]],
-                                               texture2d<half>          specularMap  [[ texture(TFSTextureIndexSpecular) ]],
-                                               depth2d<float>           shadowMap    [[ texture(TFSTextureIndexShadow) ]])
+fragment GBufferData gbuffer_fragment_material(ColorInOut                   in           [[ stage_in ]],
+                                               constant MaterialProperties &material     [[ buffer(TFSBufferIndexMaterial) ]],
+                                               sampler                      sampler2d    [[ sampler(0) ]],
+                                               texture2d<half>              baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
+                                               texture2d<half>              normalMap    [[ texture(TFSTextureIndexNormal) ]],
+                                               texture2d<half>              specularMap  [[ texture(TFSTextureIndexSpecular) ]],
+                                               depth2d<float>               shadowMap    [[ texture(TFSTextureIndexShadow) ]])
 {
     half4 base_color_sample;
     half4 normal_sample;
@@ -108,17 +108,17 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut               in      
     
     if (material.useMaterialColor) {
         base_color_sample = half4(material.color);
-    } else if (material.useBaseTexture) {
+    } else if (!is_null_texture(baseColorMap)) {
         base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord.xy);
     }
     
-    if (material.useNormalMapTexture) {
+    if (!is_null_texture(normalMap)) {
         normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
     } else {
         normal_sample = half4(in.normal, 1.0);
     }
     
-    if (material.useSpecularTexture) {
+    if (!is_null_texture(specularMap)) {
         specular_contrib = specularMap.sample(sampler2d, in.tex_coord.xy).r;
     } else {
         specular_contrib = 1.0;

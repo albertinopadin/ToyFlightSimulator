@@ -61,11 +61,11 @@ class Submesh {
         }
     }
     
-    func applyMaterial(with renderEncoder: MTLRenderCommandEncoder, customMaterial: ShaderMaterial?) {
-        var material = customMaterial == nil ? material?.shaderMaterial : customMaterial
+    func applyMaterial(with renderEncoder: MTLRenderCommandEncoder, customMaterial: MaterialProperties?) {
+        var material = customMaterial == nil ? material?.properties : customMaterial
         // TODO: Using stride freaks out Address Sanitizer, but using size fails assertion on drawIndexedPrimitives:
         renderEncoder.setFragmentBytes(&material, 
-                                       length: ShaderMaterial.stride,
+                                       length: MaterialProperties.stride,
                                        index: TFSBufferIndexMaterial.index)
     }
 }

@@ -39,18 +39,16 @@ typedef struct {
 
 typedef struct {
     simd_float4 color;
-    bool useMaterialColor;
-    bool isLit;
-    
-    bool useBaseTexture;
-    bool useNormalMapTexture;
-    bool useSpecularTexture;
-    
     simd_float3 ambient;
     simd_float3 diffuse;
     simd_float3 specular;
+    
     float shininess;
-} ShaderMaterial;
+    float opacity;
+    
+    bool useMaterialColor;
+    bool isLit;
+} MaterialProperties;
 
 typedef enum {
     Ambient,

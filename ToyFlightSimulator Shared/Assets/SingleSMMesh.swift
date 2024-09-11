@@ -236,13 +236,13 @@ class SingleSMMesh {
         self._instanceCount = count
     }
 
-    func applyMaterial(renderEncoder: MTLRenderCommandEncoder, material: ShaderMaterial?) {
+    func applyMaterial(renderEncoder: MTLRenderCommandEncoder, material: MaterialProperties?) {
         var mat = material
-        renderEncoder.setFragmentBytes(&mat, length: ShaderMaterial.stride, index: TFSBufferIndexMaterial.index)
+        renderEncoder.setFragmentBytes(&mat, length: MaterialProperties.stride, index: TFSBufferIndexMaterial.index)
     }
 
     func drawPrimitives(_ renderEncoder: MTLRenderCommandEncoder,
-                        material: ShaderMaterial? = nil,
+                        material: MaterialProperties? = nil,
                         applyMaterials: Bool = true,
                         baseColorTextureType: TextureType = .None,
                         normalMapTextureType: TextureType = .None,

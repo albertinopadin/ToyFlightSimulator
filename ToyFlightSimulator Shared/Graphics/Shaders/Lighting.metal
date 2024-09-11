@@ -15,7 +15,7 @@ using namespace metal;
 
 class Lighting {
 public:
-    static float3 GetPhongIntensity(constant ShaderMaterial &material,
+    static float3 GetPhongIntensity(constant MaterialProperties &material,
                                     constant LightData *lightData,
                                     int lightCount,
                                     float3 worldPosition,
@@ -59,7 +59,7 @@ public:
         return totalAmbient + totalDiffuse + totalSpecular;
     }
     
-    static float3 CalculateDirectionalLighting(LightData light, float3 normal, ShaderMaterial material) {
+    static float3 CalculateDirectionalLighting(LightData light, float3 normal, MaterialProperties material) {
         float4 baseColor = material.color;
         float3 metallic = material.shininess;
         float3 ambientOcclusion = material.ambient;
@@ -84,7 +84,9 @@ public:
         return (position.z > shadow_sample + 0.001) ? 0.5 : 1;
     }
     
-    static float3 CalculatePointLighting(LightData light, float3 fragmentWorldPosition, float3 normal, ShaderMaterial material) {
+    static float3 CalculatePointLighting(LightData light,
+                                         float3 fragmentWorldPosition,
+                                         float3 normal, MaterialProperties material) {
         float d = distance(light.position, fragmentWorldPosition);
         float3 lightDirection = normalize(light.position - fragmentWorldPosition);
         

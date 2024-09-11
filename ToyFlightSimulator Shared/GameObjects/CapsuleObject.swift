@@ -8,5 +8,8 @@
 class CapsuleObject: GameObject {
     init() {
         super.init(name: "Capsule", meshType: .Capsule_Custom)
+        var material = MaterialProperties()
+        material.setColor(WHITE_COLOR)
+        useMaterial(material)
     }
 }

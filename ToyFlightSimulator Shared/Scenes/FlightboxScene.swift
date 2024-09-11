@@ -17,7 +17,7 @@ class FlightboxScene: GameScene {
     let afterburner = Afterburner(name: "Afterburner")
     
     private func addGround() {
-        var groundMaterial = ShaderMaterial()
+        var groundMaterial = MaterialProperties()
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
         groundMaterial.setColor(groundColor)
         let ground = Quad()
@@ -81,7 +81,7 @@ class FlightboxScene: GameScene {
         sun.setLightDiffuseIntensity(0)
         addLight(sun)
         
-        var sunBallMat = ShaderMaterial()
+        var sunBallMat = MaterialProperties()
         sunBallMat.setColor(RED_COLOR)
         
         let sunBall = Sphere()
@@ -141,7 +141,7 @@ class FlightboxScene: GameScene {
         
 //        addGround()
         
-        var quadMaterial = ShaderMaterial()
+        var quadMaterial = MaterialProperties()
         quadMaterial.setColor([0, 0.4, 1.0, 1.0])
         quadMaterial.shininess = 10
         quad.useMaterial(quadMaterial)
@@ -156,7 +156,7 @@ class FlightboxScene: GameScene {
         
         let jetPos = container.getPosition()
         
-        var sphereBlueMaterial = ShaderMaterial()
+        var sphereBlueMaterial = MaterialProperties()
         sphereBlueMaterial.setColor(float4(0.0, 0.0, 1.0, 0.4))
         
         let sphereBluePos = float3(x: jetPos.x + 1, y: jetPos.y, z: jetPos.z - 2)
@@ -166,7 +166,7 @@ class FlightboxScene: GameScene {
         sphereBlue.useMaterial(sphereBlueMaterial)
         addChild(sphereBlue)
         
-        var sphereRedMaterial = ShaderMaterial()
+        var sphereRedMaterial = MaterialProperties()
         sphereRedMaterial.setColor([1.0, 0.0, 0.0, 0.4])
         
         let sphereRedPos = float3(x: jetPos.x - 1, y: jetPos.y, z: jetPos.z - 2)
@@ -178,25 +178,23 @@ class FlightboxScene: GameScene {
         
         
         let testQuad = Quad()
-        var testQuadMaterial = ShaderMaterial()
+        var testQuadMaterial = MaterialProperties()
         testQuadMaterial.isLit = true
         testQuadMaterial.setColor([1, 0, 0, 0.5])
         testQuadMaterial.shininess = 100000
         testQuadMaterial.diffuse = [1, 0.1, 0.1]
         testQuadMaterial.specular = [1, 1, 1]
-        testQuadMaterial.useNormalMapTexture = false
         testQuad.useMaterial(testQuadMaterial)
         testQuad.setPositionZ(1)
         testQuad.setPositionY(10)
         testQuad.setPositionX(5)
         addChild(testQuad)
         
-        var testCubeMaterial = ShaderMaterial()
+        var testCubeMaterial = MaterialProperties()
         testCubeMaterial.isLit = true
         testCubeMaterial.setColor(GRABBER_BLUE_COLOR)
         testCubeMaterial.diffuse = [0.1, 0.4, 1]
         testCubeMaterial.specular = [1, 1, 10]
-        testCubeMaterial.useNormalMapTexture = false
         testCubeMaterial.shininess = 100
         
         let testCube = Cube()

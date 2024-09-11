@@ -57,18 +57,16 @@ extension ModelConstants: sizeable {}
 
 extension SceneConstants: sizeable {}
 
-extension ShaderMaterial: sizeable {
+extension MaterialProperties: sizeable {
     init() {
         self.init(color: BLACK_COLOR,
-                  useMaterialColor: false,
-                  isLit: true,
-                  useBaseTexture: false,
-                  useNormalMapTexture: false,
-                  useSpecularTexture: false,
-                  ambient: [0.1, 0.1, 0.1],
+                  ambient: [0.1, 0.1, 0.1], 
                   diffuse: [1, 1, 1],
                   specular: [1, 1, 1],
-                  shininess: 2)
+                  shininess: 2.0,
+                  opacity: 1.0,
+                  useMaterialColor: false,
+                  isLit: true)
     }
     
     mutating func setColor(_ color: float4) {

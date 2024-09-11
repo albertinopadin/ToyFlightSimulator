@@ -75,14 +75,14 @@ fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stag
 }
 
 fragment TransparentFragmentStore transparent_material_fragment(
-                        RasterizerData              rd              [[ stage_in ]],
-                        constant ShaderMaterial     &material       [[ buffer(TFSBufferIndexMaterial) ]],
-                        constant int                &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
-                        constant LightData          *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
-                        sampler                     sampler2d       [[ sampler(0) ]],
-                        texture2d<float>            baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
-                        texture2d<float>            normalMap       [[ texture(TFSTextureIndexNormal) ]],
-                        TransparentFragmentValues   fragmentValues  [[ imageblock_data ]]) {
+                        RasterizerData                  rd              [[ stage_in ]],
+                        constant MaterialProperties     &material       [[ buffer(TFSBufferIndexMaterial) ]],
+                        constant int                    &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
+                        constant LightData              *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+                        sampler                         sampler2d       [[ sampler(0) ]],
+                        texture2d<float>                baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
+                        texture2d<float>                normalMap       [[ texture(TFSTextureIndexNormal) ]],
+                        TransparentFragmentValues       fragmentValues  [[ imageblock_data ]]) {
                             
     float2 texCoord = rd.textureCoordinate;
     float4 color = rd.color;
@@ -91,14 +91,14 @@ fragment TransparentFragmentStore transparent_material_fragment(
         color = material.color;
     }
     
-    if (material.useBaseTexture) {
+    if (!is_null_texture(baseColorMap)) {
         color = baseColorMap.sample(sampler2d, texCoord);
     }
     
     float3 unitNormal;
     if (material.isLit) {
         unitNormal = normalize(rd.surfaceNormal);
-        if (material.useNormalMapTexture) {
+        if (!is_null_texture(normalMap)) {
             float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
             float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
             unitNormal = TBN * sampleNormal;

@@ -8,7 +8,7 @@
 import MetalKit
 
 class InstancedGameObject: Node {
-    private var _material: ShaderMaterial?
+    private var _material: MaterialProperties?
     private var _mesh: Mesh!
     internal var _nodes: [Node] = []
     
@@ -61,7 +61,7 @@ extension InstancedGameObject: Renderable {
         renderEncoder.setVertexBuffer(_modelConstantBuffer, offset: 0, index: 2)
         
         // Fragment Shader
-        renderEncoder.setFragmentBytes(&_material, length: ShaderMaterial.stride, index: 1)
+        renderEncoder.setFragmentBytes(&_material, length: MaterialProperties.stride, index: 1)
         
         _mesh.drawPrimitives(renderEncoder, submeshesToDisplay: submeshesToRender)
     }

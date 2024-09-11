@@ -7,7 +7,40 @@
 
 import ModelIO
 
-extension MDLMaterialSemantic {
+extension MDLMaterialSemantic: CaseIterable {
+    public static var allCases: [MDLMaterialSemantic] {
+        get {
+            return [
+                .ambientOcclusion,
+                .ambientOcclusionScale,
+                .anisotropic,
+                .anisotropicRotation,
+                .baseColor,
+                .bump,
+                .clearcoat,
+                .clearcoatGloss,
+                .displacement,
+                .displacementScale,
+                .emission,
+                .interfaceIndexOfRefraction,
+                .materialIndexOfRefraction,
+                .metallic,
+                .none,
+                .objectSpaceNormal,
+                .opacity,
+                .roughness,
+                .sheen,
+                .sheenTint,
+                .specular,
+                .specularExponent,
+                .specularTint,
+                .subsurface,
+                .tangentSpaceNormal,
+                .userDefined
+            ]
+        }
+    }
+    
     func toString() -> String {
         switch self {
             case .ambientOcclusion:

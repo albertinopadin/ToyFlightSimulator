@@ -46,7 +46,7 @@ tiled_deferred_point_light_fragment(         PointLightOut  in              [[ s
     float3 normal = gBuffer.normal.xyz;
     float3 worldPosition = gBuffer.position.xyz;
     
-    ShaderMaterial material {
+    MaterialProperties material {
         .color = 1
     };
     

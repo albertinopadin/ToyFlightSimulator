@@ -38,7 +38,7 @@ tiled_deferred_directional_light_fragment(         VertexQuadOut  in         [[ 
     float4 albedo = gBuffer.albedo;
     float3 normal = gBuffer.normal.xyz;
     
-    ShaderMaterial material;
+    MaterialProperties material;
     material.color = albedo;
     material.shininess = 0.1;   // Shininess == 1 results in all black screen
     material.ambient = 1.0;     // Should be ambient occlusion
