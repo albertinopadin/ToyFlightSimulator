@@ -242,8 +242,8 @@ class FlightboxScene: GameScene {
         quad.rotateZ(fdTime)
         
         let ftTime = Float(GameTime.TotalGameTime)
-        pl2.moveX(cos(ftTime * 10))
-        pl2.moveZ(sin(ftTime * 10))
+        pl2.moveX(cos(ftTime * 5))
+        pl2.moveZ(sin(ftTime * 5))
         
 //        InputManager.handleMouseClickDebounced(command: .ClickSelect) {
 //            print("Mouse position in window: \(Mouse.GetMouseWindowPosition())")

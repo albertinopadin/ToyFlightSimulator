@@ -9,10 +9,9 @@ import SwiftUI
 
 struct TFSMenu: View {
     @Binding var framesPerSecond: FPS
+    @Binding var rendererType: RendererType
     
     var viewSize: CGSize
-    
-    @State private var rendererType: RendererType = .TiledDeferred
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -72,5 +71,7 @@ struct TFSMenu: View {
 }
 
 #Preview {
-    TFSMenu(framesPerSecond: Binding<FPS>.constant(.FPS_120), viewSize: CGSize(width: 1920, height: 1080))
+    TFSMenu(framesPerSecond: Binding<FPS>.constant(.FPS_120),
+            rendererType: Binding<RendererType>.constant(.TiledDeferred),
+            viewSize: CGSize(width: 1920, height: 1080))
 }

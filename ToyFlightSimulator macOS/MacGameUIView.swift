@@ -14,15 +14,17 @@ struct MacGameUIView: View {
     @State private var shouldDisplayMenu: Bool = false
     @State private var shouldDisplayGameStats: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
+    @State private var rendererType: RendererType = .TiledDeferred
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 MacMetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize),
-                                    refreshRate: framesPerSecond)
+                                    refreshRate: framesPerSecond,
+                                    rendererType: rendererType)
                 
                 if shouldDisplayMenu {
-                    TFSMenu(framesPerSecond: $framesPerSecond, viewSize: viewSize)
+                    TFSMenu(framesPerSecond: $framesPerSecond, rendererType: $rendererType, viewSize: viewSize)
                 }
                 
                 if shouldDisplayGameStats {

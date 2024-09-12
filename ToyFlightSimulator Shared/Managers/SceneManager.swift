@@ -53,6 +53,13 @@ final class SceneManager {
         }
     }
     
+    public static func TeardownScene() {
+        CurrentScene?.teardownScene()
+        _sceneType = nil
+        _view = nil
+        _rendererType = nil
+    }
+    
     public static func Update(deltaTime: Double) {
         if !Paused {
             GameTime.UpdateTime(deltaTime)

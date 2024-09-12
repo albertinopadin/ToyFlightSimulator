@@ -47,6 +47,9 @@ tiled_deferred_gbuffer_fragment(VertexOut                   in                  
     
     color.a = Lighting::CalculateShadow(in.shadowPosition, shadowTexture);
     
+    // Testing
+//    color.xyz *= material.opacity;
+    
     float4 normal = float4(normalize(in.worldNormal), 1.0);
     
     if (!is_null_texture(normalTexture)) {

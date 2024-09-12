@@ -7,23 +7,29 @@
 
 import SwiftUI
 
+class TFSCoordinator {
+    var renderer: Renderer
+    
+    init(renderer: Renderer) {
+        self.renderer = renderer
+    }
+}
+
 struct MacMetalViewWrapper: NSViewRepresentable {
     typealias NSViewType = GameView
     
     var viewSize: CGSize
     var refreshRate: FPS
+    var rendererType: RendererType
     
-    func makeCoordinator() -> Renderer {
+    func makeCoordinator() -> TFSCoordinator {
         guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
             fatalError("Metal is not supported on this device")
         }
         
         Engine.Start(device: defaultDevice)
-//        let rendererType: RendererType = .OrderIndependentTransparency
-//        let rendererType: RendererType = .SinglePassDeferredLighting
-        let rendererType: RendererType = .TiledDeferred
         let renderer = initRenderer(type: rendererType)
-        return renderer
+        return TFSCoordinator(renderer: renderer)
     }
     
     func initRenderer(type: RendererType) -> Renderer {
@@ -49,19 +55,32 @@ struct MacMetalViewWrapper: NSViewRepresentable {
         gameView.preferredFramesPerSecond = refreshRate.rawValue
         gameView.drawableSize = viewSize
         
-        context.coordinator.metalView = gameView
-        SceneManager.SetScene(Preferences.StartingSceneType, 
+        context.coordinator.renderer.metalView = gameView
+        SceneManager.SetScene(Preferences.StartingSceneType,
                               mtkView: gameView,
-                              rendererType: context.coordinator.rendererType)
+                              rendererType: context.coordinator.renderer.rendererType)
         
         return gameView
     }
     
     func updateNSView(_ nsView: NSViewType, context: Context) {
+        print("[updateNSView] renderer type: \(rendererType)")
+        if rendererType != context.coordinator.renderer.rendererType {
+//            nsView.isPaused = true
+            SceneManager.TeardownScene()
+            let newRenderer = initRenderer(type: rendererType)
+            newRenderer.metalView = nsView
+            context.coordinator.renderer = newRenderer
+            SceneManager.SetScene(Preferences.StartingSceneType,
+                                  mtkView: nsView,
+                                  rendererType: context.coordinator.renderer.rendererType)
+            SceneManager.Paused = true
+        }
+        
         let newSize = nsView.bounds.size
         if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
-            context.coordinator.metalView.drawableSize = nsView.bounds.size
-            context.coordinator.metalView.preferredFramesPerSecond = refreshRate.rawValue
+            context.coordinator.renderer.metalView.drawableSize = nsView.bounds.size
+            context.coordinator.renderer.metalView.preferredFramesPerSecond = refreshRate.rawValue
         }
     }
 }
@@ -69,6 +88,6 @@ struct MacMetalViewWrapper: NSViewRepresentable {
 struct MacMetalViewWrapper_Previews: PreviewProvider {
     static var previewSize = CGSize(width: 1920, height: 1080)
     static var previews: some View {
-        MacMetalViewWrapper(viewSize: previewSize, refreshRate: .FPS_120)
+        MacMetalViewWrapper(viewSize: previewSize, refreshRate: .FPS_120, rendererType: .TiledDeferred)
     }
 }
