@@ -165,8 +165,10 @@ class Mesh {
     }
     
     func drawPrimitives(_ renderEncoder: MTLRenderCommandEncoder,
+                        objectName: String,
                         material: MaterialProperties? = nil,
                         applyMaterials: Bool = true,
+                        withTransparency: Bool = false,
                         baseColorTextureType: TextureType = .None,
                         normalMapTextureType: TextureType = .None,
                         specularTextureType: TextureType = .None,
@@ -178,28 +180,28 @@ class Mesh {
                 if let submeshesToDisplay {
                     for submesh in _submeshes {
                         if submeshesToDisplay[submesh.name] ?? false {
-                            if applyMaterials {
-                                submesh.material?.applyTextures(with: renderEncoder,
-                                                                baseColorTextureType: baseColorTextureType,
-                                                                normalMapTextureType: normalMapTextureType,
-                                                                specularTextureType: specularTextureType)
-                                submesh.applyMaterial(with: renderEncoder, customMaterial: material)
-                            }
-
-                            drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
+                            drawSubmesh(renderEncoder,
+                                        submesh: submesh,
+                                        objectName: objectName,
+                                        material: material,
+                                        applyMaterials: applyMaterials,
+                                        withTransparency: withTransparency,
+                                        baseColorTextureType: baseColorTextureType,
+                                        normalMapTextureType: normalMapTextureType,
+                                        specularTextureType: specularTextureType)
                         }
                     }
                 } else {
                     for submesh in _submeshes {
-                        if applyMaterials {
-                            submesh.material?.applyTextures(with: renderEncoder,
-                                                            baseColorTextureType: baseColorTextureType,
-                                                            normalMapTextureType: normalMapTextureType,
-                                                            specularTextureType: specularTextureType)
-                            submesh.applyMaterial(with: renderEncoder, customMaterial: material)
-                        }
-                        
-                        drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
+                        drawSubmesh(renderEncoder,
+                                    submesh: submesh,
+                                    objectName: objectName,
+                                    material: material,
+                                    applyMaterials: applyMaterials,
+                                    withTransparency: withTransparency,
+                                    baseColorTextureType: baseColorTextureType,
+                                    normalMapTextureType: normalMapTextureType,
+                                    specularTextureType: specularTextureType)
                     }
                 }
             } else {
@@ -216,12 +218,36 @@ class Mesh {
         
         for child in _childMeshes {
             child.drawPrimitives(renderEncoder,
+                                 objectName: objectName,
                                  material: material,
                                  applyMaterials: applyMaterials,
+                                 withTransparency: withTransparency,
                                  baseColorTextureType: baseColorTextureType,
                                  normalMapTextureType: normalMapTextureType,
                                  specularTextureType: specularTextureType,
                                  submeshesToDisplay: submeshesToDisplay)
+        }
+    }
+    
+    func drawSubmesh(_ renderEncoder: MTLRenderCommandEncoder,
+                     submesh: Submesh,
+                     objectName: String,
+                     material: MaterialProperties? = nil,
+                     applyMaterials: Bool = true,
+                     withTransparency: Bool = false,
+                     baseColorTextureType: TextureType = .None,
+                     normalMapTextureType: TextureType = .None,
+                     specularTextureType: TextureType = .None) {
+        if withTransparency == submesh.material!.isTransparent {
+            if applyMaterials {
+                submesh.material?.applyTextures(with: renderEncoder,
+                                                baseColorTextureType: baseColorTextureType,
+                                                normalMapTextureType: normalMapTextureType,
+                                                specularTextureType: specularTextureType)
+                submesh.applyMaterial(with: renderEncoder, customMaterial: material)
+            }
+            
+            drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
         }
     }
     

@@ -495,9 +495,12 @@ class F18Usdz: Aircraft {
     
     override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
+                           withTransparency: Bool = false,
                            submeshesToRender: [String : Bool]? = nil) {
 //        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToDisplay)
-        super.doRender(renderEncoder, applyMaterials: applyMaterials)
+        super.doRender(renderEncoder, 
+                       applyMaterials: applyMaterials,
+                       withTransparency: withTransparency)
     }
     
     override func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String : Bool]?) {

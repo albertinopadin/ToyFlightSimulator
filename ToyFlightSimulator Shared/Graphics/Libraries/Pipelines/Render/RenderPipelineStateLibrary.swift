@@ -36,6 +36,8 @@ enum RenderPipelineStateType {
     case TiledDeferredDirectionalLight
     case TiledDeferredPointLight
     
+    case TiledDeferredTransparency
+    
     // For testing:
     case Icosahedron
     
@@ -72,6 +74,8 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(TiledDeferredGBufferPipelineState(), forKey: .TiledDeferredGBuffer)
         _library.updateValue(TiledDeferredDirectionalLightPipelineState(), forKey: .TiledDeferredDirectionalLight)
         _library.updateValue(TiledDeferredPointLightPipelineState(), forKey: .TiledDeferredPointLight)
+        
+        _library.updateValue(TiledDeferredTransparencyPipelineState(), forKey: .TiledDeferredTransparency)
         
         _library.updateValue(ParticleRenderPipelineState(), forKey: .Particle)
     }

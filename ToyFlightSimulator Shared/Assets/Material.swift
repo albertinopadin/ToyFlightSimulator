@@ -19,6 +19,10 @@ struct Material: sizeable {
     public var ambientOcclusionTexture: MTLTexture?
     public var opacityTexture: MTLTexture?
     
+    public var isTransparent: Bool {
+        return opacityTexture != nil || properties.opacity < 1.0
+    }
+    
     init(_ properties: MaterialProperties) {
         self.properties = properties
     }
@@ -26,7 +30,7 @@ struct Material: sizeable {
     init(_ mdlMaterial: MDLMaterial) {
         name = mdlMaterial.name
         // TODO: 
-//        setProperties(with: mdlMaterial, semantics: [.emission, .baseColor, .specular, .specularExponent])
+        setProperties(with: mdlMaterial, semantics: [.emission, .baseColor, .specular, .specularExponent, .opacity])
         populateMaterial(with: mdlMaterial)
     }
     
@@ -74,6 +78,7 @@ struct Material: sizeable {
                         switch semantic {
                             case .opacity:
                                 properties.opacity = property.floatValue
+                                print("[Material populateMaterial] got opacity: \(property.floatValue)")
                             default:
                                 print("Property was not opacity")
                         }
@@ -108,6 +113,7 @@ struct Material: sizeable {
                 ambientOcclusionTexture = texture
             case .opacity:
                 opacityTexture = texture
+                print("[Material populateTexture] Got opacity texture!")
             default:
                 print("Got string for semantic \(semantic.toString())")
                 
@@ -138,6 +144,9 @@ struct Material: sizeable {
                         if shininess != .zero {
                             properties.shininess = shininess
                         }
+                    case .opacity:
+                        properties.opacity = materialProp.floatValue
+                        print("[Material setProperties] got opacity: \(materialProp.floatValue)")
                     default:
                         print("[Material setShaderMaterialProperty] Unused semantic: \(semantic.toString())")
                 }

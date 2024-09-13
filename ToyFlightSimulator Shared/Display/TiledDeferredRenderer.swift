@@ -159,6 +159,17 @@ class TiledDeferredRenderer: Renderer {
         }
     }
     
+    func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
+        encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
+//            renderEncoder.setCullMode(.none)
+//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
+            SceneManager.Render(with: renderEncoder,
+                                renderPipelineStateType: .TiledDeferredTransparency,
+                                withTransparency: true)
+        }
+    }
+    
     func encodeParticleComputePass(into commandBuffer: MTLCommandBuffer) {
         encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
             computeEncoder.setComputePipelineState(particleComputePipelineState)
@@ -238,6 +249,7 @@ class TiledDeferredRenderer: Renderer {
                     SceneManager.SetSceneConstants(with: renderEncoder)
                     encodeGBufferStage(using: renderEncoder)
                     encodeLightingStage(using: renderEncoder)
+                    encodeTransparencyStage(using: renderEncoder)
                     encodeParticleRenderStage(using: renderEncoder)
                 }
             }

@@ -166,11 +166,13 @@ class GameScene: Node {
     
     override func render(with renderEncoder: MTLRenderCommandEncoder,
                          renderPipelineStateType: RenderPipelineStateType,
-                         applyMaterials: Bool = true) {
-        renderEncoder.pushDebugGroup("Rendering \(renderPipelineStateType) Scene")
+                         applyMaterials: Bool = true,
+                         withTransparency: Bool = false) {
+        renderEncoder.pushDebugGroup("Rendering \(renderPipelineStateType) Scene; withTransparency: \(withTransparency)")
         super.render(with: renderEncoder,
                      renderPipelineStateType: renderPipelineStateType,
-                     applyMaterials: applyMaterials)
+                     applyMaterials: applyMaterials,
+                     withTransparency: withTransparency)
         renderEncoder.popDebugGroup()
     }
 }

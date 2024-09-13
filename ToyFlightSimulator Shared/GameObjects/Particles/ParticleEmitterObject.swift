@@ -37,6 +37,7 @@ class ParticleEmitterObject: GameObject, ParticleEmitterEntity {
     
     override func doRender(_ renderEncoder: any MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
+                           withTransparency: Bool = false,
                            submeshesToRender: [String : Bool]? = nil) {
         if shouldEmit && emitter.currentParticles > 0 {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Particle])

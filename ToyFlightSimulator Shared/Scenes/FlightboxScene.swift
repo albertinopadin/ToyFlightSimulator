@@ -63,22 +63,16 @@ class FlightboxScene: GameScene {
 //        f16Sphere.setScale(0.5)
 //        f16.addChild(f16Sphere)
         
-        if _rendererType == .OrderIndependentTransparency {
-            let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
-            addChild(sky)
-        } else {
-            let sky = SkyBox(skyBoxTextureType: .SkyMap)
-            addChild(sky)
-        }
-        
         // TODO: Why does position with z = 0 result in much darker lighting ???
         sun.setPosition(0, 100, 4)
         sun.setLightBrightness(1.0)
 //        sun.setLightBrightness(0.2)
         sun.setLightColor(1, 1, 1)
-        sun.setLightAmbientIntensity(0.04)
+//        sun.setLightAmbientIntensity(0.04)
+        sun.setLightAmbientIntensity(0.5)
 //        sun.setLightDiffuseIntensity(0.15)
-        sun.setLightDiffuseIntensity(0)
+        sun.setLightDiffuseIntensity(0.5)
+//        sun.setLightDiffuseIntensity(0)
         addLight(sun)
         
         var sunBallMat = MaterialProperties()
@@ -221,6 +215,14 @@ class FlightboxScene: GameScene {
 //        testCube.useMaterial(testCubeMaterial)
 //        testCube.setPosition(f16Pos.x, 1, f16Pos.z - 4)
 //        addChild(testCube)
+        
+        if _rendererType == .OrderIndependentTransparency {
+            let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+            addChild(sky)
+        } else {
+            let sky = SkyBox(skyBoxTextureType: .SkyMap)
+            addChild(sky)
+        }
         
         print("Flightbox scene children:")
         for child in children {

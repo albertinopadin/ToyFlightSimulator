@@ -90,11 +90,13 @@ final class SceneManager {
     
     public static func Render(with renderEncoder: MTLRenderCommandEncoder,
                               renderPipelineStateType: RenderPipelineStateType,
-                              applyMaterials: Bool = true) {
+                              applyMaterials: Bool = true,
+                              withTransparency: Bool = false) {
         renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
         CurrentScene?.render(with: renderEncoder,
                              renderPipelineStateType: renderPipelineStateType,
-                             applyMaterials: applyMaterials)
+                             applyMaterials: applyMaterials,
+                             withTransparency: withTransparency)
     }
     
     public static func RenderGBuffer(with renderEncoder: MTLRenderCommandEncoder) {

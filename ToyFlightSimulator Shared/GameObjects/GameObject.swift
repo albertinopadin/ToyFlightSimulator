@@ -48,16 +48,19 @@ class GameObject: Node, Renderable {
     
     func doRender(_ renderEncoder: MTLRenderCommandEncoder,
                   applyMaterials: Bool = true,
+                  withTransparency: Bool = false,
                   submeshesToRender: [String: Bool]? = nil) {
-        encodeRender(using: renderEncoder, label: "Rendering \(self.getName())") {
+        encodeRender(using: renderEncoder, label: "Rendering \(self.getName()) withTransparency: \(withTransparency)") {
             // Vertex Shader
             renderEncoder.setVertexBytes(&_modelConstants,
                                          length: ModelConstants.stride,
                                          index: TFSBufferModelConstants.index)
             
             _mesh.drawPrimitives(renderEncoder,
+                                 objectName: self.getName(),
                                  material: _material,
                                  applyMaterials: applyMaterials,
+                                 withTransparency: withTransparency,
                                  baseColorTextureType: _baseColorTextureType,
                                  normalMapTextureType: _normalMapTextureType,
                                  specularTextureType: _specularTextureType,

@@ -53,6 +53,7 @@ class InstancedGameObject: Node {
 extension InstancedGameObject: Renderable {
     func doRender(_ renderEncoder: MTLRenderCommandEncoder,
                   applyMaterials: Bool = true,
+                  withTransparency: Bool = false,
                   submeshesToRender: [String: Bool]? = nil) {
         renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Instanced])
         renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
@@ -63,7 +64,7 @@ extension InstancedGameObject: Renderable {
         // Fragment Shader
         renderEncoder.setFragmentBytes(&_material, length: MaterialProperties.stride, index: 1)
         
-        _mesh.drawPrimitives(renderEncoder, submeshesToDisplay: submeshesToRender)
+        _mesh.drawPrimitives(renderEncoder, objectName: self.getName(), submeshesToDisplay: submeshesToRender)
     }
     
     func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {

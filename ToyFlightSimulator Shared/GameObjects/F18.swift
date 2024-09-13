@@ -604,9 +604,13 @@ class F18: Aircraft {
     
     override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
+                           withTransparency: Bool = false,
                            submeshesToRender: [String : Bool]? = nil) {
         renderEncoder.setFrontFacing(.counterClockwise)
-        super.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
+        super.doRender(renderEncoder, 
+                       applyMaterials: applyMaterials,
+                       withTransparency: withTransparency,
+                       submeshesToRender: submeshesToRender)
         renderEncoder.setFrontFacing(.clockwise)
     }
     

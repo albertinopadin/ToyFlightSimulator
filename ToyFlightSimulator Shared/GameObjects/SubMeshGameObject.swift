@@ -45,6 +45,7 @@ class SubMeshGameObject: GameObject {
     
     override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
                            applyMaterials: Bool = true,
+                           withTransparency: Bool = false,
                            submeshesToRender: [String: Bool]? = nil) {
         encodeRender(using: renderEncoder, label: "Rendering \(self.getName())") {
             renderEncoder.setVertexBytes(&_modelConstants,
@@ -54,6 +55,7 @@ class SubMeshGameObject: GameObject {
             _singleSMMesh.drawPrimitives(renderEncoder,
                                          material: _material,
                                          applyMaterials: applyMaterials,
+                                         withTransparency: withTransparency,
                                          baseColorTextureType: _baseColorTextureType,
                                          normalMapTextureType: _normalMapTextureType,
                                          specularTextureType: _specularTextureType)

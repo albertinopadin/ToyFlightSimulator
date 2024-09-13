@@ -47,6 +47,9 @@ enum ShaderType {
     case TiledDeferredPointLightVertex
     case TiledDeferredPointLightFragment
     
+    case TiledDeferredTransparencyVertex
+    case TiledDeferredTransparencyFragment
+    
     case ComputeParticles
     
     case ParticlesVertex
@@ -107,6 +110,11 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         
         _library.updateValue(Shader(functionName: "vertex_particle"), forKey: .ParticlesVertex)
         _library.updateValue(Shader(functionName: "fragment_particle"), forKey: .ParticlesFragment)
+        
+        _library.updateValue(Shader(functionName: "tiled_deferred_transparency_vertex"),
+                             forKey: .TiledDeferredTransparencyVertex)
+        _library.updateValue(Shader(functionName: "tiled_deferred_transparency_fragment"),
+                             forKey: .TiledDeferredTransparencyFragment)
         
         // Compute Functions:
         _library.updateValue(Shader(functionName: "compute_particle"), forKey: .ComputeParticles)

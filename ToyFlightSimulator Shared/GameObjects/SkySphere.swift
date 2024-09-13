@@ -18,10 +18,12 @@ class SkySphere: GameObject {
     
     override func render(with renderEncoder: MTLRenderCommandEncoder,
                          renderPipelineStateType: RenderPipelineStateType,
-                         applyMaterials: Bool = true) {
+                         applyMaterials: Bool = true,
+                         withTransparency: Bool = false) {
         renderEncoder.setFragmentTexture(Assets.Textures[_skySphereTextureType], index: 10)
         super.render(with: renderEncoder,
                      renderPipelineStateType: renderPipelineStateType,
-                     applyMaterials: applyMaterials)
+                     applyMaterials: applyMaterials,
+                     withTransparency: withTransparency)
     }
 }

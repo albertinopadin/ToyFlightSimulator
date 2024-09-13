@@ -119,7 +119,7 @@ class OITRenderer: Renderer {
             encodeRenderStage(using: renderEncoder, label: "Final Render") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Final])
                 renderEncoder.setFragmentTexture(Assets.Textures[.BaseColorRender_0], index: 0)
-                Assets.Meshes[.Quad].drawPrimitives(renderEncoder)
+                Assets.Meshes[.Quad].drawPrimitives(renderEncoder, objectName: "Final Quad")
             }
         }
     }

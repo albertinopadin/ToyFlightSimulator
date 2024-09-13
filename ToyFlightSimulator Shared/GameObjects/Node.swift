@@ -130,6 +130,9 @@ class Node: ClickSelectable {
         if self is PointLightObject {
             return (renderPipelineStateType == .LightMask || renderPipelineStateType == .SinglePassDeferredPointLight) &&
                    (_renderPipelineStateType == .LightMask || _renderPipelineStateType == .SinglePassDeferredPointLight)
+        } else if renderPipelineStateType == .TiledDeferredTransparency {
+            return (_renderPipelineStateType != .Skybox && _renderPipelineStateType != .SkySphere &&
+                    !(self is LightObject) && !(self is Icosahedron) && !(self is ParticleEmitterEntity))
         } else {
             return _renderPipelineStateType == renderPipelineStateType
         }
@@ -137,15 +140,20 @@ class Node: ClickSelectable {
     
     func render(with renderEncoder: MTLRenderCommandEncoder,
                 renderPipelineStateType: RenderPipelineStateType,
-                applyMaterials: Bool = true) {
+                applyMaterials: Bool = true,
+                withTransparency: Bool = false) {
         if shouldRender(with: renderPipelineStateType), let renderable = self as? Renderable {
-            renderable.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: nil)
+            renderable.doRender(renderEncoder, 
+                                applyMaterials: applyMaterials,
+                                withTransparency: withTransparency,
+                                submeshesToRender: nil)
         }
         
         for child in children {
             child.render(with: renderEncoder,
                          renderPipelineStateType: renderPipelineStateType,
-                         applyMaterials: applyMaterials)
+                         applyMaterials: applyMaterials,
+                         withTransparency: withTransparency)
         }
     }
     
@@ -158,7 +166,10 @@ class Node: ClickSelectable {
     
     func renderGBuffer(with renderEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
         if shouldRenderGBuffer(gBufferRPS: gBufferRPS), let renderable = self as? Renderable {
-            renderable.doRender(renderEncoder, applyMaterials: true, submeshesToRender: nil)
+            renderable.doRender(renderEncoder, 
+                                applyMaterials: true,
+                                withTransparency: false,
+                                submeshesToRender: nil)
         }
         
         for child in children {
@@ -173,7 +184,10 @@ class Node: ClickSelectable {
     
     func renderTiledDeferredGBuffer(with renderEncoder: MTLRenderCommandEncoder) {
         if shouldRenderTiledGBuffer(), let renderable = self as? Renderable {
-            renderable.doRender(renderEncoder, applyMaterials: true, submeshesToRender: nil)
+            renderable.doRender(renderEncoder, 
+                                applyMaterials: true,
+                                withTransparency: false,
+                                submeshesToRender: nil)
         }
         
         for child in children {

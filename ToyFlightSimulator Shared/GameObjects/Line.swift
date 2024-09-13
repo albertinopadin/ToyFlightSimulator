@@ -27,6 +27,7 @@ class Line: GameObject {
     
     override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
                            applyMaterials: Bool,
+                           withTransparency: Bool = false,
                            submeshesToRender: [String: Bool]? = nil) {
         super.doRender(renderEncoder)
         renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
