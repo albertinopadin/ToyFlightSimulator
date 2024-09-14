@@ -14,7 +14,7 @@ class F35: Aircraft {
     
     init(scale: Float = 1.0, shouldUpdate: Bool = true) {
         super.init(name: Self.NAME,
-                   meshType: .Sketchfab_F35,
+                   modelType: .Sketchfab_F35,
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)

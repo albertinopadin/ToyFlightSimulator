@@ -11,7 +11,7 @@ class SkySphere: GameObject {
     private var _skySphereTextureType: TextureType!
     
     init(skySphereTextureType: TextureType) {
-        super.init(name: "SkySphere", meshType: .SkySphere, renderPipelineStateType: .SkySphere)
+        super.init(name: "SkySphere", modelType: .SkySphere, renderPipelineStateType: .SkySphere)
         _skySphereTextureType = skySphereTextureType
         setScale(1000)
     }

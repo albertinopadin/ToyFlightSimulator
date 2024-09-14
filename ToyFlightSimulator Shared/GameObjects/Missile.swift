@@ -10,9 +10,11 @@ class Missile: SubMeshGameObject {
     var speed: Float = 0.0
     
     init(name: String,
+         modelType: ModelType,
          meshType: SingleSMMeshType,
          renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
         super.init(name: name,
+                   modelType: modelType,
                    meshType: meshType,
                    renderPipelineStateType: renderPipelineStateType)
     }

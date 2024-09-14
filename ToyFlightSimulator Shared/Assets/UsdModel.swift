@@ -8,40 +8,40 @@
 import Foundation
 import MetalKit
 
-class UsdMesh: Mesh {
-    init(_ modelName: String, fileExtension: MeshExtension = .USDZ) {
+class UsdModel: Model {
+    init(_ modelName: String, fileExtension: ModelExtension = .USDZ) {
         super.init()
         
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: fileExtension.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")
         }
         
-        let descriptor = Self.createMdlVertexDescriptor()
+        let descriptor = Mesh.createMdlVertexDescriptor()
         let asset = MDLAsset(url: assetUrl,
                              vertexDescriptor: descriptor,
-                             bufferAllocator: Self.mtkMeshBufferAllocator)
+                             bufferAllocator: Mesh.mtkMeshBufferAllocator)
         
         asset.loadTextures()
         
         for i in 0..<asset.count {
             let child = asset.object(at: i)
-            print("[UsdMesh init] \(modelName) child name: \(child.name)")
-            _childMeshes.append(contentsOf: Self.makeMeshes(object: child, vertexDescriptor: descriptor))
+            print("[UsdModel init] \(modelName) child name: \(child.name)")
+            meshes.append(contentsOf: Self.makeMeshes(object: child, vertexDescriptor: descriptor))
         }
         
         // Invert Z in meshes due to USD being right handed coord system:
 //        invertMeshZ()  // Not needed for F-22
         
-        print("[UsdMesh init] Num child meshes for \(modelName): \(_childMeshes.count)")
+        print("[UsdModel init] Num meshes for \(modelName): \(meshes.count)")
     }
     
     private static func makeMeshes(object: MDLObject, vertexDescriptor: MDLVertexDescriptor) -> [Mesh] {
         var meshes = [Mesh]()
         
-        print("[UsdMesh makeMeshes] object named \(object.name): \(object)")
+        print("[UsdModel makeMeshes] object named \(object.name): \(object)")
         
         if let mesh = object as? MDLMesh {
-            print("[UsdMesh makeMeshes] object named \(object.name) is MDLMesh")
+            print("[UsdModel makeMeshes] object named \(object.name) is MDLMesh")
             let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
             meshes.append(newMesh)
         }
@@ -55,7 +55,7 @@ class UsdMesh: Mesh {
     }
     
     private func invertMeshZ() {
-        for mesh in _childMeshes {
+        for mesh in meshes {
             let vertexBuffer = mesh._vertexBuffer!
             let count = vertexBuffer.length / Vertex.stride
             var pointer = vertexBuffer.contents().bindMemory(to: Vertex.self, capacity: count)

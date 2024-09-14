@@ -15,9 +15,15 @@ class Assets {
     private static var _textureLibrary: TextureLibrary!
     public static var Textures: TextureLibrary { return _textureLibrary }
     
+    private static var _modelLibrary: ModelLibrary!
+    public static var Models: ModelLibrary { return _modelLibrary }
+    
     public static func Initialize() {
         self._meshLibrary = MeshLibrary()
         self._singleSMMeshLibrary = SingleSMMeshLibrary()
         self._textureLibrary = TextureLibrary()
+        
+        // The model library needs to be initialized AFTER the mesh library:
+        self._modelLibrary = ModelLibrary()
     }
 }

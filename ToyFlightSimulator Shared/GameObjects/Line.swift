@@ -19,7 +19,7 @@ class Line: GameObject {
         endVertex = Vertex(position: endPoint, color: color)
         _vertices = [startVertex, endVertex]
         _vertexBuffer = Engine.Device.makeBuffer(bytes: _vertices, length: Vertex.stride(_vertices.count))
-        super.init(name: "Line", meshType: .None)
+        super.init(name: "Line", modelType: .None)
         if color.w < 1.0 {
             _renderPipelineStateType = .OrderIndependentTransparent
         }

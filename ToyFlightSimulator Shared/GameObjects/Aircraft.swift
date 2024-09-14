@@ -21,12 +21,12 @@ class Aircraft: GameObject {
     }
     
     init(name: String,
-         meshType: MeshType,
+         modelType: ModelType,
          renderPipelineStateType: RenderPipelineStateType,
          scale: Float = 1.0,
          shouldUpdate: Bool = true) {
         self.shouldUpdate = shouldUpdate
-        super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
+        super.init(name: name, modelType: modelType, renderPipelineStateType: renderPipelineStateType)
         self.setScale(scale)
         print("[Aircraft init] name: \(name), scale: \(scale)")
         self.hasFocus = true

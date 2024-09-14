@@ -9,7 +9,7 @@ class PointLightObject: LightObject {
     init() {
         super.init(name: "Point Light",
                    lightType: Point,
-                   meshType: .Icosahedron,
+                   modelType: .Icosahedron,
                    renderPipelineStateType: .SinglePassDeferredPointLight)
     }
 }

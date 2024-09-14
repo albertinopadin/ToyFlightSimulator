@@ -11,7 +11,7 @@ class SkyBox: GameObject {
     private var _skyBoxTextureType: TextureType!
     
     init(skyBoxTextureType: TextureType) {
-        super.init(name: "SkyBox", meshType: .Skybox, renderPipelineStateType: .Skybox)
+        super.init(name: "SkyBox", modelType: .Skybox, renderPipelineStateType: .Skybox)
         _skyBoxTextureType = skyBoxTextureType
         setPosition(0, 0, -10)
         setScale(1000)

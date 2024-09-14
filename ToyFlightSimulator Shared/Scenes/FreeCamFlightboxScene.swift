@@ -8,7 +8,7 @@
 class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
     var jet = F22(shouldUpdate: false)
-    var sun = Sun(meshType: .Sphere)
+    var sun = Sun(modelType: .Sphere)
     var ground = Quad()
     var sidewinderMissile = Sidewinder()
     var aim120 = AIM120()

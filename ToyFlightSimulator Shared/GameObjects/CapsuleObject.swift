@@ -7,7 +7,7 @@
 
 class CapsuleObject: GameObject {
     init() {
-        super.init(name: "Capsule", meshType: .Capsule_Custom)
+        super.init(name: "Capsule", modelType: .Capsule)
         var material = MaterialProperties()
         material.setColor(WHITE_COLOR)
         useMaterial(material)

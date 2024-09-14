@@ -9,7 +9,7 @@ class FlightboxScene: GameScene {
     var attachedCamera = AttachedCamera(fieldOfView: 60.0,
                                         near: 0.01,
                                         far: 1000000.0)
-    var sun = Sun(meshType: .Sphere)
+    var sun = Sun(modelType: .Sphere)
     var quad = Quad()
     var capsule = CapsuleObject()
     

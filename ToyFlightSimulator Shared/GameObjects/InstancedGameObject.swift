@@ -8,17 +8,18 @@
 import MetalKit
 
 class InstancedGameObject: Node {
+    public var model: Model!
+    
     private var _material: MaterialProperties?
-    private var _mesh: Mesh!
     internal var _nodes: [Node] = []
     
     private var _modelConstantBuffer: MTLBuffer!
     
-    init(meshType: MeshType, instanceCount: Int) {
+    init(modelType: ModelType, instanceCount: Int) {
         super.init(name: "Instanced Game Object")
         self._renderPipelineStateType = .Instanced
-        self._mesh = Assets.Meshes[meshType]
-        self._mesh.setInstanceCount(instanceCount)
+        self.model = Assets.Models[modelType]
+        self.model.meshes.forEach { $0.setInstanceCount(instanceCount) }
         self.generateInstances(instanceCount)
         self.createBuffers(instanceCount)
     }
@@ -63,7 +64,7 @@ extension InstancedGameObject: Renderable {
         // Fragment Shader
         renderEncoder.setFragmentBytes(&_material, length: MaterialProperties.stride, index: 1)
         
-        _mesh.drawPrimitives(renderEncoder, submeshesToDisplay: submeshesToRender)
+        model.draw(renderEncoder, submeshesToDisplay: submeshesToRender)
     }
     
     func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {

@@ -12,10 +12,11 @@ class SubMeshGameObject: GameObject {
     var submeshName: String = ""
     
     init(name: String,
+         modelType: ModelType,
          meshType: SingleSMMeshType,
          submeshOrigin: float3 = float3(0, 0, 0),
          renderPipelineStateType: RenderPipelineStateType = .Opaque) {
-        super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
+        super.init(name: name, modelType: .None, renderPipelineStateType: renderPipelineStateType)
         _singleSMMesh = Assets.SingleSMMeshes[meshType]
         _singleSMMesh.setSubmeshOrigin(submeshOrigin)
     }
@@ -25,7 +26,7 @@ class SubMeshGameObject: GameObject {
          submeshName: String,
          submeshOrigin: float3 = float3(0, 0, 0),
          renderPipelineStateType: RenderPipelineStateType = .Opaque) {
-        super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
+        super.init(name: name, modelType: .None, renderPipelineStateType: renderPipelineStateType)
         self.submeshName = submeshName
         _singleSMMesh = SingleSMMesh.createSingleSMMeshFromModel(modelName: modelName, submeshName: submeshName)
         _singleSMMesh.setSubmeshOrigin(submeshOrigin)

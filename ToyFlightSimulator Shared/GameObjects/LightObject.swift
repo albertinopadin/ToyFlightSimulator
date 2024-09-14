@@ -7,13 +7,6 @@
 
 import MetalKit
 
-//enum LightType: UInt32 {
-//    case Ambient
-//    case Directional
-//    case Omni
-//    case Point
-//}
-
 class LightObject: GameObject {
     var lightType: LightType
     var lightData = LightData()
@@ -31,23 +24,23 @@ class LightObject: GameObject {
     let shadowScale = Transform.scaleMatrix(.init(0.5, -0.5, 1))
     let shadowTranslate = Transform.translationMatrix(.init(0.5, 0.5, 0))
     
-    private var _meshType: MeshType = .None
+    private var _modelType: ModelType = .None
     
     // TODO: What RPS is appropriate for a LightObject ???
     init(name: String, lightType: LightType = Directional, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         self.lightType = lightType
-        super.init(name: name, meshType: .None, renderPipelineStateType: renderPipelineStateType)
+        super.init(name: name, modelType: .None, renderPipelineStateType: renderPipelineStateType)
         self.lightData.shadowTransformMatrix = shadowTranslate * shadowScale
     }
     
     // TODO: What RPS is appropriate for a LightObject ???
     init(name: String,
          lightType: LightType = Directional,
-         meshType: MeshType = .Sphere,
+         modelType: ModelType = .Sphere,
          renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         self.lightType = lightType
-        self._meshType = meshType
-        super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
+        self._modelType = modelType
+        super.init(name: name, modelType: modelType, renderPipelineStateType: renderPipelineStateType)
         self.lightData.shadowTransformMatrix = shadowTranslate * shadowScale
     }
     
@@ -59,10 +52,6 @@ class LightObject: GameObject {
 //        let position = self.modelMatrix.columns.3.xyz
 //        self.lightData.position = position
 //        self.lightData.eyeDirection = normalize(float4(-position, 1))
-        
-//        print("[LightObject update]")
-//        print("self.getPosition: \(self.getPosition())")
-//        print("self.modelMatrix.columns.3.xyz: \(self.modelMatrix.columns.3.xyz)")
         
         self.lightData.position = self.getPosition()
 //        self.lightData.eyeDirection = normalize(float4(-self.getPosition(), 1))
@@ -76,7 +65,7 @@ class LightObject: GameObject {
 extension LightObject {
     public func setLightColor(_ color: float3) {
         self.lightData.color = color
-        if _meshType != .None {
+        if _modelType != .None {
             var material = MaterialProperties()
             material.color = float4(color, 1.0)  // TODO: Why are we setting the material color alpha to zero?
             self.useMaterial(material)

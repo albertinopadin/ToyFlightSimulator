@@ -19,7 +19,7 @@ class F22: Aircraft {
     
     init(scale: Float = 1.0, shouldUpdate: Bool = true) {
         super.init(name: Self.NAME,
-                   meshType: .Sketchfab_F22,
+                   modelType: .Sketchfab_F22,
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)

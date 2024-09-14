@@ -18,7 +18,7 @@ import MetalKit
 // Inheriting from Aircraft for testing:
 class Temple: Aircraft {
     init(scale: Float) {
-        super.init(name: "Temple", meshType: .Temple, renderPipelineStateType: .OpaqueMaterial, scale: scale)
+        super.init(name: "Temple", modelType: .Temple, renderPipelineStateType: .OpaqueMaterial, scale: scale)
     }
     
     override func doRender(_ renderEncoder: MTLRenderCommandEncoder, 

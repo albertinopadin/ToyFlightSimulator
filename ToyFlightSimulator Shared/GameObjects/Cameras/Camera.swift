@@ -37,7 +37,7 @@ class Camera: GameObject {
          fieldOfView: Float = 45.0,
          near: Float = 0.1,
          far: Float = 1000) {
-        super.init(name: name, meshType: .None)
+        super.init(name: name, modelType: .None)
         self.cameraType = cameraType
         self.fieldOfView = fieldOfView
         self.near = near

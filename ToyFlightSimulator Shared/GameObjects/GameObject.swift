@@ -8,31 +8,32 @@
 import MetalKit
 
 class GameObject: Node, Renderable {
+    public var model: Model!
+    
     internal var _modelConstants = ModelConstants()
-    internal var _mesh: Mesh!
     
     internal var _material: MaterialProperties? = nil
     internal var _baseColorTextureType: TextureType = .None
     internal var _normalMapTextureType: TextureType = .None
     internal var _specularTextureType: TextureType = .None
     
-    init(name: String, meshType: MeshType, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
+    init(name: String, modelType: ModelType, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
         super.init(name: name)
         self._renderPipelineStateType = renderPipelineStateType
         if renderPipelineStateType == .OpaqueMaterial {
             self._gBufferRenderPipelineStateType = .SinglePassDeferredGBufferMaterial
         }
-        _mesh = Assets.Meshes[meshType]
+        model = Assets.Models[modelType]
         print("GameObject named \(self.getName()) render pipeline state type: \(self._renderPipelineStateType)")
     }
     
-    convenience init(name: String,
-                     meshType: MeshType,
-                     renderPipelineStateType: RenderPipelineStateType = .Opaque,
-                     gBufferRPS: RenderPipelineStateType = .SinglePassDeferredGBufferBase) {
-        self.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
-        self._gBufferRenderPipelineStateType = gBufferRPS
-    }
+//    convenience init(name: String,
+//                     meshType: MeshType,
+//                     renderPipelineStateType: RenderPipelineStateType = .Opaque,
+//                     gBufferRPS: RenderPipelineStateType = .SinglePassDeferredGBufferBase) {
+//        self.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
+//        self._gBufferRenderPipelineStateType = gBufferRPS
+//    }
     
     override func update() {
         super.update()
@@ -55,13 +56,13 @@ class GameObject: Node, Renderable {
                                          length: ModelConstants.stride,
                                          index: TFSBufferModelConstants.index)
             
-            _mesh.drawPrimitives(renderEncoder,
-                                 material: _material,
-                                 applyMaterials: applyMaterials,
-                                 baseColorTextureType: _baseColorTextureType,
-                                 normalMapTextureType: _normalMapTextureType,
-                                 specularTextureType: _specularTextureType,
-                                 submeshesToDisplay: submeshesToRender)
+            model.draw(renderEncoder,
+                       material: _material,
+                       applyMaterials: applyMaterials,
+                       baseColorTextureType: _baseColorTextureType,
+                       normalMapTextureType: _normalMapTextureType,
+                       specularTextureType: _specularTextureType,
+                       submeshesToDisplay: submeshesToRender)
         }
     }
     
@@ -70,7 +71,7 @@ class GameObject: Node, Renderable {
             renderEncoder.setVertexBytes(&_modelConstants,
                                          length: ModelConstants.stride,
                                          index: TFSBufferModelConstants.index)
-            _mesh.drawShadowPrimitives(renderEncoder, submeshesToDisplay: submeshesToRender)
+            model.drawShadow(renderEncoder, submeshesToDisplay: submeshesToRender)
         }
     }
 }
@@ -102,6 +103,6 @@ extension GameObject {
         _gBufferRenderPipelineStateType = .SinglePassDeferredGBufferMaterial
         
         _material = material
-        _mesh._submeshes.forEach { $0.material = Material(material) }
+        model.meshes.forEach { $0._submeshes.forEach { $0.material = Material(material) } }
     }
 }

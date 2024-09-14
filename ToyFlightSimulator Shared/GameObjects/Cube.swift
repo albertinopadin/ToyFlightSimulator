@@ -7,6 +7,6 @@
 
 class Cube: GameObject {
     init() {
-        super.init(name: "Cube", meshType: .Cube_Custom)
+        super.init(name: "Cube", modelType: .Cube)
     }
 }

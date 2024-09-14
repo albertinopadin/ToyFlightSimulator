@@ -13,10 +13,10 @@ class ParticleEmitterObject: GameObject, ParticleEmitterEntity {
     
     init(name: String,
          emitter: ParticleEmitter,
-         meshType: MeshType = .None,
+         modelType: ModelType = .None,
          renderPipelineStateType: RenderPipelineStateType = .Particle) {
         self.emitter = emitter
-        super.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
+        super.init(name: name, modelType: modelType, renderPipelineStateType: renderPipelineStateType)
     }
     
     override func update() {

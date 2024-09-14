@@ -7,15 +7,7 @@
 
 import MetalKit
 
-enum MeshExtension: String {
-    case OBJ = "obj"
-    case USDC = "usdc"
-    case USDZ = "usdz"
-}
-
-// Vertex Information
 class Mesh {
-    // Trying out only declaring this once...
     public static let mtkMeshBufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)
     
     private static let loadingQueue = DispatchQueue(label: "mesh-model-loading-queue")
@@ -26,7 +18,6 @@ class Mesh {
     internal var _vertexBuffer: MTLBuffer! = nil
     internal var _instanceCount: Int = 1
     internal var _submeshes: [Submesh] = []
-    internal var _childMeshes: [Mesh] = []
     internal var _metalKitMesh: MTKMesh? = nil
     
     init() {
@@ -213,16 +204,6 @@ class Mesh {
                                                     instanceCount: _instanceCount)
             }
         }
-        
-        for child in _childMeshes {
-            child.drawPrimitives(renderEncoder,
-                                 material: material,
-                                 applyMaterials: applyMaterials,
-                                 baseColorTextureType: baseColorTextureType,
-                                 normalMapTextureType: normalMapTextureType,
-                                 specularTextureType: specularTextureType,
-                                 submeshesToDisplay: submeshesToDisplay)
-        }
     }
     
     func drawShadowPrimitives(_ renderEncoder: MTLRenderCommandEncoder, submeshesToDisplay: [String: Bool]? = nil) {
@@ -246,10 +227,6 @@ class Mesh {
                                                     vertexCount: _vertices.count,
                                                     instanceCount: _instanceCount)
             }
-        }
-        
-        for child in _childMeshes {
-            child.drawShadowPrimitives(renderEncoder, submeshesToDisplay: submeshesToDisplay)
         }
     }
 }

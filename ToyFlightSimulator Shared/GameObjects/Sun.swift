@@ -11,8 +11,8 @@ class Sun: LightObject {
         self.setScale(float3(repeating: 0.3))
     }
     
-    init(meshType: MeshType) {
-        super.init(name: "Sun", lightType: Directional, meshType: meshType)
+    init(modelType: ModelType) {
+        super.init(name: "Sun", lightType: Directional, modelType: modelType)
         self.setScale(float3(repeating: 0.3))
     }
 }

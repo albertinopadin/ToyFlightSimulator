@@ -292,7 +292,7 @@ class F18: Aircraft {
     
     init(scale: Float = 1.0, shouldUpdate: Bool = true) {
         super.init(name: "F-18",
-                   meshType: .F18,
+                   modelType: .F18,
                    renderPipelineStateType: .OpaqueMaterial,
                    scale: scale,
                    shouldUpdate: shouldUpdate)

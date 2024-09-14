@@ -7,6 +7,6 @@
 
 class Quad: GameObject {
     init() {
-        super.init(name: "Quad", meshType: .Plane)
+        super.init(name: "Quad", modelType: .Plane)
     }
 }
