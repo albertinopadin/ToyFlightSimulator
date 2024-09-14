@@ -7,10 +7,7 @@
 
 class AIM120: Missile {
     init() {
-        super.init(name: "AIM-120", 
-                   modelType: .F18,
-                   meshType: .F18_AIM120,
-                   renderPipelineStateType: .OpaqueMaterial)
+        super.init(name: "AIM-120",  modelType: .F18, meshType: .F18_AIM120)
     }
     
     init(modelName: String, submeshName: String) {

@@ -7,23 +7,24 @@
 
 import MetalKit
 
-class SkyBox: GameObject {
-    private var _skyBoxTextureType: TextureType!
+class SkyBox: GameObject, SkyEntity {
+    public var textureType: TextureType
     
-    init(skyBoxTextureType: TextureType) {
-        super.init(name: "SkyBox", modelType: .Skybox, renderPipelineStateType: .Skybox)
-        _skyBoxTextureType = skyBoxTextureType
+    init(textureType: TextureType) {
+        self.textureType = textureType
+        super.init(name: "SkyBox", modelType: .Skybox)
         setPosition(0, 0, -10)
         setScale(1000)
     }
     
-    override func render(with renderEncoder: MTLRenderCommandEncoder,
-                         renderPipelineStateType: RenderPipelineStateType,
-                         applyMaterials: Bool = false) {
-        renderEncoder.setFragmentTexture(Assets.Textures[_skyBoxTextureType],
-                                         index: TFSTextureIndexBaseColor.index)
-        super.render(with: renderEncoder,
-                     renderPipelineStateType: renderPipelineStateType,
-                     applyMaterials: applyMaterials)
-    }
+    // TODO - Decide on consistent index for sky texture:
+//    override func render(with renderEncoder: MTLRenderCommandEncoder,
+//                         renderPipelineStateType: RenderPipelineStateType,
+//                         applyMaterials: Bool = false) {
+//        renderEncoder.setFragmentTexture(Assets.Textures[_skyBoxTextureType],
+//                                         index: TFSTextureIndexBaseColor.index)
+//        super.render(with: renderEncoder,
+//                     renderPipelineStateType: renderPipelineStateType,
+//                     applyMaterials: applyMaterials)
+//    }
 }

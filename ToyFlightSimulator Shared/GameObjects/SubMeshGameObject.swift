@@ -14,9 +14,8 @@ class SubMeshGameObject: GameObject {
     init(name: String,
          modelType: ModelType,
          meshType: SingleSMMeshType,
-         submeshOrigin: float3 = float3(0, 0, 0),
-         renderPipelineStateType: RenderPipelineStateType = .Opaque) {
-        super.init(name: name, modelType: .None, renderPipelineStateType: renderPipelineStateType)
+         submeshOrigin: float3 = float3(0, 0, 0)) {
+        super.init(name: name, modelType: .None)
         _singleSMMesh = Assets.SingleSMMeshes[meshType]
         _singleSMMesh.setSubmeshOrigin(submeshOrigin)
     }
@@ -24,9 +23,8 @@ class SubMeshGameObject: GameObject {
     init(name: String,
          modelName: String,
          submeshName: String,
-         submeshOrigin: float3 = float3(0, 0, 0),
-         renderPipelineStateType: RenderPipelineStateType = .Opaque) {
-        super.init(name: name, modelType: .None, renderPipelineStateType: renderPipelineStateType)
+         submeshOrigin: float3 = float3(0, 0, 0)) {
+        super.init(name: name, modelType: .None)
         self.submeshName = submeshName
         _singleSMMesh = SingleSMMesh.createSingleSMMeshFromModel(modelName: modelName, submeshName: submeshName)
         _singleSMMesh.setSubmeshOrigin(submeshOrigin)
@@ -42,31 +40,5 @@ class SubMeshGameObject: GameObject {
     
     public func getSubmeshVertexMetadata() -> SingleMeshVertexMetadata {
         return _singleSMMesh.vertexMetadata
-    }
-    
-    override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
-                           applyMaterials: Bool = true,
-                           submeshesToRender: [String: Bool]? = nil) {
-        encodeRender(using: renderEncoder, label: "Rendering \(self.getName())") {
-            renderEncoder.setVertexBytes(&_modelConstants,
-                                         length: ModelConstants.stride,
-                                         index: TFSBufferModelConstants.index)
-            
-            _singleSMMesh.drawPrimitives(renderEncoder,
-                                         material: _material,
-                                         applyMaterials: applyMaterials,
-                                         baseColorTextureType: _baseColorTextureType,
-                                         normalMapTextureType: _normalMapTextureType,
-                                         specularTextureType: _specularTextureType)
-        }
-    }
-    
-    override func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
-        encodeRender(using: renderEncoder, label: "Shadow Rendering \(self.getName())") {
-            renderEncoder.setVertexBytes(&_modelConstants,
-                                         length: ModelConstants.stride,
-                                         index: TFSBufferModelConstants.index)
-            _singleSMMesh.drawShadowPrimitives(renderEncoder)
-        }
     }
 }

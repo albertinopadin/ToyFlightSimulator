@@ -32,7 +32,7 @@ extension RenderPipelineState {
 
 struct TileRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        createRenderPipelineState(label: "Init Image Block Kernel") { descriptor in
+        createTileRenderPipelineState(label: "Init Image Block Kernel") { descriptor in
             descriptor.tileFunction = Graphics.Shaders[.TileKernel]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             descriptor.threadgroupSizeMatchesTileSize = true

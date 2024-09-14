@@ -10,8 +10,6 @@ import MetalKit
 
 class UsdModel: Model {
     init(_ modelName: String, fileExtension: ModelExtension = .USDZ) {
-        super.init()
-        
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: fileExtension.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")
         }
@@ -23,14 +21,18 @@ class UsdModel: Model {
         
         asset.loadTextures()
         
+        var usdMeshes: [Mesh] = []
+        
         for i in 0..<asset.count {
             let child = asset.object(at: i)
             print("[UsdModel init] \(modelName) child name: \(child.name)")
-            meshes.append(contentsOf: Self.makeMeshes(object: child, vertexDescriptor: descriptor))
+            usdMeshes.append(contentsOf: Self.makeMeshes(object: child, vertexDescriptor: descriptor))
         }
         
         // Invert Z in meshes due to USD being right handed coord system:
 //        invertMeshZ()  // Not needed for F-22
+        
+        super.init(meshes: usdMeshes)
         
         print("[UsdModel init] Num meshes for \(modelName): \(meshes.count)")
     }
@@ -56,7 +58,7 @@ class UsdModel: Model {
     
     private func invertMeshZ() {
         for mesh in meshes {
-            let vertexBuffer = mesh._vertexBuffer!
+            let vertexBuffer = mesh.vertexBuffer!
             let count = vertexBuffer.length / Vertex.stride
             var pointer = vertexBuffer.contents().bindMemory(to: Vertex.self, capacity: count)
             for _ in 0..<count {

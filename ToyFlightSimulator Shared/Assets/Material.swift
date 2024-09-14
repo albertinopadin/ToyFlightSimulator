@@ -19,14 +19,17 @@ struct Material: sizeable {
     public var ambientOcclusionTexture: MTLTexture?
     public var opacityTexture: MTLTexture?
     
+    public var isTransparent: Bool {
+        return opacityTexture != nil || properties.opacity < 1.0 || properties.color.w < 1.0
+    }
+    
     init(_ properties: MaterialProperties) {
         self.properties = properties
     }
     
     init(_ mdlMaterial: MDLMaterial) {
         name = mdlMaterial.name
-        // TODO: 
-//        setProperties(with: mdlMaterial, semantics: [.emission, .baseColor, .specular, .specularExponent])
+        setProperties(with: mdlMaterial, semantics: [.emission, .baseColor, .specular, .specularExponent, .opacity])
         populateMaterial(with: mdlMaterial)
     }
     
@@ -138,6 +141,8 @@ struct Material: sizeable {
                         if shininess != .zero {
                             properties.shininess = shininess
                         }
+                    case .opacity:
+                        properties.opacity = materialProp.floatValue
                     default:
                         print("[Material setShaderMaterialProperty] Unused semantic: \(semantic.toString())")
                 }

@@ -103,7 +103,7 @@ class TiledDeferredRenderer: Renderer {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredShadow])
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredShadow])
                 SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                SceneManager.RenderShadows(with: renderEncoder)
+                DrawManager.Draw(with: renderEncoder)
             }
         }
     }
@@ -113,8 +113,7 @@ class TiledDeferredRenderer: Renderer {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredGBuffer])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             renderEncoder.setFragmentTexture(shadowTexture, index: TFSTextureIndexShadow.index)
-            SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-            SceneManager.RenderTiledDeferredGBuffer(with: renderEncoder)
+            DrawManager.Draw(with: renderEncoder)
         }
     }
     
@@ -129,7 +128,6 @@ class TiledDeferredRenderer: Renderer {
     func encodeDirectionalLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Directional Light Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredDirectionalLight])
-            SceneManager.SetDirectionalLightConstants(with: renderEncoder)
             // Draw full screen quad
             renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
         }
@@ -140,9 +138,8 @@ class TiledDeferredRenderer: Renderer {
         if !pointLights.isEmpty {
             encodeRenderStage(using: renderEncoder, label: "Point Light Stage") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredPointLight])
-                SceneManager.SetPointLightData(with: renderEncoder)
                 guard let mesh = self.icosahedron._metalKitMesh,
-                      let submesh = self.icosahedron._submeshes.first else {
+                      let submesh = self.icosahedron.submeshes.first else {
                     print("No icosahedron mesh or submesh found.")
                     return
                 }
@@ -159,6 +156,14 @@ class TiledDeferredRenderer: Renderer {
         }
     }
     
+    func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
+        encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredTransparency])
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
+            DrawManager.Draw(with: renderEncoder, withTransparency: true)
+        }
+    }
+    
     func encodeParticleComputePass(into commandBuffer: MTLCommandBuffer) {
         encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
             computeEncoder.setComputePipelineState(particleComputePipelineState)
@@ -171,49 +176,11 @@ class TiledDeferredRenderer: Renderer {
     
     func encodeParticleRenderStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Particle Render Stage") {
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Particle])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            SceneManager.SetSceneConstants(with: renderEncoder)
-            SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Particle)
+            DrawManager.DrawParticles(with: renderEncoder)
         }
     }
-    
-//    override func draw(in view: MTKView) {
-//        // Updates scene:
-//        super.draw(in: view)
-//        
-////        let commandBuffer = beginDrawableCommands()
-//        var commandBuffer = beginFrame()
-//        commandBuffer.label = "Shadow Commands"
-//        
-//        encodeShadowPass(into: commandBuffer)
-//        commandBuffer.commit()
-//        
-//        commandBuffer = beginDrawableCommands()
-//        commandBuffer.label = "GBuffer & Lighting Commands"
-//        
-//        if let drawableTexture = view.currentDrawable?.texture {
-//            tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
-//            
-//            encodeParticleComputePass(into: commandBuffer)
-//            
-//            encodeRenderPass(into: commandBuffer,
-//                             using: tiledDeferredRenderPassDescriptor,
-//                             label: "GBuffer & Lighting Pass") { renderEncoder in
-//                SceneManager.SetSceneConstants(with: renderEncoder)
-////                encodeParticleRenderStage(using: renderEncoder)
-//                encodeGBufferStage(using: renderEncoder)
-////                encodeParticleRenderStage(using: renderEncoder)
-//                encodeLightingStage(using: renderEncoder)
-//                encodeParticleRenderStage(using: renderEncoder)
-//            }
-//        }
-//        
-//        if let drawable = view.currentDrawable {
-//            commandBuffer.present(drawable)
-//        }
-//        
-//        commandBuffer.commit()
-//    }
     
     override func draw(in view: MTKView) {
         // Updates scene:
@@ -236,8 +203,12 @@ class TiledDeferredRenderer: Renderer {
                                  using: tiledDeferredRenderPassDescriptor,
                                  label: "GBuffer & Lighting Pass") { renderEncoder in
                     SceneManager.SetSceneConstants(with: renderEncoder)
+                    SceneManager.SetDirectionalLightConstants(with: renderEncoder)
+                    SceneManager.SetPointLightData(with: renderEncoder)
+                    
                     encodeGBufferStage(using: renderEncoder)
                     encodeLightingStage(using: renderEncoder)
+                    encodeTransparencyStage(using: renderEncoder)
                     encodeParticleRenderStage(using: renderEncoder)
                 }
             }

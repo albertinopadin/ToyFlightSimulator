@@ -10,8 +10,6 @@ import MetalKit
 
 class ObjModel: Model {
     init(_ modelName: String) {
-        super.init()
-        
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: ModelExtension.OBJ.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")
         }
@@ -28,13 +26,17 @@ class ObjModel: Model {
         asset.loadTextures()
         print("[ObjModel init] Loaded asset textures")
         
+        var objMeshes: [Mesh] = []
+        
         for i in 0..<asset.count {
             let child = asset.object(at: i)
             print("[ObjModel init] \(modelName) child name: \(child.name)")
-            meshes.append(contentsOf: ObjModel.makeMeshes(object: child, vertexDescriptor: descriptor))
+            objMeshes.append(contentsOf: ObjModel.makeMeshes(object: child, vertexDescriptor: descriptor))
         }
         
 //        invertMeshZ()
+        
+        super.init(meshes: objMeshes)
     }
     
     private static func makeMeshes(object: MDLObject, vertexDescriptor: MDLVertexDescriptor) -> [Mesh] {
@@ -58,7 +60,7 @@ class ObjModel: Model {
     
     private func invertMeshZ() {
         for mesh in meshes {
-            let vertexBuffer = mesh._vertexBuffer!
+            let vertexBuffer = mesh.vertexBuffer!
             let count = vertexBuffer.length / Vertex.stride
             var pointer = vertexBuffer.contents().bindMemory(to: Vertex.self, capacity: count)
             for _ in 0..<count {

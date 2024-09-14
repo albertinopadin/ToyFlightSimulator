@@ -15,36 +15,15 @@ enum ModelExtension: String {
 
 class Model {
     public var meshes: [Mesh] = []
-    
-    init() {
-        meshes.append(Mesh())
-    }
+    public var parent: GameObject?
     
     init(mesh: Mesh) {
         meshes.append(mesh)
+        meshes.forEach { $0.parentModel = self }
     }
     
-    func draw(_ renderEncoder: MTLRenderCommandEncoder,
-              material: MaterialProperties? = nil,
-              applyMaterials: Bool = true,
-              baseColorTextureType: TextureType = .None,
-              normalMapTextureType: TextureType = .None,
-              specularTextureType: TextureType = .None,
-              submeshesToDisplay: [String: Bool]? = nil) {
-        for mesh in meshes {
-            mesh.drawPrimitives(renderEncoder,
-                                 material: material,
-                                 applyMaterials: applyMaterials,
-                                 baseColorTextureType: baseColorTextureType,
-                                 normalMapTextureType: normalMapTextureType,
-                                 specularTextureType: specularTextureType,
-                                 submeshesToDisplay: submeshesToDisplay)
-        }
-    }
-    
-    func drawShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToDisplay: [String: Bool]? = nil) {
-        for mesh in meshes {
-            mesh.drawShadowPrimitives(renderEncoder, submeshesToDisplay: submeshesToDisplay)
-        }
+    init(meshes: [Mesh]) {
+        self.meshes = meshes
+        meshes.forEach { $0.parentModel = self }
     }
 }

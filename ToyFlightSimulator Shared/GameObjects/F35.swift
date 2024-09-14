@@ -13,11 +13,7 @@ class F35: Aircraft {
     }
     
     init(scale: Float = 1.0, shouldUpdate: Bool = true) {
-        super.init(name: Self.NAME,
-                   modelType: .Sketchfab_F35,
-                   renderPipelineStateType: .OpaqueMaterial,
-                   scale: scale,
-                   shouldUpdate: shouldUpdate)
+        super.init(name: Self.NAME, modelType: .Sketchfab_F35, scale: scale, shouldUpdate: shouldUpdate)
 //        rotateY(Float(180).toRadians)
         rotateX(Float(90).toRadians)
         rotateY(Float(180).toRadians)

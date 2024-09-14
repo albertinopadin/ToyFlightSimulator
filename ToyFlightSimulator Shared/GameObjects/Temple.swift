@@ -18,14 +18,6 @@ import MetalKit
 // Inheriting from Aircraft for testing:
 class Temple: Aircraft {
     init(scale: Float) {
-        super.init(name: "Temple", modelType: .Temple, renderPipelineStateType: .OpaqueMaterial, scale: scale)
-    }
-    
-    override func doRender(_ renderEncoder: MTLRenderCommandEncoder, 
-                           applyMaterials: Bool = true,
-                           submeshesToRender: [String : Bool]? = nil) {
-        renderEncoder.setFrontFacing(.counterClockwise)
-        super.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
-        renderEncoder.setFrontFacing(.clockwise)
+        super.init(name: "Temple", modelType: .Temple, scale: scale)
     }
 }

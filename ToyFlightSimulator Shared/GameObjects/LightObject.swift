@@ -27,20 +27,17 @@ class LightObject: GameObject {
     private var _modelType: ModelType = .None
     
     // TODO: What RPS is appropriate for a LightObject ???
-    init(name: String, lightType: LightType = Directional, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
+    init(name: String, lightType: LightType = Directional) {
         self.lightType = lightType
-        super.init(name: name, modelType: .None, renderPipelineStateType: renderPipelineStateType)
+        super.init(name: name, modelType: .None)
         self.lightData.shadowTransformMatrix = shadowTranslate * shadowScale
     }
     
     // TODO: What RPS is appropriate for a LightObject ???
-    init(name: String,
-         lightType: LightType = Directional,
-         modelType: ModelType = .Sphere,
-         renderPipelineStateType: RenderPipelineStateType = .Opaque) {
+    init(name: String, lightType: LightType = Directional, modelType: ModelType = .Sphere) {
         self.lightType = lightType
         self._modelType = modelType
-        super.init(name: name, modelType: modelType, renderPipelineStateType: renderPipelineStateType)
+        super.init(name: name, modelType: modelType)
         self.lightData.shadowTransformMatrix = shadowTranslate * shadowScale
     }
     

@@ -21,10 +21,10 @@ class FreeCamFlightboxScene: GameScene {
         print("Sun light type: \(sun.lightType)")
         
         if _rendererType == .OrderIndependentTransparency {
-            let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+            let sky = SkySphere(textureType: .Clouds_Skysphere)
             addChild(sky)
         } else {
-            let sky = SkyBox(skyBoxTextureType: .SkyMap)
+            let sky = SkyBox(textureType: .SkyMap)
             addChild(sky)
         }
         

@@ -7,10 +7,7 @@
 
 class Sidewinder: Missile {
     init() {
-        super.init(name: "Sidewinder", 
-                   modelType: .F18,
-                   meshType: .F18_Sidewinder,
-                   renderPipelineStateType: .OpaqueMaterial)
+        super.init(name: "Sidewinder",  modelType: .F18, meshType: .F18_Sidewinder)
     }
     
     init(modelName: String, submeshName: String) {

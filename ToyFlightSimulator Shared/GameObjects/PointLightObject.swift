@@ -7,9 +7,6 @@
 
 class PointLightObject: LightObject {
     init() {
-        super.init(name: "Point Light",
-                   lightType: Point,
-                   modelType: .Icosahedron,
-                   renderPipelineStateType: .SinglePassDeferredPointLight)
+        super.init(name: "Point Light", lightType: Point, modelType: .Icosahedron)
     }
 }

@@ -110,8 +110,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //            renderEncoder.setCullMode(.back)
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setFragmentTexture(shadowMap, index: TFSTextureIndexShadow.index)
-            SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-            SceneManager.RenderGBuffer(with: renderEncoder)
+            DrawManager.Draw(with: renderEncoder)
         }
     }
     
@@ -124,8 +123,6 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setVertexBuffer(_quadVertexBuffer,
                                           offset: 0,
                                           index: TFSBufferIndexMeshPositions.index)
-            SceneManager.SetSceneConstants(with: renderEncoder)
-            SceneManager.SetDirectionalLightConstants(with: renderEncoder)
             
             // Draw full screen quad
             renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
@@ -139,7 +136,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setCullMode(.front)
             SceneManager.SetPointLightConstants(with: renderEncoder)
-            SceneManager.RenderPointLightMeshes(with: renderEncoder)
+//            SceneManager.RenderPointLightMeshes(with: renderEncoder)
         }
     }
     
@@ -152,7 +149,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setCullMode(.back)
 //            SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetPointLightData(with: renderEncoder)
-            SceneManager.RenderPointLights(with: renderEncoder)
+//            SceneManager.RenderPointLights(with: renderEncoder)
         }
     }
     
@@ -162,7 +159,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setCullMode(.back)  //<-- This or not setting the cull mode works. WTF?
-            SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Skybox, applyMaterials: false)
+            DrawManager.DrawSky(with: renderEncoder, withTransparency: false, applyMaterials: true)
         }
     }
     
@@ -180,8 +177,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //                renderEncoder.setCullMode(.front)
 //                renderEncoder.setDepthBias(0.015, slopeScale: 7, clamp: 0.02)
                 renderEncoder.setDepthBias(0.1, slopeScale: 1, clamp: 0.0)
-                SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                SceneManager.RenderShadows(with: renderEncoder)
+                DrawManager.Draw(with: renderEncoder)
             }
         }
     }
@@ -194,7 +190,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DepthWriteDisabled])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])
             renderEncoder.setStencilReferenceValue(128)
-            SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Icosahedron)
+//            SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Icosahedron)
         }
     }
     
@@ -217,6 +213,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
                 encodeRenderPass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
                     renderEncoder in
                     SceneManager.SetSceneConstants(with: renderEncoder)
+                    SceneManager.SetDirectionalLightConstants(with: renderEncoder)
                     
                     encodeGBufferStage(using: renderEncoder)
                     encodeDirectionalLightingStage(using: renderEncoder)

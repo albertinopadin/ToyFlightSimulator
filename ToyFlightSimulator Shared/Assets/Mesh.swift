@@ -13,11 +13,14 @@ class Mesh {
     private static let loadingQueue = DispatchQueue(label: "mesh-model-loading-queue")
     
     public var name: String = "Mesh"
+    public var parentModel: Model?
+    
+    public var vertexBuffer: MTLBuffer! = nil
+    public var instanceCount: Int = 1
+    public var submeshes: [Submesh] = []
+    
     internal var _vertices: [Vertex] = []
     internal var _vertexCount: Int = 0
-    internal var _vertexBuffer: MTLBuffer! = nil
-    internal var _instanceCount: Int = 1
-    internal var _submeshes: [Submesh] = []
     internal var _metalKitMesh: MTKMesh? = nil
     
     init() {
@@ -47,7 +50,7 @@ class Mesh {
             if _metalKitMesh!.vertexBuffers.count > 1 {
                 print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
             }
-            self._vertexBuffer = _metalKitMesh!.vertexBuffers[0].buffer
+            self.vertexBuffer = _metalKitMesh!.vertexBuffers[0].buffer
             self._vertexCount = _metalKitMesh!.vertexCount
             for i in 0..<_metalKitMesh!.submeshes.count {
                 let mtkSubmesh = _metalKitMesh!.submeshes[i]
@@ -60,7 +63,7 @@ class Mesh {
             print("ERROR::LOADING_MDLMESH::__::\(error.localizedDescription)")
         }
         
-        print("Num submeshes for \(mdlMesh.name): \(_submeshes.count)")
+        print("Num submeshes for \(mdlMesh.name): \(submeshes.count)")
     }
     
     init(mtkMesh: MTKMesh, mdlMesh: MDLMesh, addTangentBases: Bool = true) {
@@ -81,7 +84,7 @@ class Mesh {
             // TODO: Figure out how to handle multiple vertex layouts with potentially multiple buffers
             print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
         }
-        self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
+        self.vertexBuffer = mtkMesh.vertexBuffers[0].buffer
         self._vertexCount = mtkMesh.vertexCount
         for i in 0..<mtkMesh.submeshes.count {
             let mtkSubmesh = mtkMesh.submeshes[i]
@@ -96,7 +99,7 @@ class Mesh {
     
     private func createBuffer() {
         if _vertices.count > 0 {
-            _vertexBuffer = Engine.Device.makeBuffer(bytes: _vertices,
+            vertexBuffer = Engine.Device.makeBuffer(bytes: _vertices,
                                                      length: Vertex.stride(_vertices.count),
                                                      options: [])
         }
@@ -120,11 +123,12 @@ class Mesh {
     }
     
     func setInstanceCount(_ count: Int) {
-        self._instanceCount = count
+        self.instanceCount = count
     }
     
     func addSubmesh(_ submesh: Submesh) {
-        _submeshes.append(submesh)
+        self.submeshes.append(submesh)
+        submesh.parentMesh = self
     }
     
     func addVertex(position: float3,
@@ -162,12 +166,12 @@ class Mesh {
                         normalMapTextureType: TextureType = .None,
                         specularTextureType: TextureType = .None,
                         submeshesToDisplay: [String: Bool]? = nil) {
-        if let _vertexBuffer {
-            renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
+        if let vertexBuffer {
+            renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
             
-            if _submeshes.count > 0 {
+            if submeshes.count > 0 {
                 if let submeshesToDisplay {
-                    for submesh in _submeshes {
+                    for submesh in submeshes {
                         if submeshesToDisplay[submesh.name] ?? false {
                             if applyMaterials {
                                 submesh.material?.applyTextures(with: renderEncoder,
@@ -177,11 +181,11 @@ class Mesh {
                                 submesh.applyMaterial(with: renderEncoder, customMaterial: material)
                             }
 
-                            drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
+                            drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: instanceCount)
                         }
                     }
                 } else {
-                    for submesh in _submeshes {
+                    for submesh in submeshes {
                         if applyMaterials {
                             submesh.material?.applyTextures(with: renderEncoder,
                                                             baseColorTextureType: baseColorTextureType,
@@ -190,7 +194,7 @@ class Mesh {
                             submesh.applyMaterial(with: renderEncoder, customMaterial: material)
                         }
                         
-                        drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
+                        drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: instanceCount)
                     }
                 }
             } else {
@@ -199,33 +203,33 @@ class Mesh {
                 }
                 
                 renderEncoder.drawPrimitives(type: .triangle,
-                                                    vertexStart: 0,
-                                                    vertexCount: _vertices.count,
-                                                    instanceCount: _instanceCount)
+                                             vertexStart: 0,
+                                             vertexCount: _vertices.count,
+                                             instanceCount: instanceCount)
             }
         }
     }
     
     func drawShadowPrimitives(_ renderEncoder: MTLRenderCommandEncoder, submeshesToDisplay: [String: Bool]? = nil) {
-        if let _vertexBuffer {
-            renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
-            if _submeshes.count > 0 {
+        if let vertexBuffer {
+            renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+            if submeshes.count > 0 {
                 if let submeshesToDisplay {
-                    for submesh in _submeshes {
+                    for submesh in submeshes {
                         if submeshesToDisplay[submesh.name] ?? false {
-                            drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
+                            drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: instanceCount)
                         }
                     }
                 } else {
-                    for submesh in _submeshes {
-                        drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: _instanceCount)
+                    for submesh in submeshes {
+                        drawIndexedPrimitives(renderEncoder, submesh: submesh, instanceCount: instanceCount)
                     }
                 }
             } else {
                 renderEncoder.drawPrimitives(type: .triangle,
-                                                    vertexStart: 0,
-                                                    vertexCount: _vertices.count,
-                                                    instanceCount: _instanceCount)
+                                             vertexStart: 0,
+                                             vertexCount: _vertices.count,
+                                             instanceCount: instanceCount)
             }
         }
     }

@@ -232,43 +232,35 @@ class F18: Aircraft {
     
     let leftAileron = SubMeshGameObject(name: "Left_Aileron",
                                         modelName: F18_ModelName,
-                                        submeshName: "EleronsL_Paint",
-                                        renderPipelineStateType: .OpaqueMaterial)
+                                        submeshName: "EleronsL_Paint")
     
     let rightAileron = SubMeshGameObject(name: "Right_Aileron",
                                          modelName: F18_ModelName,
-                                         submeshName: "EleronsR_Paint",
-                                         renderPipelineStateType: .OpaqueMaterial)
+                                         submeshName: "EleronsR_Paint")
     
     let leftElevon = SubMeshGameObject(name: "Right_Elevon",
                                        modelName: F18_ModelName,
-                                       submeshName: "ElevatorL_Paint",
-                                       renderPipelineStateType: .OpaqueMaterial)
+                                       submeshName: "ElevatorL_Paint")
     
     let rightElevon = SubMeshGameObject(name: "Right_Elevon",
                                         modelName: F18_ModelName,
-                                        submeshName: "ElevatorR_Paint",
-                                        renderPipelineStateType: .OpaqueMaterial)
+                                        submeshName: "ElevatorR_Paint")
     
     let leftFlap = SubMeshGameObject(name: "Left_Flap",
                                      modelName: F18_ModelName,
-                                     submeshName: "FlapsL_Paint",
-                                     renderPipelineStateType: .OpaqueMaterial)
+                                     submeshName: "FlapsL_Paint")
     
     let rightFlap = SubMeshGameObject(name: "Right_Flap",
                                       modelName: F18_ModelName,
-                                      submeshName: "FlapsR_Paint",
-                                      renderPipelineStateType: .OpaqueMaterial)
+                                      submeshName: "FlapsR_Paint")
     
     let leftRudder = SubMeshGameObject(name: "Left_Rudder",
                                            modelName: F18_ModelName,
-                                           submeshName: "RudderL_Paint",
-                                           renderPipelineStateType: .OpaqueMaterial)
+                                           submeshName: "RudderL_Paint")
 
     let rightRudder = SubMeshGameObject(name: "Right_Rudder",
                                         modelName: F18_ModelName,
-                                        submeshName: "RudderR_Paint",
-                                        renderPipelineStateType: .OpaqueMaterial)
+                                        submeshName: "RudderR_Paint")
     
     var flapsDeployed: Bool = false
     var flapsDegrees: Float = 0.0
@@ -291,12 +283,7 @@ class F18: Aircraft {
     var landingGearFinishedRetracting: Bool = false
     
     init(scale: Float = 1.0, shouldUpdate: Bool = true) {
-        super.init(name: "F-18",
-                   modelType: .F18,
-                   renderPipelineStateType: .OpaqueMaterial,
-                   scale: scale,
-                   shouldUpdate: shouldUpdate)
-//        self.rotateY(Float(180).toRadians)
+        super.init(name: "F-18", modelType: .F18, scale: scale, shouldUpdate: shouldUpdate)
         setupControlSurfaces()
     }
     
@@ -600,23 +587,5 @@ class F18: Aircraft {
                 }
             }
         }
-    }
-    
-    override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
-                           applyMaterials: Bool = true,
-                           submeshesToRender: [String : Bool]? = nil) {
-        renderEncoder.setFrontFacing(.counterClockwise)
-        super.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
-        renderEncoder.setFrontFacing(.clockwise)
-    }
-    
-//    override func doRender(_ renderCommandEncoder: MTLRenderCommandEncoder,
-//                           applyMaterials: Bool = true,
-//                           submeshesToRender: [String : Bool]? = nil) {
-//        super.doRender(renderCommandEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToDisplay)
-//    }
-    
-    override func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String : Bool]?) {
-        super.doRenderShadow(renderEncoder, submeshesToRender: submeshesToDisplay)
     }
 }

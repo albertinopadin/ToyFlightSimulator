@@ -20,16 +20,14 @@ class Line: GameObject {
         _vertices = [startVertex, endVertex]
         _vertexBuffer = Engine.Device.makeBuffer(bytes: _vertices, length: Vertex.stride(_vertices.count))
         super.init(name: "Line", modelType: .None)
-        if color.w < 1.0 {
-            _renderPipelineStateType = .OrderIndependentTransparent
-        }
     }
     
-    override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
-                           applyMaterials: Bool,
-                           submeshesToRender: [String: Bool]? = nil) {
-        super.doRender(renderEncoder)
-        renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
-        renderEncoder.drawPrimitives(type: .lineStrip, vertexStart: 0, vertexCount: _vertices.count)
-    }
+//    TODO
+//    override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
+//                           applyMaterials: Bool,
+//                           submeshesToRender: [String: Bool]? = nil) {
+//        super.doRender(renderEncoder)
+//        renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
+//        renderEncoder.drawPrimitives(type: .lineStrip, vertexStart: 0, vertexCount: _vertices.count)
+//    }
 }

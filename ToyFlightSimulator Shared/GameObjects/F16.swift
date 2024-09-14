@@ -9,18 +9,15 @@ import MetalKit
 
 class F16: Aircraft {
     init(scale: Float = 1.0, shouldUpdate: Bool = true) {
-        super.init(name: "F-16",
-                   modelType: .F16,
-                   renderPipelineStateType: .OpaqueMaterial,
-                   scale: scale,
-                   shouldUpdate: shouldUpdate)
+        super.init(name: "F-16", modelType: .F16, scale: scale, shouldUpdate: shouldUpdate)
     }
     
-    override func doRender(_ renderEncoder: MTLRenderCommandEncoder, 
-                           applyMaterials: Bool = true,
-                           submeshesToRender: [String : Bool]? = nil) {
-        renderEncoder.setFrontFacing(.counterClockwise)
-        super.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
-        renderEncoder.setFrontFacing(.clockwise)
-    }
+    // TODO: Whats with the setFrontFacing call?
+//    override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
+//                           applyMaterials: Bool = true,
+//                           submeshesToRender: [String : Bool]? = nil) {
+//        renderEncoder.setFrontFacing(.counterClockwise)
+//        super.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
+//        renderEncoder.setFrontFacing(.clockwise)
+//    }
 }

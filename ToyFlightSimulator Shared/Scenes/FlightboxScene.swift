@@ -64,10 +64,10 @@ class FlightboxScene: GameScene {
 //        f16.addChild(f16Sphere)
         
         if _rendererType == .OrderIndependentTransparency {
-            let sky = SkySphere(skySphereTextureType: .Clouds_Skysphere)
+            let sky = SkySphere(textureType: .Clouds_Skysphere)
             addChild(sky)
         } else {
-            let sky = SkyBox(skyBoxTextureType: .SkyMap)
+            let sky = SkyBox(textureType: .SkyMap)
             addChild(sky)
         }
         
@@ -228,6 +228,7 @@ class FlightboxScene: GameScene {
         }
         
         TextureLoader.PrintCacheInfo()
+        print("Total Submesh count: \(DrawManager.SubmeshCount)")
     }
     
     override func doUpdate() {

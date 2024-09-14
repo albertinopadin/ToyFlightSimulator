@@ -9,6 +9,8 @@ import MetalKit
 
 class Submesh {
     public var name: String = "Submesh"
+    public var material: Material?
+    public var parentMesh: Mesh?
     
     private var _indices: [UInt32] = []
     
@@ -26,8 +28,6 @@ class Submesh {
     
     private var _indexBufferOffset: Int = 0
     public var indexBufferOffset: Int { return _indexBufferOffset }
-    
-    public var material: Material?
     
     init(indices: [UInt32]) {
         self._indices = indices

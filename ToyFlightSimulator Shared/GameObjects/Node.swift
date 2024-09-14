@@ -21,9 +21,6 @@ class Node: ClickSelectable {
     private var _modelMatrix = matrix_identity_float4x4
     private var _rotationMatrix = matrix_identity_float4x4
     
-    internal var _renderPipelineStateType: RenderPipelineStateType = .Opaque
-    internal var _gBufferRenderPipelineStateType: RenderPipelineStateType = .SinglePassDeferredGBufferBase
-    
     var parent: Node? = nil
     var children: [Node] = []
     
@@ -124,76 +121,6 @@ class Node: ClickSelectable {
         
         return mousePosition.x >= minBoundX && mousePosition.x <= maxBoundX &&
                mousePosition.y >= minBoundY && mousePosition.y <= maxBoundY
-    }
-    
-    func shouldRender(with renderPipelineStateType: RenderPipelineStateType) -> Bool {
-        if self is PointLightObject {
-            return (renderPipelineStateType == .LightMask || renderPipelineStateType == .SinglePassDeferredPointLight) &&
-                   (_renderPipelineStateType == .LightMask || _renderPipelineStateType == .SinglePassDeferredPointLight)
-        } else {
-            return _renderPipelineStateType == renderPipelineStateType
-        }
-    }
-    
-    func render(with renderEncoder: MTLRenderCommandEncoder,
-                renderPipelineStateType: RenderPipelineStateType,
-                applyMaterials: Bool = true) {
-        if shouldRender(with: renderPipelineStateType), let renderable = self as? Renderable {
-            renderable.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: nil)
-        }
-        
-        for child in children {
-            child.render(with: renderEncoder,
-                         renderPipelineStateType: renderPipelineStateType,
-                         applyMaterials: applyMaterials)
-        }
-    }
-    
-    // TODO: Smells off to manually set these conditions...
-    private func shouldRenderGBuffer(gBufferRPS: RenderPipelineStateType) -> Bool {
-        return _gBufferRenderPipelineStateType == gBufferRPS &&
-               _renderPipelineStateType != .Skybox &&
-               !(self is LightObject) && !(self is Icosahedron)
-    }
-    
-    func renderGBuffer(with renderEncoder: MTLRenderCommandEncoder, gBufferRPS: RenderPipelineStateType) {
-        if shouldRenderGBuffer(gBufferRPS: gBufferRPS), let renderable = self as? Renderable {
-            renderable.doRender(renderEncoder, applyMaterials: true, submeshesToRender: nil)
-        }
-        
-        for child in children {
-            child.renderGBuffer(with: renderEncoder, gBufferRPS: gBufferRPS)
-        }
-    }
-    
-    // TODO: God noooo...
-    private func shouldRenderTiledGBuffer() -> Bool {
-        return _renderPipelineStateType != .Skybox && !(self is LightObject) && !(self is ParticleEmitterEntity)
-    }
-    
-    func renderTiledDeferredGBuffer(with renderEncoder: MTLRenderCommandEncoder) {
-        if shouldRenderTiledGBuffer(), let renderable = self as? Renderable {
-            renderable.doRender(renderEncoder, applyMaterials: true, submeshesToRender: nil)
-        }
-        
-        for child in children {
-            child.renderTiledDeferredGBuffer(with: renderEncoder)
-        }
-    }
-    
-    // TODO: Smells off to manually set these conditions...
-    private func shouldRenderShadows() -> Bool {
-        return _renderPipelineStateType != .Skybox && !(self is LightObject) && !(self is Icosahedron)
-    }
-    
-    func renderShadows(with renderEncoder: MTLRenderCommandEncoder) {
-        if shouldRenderShadows(), let renderable = self as? Renderable {
-            renderable.doRenderShadow(renderEncoder, submeshesToRender: nil)
-        }
-        
-        for child in children {
-            child.renderShadows(with: renderEncoder)
-        }
     }
     
     // ---------------

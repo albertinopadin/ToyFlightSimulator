@@ -88,45 +88,12 @@ final class SceneManager {
         CurrentScene?.setPointLightData(with: renderEncoder)
     }
     
-    public static func Render(with renderEncoder: MTLRenderCommandEncoder,
-                              renderPipelineStateType: RenderPipelineStateType,
-                              applyMaterials: Bool = true) {
-        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[renderPipelineStateType])
-        CurrentScene?.render(with: renderEncoder,
-                             renderPipelineStateType: renderPipelineStateType,
-                             applyMaterials: applyMaterials)
-    }
-    
-    public static func RenderGBuffer(with renderEncoder: MTLRenderCommandEncoder) {
-        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredGBufferBase])
-        CurrentScene?.renderGBuffer(with: renderEncoder, gBufferRPS: .SinglePassDeferredGBufferBase)
-        
-        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredGBufferMaterial])
-        CurrentScene?.renderGBuffer(with: renderEncoder, gBufferRPS: .SinglePassDeferredGBufferMaterial)
-    }
-    
-    public static func RenderTiledDeferredGBuffer(with renderEncoder: MTLRenderCommandEncoder) {
-        // TODO: Take material into account:
-        CurrentScene?.renderTiledDeferredGBuffer(with: renderEncoder)
-    }
-    
-    public static func RenderShadows(with renderEncoder: MTLRenderCommandEncoder) {
-        CurrentScene?.renderShadows(with: renderEncoder)
-    }
-    
-    public static func RenderPointLightMeshes(with renderEncoder: MTLRenderCommandEncoder) {
-        CurrentScene?.renderPointLightMeshes(with: renderEncoder)
-    }
-    
-    public static func RenderPointLights(with renderEncoder: MTLRenderCommandEncoder) {
-        CurrentScene?.renderPointLights(with: renderEncoder)
-    }
-    
-    public static func Compute(with computeEncoder: MTLComputeCommandEncoder, threadsPerGroup: MTLSize) {
-        CurrentScene?.compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
-    }
-    
     public static func SetAspectRatio(_ aspectRatio: Float) {
         CurrentScene?.setAspectRatio(aspectRatio)
+    }
+    
+    // TODO: Perhaps should have a ComputeMgr?
+    public static func Compute(with computeEncoder: MTLComputeCommandEncoder, threadsPerGroup: MTLSize) {
+        CurrentScene?.compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
     }
 }

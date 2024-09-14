@@ -17,7 +17,6 @@ class InstancedGameObject: Node {
     
     init(modelType: ModelType, instanceCount: Int) {
         super.init(name: "Instanced Game Object")
-        self._renderPipelineStateType = .Instanced
         self.model = Assets.Models[modelType]
         self.model.meshes.forEach { $0.setInstanceCount(instanceCount) }
         self.generateInstances(instanceCount)
@@ -51,27 +50,28 @@ class InstancedGameObject: Node {
     }
 }
 
-extension InstancedGameObject: Renderable {
-    func doRender(_ renderEncoder: MTLRenderCommandEncoder,
-                  applyMaterials: Bool = true,
-                  submeshesToRender: [String: Bool]? = nil) {
-        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Instanced])
-        renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
-        
-        // Vertex Shader
-        renderEncoder.setVertexBuffer(_modelConstantBuffer, offset: 0, index: 2)
-        
-        // Fragment Shader
-        renderEncoder.setFragmentBytes(&_material, length: MaterialProperties.stride, index: 1)
-        
-        model.draw(renderEncoder, submeshesToDisplay: submeshesToRender)
-    }
-    
-    func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
-        // NOT IMPLEMENTED
-        fatalError("NOT IMPLEMENTED")
-    }
-}
+// TODO: Implement instancing in DrawManager
+//extension InstancedGameObject: Renderable {
+//    func doRender(_ renderEncoder: MTLRenderCommandEncoder,
+//                  applyMaterials: Bool = true,
+//                  submeshesToRender: [String: Bool]? = nil) {
+//        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Instanced])
+//        renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
+//        
+//        // Vertex Shader
+//        renderEncoder.setVertexBuffer(_modelConstantBuffer, offset: 0, index: 2)
+//        
+//        // Fragment Shader
+//        renderEncoder.setFragmentBytes(&_material, length: MaterialProperties.stride, index: 1)
+//        
+//        model.draw(renderEncoder, submeshesToDisplay: submeshesToRender)
+//    }
+//    
+//    func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
+//        // NOT IMPLEMENTED
+//        fatalError("NOT IMPLEMENTED")
+//    }
+//}
 
 // Material Properties
 extension InstancedGameObject {

@@ -9,14 +9,11 @@ import MetalKit
 class ParticleEmitterObject: GameObject, ParticleEmitterEntity {
     let emitter: ParticleEmitter
     
-    var shouldEmit: Bool = true
+    public var shouldEmit: Bool = true
     
-    init(name: String,
-         emitter: ParticleEmitter,
-         modelType: ModelType = .None,
-         renderPipelineStateType: RenderPipelineStateType = .Particle) {
+    init(name: String, emitter: ParticleEmitter, modelType: ModelType = .None) {
         self.emitter = emitter
-        super.init(name: name, modelType: modelType, renderPipelineStateType: renderPipelineStateType)
+        super.init(name: name, modelType: modelType)
     }
     
     override func update() {
@@ -32,29 +29,6 @@ class ParticleEmitterObject: GameObject, ParticleEmitterEntity {
             let threadsPerGrid = MTLSize(width: emitter.particleCount, height: 1, depth: 1)
             computeEncoder.setBuffer(emitter.particleBuffer, offset: 0, index: 0)
             computeEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
-        }
-    }
-    
-    override func doRender(_ renderEncoder: any MTLRenderCommandEncoder,
-                           applyMaterials: Bool = true,
-                           submeshesToRender: [String : Bool]? = nil) {
-        if shouldEmit && emitter.currentParticles > 0 {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Particle])
-            renderEncoder.setVertexBuffer(emitter.particleBuffer, offset: 0, index: 0)
-            renderEncoder.setVertexBytes(&emitter.position, length: float3.stride, index: 2)
-            
-            renderEncoder.setVertexBytes(&_modelConstants,
-                                         length: ModelConstants.stride,
-                                         index: TFSBufferModelConstants.index)
-            
-            if let emitterTexture = emitter.particleTexture {
-                renderEncoder.setFragmentTexture(emitterTexture, index: TFSTextureIndexParticle.index)
-            }
-            
-            renderEncoder.drawPrimitives(type: .point,
-                                         vertexStart: 0,
-                                         vertexCount: 1,
-                                         instanceCount: emitter.currentParticles)
         }
     }
 }

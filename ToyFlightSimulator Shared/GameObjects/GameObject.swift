@@ -7,102 +7,55 @@
 
 import MetalKit
 
-class GameObject: Node, Renderable {
-    public var model: Model!
-    
-    internal var _modelConstants = ModelConstants()
-    
-    internal var _material: MaterialProperties? = nil
-    internal var _baseColorTextureType: TextureType = .None
-    internal var _normalMapTextureType: TextureType = .None
-    internal var _specularTextureType: TextureType = .None
-    
-    init(name: String, modelType: ModelType, renderPipelineStateType: RenderPipelineStateType = .Opaque) {
-        super.init(name: name)
-        self._renderPipelineStateType = renderPipelineStateType
-        if renderPipelineStateType == .OpaqueMaterial {
-            self._gBufferRenderPipelineStateType = .SinglePassDeferredGBufferMaterial
-        }
-        model = Assets.Models[modelType]
-        print("GameObject named \(self.getName()) render pipeline state type: \(self._renderPipelineStateType)")
+class GameObject: Node, Renderable, Hashable {
+    static func == (lhs: GameObject, rhs: GameObject) -> Bool {
+        return lhs.getID() == rhs.getID()
     }
     
-//    convenience init(name: String,
-//                     meshType: MeshType,
-//                     renderPipelineStateType: RenderPipelineStateType = .Opaque,
-//                     gBufferRPS: RenderPipelineStateType = .SinglePassDeferredGBufferBase) {
-//        self.init(name: name, meshType: meshType, renderPipelineStateType: renderPipelineStateType)
-//        self._gBufferRenderPipelineStateType = gBufferRPS
-//    }
+    public var model: Model!
+    public var modelConstants = ModelConstants()
+    
+    public var material: MaterialProperties? = nil
+    public var baseColorTextureType: TextureType = .None
+    public var normalMapTextureType: TextureType = .None
+    public var specularTextureType: TextureType = .None
+    
+    init(name: String, modelType: ModelType) {
+        super.init(name: name)
+        model = Assets.Models[modelType]
+        model.parent = self
+        
+        DrawManager.RegisterObject(self)
+        print("GameObject init; named \(self.getName())")
+    }
     
     override func update() {
         super.update()
-        _modelConstants.modelMatrix = self.modelMatrix
-        _modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
+        modelConstants.modelMatrix = self.modelMatrix
+        modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
     }
     
-    func encodeRender(using renderEncoder: MTLRenderCommandEncoder, label: String, _ encodingBlock: () -> Void) {
-        renderEncoder.pushDebugGroup(label)
-        encodingBlock()
-        renderEncoder.popDebugGroup()
-    }
-    
-    func doRender(_ renderEncoder: MTLRenderCommandEncoder,
-                  applyMaterials: Bool = true,
-                  submeshesToRender: [String: Bool]? = nil) {
-        encodeRender(using: renderEncoder, label: "Rendering \(self.getName())") {
-            // Vertex Shader
-            renderEncoder.setVertexBytes(&_modelConstants,
-                                         length: ModelConstants.stride,
-                                         index: TFSBufferModelConstants.index)
-            
-            model.draw(renderEncoder,
-                       material: _material,
-                       applyMaterials: applyMaterials,
-                       baseColorTextureType: _baseColorTextureType,
-                       normalMapTextureType: _normalMapTextureType,
-                       specularTextureType: _specularTextureType,
-                       submeshesToDisplay: submeshesToRender)
-        }
-    }
-    
-    func doRenderShadow(_ renderEncoder: MTLRenderCommandEncoder, submeshesToRender: [String: Bool]? = nil) {
-        encodeRender(using: renderEncoder, label: "Shadow Rendering \(self.getName())") {
-            renderEncoder.setVertexBytes(&_modelConstants,
-                                         length: ModelConstants.stride,
-                                         index: TFSBufferModelConstants.index)
-            model.drawShadow(renderEncoder, submeshesToDisplay: submeshesToRender)
-        }
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(self.getID())
     }
 }
 
 // Material Properties
 extension GameObject {
     public func useBaseColorTexture(_ textureType: TextureType) {
-        _baseColorTextureType = textureType
+        baseColorTextureType = textureType
     }
     
     public func useNormalMapTexture(_ textureType: TextureType) {
-        _normalMapTextureType = textureType
+        normalMapTextureType = textureType
     }
     
     public func useSpecularTexture(_ textureType: TextureType) {
-        _specularTextureType = textureType
+        specularTextureType = textureType
     }
     
     public func useMaterial(_ material: MaterialProperties) {
-        if material.color.w < 1.0 {
-            _renderPipelineStateType = .OrderIndependentTransparent
-        } else {
-            // TODO: This smells...
-            if !(self is LightObject) && !(self is Icosahedron) {
-                _renderPipelineStateType = .OpaqueMaterial
-            }
-        }
-        
-        _gBufferRenderPipelineStateType = .SinglePassDeferredGBufferMaterial
-        
-        _material = material
-        model.meshes.forEach { $0._submeshes.forEach { $0.material = Material(material) } }
+        self.material = material
+        model.meshes.forEach { $0.submeshes.forEach { $0.material = Material(material) } }
     }
 }

@@ -20,7 +20,7 @@ extension RenderPipelineState {
         }
     }
     
-    static func createRenderPipelineState(tileRenderPipelineDescriptor: MTLTileRenderPipelineDescriptor) ->
+    static func createTileRenderPipelineState(tileRenderPipelineDescriptor: MTLTileRenderPipelineDescriptor) ->
         MTLRenderPipelineState {
         do {
             return try Engine.Device.makeRenderPipelineState(tileDescriptor: tileRenderPipelineDescriptor,
@@ -43,8 +43,8 @@ extension RenderPipelineState {
         }
     }
     
-    static func createRenderPipelineState(label: String,
-                                          tileBlock: (MTLTileRenderPipelineDescriptor) -> Void) -> MTLRenderPipelineState {
+    static func createTileRenderPipelineState(label: String,
+                                              tileBlock: (MTLTileRenderPipelineDescriptor) -> Void) -> MTLRenderPipelineState {
         let descriptor = MTLTileRenderPipelineDescriptor()
         descriptor.label = label
         tileBlock(descriptor)

@@ -10,24 +10,12 @@ class Droppable: SubMeshGameObject {
     var velocityVector: float3 = [0, 0, 0]
     var forwardVelocityComponent: Float = 0.0
     
-    init(name: String,
-         modelType: ModelType,
-         meshType: SingleSMMeshType,
-         renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
-        super.init(name: name,
-                   modelType: modelType,
-                   meshType: meshType,
-                   renderPipelineStateType: renderPipelineStateType)
+    init(name: String, modelType: ModelType, meshType: SingleSMMeshType) {
+        super.init(name: name, modelType: modelType, meshType: meshType)
     }
     
-    init(name: String,
-         modelName: String,
-         submeshName: String,
-         renderPipelineStateType: RenderPipelineStateType = .OpaqueMaterial) {
-        super.init(name: name,
-                   modelName: modelName,
-                   submeshName: submeshName,
-                   renderPipelineStateType: renderPipelineStateType)
+    init(name: String, modelName: String, submeshName: String) {
+        super.init(name: name, modelName: modelName, submeshName: submeshName)
     }
     
     func drop(forwardComponent: Float) {

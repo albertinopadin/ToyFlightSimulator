@@ -152,25 +152,25 @@ class GameScene: Node {
         LightManager.SetPointLightData(renderEncoder)
     }
     
-    func renderPointLightMeshes(with renderEncoder: MTLRenderCommandEncoder) {
-        for pointLight in LightManager.GetLightObjects(lightType: Point) {
-            pointLight.render(with: renderEncoder, renderPipelineStateType: .LightMask)
-        }
-    }
+//    func renderPointLightMeshes(with renderEncoder: MTLRenderCommandEncoder) {
+//        for pointLight in LightManager.GetLightObjects(lightType: Point) {
+//            pointLight.render(with: renderEncoder, renderPipelineStateType: .LightMask)
+//        }
+//    }
     
-    func renderPointLights(with renderEncoder: MTLRenderCommandEncoder) {
-        for pointLight in LightManager.GetLightObjects(lightType: Point) {
-            pointLight.render(with: renderEncoder, renderPipelineStateType: .SinglePassDeferredPointLight)
-        }
-    }
+//    func renderPointLights(with renderEncoder: MTLRenderCommandEncoder) {
+//        for pointLight in LightManager.GetLightObjects(lightType: Point) {
+//            pointLight.render(with: renderEncoder, renderPipelineStateType: .SinglePassDeferredPointLight)
+//        }
+//    }
     
-    override func render(with renderEncoder: MTLRenderCommandEncoder,
-                         renderPipelineStateType: RenderPipelineStateType,
-                         applyMaterials: Bool = true) {
-        renderEncoder.pushDebugGroup("Rendering \(renderPipelineStateType) Scene")
-        super.render(with: renderEncoder,
-                     renderPipelineStateType: renderPipelineStateType,
-                     applyMaterials: applyMaterials)
-        renderEncoder.popDebugGroup()
-    }
+//    override func render(with renderEncoder: MTLRenderCommandEncoder,
+//                         renderPipelineStateType: RenderPipelineStateType,
+//                         applyMaterials: Bool = true) {
+//        renderEncoder.pushDebugGroup("Rendering \(renderPipelineStateType) Scene")
+//        super.render(with: renderEncoder,
+//                     renderPipelineStateType: renderPipelineStateType,
+//                     applyMaterials: applyMaterials)
+//        renderEncoder.popDebugGroup()
+//    }
 }
