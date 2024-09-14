@@ -52,7 +52,7 @@ tiled_deferred_gbuffer_fragment(VertexOut                   in                  
     
     float4 normal = float4(normalize(in.worldNormal), 1.0);
     
-    if (!is_null_texture(normalTexture)) {
+    if (material.useNormalMapTexture && !is_null_texture(normalTexture)) {
         normal = float4(normalTexture.sample(sampler2d, in.uv));
     }
     

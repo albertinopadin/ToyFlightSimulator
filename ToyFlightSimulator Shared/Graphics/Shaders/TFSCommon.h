@@ -47,6 +47,9 @@ typedef struct {
     float opacity;
     
     bool useMaterialColor;
+    bool useBaseTexture;
+    bool useNormalMapTexture;
+    bool useSpecularTexture;
     bool isLit;
 } MaterialProperties;
 

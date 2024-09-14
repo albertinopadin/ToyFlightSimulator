@@ -129,6 +129,15 @@ class SinglePassDeferredLightingRenderer: Renderer {
         }
     }
     
+    // TODO: Need to create proper RPS and DSS:
+//    func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
+//        encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
+//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredTransparency])
+//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
+//            DrawManager.Draw(with: renderEncoder, withTransparency: true)
+//        }
+//    }
+    
     func encodeLightMaskStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Point Light Mask Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.LightMask])
@@ -159,7 +168,8 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setCullMode(.back)  //<-- This or not setting the cull mode works. WTF?
-            DrawManager.DrawSky(with: renderEncoder, withTransparency: false, applyMaterials: true)
+            // TODO:
+//            DrawManager.DrawSky(with: renderEncoder, withTransparency: false, applyMaterials: true)
         }
     }
     
@@ -170,6 +180,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     // ADDENDUM: Might fix issues if I implement soft shadows...
     func encodeShadowMapPass(into commandBuffer: MTLCommandBuffer) {
         encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Map Pass") { renderEncoder in
+            SceneManager.SetDirectionalLightConstants(with: renderEncoder)
             encodeRenderStage(using: renderEncoder, label: "Shadow Generation Stage") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ShadowGeneration])
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.ShadowGeneration])
@@ -190,6 +201,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DepthWriteDisabled])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])
             renderEncoder.setStencilReferenceValue(128)
+            // TODO:
 //            SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Icosahedron)
         }
     }
@@ -217,6 +229,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
                     
                     encodeGBufferStage(using: renderEncoder)
                     encodeDirectionalLightingStage(using: renderEncoder)
+//                    encodeTransparencyStage(using: renderEncoder)
                     encodeLightMaskStage(using: renderEncoder)
                     encodePointLightStage(using: renderEncoder)
                     encodeIcosahedronStage(using: renderEncoder)

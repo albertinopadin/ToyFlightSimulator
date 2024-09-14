@@ -66,6 +66,9 @@ extension MaterialProperties: sizeable {
                   shininess: 2.0,
                   opacity: 1.0,
                   useMaterialColor: false,
+                  useBaseTexture: false,
+                  useNormalMapTexture: false,
+                  useSpecularTexture: false,
                   isLit: true)
     }
     

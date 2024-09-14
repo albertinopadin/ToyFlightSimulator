@@ -154,6 +154,10 @@ struct Material: sizeable {
                                        baseColorTextureType: TextureType,
                                        normalMapTextureType: TextureType,
                                        specularTextureType: TextureType) {
+        properties.useBaseTexture = baseColorTextureType != .None || baseColorTexture != nil
+        properties.useNormalMapTexture = normalMapTextureType != .None || normalMapTexture != nil
+        properties.useSpecularTexture = specularTextureType != .None || specularTexture != nil
+        
         renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
         
         if let baseColorTex = baseColorTextureType == .None ? baseColorTexture : Assets.Textures[baseColorTextureType] {
