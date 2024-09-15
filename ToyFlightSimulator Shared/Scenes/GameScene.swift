@@ -163,14 +163,4 @@ class GameScene: Node {
 //            pointLight.render(with: renderEncoder, renderPipelineStateType: .SinglePassDeferredPointLight)
 //        }
 //    }
-    
-//    override func render(with renderEncoder: MTLRenderCommandEncoder,
-//                         renderPipelineStateType: RenderPipelineStateType,
-//                         applyMaterials: Bool = true) {
-//        renderEncoder.pushDebugGroup("Rendering \(renderPipelineStateType) Scene")
-//        super.render(with: renderEncoder,
-//                     renderPipelineStateType: renderPipelineStateType,
-//                     applyMaterials: applyMaterials)
-//        renderEncoder.popDebugGroup()
-//    }
 }

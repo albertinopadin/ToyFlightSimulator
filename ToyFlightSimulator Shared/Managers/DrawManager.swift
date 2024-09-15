@@ -120,6 +120,19 @@ final class DrawManager {
 //        DrawSky(with: renderEncoder, withTransparency: withTransparency, applyMaterials: applyMaterials)
     }
     
+    
+    // TODO: Maybe it would be a good idea to refactor this class;
+    //       Have the Renderer provide a dict of [RenderPipelineStateType : GameObject Type]
+    //       Then parametrize Draw command on the pso to draw the appropriate objects
+//    static func Draw(with renderEncoder: MTLRenderCommandEncoder,
+//                     psoType: RenderPipelineStateType,
+//                     withTransparency: Bool = false,
+//                     applyMaterials: Bool = true) {
+//        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[psoType])
+//        
+//
+//    }
+    
     static func DrawQuad(with renderEncoder: MTLRenderCommandEncoder) {
         for mesh in Assets.Models[.Quad].meshes {
             if let vertexBuffer = mesh.vertexBuffer {
@@ -134,6 +147,20 @@ final class DrawManager {
                                                         instanceCount: mesh.instanceCount)
                 }
             }
+        }
+    }
+    
+    static func DrawIcosahedrons(with renderEncoder: MTLRenderCommandEncoder) {
+        for icosahedron in icosahedrons {
+//            Draw(renderEncoder,
+//                 gameObject: icosahedron,
+//                 submeshes: icosahedron.model.meshes.reduce([]) { $1.submeshes },
+//                 applyMaterials: true)
+            
+            Draw(renderEncoder,
+                 gameObject: icosahedron,
+                 submeshes: icosahedron.model.meshes.flatMap { $0.submeshes },
+                 applyMaterials: true)
         }
     }
     

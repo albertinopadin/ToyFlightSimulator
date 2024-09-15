@@ -130,13 +130,13 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     // TODO: Need to create proper RPS and DSS:
-//    func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
-//        encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
-//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredTransparency])
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-//            DrawManager.Draw(with: renderEncoder, withTransparency: true)
-//        }
-//    }
+    func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
+        encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredTransparency])
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
+            DrawManager.Draw(with: renderEncoder, withTransparency: true)
+        }
+    }
     
     func encodeLightMaskStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Point Light Mask Stage") {
@@ -201,8 +201,8 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DepthWriteDisabled])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])
             renderEncoder.setStencilReferenceValue(128)
-            // TODO:
-//            SceneManager.Render(with: renderEncoder, renderPipelineStateType: .Icosahedron)
+            // TODO: Doesn't quite work
+            DrawManager.DrawIcosahedrons(with: renderEncoder)
         }
     }
     
@@ -229,7 +229,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
                     
                     encodeGBufferStage(using: renderEncoder)
                     encodeDirectionalLightingStage(using: renderEncoder)
-//                    encodeTransparencyStage(using: renderEncoder)
+                    encodeTransparencyStage(using: renderEncoder)
                     encodeLightMaskStage(using: renderEncoder)
                     encodePointLightStage(using: renderEncoder)
                     encodeIcosahedronStage(using: renderEncoder)

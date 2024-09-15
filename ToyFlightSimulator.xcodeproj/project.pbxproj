@@ -465,6 +465,10 @@
 		CE76931B29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
 		CE76931C29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
 		CE76931D29DE79CE00BBC718 /* Sidewinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76931A29DE79CE00BBC718 /* Sidewinder.swift */; };
+		CE76D2C92C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE76D2C82C96BF0B00384F7F /* SinglePassDeferredTransparency.metal */; };
+		CE76D2CA2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE76D2C82C96BF0B00384F7F /* SinglePassDeferredTransparency.metal */; };
+		CE76D2CB2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE76D2C82C96BF0B00384F7F /* SinglePassDeferredTransparency.metal */; };
+		CE76D2CC2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE76D2C82C96BF0B00384F7F /* SinglePassDeferredTransparency.metal */; };
 		CE79B5F62B8F15BE009F2E49 /* BasicPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B5F52B8F15BE009F2E49 /* BasicPipeline.swift */; };
 		CE79B5F72B8F15BE009F2E49 /* BasicPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B5F52B8F15BE009F2E49 /* BasicPipeline.swift */; };
 		CE79B5F82B8F15BE009F2E49 /* BasicPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B5F52B8F15BE009F2E49 /* BasicPipeline.swift */; };
@@ -823,6 +827,7 @@
 		CE76931229DD5F5500BBC718 /* SingleSMMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleSMMesh.swift; sourceTree = "<group>"; };
 		CE76931629DE75CB00BBC718 /* SingleSMMeshLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleSMMeshLibrary.swift; sourceTree = "<group>"; };
 		CE76931A29DE79CE00BBC718 /* Sidewinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidewinder.swift; sourceTree = "<group>"; };
+		CE76D2C82C96BF0B00384F7F /* SinglePassDeferredTransparency.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SinglePassDeferredTransparency.metal; sourceTree = "<group>"; };
 		CE79B5F52B8F15BE009F2E49 /* BasicPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicPipeline.swift; sourceTree = "<group>"; };
 		CE79B5FA2B8F15E2009F2E49 /* OrderIndependentTransparencyPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderIndependentTransparencyPipeline.swift; sourceTree = "<group>"; };
 		CE79B5FF2B8F160E009F2E49 /* SinglePassDeferredPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePassDeferredPipeline.swift; sourceTree = "<group>"; };
@@ -1433,6 +1438,7 @@
 				CEAB383F297CDE770087F7CB /* Shadow.metal */,
 				CE886A422984FFB00013062D /* GBuffer.metal */,
 				CE886A462985007A0013062D /* DirectionalLight.metal */,
+				CE76D2C82C96BF0B00384F7F /* SinglePassDeferredTransparency.metal */,
 				CE886A3E2983BFB30013062D /* PointLights.metal */,
 				CE886A3A29825CB80013062D /* Skybox.metal */,
 				CE79B6442B932B29009F2E49 /* TiledDeferredGBuffer.metal */,
@@ -1783,6 +1789,7 @@
 				CE452FE42A7CB4A0001945B9 /* Camera.swift in Sources */,
 				CE452FFF2A7CB4AC001945B9 /* FlightboxScene.swift in Sources */,
 				CE79B6232B92E361009F2E49 /* BasicVertexDescriptors.swift in Sources */,
+				CE76D2CC2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */,
 				CE327B722C47670D004AF2D0 /* Afterburner.swift in Sources */,
 				CE4530082A7CB4B5001945B9 /* OITRenderer.swift in Sources */,
 				CE452FF62A7CB4A6001945B9 /* AircraftStore.swift in Sources */,
@@ -1988,6 +1995,7 @@
 				CE3BFF7A28E2FC270014A752 /* SandboxScene.swift in Sources */,
 				CE3BFF2428E056230014A752 /* Graphics.swift in Sources */,
 				CEC0C5992B53BB7400863C38 /* ObjModel.swift in Sources */,
+				CE76D2C92C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */,
 				CE3BFF6E28E1B4D70014A752 /* MeshLibrary.swift in Sources */,
 				CE5D78282C917D0A00FB0E26 /* MDLMaterialSemantic+Extensions.swift in Sources */,
 				CED798482C905303003B6559 /* MTKMesh+Extensions.swift in Sources */,
@@ -2102,6 +2110,7 @@
 				CE8A7A3D2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */,
 				CED798492C9055D3003B6559 /* MTKMesh+Extensions.swift in Sources */,
 				CEC0C59A2B53BB7400863C38 /* ObjModel.swift in Sources */,
+				CE76D2CA2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */,
 				CE3BFFA828E453260014A752 /* Sun.swift in Sources */,
 				CE387B442BDE273B00F51DC4 /* ParticleEmitterEntity.swift in Sources */,
 				CEFC6F27296B61CA009B692B /* Line.swift in Sources */,
@@ -2197,6 +2206,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE3BFF6228E1B2D10014A752 /* DepthStencilStateLibrary.swift in Sources */,
+				CE76D2CB2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */,
 				CE79B64C2B951000009F2E49 /* TiledDeferredDirectionalLight.metal in Sources */,
 				CE452FD52A7CB489001945B9 /* Mesh.swift in Sources */,
 				CE79B61D2B92E312009F2E49 /* VertexDescriptor.swift in Sources */,

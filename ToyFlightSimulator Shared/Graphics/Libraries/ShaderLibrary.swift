@@ -32,6 +32,8 @@ enum ShaderType {
     case SinglePassDeferredGBufferFragmentBase
     case SinglePassDeferredGBufferFragmentMaterial
     case SinglePassDeferredDirectionalLightFragment
+    case SinglePassDeferredTransparencyVertex
+    case SinglePassDeferredTransparencyFragment
     case SinglePassDeferredPointLightFragment
     case SkyboxFragment
     
@@ -87,6 +89,10 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "gbuffer_fragment_material"), forKey: .SinglePassDeferredGBufferFragmentMaterial)
         _library.updateValue(Shader(functionName: "deferred_directional_lighting_fragment"),
                              forKey: .SinglePassDeferredDirectionalLightFragment)
+        _library.updateValue(Shader(functionName: "single_pass_deferred_transparency_vertex"),
+                             forKey: .SinglePassDeferredTransparencyVertex)
+        _library.updateValue(Shader(functionName: "single_pass_deferred_transparency_fragment"),
+                             forKey: .SinglePassDeferredTransparencyFragment)
         _library.updateValue(Shader(functionName: "deferred_point_lighting_fragment"), forKey: .SinglePassDeferredPointLightFragment)
         _library.updateValue(Shader(functionName: "skybox_fragment"), forKey: .SkyboxFragment)
         

@@ -42,23 +42,6 @@ deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_i
     float depth = GBuffer.depth;
     half4 normal_shadow = GBuffer.normal_shadow;
     half4 albedo_specular = GBuffer.albedo_specular;
-//    half3 light_eye_direction = half3(lightData.eyeDirection.xyz);
-    
-    // TODO: This calculation seems off:
-//    half sun_diffuse_intensity = dot(normal_shadow.xyz, half3(lightData.lightEyeDirection));
-//    half sun_diffuse_intensity = dot(normal_shadow.xyz, half3(normalize(lightData.position)));
-//    float3 light_to_frag_dir = normalize(in.position.xyz - lightData.position);
-//    half sun_diffuse_intensity = dot(normal_shadow.xyz, half3(light_to_frag_dir));
-//    float3 light_to_eye_dir = normalize(in.eye_position - lightData.position);
-//    half sun_diffuse_intensity = dot(normal_shadow.xyz, half3(light_to_eye_dir));
-//    float3 eye_to_light_dir = normalize(lightData.position - in.eye_position);
-//    half sun_diffuse_intensity = dot(normal_shadow.xyz, half3(eye_to_light_dir));
-//    sun_diffuse_intensity = min(sun_diffuse_intensity, 1.h);
-//    sun_diffuse_intensity = max(sun_diffuse_intensity, 0.h);
-//    sun_diffuse_intensity = max(sun_diffuse_intensity, 1.h);
-//    sun_diffuse_intensity = max(sun_diffuse_intensity, half(lightData.diffuseIntensity));
-//    sun_diffuse_intensity = max(sun_diffuse_intensity, -sun_diffuse_intensity);
-//    half sun_diffuse_intensity = 0.8h;
     half3 lightDirection = half3(-lightData.position);
     half sun_diffuse_intensity = saturate(-dot(lightDirection, normal_shadow.xyz));
     half minimum_sun_diffuse_intensity = 0.4h;
@@ -76,13 +59,7 @@ deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_i
 //    float4 eye_light_direction = lightData.eyeDirection;
 
     // Specular Contribution
-//    float3 halfway_vector = normalize(eye_space_fragment_pos - eye_light_direction.xyz);
-//    float3 halfway_vector = normalize(eye_space_fragment_pos - lightData.lightEyeDirection);
     float3 halfway_vector = normalize(eye_space_fragment_pos - lightData.position);
-//    float3 halfway_vector = normalize(eye_space_fragment_pos);
-//    float3 halfway_vector = normalize(eye_space_fragment_pos - light_to_frag_dir);
-//    float3 halfway_vector = normalize(eye_space_fragment_pos - light_to_eye_dir);
-//    float3 halfway_vector = normalize(eye_space_fragment_pos - eye_to_light_dir);
 
     half specular_intensity = half(lightData.specularIntensity);
     

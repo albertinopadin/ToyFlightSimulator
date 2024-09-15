@@ -19,8 +19,8 @@ extension RenderPipelineState {
 struct ShadowGenerationRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Shadow Generation Stage") { descriptor in
-            descriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]  // ???
+            descriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
             descriptor.depthAttachmentPixelFormat = .depth32Float
             // TODO: Should I set the render target pixel formats here?
         }
@@ -30,9 +30,9 @@ struct ShadowGenerationRenderPipelineState: RenderPipelineState {
 struct GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "GBuffer Generation Stage") { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredGBufferVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredGBufferFragmentBase]
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
@@ -49,9 +49,9 @@ struct GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
 struct GBufferGenerationMaterialRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "GBuffer Generation Stage") { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredGBufferVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredGBufferFragmentMaterial]
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
@@ -69,6 +69,33 @@ struct DirectionalLightingRenderPipelineState: RenderPipelineState {
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             Self.setRenderTargetPixelFormatsForSinglePassDeferredPipeline(descriptor: descriptor)
+        }
+    }()
+}
+
+struct TransparencyPipelineState: RenderPipelineState {
+    static func enableBlending(colorAttachment: MTLRenderPipelineColorAttachmentDescriptor) {
+        colorAttachment.isBlendingEnabled = true
+        colorAttachment.rgbBlendOperation = .add
+        colorAttachment.alphaBlendOperation = .add
+        colorAttachment.sourceRGBBlendFactor = .one
+        colorAttachment.sourceAlphaBlendFactor = .one
+        colorAttachment.destinationRGBBlendFactor = .one
+        colorAttachment.destinationAlphaBlendFactor = .zero
+        colorAttachment.sourceRGBBlendFactor = .one
+        colorAttachment.sourceAlphaBlendFactor = .one
+    }
+    
+    var renderPipelineState: MTLRenderPipelineState = {
+        createRenderPipelineState(label: "Transparency Stage") { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredTransparencyVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredTransparencyFragment]
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
+            Self.setRenderTargetPixelFormatsForSinglePassDeferredPipeline(descriptor: descriptor)
+            descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
+            descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
+            Self.enableBlending(colorAttachmentDescriptor: descriptor.colorAttachments[TFSRenderTargetLighting.index])
         }
     }()
 }

@@ -108,17 +108,17 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut                   in  
     
     if (material.useMaterialColor) {
         base_color_sample = half4(material.color);
-    } else if (!is_null_texture(baseColorMap)) {
+    } else if (material.useBaseTexture && !is_null_texture(baseColorMap)) {
         base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord.xy);
     }
     
-    if (!is_null_texture(normalMap)) {
+    if (material.useNormalMapTexture && !is_null_texture(normalMap)) {
         normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
     } else {
         normal_sample = half4(in.normal, 1.0);
     }
     
-    if (!is_null_texture(specularMap)) {
+    if (material.useSpecularTexture && !is_null_texture(specularMap)) {
         specular_contrib = specularMap.sample(sampler2d, in.tex_coord.xy).r;
     } else {
         specular_contrib = 1.0;

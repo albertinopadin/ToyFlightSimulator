@@ -26,6 +26,7 @@ enum RenderPipelineStateType {
     case SinglePassDeferredGBufferBase
     case SinglePassDeferredGBufferMaterial
     case SinglePassDeferredDirectionalLighting
+    case SinglePassDeferredTransparency
     case LightMask
     case SinglePassDeferredPointLight
     case Skybox
@@ -63,6 +64,7 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(GBufferGenerationBaseRenderPipelineState(), forKey: .SinglePassDeferredGBufferBase)
         _library.updateValue(GBufferGenerationMaterialRenderPipelineState(), forKey: .SinglePassDeferredGBufferMaterial)
         _library.updateValue(DirectionalLightingRenderPipelineState(), forKey: .SinglePassDeferredDirectionalLighting)
+        _library.updateValue(TransparencyPipelineState(), forKey: .SinglePassDeferredTransparency)
         _library.updateValue(LightMaskRenderPipelineState(), forKey: .LightMask)
         _library.updateValue(PointLightingRenderPipelineState(), forKey: .SinglePassDeferredPointLight)
         _library.updateValue(SkyboxRenderPipelineState(), forKey: .Skybox)
