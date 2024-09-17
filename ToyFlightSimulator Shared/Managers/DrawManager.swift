@@ -101,8 +101,6 @@ final class DrawManager {
                      withTransparency: Bool = false,
                      applyMaterials: Bool = true) {
         for (gameObject, submeshes) in gameObjectToSubmeshes {
-            // Set constants / uniforms
-            
             if withTransparency {
                 Draw(renderEncoder, 
                      gameObject: gameObject,
@@ -117,9 +115,17 @@ final class DrawManager {
         }
         
         DrawLines(with: renderEncoder)
-//        DrawSky(with: renderEncoder, withTransparency: withTransparency, applyMaterials: applyMaterials)
     }
     
+    // I really don't like this long term...
+    static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
+        for (gameObject, submeshes) in gameObjectToSubmeshes {
+            Draw(renderEncoder,
+                 gameObject: gameObject,
+                 submeshes: submeshes.opaqueSubmeshes,
+                 applyMaterials: false)
+        }
+    }
     
     // TODO: Maybe it would be a good idea to refactor this class;
     //       Have the Renderer provide a dict of [RenderPipelineStateType : GameObject Type]
@@ -164,23 +170,16 @@ final class DrawManager {
         }
     }
     
-    static func DrawSky(with renderEncoder: MTLRenderCommandEncoder,
-                        withTransparency: Bool,
-                        applyMaterials: Bool) {
+    static func DrawSky(with renderEncoder: MTLRenderCommandEncoder) {
         if let skyObj = skySubmeshes.gameObject as? SkyEntity {
-            renderEncoder.setFragmentTexture(Assets.Textures[skyObj.textureType], index: 10)
+            let pso: RenderPipelineStateType = ((skyObj as? SkyBox) != nil) ? .Skybox : .SkySphere
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[pso])
+            renderEncoder.setFragmentTexture(Assets.Textures[skyObj.textureType], index: TFSTextureIndexSkyBox.index)
             
-            if withTransparency {
-                Draw(renderEncoder,
-                     gameObject: skySubmeshes.gameObject!,
-                     submeshes: skySubmeshes.transparentSubmeshes,
-                     applyMaterials: applyMaterials)
-            } else {
-                Draw(renderEncoder,
-                     gameObject: skySubmeshes.gameObject!,
-                     submeshes: skySubmeshes.opaqueSubmeshes,
-                     applyMaterials: applyMaterials)
-            }
+            Draw(renderEncoder,
+                 gameObject: skySubmeshes.gameObject!,
+                 submeshes: skySubmeshes.opaqueSubmeshes,
+                 applyMaterials: false)
         }
     }
     

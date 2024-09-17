@@ -64,29 +64,29 @@ fragment FragmentOutput material_fragment(RasterizerData rd [[ stage_in ]],
         color = material.color;
     }
     
-    if (!is_null_texture(baseColorMap)) {
+    if (material.useBaseTexture && !is_null_texture(baseColorMap)) {
         color = baseColorMap.sample(sampler2d, texCoord);
     }
     
     float3 unitNormal;
-    if (material.isLit) {
-        unitNormal = normalize(rd.surfaceNormal);
-        if (!is_null_texture(normalMap)) {
-            float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
-            float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
-            unitNormal = TBN * sampleNormal;
-        }
-        
-        float3 unitToCameraVector = normalize(rd.toCameraVector);
-        
-        float3 phongIntensity = Lighting::GetPhongIntensity(material,
-                                                            lightData,
-                                                            lightCount,
-                                                            rd.worldPosition,
-                                                            unitNormal,
-                                                            unitToCameraVector);
-        color *= float4(phongIntensity, 1.0);
-    }
+//    if (material.isLit) {
+//        unitNormal = normalize(rd.surfaceNormal);
+//        if (material.useNormalMapTexture && !is_null_texture(normalMap)) {
+//            float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
+//            float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
+//            unitNormal = TBN * sampleNormal;
+//        }
+//        
+//        float3 unitToCameraVector = normalize(rd.toCameraVector);
+//        
+//        float3 phongIntensity = Lighting::GetPhongIntensity(material,
+//                                                            lightData,
+//                                                            lightCount,
+//                                                            rd.worldPosition,
+//                                                            unitNormal,
+//                                                            unitToCameraVector);
+//        color *= float4(phongIntensity, 1.0);
+//    }
     
     FragmentOutput out = {
         .color0 = half4(color.r, color.g, color.b, color.a),

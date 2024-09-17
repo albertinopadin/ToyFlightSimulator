@@ -8,25 +8,29 @@
 import MetalKit
 
 extension RenderPipelineState {
-    static func getOpaqueRenderPipelineDescriptor(vertexDescriptorType: VertexDescriptorType,
+    static func EnableBlending(colorAttachment: MTLRenderPipelineColorAttachmentDescriptor) {
+        colorAttachment.isBlendingEnabled = true
+        colorAttachment.alphaBlendOperation = .add
+        colorAttachment.sourceAlphaBlendFactor = .one
+        colorAttachment.destinationAlphaBlendFactor = .zero
+        colorAttachment.sourceRGBBlendFactor = .sourceAlpha
+        colorAttachment.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        colorAttachment.rgbBlendOperation = .add
+        colorAttachment.writeMask = .all
+    }
+    
+    static func GetOpaqueRenderPipelineDescriptor(vertexDescriptorType: VertexDescriptorType,
                                                   vertexShaderType: ShaderType,
                                                   fragmentShaderType: ShaderType) -> MTLRenderPipelineDescriptor {
-        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
-        renderPipelineDescriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
-        renderPipelineDescriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-        renderPipelineDescriptor.stencilAttachmentPixelFormat = .invalid
-        renderPipelineDescriptor.vertexDescriptor = Graphics.VertexDescriptors[vertexDescriptorType]
-        renderPipelineDescriptor.vertexFunction = Graphics.Shaders[vertexShaderType]
-        renderPipelineDescriptor.fragmentFunction = Graphics.Shaders[fragmentShaderType]
-        renderPipelineDescriptor.colorAttachments[TFSRenderTargetLighting.index].isBlendingEnabled = true
-        renderPipelineDescriptor.colorAttachments[TFSRenderTargetLighting.index].alphaBlendOperation = .add
-        renderPipelineDescriptor.colorAttachments[TFSRenderTargetLighting.index].sourceAlphaBlendFactor = .one
-        renderPipelineDescriptor.colorAttachments[TFSRenderTargetLighting.index].destinationAlphaBlendFactor = .zero
-        renderPipelineDescriptor.colorAttachments[TFSRenderTargetLighting.index].sourceRGBBlendFactor = .sourceAlpha
-        renderPipelineDescriptor.colorAttachments[TFSRenderTargetLighting.index].destinationRGBBlendFactor = .oneMinusSourceAlpha
-        renderPipelineDescriptor.colorAttachments[TFSRenderTargetLighting.index].rgbBlendOperation = .add
-        renderPipelineDescriptor.colorAttachments[TFSRenderTargetLighting.index].writeMask = .all
-        return renderPipelineDescriptor
+        let descriptor = MTLRenderPipelineDescriptor()
+        descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
+        descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
+        descriptor.stencilAttachmentPixelFormat = .invalid
+        descriptor.vertexDescriptor = Graphics.VertexDescriptors[vertexDescriptorType]
+        descriptor.vertexFunction = Graphics.Shaders[vertexShaderType]
+        descriptor.fragmentFunction = Graphics.Shaders[fragmentShaderType]
+        Self.EnableBlending(colorAttachment: descriptor.colorAttachments[TFSRenderTargetLighting.index])
+        return descriptor
     }
 }
 
@@ -42,7 +46,7 @@ struct TileRenderPipelineState: RenderPipelineState {
 
 struct OpaqueRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.getOpaqueRenderPipelineDescriptor(vertexDescriptorType: .Base,
+        let renderPipelineDescriptor = Self.GetOpaqueRenderPipelineDescriptor(vertexDescriptorType: .Base,
                                                                               vertexShaderType: .BaseVertex,
                                                                               fragmentShaderType: .BaseFragment)
         
@@ -53,7 +57,7 @@ struct OpaqueRenderPipelineState: RenderPipelineState {
 
 struct OpaqueMaterialRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.getOpaqueRenderPipelineDescriptor(vertexDescriptorType: .Base,
+        let renderPipelineDescriptor = Self.GetOpaqueRenderPipelineDescriptor(vertexDescriptorType: .Base,
                                                                               vertexShaderType: .BaseVertex,
                                                                               fragmentShaderType: .MaterialFragment)
         

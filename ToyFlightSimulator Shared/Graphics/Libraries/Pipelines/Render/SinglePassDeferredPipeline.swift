@@ -140,6 +140,7 @@ struct SkyboxRenderPipelineState: RenderPipelineState {
             descriptor.vertexFunction = Graphics.Shaders[.SkyboxVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.SkyboxFragment]
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Skybox]
+//            descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat

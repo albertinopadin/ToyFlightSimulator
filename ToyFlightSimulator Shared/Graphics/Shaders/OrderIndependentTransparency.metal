@@ -74,15 +74,15 @@ fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stag
     return out;
 }
 
-fragment TransparentFragmentStore transparent_material_fragment(
-                        RasterizerData                  rd              [[ stage_in ]],
-                        constant MaterialProperties     &material       [[ buffer(TFSBufferIndexMaterial) ]],
-                        constant int                    &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
-                        constant LightData              *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
-                        sampler                         sampler2d       [[ sampler(0) ]],
-                        texture2d<float>                baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
-                        texture2d<float>                normalMap       [[ texture(TFSTextureIndexNormal) ]],
-                        TransparentFragmentValues       fragmentValues  [[ imageblock_data ]]) {
+fragment TransparentFragmentStore 
+transparent_material_fragment(RasterizerData                  rd              [[ stage_in ]],
+                              constant MaterialProperties     &material       [[ buffer(TFSBufferIndexMaterial) ]],
+                              constant int                    &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
+                              constant LightData              *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+                              sampler                         sampler2d       [[ sampler(0) ]],
+                              texture2d<float>                baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
+                              texture2d<float>                normalMap       [[ texture(TFSTextureIndexNormal) ]],
+                              TransparentFragmentValues       fragmentValues  [[ imageblock_data ]]) {
                             
     float2 texCoord = rd.textureCoordinate;
     float4 color = rd.color;

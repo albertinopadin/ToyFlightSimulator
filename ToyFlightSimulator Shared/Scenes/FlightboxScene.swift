@@ -63,12 +63,15 @@ class FlightboxScene: GameScene {
 //        f16Sphere.setScale(0.5)
 //        f16.addChild(f16Sphere)
         
-        if _rendererType == .OrderIndependentTransparency {
-            let sky = SkySphere(textureType: .Clouds_Skysphere)
-            addChild(sky)
-        } else {
-            let sky = SkyBox(textureType: .SkyMap)
-            addChild(sky)
+        switch _rendererType {
+            case .OrderIndependentTransparency:
+                let sky = SkySphere(textureType: .Clouds_Skysphere)
+                addChild(sky)
+            case .SinglePassDeferredLighting:
+                let sky = SkyBox(textureType: .SkyMap)
+                addChild(sky)
+            default:
+                print("No sky")
         }
         
         // TODO: Why does position with z = 0 result in much darker lighting ???

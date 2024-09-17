@@ -168,8 +168,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setCullMode(.back)  //<-- This or not setting the cull mode works. WTF?
-            // TODO:
-//            DrawManager.DrawSky(with: renderEncoder, withTransparency: false, applyMaterials: true)
+            DrawManager.DrawSky(with: renderEncoder)
         }
     }
     
@@ -188,7 +187,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //                renderEncoder.setCullMode(.front)
 //                renderEncoder.setDepthBias(0.015, slopeScale: 7, clamp: 0.02)
                 renderEncoder.setDepthBias(0.1, slopeScale: 1, clamp: 0.0)
-                DrawManager.Draw(with: renderEncoder)
+                DrawManager.DrawShadows(with: renderEncoder)
             }
         }
     }

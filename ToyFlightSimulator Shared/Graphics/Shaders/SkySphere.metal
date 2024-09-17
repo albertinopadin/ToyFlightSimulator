@@ -26,7 +26,7 @@ vertex RasterizerData skysphere_vertex(const    VertexIn        vIn             
 
 fragment half4 skysphere_fragment(RasterizerData rd [[ stage_in ]],
                                   sampler sampler2d [[ sampler(0) ]],
-                                  texture2d<float> skySphereTexture [[ texture(10) ]]) {
+                                  texture2d<float> skySphereTexture [[ texture(TFSTextureIndexSkyBox) ]]) {
     float2 texCoord = rd.textureCoordinate;
     float4 color = skySphereTexture.sample(sampler2d, texCoord, level(0));
     return half4(color);

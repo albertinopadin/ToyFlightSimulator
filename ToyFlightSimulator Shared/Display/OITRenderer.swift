@@ -75,6 +75,7 @@ class OITRenderer: Renderer {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OpaqueMaterial])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
             DrawManager.Draw(with: renderEncoder)
+            DrawManager.DrawSky(with: renderEncoder)
         }
     }
     
@@ -82,6 +83,7 @@ class OITRenderer: Renderer {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
             renderEncoder.setCullMode(.none)
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OrderIndependentTransparent])
+//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Blend])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
             DrawManager.Draw(with: renderEncoder, withTransparency: true)
         }
@@ -116,7 +118,6 @@ class OITRenderer: Renderer {
             encodeRenderStage(using: renderEncoder, label: "Final Render") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Final])
                 renderEncoder.setFragmentTexture(Assets.Textures[.BaseColorRender_0], index: 0)
-//                Assets.Meshes[.Quad].drawPrimitives(renderEncoder)
                 DrawManager.DrawQuad(with: renderEncoder)
             }
         }
