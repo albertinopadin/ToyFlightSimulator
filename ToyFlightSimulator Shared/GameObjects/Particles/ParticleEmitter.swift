@@ -156,20 +156,20 @@ class ParticleEmitter {
             let positionZ = particleDescriptor.position.z + .random(in: particleDescriptor.positionZRange)
             particlePointer.pointee.position = [positionX, positionY, positionZ]
             particlePointer.pointee.startPosition = particlePointer.pointee.position
-            particlePointer.pointee.size = particleDescriptor.pointSize + .random(in: particleDescriptor.pointSizeRange)
-            particlePointer.pointee.direction = particleDescriptor.direction + .random(in: particleDescriptor.directionRange)
-            particlePointer.pointee.speed = particleDescriptor.speed + .random(in: particleDescriptor.speedRange)
-            particlePointer.pointee.scale = particleDescriptor.startScale + .random(in: particleDescriptor.startScaleRange)
+            particlePointer.pointee.size = particleDescriptor.pointSize + Float.random(in: particleDescriptor.pointSizeRange)
+            particlePointer.pointee.direction = particleDescriptor.direction + Float.random(in: particleDescriptor.directionRange)
+            particlePointer.pointee.speed = particleDescriptor.speed + Float.random(in: particleDescriptor.speedRange)
+            particlePointer.pointee.scale = particleDescriptor.startScale + Float.random(in: particleDescriptor.startScaleRange)
             particlePointer.pointee.startScale = particlePointer.pointee.scale
             
             if let range = particleDescriptor.endScaleRange {
-                particlePointer.pointee.endScale = particleDescriptor.endScale + .random(in: range)
+                particlePointer.pointee.endScale = particleDescriptor.endScale + Float.random(in: range)
             } else {
                 particlePointer.pointee.endScale = particlePointer.pointee.startScale
             }
             
             particlePointer.pointee.age = 0
-            particlePointer.pointee.life = particleDescriptor.life + .random(in: particleDescriptor.lifeRange)
+            particlePointer.pointee.life = particleDescriptor.life + Float.random(in: particleDescriptor.lifeRange)
             particlePointer.pointee.color = particleDescriptor.color
             particlePointer = particlePointer.advanced(by: 1)
         }
