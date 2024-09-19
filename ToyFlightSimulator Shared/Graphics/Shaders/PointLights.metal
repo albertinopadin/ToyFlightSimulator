@@ -20,14 +20,6 @@ light_mask_vertex(const device float4         * vertices        [[ buffer(TFSBuf
                   constant SceneConstants     & sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                   uint                          iid             [[ instance_id ]],
                   uint                          vid             [[ vertex_id ]]) {
-    // Transform light to position relative to the scene
-//    float4 vertex_eye_position = float4(vertices[vid].xyz * light_data[iid].radius + light_data[iid].position, 1);
-//    float4 vertex_eye_position = light_data[iid].modelMatrix * vertices[vid] * float4(light_data[iid].radius + light_data[iid].position, 1);
-//    float4 vertex_eye_position = light_data[iid].modelMatrix * vertices[vid] * light_data[iid].radius;
-//    float4 vertex_eye_position = float4(light_data[iid].radius + light_data[iid].position, 1);
-//    out.position = sceneConstants.projectionMatrix * vertex_eye_position;
-//    float4 modelPosition = vertices[vid] * light_data[iid].radius;
-    
     float4 modelPosition = vertices[vid];
     float4 worldPosition = light_data[iid].modelMatrix * modelPosition;
     float4 eyePosition = sceneConstants.viewMatrix * worldPosition;

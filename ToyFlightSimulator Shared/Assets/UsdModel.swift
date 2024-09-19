@@ -32,7 +32,7 @@ class UsdModel: Model {
         // Invert Z in meshes due to USD being right handed coord system:
 //        invertMeshZ()  // Not needed for F-22
         
-        super.init(meshes: usdMeshes)
+        super.init(name: modelName, meshes: usdMeshes)
         
         print("[UsdModel init] Num meshes for \(modelName): \(meshes.count)")
     }

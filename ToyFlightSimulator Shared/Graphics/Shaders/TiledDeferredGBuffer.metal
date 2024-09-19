@@ -14,9 +14,11 @@ using namespace metal;
 vertex VertexOut 
 tiled_deferred_gbuffer_vertex(VertexIn                in              [[ stage_in ]],
                               constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-                              constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]],
-                              constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]]) {
-    float4 worldPosition = modelConstants.modelMatrix * float4(in.position, 1);
+                              constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                              constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+                              uint                    instanceId      [[ instance_id ]]) {
+    ModelConstants modelInstance = modelConstants[instanceId];
+    float4 worldPosition = modelInstance.modelMatrix * float4(in.position, 1);
     float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
     
     VertexOut out {
@@ -24,9 +26,9 @@ tiled_deferred_gbuffer_vertex(VertexIn                in              [[ stage_i
         .normal = in.normal,
         .uv = in.textureCoordinate,
         .worldPosition = worldPosition.xyz / worldPosition.w,
-        .worldNormal = modelConstants.normalMatrix * in.normal,
-        .worldTangent = modelConstants.normalMatrix * in.tangent,
-        .worldBitangent = modelConstants.normalMatrix * in.bitangent,
+        .worldNormal = modelInstance.normalMatrix * in.normal,
+        .worldTangent = modelInstance.normalMatrix * in.tangent,
+        .worldBitangent = modelInstance.normalMatrix * in.bitangent,
         .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition
     };
     return out;

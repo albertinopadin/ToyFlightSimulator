@@ -13,17 +13,28 @@ enum ModelExtension: String {
     case USDZ = "usdz"
 }
 
-class Model {
+class Model: Hashable {
+    public let id: String
+    public let name: String
     public var meshes: [Mesh] = []
     public var parent: GameObject?
     
-    init(mesh: Mesh) {
-        meshes.append(mesh)
+    static func == (lhs: Model, rhs: Model) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    init(name: String, meshes: [Mesh]) {
+        self.id = UUID().uuidString
+        self.name = name
+        self.meshes = meshes
         meshes.forEach { $0.parentModel = self }
     }
     
-    init(meshes: [Mesh]) {
-        self.meshes = meshes
-        meshes.forEach { $0.parentModel = self }
+    convenience init(name: String, mesh: Mesh) {
+        self.init(name: name, meshes: [mesh])
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(self.id)
     }
 }

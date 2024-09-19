@@ -14,11 +14,7 @@ class GameObject: Node, Renderable, Hashable {
     
     public var model: Model!
     public var modelConstants = ModelConstants()
-    
     public var material: MaterialProperties? = nil
-    public var baseColorTextureType: TextureType = .None
-    public var normalMapTextureType: TextureType = .None
-    public var specularTextureType: TextureType = .None
     
     init(name: String, modelType: ModelType) {
         super.init(name: name)
@@ -37,21 +33,6 @@ class GameObject: Node, Renderable, Hashable {
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(self.getID())
-    }
-}
-
-// Material Properties
-extension GameObject {
-    public func useBaseColorTexture(_ textureType: TextureType) {
-        baseColorTextureType = textureType
-    }
-    
-    public func useNormalMapTexture(_ textureType: TextureType) {
-        normalMapTextureType = textureType
-    }
-    
-    public func useSpecularTexture(_ textureType: TextureType) {
-        specularTextureType = textureType
     }
     
     public func useMaterial(_ material: MaterialProperties) {

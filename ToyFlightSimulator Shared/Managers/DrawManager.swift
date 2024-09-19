@@ -7,13 +7,13 @@
 
 import MetalKit
 
-struct GameObjectSubmeshes {
-    var gameObject: GameObject?
+struct ModelData {
+    var gameObjects: [GameObject] = []
     var opaqueSubmeshes: [Submesh] = []
     var transparentSubmeshes: [Submesh] = []
     
-    mutating func setGameObject(_ gameObject: GameObject) {
-        self.gameObject = gameObject
+    mutating func addGameObject(_ gameObject: GameObject) {
+        self.gameObjects.append(gameObject)
     }
     
     mutating func appendOpaque(submesh: Submesh) {
@@ -26,14 +26,14 @@ struct GameObjectSubmeshes {
 }
 
 final class DrawManager {
-    static var gameObjectToSubmeshes: [GameObject: GameObjectSubmeshes] = [:]
+    static var modelDatas: [Model: ModelData] = [:]
     static var particleObjects: [ParticleEmitterObject] = []
-    static var skySubmeshes = GameObjectSubmeshes()
+    static var skyData = ModelData()
     static var lines: [Line] = []
     static var icosahedrons: [Icosahedron] = []
     
     static var SubmeshCount: Int {
-        return gameObjectToSubmeshes.reduce(0) { $0 + $1.value.opaqueSubmeshes.count + $1.value.transparentSubmeshes.count }
+        return modelDatas.reduce(0) { $0 + $1.value.opaqueSubmeshes.count + $1.value.transparentSubmeshes.count }
     }
     
     static func Register(_ gameObject: GameObject) {
@@ -56,36 +56,39 @@ final class DrawManager {
     static private func RegisterObject(_ gameObject: GameObject) {
         for mesh in gameObject.model.meshes {
             for submesh in mesh.submeshes {
-                if let _ = gameObjectToSubmeshes[gameObject] {
+                if let _ = modelDatas[gameObject.model] {
+                    modelDatas[gameObject.model]?.addGameObject(gameObject)
                     if let isTransparent = submesh.material?.isTransparent, isTransparent {
-                        gameObjectToSubmeshes[gameObject]?.appendTransparent(submesh: submesh)
+                        modelDatas[gameObject.model]?.appendTransparent(submesh: submesh)
                     } else {
-                        gameObjectToSubmeshes[gameObject]?.appendOpaque(submesh: submesh)
+                        modelDatas[gameObject.model]?.appendOpaque(submesh: submesh)
                     }
                 } else {
-                    var goSubmeshes = GameObjectSubmeshes()
+                    var modelData = ModelData()
+                    modelData.addGameObject(gameObject)
                     if let isTransparent = submesh.material?.isTransparent, isTransparent {
-                        goSubmeshes.appendTransparent(submesh: submesh)
+                        modelData.appendTransparent(submesh: submesh)
                     } else {
-                        goSubmeshes.appendOpaque(submesh: submesh)
+                        modelData.appendOpaque(submesh: submesh)
                     }
-                    gameObjectToSubmeshes[gameObject] = goSubmeshes
+                    modelDatas[gameObject.model] = modelData
                 }
             }
         }
     }
     
     static private func RegisterSky(_ gameObject: GameObject) {
+        // TODO: Hack to set sky object - think of something better
+        if skyData.gameObjects.isEmpty {
+            skyData.gameObjects.append(gameObject)
+        }
+        
         for mesh in gameObject.model.meshes {
             for submesh in mesh.submeshes {
-                if skySubmeshes.gameObject == nil {
-                    skySubmeshes.gameObject = gameObject
-                }
-                
                 if let isTransparent = submesh.material?.isTransparent, isTransparent {
-                    skySubmeshes.appendTransparent(submesh: submesh)
+                    skyData.appendTransparent(submesh: submesh)
                 } else {
-                    skySubmeshes.appendOpaque(submesh: submesh)
+                    skyData.appendOpaque(submesh: submesh)
                 }
             }
         }
@@ -100,16 +103,18 @@ final class DrawManager {
     static func Draw(with renderEncoder: MTLRenderCommandEncoder,
                      withTransparency: Bool = false,
                      applyMaterials: Bool = true) {
-        for (gameObject, submeshes) in gameObjectToSubmeshes {
+        for (model, data) in modelDatas {
             if withTransparency {
-                Draw(renderEncoder, 
-                     gameObject: gameObject,
-                     submeshes: submeshes.transparentSubmeshes, 
+                Draw(renderEncoder,
+                     model: model,
+                     gameObjects: data.gameObjects,
+                     submeshes: data.transparentSubmeshes,
                      applyMaterials: applyMaterials)
             } else {
-                Draw(renderEncoder, 
-                     gameObject: gameObject,
-                     submeshes: submeshes.opaqueSubmeshes,
+                Draw(renderEncoder,
+                     model: model,
+                     gameObjects: data.gameObjects,
+                     submeshes: data.opaqueSubmeshes,
                      applyMaterials: applyMaterials)
             }
         }
@@ -119,10 +124,11 @@ final class DrawManager {
     
     // I really don't like this long term...
     static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
-        for (gameObject, submeshes) in gameObjectToSubmeshes {
+        for (model, data) in modelDatas {
             Draw(renderEncoder,
-                 gameObject: gameObject,
-                 submeshes: submeshes.opaqueSubmeshes,
+                 model: model,
+                 gameObjects: data.gameObjects,
+                 submeshes: data.opaqueSubmeshes,
                  applyMaterials: false)
         }
     }
@@ -157,28 +163,25 @@ final class DrawManager {
     }
     
     static func DrawIcosahedrons(with renderEncoder: MTLRenderCommandEncoder) {
-        for icosahedron in icosahedrons {
-//            Draw(renderEncoder,
-//                 gameObject: icosahedron,
-//                 submeshes: icosahedron.model.meshes.reduce([]) { $1.submeshes },
-//                 applyMaterials: true)
-            
+        if !icosahedrons.isEmpty {
             Draw(renderEncoder,
-                 gameObject: icosahedron,
-                 submeshes: icosahedron.model.meshes.flatMap { $0.submeshes },
+                 model: Assets.Models[.Icosahedron],
+                 gameObjects: icosahedrons,
+                 submeshes: icosahedrons.first!.model.meshes.flatMap { $0.submeshes },
                  applyMaterials: true)
         }
     }
     
     static func DrawSky(with renderEncoder: MTLRenderCommandEncoder) {
-        if let skyObj = skySubmeshes.gameObject as? SkyEntity {
+        if let skyObj = skyData.gameObjects.first as? SkyEntity {
             let pso: RenderPipelineStateType = ((skyObj as? SkyBox) != nil) ? .Skybox : .SkySphere
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[pso])
             renderEncoder.setFragmentTexture(Assets.Textures[skyObj.textureType], index: TFSTextureIndexSkyBox.index)
             
             Draw(renderEncoder,
-                 gameObject: skySubmeshes.gameObject!,
-                 submeshes: skySubmeshes.opaqueSubmeshes,
+                 model: skyObj.model,
+                 gameObjects: skyData.gameObjects,
+                 submeshes: skyData.opaqueSubmeshes,
                  applyMaterials: false)
         }
     }
@@ -221,24 +224,34 @@ final class DrawManager {
     }
     
     static private func Draw(_ renderEncoder: MTLRenderCommandEncoder,
-                             gameObject: GameObject,
+                             model: Model,
+                             gameObjects: [GameObject],
                              submeshes: [Submesh],
                              applyMaterials: Bool) {
-        EncodeRender(using: renderEncoder, label: "Rendering \(gameObject.getName())") {
-            renderEncoder.setVertexBytes(&gameObject.modelConstants,
-                                         length: ModelConstants.stride,
+        EncodeRender(using: renderEncoder, label: "Rendering \(model.name)") {
+            var constants = gameObjects.map { $0.modelConstants }
+            renderEncoder.setVertexBytes(&constants,
+                                         length: ModelConstants.stride(gameObjects.count),
                                          index: TFSBufferModelConstants.index)
+            
+            // TODO:
+            // This is sorta messed up because some GOs have materials while others do not
+            // I guess if GO material is null, just use submesh material ???
+//            if applyMaterials {
+//                var materials = gameObjects.map { $0.material }
+//                renderEncoder.setFragmentBytes(&materials,
+//                                               length: MaterialProperties.stride(gameObjects.count),
+//                                               index: TFSBufferIndexMaterial.index)
+//            }
             
             for submesh in submeshes {
                 if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
                     renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
                     
+                    // TODO: This should be per game object
                     if applyMaterials {
-                        submesh.material?.applyTextures(with: renderEncoder,
-                                                        baseColorTextureType: gameObject.baseColorTextureType,
-                                                        normalMapTextureType: gameObject.normalMapTextureType,
-                                                        specularTextureType: gameObject.specularTextureType)
-                        submesh.applyMaterial(with: renderEncoder, customMaterial: gameObject.material)
+                        submesh.material?.applyTextures(with: renderEncoder)
+                        submesh.applyMaterial(with: renderEncoder)
                     }
                     
                     renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
@@ -246,7 +259,7 @@ final class DrawManager {
                                                         indexType: submesh.indexType,
                                                         indexBuffer: submesh.indexBuffer,
                                                         indexBufferOffset: submesh.indexBufferOffset,
-                                                        instanceCount: submesh.parentMesh!.instanceCount)
+                                                        instanceCount: submesh.parentMesh!.instanceCount * gameObjects.count)
                 }
             }
         }

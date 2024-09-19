@@ -5,6 +5,6 @@
 //  Created by Albertino Padin on 9/14/24.
 //
 
-protocol SkyEntity {
+protocol SkyEntity: GameObject {
     var textureType: TextureType { get set }
 }

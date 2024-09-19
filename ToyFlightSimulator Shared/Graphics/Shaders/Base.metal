@@ -18,8 +18,10 @@ struct FragmentOutput {
 
 vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
                                   constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-                                  constant ModelConstants &modelConstants [[ buffer(TFSBufferModelConstants) ]]) {
-    float4 worldPosition = modelConstants.modelMatrix * float4(vIn.position, 1);
+                                  constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                                  uint instanceId [[ instance_id ]]) {
+    ModelConstants modelInstance = modelConstants[instanceId];
+    float4 worldPosition = modelInstance.modelMatrix * float4(vIn.position, 1);
     
     RasterizerData rd = {
         // Order of matrix multiplication is important here:
@@ -29,9 +31,9 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
         .totalGameTime = sceneConstants.totalGameTime,
         .worldPosition = worldPosition.xyz,
         .toCameraVector = sceneConstants.cameraPosition - worldPosition.xyz,
-        .surfaceNormal = normalize(modelConstants.modelMatrix * float4(vIn.normal, 1.0)).xyz,
-        .surfaceTangent = normalize(modelConstants.modelMatrix * float4(vIn.tangent, 1.0)).xyz,
-        .surfaceBitangent = normalize(modelConstants.modelMatrix * float4(vIn.bitangent, 1.0)).xyz
+        .surfaceNormal = normalize(modelInstance.modelMatrix * float4(vIn.normal, 1.0)).xyz,
+        .surfaceTangent = normalize(modelInstance.modelMatrix * float4(vIn.tangent, 1.0)).xyz,
+        .surfaceBitangent = normalize(modelInstance.modelMatrix * float4(vIn.bitangent, 1.0)).xyz
     };
     
     return rd;
@@ -69,6 +71,7 @@ fragment FragmentOutput material_fragment(RasterizerData rd [[ stage_in ]],
     }
     
     float3 unitNormal;
+    // TODO: This results in very dark scene:
 //    if (material.isLit) {
 //        unitNormal = normalize(rd.surfaceNormal);
 //        if (material.useNormalMapTexture && !is_null_texture(normalMap)) {

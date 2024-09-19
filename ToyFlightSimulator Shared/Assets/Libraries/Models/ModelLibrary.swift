@@ -36,11 +36,11 @@ class ModelLibrary: Library<ModelType, Model> {
     private var _library: [ModelType: Model] = [:]
     
     override func makeLibrary() {
-        _library.updateValue(Model(mesh: NoMesh()), forKey: .None)
-        _library.updateValue(Model(mesh: TriangleMesh()), forKey: .Triangle)
-        _library.updateValue(Model(mesh: CubeMesh()), forKey: .Cube)
-        _library.updateValue(Model(mesh: CapsuleMesh()), forKey: .Capsule)
-        _library.updateValue(Model(mesh: SkyboxMesh()), forKey: .Skybox)
+        _library.updateValue(Model(name: "No Mesh", mesh: NoMesh()), forKey: .None)
+        _library.updateValue(Model(name: "Triangle", mesh: TriangleMesh()), forKey: .Triangle)
+        _library.updateValue(Model(name: "Cube", mesh: CubeMesh()), forKey: .Cube)
+        _library.updateValue(Model(name: "Capsule", mesh: CapsuleMesh()), forKey: .Capsule)
+        _library.updateValue(Model(name: "Skybox", mesh: SkyboxMesh()), forKey: .Skybox)
         
         _library.updateValue(ObjModel("sphere"), forKey: .Sphere)
         _library.updateValue(ObjModel("quad"), forKey: .Quad)
@@ -53,8 +53,8 @@ class ModelLibrary: Library<ModelType, Model> {
         _library.updateValue(UsdModel("F-35A_Lightning_II"), forKey: .Sketchfab_F35)
         _library.updateValue(UsdModel("F-22_Raptor"), forKey: .Sketchfab_F22)
         
-        _library.updateValue(Model(mesh: PlaneMesh()), forKey: .Plane)
-        _library.updateValue(Model(mesh: IcosahedronMesh()), forKey: .Icosahedron)
+        _library.updateValue(Model(name: "Plane", mesh: PlaneMesh()), forKey: .Plane)
+        _library.updateValue(Model(name: "Icosahedron", mesh: IcosahedronMesh()), forKey: .Icosahedron)
         _library.updateValue(ObjModel("Temple"), forKey: .Temple)
     }
     

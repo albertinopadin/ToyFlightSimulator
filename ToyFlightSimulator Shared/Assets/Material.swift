@@ -151,9 +151,9 @@ struct Material: sizeable {
     }
     
     public mutating func applyTextures(with renderEncoder: MTLRenderCommandEncoder,
-                                       baseColorTextureType: TextureType,
-                                       normalMapTextureType: TextureType,
-                                       specularTextureType: TextureType) {
+                                       baseColorTextureType: TextureType = .None,
+                                       normalMapTextureType: TextureType = .None,
+                                       specularTextureType: TextureType = .None) {
         properties.useBaseTexture = baseColorTextureType != .None || baseColorTexture != nil
         properties.useNormalMapTexture = normalMapTextureType != .None || normalMapTexture != nil
         properties.useSpecularTexture = specularTextureType != .None || specularTexture != nil

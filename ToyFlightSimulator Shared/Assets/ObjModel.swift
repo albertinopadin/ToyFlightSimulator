@@ -36,7 +36,7 @@ class ObjModel: Model {
         
 //        invertMeshZ()
         
-        super.init(meshes: objMeshes)
+        super.init(name: modelName, meshes: objMeshes)
     }
     
     private static func makeMeshes(object: MDLObject, vertexDescriptor: MDLVertexDescriptor) -> [Mesh] {

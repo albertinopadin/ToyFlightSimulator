@@ -34,10 +34,12 @@ typedef struct {
 
 vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ stage_in ]],
                                  constant SceneConstants    &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-                                 constant ModelConstants    &modelConstants [[ buffer(TFSBufferModelConstants) ]],
-                                 constant LightData         &lightData      [[ buffer(TFSBufferDirectionalLightData) ]]) {
+                                 constant ModelConstants    *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                                 constant LightData         &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+                                 uint                       instanceId      [[ instance_id ]]) {
+    ModelConstants modelInstance = modelConstants[instanceId];
     float4 modelPosition = float4(in.position, 1.0);
-    float4 worldPosition = modelConstants.modelMatrix * modelPosition;
+    float4 worldPosition = modelInstance.modelMatrix * modelPosition;
     float4 eyePosition = sceneConstants.viewMatrix * worldPosition;
     
     ColorInOut out = {
@@ -48,9 +50,9 @@ vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ s
         .shadow_coord = (lightData.shadowTransformMatrix *
                          lightData.shadowViewProjectionMatrix *
                          worldPosition).xyz,
-        .tangent = half3(normalize(modelConstants.normalMatrix * in.tangent)),
-        .bitangent = half3(-normalize(modelConstants.normalMatrix * in.bitangent)),
-        .normal = half3(normalize(modelConstants.normalMatrix * in.normal)),
+        .tangent = half3(normalize(modelInstance.normalMatrix * in.tangent)),
+        .bitangent = half3(-normalize(modelInstance.normalMatrix * in.bitangent)),
+        .normal = half3(normalize(modelInstance.normalMatrix * in.normal)),
     };
     
     return out;

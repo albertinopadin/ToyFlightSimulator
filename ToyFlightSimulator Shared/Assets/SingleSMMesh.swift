@@ -255,7 +255,8 @@ class SingleSMMesh {
                                                  baseColorTextureType: baseColorTextureType,
                                                  normalMapTextureType: normalMapTextureType,
                                                  specularTextureType: specularTextureType)
-                _submesh.applyMaterial(with: renderEncoder, customMaterial: material)
+//                _submesh.applyMaterial(with: renderEncoder, customMaterial: material)
+                _submesh.applyMaterial(with: renderEncoder)
             }
 
             renderEncoder.drawIndexedPrimitives(type: _submesh.primitiveType,
