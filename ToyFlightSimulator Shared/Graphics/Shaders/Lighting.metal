@@ -15,7 +15,7 @@ using namespace metal;
 
 class Lighting {
 public:
-    static float3 GetPhongIntensity(constant MaterialProperties &material,
+    static float3 GetPhongIntensity(MaterialProperties material,
                                     constant LightData *lightData,
                                     int lightCount,
                                     float3 worldPosition,

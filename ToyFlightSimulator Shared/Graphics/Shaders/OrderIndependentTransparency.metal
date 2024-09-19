@@ -76,14 +76,15 @@ fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stag
 
 fragment TransparentFragmentStore 
 transparent_material_fragment(RasterizerData                  rd              [[ stage_in ]],
-                              constant MaterialProperties     &material       [[ buffer(TFSBufferIndexMaterial) ]],
+                              constant MaterialProperties     *materials      [[ buffer(TFSBufferIndexMaterial) ]],
                               constant int                    &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
                               constant LightData              *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
                               sampler                         sampler2d       [[ sampler(0) ]],
                               texture2d<float>                baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
                               texture2d<float>                normalMap       [[ texture(TFSTextureIndexNormal) ]],
                               TransparentFragmentValues       fragmentValues  [[ imageblock_data ]]) {
-                            
+    uint instanceId = rd.instanceId;
+    MaterialProperties material = materials[instanceId];
     float2 texCoord = rd.textureCoordinate;
     float4 color = rd.color;
     

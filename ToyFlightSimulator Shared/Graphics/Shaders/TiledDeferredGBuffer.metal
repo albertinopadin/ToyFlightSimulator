@@ -29,18 +29,20 @@ tiled_deferred_gbuffer_vertex(VertexIn                in              [[ stage_i
         .worldNormal = modelInstance.normalMatrix * in.normal,
         .worldTangent = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
-        .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition
+        .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition,
+        .instanceId = instanceId
     };
     return out;
 }
 
 fragment GBufferOut 
 tiled_deferred_gbuffer_fragment(VertexOut                   in                  [[ stage_in ]],
-                                constant MaterialProperties &material           [[ buffer(TFSBufferIndexMaterial) ]],
+                                constant MaterialProperties *materials          [[ buffer(TFSBufferIndexMaterial) ]],
                                 sampler                     sampler2d           [[ sampler(0) ]],
                                 texture2d<half>             baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
                                 texture2d<half>             normalTexture       [[ texture(TFSTextureIndexNormal) ]],
                                 depth2d<float>              shadowTexture       [[ texture(TFSTextureIndexShadow) ]]) {
+    MaterialProperties material = materials[in.instanceId];
     float4 color = material.color;
     
     if (!material.useMaterialColor && !is_null_texture(baseColorTexture)) {

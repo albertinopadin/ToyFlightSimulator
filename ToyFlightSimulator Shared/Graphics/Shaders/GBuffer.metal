@@ -30,6 +30,7 @@ typedef struct {
     half3 tangent;
     half3 bitangent;
     half3 normal;
+    uint instanceId;
 } ColorInOut;
 
 vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ stage_in ]],
@@ -53,6 +54,7 @@ vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ s
         .tangent = half3(normalize(modelInstance.normalMatrix * in.tangent)),
         .bitangent = half3(-normalize(modelInstance.normalMatrix * in.bitangent)),
         .normal = half3(normalize(modelInstance.normalMatrix * in.normal)),
+        .instanceId = instanceId
     };
     
     return out;
@@ -97,7 +99,7 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
 }
 
 fragment GBufferData gbuffer_fragment_material(ColorInOut                   in           [[ stage_in ]],
-                                               constant MaterialProperties &material     [[ buffer(TFSBufferIndexMaterial) ]],
+                                               constant MaterialProperties *materials    [[ buffer(TFSBufferIndexMaterial) ]],
                                                sampler                      sampler2d    [[ sampler(0) ]],
                                                texture2d<half>              baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
                                                texture2d<half>              normalMap    [[ texture(TFSTextureIndexNormal) ]],
@@ -107,6 +109,8 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut                   in  
     half4 base_color_sample;
     half4 normal_sample;
     half specular_contrib;
+    
+    MaterialProperties material = materials[in.instanceId];
     
     if (material.useMaterialColor) {
         base_color_sample = half4(material.color);

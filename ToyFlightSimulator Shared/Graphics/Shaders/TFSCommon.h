@@ -140,8 +140,8 @@ typedef struct
     matrix_float4x4 projection_matrix;
     matrix_float4x4 projection_matrix_inverse;
     matrix_float4x4 view_matrix;
-    uint64_t framebuffer_width;
-    uint64_t framebuffer_height;
+    uint32_t framebuffer_width;
+    uint32_t framebuffer_height;
 
     // Per Mesh frameData
     matrix_float4x4 temple_modelview_matrix;

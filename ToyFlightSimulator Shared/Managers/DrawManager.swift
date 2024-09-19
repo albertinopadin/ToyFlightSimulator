@@ -58,7 +58,7 @@ final class DrawManager {
             for submesh in mesh.submeshes {
                 if let _ = modelDatas[gameObject.model] {
                     modelDatas[gameObject.model]?.addGameObject(gameObject)
-                    if let isTransparent = submesh.material?.isTransparent, isTransparent {
+                    if isTransparent(gameObject: gameObject, submesh: submesh) {
                         modelDatas[gameObject.model]?.appendTransparent(submesh: submesh)
                     } else {
                         modelDatas[gameObject.model]?.appendOpaque(submesh: submesh)
@@ -66,7 +66,7 @@ final class DrawManager {
                 } else {
                     var modelData = ModelData()
                     modelData.addGameObject(gameObject)
-                    if let isTransparent = submesh.material?.isTransparent, isTransparent {
+                    if isTransparent(gameObject: gameObject, submesh: submesh) {
                         modelData.appendTransparent(submesh: submesh)
                     } else {
                         modelData.appendOpaque(submesh: submesh)
@@ -75,6 +75,18 @@ final class DrawManager {
                 }
             }
         }
+    }
+    
+    static private func isTransparent(gameObject: GameObject, submesh: Submesh) -> Bool {
+        if let isTransparent = submesh.material?.isTransparent, isTransparent {
+            return true
+        }
+        
+        if let goMaterial = gameObject.material {
+            return goMaterial.opacity < 1.0 || goMaterial.color.w < 1.0
+        }
+        
+        return false
     }
     
     static private func RegisterSky(_ gameObject: GameObject) {
@@ -234,15 +246,12 @@ final class DrawManager {
                                          length: ModelConstants.stride(gameObjects.count),
                                          index: TFSBufferModelConstants.index)
             
-            // TODO:
-            // This is sorta messed up because some GOs have materials while others do not
-            // I guess if GO material is null, just use submesh material ???
-//            if applyMaterials {
-//                var materials = gameObjects.map { $0.material }
-//                renderEncoder.setFragmentBytes(&materials,
-//                                               length: MaterialProperties.stride(gameObjects.count),
-//                                               index: TFSBufferIndexMaterial.index)
-//            }
+            if applyMaterials {
+                var materials = gameObjects.map { $0.material != nil ? $0.material : submeshes.first?.material?.properties }
+                renderEncoder.setFragmentBytes(&materials,
+                                               length: MaterialProperties.stride(gameObjects.count),
+                                               index: TFSBufferIndexMaterial.index)
+            }
             
             for submesh in submeshes {
                 if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
@@ -251,7 +260,6 @@ final class DrawManager {
                     // TODO: This should be per game object
                     if applyMaterials {
                         submesh.material?.applyTextures(with: renderEncoder)
-                        submesh.applyMaterial(with: renderEncoder)
                     }
                     
                     renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,

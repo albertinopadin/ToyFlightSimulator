@@ -37,6 +37,5 @@ class GameObject: Node, Renderable, Hashable {
     
     public func useMaterial(_ material: MaterialProperties) {
         self.material = material
-        model.meshes.forEach { $0.submeshes.forEach { $0.material = Material(material) } }
     }
 }

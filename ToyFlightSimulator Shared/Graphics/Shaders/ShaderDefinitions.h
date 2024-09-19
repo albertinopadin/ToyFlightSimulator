@@ -34,6 +34,8 @@ struct RasterizerData {
     float3 surfaceNormal;
     float3 surfaceTangent;
     float3 surfaceBitangent;
+    
+    uint32_t instanceId;
 };
 
 // Raster order group definitions
@@ -71,4 +73,5 @@ struct VertexOut {
     float3 worldTangent;
     float3 worldBitangent;
     float4 shadowPosition;
+    uint instanceId;
 };

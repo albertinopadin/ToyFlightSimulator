@@ -33,7 +33,8 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
         .toCameraVector = sceneConstants.cameraPosition - worldPosition.xyz,
         .surfaceNormal = normalize(modelInstance.modelMatrix * float4(vIn.normal, 1.0)).xyz,
         .surfaceTangent = normalize(modelInstance.modelMatrix * float4(vIn.tangent, 1.0)).xyz,
-        .surfaceBitangent = normalize(modelInstance.modelMatrix * float4(vIn.bitangent, 1.0)).xyz
+        .surfaceBitangent = normalize(modelInstance.modelMatrix * float4(vIn.bitangent, 1.0)).xyz,
+        .instanceId = instanceId
     };
     
     return rd;
@@ -52,15 +53,18 @@ fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]]) {
 }
 
 
-fragment FragmentOutput material_fragment(RasterizerData rd [[ stage_in ]],
-                                          constant MaterialProperties &material [[ buffer(TFSBufferIndexMaterial) ]],
-                                          constant int &lightCount [[ buffer(TFSBufferDirectionalLightsNum) ]],
-                                          constant LightData *lightData [[ buffer(TFSBufferDirectionalLightData) ]],
-                                          sampler sampler2d [[ sampler(0) ]],
-                                          texture2d<float> baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
-                                          texture2d<float> normalMap [[ texture(TFSTextureIndexNormal) ]]) {
+fragment FragmentOutput
+material_fragment(          RasterizerData      rd              [[ stage_in ]],
+                  constant  MaterialProperties  *materials      [[ buffer(TFSBufferIndexMaterial) ]],
+                  constant  int                 &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
+                  constant  LightData           *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+                            sampler             sampler2d       [[ sampler(0) ]],
+                            texture2d<float>    baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
+                            texture2d<float>    normalMap       [[ texture(TFSTextureIndexNormal) ]]) {
+    uint instanceId = rd.instanceId;
     float2 texCoord = rd.textureCoordinate;
     float4 color = rd.color;
+    MaterialProperties material = materials[instanceId];
     
     if (material.useMaterialColor) {
         color = material.color;
