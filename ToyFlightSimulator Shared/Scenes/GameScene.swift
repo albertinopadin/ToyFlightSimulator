@@ -30,6 +30,21 @@ class GameScene: Node {
         initScene()
     }
     
+    override func addChild(_ child: Node) {
+        super.addChild(child)
+        registerChild(child)
+    }
+    
+    func registerChild(_ child: Node) {
+        if let go = child as? GameObject {
+            DrawManager.Register(go)
+        }
+        
+        for subchild in child.children {
+            registerChild(subchild)
+        }
+    }
+    
     func initScene() {
         preBuildScene()
         buildScene()

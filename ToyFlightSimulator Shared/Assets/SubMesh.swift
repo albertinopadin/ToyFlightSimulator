@@ -66,7 +66,7 @@ class Submesh {
         // TODO: Using stride freaks out Address Sanitizer, but using size fails assertion on drawIndexedPrimitives:
         renderEncoder.setFragmentBytes(&material_, 
                                        length: MaterialProperties.stride,
-                                       index: TFSBufferIndexMaterial.index)
+                                       index: TFSBufferIndexSubmeshMaterial.index)
     }
 }
 

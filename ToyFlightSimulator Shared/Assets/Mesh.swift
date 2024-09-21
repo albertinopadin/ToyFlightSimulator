@@ -144,9 +144,4 @@ class Mesh {
                                 tangent: tangent,
                                 bitangent: bitangent))
     }
-    
-    func applyMaterial(with renderEncoder: MTLRenderCommandEncoder, material: MaterialProperties?) {
-        var mat = material
-        renderEncoder.setFragmentBytes(&mat, length: MaterialProperties.stride, index: Int(TFSBufferIndexMaterial.rawValue))
-    }
 }

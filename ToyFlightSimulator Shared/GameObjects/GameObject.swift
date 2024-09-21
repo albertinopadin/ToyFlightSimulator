@@ -16,12 +16,16 @@ class GameObject: Node, Renderable, Hashable {
     public var modelConstants = ModelConstants()
     public var material: MaterialProperties? = nil
     
-    init(name: String, modelType: ModelType) {
+    init(name: String, modelType: ModelType, materialProperties: MaterialProperties? = nil) {
         super.init(name: name)
         model = Assets.Models[modelType]
         model.parent = self
         
-        DrawManager.Register(self)
+        if let materialProperties {
+            useMaterial(materialProperties)
+        }
+        
+//        DrawManager.Register(self)
         print("GameObject init; named \(self.getName())")
     }
     
@@ -37,5 +41,6 @@ class GameObject: Node, Renderable, Hashable {
     
     public func useMaterial(_ material: MaterialProperties) {
         self.material = material
+        modelConstants.useObjectMaterial = true
     }
 }

@@ -6,7 +6,7 @@
 //
 
 class Sphere: GameObject {
-    init() {
-        super.init(name: "Sphere", modelType: .Sphere)
+    init(materialProperties: MaterialProperties? = nil) {
+        super.init(name: "Sphere", modelType: .Sphere, materialProperties: materialProperties)
     }
 }

@@ -24,20 +24,6 @@ typedef struct __attribute__ ((packed)) packed_float3 {
 #endif
 
 typedef struct {
-    matrix_float4x4 modelMatrix;
-    matrix_float3x3 normalMatrix;
-} ModelConstants;
-
-typedef struct {
-    float totalGameTime;
-    matrix_float4x4 viewMatrix;
-    matrix_float4x4 skyViewMatrix;
-    matrix_float4x4 projectionMatrix;
-    matrix_float4x4 projectionMatrixInverse;
-    simd_float3 cameraPosition;
-} SceneConstants;
-
-typedef struct {
     simd_float4 color;
     simd_float3 ambient;
     simd_float3 diffuse;
@@ -52,6 +38,21 @@ typedef struct {
     bool useSpecularTexture;
     bool isLit;
 } MaterialProperties;
+
+typedef struct {
+    matrix_float4x4 modelMatrix;
+    matrix_float3x3 normalMatrix;
+    bool useObjectMaterial;
+} ModelConstants;
+
+typedef struct {
+    float totalGameTime;
+    matrix_float4x4 viewMatrix;
+    matrix_float4x4 skyViewMatrix;
+    matrix_float4x4 projectionMatrix;
+    matrix_float4x4 projectionMatrixInverse;
+    simd_float3 cameraPosition;
+} SceneConstants;
 
 typedef enum {
     Ambient,
@@ -91,8 +92,8 @@ typedef enum {
     TFSBufferPointLightsPosition    = 6,
     TFSBufferModelConstants         = 7,
     TFSBufferIndexSceneConstants    = 8,
-    TFSBufferIndexMaterial          = 9
-    
+    TFSBufferIndexObjectMaterial    = 9,
+    TFSBufferIndexSubmeshMaterial   = 10
 } TFSBufferIndices;
 
 // Attribute index values shared between shader and C code to ensure Metal shader vertex

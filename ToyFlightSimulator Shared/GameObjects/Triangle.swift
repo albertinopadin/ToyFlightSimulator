@@ -6,7 +6,7 @@
 //
 
 class Triangle: GameObject {
-    init() {
-        super.init(name: "Triangle", modelType: .Triangle)
+    init(materialProperties: MaterialProperties? = nil) {
+        super.init(name: "Triangle", modelType: .Triangle, materialProperties: materialProperties)
     }
 }

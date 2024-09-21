@@ -29,23 +29,31 @@ single_pass_deferred_transparency_vertex(   VertexIn       in              [[ st
         .worldTangent = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
         .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition,
-        .instanceId = instanceId
+        .instanceId = instanceId,
+        .useObjectMaterial = modelInstance.useObjectMaterial
     };
     return out;
 }
 
 fragment float4
-single_pass_deferred_transparency_fragment(   VertexOut          in                  [[ stage_in ]],
-                                     constant MaterialProperties *materials          [[ buffer(TFSBufferIndexMaterial) ]],
-                                     sampler                     sampler2d           [[ sampler(0) ]],
-                                     texture2d<half>             baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]]) {
-    MaterialProperties material = materials[in.instanceId];
+single_pass_deferred_transparency_fragment(
+              VertexOut            in                  [[ stage_in ]],
+    constant  MaterialProperties   *objectMaterials    [[ buffer(TFSBufferIndexObjectMaterial) ]],
+    constant  MaterialProperties   &submeshMaterial    [[ buffer(TFSBufferIndexSubmeshMaterial) ]],
+              sampler              sampler2d           [[ sampler(0) ]],
+              texture2d<half>      baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]]) {
+    MaterialProperties material = submeshMaterial;
+    if (in.useObjectMaterial) {
+        material = objectMaterials[in.instanceId];
+    }
+                  
     float4 color = material.color;
     
     if (!material.useMaterialColor && !is_null_texture(baseColorTexture)) {
         color = float4(baseColorTexture.sample(sampler2d, in.uv));
     }
     
-    color.a = material.opacity;
+    color.a = min(color.a, material.opacity);
+    
     return color;
 }

@@ -6,10 +6,10 @@
 //
 
 class CapsuleObject: GameObject {
-    init() {
+    init(materialProperties: MaterialProperties? = nil) {
         super.init(name: "Capsule", modelType: .Capsule)
-        var material = MaterialProperties()
-        material.setColor(WHITE_COLOR)
-        useMaterial(material)
+        var capsuleMaterial = MaterialProperties()
+        capsuleMaterial.setColor(WHITE_COLOR)
+        self.useMaterial(capsuleMaterial)
     }
 }

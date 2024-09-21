@@ -30,19 +30,57 @@ tiled_deferred_gbuffer_vertex(VertexIn                in              [[ stage_i
         .worldTangent = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
         .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition,
-        .instanceId = instanceId
+        .instanceId = instanceId,
+        .useObjectMaterial = modelInstance.useObjectMaterial
     };
     return out;
 }
 
-fragment GBufferOut 
-tiled_deferred_gbuffer_fragment(VertexOut                   in                  [[ stage_in ]],
-                                constant MaterialProperties *materials          [[ buffer(TFSBufferIndexMaterial) ]],
-                                sampler                     sampler2d           [[ sampler(0) ]],
-                                texture2d<half>             baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
-                                texture2d<half>             normalTexture       [[ texture(TFSTextureIndexNormal) ]],
-                                depth2d<float>              shadowTexture       [[ texture(TFSTextureIndexShadow) ]]) {
-    MaterialProperties material = materials[in.instanceId];
+//fragment GBufferOut 
+//tiled_deferred_gbuffer_fragment(VertexOut                       in                  [[ stage_in ]],
+//                                constant  MaterialProperties   *objectMaterials     [[ buffer(TFSBufferIndexObjectMaterial) ]],
+//                                constant  MaterialProperties   &submeshMaterial     [[ buffer(TFSBufferIndexSubmeshMaterial) ]],
+//                                sampler                         sampler2d           [[ sampler(0) ]],
+//                                texture2d<half>                 baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
+//                                texture2d<half>                 normalTexture       [[ texture(TFSTextureIndexNormal) ]],
+//                                depth2d<float>                  shadowTexture       [[ texture(TFSTextureIndexShadow) ]]) {
+//    MaterialProperties material = submeshMaterial;
+//    if (in.useObjectMaterial) {
+//        material = objectMaterials[in.instanceId];
+//    }
+//    float4 color = material.color;
+//    
+//    if (!material.useMaterialColor && !is_null_texture(baseColorTexture)) {
+//        color = float4(baseColorTexture.sample(sampler2d, in.uv));
+//    }
+//    
+//    color.a = Lighting::CalculateShadow(in.shadowPosition, shadowTexture);
+//    
+//    // Testing
+////    color.xyz *= material.opacity;
+//    
+//    float4 normal = float4(normalize(in.worldNormal), 1.0);
+//    
+//    if (material.useNormalMapTexture && !is_null_texture(normalTexture)) {
+//        normal = float4(normalTexture.sample(sampler2d, in.uv));
+//    }
+//    
+//    GBufferOut out {
+//        .albedo = color,
+//        .normal = normal,
+//        .position = float4(in.worldPosition, 1.0)
+//    };
+//    return out;
+//}
+
+
+GBufferOut getGBufferOut(VertexOut          in,
+                         MaterialProperties material,
+                         sampler            sampler2d,
+                         texture2d<half>    baseColorTexture,
+                         texture2d<half>    normalTexture,
+                         depth2d<float>     shadowTexture) {
+    
     float4 color = material.color;
     
     if (!material.useMaterialColor && !is_null_texture(baseColorTexture)) {
@@ -65,6 +103,22 @@ tiled_deferred_gbuffer_fragment(VertexOut                   in                  
         .normal = normal,
         .position = float4(in.worldPosition, 1.0)
     };
+    
     return out;
+}
+
+fragment GBufferOut
+tiled_deferred_gbuffer_fragment(VertexOut                       in                  [[ stage_in ]],
+                                constant  MaterialProperties   *objectMaterials     [[ buffer(TFSBufferIndexObjectMaterial) ]],
+                                constant  MaterialProperties   &submeshMaterial     [[ buffer(TFSBufferIndexSubmeshMaterial) ]],
+                                sampler                         sampler2d           [[ sampler(0) ]],
+                                texture2d<half>                 baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
+                                texture2d<half>                 normalTexture       [[ texture(TFSTextureIndexNormal) ]],
+                                depth2d<float>                  shadowTexture       [[ texture(TFSTextureIndexShadow) ]]) {
+    if (in.useObjectMaterial) {
+        return getGBufferOut(in, objectMaterials[in.instanceId], sampler2d, baseColorTexture, normalTexture, shadowTexture);
+    } else {
+        return getGBufferOut(in, submeshMaterial, sampler2d, baseColorTexture, normalTexture, shadowTexture);
+    }
 }
 

@@ -34,7 +34,8 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
         .surfaceNormal = normalize(modelInstance.modelMatrix * float4(vIn.normal, 1.0)).xyz,
         .surfaceTangent = normalize(modelInstance.modelMatrix * float4(vIn.tangent, 1.0)).xyz,
         .surfaceBitangent = normalize(modelInstance.modelMatrix * float4(vIn.bitangent, 1.0)).xyz,
-        .instanceId = instanceId
+        .instanceId = instanceId,
+        .useObjectMaterial = modelInstance.useObjectMaterial
     };
     
     return rd;
@@ -53,18 +54,74 @@ fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]]) {
 }
 
 
-fragment FragmentOutput
-material_fragment(          RasterizerData      rd              [[ stage_in ]],
-                  constant  MaterialProperties  *materials      [[ buffer(TFSBufferIndexMaterial) ]],
-                  constant  int                 &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
-                  constant  LightData           *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
-                            sampler             sampler2d       [[ sampler(0) ]],
-                            texture2d<float>    baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
-                            texture2d<float>    normalMap       [[ texture(TFSTextureIndexNormal) ]]) {
-    uint instanceId = rd.instanceId;
-    float2 texCoord = rd.textureCoordinate;
+//fragment FragmentOutput
+//material_fragment(          RasterizerData      rd               [[ stage_in ]],
+//                  constant  MaterialProperties  *objectMaterials [[ buffer(TFSBufferIndexObjectMaterial) ]],
+//                  constant  MaterialProperties  &submeshMaterial [[ buffer(TFSBufferIndexSubmeshMaterial) ]],
+//                  constant  int                 &lightCount      [[ buffer(TFSBufferDirectionalLightsNum) ]],
+//                  constant  LightData           *lightData       [[ buffer(TFSBufferDirectionalLightData) ]],
+//                            sampler             sampler2d        [[ sampler(0) ]],
+//                            texture2d<float>    baseColorMap     [[ texture(TFSTextureIndexBaseColor) ]],
+//                            texture2d<float>    normalMap        [[ texture(TFSTextureIndexNormal) ]]) {
+//    uint instanceId = rd.instanceId;
+//    float2 texCoord = rd.textureCoordinate;
+//    float4 color = rd.color;
+//    
+//    MaterialProperties material = submeshMaterial;
+//    
+//    if (rd.useObjectMaterial) {
+//        material = objectMaterials[instanceId];
+//    }
+//    
+//    if (material.useMaterialColor) {
+//        color = material.color;
+//    }
+//    
+//    if (material.useBaseTexture && !is_null_texture(baseColorMap)) {
+//        color = baseColorMap.sample(sampler2d, texCoord);
+//    }
+//    
+////    float3 unitNormal;
+//    float3 unitNormal = normalize(rd.surfaceNormal);
+//    // TODO: This results in very dark scene:
+////    if (material.isLit) {
+////        unitNormal = normalize(rd.surfaceNormal);
+//////        unitNormal = rd.surfaceNormal;
+////        if (material.useNormalMapTexture && !is_null_texture(normalMap)) {
+////            float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
+////            float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
+////            unitNormal = TBN * sampleNormal;
+////        }
+////        
+////        float3 unitToCameraVector = normalize(rd.toCameraVector);
+//////        float3 unitToCameraVector = rd.toCameraVector;
+////        
+////        float3 phongIntensity = Lighting::GetPhongIntensity(material,
+////                                                            lightData,
+////                                                            lightCount,
+////                                                            rd.worldPosition,
+////                                                            unitNormal,
+////                                                            unitToCameraVector);
+////        color *= float4(phongIntensity, 1.0);
+////    }
+//    
+//    FragmentOutput out = {
+//        .color0 = half4(color.r, color.g, color.b, color.a),
+//        .color1 = half4(unitNormal.x, unitNormal.y, unitNormal.z, 1.0)
+//    };
+//    
+//    return out;
+//}
+
+FragmentOutput getFragmentOutput(RasterizerData        rd,
+                                 MaterialProperties    material,
+                                 constant int                   &lightCount,
+                                 constant LightData             *lightData,
+                                 sampler               sampler2d,
+                                 texture2d<float>      baseColorMap,
+                                 texture2d<float>      normalMap) {
     float4 color = rd.color;
-    MaterialProperties material = materials[instanceId];
+    float2 texCoord = rd.textureCoordinate;
     
     if (material.useMaterialColor) {
         color = material.color;
@@ -74,18 +131,21 @@ material_fragment(          RasterizerData      rd              [[ stage_in ]],
         color = baseColorMap.sample(sampler2d, texCoord);
     }
     
-    float3 unitNormal;
+//    float3 unitNormal;
+    float3 unitNormal = normalize(rd.surfaceNormal);
     // TODO: This results in very dark scene:
 //    if (material.isLit) {
 //        unitNormal = normalize(rd.surfaceNormal);
+////        unitNormal = rd.surfaceNormal;
 //        if (material.useNormalMapTexture && !is_null_texture(normalMap)) {
 //            float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
 //            float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
 //            unitNormal = TBN * sampleNormal;
 //        }
-//        
+//
 //        float3 unitToCameraVector = normalize(rd.toCameraVector);
-//        
+////        float3 unitToCameraVector = rd.toCameraVector;
+//
 //        float3 phongIntensity = Lighting::GetPhongIntensity(material,
 //                                                            lightData,
 //                                                            lightCount,
@@ -101,4 +161,32 @@ material_fragment(          RasterizerData      rd              [[ stage_in ]],
     };
     
     return out;
+}
+
+fragment FragmentOutput
+material_fragment(          RasterizerData      rd               [[ stage_in ]],
+                  constant  MaterialProperties  *objectMaterials [[ buffer(TFSBufferIndexObjectMaterial) ]],
+                  constant  MaterialProperties  &submeshMaterial [[ buffer(TFSBufferIndexSubmeshMaterial) ]],
+                  constant  int                 &lightCount      [[ buffer(TFSBufferDirectionalLightsNum) ]],
+                  constant  LightData           *lightData       [[ buffer(TFSBufferDirectionalLightData) ]],
+                            sampler             sampler2d        [[ sampler(0) ]],
+                            texture2d<float>    baseColorMap     [[ texture(TFSTextureIndexBaseColor) ]],
+                            texture2d<float>    normalMap        [[ texture(TFSTextureIndexNormal) ]]) {
+    if (rd.useObjectMaterial) {
+        return getFragmentOutput(rd,
+                                 objectMaterials[rd.instanceId],
+                                 lightCount,
+                                 lightData,
+                                 sampler2d,
+                                 baseColorMap,
+                                 normalMap);
+    } else {
+        return getFragmentOutput(rd,
+                                 submeshMaterial,
+                                 lightCount,
+                                 lightData,
+                                 sampler2d,
+                                 baseColorMap,
+                                 normalMap);
+    }
 }

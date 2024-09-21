@@ -238,7 +238,7 @@ class SingleSMMesh {
 
     func applyMaterial(renderEncoder: MTLRenderCommandEncoder, material: MaterialProperties?) {
         var mat = material
-        renderEncoder.setFragmentBytes(&mat, length: MaterialProperties.stride, index: TFSBufferIndexMaterial.index)
+        renderEncoder.setFragmentBytes(&mat, length: MaterialProperties.stride, index: TFSBufferIndexObjectMaterial.index)
     }
 
     func drawPrimitives(_ renderEncoder: MTLRenderCommandEncoder,

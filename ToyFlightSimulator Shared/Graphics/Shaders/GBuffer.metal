@@ -31,6 +31,7 @@ typedef struct {
     half3 bitangent;
     half3 normal;
     uint instanceId;
+    bool useObjectMaterial;
 } ColorInOut;
 
 vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ stage_in ]],
@@ -54,7 +55,8 @@ vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ s
         .tangent = half3(normalize(modelInstance.normalMatrix * in.tangent)),
         .bitangent = half3(-normalize(modelInstance.normalMatrix * in.bitangent)),
         .normal = half3(normalize(modelInstance.normalMatrix * in.normal)),
-        .instanceId = instanceId
+        .instanceId = instanceId,
+        .useObjectMaterial = modelInstance.useObjectMaterial
     };
     
     return out;
@@ -98,19 +100,27 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
     return gBuffer;
 }
 
-fragment GBufferData gbuffer_fragment_material(ColorInOut                   in           [[ stage_in ]],
-                                               constant MaterialProperties *materials    [[ buffer(TFSBufferIndexMaterial) ]],
-                                               sampler                      sampler2d    [[ sampler(0) ]],
-                                               texture2d<half>              baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
-                                               texture2d<half>              normalMap    [[ texture(TFSTextureIndexNormal) ]],
-                                               texture2d<half>              specularMap  [[ texture(TFSTextureIndexSpecular) ]],
-                                               depth2d<float>               shadowMap    [[ texture(TFSTextureIndexShadow) ]])
+fragment GBufferData
+gbuffer_fragment_material(ColorInOut                     in                 [[ stage_in ]],
+                          constant  MaterialProperties   *objectMaterials   [[ buffer(TFSBufferIndexObjectMaterial) ]],
+                          constant  MaterialProperties   &submeshMaterial   [[ buffer(TFSBufferIndexSubmeshMaterial) ]],
+                          sampler                        sampler2d          [[ sampler(0) ]],
+                          texture2d<half>                baseColorMap       [[ texture(TFSTextureIndexBaseColor) ]],
+                          texture2d<half>                normalMap          [[ texture(TFSTextureIndexNormal) ]],
+                          texture2d<half>                specularMap        [[ texture(TFSTextureIndexSpecular) ]],
+                          depth2d<float>                 shadowMap          [[ texture(TFSTextureIndexShadow) ]])
 {
     half4 base_color_sample;
     half4 normal_sample;
     half specular_contrib;
     
-    MaterialProperties material = materials[in.instanceId];
+    MaterialProperties material;
+    
+    if (in.useObjectMaterial) {
+        material = objectMaterials[in.instanceId];
+    } else {
+        material = submeshMaterial;
+    }
     
     if (material.useMaterialColor) {
         base_color_sample = half4(material.color);

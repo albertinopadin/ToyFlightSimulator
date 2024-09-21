@@ -131,7 +131,9 @@ final class DrawManager {
             }
         }
         
-        DrawLines(with: renderEncoder)
+        if !withTransparency {
+            DrawLines(with: renderEncoder)
+        }
     }
     
     // I really don't like this long term...
@@ -224,6 +226,8 @@ final class DrawManager {
     }
     
     static func DrawLines(with renderEncoder: MTLRenderCommandEncoder) {
+        renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
+        
         for line in lines {
             EncodeRender(using: renderEncoder, label: "Rendering \(line.getName())") {
                 renderEncoder.setVertexBytes(&line.modelConstants,
@@ -247,10 +251,10 @@ final class DrawManager {
                                          index: TFSBufferModelConstants.index)
             
             if applyMaterials {
-                var materials = gameObjects.map { $0.material != nil ? $0.material : submeshes.first?.material?.properties }
+                var materials = gameObjects.map { $0.material }
                 renderEncoder.setFragmentBytes(&materials,
-                                               length: MaterialProperties.stride(gameObjects.count),
-                                               index: TFSBufferIndexMaterial.index)
+                                              length: MaterialProperties.stride(gameObjects.count),
+                                              index: TFSBufferIndexObjectMaterial.index)
             }
             
             for submesh in submeshes {
@@ -258,8 +262,19 @@ final class DrawManager {
                     renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
                     
                     // TODO: This should be per game object
+//                    if applyMaterials, var material = submesh.material {
+////                        submesh.applyMaterial(with: renderEncoder)
+//                        renderEncoder.setFragmentBytes(&material.properties,
+//                                                       length: MaterialProperties.stride,
+//                                                       index: TFSBufferIndexSubmeshMaterial.index)
+//                        material.applyTextures(with: renderEncoder)
+//                    }
+                    
                     if applyMaterials {
-                        submesh.material?.applyTextures(with: renderEncoder)
+                        renderEncoder.setFragmentBytes(&submesh.material!.properties,
+                                                       length: MaterialProperties.stride,
+                                                       index: TFSBufferIndexSubmeshMaterial.index)
+                        submesh.material!.applyTextures(with: renderEncoder)
                     }
                     
                     renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
@@ -268,6 +283,13 @@ final class DrawManager {
                                                         indexBuffer: submesh.indexBuffer,
                                                         indexBufferOffset: submesh.indexBufferOffset,
                                                         instanceCount: submesh.parentMesh!.instanceCount * gameObjects.count)
+                    
+//                    renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+//                                                        indexCount: submesh.indexCount,
+//                                                        indexType: submesh.indexType,
+//                                                        indexBuffer: submesh.indexBuffer,
+//                                                        indexBufferOffset: submesh.indexBufferOffset,
+//                                                        instanceCount: gameObjects.count)
                 }
             }
         }

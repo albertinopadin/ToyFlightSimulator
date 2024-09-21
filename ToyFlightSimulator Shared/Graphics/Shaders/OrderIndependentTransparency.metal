@@ -76,15 +76,18 @@ fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stag
 
 fragment TransparentFragmentStore 
 transparent_material_fragment(RasterizerData                  rd              [[ stage_in ]],
-                              constant MaterialProperties     *materials      [[ buffer(TFSBufferIndexMaterial) ]],
+                              constant  MaterialProperties   *objectMaterials [[ buffer(TFSBufferIndexObjectMaterial) ]],
+                              constant  MaterialProperties   &submeshMaterial [[ buffer(TFSBufferIndexSubmeshMaterial) ]],
                               constant int                    &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
                               constant LightData              *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
                               sampler                         sampler2d       [[ sampler(0) ]],
                               texture2d<float>                baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
                               texture2d<float>                normalMap       [[ texture(TFSTextureIndexNormal) ]],
                               TransparentFragmentValues       fragmentValues  [[ imageblock_data ]]) {
-    uint instanceId = rd.instanceId;
-    MaterialProperties material = materials[instanceId];
+    MaterialProperties material = submeshMaterial;
+    if (rd.useObjectMaterial) {
+        material = objectMaterials[rd.instanceId];
+    }
     float2 texCoord = rd.textureCoordinate;
     float4 color = rd.color;
     
@@ -92,21 +95,22 @@ transparent_material_fragment(RasterizerData                  rd              [[
         color = material.color;
     }
     
-    if (!is_null_texture(baseColorMap)) {
+    if (material.useBaseTexture && !is_null_texture(baseColorMap)) {
         color = baseColorMap.sample(sampler2d, texCoord);
     }
     
     float3 unitNormal;
     if (material.isLit) {
         unitNormal = normalize(rd.surfaceNormal);
-        if (!is_null_texture(normalMap)) {
+        if (material.useNormalMapTexture && !is_null_texture(normalMap)) {
             float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
             float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
             unitNormal = TBN * sampleNormal;
         }
         
         float3 unitToCameraVector = normalize(rd.toCameraVector);
-        
+//        float3 unitToCameraVector = rd.toCameraVector;
+
         float3 phongIntensity = Lighting::GetPhongIntensity(material,
                                                             lightData,
                                                             lightCount,
@@ -118,6 +122,10 @@ transparent_material_fragment(RasterizerData                  rd              [[
     
     TransparentFragmentStore out;
     half4 finalColor = half4(color);
+    
+    // Hack for F-22 canopy:
+    finalColor.w = max(finalColor.w, half(0.04));
+    
     finalColor.xyz *= finalColor.w;
     
     // Get fragment distance from camera:
@@ -128,6 +136,7 @@ transparent_material_fragment(RasterizerData                  rd              [[
         half4 layerColor = fragmentValues.colors[i];
         
         bool insert (depth <= layerDepth);
+//        bool insert (depth < layerDepth);
         fragmentValues.colors[i] = insert ? finalColor : layerColor;
         fragmentValues.depths[i] = insert ? depth : layerDepth;
         

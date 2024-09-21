@@ -14,10 +14,10 @@ class F22: Aircraft {
     let afterburnerRight = Afterburner(name: "F-22 Right Afterburner")
     
     override var cameraOffset: float3 {
-        [0, 10, 25]
+        [0, 15, 27]
     }
     
-    init(scale: Float = 1.0, shouldUpdate: Bool = true) {
+    init(scale: Float = 0.25, shouldUpdate: Bool = true) {
         super.init(name: Self.NAME, modelType: .Sketchfab_F22, scale: scale, shouldUpdate: shouldUpdate)
         rotateX(Float(90).toRadians)
         rotateZ(Float(90).toRadians)

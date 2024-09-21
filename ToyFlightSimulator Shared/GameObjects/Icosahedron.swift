@@ -6,7 +6,7 @@
 //
 
 class Icosahedron: GameObject {
-    init() {
-        super.init(name: "Icosahedron", modelType: .Icosahedron)
+    init(materialProperties: MaterialProperties? = nil) {
+        super.init(name: "Icosahedron", modelType: .Icosahedron, materialProperties: materialProperties)
     }
 }
