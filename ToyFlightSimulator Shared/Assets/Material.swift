@@ -66,7 +66,7 @@ struct Material: sizeable {
                                            Float(property.color!.components![2]),
                                            Float(property.color!.components![3]))
                         
-                        properties.setColor(color)
+                        properties.color = color
                         
                     case .buffer:
                         print("Material \(material.name) property is a buffer for semantic: \(semantic.toString())")
@@ -150,26 +150,19 @@ struct Material: sizeable {
         }
     }
     
-    public mutating func applyTextures(with renderEncoder: MTLRenderCommandEncoder,
-                                       baseColorTextureType: TextureType = .None,
-                                       normalMapTextureType: TextureType = .None,
-                                       specularTextureType: TextureType = .None) {
-        properties.useBaseTexture = baseColorTextureType != .None || baseColorTexture != nil
-        properties.useNormalMapTexture = normalMapTextureType != .None || normalMapTexture != nil
-        properties.useSpecularTexture = specularTextureType != .None || specularTexture != nil
-        
+    public mutating func applyTextures(with renderEncoder: MTLRenderCommandEncoder) {
         renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
         
-        if let baseColorTex = baseColorTextureType == .None ? baseColorTexture : Assets.Textures[baseColorTextureType] {
-            renderEncoder.setFragmentTexture(baseColorTex, index: TFSTextureIndexBaseColor.index)
+        if let baseColorTexture {
+            renderEncoder.setFragmentTexture(baseColorTexture, index: TFSTextureIndexBaseColor.index)
         }
         
-        if let normalMapTex = normalMapTextureType == .None ? normalMapTexture : Assets.Textures[normalMapTextureType] {
-            renderEncoder.setFragmentTexture(normalMapTex, index: TFSTextureIndexNormal.index)
+        if let normalMapTexture {
+            renderEncoder.setFragmentTexture(normalMapTexture, index: TFSTextureIndexNormal.index)
         }
         
-        if let specularTex = specularTextureType == .None ? specularTexture : Assets.Textures[specularTextureType] {
-            renderEncoder.setFragmentTexture(specularTex, index: TFSTextureIndexSpecular.index)
+        if let specularTexture {
+            renderEncoder.setFragmentTexture(specularTexture, index: TFSTextureIndexSpecular.index)
         }
     }
 }

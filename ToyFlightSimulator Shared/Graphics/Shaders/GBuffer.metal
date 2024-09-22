@@ -24,6 +24,7 @@ typedef struct {
 typedef struct {
     float4 position [[ position ]];
     float4 color;
+    float4 objectColor;
     float2 tex_coord;
     float3 shadow_coord;
     float3 eye_position;
@@ -31,6 +32,7 @@ typedef struct {
     half3 bitangent;
     half3 normal;
     uint instanceId;
+    bool useObjectColor;
 } ColorInOut;
 
 vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ stage_in ]],
@@ -45,6 +47,7 @@ vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ s
     
     ColorInOut out = {
         .color = in.color,
+        .objectColor = modelInstance.objectColor,
         .tex_coord = in.textureCoordinate,
         .position = sceneConstants.projectionMatrix * eyePosition,
         .eye_position = eyePosition.xyz,
@@ -54,7 +57,8 @@ vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ s
         .tangent = half3(normalize(modelInstance.normalMatrix * in.tangent)),
         .bitangent = half3(-normalize(modelInstance.normalMatrix * in.bitangent)),
         .normal = half3(normalize(modelInstance.normalMatrix * in.normal)),
-        .instanceId = instanceId
+        .instanceId = instanceId,
+        .useObjectColor = modelInstance.useObjectColor
     };
     
     return out;
@@ -99,7 +103,7 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
 }
 
 fragment GBufferData gbuffer_fragment_material(ColorInOut                   in           [[ stage_in ]],
-                                               constant MaterialProperties *materials    [[ buffer(TFSBufferIndexMaterial) ]],
+                                               constant MaterialProperties &material     [[ buffer(TFSBufferIndexMaterial) ]],
                                                sampler                      sampler2d    [[ sampler(0) ]],
                                                texture2d<half>              baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
                                                texture2d<half>              normalMap    [[ texture(TFSTextureIndexNormal) ]],
@@ -110,21 +114,19 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut                   in  
     half4 normal_sample;
     half specular_contrib;
     
-    MaterialProperties material = materials[in.instanceId];
-    
-    if (material.useMaterialColor) {
-        base_color_sample = half4(material.color);
-    } else if (material.useBaseTexture && !is_null_texture(baseColorMap)) {
+    if (in.useObjectColor) {
+        base_color_sample = half4(in.objectColor);
+    } else if (!is_null_texture(baseColorMap)) {
         base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord.xy);
     }
     
-    if (material.useNormalMapTexture && !is_null_texture(normalMap)) {
+    if (!in.useObjectColor && !is_null_texture(normalMap)) {
         normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
     } else {
         normal_sample = half4(in.normal, 1.0);
     }
     
-    if (material.useSpecularTexture && !is_null_texture(specularMap)) {
+    if (!in.useObjectColor && !is_null_texture(specularMap)) {
         specular_contrib = specularMap.sample(sampler2d, in.tex_coord.xy).r;
     } else {
         specular_contrib = 1.0;

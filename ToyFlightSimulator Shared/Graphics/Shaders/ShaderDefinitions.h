@@ -25,6 +25,7 @@ struct VertexIn {
 struct RasterizerData {
     float4 position [[ position ]];
     float4 color;
+    float4 objectColor;
     float2 textureCoordinate;
     float totalGameTime;
     
@@ -36,6 +37,7 @@ struct RasterizerData {
     float3 surfaceBitangent;
     
     uint32_t instanceId;
+    bool useObjectColor;
 };
 
 // Raster order group definitions
@@ -74,4 +76,6 @@ struct VertexOut {
     float3 worldBitangent;
     float4 shadowPosition;
     uint instanceId;
+    float4 objectColor;
+    bool useObjectColor;
 };

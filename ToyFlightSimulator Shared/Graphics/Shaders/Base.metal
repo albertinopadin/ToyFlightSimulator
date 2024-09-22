@@ -27,6 +27,7 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
         // Order of matrix multiplication is important here:
         .position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition,
         .color = vIn.color,
+        .objectColor = modelInstance.objectColor,
         .textureCoordinate = vIn.textureCoordinate,
         .totalGameTime = sceneConstants.totalGameTime,
         .worldPosition = worldPosition.xyz,
@@ -34,7 +35,8 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
         .surfaceNormal = normalize(modelInstance.modelMatrix * float4(vIn.normal, 1.0)).xyz,
         .surfaceTangent = normalize(modelInstance.modelMatrix * float4(vIn.tangent, 1.0)).xyz,
         .surfaceBitangent = normalize(modelInstance.modelMatrix * float4(vIn.bitangent, 1.0)).xyz,
-        .instanceId = instanceId
+        .instanceId = instanceId,
+        .useObjectColor = modelInstance.useObjectColor
     };
     
     return rd;
@@ -55,22 +57,18 @@ fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]]) {
 
 fragment FragmentOutput
 material_fragment(          RasterizerData      rd              [[ stage_in ]],
-                  constant  MaterialProperties  *materials      [[ buffer(TFSBufferIndexMaterial) ]],
+                  constant  MaterialProperties  &material       [[ buffer(TFSBufferIndexMaterial) ]],
                   constant  int                 &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
                   constant  LightData           *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
                             sampler             sampler2d       [[ sampler(0) ]],
                             texture2d<float>    baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
                             texture2d<float>    normalMap       [[ texture(TFSTextureIndexNormal) ]]) {
-    uint instanceId = rd.instanceId;
     float2 texCoord = rd.textureCoordinate;
-    float4 color = rd.color;
-    MaterialProperties material = materials[instanceId];
+    float4 color;
     
-    if (material.useMaterialColor) {
-        color = material.color;
-    }
-    
-    if (material.useBaseTexture && !is_null_texture(baseColorMap)) {
+    if (rd.useObjectColor) {
+        color = rd.objectColor;
+    } else if (!is_null_texture(baseColorMap)) {
         color = baseColorMap.sample(sampler2d, texCoord);
     }
     

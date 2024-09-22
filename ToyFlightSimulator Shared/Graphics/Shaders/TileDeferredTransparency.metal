@@ -29,23 +29,31 @@ tiled_deferred_transparency_vertex(VertexIn                in              [[ st
         .worldTangent = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
         .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition,
-        .instanceId = instanceId
+        .instanceId = instanceId,
+        .objectColor = modelInstance.objectColor,
+        .useObjectColor = modelInstance.useObjectColor
     };
     return out;
 }
 
 fragment float4
 tiled_deferred_transparency_fragment(VertexOut                   in                  [[ stage_in ]],
-                                     constant MaterialProperties *materials          [[ buffer(TFSBufferIndexMaterial) ]],
+                                     constant MaterialProperties &material           [[ buffer(TFSBufferIndexMaterial) ]],
                                      sampler                     sampler2d           [[ sampler(0) ]],
                                      texture2d<half>             baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]]) {
-    MaterialProperties material = materials[in.instanceId];
     float4 color = material.color;
     
-    if (!material.useMaterialColor && !is_null_texture(baseColorTexture)) {
+    if (in.useObjectColor) {
+        color = in.objectColor;
+    } else if (!is_null_texture(baseColorTexture)) {
         color = float4(baseColorTexture.sample(sampler2d, in.uv));
     }
     
-    color.a = material.opacity;
+    if (color.a < 1.0 && material.opacity < 1.0) {
+        color.a = max(color.a, material.opacity);
+    } else {
+        color.a = min(color.a, material.opacity);
+    }
+    
     return color;
 }

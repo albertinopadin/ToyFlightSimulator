@@ -17,11 +17,9 @@ class FlightboxScene: GameScene {
     let afterburner = Afterburner(name: "Afterburner")
     
     private func addGround() {
-        var groundMaterial = MaterialProperties()
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        groundMaterial.setColor(groundColor)
         let ground = Quad()
-        ground.useMaterial(groundMaterial)
+        ground.setColor(groundColor)
         ground.rotateZ(Float(270).toRadians)
         ground.setScale(1000)
         addChild(ground)
@@ -84,11 +82,8 @@ class FlightboxScene: GameScene {
         sun.setLightDiffuseIntensity(0)
         addLight(sun)
         
-        var sunBallMat = MaterialProperties()
-        sunBallMat.setColor(RED_COLOR)
-        
         let sunBall = Sphere()
-        sunBall.useMaterial(sunBallMat)
+        sunBall.setColor(RED_COLOR)
         sunBall.setPosition(sun.getPosition())
         addChild(sunBall)
         
@@ -144,10 +139,8 @@ class FlightboxScene: GameScene {
         
 //        addGround()
         
-        var quadMaterial = MaterialProperties()
-        quadMaterial.setColor([0, 0.4, 1.0, 1.0])
-        quadMaterial.shininess = 10
-        quad.useMaterial(quadMaterial)
+//        quadMaterial.shininess = 10
+        quad.setColor([0, 0.4, 1.0, 1.0])
         quad.setPositionZ(1)
         quad.setPositionY(14)
         addChild(quad)
@@ -159,49 +152,44 @@ class FlightboxScene: GameScene {
         
         let jetPos = container.getPosition()
         
-        var sphereBlueMaterial = MaterialProperties()
-        sphereBlueMaterial.setColor(float4(0.0, 0.0, 1.0, 0.4))
-        
         let sphereBluePos = float3(x: jetPos.x + 1, y: jetPos.y, z: jetPos.z - 2)
         let sphereBlue = Sphere()
         sphereBlue.setPosition(sphereBluePos)
         sphereBlue.setScale(1.5)
-        sphereBlue.useMaterial(sphereBlueMaterial)
+        sphereBlue.setColor([0.0, 0.0, 1.0, 0.4])
         addChild(sphereBlue)
-        
-        var sphereRedMaterial = MaterialProperties()
-        sphereRedMaterial.setColor([1.0, 0.0, 0.0, 0.4])
         
         let sphereRedPos = float3(x: jetPos.x - 1, y: jetPos.y, z: jetPos.z - 2)
         let sphereRed = Sphere()
         sphereRed.setPosition(sphereRedPos)
         sphereRed.setScale(1.5)
-        sphereRed.useMaterial(sphereRedMaterial)
+        sphereRed.setColor([1.0, 0.0, 0.0, 0.4])
         addChild(sphereRed)
         
         
         let testQuad = Quad()
-        var testQuadMaterial = MaterialProperties()
-        testQuadMaterial.isLit = true
-        testQuadMaterial.setColor([1, 0, 0, 0.5])
-        testQuadMaterial.shininess = 100000
-        testQuadMaterial.diffuse = [1, 0.1, 0.1]
-        testQuadMaterial.specular = [1, 1, 1]
-        testQuad.useMaterial(testQuadMaterial)
+//        var testQuadMaterial = MaterialProperties()
+//        testQuadMaterial.isLit = true
+//        testQuadMaterial.setColor([1, 0, 0, 0.5])
+//        testQuadMaterial.shininess = 100000
+//        testQuadMaterial.diffuse = [1, 0.1, 0.1]
+//        testQuadMaterial.specular = [1, 1, 1]
+//        testQuad.useMaterial(testQuadMaterial)
+        testQuad.setColor([1, 0, 0, 0.5])
         testQuad.setPositionZ(1)
         testQuad.setPositionY(10)
         testQuad.setPositionX(5)
         addChild(testQuad)
         
-        var testCubeMaterial = MaterialProperties()
-        testCubeMaterial.isLit = true
-        testCubeMaterial.setColor(GRABBER_BLUE_COLOR)
-        testCubeMaterial.diffuse = [0.1, 0.4, 1]
-        testCubeMaterial.specular = [1, 1, 10]
-        testCubeMaterial.shininess = 100
+//        var testCubeMaterial = MaterialProperties()
+//        testCubeMaterial.isLit = true
+//        testCubeMaterial.setColor(GRABBER_BLUE_COLOR)
+//        testCubeMaterial.diffuse = [0.1, 0.4, 1]
+//        testCubeMaterial.specular = [1, 1, 10]
+//        testCubeMaterial.shininess = 100
         
         let testCube = Cube()
-        testCube.useMaterial(testCubeMaterial)
+        testCube.setColor(GRABBER_BLUE_COLOR)
         testCube.setPosition(jetPos.x, 1, jetPos.z - 4)
         addChild(testCube)
         
@@ -216,7 +204,7 @@ class FlightboxScene: GameScene {
         addChild(testTri)
         
         let testQuad2 = Quad()
-        testQuad2.useMaterial(testCubeMaterial)
+        testQuad2.setColor(GRABBER_BLUE_COLOR)
         testQuad2.setPosition(jetPos.x, 1, jetPos.z - 8)
         addChild(testQuad2)
         

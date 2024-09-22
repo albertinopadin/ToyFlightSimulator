@@ -26,6 +26,8 @@ typedef struct __attribute__ ((packed)) packed_float3 {
 typedef struct {
     matrix_float4x4 modelMatrix;
     matrix_float3x3 normalMatrix;
+    simd_float4 objectColor;
+    bool useObjectColor;
 } ModelConstants;
 
 typedef struct {
@@ -46,10 +48,6 @@ typedef struct {
     float shininess;
     float opacity;
     
-    bool useMaterialColor;
-    bool useBaseTexture;
-    bool useNormalMapTexture;
-    bool useSpecularTexture;
     bool isLit;
 } MaterialProperties;
 

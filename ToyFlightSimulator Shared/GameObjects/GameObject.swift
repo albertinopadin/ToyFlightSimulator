@@ -14,14 +14,12 @@ class GameObject: Node, Renderable, Hashable {
     
     public var model: Model!
     public var modelConstants = ModelConstants()
-    public var material: MaterialProperties? = nil
     
     init(name: String, modelType: ModelType) {
         super.init(name: name)
         model = Assets.Models[modelType]
         model.parent = self
         
-        DrawManager.Register(self)
         print("GameObject init; named \(self.getName())")
     }
     
@@ -35,7 +33,8 @@ class GameObject: Node, Renderable, Hashable {
         hasher.combine(self.getID())
     }
     
-    public func useMaterial(_ material: MaterialProperties) {
-        self.material = material
+    public func setColor(_ color: float4) {
+        modelConstants.objectColor = color
+        modelConstants.useObjectColor = true
     }
 }

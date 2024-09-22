@@ -63,9 +63,7 @@ extension LightObject {
     public func setLightColor(_ color: float3) {
         self.lightData.color = color
         if _modelType != .None {
-            var material = MaterialProperties()
-            material.color = float4(color, 1.0)  // TODO: Why are we setting the material color alpha to zero?
-            self.useMaterial(material)
+            self.setColor(float4(color, 1.0))
         }
     }
     public func setLightColor(_ r: Float, _ g: Float, _ b: Float) { setLightColor([r, g, b]) }

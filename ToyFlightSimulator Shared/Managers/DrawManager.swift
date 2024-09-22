@@ -58,7 +58,7 @@ final class DrawManager {
             for submesh in mesh.submeshes {
                 if let _ = modelDatas[gameObject.model] {
                     modelDatas[gameObject.model]?.addGameObject(gameObject)
-                    if isTransparent(gameObject: gameObject, submesh: submesh) {
+                    if isTransparent(submesh: submesh) {
                         modelDatas[gameObject.model]?.appendTransparent(submesh: submesh)
                     } else {
                         modelDatas[gameObject.model]?.appendOpaque(submesh: submesh)
@@ -66,7 +66,7 @@ final class DrawManager {
                 } else {
                     var modelData = ModelData()
                     modelData.addGameObject(gameObject)
-                    if isTransparent(gameObject: gameObject, submesh: submesh) {
+                    if isTransparent(submesh: submesh) {
                         modelData.appendTransparent(submesh: submesh)
                     } else {
                         modelData.appendOpaque(submesh: submesh)
@@ -77,13 +77,9 @@ final class DrawManager {
         }
     }
     
-    static private func isTransparent(gameObject: GameObject, submesh: Submesh) -> Bool {
+    static private func isTransparent(submesh: Submesh) -> Bool {
         if let isTransparent = submesh.material?.isTransparent, isTransparent {
             return true
-        }
-        
-        if let goMaterial = gameObject.material {
-            return goMaterial.opacity < 1.0 || goMaterial.color.w < 1.0
         }
         
         return false
@@ -117,21 +113,27 @@ final class DrawManager {
                      applyMaterials: Bool = true) {
         for (model, data) in modelDatas {
             if withTransparency {
-                Draw(renderEncoder,
-                     model: model,
-                     gameObjects: data.gameObjects,
-                     submeshes: data.transparentSubmeshes,
-                     applyMaterials: applyMaterials)
+                if !data.transparentSubmeshes.isEmpty {
+                    Draw(renderEncoder,
+                         model: model,
+                         gameObjects: data.gameObjects,
+                         submeshes: data.transparentSubmeshes,
+                         applyMaterials: applyMaterials)
+                }
             } else {
-                Draw(renderEncoder,
-                     model: model,
-                     gameObjects: data.gameObjects,
-                     submeshes: data.opaqueSubmeshes,
-                     applyMaterials: applyMaterials)
+                if !data.opaqueSubmeshes.isEmpty {
+                    Draw(renderEncoder,
+                         model: model,
+                         gameObjects: data.gameObjects,
+                         submeshes: data.opaqueSubmeshes,
+                         applyMaterials: applyMaterials)
+                }
             }
         }
         
-        DrawLines(with: renderEncoder)
+        if !withTransparency {
+            DrawLines(with: renderEncoder)
+        }
     }
     
     // I really don't like this long term...
@@ -246,20 +248,18 @@ final class DrawManager {
                                          length: ModelConstants.stride(gameObjects.count),
                                          index: TFSBufferModelConstants.index)
             
-            if applyMaterials {
-                var materials = gameObjects.map { $0.material != nil ? $0.material : submeshes.first?.material?.properties }
-                renderEncoder.setFragmentBytes(&materials,
-                                               length: MaterialProperties.stride(gameObjects.count),
-                                               index: TFSBufferIndexMaterial.index)
-            }
-            
             for submesh in submeshes {
                 if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
                     renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
                     
                     // TODO: This should be per game object
                     if applyMaterials {
-                        submesh.material?.applyTextures(with: renderEncoder)
+                        submesh.material!.applyTextures(with: renderEncoder)
+                        
+                        var materialProps = submesh.material!.properties
+                        renderEncoder.setFragmentBytes(&materialProps,
+                                                       length: MaterialProperties.stride,
+                                                       index: TFSBufferIndexMaterial.index)
                     }
                     
                     renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,

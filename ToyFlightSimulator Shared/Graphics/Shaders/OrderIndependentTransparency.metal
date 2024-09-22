@@ -76,30 +76,26 @@ fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stag
 
 fragment TransparentFragmentStore 
 transparent_material_fragment(RasterizerData                  rd              [[ stage_in ]],
-                              constant MaterialProperties     *materials      [[ buffer(TFSBufferIndexMaterial) ]],
+                              constant MaterialProperties     &material       [[ buffer(TFSBufferIndexMaterial) ]],
                               constant int                    &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
                               constant LightData              *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
                               sampler                         sampler2d       [[ sampler(0) ]],
                               texture2d<float>                baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
                               texture2d<float>                normalMap       [[ texture(TFSTextureIndexNormal) ]],
                               TransparentFragmentValues       fragmentValues  [[ imageblock_data ]]) {
-    uint instanceId = rd.instanceId;
-    MaterialProperties material = materials[instanceId];
     float2 texCoord = rd.textureCoordinate;
     float4 color = rd.color;
     
-    if (material.useMaterialColor) {
-        color = material.color;
-    }
-    
-    if (!is_null_texture(baseColorMap)) {
+    if (rd.useObjectColor) {
+        color = rd.objectColor;
+    } else if (!is_null_texture(baseColorMap)) {
         color = baseColorMap.sample(sampler2d, texCoord);
     }
     
     float3 unitNormal;
     if (material.isLit) {
         unitNormal = normalize(rd.surfaceNormal);
-        if (!is_null_texture(normalMap)) {
+        if (!rd.useObjectColor && !is_null_texture(normalMap)) {
             float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
             float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
             unitNormal = TBN * sampleNormal;
@@ -118,6 +114,17 @@ transparent_material_fragment(RasterizerData                  rd              [[
     
     TransparentFragmentStore out;
     half4 finalColor = half4(color);
+    
+    if (finalColor.w < 1.0 && material.opacity < 1.0) {
+        finalColor.w = max(finalColor.w, half(material.opacity));
+    } else {
+        finalColor.w = min(finalColor.w, half(material.opacity));
+    }
+    
+    if (finalColor.w > 0.1) {
+        finalColor.w = 0.1;
+    }
+    
     finalColor.xyz *= finalColor.w;
     
     // Get fragment distance from camera:

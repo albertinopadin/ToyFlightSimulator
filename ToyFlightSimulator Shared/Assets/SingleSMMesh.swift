@@ -250,14 +250,14 @@ class SingleSMMesh {
         if let _vertexBuffer {
             renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
 
-            if applyMaterials {
-                _submesh.material?.applyTextures(with: renderEncoder,
-                                                 baseColorTextureType: baseColorTextureType,
-                                                 normalMapTextureType: normalMapTextureType,
-                                                 specularTextureType: specularTextureType)
-//                _submesh.applyMaterial(with: renderEncoder, customMaterial: material)
-                _submesh.applyMaterial(with: renderEncoder)
-            }
+//            if applyMaterials {
+//                _submesh.material?.applyTextures(with: renderEncoder,
+//                                                 baseColorTextureType: baseColorTextureType,
+//                                                 normalMapTextureType: normalMapTextureType,
+//                                                 specularTextureType: specularTextureType)
+////                _submesh.applyMaterial(with: renderEncoder, customMaterial: material)
+////                _submesh.applyMaterial(with: renderEncoder)
+//            }
 
             renderEncoder.drawIndexedPrimitives(type: _submesh.primitiveType,
                                                 indexCount: _submesh.indexCount,

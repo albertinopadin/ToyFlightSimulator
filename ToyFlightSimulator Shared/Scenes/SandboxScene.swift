@@ -50,13 +50,13 @@ class SandboxScene: GameScene {
     }
     
     func createQuad(color: float4, position: float3) -> Quad {
-        var material = MaterialProperties()
-        material.setColor(color)
-        material.shininess = 100
-        material.specular = [10, 10, 10]
-        material.diffuse = [10, 10, 10]
+//        var material = MaterialProperties()
+//        material.setColor(color)
+//        material.shininess = 100
+//        material.specular = [10, 10, 10]
+//        material.diffuse = [10, 10, 10]
         let quad = Quad()
-        quad.useMaterial(material)
+        quad.setColor(color)
         quad.setPosition(position)
         return quad
     }
