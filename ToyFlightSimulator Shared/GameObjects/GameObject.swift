@@ -15,6 +15,10 @@ class GameObject: Node, Renderable, Hashable {
     public var model: Model!
     public var modelConstants = ModelConstants()
     
+    public var isTransparent: Bool {
+        return modelConstants.useObjectColor && modelConstants.objectColor.w < 1.0
+    }
+    
     init(name: String, modelType: ModelType) {
         super.init(name: name)
         model = Assets.Models[modelType]
