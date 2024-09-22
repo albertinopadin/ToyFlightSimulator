@@ -118,7 +118,7 @@ class OITRenderer: Renderer {
             encodeRenderStage(using: renderEncoder, label: "Final Render") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Final])
                 renderEncoder.setFragmentTexture(Assets.Textures[.BaseColorRender_0], index: 0)
-                DrawManager.DrawQuad(with: renderEncoder)
+                DrawManager.DrawFullScreenQuad(with: renderEncoder)
             }
         }
     }

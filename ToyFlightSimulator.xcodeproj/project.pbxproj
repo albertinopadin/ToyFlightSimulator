@@ -238,9 +238,6 @@
 		CE3BFF8628E2FD9C0014A752 /* GameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8528E2FD9C0014A752 /* GameObject.swift */; };
 		CE3BFF8728E2FD9C0014A752 /* GameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8528E2FD9C0014A752 /* GameObject.swift */; };
 		CE3BFF8828E2FD9C0014A752 /* GameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8528E2FD9C0014A752 /* GameObject.swift */; };
-		CE3BFF8A28E2FDB20014A752 /* InstancedGameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8928E2FDB20014A752 /* InstancedGameObject.swift */; };
-		CE3BFF8B28E2FDB20014A752 /* InstancedGameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8928E2FDB20014A752 /* InstancedGameObject.swift */; };
-		CE3BFF8C28E2FDB20014A752 /* InstancedGameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8928E2FDB20014A752 /* InstancedGameObject.swift */; };
 		CE3BFF8E28E2FE140014A752 /* Math.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8D28E2FE140014A752 /* Math.swift */; };
 		CE3BFF8F28E2FE140014A752 /* Math.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8D28E2FE140014A752 /* Math.swift */; };
 		CE3BFF9028E2FE140014A752 /* Math.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8D28E2FE140014A752 /* Math.swift */; };
@@ -391,7 +388,6 @@
 		CE452FEF2A7CB4A6001945B9 /* F16.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFFE728E6A0F40014A752 /* F16.swift */; };
 		CE452FF02A7CB4A6001945B9 /* F18.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2ED2962998A10400C81F47 /* F18.swift */; };
 		CE452FF12A7CB4A6001945B9 /* Renderable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8128E2FD6F0014A752 /* Renderable.swift */; };
-		CE452FF22A7CB4A6001945B9 /* InstancedGameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF8928E2FDB20014A752 /* InstancedGameObject.swift */; };
 		CE452FF32A7CB4A6001945B9 /* Droppable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3DD2EC2A020F4900787E53 /* Droppable.swift */; };
 		CE452FF42A7CB4A6001945B9 /* AIM120.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEED93A229E2B3EE0020DC53 /* AIM120.swift */; };
 		CE452FF52A7CB4A6001945B9 /* LightObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFFA228E452F00014A752 /* LightObject.swift */; };
@@ -781,7 +777,6 @@
 		CE3BFF7D28E2FCF50014A752 /* Node.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Node.swift; sourceTree = "<group>"; };
 		CE3BFF8128E2FD6F0014A752 /* Renderable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderable.swift; sourceTree = "<group>"; };
 		CE3BFF8528E2FD9C0014A752 /* GameObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameObject.swift; sourceTree = "<group>"; };
-		CE3BFF8928E2FDB20014A752 /* InstancedGameObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstancedGameObject.swift; sourceTree = "<group>"; };
 		CE3BFF8D28E2FE140014A752 /* Math.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Math.swift; sourceTree = "<group>"; };
 		CE3BFF9128E451E50014A752 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
 		CE3BFF9528E451F00014A752 /* LightManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightManager.swift; sourceTree = "<group>"; };
@@ -1074,7 +1069,6 @@
 				CE3BFF7D28E2FCF50014A752 /* Node.swift */,
 				CED3AA862B5D4DA300191002 /* ContainerNode.swift */,
 				CE3BFF8528E2FD9C0014A752 /* GameObject.swift */,
-				CE3BFF8928E2FDB20014A752 /* InstancedGameObject.swift */,
 				CE76930E29DD5DF600BBC718 /* SubMeshGameObject.swift */,
 				CE3BFFA228E452F00014A752 /* LightObject.swift */,
 				CE3BFFA628E453260014A752 /* Sun.swift */,
@@ -1823,7 +1817,6 @@
 				CE79B63E2B931F19009F2E49 /* TiledDeferredPipeline.swift in Sources */,
 				CE452FFB2A7CB4A6001945B9 /* Aircraft.swift in Sources */,
 				CE452FC22A7CB468001945B9 /* VertexDescriptorLibrary.swift in Sources */,
-				CE452FF22A7CB4A6001945B9 /* InstancedGameObject.swift in Sources */,
 				CE452FF92A7CB4A6001945B9 /* Quad.swift in Sources */,
 				CE79B6292B92E47E009F2E49 /* Texture.swift in Sources */,
 				CE452FE72A7CB4A6001945B9 /* Cube.swift in Sources */,
@@ -1980,7 +1973,6 @@
 				CE387B522BE230FE00F51DC4 /* ComputePipelineStateLibrary.swift in Sources */,
 				CE3BFF2828E056BB0014A752 /* Lighting.metal in Sources */,
 				CE3BFF5828E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
-				CE3BFF8A28E2FDB20014A752 /* InstancedGameObject.swift in Sources */,
 				CE327B6F2C47670D004AF2D0 /* Afterburner.swift in Sources */,
 				CE3BFFA328E452F00014A752 /* LightObject.swift in Sources */,
 				CE3BFFAB28E453310014A752 /* Quad.swift in Sources */,
@@ -2103,7 +2095,6 @@
 				CE3BFF6128E1B2D10014A752 /* DepthStencilStateLibrary.swift in Sources */,
 				CE3BFF5D28E1B2BC0014A752 /* VertexDescriptorLibrary.swift in Sources */,
 				CE3DD2F22A02309300787E53 /* GBU16.swift in Sources */,
-				CE3BFF8B28E2FDB20014A752 /* InstancedGameObject.swift in Sources */,
 				CE3BFF6528E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE3BFFAC28E453310014A752 /* Quad.swift in Sources */,
 				CE2ED263299394E500C81F47 /* ModelIO+Extensions.swift in Sources */,
@@ -2258,7 +2249,6 @@
 				CE3BFF5A28E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
 				CE79B5F82B8F15BE009F2E49 /* BasicPipeline.swift in Sources */,
 				CE886A3C2983BF1B0013062D /* Skybox.metal in Sources */,
-				CE3BFF8C28E2FDB20014A752 /* InstancedGameObject.swift in Sources */,
 				CE7C3D292A2F377B009C1E6F /* Joystick.swift in Sources */,
 				CE327B762C490D09004AF2D0 /* ParticleEmitterObject.swift in Sources */,
 				CE3BFFA528E452F00014A752 /* LightObject.swift in Sources */,

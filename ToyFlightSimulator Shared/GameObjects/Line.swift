@@ -19,5 +19,7 @@ class Line: GameObject {
         vertices = [startVertex, endVertex]
         vertexBuffer = Engine.Device.makeBuffer(bytes: vertices, length: Vertex.stride(vertices.count))
         super.init(name: "Line", modelType: .None)
+        modelConstants.useObjectColor = true
+        modelConstants.objectColor = color
     }
 }

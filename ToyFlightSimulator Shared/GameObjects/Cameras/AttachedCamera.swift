@@ -45,6 +45,22 @@ class AttachedCamera: Camera {
             self.moveY(Mouse.GetDY() * Float(GameTime.DeltaTime) * _moveSpeed)
         }
         
+        if Keyboard.IsKeyPressed(.i) {
+            self.moveY(Float(GameTime.DeltaTime) * _moveSpeed)
+        }
+        
+        if Keyboard.IsKeyPressed(.k) {
+            self.moveY(-Float(GameTime.DeltaTime) * _moveSpeed)
+        }
+        
+        if Keyboard.IsKeyPressed(.l) {
+            self.moveX(Float(GameTime.DeltaTime) * _moveSpeed)
+        }
+        
+        if Keyboard.IsKeyPressed(.j) {
+            self.moveX(-Float(GameTime.DeltaTime) * _moveSpeed)
+        }
+        
         self.moveZ(-Mouse.GetDWheel() * 0.1)
     }
 }

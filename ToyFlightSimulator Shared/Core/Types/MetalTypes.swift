@@ -58,6 +58,22 @@ extension ModelConstants: sizeable {}
 extension SceneConstants: sizeable {}
 
 extension MaterialProperties: sizeable {
+//    init(color: float4 = BLACK_COLOR,
+//         ambient: float3 = [0.1, 0.1, 0.1],
+//         diffuse: float3 = [1, 1, 1],
+//         specular: float3 = [1, 1, 1],
+//         shininess: Float = 2.0,
+//         opacity: Float = 1.0,
+//         lit: Bool = true) {
+//        self.init(color: color,
+//                  ambient: ambient,
+//                  diffuse: diffuse,
+//                  specular: specular,
+//                  shininess: shininess,
+//                  opacity: opacity,
+//                  isLit: lit)
+//    }
+    
     init() {
         self.init(color: BLACK_COLOR,
                   ambient: [0.1, 0.1, 0.1], 

@@ -6,7 +6,7 @@
 //
 
 class FlightboxScene: GameScene {
-    var attachedCamera = AttachedCamera(fieldOfView: 60.0,
+    var attachedCamera = AttachedCamera(fieldOfView: 75.0,
                                         near: 0.01,
                                         far: 1000000.0)
     var sun = Sun(modelType: .Sphere)
@@ -32,7 +32,7 @@ class FlightboxScene: GameScene {
 //        let jet = F18()
 //        let jet = F18Usdz()
 //        let jet = F35(scale: 0.8)
-        let jet = F22(scale: 0.125)
+        let jet = F22(scale: 0.25)
 //        let jet = Temple(scale: 0.02)
         
         addCamera(attachedCamera)

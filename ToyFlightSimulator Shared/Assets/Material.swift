@@ -23,10 +23,6 @@ struct Material: sizeable {
         return opacityTexture != nil || properties.opacity < 1.0 || properties.color.w < 1.0
     }
     
-    init(_ properties: MaterialProperties) {
-        self.properties = properties
-    }
-    
     init(_ mdlMaterial: MDLMaterial) {
         name = mdlMaterial.name
         setProperties(with: mdlMaterial, semantics: [.emission, .baseColor, .specular, .specularExponent, .opacity])

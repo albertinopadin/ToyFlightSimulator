@@ -159,7 +159,7 @@ final class DrawManager {
 //
 //    }
     
-    static func DrawQuad(with renderEncoder: MTLRenderCommandEncoder) {
+    static func DrawFullScreenQuad(with renderEncoder: MTLRenderCommandEncoder) {
         for mesh in Assets.Models[.Quad].meshes {
             if let vertexBuffer = mesh.vertexBuffer {
                 renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
