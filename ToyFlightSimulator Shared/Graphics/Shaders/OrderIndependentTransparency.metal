@@ -92,25 +92,26 @@ transparent_material_fragment(RasterizerData                  rd              [[
         color = baseColorMap.sample(sampler2d, texCoord);
     }
     
-    float3 unitNormal;
-    if (material.isLit) {
-        unitNormal = normalize(rd.surfaceNormal);
-        if (!rd.useObjectColor && !is_null_texture(normalMap)) {
-            float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
-            float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
-            unitNormal = TBN * sampleNormal;
-        }
-        
-        float3 unitToCameraVector = normalize(rd.toCameraVector);
-        
-        float3 phongIntensity = Lighting::GetPhongIntensity(material,
-                                                            lightData,
-                                                            lightCount,
-                                                            rd.worldPosition,
-                                                            unitNormal,
-                                                            unitToCameraVector);
-        color *= float4(phongIntensity, 1.0);
-    }
+    // TODO: This darkens the transparent objects:
+//    float3 unitNormal;
+//    if (material.isLit) {
+//        unitNormal = normalize(rd.surfaceNormal);
+//        if (!rd.useObjectColor && !is_null_texture(normalMap)) {
+//            float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
+//            float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
+//            unitNormal = TBN * sampleNormal;
+//        }
+//        
+//        float3 unitToCameraVector = normalize(rd.toCameraVector);
+//        
+//        float3 phongIntensity = Lighting::GetPhongIntensity(material,
+//                                                            lightData,
+//                                                            lightCount,
+//                                                            rd.worldPosition,
+//                                                            unitNormal,
+//                                                            unitToCameraVector);
+//        color *= float4(phongIntensity, 1.0);
+//    }
     
     TransparentFragmentStore out;
     half4 finalColor = half4(color);

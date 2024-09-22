@@ -191,6 +191,7 @@ class FlightboxScene: GameScene {
         let testCube = Cube()
         testCube.setColor(GRABBER_BLUE_COLOR)
         testCube.setPosition(jetPos.x, 1, jetPos.z - 4)
+        testCube.setScale(2.0)
         addChild(testCube)
         
 //        let testQuad2 = Quad()

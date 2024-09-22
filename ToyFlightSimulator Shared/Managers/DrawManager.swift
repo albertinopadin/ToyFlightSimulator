@@ -25,8 +25,22 @@ struct ModelData {
     }
 }
 
+struct TransparentObjectData {
+    var gameObjects: [GameObject] = []
+    var models: [Model] = []
+    
+    mutating func addGameObject(_ gameObject: GameObject) {
+        self.gameObjects.append(gameObject)
+    }
+    
+    mutating func addModel(_ model: Model) {
+        self.models.append(model)
+    }
+}
+
 final class DrawManager {
     static var modelDatas: [Model: ModelData] = [:]
+    static var transparentObjectDatas: [Model: TransparentObjectData] = [:]
     static var particleObjects: [ParticleEmitterObject] = []
     static var skyData = ModelData()
     static var lines: [Line] = []
@@ -54,26 +68,38 @@ final class DrawManager {
     }
     
     static private func RegisterObject(_ gameObject: GameObject) {
-        for mesh in gameObject.model.meshes {
-            for submesh in mesh.submeshes {
-                if let _ = modelDatas[gameObject.model] {
-                    modelDatas[gameObject.model]?.addGameObject(gameObject)
-                    if isTransparent(submesh: submesh) {
-                        modelDatas[gameObject.model]?.appendTransparent(submesh: submesh)
-                    } else {
-                        modelDatas[gameObject.model]?.appendOpaque(submesh: submesh)
+        if gameObject.isTransparent {
+            registerTransparentObject(gameObject)
+        } else {
+            if let _ = modelDatas[gameObject.model] {
+                modelDatas[gameObject.model]!.addGameObject(gameObject)
+            } else {
+                var modelData = ModelData()
+                modelData.addGameObject(gameObject)
+                
+                for mesh in gameObject.model.meshes {
+                    for submesh in mesh.submeshes {
+                        if isTransparent(submesh: submesh) {
+                            modelData.appendTransparent(submesh: submesh)
+                        } else {
+                            modelData.appendOpaque(submesh: submesh)
+                        }
                     }
-                } else {
-                    var modelData = ModelData()
-                    modelData.addGameObject(gameObject)
-                    if isTransparent(submesh: submesh) {
-                        modelData.appendTransparent(submesh: submesh)
-                    } else {
-                        modelData.appendOpaque(submesh: submesh)
-                    }
-                    modelDatas[gameObject.model] = modelData
                 }
+                
+                modelDatas[gameObject.model] = modelData
             }
+        }
+    }
+    
+    static private func registerTransparentObject(_ gameObject: GameObject) {
+        if let _ = transparentObjectDatas[gameObject.model] {
+            transparentObjectDatas[gameObject.model]!.addGameObject(gameObject)
+        } else {
+            var transparentObjectData = TransparentObjectData()
+            transparentObjectData.addGameObject(gameObject)
+            transparentObjectData.addModel(gameObject.model)
+            transparentObjectDatas[gameObject.model] = transparentObjectData
         }
     }
     
@@ -131,7 +157,15 @@ final class DrawManager {
             }
         }
         
-        if !withTransparency {
+        if withTransparency {
+            for (model, data) in transparentObjectDatas {
+                Draw(renderEncoder,
+                     model: model,
+                     gameObjects: data.gameObjects,
+                     submeshes: model.meshes.flatMap { $0.submeshes },
+                     applyMaterials: applyMaterials)
+            }
+        } else {
             DrawLines(with: renderEncoder)
         }
     }
@@ -226,13 +260,17 @@ final class DrawManager {
     }
     
     static func DrawLines(with renderEncoder: MTLRenderCommandEncoder) {
-        for line in lines {
-            EncodeRender(using: renderEncoder, label: "Rendering \(line.getName())") {
-                renderEncoder.setVertexBytes(&line.modelConstants,
-                                             length: ModelConstants.stride,
-                                             index: TFSBufferModelConstants.index)
-                renderEncoder.setVertexBuffer(line.vertexBuffer, offset: 0, index: 0)
-                renderEncoder.drawPrimitives(type: .lineStrip, vertexStart: 0, vertexCount: line.vertices.count)
+        if !lines.isEmpty {
+            EncodeRender(using: renderEncoder, label: "Rendering Lines") {
+                renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
+                
+                for line in lines {
+                    renderEncoder.setVertexBytes(&line.modelConstants,
+                                                 length: ModelConstants.stride,
+                                                 index: TFSBufferModelConstants.index)
+                    renderEncoder.setVertexBuffer(line.vertexBuffer, offset: 0, index: 0)
+                    renderEncoder.drawPrimitives(type: .lineStrip, vertexStart: 0, vertexCount: line.vertices.count)
+                }
             }
         }
     }
@@ -252,7 +290,6 @@ final class DrawManager {
                 if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
                     renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
                     
-                    // TODO: This should be per game object
                     if applyMaterials {
                         submesh.material!.applyTextures(with: renderEncoder)
                         
