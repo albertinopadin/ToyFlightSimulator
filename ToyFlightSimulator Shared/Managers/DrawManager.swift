@@ -82,10 +82,6 @@ final class DrawManager {
             return true
         }
         
-        if let goMaterial = gameObject.material {
-            return goMaterial.opacity < 1.0 || goMaterial.color.w < 1.0
-        }
-        
         return false
     }
     
@@ -117,17 +113,21 @@ final class DrawManager {
                      applyMaterials: Bool = true) {
         for (model, data) in modelDatas {
             if withTransparency {
-                Draw(renderEncoder,
-                     model: model,
-                     gameObjects: data.gameObjects,
-                     submeshes: data.transparentSubmeshes,
-                     applyMaterials: applyMaterials)
+                if !data.transparentSubmeshes.isEmpty {
+                    Draw(renderEncoder,
+                         model: model,
+                         gameObjects: data.gameObjects,
+                         submeshes: data.transparentSubmeshes,
+                         applyMaterials: applyMaterials)
+                }
             } else {
-                Draw(renderEncoder,
-                     model: model,
-                     gameObjects: data.gameObjects,
-                     submeshes: data.opaqueSubmeshes,
-                     applyMaterials: applyMaterials)
+                if !data.opaqueSubmeshes.isEmpty {
+                    Draw(renderEncoder,
+                         model: model,
+                         gameObjects: data.gameObjects,
+                         submeshes: data.opaqueSubmeshes,
+                         applyMaterials: applyMaterials)
+                }
             }
         }
         

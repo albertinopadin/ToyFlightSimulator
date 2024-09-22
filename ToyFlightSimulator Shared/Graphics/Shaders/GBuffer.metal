@@ -112,10 +112,16 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut                   in  
     
     MaterialProperties material = materials[in.instanceId];
     
-    if (material.useMaterialColor) {
-        base_color_sample = half4(material.color);
-    } else if (material.useBaseTexture && !is_null_texture(baseColorMap)) {
+//    if (material.useMaterialColor) {
+//        base_color_sample = half4(material.color);
+//    } else if (material.useBaseTexture && !is_null_texture(baseColorMap)) {
+//        base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord.xy);
+//    }
+    
+    if (material.useBaseTexture && !is_null_texture(baseColorMap)) {
         base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord.xy);
+    } else {
+        base_color_sample = half4(material.color);
     }
     
     if (material.useNormalMapTexture && !is_null_texture(normalMap)) {

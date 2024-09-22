@@ -142,8 +142,6 @@ class FlightboxScene: GameScene {
 //        bluishSphere.useMaterial(sphereBluishMaterial)
 //        addChild(bluishSphere)
         
-//        addGround()
-        
         var quadMaterial = MaterialProperties()
         quadMaterial.setColor([0, 0.4, 1.0, 1.0])
         quadMaterial.shininess = 10
@@ -178,7 +176,6 @@ class FlightboxScene: GameScene {
         sphereRed.setScale(1.5)
         sphereRed.useMaterial(sphereRedMaterial)
         addChild(sphereRed)
-        
         
         let testQuad = Quad()
         var testQuadMaterial = MaterialProperties()

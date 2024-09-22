@@ -58,8 +58,32 @@ extension ModelConstants: sizeable {}
 extension SceneConstants: sizeable {}
 
 extension MaterialProperties: sizeable {
+//    init(color: float4 = BLUE_COLOR,
+//         ambient: float3 = [0.1, 0.1, 0.1],
+//         diffuse: float3 = [1, 1, 1],
+//         specular: float3 = [1, 1, 1],
+//         shininess: Float = 2.0,
+//         opacity: Float = 1.0,
+//         useMaterialColor: Bool = false,
+//         useBaseColorTexture: Bool = false,
+//         useNormalTexture: Bool = false,
+//         useSpecularTexture: Bool = false,
+//         isLit: Bool = true) {
+//        self.init(color: color,
+//                  ambient: ambient,
+//                  diffuse: diffuse,
+//                  specular: specular,
+//                  shininess: shininess,
+//                  opacity: opacity,
+//                  useMaterialColor: useMaterialColor,
+//                  useBaseTexture: useBaseColorTexture,
+//                  useNormalMapTexture: useNormalTexture,
+//                  useSpecularTexture: useSpecularTexture,
+//                  isLit: isLit)
+//    }
+    
     init() {
-        self.init(color: BLACK_COLOR,
+        self.init(color: WHITE_COLOR,
                   ambient: [0.1, 0.1, 0.1], 
                   diffuse: [1, 1, 1],
                   specular: [1, 1, 1],

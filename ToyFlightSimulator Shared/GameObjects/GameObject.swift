@@ -21,7 +21,7 @@ class GameObject: Node, Renderable, Hashable {
         model = Assets.Models[modelType]
         model.parent = self
         
-        DrawManager.Register(self)
+//        DrawManager.Register(self)
         print("GameObject init; named \(self.getName())")
     }
     
