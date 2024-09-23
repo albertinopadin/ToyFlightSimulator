@@ -24,7 +24,7 @@ extension RenderPipelineState {
         MTLRenderPipelineState {
         do {
             return try Engine.Device.makeRenderPipelineState(tileDescriptor: tileRenderPipelineDescriptor,
-                                                             options: .argumentInfo,
+                                                             options: .bindingInfo,
                                                              reflection: nil)
         } catch {
             fatalError(error.localizedDescription)
@@ -50,7 +50,7 @@ extension RenderPipelineState {
         tileBlock(descriptor)
         do {
             return try Engine.Device.makeRenderPipelineState(tileDescriptor: descriptor,
-                                                             options: .argumentInfo,
+                                                             options: .bindingInfo,
                                                              reflection: nil)
         } catch {
             fatalError(error.localizedDescription)

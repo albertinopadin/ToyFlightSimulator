@@ -92,6 +92,7 @@ class Renderer: NSObject, MTKViewDelegate {
                           using descriptor: MTLRenderPassDescriptor,
                           label: String,
                           _ encodingBlock: (MTLRenderCommandEncoder) -> Void) {
+//        print("Descriptor: \(descriptor)")
         guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor) else {
             fatalError("Failed to make render command encoder with: \(descriptor.description)")
         }

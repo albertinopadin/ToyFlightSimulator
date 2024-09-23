@@ -16,6 +16,7 @@ class OITRenderer: Renderer {
     
     override var metalView: MTKView {
         didSet {
+            metalView.sampleCount = 4
             createForwardRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
                                               screenHeight: Int(Renderer.ScreenSize.y))
         }
@@ -33,13 +34,14 @@ class OITRenderer: Renderer {
     
     
     private func createForwardRenderPassDescriptor(screenWidth: Int, screenHeight: Int) {
-        // --- BASE COLOR 0 TEXTURE ---
+//        // --- BASE COLOR 0 TEXTURE ---
         let base0TextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainPixelFormat,
                                                                               width: screenWidth,
                                                                               height: screenHeight,
                                                                               mipmapped: false)
         // Defining render target
         base0TextureDescriptor.usage = [.renderTarget, .shaderRead]
+        base0TextureDescriptor.storageMode = .private
         Assets.Textures.setTexture(textureType: .BaseColorRender_0,
                                    texture: Engine.Device.makeTexture(descriptor: base0TextureDescriptor)!)
         
@@ -58,6 +60,10 @@ class OITRenderer: Renderer {
         _forwardRenderPassDescriptor.colorAttachments[0].texture = Assets.Textures[.BaseColorRender_0]
         _forwardRenderPassDescriptor.colorAttachments[0].storeAction = .store
         _forwardRenderPassDescriptor.colorAttachments[0].loadAction = .clear
+        
+//        if let colorAttachment = metalView.currentRenderPassDescriptor?.colorAttachments[TFSRenderTargetLighting.index] {
+//            _forwardRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index] = colorAttachment
+//        }
         
         _forwardRenderPassDescriptor.depthAttachment.texture = Assets.Textures[.BaseDepthRender]
         _forwardRenderPassDescriptor.depthAttachment.storeAction = .store
@@ -123,8 +129,16 @@ class OITRenderer: Renderer {
         }
     }
     
+    var psoCreated = false
+    
     override func draw(in view: MTKView) {
         super.draw(in: view)
+        
+        if !psoCreated {
+            createForwardRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
+                                              screenHeight: Int(Renderer.ScreenSize.y))
+            psoCreated.toggle()
+        }
         
         runDrawableCommands { commandBuffer in
             commandBuffer.label = "Order Independent Transparency Render Command Buffer"

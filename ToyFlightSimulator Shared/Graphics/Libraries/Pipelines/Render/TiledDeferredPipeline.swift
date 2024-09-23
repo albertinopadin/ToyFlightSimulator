@@ -19,10 +19,10 @@ extension RenderPipelineState {
 struct TiledDeferredShadowPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Deferred Shadow", block: { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = .invalid
             descriptor.depthAttachmentPixelFormat = .depth32Float
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
         })
     }()
 }
@@ -30,16 +30,13 @@ struct TiledDeferredShadowPipelineState: RenderPipelineState {
 struct TiledDeferredGBufferPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Deferred GBuffer") { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredGBufferVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredGBufferFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             Self.setGBufferPixelFormatsForTiledDeferredPipeline(descriptor: descriptor)
             descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
-            
-            // Testing
-//            Self.enableBlending(colorAttachmentDescriptor: descriptor.colorAttachments[TFSRenderTargetLighting.index])
         }
     }()
 }
@@ -53,9 +50,6 @@ struct TiledDeferredDirectionalLightPipelineState: RenderPipelineState {
             Self.setGBufferPixelFormatsForTiledDeferredPipeline(descriptor: descriptor)
             descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
-            
-            // Testing
-//            Self.enableBlending(colorAttachmentDescriptor: descriptor.colorAttachments[TFSRenderTargetLighting.index])
         }
     }()
 }
@@ -102,13 +96,13 @@ struct TiledDeferredPointLightPipelineState: RenderPipelineState {
     
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Deferred Point Light") { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.PositionOnly]
             descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredPointLightVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredPointLightFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             Self.setGBufferPixelFormatsForTiledDeferredPipeline(descriptor: descriptor)
             descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.PositionOnly]
             Self.enableBlending(colorAttachment: descriptor.colorAttachments[TFSRenderTargetLighting.index])
         }
     }()

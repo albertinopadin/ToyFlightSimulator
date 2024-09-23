@@ -50,10 +50,11 @@ struct SkySphereRenderPipelineState: RenderPipelineState {
 struct FinalRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Final Render") { descriptor in
-            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.vertexFunction = Graphics.Shaders[.FinalVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.FinalFragment]
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
+            descriptor.rasterSampleCount = 4
         }
     }()
 }

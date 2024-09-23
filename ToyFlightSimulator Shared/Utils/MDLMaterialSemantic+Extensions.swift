@@ -7,7 +7,7 @@
 
 import ModelIO
 
-extension MDLMaterialSemantic: CaseIterable {
+extension MDLMaterialSemantic: @retroactive CaseIterable {
     public static var allCases: [MDLMaterialSemantic] {
         get {
             return [
