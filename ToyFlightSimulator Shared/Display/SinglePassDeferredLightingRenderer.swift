@@ -158,7 +158,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setCullMode(.back)
 //            SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetPointLightData(with: renderEncoder)
-//            SceneManager.RenderPointLights(with: renderEncoder)
+            DrawManager.DrawPointLights(with: renderEncoder)
         }
     }
     
@@ -196,8 +196,6 @@ class SinglePassDeferredLightingRenderer: Renderer {
     func encodeIcosahedronStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Icosahedron Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Icosahedron])
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DepthWriteDisabled])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])
             renderEncoder.setStencilReferenceValue(128)
             // TODO: Doesn't quite work
@@ -231,7 +229,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
                     encodeTransparencyStage(using: renderEncoder)
                     encodeLightMaskStage(using: renderEncoder)
                     encodePointLightStage(using: renderEncoder)
-                    encodeIcosahedronStage(using: renderEncoder)
+//                    encodeIcosahedronStage(using: renderEncoder)
                     encodeSkyboxStage(using: renderEncoder)
                 }
             }

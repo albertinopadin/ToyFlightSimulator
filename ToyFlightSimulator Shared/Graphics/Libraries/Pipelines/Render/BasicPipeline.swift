@@ -9,41 +9,32 @@ import MetalKit
 
 struct BaseRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
-                                                                        vertexShaderType: .BaseVertex,
-                                                                        fragmentShaderType: .BaseFragment)
-        renderPipelineDescriptor.label = "Base Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
+        let descriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+                                                          vertexShaderType: .BaseVertex,
+                                                          fragmentShaderType: .BaseFragment)
+        descriptor.label = "Base Render"
+        return createRenderPipelineState(descriptor: descriptor)
     }()
 }
 
 struct MaterialRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
-                                                                        vertexShaderType: .BaseVertex,
-                                                                        fragmentShaderType: .MaterialFragment)
-        renderPipelineDescriptor.label = "Material Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
-    }()
-}
-
-struct InstancedRenderPipelineState: RenderPipelineState {
-    var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
-                                                                        vertexShaderType: .InstancedVertex,
-                                                                        fragmentShaderType: .BaseFragment)
-        renderPipelineDescriptor.label = "Instanced Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
+        let descriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+                                                          vertexShaderType: .BaseVertex,
+                                                          fragmentShaderType: .MaterialFragment)
+        descriptor.label = "Material Render"
+        return createRenderPipelineState(descriptor: descriptor)
     }()
 }
 
 struct SkySphereRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
-                                                                        vertexShaderType: .SkySphereVertex,
-                                                                        fragmentShaderType: .SkySphereFragment)
-        renderPipelineDescriptor.label = "Sky Sphere Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
+        let descriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+                                                          vertexShaderType: .SkySphereVertex,
+                                                          fragmentShaderType: .SkySphereFragment)
+        descriptor.label = "Sky Sphere Render"
+//        descriptor.rasterSampleCount = 2
+        return createRenderPipelineState(descriptor: descriptor)
     }()
 }
 

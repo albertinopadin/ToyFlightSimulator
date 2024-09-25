@@ -10,7 +10,6 @@ import MetalKit
 enum RenderPipelineStateType {
     case Base
     case Material
-    case Instanced
     case SkySphere
     case Final
     
@@ -50,7 +49,6 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
     override func makeLibrary() {
         _library.updateValue(BaseRenderPipelineState(), forKey: .Base)
         _library.updateValue(MaterialRenderPipelineState(), forKey: .Material)
-        _library.updateValue(InstancedRenderPipelineState(), forKey: .Instanced)
         _library.updateValue(SkySphereRenderPipelineState(), forKey: .SkySphere)
         _library.updateValue(FinalRenderPipelineState(), forKey: .Final)
         

@@ -16,15 +16,6 @@ class FlightboxScene: GameScene {
     var pl2 = PointLightObject()
     let afterburner = Afterburner(name: "Afterburner")
     
-    private func addGround() {
-        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        let ground = Quad()
-        ground.setColor(groundColor)
-        ground.rotateZ(Float(270).toRadians)
-        ground.setScale(1000)
-        addChild(ground)
-    }
-    
     override func buildScene() {
         addGround()
         
@@ -87,21 +78,11 @@ class FlightboxScene: GameScene {
         sunBall.setPosition(sun.getPosition())
         addChild(sunBall)
         
-        if _rendererType == .TiledDeferred {
-            let pl = PointLightObject()
-            pl.setPosition(capsule.getPositionX(), 0.5, capsule.getPositionZ())
-            pl.setLightColor(BLUE_COLOR.xyz)
-            pl.setLightBrightness(1.0)
-            //        pl.setLightRadius(10.0)
-            pl.setScale(2.0)
-            addLight(pl)
-            
-            //        pl2.setPosition(-capsule.getPositionX(), capsule.getPositionY(), capsule.getPositionZ())
-            pl2.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
-            pl2.setLightColor(RED_COLOR.xyz)
-            pl2.setLightBrightness(1.0)
-            pl2.setScale(3.0)
-            addLight(pl2)
+        switch _rendererType {
+            case .SinglePassDeferredLighting, .TiledDeferred:
+                addPointLights()
+            default:
+                print("Omitting point lights")
         }
         
         let f16 = F16(shouldUpdate: false)
@@ -152,17 +133,17 @@ class FlightboxScene: GameScene {
         
         let jetPos = container.getPosition()
         
-        let sphereBluePos = float3(x: jetPos.x + 1, y: jetPos.y, z: jetPos.z - 2)
+        let sphereBluePos = float3(x: jetPos.x + 2, y: jetPos.y, z: jetPos.z - 2)
         let sphereBlue = Sphere()
         sphereBlue.setPosition(sphereBluePos)
-        sphereBlue.setScale(1.5)
+        sphereBlue.setScale(3)
         sphereBlue.setColor([0.0, 0.0, 1.0, 0.4])
         addChild(sphereBlue)
         
-        let sphereRedPos = float3(x: jetPos.x - 1, y: jetPos.y, z: jetPos.z - 2)
+        let sphereRedPos = float3(x: jetPos.x - 2, y: jetPos.y, z: jetPos.z - 2)
         let sphereRed = Sphere()
         sphereRed.setPosition(sphereRedPos)
-        sphereRed.setScale(1.5)
+        sphereRed.setScale(3)
         sphereRed.setColor([1.0, 0.0, 0.0, 0.4])
         addChild(sphereRed)
         
@@ -221,6 +202,32 @@ class FlightboxScene: GameScene {
         
         TextureLoader.PrintCacheInfo()
         print("Total Submesh count: \(DrawManager.SubmeshCount)")
+    }
+    
+    private func addGround() {
+        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
+        let ground = Quad()
+        ground.setColor(groundColor)
+        ground.rotateZ(Float(270).toRadians)
+        ground.setScale(1000)
+        addChild(ground)
+    }
+    
+    func addPointLights() {
+        let pl = PointLightObject()
+        pl.setPosition(capsule.getPositionX(), 0.5, capsule.getPositionZ())
+        pl.setLightColor(BLUE_COLOR.xyz)
+        pl.setLightBrightness(1.0)
+        //        pl.setLightRadius(10.0)
+        pl.setScale(2.0)
+        addLight(pl)
+        
+        //        pl2.setPosition(-capsule.getPositionX(), capsule.getPositionY(), capsule.getPositionZ())
+        pl2.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
+        pl2.setLightColor(RED_COLOR.xyz)
+        pl2.setLightBrightness(1.0)
+        pl2.setScale(3.0)
+        addLight(pl2)
     }
     
     override func doUpdate() {

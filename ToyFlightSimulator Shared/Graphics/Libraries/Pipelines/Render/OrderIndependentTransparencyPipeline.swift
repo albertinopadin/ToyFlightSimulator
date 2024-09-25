@@ -29,6 +29,7 @@ extension RenderPipelineState {
         descriptor.vertexDescriptor = Graphics.VertexDescriptors[vertexDescriptorType]
         descriptor.vertexFunction = Graphics.Shaders[vertexShaderType]
         descriptor.fragmentFunction = Graphics.Shaders[fragmentShaderType]
+//        descriptor.rasterSampleCount = 2
         Self.EnableBlending(colorAttachment: descriptor.colorAttachments[TFSRenderTargetLighting.index])
         return descriptor
     }
@@ -40,6 +41,7 @@ struct TileRenderPipelineState: RenderPipelineState {
             descriptor.tileFunction = Graphics.Shaders[.TileKernel]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             descriptor.threadgroupSizeMatchesTileSize = true
+//            descriptor.rasterSampleCount = 2
         }
     }()
 }
@@ -51,7 +53,7 @@ struct OpaqueRenderPipelineState: RenderPipelineState {
                                                                               fragmentShaderType: .BaseFragment)
         
         renderPipelineDescriptor.label = "Opaque Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
+        return createRenderPipelineState(descriptor: renderPipelineDescriptor)
     }()
 }
 
@@ -62,7 +64,7 @@ struct OpaqueMaterialRenderPipelineState: RenderPipelineState {
                                                                               fragmentShaderType: .MaterialFragment)
         
         renderPipelineDescriptor.label = "Opaque Material Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
+        return createRenderPipelineState(descriptor: renderPipelineDescriptor)
     }()
 }
 
@@ -79,6 +81,8 @@ struct OrderIndependentTransparencyRenderPipelineState: RenderPipelineState {
             
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
             descriptor.stencilAttachmentPixelFormat = .invalid
+            
+//            descriptor.rasterSampleCount = 2
         }
     }()
 }
@@ -92,6 +96,7 @@ struct BlendRenderPipelineState: RenderPipelineState {
             descriptor.vertexDescriptor = nil
             descriptor.vertexFunction = Graphics.Shaders[.QuadPassVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.BlendFragment]
+//            descriptor.rasterSampleCount = 2
         }
     }()
 }

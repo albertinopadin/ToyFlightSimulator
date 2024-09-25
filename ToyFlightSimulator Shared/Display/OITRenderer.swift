@@ -42,6 +42,8 @@ class OITRenderer: Renderer {
         // Defining render target
         base0TextureDescriptor.usage = [.renderTarget, .shaderRead]
         base0TextureDescriptor.storageMode = .private
+//        base0TextureDescriptor.textureType = .type2DMultisample
+//        base0TextureDescriptor.sampleCount = 2
         Assets.Textures.setTexture(textureType: .BaseColorRender_0,
                                    texture: Engine.Device.makeTexture(descriptor: base0TextureDescriptor)!)
         
@@ -53,6 +55,8 @@ class OITRenderer: Renderer {
         // Defining render target
         depthTextureDescriptor.usage = [.renderTarget, .shaderRead]
         depthTextureDescriptor.storageMode = .private
+//        depthTextureDescriptor.textureType = .type2DMultisample
+//        depthTextureDescriptor.sampleCount = 2
         Assets.Textures.setTexture(textureType: .BaseDepthRender,
                                    texture: Engine.Device.makeTexture(descriptor: depthTextureDescriptor)!)
         
@@ -60,10 +64,6 @@ class OITRenderer: Renderer {
         _forwardRenderPassDescriptor.colorAttachments[0].texture = Assets.Textures[.BaseColorRender_0]
         _forwardRenderPassDescriptor.colorAttachments[0].storeAction = .store
         _forwardRenderPassDescriptor.colorAttachments[0].loadAction = .clear
-        
-//        if let colorAttachment = metalView.currentRenderPassDescriptor?.colorAttachments[TFSRenderTargetLighting.index] {
-//            _forwardRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index] = colorAttachment
-//        }
         
         _forwardRenderPassDescriptor.depthAttachment.texture = Assets.Textures[.BaseDepthRender]
         _forwardRenderPassDescriptor.depthAttachment.storeAction = .store
@@ -89,7 +89,6 @@ class OITRenderer: Renderer {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
             renderEncoder.setCullMode(.none)
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OrderIndependentTransparent])
-//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Blend])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
             DrawManager.Draw(with: renderEncoder, withTransparency: true)
         }

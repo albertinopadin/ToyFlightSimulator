@@ -136,6 +136,7 @@ class TiledDeferredRenderer: Renderer {
         }
     }
     
+    // TODO: Refactor this into DrawMgr
     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         let pointLights = LightManager.GetPointLightData()
         if !pointLights.isEmpty {
