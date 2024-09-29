@@ -51,7 +51,7 @@ struct OpaqueRenderPipelineState: RenderPipelineState {
                                                                               fragmentShaderType: .BaseFragment)
         
         renderPipelineDescriptor.label = "Opaque Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
+        return createRenderPipelineState(descriptor: renderPipelineDescriptor)
     }()
 }
 
@@ -62,7 +62,7 @@ struct OpaqueMaterialRenderPipelineState: RenderPipelineState {
                                                                               fragmentShaderType: .MaterialFragment)
         
         renderPipelineDescriptor.label = "Opaque Material Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
+        return createRenderPipelineState(descriptor: renderPipelineDescriptor)
     }()
 }
 

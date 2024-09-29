@@ -13,7 +13,7 @@ struct BaseRenderPipelineState: RenderPipelineState {
                                                                         vertexShaderType: .BaseVertex,
                                                                         fragmentShaderType: .BaseFragment)
         renderPipelineDescriptor.label = "Base Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
+        return createRenderPipelineState(descriptor: renderPipelineDescriptor)
     }()
 }
 
@@ -23,17 +23,7 @@ struct MaterialRenderPipelineState: RenderPipelineState {
                                                                         vertexShaderType: .BaseVertex,
                                                                         fragmentShaderType: .MaterialFragment)
         renderPipelineDescriptor.label = "Material Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
-    }()
-}
-
-struct InstancedRenderPipelineState: RenderPipelineState {
-    var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
-                                                                        vertexShaderType: .InstancedVertex,
-                                                                        fragmentShaderType: .BaseFragment)
-        renderPipelineDescriptor.label = "Instanced Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
+        return createRenderPipelineState(descriptor: renderPipelineDescriptor)
     }()
 }
 
@@ -43,7 +33,7 @@ struct SkySphereRenderPipelineState: RenderPipelineState {
                                                                         vertexShaderType: .SkySphereVertex,
                                                                         fragmentShaderType: .SkySphereFragment)
         renderPipelineDescriptor.label = "Sky Sphere Render"
-        return createRenderPipelineState(renderPipelineDescriptor: renderPipelineDescriptor)
+        return createRenderPipelineState(descriptor: renderPipelineDescriptor)
     }()
 }
 

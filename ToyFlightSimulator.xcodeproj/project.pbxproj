@@ -432,10 +432,10 @@
 		CE50C0FB2C956C7700202C45 /* DrawManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0F92C956C7700202C45 /* DrawManager.swift */; };
 		CE50C0FC2C956C7700202C45 /* DrawManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0F92C956C7700202C45 /* DrawManager.swift */; };
 		CE50C0FD2C956C7700202C45 /* DrawManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0F92C956C7700202C45 /* DrawManager.swift */; };
-		CE50C0FF2C9584F200202C45 /* TileDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0FE2C9584F200202C45 /* TileDeferredTransparency.metal */; };
-		CE50C1002C9584F200202C45 /* TileDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0FE2C9584F200202C45 /* TileDeferredTransparency.metal */; };
-		CE50C1012C9584F200202C45 /* TileDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0FE2C9584F200202C45 /* TileDeferredTransparency.metal */; };
-		CE50C1022C9584F200202C45 /* TileDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0FE2C9584F200202C45 /* TileDeferredTransparency.metal */; };
+		CE50C0FF2C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0FE2C9584F200202C45 /* TiledDeferredTransparency.metal */; };
+		CE50C1002C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0FE2C9584F200202C45 /* TiledDeferredTransparency.metal */; };
+		CE50C1012C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0FE2C9584F200202C45 /* TiledDeferredTransparency.metal */; };
+		CE50C1022C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0FE2C9584F200202C45 /* TiledDeferredTransparency.metal */; };
 		CE50C1042C95921800202C45 /* SkyEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C1032C95921800202C45 /* SkyEntity.swift */; };
 		CE50C1052C95921800202C45 /* SkyEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C1032C95921800202C45 /* SkyEntity.swift */; };
 		CE50C1062C95921800202C45 /* SkyEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C1032C95921800202C45 /* SkyEntity.swift */; };
@@ -813,7 +813,7 @@
 		CE50C0EE2C954F4A00202C45 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 		CE50C0F42C95564300202C45 /* ModelLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelLibrary.swift; sourceTree = "<group>"; };
 		CE50C0F92C956C7700202C45 /* DrawManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawManager.swift; sourceTree = "<group>"; };
-		CE50C0FE2C9584F200202C45 /* TileDeferredTransparency.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TileDeferredTransparency.metal; sourceTree = "<group>"; };
+		CE50C0FE2C9584F200202C45 /* TiledDeferredTransparency.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TiledDeferredTransparency.metal; sourceTree = "<group>"; };
 		CE50C1032C95921800202C45 /* SkyEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyEntity.swift; sourceTree = "<group>"; };
 		CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachedCamera.swift; sourceTree = "<group>"; };
 		CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightboxScene.swift; sourceTree = "<group>"; };
@@ -1438,7 +1438,7 @@
 				CE79B6442B932B29009F2E49 /* TiledDeferredGBuffer.metal */,
 				CE79B6492B951000009F2E49 /* TiledDeferredDirectionalLight.metal */,
 				CE79B64E2B95100F009F2E49 /* TiledDeferredPointLight.metal */,
-				CE50C0FE2C9584F200202C45 /* TileDeferredTransparency.metal */,
+				CE50C0FE2C9584F200202C45 /* TiledDeferredTransparency.metal */,
 				CE387B302BCBA5B300F51DC4 /* Particles.metal */,
 			);
 			path = Shaders;
@@ -1847,7 +1847,7 @@
 				CE452FEB2A7CB4A6001945B9 /* GBU16.swift in Sources */,
 				CED3AA892B5D4DA300191002 /* ContainerNode.swift in Sources */,
 				CE4530542A7F3EC3001945B9 /* FPS.swift in Sources */,
-				CE50C1022C9584F200202C45 /* TileDeferredTransparency.metal in Sources */,
+				CE50C1022C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
 				CE452FDE2A7CB48E001945B9 /* MeshLibrary.swift in Sources */,
 				CE452FD92A7CB489001945B9 /* Assets.swift in Sources */,
 				CE452FE32A7CB4A0001945B9 /* DebugCamera.swift in Sources */,
@@ -2052,7 +2052,7 @@
 				CEFC6F26296B61CA009B692B /* Line.swift in Sources */,
 				CE45304F2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift in Sources */,
 				CE4127972B6B3F2900B01AEA /* Temple.swift in Sources */,
-				CE50C0FF2C9584F200202C45 /* TileDeferredTransparency.metal in Sources */,
+				CE50C0FF2C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
 				CE886A472985007A0013062D /* DirectionalLight.metal in Sources */,
 				CE8A7A372B9818FA00C024EA /* BasicMeshes.swift in Sources */,
 				CE79B6262B92E47E009F2E49 /* Texture.swift in Sources */,
@@ -2083,7 +2083,7 @@
 				CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CE79B6502B95100F009F2E49 /* TiledDeferredPointLight.metal in Sources */,
 				CE76931C29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
-				CE50C1002C9584F200202C45 /* TileDeferredTransparency.metal in Sources */,
+				CE50C1002C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
 				CE3DD2F62A039B0700787E53 /* FuelTank.swift in Sources */,
 				CE79B5FC2B8F15E2009F2E49 /* OrderIndependentTransparencyPipeline.swift in Sources */,
 				CE3E526428E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
@@ -2202,7 +2202,7 @@
 				CE452FD52A7CB489001945B9 /* Mesh.swift in Sources */,
 				CE79B61D2B92E312009F2E49 /* VertexDescriptor.swift in Sources */,
 				CE3BFF3D28E059B60014A752 /* ShaderDefinitions.h in Sources */,
-				CE50C1012C9584F200202C45 /* TileDeferredTransparency.metal in Sources */,
+				CE50C1012C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
 				CE452FD32A7CB489001945B9 /* Submesh.swift in Sources */,
 				CE3BFFB528E572FB0014A752 /* Final.metal in Sources */,
 				CE3DD2F72A039B0700787E53 /* FuelTank.swift in Sources */,

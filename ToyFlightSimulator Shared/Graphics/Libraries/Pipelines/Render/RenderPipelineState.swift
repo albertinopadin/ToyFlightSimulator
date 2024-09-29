@@ -12,11 +12,11 @@ protocol RenderPipelineState {
 }
 
 extension RenderPipelineState {
-    static func createRenderPipelineState(renderPipelineDescriptor: MTLRenderPipelineDescriptor) -> MTLRenderPipelineState {
+    static func createRenderPipelineState(descriptor: MTLRenderPipelineDescriptor) -> MTLRenderPipelineState {
         do {
-            return try Engine.Device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
+            return try Engine.Device.makeRenderPipelineState(descriptor: descriptor)
         } catch let error as NSError {
-            fatalError("ERROR::CREATE::RENDER_PIPELINE_STATE::__::\(error) for \(renderPipelineDescriptor.label!)")
+            fatalError("ERROR::CREATE::RENDER_PIPELINE_STATE::__::\(error) for \(descriptor.label!)")
         }
     }
     
@@ -24,7 +24,7 @@ extension RenderPipelineState {
         MTLRenderPipelineState {
         do {
             return try Engine.Device.makeRenderPipelineState(tileDescriptor: tileRenderPipelineDescriptor,
-                                                             options: .argumentInfo,
+                                                             options: .bindingInfo,
                                                              reflection: nil)
         } catch {
             fatalError(error.localizedDescription)

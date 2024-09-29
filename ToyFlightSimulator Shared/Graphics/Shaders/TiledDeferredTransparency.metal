@@ -1,5 +1,5 @@
 //
-//  TileDeferredTransparency.metal
+//  TiledDeferredTransparency.metal
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 9/14/24.

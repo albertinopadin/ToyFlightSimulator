@@ -210,6 +210,17 @@ final class DrawManager {
         }
     }
     
+    static func DrawPointLights(with renderEncoder: MTLRenderCommandEncoder) {
+        let pointLights = LightManager.GetLightObjects(lightType: Point)
+        if !pointLights.isEmpty {
+            Draw(renderEncoder,
+                 model: Assets.Models[.Icosahedron],
+                 gameObjects: pointLights,
+                 submeshes: Assets.Models[.Icosahedron].meshes.flatMap { $0.submeshes },
+                 applyMaterials: true)
+        }
+    }
+    
     static func DrawIcosahedrons(with renderEncoder: MTLRenderCommandEncoder) {
         if !icosahedrons.isEmpty {
             Draw(renderEncoder,

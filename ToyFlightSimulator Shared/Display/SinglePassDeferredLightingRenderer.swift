@@ -159,6 +159,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
 //            SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetPointLightData(with: renderEncoder)
 //            SceneManager.RenderPointLights(with: renderEncoder)
+            DrawManager.DrawPointLights(with: renderEncoder)
         }
     }
     
@@ -231,7 +232,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
                     encodeTransparencyStage(using: renderEncoder)
                     encodeLightMaskStage(using: renderEncoder)
                     encodePointLightStage(using: renderEncoder)
-                    encodeIcosahedronStage(using: renderEncoder)
+//                    encodeIcosahedronStage(using: renderEncoder)
                     encodeSkyboxStage(using: renderEncoder)
                 }
             }
