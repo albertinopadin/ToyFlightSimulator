@@ -79,3 +79,11 @@ struct VertexOut {
     float4 objectColor;
     bool useObjectColor;
 };
+
+struct VertexQuadOut {
+    float4 position [[ position ]];
+};
+
+struct FragData {
+    half4 color [[ color(0) ]];
+};

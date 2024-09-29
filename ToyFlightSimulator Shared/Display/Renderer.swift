@@ -12,6 +12,9 @@ class Renderer: NSObject, MTKViewDelegate {
     public static var ScreenSize = float2(100, 100)
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
     
+    // For MSAA
+    public var sampleCount: Int = 1
+    
     private var previousTime: UInt64 = 0
     
     // The max number of command buffers in flight

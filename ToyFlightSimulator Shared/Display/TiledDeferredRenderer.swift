@@ -36,7 +36,6 @@ class TiledDeferredRenderer: Renderer {
         // To make empty space (no nodes/skybox) look black instead of Snow...
         descriptor.colorAttachments[TFSRenderTargetLighting.index].loadAction = .clear
         descriptor.colorAttachments[TFSRenderTargetLighting.index].clearColor = Preferences.ClearColor
-//        descriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .multisampleResolve
         return descriptor
     }()
     
@@ -55,8 +54,6 @@ class TiledDeferredRenderer: Renderer {
                                                                                mipmapped: false)
         shadowTextureDescriptor.resourceOptions = .storageModePrivate
         shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
-//        shadowTextureDescriptor.textureType = .type2DMultisample
-//        shadowTextureDescriptor.sampleCount = 4
         guard let shadowTex = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor) else {
             fatalError("Failed to create shadow texture")
         }
@@ -187,8 +184,6 @@ class TiledDeferredRenderer: Renderer {
     }
     
     override func draw(in view: MTKView) {
-//        view.sampleCount = 4
-        
         // Updates scene:
         super.draw(in: view)
         
@@ -202,7 +197,6 @@ class TiledDeferredRenderer: Renderer {
             
             if let drawableTexture = view.currentDrawable?.texture {
                 tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
-//                tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = view.currentRenderPassDescriptor?.colorAttachments[TFSRenderTargetLighting.index].texture
                 
                 encodeParticleComputePass(into: commandBuffer)
                 

@@ -20,10 +20,6 @@ constant float3 vertices[6] = {
     float3( 1, -1,  0)
 };
 
-struct VertexQuadOut {
-    float4 position [[ position ]];
-};
-
 vertex VertexQuadOut tiled_deferred_vertex_quad(uint vertexId [[ vertex_id ]]) {
     VertexQuadOut out {
         .position = float4(vertices[vertexId], 1)
@@ -31,7 +27,7 @@ vertex VertexQuadOut tiled_deferred_vertex_quad(uint vertexId [[ vertex_id ]]) {
     return out;
 }
 
-fragment float4
+fragment FragData
 tiled_deferred_directional_light_fragment(         VertexQuadOut  in         [[ stage_in ]],
                                           constant LightData      &lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                                    GBufferOut     gBuffer) {
@@ -53,5 +49,11 @@ tiled_deferred_directional_light_fragment(         VertexQuadOut  in         [[ 
     }
     
     color *= albedo.a;
-    return float4(color, 1);
+    
+    float4 resolvedColor = float4(color, 1);
+    FragData fragData {
+        .color = half4(resolvedColor)
+    };
+    
+    return fragData;
 }

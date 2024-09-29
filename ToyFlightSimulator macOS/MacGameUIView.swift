@@ -14,7 +14,7 @@ struct MacGameUIView: View {
     @State private var shouldDisplayMenu: Bool = false
     @State private var shouldDisplayGameStats: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
-    @State private var rendererType: RendererType = .SinglePassDeferredLighting
+    @State private var rendererType: RendererType = .TiledDeferredMSAA
     
     var body: some View {
         GeometryReader { geometry in

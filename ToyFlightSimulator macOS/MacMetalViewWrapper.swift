@@ -41,6 +41,8 @@ struct MacMetalViewWrapper: NSViewRepresentable {
                 return SinglePassDeferredLightingRenderer()
             case .TiledDeferred:
                 return TiledDeferredRenderer()
+            case .TiledDeferredMSAA:
+                return TiledMultisampledRenderer()
             case .ForwardPlusTileShading:
                 return ForwardPlusTileShadingRenderer()
         }

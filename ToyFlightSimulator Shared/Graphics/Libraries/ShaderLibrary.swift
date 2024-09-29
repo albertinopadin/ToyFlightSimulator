@@ -55,6 +55,11 @@ enum ShaderType {
     
     case ParticlesVertex
     case ParticlesFragment
+    
+    case TiledMultisampledResolve
+    
+    case CompositeVertex
+    case CompositeFragment
 }
 
 
@@ -119,6 +124,10 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         
         _library.updateValue(Shader(functionName: "vertex_particle"), forKey: .ParticlesVertex)
         _library.updateValue(Shader(functionName: "fragment_particle"), forKey: .ParticlesFragment)
+        
+        _library.updateValue(Shader(functionName: "average_resolve_tile_kernel"), forKey: .TiledMultisampledResolve)
+        _library.updateValue(Shader(functionName: "compositeVertexShader"), forKey: .CompositeVertex)
+        _library.updateValue(Shader(functionName: "compositeFragmentShader"), forKey: .CompositeFragment)
         
         // Compute Functions:
         _library.updateValue(Shader(functionName: "compute_particle"), forKey: .ComputeParticles)

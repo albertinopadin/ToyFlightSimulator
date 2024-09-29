@@ -46,7 +46,10 @@ struct TiledDeferredGBufferTextures {
         }
     }
     
-    mutating func makeTextures(device: MTLDevice, size: CGSize, storageMode: MTLStorageMode) {
+    mutating func makeTextures(device: MTLDevice,
+                               size: CGSize,
+                               storageMode: MTLStorageMode,
+                               sampleCount: Int = 1) {
         for textureType in Self.TextureType.allCases {
             let pixelFormat = Self.getPixelFormat(for: textureType)
             
@@ -57,6 +60,11 @@ struct TiledDeferredGBufferTextures {
             textureDescriptor.usage = [.shaderRead, .renderTarget]
             textureDescriptor.storageMode = storageMode
             textureDescriptor.pixelFormat = pixelFormat
+            
+            if sampleCount > 1 {
+                textureDescriptor.textureType = .type2DMultisample
+                textureDescriptor.sampleCount = sampleCount
+            }
             
             switch textureType {
                 case .Albedo:
