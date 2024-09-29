@@ -465,6 +465,22 @@
 		CE76D2CA2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE76D2C82C96BF0B00384F7F /* SinglePassDeferredTransparency.metal */; };
 		CE76D2CB2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE76D2C82C96BF0B00384F7F /* SinglePassDeferredTransparency.metal */; };
 		CE76D2CC2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE76D2C82C96BF0B00384F7F /* SinglePassDeferredTransparency.metal */; };
+		CE7732002CA8F4E70025286F /* TiledMSAAPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7731FF2CA8F4D60025286F /* TiledMSAAPipeline.swift */; };
+		CE7732012CA8F4E70025286F /* TiledMSAAPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7731FF2CA8F4D60025286F /* TiledMSAAPipeline.swift */; };
+		CE7732022CA8F4E70025286F /* TiledMSAAPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7731FF2CA8F4D60025286F /* TiledMSAAPipeline.swift */; };
+		CE7732032CA8F4E70025286F /* TiledMSAAPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7731FF2CA8F4D60025286F /* TiledMSAAPipeline.swift */; };
+		CE7732052CA8F5EA0025286F /* TiledMSAAGBuffer.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE7732042CA8F5EA0025286F /* TiledMSAAGBuffer.metal */; };
+		CE7732062CA8F5EA0025286F /* TiledMSAAGBuffer.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE7732042CA8F5EA0025286F /* TiledMSAAGBuffer.metal */; };
+		CE7732072CA8F5EA0025286F /* TiledMSAAGBuffer.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE7732042CA8F5EA0025286F /* TiledMSAAGBuffer.metal */; };
+		CE7732082CA8F5EA0025286F /* TiledMSAAGBuffer.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE7732042CA8F5EA0025286F /* TiledMSAAGBuffer.metal */; };
+		CE77320A2CA901EA0025286F /* TiledMSAATransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE7732092CA901EA0025286F /* TiledMSAATransparency.metal */; };
+		CE77320B2CA901EA0025286F /* TiledMSAATransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE7732092CA901EA0025286F /* TiledMSAATransparency.metal */; };
+		CE77320C2CA901EA0025286F /* TiledMSAATransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE7732092CA901EA0025286F /* TiledMSAATransparency.metal */; };
+		CE77320D2CA901EA0025286F /* TiledMSAATransparency.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE7732092CA901EA0025286F /* TiledMSAATransparency.metal */; };
+		CE77320F2CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE77320E2CA904DF0025286F /* TiledMultisampleRenderer.swift */; };
+		CE7732102CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE77320E2CA904DF0025286F /* TiledMultisampleRenderer.swift */; };
+		CE7732112CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE77320E2CA904DF0025286F /* TiledMultisampleRenderer.swift */; };
+		CE7732122CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE77320E2CA904DF0025286F /* TiledMultisampleRenderer.swift */; };
 		CE79B5F62B8F15BE009F2E49 /* BasicPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B5F52B8F15BE009F2E49 /* BasicPipeline.swift */; };
 		CE79B5F72B8F15BE009F2E49 /* BasicPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B5F52B8F15BE009F2E49 /* BasicPipeline.swift */; };
 		CE79B5F82B8F15BE009F2E49 /* BasicPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79B5F52B8F15BE009F2E49 /* BasicPipeline.swift */; };
@@ -823,6 +839,10 @@
 		CE76931629DE75CB00BBC718 /* SingleSMMeshLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleSMMeshLibrary.swift; sourceTree = "<group>"; };
 		CE76931A29DE79CE00BBC718 /* Sidewinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidewinder.swift; sourceTree = "<group>"; };
 		CE76D2C82C96BF0B00384F7F /* SinglePassDeferredTransparency.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SinglePassDeferredTransparency.metal; sourceTree = "<group>"; };
+		CE7731FF2CA8F4D60025286F /* TiledMSAAPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiledMSAAPipeline.swift; sourceTree = "<group>"; };
+		CE7732042CA8F5EA0025286F /* TiledMSAAGBuffer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TiledMSAAGBuffer.metal; sourceTree = "<group>"; };
+		CE7732092CA901EA0025286F /* TiledMSAATransparency.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TiledMSAATransparency.metal; sourceTree = "<group>"; };
+		CE77320E2CA904DF0025286F /* TiledMultisampleRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiledMultisampleRenderer.swift; sourceTree = "<group>"; };
 		CE79B5F52B8F15BE009F2E49 /* BasicPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicPipeline.swift; sourceTree = "<group>"; };
 		CE79B5FA2B8F15E2009F2E49 /* OrderIndependentTransparencyPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderIndependentTransparencyPipeline.swift; sourceTree = "<group>"; };
 		CE79B5FF2B8F160E009F2E49 /* SinglePassDeferredPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePassDeferredPipeline.swift; sourceTree = "<group>"; };
@@ -1440,6 +1460,8 @@
 				CE79B64E2B95100F009F2E49 /* TiledDeferredPointLight.metal */,
 				CE50C0FE2C9584F200202C45 /* TiledDeferredTransparency.metal */,
 				CE387B302BCBA5B300F51DC4 /* Particles.metal */,
+				CE7732042CA8F5EA0025286F /* TiledMSAAGBuffer.metal */,
+				CE7732092CA901EA0025286F /* TiledMSAATransparency.metal */,
 			);
 			path = Shaders;
 			sourceTree = "<group>";
@@ -1454,6 +1476,7 @@
 				CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */,
 				CE886A4A298525D00013062D /* SinglePassDeferredLightingRenderer.swift */,
 				CE79B62F2B92E605009F2E49 /* TiledDeferredRenderer.swift */,
+				CE77320E2CA904DF0025286F /* TiledMultisampleRenderer.swift */,
 				CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */,
 			);
 			path = Display;
@@ -1478,6 +1501,7 @@
 				CE79B5FA2B8F15E2009F2E49 /* OrderIndependentTransparencyPipeline.swift */,
 				CE79B5FF2B8F160E009F2E49 /* SinglePassDeferredPipeline.swift */,
 				CE79B63A2B931F19009F2E49 /* TiledDeferredPipeline.swift */,
+				CE7731FF2CA8F4D60025286F /* TiledMSAAPipeline.swift */,
 			);
 			path = Render;
 			sourceTree = "<group>";
@@ -1787,6 +1811,7 @@
 				CE327B722C47670D004AF2D0 /* Afterburner.swift in Sources */,
 				CE4530082A7CB4B5001945B9 /* OITRenderer.swift in Sources */,
 				CE452FF62A7CB4A6001945B9 /* AircraftStore.swift in Sources */,
+				CE7732122CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */,
 				CE79B6332B92E605009F2E49 /* TiledDeferredRenderer.swift in Sources */,
 				CE452FED2A7CB4A6001945B9 /* SkyBox.swift in Sources */,
 				CE452FF02A7CB4A6001945B9 /* F18.swift in Sources */,
@@ -1796,6 +1821,7 @@
 				CE452FB82A7CB440001945B9 /* Controller.swift in Sources */,
 				CE452FD12A7CB47F001945B9 /* GBuffer.metal in Sources */,
 				CE4127AC2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */,
+				CE77320C2CA901EA0025286F /* TiledMSAATransparency.metal in Sources */,
 				CE4530052A7CB4B5001945B9 /* Renderer.swift in Sources */,
 				CE79B6382B92ED1A009F2E49 /* TiledDeferredDepthStencils.swift in Sources */,
 				CE4530042A7CB4B5001945B9 /* GameView.swift in Sources */,
@@ -1809,6 +1835,7 @@
 				CE452FE62A7CB4A6001945B9 /* Sun.swift in Sources */,
 				CE452FCB2A7CB47F001945B9 /* Skybox.metal in Sources */,
 				CE452FEC2A7CB4A6001945B9 /* SkySphere.swift in Sources */,
+				CE7732022CA8F4E70025286F /* TiledMSAAPipeline.swift in Sources */,
 				CE5D782B2C917D0A00FB0E26 /* MDLMaterialSemantic+Extensions.swift in Sources */,
 				CE387B462BDE273B00F51DC4 /* ParticleEmitterEntity.swift in Sources */,
 				CE79B6482B932B29009F2E49 /* TiledDeferredGBuffer.metal in Sources */,
@@ -1835,6 +1862,7 @@
 				CE452FC62A7CB47F001945B9 /* Final.metal in Sources */,
 				CE452FF42A7CB4A6001945B9 /* AIM120.swift in Sources */,
 				CE452FDA2A7CB489001945B9 /* Mesh.swift in Sources */,
+				CE7732082CA8F5EA0025286F /* TiledMSAAGBuffer.metal in Sources */,
 				CE452FFD2A7CB4AC001945B9 /* SandboxScene.swift in Sources */,
 				CE452FB22A7CB42A001945B9 /* MetalTypes.swift in Sources */,
 				CE452FF12A7CB4A6001945B9 /* Renderable.swift in Sources */,
@@ -1961,6 +1989,7 @@
 				CE79B5FB2B8F15E2009F2E49 /* OrderIndependentTransparencyPipeline.swift in Sources */,
 				CE50C1042C95921800202C45 /* SkyEntity.swift in Sources */,
 				CE3BFF4728E1B05A0014A752 /* SceneManager.swift in Sources */,
+				CE77320A2CA901EA0025286F /* TiledMSAATransparency.metal in Sources */,
 				CEAB3838297CCB2F0087F7CB /* OITRenderer.swift in Sources */,
 				CE45304B2A7F3A91001945B9 /* Keyboard.swift in Sources */,
 				CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
@@ -2002,6 +2031,7 @@
 				CE7F483E28B770B00082B197 /* Colors.swift in Sources */,
 				CEAB384A297FB3720087F7CB /* SinglePassDeferredGBufferTextures.swift in Sources */,
 				CE387B482BE22FF000F51DC4 /* ParticlePipeline.swift in Sources */,
+				CE7732052CA8F5EA0025286F /* TiledMSAAGBuffer.metal in Sources */,
 				CE387B372BCBDDE700F51DC4 /* ParticleEmitter.swift in Sources */,
 				CE3BFF9B28E4523D0014A752 /* Camera.swift in Sources */,
 				CE79B6052B8F164E009F2E49 /* RenderPipelineState.swift in Sources */,
@@ -2021,6 +2051,7 @@
 				CE3BFF9628E451F00014A752 /* LightManager.swift in Sources */,
 				CE3BFF6928E1B4C10014A752 /* Assets.swift in Sources */,
 				CED3AA7B2B5D008200191002 /* F22.swift in Sources */,
+				CE7732032CA8F4E70025286F /* TiledMSAAPipeline.swift in Sources */,
 				CED798402C8FE2D8003B6559 /* TFSMenuMobile.swift in Sources */,
 				CE56921C28EC1D2F00F6B42C /* FlightboxScene.swift in Sources */,
 				CEFC6E3129531C0C009B692B /* Triangle.swift in Sources */,
@@ -2044,6 +2075,7 @@
 				CEED93A729E3B2600020DC53 /* AircraftStore.swift in Sources */,
 				CE4530512A7F3EBF001945B9 /* FPS.swift in Sources */,
 				CE3BFFA728E453260014A752 /* Sun.swift in Sources */,
+				CE7732112CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */,
 				CE7F483A28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE3DD2F12A02309300787E53 /* GBU16.swift in Sources */,
 				CEC0C5942B4B2D3100863C38 /* Material.swift in Sources */,
@@ -2071,6 +2103,7 @@
 				CEAB38572981081E0087F7CB /* Lighting.metal in Sources */,
 				CE79B5F72B8F15BE009F2E49 /* BasicPipeline.swift in Sources */,
 				CEAA40282C746F3800009894 /* ClickSelectable.swift in Sources */,
+				CE7732012CA8F4E70025286F /* TiledMSAAPipeline.swift in Sources */,
 				CEAB38582981081E0087F7CB /* Base.metal in Sources */,
 				CEAB38592981081E0087F7CB /* Instanced.metal in Sources */,
 				CE327B752C490D09004AF2D0 /* ParticleEmitterObject.swift in Sources */,
@@ -2081,6 +2114,7 @@
 				CE2ED2BD299CB91200C81F47 /* RendererType.swift in Sources */,
 				CE2ED2B92998A4CF00C81F47 /* F18.swift in Sources */,
 				CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
+				CE7732102CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */,
 				CE79B6502B95100F009F2E49 /* TiledDeferredPointLight.metal in Sources */,
 				CE76931C29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
 				CE50C1002C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
@@ -2110,6 +2144,7 @@
 				CE3DD2EA29F37FE500787E53 /* Missile.swift in Sources */,
 				CE79B6312B92E605009F2E49 /* TiledDeferredRenderer.swift in Sources */,
 				CE2ED2C129A2522900C81F47 /* SkyBox.swift in Sources */,
+				CE77320B2CA901EA0025286F /* TiledMSAATransparency.metal in Sources */,
 				CEB2DFD129D437990048D292 /* FreeCamFlightboxScene.swift in Sources */,
 				CE41279A2B6B667800B01AEA /* Temple.swift in Sources */,
 				CE2ED29A2998A37F00C81F47 /* Aircraft.swift in Sources */,
@@ -2134,6 +2169,7 @@
 				CE56921928EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
 				CE3BFF8328E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CE79B6412B932482009F2E49 /* TiledDeferredGBufferTextures.swift in Sources */,
+				CE7732072CA8F5EA0025286F /* TiledMSAAGBuffer.metal in Sources */,
 				CE3BFF7B28E2FC270014A752 /* SandboxScene.swift in Sources */,
 				CEC0C5952B4B2D3100863C38 /* Material.swift in Sources */,
 				CE2ED25E299223E900C81F47 /* Submesh.swift in Sources */,
@@ -2211,6 +2247,7 @@
 				CE76931129DD5DF600BBC718 /* SubMeshGameObject.swift in Sources */,
 				CE79B5FD2B8F15E2009F2E49 /* OrderIndependentTransparencyPipeline.swift in Sources */,
 				CEB84E792A24A76400BEF778 /* InputManager.swift in Sources */,
+				CE77320D2CA901EA0025286F /* TiledMSAATransparency.metal in Sources */,
 				CE7F484828B770EB0082B197 /* MathUtils.swift in Sources */,
 				CE452FD42A7CB489001945B9 /* Assets.swift in Sources */,
 				CED7984A2C9055D3003B6559 /* MTKMesh+Extensions.swift in Sources */,
@@ -2320,6 +2357,7 @@
 				CE387B402BDA316900F51DC4 /* Fire.swift in Sources */,
 				CE3BFF3828E059950014A752 /* Keycodes.swift in Sources */,
 				CE0EF72B2A4705FE00F54A2C /* Throttle.swift in Sources */,
+				CE7732062CA8F5EA0025286F /* TiledMSAAGBuffer.metal in Sources */,
 				CE56921A28EA9F7B00F6B42C /* AttachedCamera.swift in Sources */,
 				CE4127AB2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */,
 				CE3BFFA128E452480014A752 /* DebugCamera.swift in Sources */,
@@ -2329,6 +2367,7 @@
 				CE452FD62A7CB489001945B9 /* SingleSMMesh.swift in Sources */,
 				CE3BFFA928E453260014A752 /* Sun.swift in Sources */,
 				CEED93A929E3B2600020DC53 /* AircraftStore.swift in Sources */,
+				CE77320F2CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */,
 				CEC231342B25AC650081A26A /* PointLightObject.swift in Sources */,
 				CE3BFF4028E059B60014A752 /* Lighting.metal in Sources */,
 				CE7F48D528BCB4DD0082B197 /* GameView.swift in Sources */,
@@ -2339,6 +2378,7 @@
 				CE886A492985007A0013062D /* DirectionalLight.metal in Sources */,
 				CEFC6F24296B4200009B692B /* Sphere.swift in Sources */,
 				CE2ED264299394E500C81F47 /* ModelIO+Extensions.swift in Sources */,
+				CE7732002CA8F4E70025286F /* TiledMSAAPipeline.swift in Sources */,
 				CE2ED2BA2998A4D000C81F47 /* F18.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

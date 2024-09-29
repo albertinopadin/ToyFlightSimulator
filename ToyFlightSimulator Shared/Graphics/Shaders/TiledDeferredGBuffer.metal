@@ -67,4 +67,3 @@ tiled_deferred_gbuffer_fragment(VertexOut                   in                  
     };
     return out;
 }
-

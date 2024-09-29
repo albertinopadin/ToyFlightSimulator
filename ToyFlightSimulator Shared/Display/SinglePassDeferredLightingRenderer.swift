@@ -146,6 +146,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setCullMode(.front)
             SceneManager.SetPointLightConstants(with: renderEncoder)
 //            SceneManager.RenderPointLightMeshes(with: renderEncoder)
+            DrawManager.DrawIcosahedrons(with: renderEncoder)
         }
     }
     
@@ -158,7 +159,6 @@ class SinglePassDeferredLightingRenderer: Renderer {
             renderEncoder.setCullMode(.back)
 //            SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
             SceneManager.SetPointLightData(with: renderEncoder)
-//            SceneManager.RenderPointLights(with: renderEncoder)
             DrawManager.DrawPointLights(with: renderEncoder)
         }
     }

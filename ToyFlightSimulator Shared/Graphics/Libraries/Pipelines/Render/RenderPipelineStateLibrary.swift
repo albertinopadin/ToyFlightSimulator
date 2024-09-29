@@ -37,10 +37,18 @@ enum RenderPipelineStateType {
     case TiledDeferredPointLight
     case TiledDeferredTransparency
     
+    // Tiled MSAA:
+    case TiledMSAAShadow
+    case TiledMSAAGBuffer
+    case TiledMSAADirectionalLight
+    case TiledMSAAPointLight
+    case TiledMSAATransparency
+    
     // For testing:
     case Icosahedron
     
     case Particle
+    case ParticleMSAA
 }
 
 class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState> {
@@ -76,6 +84,15 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(TiledDeferredTransparencyPipelineState(), forKey: .TiledDeferredTransparency)
         
         _library.updateValue(ParticleRenderPipelineState(), forKey: .Particle)
+        
+        // MSAA:
+        _library.updateValue(TiledMSAAShadowPipelineState(), forKey: .TiledMSAAShadow)
+        _library.updateValue(TiledMSAAGBufferPipelineState(), forKey: .TiledMSAAGBuffer)
+        _library.updateValue(TiledMSAADirectionalLightPipelineState(), forKey: .TiledMSAADirectionalLight)
+        _library.updateValue(TiledMSAAPointLightPipelineState(), forKey: .TiledMSAAPointLight)
+        _library.updateValue(TiledMSAATransparencyPipelineState(), forKey: .TiledMSAATransparency)
+        
+        _library.updateValue(ParticleMSAARenderPipelineState(), forKey: .ParticleMSAA)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {

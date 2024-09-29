@@ -249,7 +249,7 @@ final class DrawManager {
         for particleObject in particleObjects {
             if particleObject.shouldEmit && particleObject.emitter.currentParticles > 0 {
                 EncodeRender(using: renderEncoder, label: "Rendering \(particleObject.getName())") {
-                    renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Particle])
+//                    renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Particle])
                     renderEncoder.setVertexBuffer(particleObject.emitter.particleBuffer, offset: 0, index: 0)
                     renderEncoder.setVertexBytes(&particleObject.emitter.position, length: float3.stride, index: 2)
                     

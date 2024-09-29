@@ -84,6 +84,26 @@ public:
         return (position.z > shadow_sample + 0.001) ? 0.5 : 1;
     }
     
+    static float CalculateShadowMSAA(float4 shadowPosition, depth2d_ms<float> shadowTexture) {
+        float3 position = shadowPosition.xyz / shadowPosition.w;
+        float2 xy = position.xy;
+        xy = xy * 0.5 + 0.5;
+        xy.y = 1 - xy.y;
+        
+        float shadow = 0;
+        
+        uint2 coords = uint2(uint(xy.x * shadowTexture.get_width()), uint(xy.y * shadowTexture.get_height()));
+        uint numSamples = shadowTexture.get_num_samples();
+        
+        for (uint i = 0; i < numSamples; ++i) {
+            shadow += shadowTexture.read(coords, i);
+        }
+        
+        shadow /= numSamples;
+        
+        return (position.z > shadow + 0.001) ? 0.5 : 1;
+    }
+    
     static float3 CalculatePointLighting(LightData light,
                                          float3 fragmentWorldPosition,
                                          float3 normal, MaterialProperties material) {

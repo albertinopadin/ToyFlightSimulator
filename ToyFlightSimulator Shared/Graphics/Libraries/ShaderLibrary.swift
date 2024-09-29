@@ -55,6 +55,11 @@ enum ShaderType {
     
     case ParticlesVertex
     case ParticlesFragment
+    
+    // MSAA:
+    case TiledMSAAGBufferFragment
+    case TiledMSAATransparencyFragment
+    case ParticlesFragmentMSAA
 }
 
 
@@ -122,6 +127,12 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         
         // Compute Functions:
         _library.updateValue(Shader(functionName: "compute_particle"), forKey: .ComputeParticles)
+        
+        // MSAA:
+        _library.updateValue(Shader(functionName: "tiled_msaa_gbuffer_fragment"), forKey: .TiledMSAAGBufferFragment)
+        _library.updateValue(Shader(functionName: "tiled_msaa_transparency_fragment"), forKey: .TiledMSAATransparencyFragment)
+        
+        _library.updateValue(Shader(functionName: "fragment_particle_msaa"), forKey: .ParticlesFragmentMSAA)
     }
     
     override subscript(_ type: ShaderType) -> MTLFunction {

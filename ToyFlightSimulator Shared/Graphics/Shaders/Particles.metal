@@ -71,3 +71,30 @@ fragment float4 fragment_particle(ParticleVertexOut in [[ stage_in ]],
     
     return color;
 }
+
+fragment float4 fragment_particle_msaa(ParticleVertexOut    in              [[ stage_in ]],
+                                       texture2d_ms<float>  particleTexture [[ texture(TFSTextureIndexParticle) ]],
+                                       float2               point           [[ point_coord ]]) {
+    float4 color = 0;
+    
+    int xCoord = floor(point.x * particleTexture.get_width());
+    int yCoord = floor(point.y * particleTexture.get_height());
+    uint2 coords = uint2(xCoord, yCoord);
+    
+    uint numSamples = particleTexture.get_num_samples();
+    
+    for (uint i = 0; i < numSamples; ++i) {
+        color += particleTexture.read(coords, i);
+    }
+    
+    color /= numSamples;
+    
+    if (color.a < 0.5) {
+        discard_fragment();
+    }
+    
+    color *= in.color;
+    color = float4(color.xyz * 0.9, 1);
+    
+    return color;
+}
