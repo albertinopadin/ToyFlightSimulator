@@ -49,6 +49,8 @@ enum RenderPipelineStateType {
     
     case Particle
     case ParticleMSAA
+    
+    case Composite
 }
 
 class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState> {
@@ -93,6 +95,8 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(TiledMSAATransparencyPipelineState(), forKey: .TiledMSAATransparency)
         
         _library.updateValue(ParticleMSAARenderPipelineState(), forKey: .ParticleMSAA)
+        
+        _library.updateValue(TiledMSAACompositePipelineState(), forKey: .Composite)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {

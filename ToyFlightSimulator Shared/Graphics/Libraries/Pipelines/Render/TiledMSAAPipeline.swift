@@ -125,13 +125,13 @@ struct TiledMSAAPointLightPipelineState: RenderPipelineState {
 //        }
 //    }()
 //}
-//
-//struct TiledMSAACompositePipelineState: RenderPipelineState {
-//    var renderPipelineState: any MTLRenderPipelineState = {
-//        createRenderPipelineState(label: "Composition") { descriptor in
-//            descriptor.vertexFunction = Graphics.Shaders[.CompositeVertex]
-//            descriptor.fragmentFunction = Graphics.Shaders[.CompositeFragment]
-//            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
-//        }
-//    }()
-//}
+
+struct TiledMSAACompositePipelineState: RenderPipelineState {
+    var renderPipelineState: any MTLRenderPipelineState = {
+        createRenderPipelineState(label: "Composition") { descriptor in
+            descriptor.vertexFunction = Graphics.Shaders[.CompositeVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.CompositeFragment]
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
+        }
+    }()
+}

@@ -60,6 +60,9 @@ enum ShaderType {
     case TiledMSAAGBufferFragment
     case TiledMSAATransparencyFragment
     case ParticlesFragmentMSAA
+    
+    case CompositeVertex
+    case CompositeFragment
 }
 
 
@@ -133,6 +136,9 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         _library.updateValue(Shader(functionName: "tiled_msaa_transparency_fragment"), forKey: .TiledMSAATransparencyFragment)
         
         _library.updateValue(Shader(functionName: "fragment_particle_msaa"), forKey: .ParticlesFragmentMSAA)
+        
+        _library.updateValue(Shader(functionName: "compositeVertexShader"), forKey: .CompositeVertex)
+        _library.updateValue(Shader(functionName: "compositeFragmentShader"), forKey: .CompositeFragment)
     }
     
     override subscript(_ type: ShaderType) -> MTLFunction {

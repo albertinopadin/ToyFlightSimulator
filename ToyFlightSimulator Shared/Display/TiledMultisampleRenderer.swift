@@ -39,6 +39,14 @@ class TiledMultisampleRenderer: Renderer {
         return descriptor
     }()
     
+    private let compositeRenderPassDescriptor: MTLRenderPassDescriptor = {
+        let descriptor = MTLRenderPassDescriptor()
+        descriptor.colorAttachments[TFSRenderTargetLighting.index].loadAction = .clear
+        descriptor.colorAttachments[TFSRenderTargetLighting.index].clearColor = Preferences.ClearColor
+        descriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .store
+        return descriptor
+    }()
+    
     override var metalView: MTKView {
         didSet {
             metalView.depthStencilPixelFormat = .depth32Float
@@ -165,6 +173,15 @@ class TiledMultisampleRenderer: Renderer {
         }
     }
     
+    func encodeCompositeStage(using renderEncoder: MTLRenderCommandEncoder) {
+        let resolveTexture = tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].resolveTexture
+        encodeRenderStage(using: renderEncoder, label: "Composite Stage") {
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Composite])
+            renderEncoder.setFragmentTexture(resolveTexture, index: 0)
+            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+        }
+    }
+    
     var firstRun: Bool = true
     
     override func draw(in view: MTKView) {
@@ -204,6 +221,14 @@ class TiledMultisampleRenderer: Renderer {
                     encodeLightingStage(using: renderEncoder)
                     encodeTransparencyStage(using: renderEncoder)
                     encodeParticleRenderStage(using: renderEncoder)
+                }
+                
+                compositeRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawable.texture
+                
+                encodeRenderPass(into: commandBuffer,
+                                 using: compositeRenderPassDescriptor,
+                                 label: "Composite Pass") { renderEncoder in
+                    encodeCompositeStage(using: renderEncoder)
                 }
             
                 commandBuffer.present(drawable)
