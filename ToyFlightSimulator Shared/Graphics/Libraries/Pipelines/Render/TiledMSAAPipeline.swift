@@ -33,8 +33,7 @@ struct TiledMSAAGBufferPipelineState: RenderPipelineState {
         createRenderPipelineState(label: "Tiled Multisampled GBuffer") { descriptor in
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredGBufferVertex]
-            descriptor.fragmentFunction = Graphics.Shaders[.TiledMSAAGBufferFragment]
-//            descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredGBufferFragment]
+            descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredGBufferFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             Self.setGBufferPixelFormatsForTiledMultisampledPipeline(descriptor: descriptor)
             descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
@@ -75,7 +74,6 @@ struct TiledMSAATransparencyPipelineState: RenderPipelineState {
         createRenderPipelineState(label: "Tiled Transparent Render") { descriptor in
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
             descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredTransparencyVertex]
-//            descriptor.fragmentFunction = Graphics.Shaders[.TiledMSAATransparencyFragment]
             descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredTransparencyFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             Self.setGBufferPixelFormatsForTiledMultisampledPipeline(descriptor: descriptor)
@@ -115,16 +113,20 @@ struct TiledMSAAPointLightPipelineState: RenderPipelineState {
     }()
 }
 
-//struct TiledMSAAResolvePipelineState: RenderPipelineState {
-//    var renderPipelineState: MTLRenderPipelineState = {
-//        createTileRenderPipelineState(label: "Tiled Multisampled Resolve") { descriptor in
-//            descriptor.tileFunction = Graphics.Shaders[.TiledMultisampledResolve]
-//            descriptor.threadgroupSizeMatchesTileSize = true
-//            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
-//            descriptor.rasterSampleCount = 4  // TODO: Refactor to set this dynamically
-//        }
-//    }()
-//}
+struct TiledMSAAAverageResolvePipelineState: RenderPipelineState {
+    var renderPipelineState: MTLRenderPipelineState = {
+        createTileRenderPipelineState(label: "Tiled MSAA Resolve") { descriptor in
+            descriptor.tileFunction = Graphics.Shaders[.TiledMSAAAverageResolve]
+            descriptor.threadgroupSizeMatchesTileSize = true
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetAlbedo.index].pixelFormat = TiledDeferredGBufferTextures.albedoPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetNormal.index].pixelFormat = TiledDeferredGBufferTextures.normalPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetPosition.index].pixelFormat =
+                TiledDeferredGBufferTextures.positionPixelFormat
+            descriptor.rasterSampleCount = 4  // TODO: Refactor to set this dynamically
+        }
+    }()
+}
 
 struct TiledMSAACompositePipelineState: RenderPipelineState {
     var renderPipelineState: any MTLRenderPipelineState = {

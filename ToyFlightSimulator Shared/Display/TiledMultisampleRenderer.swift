@@ -9,17 +9,27 @@ import MetalKit
 
 class TiledMultisampleRenderer: Renderer {
     private static let sampleCount: Int = 4
+    
+    private static let tileWidth = 16
+    private static let tileHeight = 16
+    private static let imageBlockSampleLength = 32
+    
     private static var ShadowTextureSize: Int = 8_192
     
     private var gBufferTextures = TiledDeferredGBufferTextures()
     
-    private var shadowTexture: MTLTexture
+    private var shadowMultisampleTexture: MTLTexture
+    private var shadowResolveTexture: MTLTexture
     private var shadowRenderPassDescriptor: MTLRenderPassDescriptor
     
     private var particleComputePipelineState: MTLComputePipelineState
     
     private let tiledDeferredRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
+        
+        descriptor.tileWidth = TiledMultisampleRenderer.tileWidth
+        descriptor.tileHeight = TiledMultisampleRenderer.tileHeight
+        descriptor.imageblockSampleLength = TiledMultisampleRenderer.imageBlockSampleLength
         
         let renderTargets: [TFSRenderTargetIndices] = [
             TFSRenderTargetAlbedo,
@@ -35,7 +45,7 @@ class TiledMultisampleRenderer: Renderer {
         // To make empty space (no nodes/skybox) look black instead of Snow...
         descriptor.colorAttachments[TFSRenderTargetLighting.index].loadAction = .clear
         descriptor.colorAttachments[TFSRenderTargetLighting.index].clearColor = Preferences.ClearColor
-        descriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .storeAndMultisampleResolve
+        descriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .multisampleResolve
         return descriptor
     }()
     
@@ -55,15 +65,19 @@ class TiledMultisampleRenderer: Renderer {
         }
     }
     
-    static func makeShadowTexture(label: String) -> MTLTexture {
+    static func makeShadowTexture(label: String, sampleCount: Int) -> MTLTexture {
         let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
                                                                                width: Self.ShadowTextureSize,
                                                                                height: Self.ShadowTextureSize,
                                                                                mipmapped: false)
         shadowTextureDescriptor.resourceOptions = .storageModePrivate
         shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
-        shadowTextureDescriptor.textureType = .type2DMultisample
-        shadowTextureDescriptor.sampleCount = Self.sampleCount
+        
+        if sampleCount > 1 {
+            shadowTextureDescriptor.textureType = .type2DMultisample
+            shadowTextureDescriptor.sampleCount = sampleCount
+        }
+        
         guard let shadowTex = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor) else {
             fatalError("Failed to create shadow texture")
         }
@@ -71,24 +85,34 @@ class TiledMultisampleRenderer: Renderer {
         return shadowTex
     }
     
-    static func makeShadowRenderPassDescriptor(shadowTexture: MTLTexture) -> MTLRenderPassDescriptor {
+    static func makeShadowRenderPassDescriptor(shadowTexture: MTLTexture,
+                                               resolveTexture: MTLTexture) -> MTLRenderPassDescriptor {
         let mShadowRenderPassDescriptor = MTLRenderPassDescriptor()
         mShadowRenderPassDescriptor.depthAttachment.texture = shadowTexture
+        mShadowRenderPassDescriptor.depthAttachment.resolveTexture = resolveTexture
         mShadowRenderPassDescriptor.depthAttachment.loadAction = .clear
-        mShadowRenderPassDescriptor.depthAttachment.storeAction = .store
+        mShadowRenderPassDescriptor.depthAttachment.storeAction = .multisampleResolve
         return mShadowRenderPassDescriptor
     }
     
     init() {
-        shadowTexture = Self.makeShadowTexture(label: "Shadow Texture")
-        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowTexture: shadowTexture)
+        shadowMultisampleTexture = Self.makeShadowTexture(label: "Shadow Multisample Texture",
+                                                          sampleCount: Self.sampleCount)
+        shadowResolveTexture = Self.makeShadowTexture(label: "Shadow Resolve Texture",
+                                                      sampleCount: 1)
+        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowTexture: shadowMultisampleTexture,
+                                                                         resolveTexture: shadowResolveTexture)
         particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
         super.init(type: .TiledDeferredMSAA)
     }
     
     init(_ mtkView: MTKView) {
-        shadowTexture = Self.makeShadowTexture(label: "Shadow Texture")
-        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowTexture: shadowTexture)
+        shadowMultisampleTexture = Self.makeShadowTexture(label: "Shadow Multisample Texture",
+                                                          sampleCount: Self.sampleCount)
+        shadowResolveTexture = Self.makeShadowTexture(label: "Shadow Resolve Texture",
+                                                      sampleCount: 1)
+        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowTexture: shadowMultisampleTexture,
+                                                                         resolveTexture: shadowResolveTexture)
         particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
         super.init(mtkView, type: .TiledDeferredMSAA)
     }
@@ -122,7 +146,7 @@ class TiledMultisampleRenderer: Renderer {
         encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBuffer])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            renderEncoder.setFragmentTexture(shadowTexture, index: TFSTextureIndexShadow.index)
+            renderEncoder.setFragmentTexture(shadowResolveTexture, index: TFSTextureIndexShadow.index)
             DrawManager.Draw(with: renderEncoder)
         }
     }
@@ -170,6 +194,13 @@ class TiledMultisampleRenderer: Renderer {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ParticleMSAA])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             DrawManager.DrawParticles(with: renderEncoder)
+        }
+    }
+    
+    func encodeMSAAResolveStage(using renderEncoder: MTLRenderCommandEncoder) {
+        encodeRenderStage(using: renderEncoder, label: "MSAA Resolve Stage") {
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAAverageResolve])
+            renderEncoder.dispatchThreadsPerTile(MTLSize(width: 16, height: 16, depth: 1))
         }
     }
     
@@ -221,8 +252,11 @@ class TiledMultisampleRenderer: Renderer {
                     encodeLightingStage(using: renderEncoder)
                     encodeTransparencyStage(using: renderEncoder)
                     encodeParticleRenderStage(using: renderEncoder)
+                    
+                    encodeMSAAResolveStage(using: renderEncoder)
                 }
                 
+                compositeRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .store
                 compositeRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawable.texture
                 
                 encodeRenderPass(into: commandBuffer,

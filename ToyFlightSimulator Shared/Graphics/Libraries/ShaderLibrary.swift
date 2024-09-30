@@ -59,6 +59,7 @@ enum ShaderType {
     // MSAA:
     case TiledMSAAGBufferFragment
     case TiledMSAATransparencyFragment
+    case TiledMSAAAverageResolve
     case ParticlesFragmentMSAA
     
     case CompositeVertex
@@ -134,6 +135,7 @@ class ShaderLibrary: Library<ShaderType, MTLFunction> {
         // MSAA:
         _library.updateValue(Shader(functionName: "tiled_msaa_gbuffer_fragment"), forKey: .TiledMSAAGBufferFragment)
         _library.updateValue(Shader(functionName: "tiled_msaa_transparency_fragment"), forKey: .TiledMSAATransparencyFragment)
+        _library.updateValue(Shader(functionName: "tiled_msaa_average_resolve_kernel"), forKey: .TiledMSAAAverageResolve)
         
         _library.updateValue(Shader(functionName: "fragment_particle_msaa"), forKey: .ParticlesFragmentMSAA)
         

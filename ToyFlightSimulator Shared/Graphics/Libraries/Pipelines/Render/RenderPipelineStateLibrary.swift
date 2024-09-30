@@ -44,6 +44,8 @@ enum RenderPipelineStateType {
     case TiledMSAAPointLight
     case TiledMSAATransparency
     
+    case TiledMSAAAverageResolve
+    
     // For testing:
     case Icosahedron
     
@@ -93,6 +95,8 @@ class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipe
         _library.updateValue(TiledMSAADirectionalLightPipelineState(), forKey: .TiledMSAADirectionalLight)
         _library.updateValue(TiledMSAAPointLightPipelineState(), forKey: .TiledMSAAPointLight)
         _library.updateValue(TiledMSAATransparencyPipelineState(), forKey: .TiledMSAATransparency)
+        
+        _library.updateValue(TiledMSAAAverageResolvePipelineState(), forKey: .TiledMSAAAverageResolve)
         
         _library.updateValue(ParticleMSAARenderPipelineState(), forKey: .ParticleMSAA)
         
