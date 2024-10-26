@@ -11,6 +11,7 @@ enum SceneType {
     case Sandbox
     case Flightbox
     case FreeCamFlightbox
+    case BallPhysics
 }
 
 final class SceneManager {
@@ -44,6 +45,8 @@ final class SceneManager {
                 CurrentScene = FlightboxScene(name: "Flightbox", rendererType: rendererType)
             case .FreeCamFlightbox:
                 CurrentScene = FreeCamFlightboxScene(name: "FreeCamFlightbox", rendererType: rendererType)
+            case .BallPhysics:
+                CurrentScene = BallPhysicsScene(name: "BallPhysicsSandbox", rendererType: rendererType)
         }
     }
     

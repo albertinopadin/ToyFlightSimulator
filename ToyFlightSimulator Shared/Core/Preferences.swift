@@ -29,5 +29,6 @@ struct Preferences {
     
 //    public static var StartingSceneType: SceneType = .Sandbox
 //    public static var StartingSceneType: SceneType = .FreeCamFlightbox
-    public static var StartingSceneType: SceneType = .Flightbox
+//    public static var StartingSceneType: SceneType = .Flightbox
+    public static var StartingSceneType: SceneType = .BallPhysics
 }
