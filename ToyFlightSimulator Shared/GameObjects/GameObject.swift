@@ -7,7 +7,14 @@
 
 import MetalKit
 
-class GameObject: Node, Renderable, Hashable {
+class GameObject: Node, PhysicsEntity, Renderable, Hashable {
+    var isStatic: Bool = false
+    var mass: Float = 1.0
+    var velocity: float3 = [0, 0, 0]
+    var acceleration: float3 = [0, 0, 0]
+    var radius: Float = 1.0  // TODO: This assumes all game objects have a spherical collision shape
+    var restitution: Float = 1.0
+    
     static func == (lhs: GameObject, rhs: GameObject) -> Bool {
         return lhs.getID() == rhs.getID()
     }

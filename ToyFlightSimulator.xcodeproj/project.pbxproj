@@ -656,6 +656,14 @@
 		CEAB38572981081E0087F7CB /* Lighting.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2728E056BB0014A752 /* Lighting.metal */; };
 		CEAB38582981081E0087F7CB /* Base.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2928E056EB0014A752 /* Base.metal */; };
 		CEAB38592981081E0087F7CB /* Instanced.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF2B28E057590014A752 /* Instanced.metal */; };
+		CEB264FB2CD48504005BCA88 /* PhysicsEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB264FA2CD484F5005BCA88 /* PhysicsEntity.swift */; };
+		CEB264FC2CD48504005BCA88 /* PhysicsEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB264FA2CD484F5005BCA88 /* PhysicsEntity.swift */; };
+		CEB264FD2CD48504005BCA88 /* PhysicsEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB264FA2CD484F5005BCA88 /* PhysicsEntity.swift */; };
+		CEB264FE2CD48504005BCA88 /* PhysicsEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB264FA2CD484F5005BCA88 /* PhysicsEntity.swift */; };
+		CEB265002CD4866F005BCA88 /* PhysicsSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB264FF2CD48668005BCA88 /* PhysicsSolver.swift */; };
+		CEB265012CD4866F005BCA88 /* PhysicsSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB264FF2CD48668005BCA88 /* PhysicsSolver.swift */; };
+		CEB265022CD4866F005BCA88 /* PhysicsSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB264FF2CD48668005BCA88 /* PhysicsSolver.swift */; };
+		CEB265032CD4866F005BCA88 /* PhysicsSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB264FF2CD48668005BCA88 /* PhysicsSolver.swift */; };
 		CEB2DFD029D437990048D292 /* FreeCamFlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */; };
 		CEB2DFD129D437990048D292 /* FreeCamFlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */; };
 		CEB2DFD229D437990048D292 /* FreeCamFlightboxScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */; };
@@ -931,6 +939,8 @@
 		CEAB383F297CDE770087F7CB /* Shadow.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shadow.metal; sourceTree = "<group>"; };
 		CEAB3849297FB3720087F7CB /* SinglePassDeferredGBufferTextures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePassDeferredGBufferTextures.swift; sourceTree = "<group>"; };
 		CEAB384F2981024E0087F7CB /* Transform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transform.swift; sourceTree = "<group>"; };
+		CEB264FA2CD484F5005BCA88 /* PhysicsEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhysicsEntity.swift; sourceTree = "<group>"; };
+		CEB264FF2CD48668005BCA88 /* PhysicsSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhysicsSolver.swift; sourceTree = "<group>"; };
 		CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreeCamFlightboxScene.swift; sourceTree = "<group>"; };
 		CEB84E762A24A76400BEF778 /* InputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputManager.swift; sourceTree = "<group>"; };
 		CEB84E7A2A24AC3300BEF778 /* Controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controller.swift; sourceTree = "<group>"; };
@@ -1552,6 +1562,7 @@
 		CE96253F2CCCE23A00CEA5A2 /* Solver */ = {
 			isa = PBXGroup;
 			children = (
+				CEB264FF2CD48668005BCA88 /* PhysicsSolver.swift */,
 				CE9625452CCCE26200CEA5A2 /* VerletSolver.swift */,
 				CE9625402CCCE25800CEA5A2 /* EulerSolver.swift */,
 			);
@@ -1561,6 +1572,7 @@
 		CE96254A2CCCE29900CEA5A2 /* World */ = {
 			isa = PBXGroup;
 			children = (
+				CEB264FA2CD484F5005BCA88 /* PhysicsEntity.swift */,
 				CE96254B2CCCE2A500CEA5A2 /* PhysicsWorld.swift */,
 			);
 			path = World;
@@ -1876,6 +1888,7 @@
 				CE77321B2CAAA32F0025286F /* TiledMSAAResolve.metal in Sources */,
 				CE4530002A7CB4AC001945B9 /* FreeCamFlightboxScene.swift in Sources */,
 				CE06022E2A945E38001F8CC3 /* F35.swift in Sources */,
+				CEB264FD2CD48504005BCA88 /* PhysicsEntity.swift in Sources */,
 				CE452FAF2A7CB365001945B9 /* Node.swift in Sources */,
 				CE452FF72A7CB4A6001945B9 /* FuelTank.swift in Sources */,
 				CE452FFA2A7CB4A6001945B9 /* SubMeshGameObject.swift in Sources */,
@@ -1887,6 +1900,7 @@
 				CE4530082A7CB4B5001945B9 /* OITRenderer.swift in Sources */,
 				CE452FF62A7CB4A6001945B9 /* AircraftStore.swift in Sources */,
 				CE7732122CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */,
+				CEB265002CD4866F005BCA88 /* PhysicsSolver.swift in Sources */,
 				CE79B6332B92E605009F2E49 /* TiledDeferredRenderer.swift in Sources */,
 				CE452FED2A7CB4A6001945B9 /* SkyBox.swift in Sources */,
 				CE9625362CCCD33200CEA5A2 /* BallPhysicsScene.swift in Sources */,
@@ -2040,6 +2054,7 @@
 				CE3BFF2628E056720014A752 /* ShaderDefinitions.h in Sources */,
 				CE7F484628B770EB0082B197 /* MathUtils.swift in Sources */,
 				CE387B3E2BDA316900F51DC4 /* Fire.swift in Sources */,
+				CEB264FE2CD48504005BCA88 /* PhysicsEntity.swift in Sources */,
 				CE76931729DE75CB00BBC718 /* SingleSMMeshLibrary.swift in Sources */,
 				CE3BFFAF28E572EC0014A752 /* SkySphere.metal in Sources */,
 				CE7732162CAA9A240025286F /* Composition.metal in Sources */,
@@ -2081,6 +2096,7 @@
 				CE50C0F52C95564300202C45 /* ModelLibrary.swift in Sources */,
 				CE3BFF2128E055BB0014A752 /* Engine.swift in Sources */,
 				CE79B61B2B92E312009F2E49 /* VertexDescriptor.swift in Sources */,
+				CEB265022CD4866F005BCA88 /* PhysicsSolver.swift in Sources */,
 				CE79B6102B92E130009F2E49 /* SinglePassDeferredDepthStencils.swift in Sources */,
 				CE387B522BE230FE00F51DC4 /* ComputePipelineStateLibrary.swift in Sources */,
 				CE3BFF2828E056BB0014A752 /* Lighting.metal in Sources */,
@@ -2263,6 +2279,7 @@
 				CE3BFF7B28E2FC270014A752 /* SandboxScene.swift in Sources */,
 				CEC0C5952B4B2D3100863C38 /* Material.swift in Sources */,
 				CE2ED25E299223E900C81F47 /* Submesh.swift in Sources */,
+				CEB264FB2CD48504005BCA88 /* PhysicsEntity.swift in Sources */,
 				CE7732192CAAA32F0025286F /* TiledMSAAResolve.metal in Sources */,
 				CE3BFF5128E1B2230014A752 /* Library.swift in Sources */,
 				CE76931829DE75CB00BBC718 /* SingleSMMeshLibrary.swift in Sources */,
@@ -2303,6 +2320,7 @@
 				CE5D78292C917D0A00FB0E26 /* MDLMaterialSemantic+Extensions.swift in Sources */,
 				CE79B6212B92E361009F2E49 /* BasicVertexDescriptors.swift in Sources */,
 				CE886A4C298525D00013062D /* SinglePassDeferredLightingRenderer.swift in Sources */,
+				CEB265032CD4866F005BCA88 /* PhysicsSolver.swift in Sources */,
 				CE50C0F62C95564300202C45 /* ModelLibrary.swift in Sources */,
 				CE79B64B2B951000009F2E49 /* TiledDeferredDirectionalLight.metal in Sources */,
 				CE3BFF9328E451E50014A752 /* CameraManager.swift in Sources */,
@@ -2416,6 +2434,7 @@
 				CEAB38522981024E0087F7CB /* Transform.swift in Sources */,
 				CE96254C2CCCE2AE00CEA5A2 /* PhysicsWorld.swift in Sources */,
 				CE3BFF4D28E1B20D0014A752 /* GameTime.swift in Sources */,
+				CEB265012CD4866F005BCA88 /* PhysicsSolver.swift in Sources */,
 				CE79B6222B92E361009F2E49 /* BasicVertexDescriptors.swift in Sources */,
 				CE7F481728B758920082B197 /* AppDelegate.swift in Sources */,
 				CEAB384C297FB3720087F7CB /* SinglePassDeferredGBufferTextures.swift in Sources */,
@@ -2429,6 +2448,7 @@
 				CEC0C5962B4B2D3100863C38 /* Material.swift in Sources */,
 				CE79B60D2B92E117009F2E49 /* BasicDepthStencils.swift in Sources */,
 				CEB2DFD229D437990048D292 /* FreeCamFlightboxScene.swift in Sources */,
+				CEB264FC2CD48504005BCA88 /* PhysicsEntity.swift in Sources */,
 				CE79B6122B92E130009F2E49 /* SinglePassDeferredDepthStencils.swift in Sources */,
 				CE085D4F2A7735AE00AFD68B /* MacMetalViewWrapper.swift in Sources */,
 				CE3BFF5628E1B29C0014A752 /* ShaderLibrary.swift in Sources */,

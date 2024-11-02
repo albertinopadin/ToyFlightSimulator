@@ -37,7 +37,7 @@ let colors: [NSColor] = [
 class BallPhysicsScene: GameScene {
     static let ballCount: Int = 10
     let debugCamera = DebugCamera()
-    let sun = Sun()
+    var physicsWorld: PhysicsWorld!
     
     let spheres: [Sphere] = {
         var sphrs = [Sphere]()
@@ -59,6 +59,9 @@ class BallPhysicsScene: GameScene {
             }
             
             let sp = Sphere()
+            sp.radius = 1.0
+            sp.mass = 1.0
+            sp.restitution = 0.9
             sp.setPosition(pos)
             sp.setColor(color)
             sphrs.append(sp)
@@ -69,6 +72,7 @@ class BallPhysicsScene: GameScene {
     private func addGround() {
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
         let ground = Quad()
+        ground.isStatic = true
         ground.setColor(groundColor)
         ground.rotateZ(Float(270).toRadians)
         ground.setScale(1000)
@@ -76,6 +80,8 @@ class BallPhysicsScene: GameScene {
     }
     
     private func addSun() {
+        let sun = Sun()
+        sun.isStatic = true
         sun.setPosition(0, 100, 4)
         sun.setLightBrightness(1.0)
 //        sun.setLightBrightness(0.2)
@@ -93,6 +99,8 @@ class BallPhysicsScene: GameScene {
         debugCamera.setPosition([0, 5, 15])
         addCamera(debugCamera)
         
+        physicsWorld = PhysicsWorld(entities: spheres, updateType: .NaiveEuler)
+        
         for sphere in spheres {
             self.addChild(sphere)
         }
@@ -100,5 +108,7 @@ class BallPhysicsScene: GameScene {
     
     override func doUpdate() {
         // TODO: resolve physics (collisions, border) here
+        physicsWorld.update(deltaTime: 0.008)
+        print("[BallPhysicsScene] update")
     }
 }
