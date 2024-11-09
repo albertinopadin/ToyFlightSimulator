@@ -35,7 +35,7 @@ let colors: [NSColor] = [
 ]
 
 class BallPhysicsScene: GameScene {
-    static let ballCount: Int = 10
+    static let ballCount: Int = 25
     let debugCamera = DebugCamera()
     var physicsWorld: PhysicsWorld!
     
@@ -84,11 +84,9 @@ class BallPhysicsScene: GameScene {
         sun.isStatic = true
         sun.setPosition(0, 100, 4)
         sun.setLightBrightness(1.0)
-//        sun.setLightBrightness(0.2)
         sun.setLightColor(1, 1, 1)
         sun.setLightAmbientIntensity(0.04)
-//        sun.setLightDiffuseIntensity(0.15)
-        sun.setLightDiffuseIntensity(0)
+        sun.setLightDiffuseIntensity(0.15)
         addLight(sun)
     }
     
@@ -99,7 +97,8 @@ class BallPhysicsScene: GameScene {
         debugCamera.setPosition([0, 5, 15])
         addCamera(debugCamera)
         
-        physicsWorld = PhysicsWorld(entities: spheres, updateType: .NaiveEuler)
+//        physicsWorld = PhysicsWorld(entities: spheres, updateType: .NaiveEuler)
+        physicsWorld = PhysicsWorld(entities: spheres, updateType: .HeckerVerlet)
         
         for sphere in spheres {
             self.addChild(sphere)
@@ -107,8 +106,8 @@ class BallPhysicsScene: GameScene {
     }
     
     override func doUpdate() {
-        // TODO: resolve physics (collisions, border) here
-        physicsWorld.update(deltaTime: 0.008)
-        print("[BallPhysicsScene] update")
+        if GameTime.DeltaTime <= 1.0 {
+            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+        }
     }
 }

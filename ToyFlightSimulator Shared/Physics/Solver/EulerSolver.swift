@@ -9,6 +9,7 @@ final class EulerSolver: PhysicsSolver {
     public static func step(deltaTime: Float, gravity: float3, entities: inout [any PhysicsEntity]) {
         applyGravity(deltaTime: deltaTime, gravity: gravity, entities: &entities)
         resolveCollisions(deltaTime: deltaTime, entities: &entities)
+        checkEntitiesHitFloor(entities: &entities)
         moveObjects(deltaTime: deltaTime, entities: &entities)
     }
     
@@ -57,6 +58,20 @@ final class EulerSolver: PhysicsSolver {
                                          entities[i].getPosition().z + entities[i].velocity.z * deltaTime]
                 
                 entities[i].setPosition(entityPos)
+            }
+        }
+    }
+    
+    // TODO: Remove this once floor is properly modeled in physics
+    static func checkEntitiesHitFloor(entities: inout [any PhysicsEntity]) {
+        for i in 0..<entities.count {
+            let entityPos = entities[i].getPosition()
+            let entityRadius = entities[i].radius
+            
+            if ((entityPos.y - entityRadius) <= 0 && entities[i].velocity.y <= 0) {
+                entities[i].acceleration = [entities[i].acceleration.x, 0, entities[i].acceleration.z]
+                entities[i].velocity = [entities[i].velocity.x, -entities[i].velocity.y, entities[i].velocity.z]
+                entities[i].setPosition([entityPos.x, entityRadius, entityPos.z])
             }
         }
     }
