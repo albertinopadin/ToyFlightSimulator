@@ -28,7 +28,7 @@ final class VerletSolver: PhysicsSolver {
             entities[i].acceleration = newAcc
         }
         
-        checkEntitiesHitFloor(entities: &entities)
+//        checkEntitiesHitFloor(entities: &entities)
     }
     
     static func zeroAcceleration(entities: inout [any PhysicsEntity]) {
@@ -42,16 +42,18 @@ final class VerletSolver: PhysicsSolver {
     }
     
     // TODO: Remove this once floor is properly modeled in physics
-    static func checkEntitiesHitFloor(entities: inout [any PhysicsEntity]) {
-        for i in 0..<entities.count {
-            let entityPos = entities[i].getPosition()
-            let entityRadius = entities[i].radius
-            
-            if ((entityPos.y - entityRadius) <= 0 && entities[i].velocity.y <= 0) {
-                entities[i].acceleration = [entities[i].acceleration.x, 0, entities[i].acceleration.z]
-                entities[i].velocity = [entities[i].velocity.x, -entities[i].velocity.y, entities[i].velocity.z]
-                entities[i].setPosition([entityPos.x, entityRadius, entityPos.z])
-            }
-        }
-    }
+//    static func checkEntitiesHitFloor(entities: inout [any PhysicsEntity]) {
+//        for i in 0..<entities.count {
+//            let entityPos = entities[i].getPosition()
+//            let entityRadius = entities[i].radius
+//            
+//            if ((entityPos.y - entityRadius) <= 0 && entities[i].velocity.y < 0) {
+//                // TODO: In future check restitution with whatever is the floor:
+//                let yVelo = -entities[i].velocity.y * entities[i].restitution
+//                entities[i].acceleration = [entities[i].acceleration.x, 0, entities[i].acceleration.z]
+//                entities[i].velocity = [entities[i].velocity.x, yVelo, entities[i].velocity.z]
+//                entities[i].setPosition([entityPos.x, entityRadius, entityPos.z])
+//            }
+//        }
+//    }
 }

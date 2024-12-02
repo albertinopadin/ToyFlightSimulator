@@ -34,17 +34,27 @@ let colors: [NSColor] = [
     .yellow
 ]
 
+class CollidableSphere: Sphere, SpherePhysicsEntity {
+    var collisionRadius: Float = 1.0
+}
+
+class CollidablePlane: Quad, PlanePhysicsEntity {
+    var collisionNormal: float3 = [0, 1, 0]
+//    var collisionShape: CollisionShape = .Plane
+}
+
 class BallPhysicsScene: GameScene {
-    static let ballCount: Int = 25
+    static let ballCount: Int = 27
+    var ground: CollidablePlane!
     let debugCamera = DebugCamera()
     var physicsWorld: PhysicsWorld!
     
-    let spheres: [Sphere] = {
-        var sphrs = [Sphere]()
+    let spheres: [CollidableSphere] = {
+        var sphrs = [CollidableSphere]()
         for i in 0..<BallPhysicsScene.ballCount {
-            let pos = float3(x: .random(in: -10...10),
+            let pos = float3(x: .random(in: -7...7),
                              y: .random(in: 1...10),
-                             z: .random(in: -10...0))
+                             z: .random(in: -7...0))
             
             let color: float4
             let randColor = colors.randomElement()!.cgColor
@@ -58,8 +68,12 @@ class BallPhysicsScene: GameScene {
                 color = GRABBER_BLUE_COLOR
             }
             
-            let sp = Sphere()
-            sp.radius = 1.0
+            let sphereRadiusScale: Float = 0.4
+            let sp = CollidableSphere()
+            sp.collisionRadius = sphereRadiusScale
+            sp.collisionShape = .Sphere
+            sp.isStatic = false
+            sp.setScale(sphereRadiusScale)
             sp.mass = 1.0
             sp.restitution = 0.9
             sp.setPosition(pos)
@@ -69,9 +83,25 @@ class BallPhysicsScene: GameScene {
         return sphrs
     }()
     
+//    let spheres: [CollidableSphere] = [{
+//        let sphereRadiusScale: Float = 0.4
+//        let sp = CollidableSphere()
+//        sp.collisionRadius = sphereRadiusScale
+//        sp.collisionShape = .Sphere
+//        sp.setScale(sphereRadiusScale)
+//        sp.mass = 1.0
+//        sp.restitution = 0.9
+//        sp.setPosition([0, 10, 0])
+//        sp.setColor(GRABBER_BLUE_COLOR)
+//        return sp
+//    }()]
+    
     private func addGround() {
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        let ground = Quad()
+        ground = CollidablePlane()
+        ground.collisionNormal = [0, 1, 0]
+        ground.collisionShape = .Plane
+        ground.restitution = 1.0
         ground.isStatic = true
         ground.setColor(groundColor)
         ground.rotateZ(Float(270).toRadians)
@@ -97,17 +127,35 @@ class BallPhysicsScene: GameScene {
         debugCamera.setPosition([0, 5, 15])
         addCamera(debugCamera)
         
-//        physicsWorld = PhysicsWorld(entities: spheres, updateType: .NaiveEuler)
-        physicsWorld = PhysicsWorld(entities: spheres, updateType: .HeckerVerlet)
+        let entities: [PhysicsEntity] = spheres + [ground]
+        physicsWorld = PhysicsWorld(entities: entities, updateType: .NaiveEuler)
+//        physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
         
         for sphere in spheres {
             self.addChild(sphere)
         }
     }
     
+    var counter: UInt64 = 0
+    var accum: UInt64 = 0
+    
     override func doUpdate() {
         if GameTime.DeltaTime <= 1.0 {
-            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+//            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+            
+            let time = timeit {
+                physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+            }
+            
+            accum += time
+            
+            if counter % 120 == 0 {
+                let avg = Double(accum) / Double(120) * 1e-9
+                accum = 0
+                print("[BallPhysiscsScene doUpdate] time: \(avg)")
+            }
+            
+            counter += 1
         }
     }
 }

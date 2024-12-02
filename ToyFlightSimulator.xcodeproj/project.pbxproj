@@ -1057,6 +1057,7 @@
 		CE2ED260299394C900C81F47 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				CE7F484D28B771550082B197 /* TimeIt.swift */,
 				CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */,
 				CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */,
 				CED798472C905303003B6559 /* MTKMesh+Extensions.swift */,
@@ -1402,7 +1403,6 @@
 				CE3BFF2D28E057CC0014A752 /* Math */,
 				CE7F48BC28BB937F0082B197 /* Display */,
 				CE7F483D28B770B00082B197 /* Colors.swift */,
-				CE7F484D28B771550082B197 /* TimeIt.swift */,
 			);
 			path = "ToyFlightSimulator Shared";
 			sourceTree = "<group>";

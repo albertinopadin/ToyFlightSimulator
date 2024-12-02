@@ -27,23 +27,27 @@ final class HeckerCollisionResponse {
                     let entityB = entities[b]
                     
                     if PhysicsWorld.collided(entityA: entityA, entityB: entityB) {
-                        let collisionVector = PhysicsWorld.getCollisionVector(entityA, entityB)
+                        let collisionData = PhysicsWorld.getCollisionData(entityA, entityB)
                         
-                        let penetrationMagnitude = entityA.radius + entityB.radius - collisionVector.magnitude
-                        let collisionNormal = collisionVector.normalize()
-                        entities[a].setPosition(entities[a].getPosition() + collisionNormal * (penetrationMagnitude / 2))
-                        entities[b].setPosition(entities[b].getPosition() - collisionNormal * (penetrationMagnitude / 2))
-                        
-                        let relativeVelo = entityA.velocity - entityB.velocity
-                        let e = min(entityA.restitution, entityB.restitution)
-                        var j = -(1 + e) * dot(relativeVelo, collisionNormal)
-                        j /= ((1.0 / entityA.mass) + (1.0 / entityB.mass))
-                        
-                        let entityADeltaVelo = j / entityA.mass * collisionNormal
-                        let entityBDeltaVelo = j / entityB.mass * collisionNormal
-                        
-                        entities[a].velocity += entityADeltaVelo.magnitude > 1.0 ? entityADeltaVelo : .zero
-                        entities[b].velocity -= entityBDeltaVelo.magnitude > 1.0 ? entityBDeltaVelo : .zero
+                        // TODO: Remove these casts; currently only colliding on spheres
+                        if let entityA = entityA as? SpherePhysicsEntity, let entityB = entityB as? SpherePhysicsEntity {
+                            let penetrationMagnitude = entityA.collisionRadius + entityB.collisionRadius - collisionData.collisionVector.magnitude
+                            
+                            let collisionNormal = collisionData.collisionVector.normalize()
+                            entities[a].setPosition(entities[a].getPosition() + collisionNormal * (penetrationMagnitude / 2))
+                            entities[b].setPosition(entities[b].getPosition() - collisionNormal * (penetrationMagnitude / 2))
+                            
+                            let relativeVelo = entityA.velocity - entityB.velocity
+                            let e = min(entityA.restitution, entityB.restitution)
+                            var j = -(1 + e) * dot(relativeVelo, collisionNormal)
+                            j /= ((1.0 / entityA.mass) + (1.0 / entityB.mass))
+                            
+                            let entityADeltaVelo = j / entityA.mass * collisionNormal
+                            let entityBDeltaVelo = j / entityB.mass * collisionNormal
+                            
+                            entities[a].velocity += entityADeltaVelo.magnitude > 1.0 ? entityADeltaVelo : .zero
+                            entities[b].velocity -= entityBDeltaVelo.magnitude > 1.0 ? entityBDeltaVelo : .zero
+                        }
                     }
                 }
             }
