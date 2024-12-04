@@ -23,19 +23,22 @@ final class HeckerCollisionResponse {
         for a in 0..<entities.count {
             for b in 0..<entities.count {
                 if a != b {
-                    let entityA = entities[a]
-                    let entityB = entities[b]
+                    var entityA = entities[a]
+                    var entityB = entities[b]
                     
-                    if PhysicsWorld.collided(entityA: entityA, entityB: entityB) {
-                        let collisionData = PhysicsWorld.getCollisionData(entityA, entityB)
+                    let alreadyCollided = entityA.collidedWith[entityB.id] ?? false
+                    
+                    if !alreadyCollided && PhysicsWorld.collided(entityA: entityA, entityB: entityB) {
+                        entityA.collidedWith[entityB.id] = true
+                        entityB.collidedWith[entityA.id] = true
                         
-                        // TODO: Remove these casts; currently only colliding on spheres
-                        if let entityA = entityA as? SpherePhysicsEntity, let entityB = entityB as? SpherePhysicsEntity {
-                            let penetrationMagnitude = entityA.collisionRadius + entityB.collisionRadius - collisionData.collisionVector.magnitude
-                            
-                            let collisionNormal = collisionData.collisionVector.normalize()
-                            entities[a].setPosition(entities[a].getPosition() + collisionNormal * (penetrationMagnitude / 2))
-                            entities[b].setPosition(entities[b].getPosition() - collisionNormal * (penetrationMagnitude / 2))
+                        let collisionData = PhysicsWorld.getCollisionData(entityA, entityB)
+                        let penetrationDepth = collisionData.penetrationDepth
+                        let collisionNormal = collisionData.collisionVector.normalize()
+                        
+                        if !entityA.isStatic && !entityB.isStatic {
+                            entities[a].setPosition(entities[a].getPosition() + collisionNormal * (penetrationDepth / 2))
+                            entities[b].setPosition(entities[b].getPosition() - collisionNormal * (penetrationDepth / 2))
                             
                             let relativeVelo = entityA.velocity - entityB.velocity
                             let e = min(entityA.restitution, entityB.restitution)
@@ -47,6 +50,36 @@ final class HeckerCollisionResponse {
                             
                             entities[a].velocity += entityADeltaVelo.magnitude > 1.0 ? entityADeltaVelo : .zero
                             entities[b].velocity -= entityBDeltaVelo.magnitude > 1.0 ? entityBDeltaVelo : .zero
+                            
+                            continue
+                        }
+                        
+                        if !entityA.isStatic && entityB.isStatic {
+                            entities[a].setPosition(entities[a].getPosition() + collisionNormal * (penetrationDepth * 2))
+                            
+                            let relativeVelo = entityA.velocity
+                            let e = min(entityA.restitution, entityB.restitution)
+                            var j = -(1 + e) * dot(relativeVelo, collisionNormal)
+                            j /= 1.0 / entityA.mass
+                            
+                            let entityADeltaVelo = j / entityA.mass * collisionNormal
+                            entities[a].velocity += entityADeltaVelo.magnitude > 1.0 ? entityADeltaVelo : .zero
+                            
+                            continue
+                        }
+                        
+                        if entityA.isStatic && !entityB.isStatic {
+                            entities[b].setPosition(entities[b].getPosition() + collisionNormal * (penetrationDepth * 2))
+                            
+                            let relativeVelo = entityB.velocity
+                            let e = min(entityA.restitution, entityB.restitution)
+                            var j = -(1 + e) * dot(relativeVelo, collisionNormal)
+                            j /= 1.0 / entityB.mass
+                            
+                            let entityBDeltaVelo = j / entityB.mass * collisionNormal
+                            entities[b].velocity += entityBDeltaVelo.magnitude > 1.0 ? entityBDeltaVelo : .zero
+                            
+                            continue
                         }
                     }
                 }
