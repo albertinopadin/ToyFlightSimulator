@@ -128,8 +128,8 @@ class BallPhysicsScene: GameScene {
         addCamera(debugCamera)
         
         let entities: [PhysicsEntity] = spheres + [ground]
-//        physicsWorld = PhysicsWorld(entities: entities, updateType: .NaiveEuler)
-        physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
+        physicsWorld = PhysicsWorld(entities: entities, updateType: .NaiveEuler)
+//        physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
         
         for sphere in spheres {
             self.addChild(sphere)

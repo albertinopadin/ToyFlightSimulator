@@ -4,6 +4,12 @@
 
 ## Devlog
 
+12/4/24 - Initial physics implementation (both naive Euler and Verlet with collision response).
+
+[Toy Flight Sim 12-4-24 Ball Physics Scene](https://www.youtube.com/watch?v=r0PpmTpkbZw)
+
+---
+
 7/21/24 - First attempt at afterburner using particle effects.
 
 [Toy Flight Sim 7-21-24 Afterburner Particle Effect (YouTube demo)](https://www.youtube.com/watch?v=6hNesEF7Tbk)
