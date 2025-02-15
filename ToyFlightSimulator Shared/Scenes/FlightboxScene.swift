@@ -5,6 +5,10 @@
 //  Created by Albertino Padin on 10/4/22.
 //
 
+class CollidableF22: F22, SpherePhysicsEntity {
+    var collisionRadius: Float = 1.0
+}
+
 class FlightboxScene: GameScene {
     var attachedCamera = AttachedCamera(fieldOfView: 75.0,
                                         near: 0.01,
@@ -16,13 +20,22 @@ class FlightboxScene: GameScene {
     var pl2 = PointLightObject()
     let afterburner = Afterburner(name: "Afterburner")
     
+    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
+    var entities: [PhysicsEntity] = []
+    
     private func addGround() {
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        let ground = Quad()
+        let ground = CollidablePlane()
+        ground.collisionNormal = [0, 1, 0]
+        ground.collisionShape = .Plane
+        ground.restitution = 1.0
+        ground.isStatic = true
         ground.setColor(groundColor)
         ground.rotateZ(Float(270).toRadians)
         ground.setScale(1000)
         addChild(ground)
+        
+        entities.append(ground)
     }
     
     override func buildScene() {
@@ -32,7 +45,8 @@ class FlightboxScene: GameScene {
 //        let jet = F18()
 //        let jet = F18Usdz()
 //        let jet = F35(scale: 0.8)
-        let jet = F22(scale: 0.25)
+//        let jet = F22(scale: 0.25)
+        let jet = CollidableF22(scale: 0.25)
 //        let jet = Temple(scale: 0.02)
         
         addCamera(attachedCamera)
@@ -104,7 +118,7 @@ class FlightboxScene: GameScene {
             addLight(pl2)
         }
         
-        let f16 = F16(shouldUpdate: false)
+        let f16 = F16(shouldUpdateOnPlayerInput: false)
         f16.setPosition(0, container.getPositionY() + 10, container.getPositionZ() - 15)
         f16.rotateY(Float(-90).toRadians)
         f16.setScale(4.0)
@@ -221,6 +235,9 @@ class FlightboxScene: GameScene {
         
         TextureLoader.PrintCacheInfo()
         print("Total Submesh count: \(DrawManager.SubmeshCount)")
+        
+        entities.append(jet)
+        physicsWorld.setEntities(entities)
     }
     
     override func doUpdate() {
@@ -242,6 +259,10 @@ class FlightboxScene: GameScene {
 //            print("Mouse position in window: \(Mouse.GetMouseWindowPosition())")
 //            print("Mouse position in viewport: \(Mouse.GetMouseViewportPosition())")
 //        }
+        
+        if GameTime.DeltaTime < 1.0 {
+            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+        }
     }
 }
 

@@ -34,15 +34,6 @@ let colors: [NSColor] = [
     .yellow
 ]
 
-class CollidableSphere: Sphere, SpherePhysicsEntity {
-    var collisionRadius: Float = 1.0
-}
-
-class CollidablePlane: Quad, PlanePhysicsEntity {
-    var collisionNormal: float3 = [0, 1, 0]
-//    var collisionShape: CollisionShape = .Plane
-}
-
 class BallPhysicsScene: GameScene {
     static let ballCount: Int = 27
     var ground: CollidablePlane!
@@ -128,8 +119,8 @@ class BallPhysicsScene: GameScene {
         addCamera(debugCamera)
         
         let entities: [PhysicsEntity] = spheres + [ground]
-        physicsWorld = PhysicsWorld(entities: entities, updateType: .NaiveEuler)
-//        physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
+//        physicsWorld = PhysicsWorld(entities: entities, updateType: .NaiveEuler)
+        physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
         
         for sphere in spheres {
             self.addChild(sphere)

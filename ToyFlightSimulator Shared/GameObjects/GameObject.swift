@@ -11,6 +11,7 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
     var collidedWith = [String : Bool]()
     var collisionShape: CollisionShape = .Sphere
     var isStatic: Bool = false
+    var shouldApplyGravity: Bool = true
     var mass: Float = 1.0
     var velocity: float3 = [0, 0, 0]
     var acceleration: float3 = [0, 0, 0]

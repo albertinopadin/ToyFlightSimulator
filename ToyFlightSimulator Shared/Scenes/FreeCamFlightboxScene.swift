@@ -7,11 +7,31 @@
 
 class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
-    var jet = F22(shouldUpdate: false)
+//    var jet = F22(shouldUpdateOnPlayerInput: false)
+    var jet = CollidableF22(shouldUpdateOnPlayerInput: false)
     var sun = Sun(modelType: .Sphere)
     var ground = Quad()
     var sidewinderMissile = Sidewinder()
     var aim120 = AIM120()
+    
+//    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
+    let physicsWorld = PhysicsWorld(updateType: .HeckerVerlet)
+    var entities: [PhysicsEntity] = []
+    
+    private func addGround() {
+        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
+        let ground = CollidablePlane()
+        ground.collisionNormal = [0, 1, 0]
+        ground.collisionShape = .Plane
+        ground.restitution = 1.0
+        ground.isStatic = true
+        ground.setColor(groundColor)
+        ground.rotateZ(Float(270).toRadians)
+        ground.setScale(1000)
+        addChild(ground)
+        
+        entities.append(ground)
+    }
     
     override func buildScene() {
         sun.setPosition(1, 25, 5)
@@ -28,13 +48,10 @@ class FreeCamFlightboxScene: GameScene {
             addChild(sky)
         }
         
-        ground.setColor([0.3, 0.7, 0.1, 1.0])
-        ground.rotateZ(Float(270).toRadians)
-        ground.setScale(100)
-        addChild(ground)
+        addGround()
         
 //        camera.setPosition(4, 12, 20)
-        camera.setPosition(12, 14, 5)
+        camera.setPosition(24, 6, 5)
 //        camera.setRotationX(Float(15).toRadians)
         camera.setRotationY(Float(75).toRadians)
         addCamera(camera)
@@ -42,7 +59,11 @@ class FreeCamFlightboxScene: GameScene {
 //        f18.setScale(0.25)  // TODO: setScale doesn't work
         jet.setPosition(0, 10, 0)
         
+        jet.collisionRadius = 2.5
+        
         jet.setScale(0.125)
+        
+        jet.restitution = 0.8
         addChild(jet)
         
         sidewinderMissile.setScale(4.0)
@@ -59,12 +80,27 @@ class FreeCamFlightboxScene: GameScene {
         addChild(aim120)
         
         TextureLoader.PrintCacheInfo()
+        
+        entities.append(jet)
+        physicsWorld.setEntities(entities)
     }
+    
+    private var shouldUpdatePhysics = false
     
     override func doUpdate() {
         super.doUpdate()
         
         sidewinderMissile.rotateY(Float(GameTime.DeltaTime))
         aim120.rotateY(Float(GameTime.DeltaTime))
+        
+        if GameTime.DeltaTime < 1.0 {
+            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+        }
+        
+//        if GameTime.DeltaTime < 1.0 && shouldUpdatePhysics {
+//            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime) * 2.0)
+//        }
+//        
+//        shouldUpdatePhysics.toggle()
     }
 }

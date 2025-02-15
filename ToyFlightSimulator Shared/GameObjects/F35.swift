@@ -12,8 +12,11 @@ class F35: Aircraft {
         [0, 10, 24]
     }
     
-    init(scale: Float = 1.0, shouldUpdate: Bool = true) {
-        super.init(name: Self.NAME, modelType: .Sketchfab_F35, scale: scale, shouldUpdate: shouldUpdate)
+    init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
+        super.init(name: Self.NAME,
+                   modelType: .Sketchfab_F35,
+                   scale: scale,
+                   shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
 //        rotateY(Float(180).toRadians)
         rotateX(Float(90).toRadians)
         rotateY(Float(180).toRadians)

@@ -20,7 +20,11 @@ final class VerletSolver: PhysicsSolver {
                 
                 let veloDtHalf = velo + 0.5 * acc * deltaTime
                 
-                let newAcc = acc + Self.applyForces(gravity: gravity)
+                var newAcc = acc
+                
+                if entities[i].shouldApplyGravity {
+                    newAcc += Self.applyForces(gravity: gravity)
+                }
                 
                 let nVelo = veloDtHalf + 0.5 * newAcc * deltaTime
                 

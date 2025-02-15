@@ -18,12 +18,24 @@ struct CollisionData {
 final class PhysicsWorld {
     public static let gravity: float3 = [0, -9.8, 0]
     
-    var entities: [PhysicsEntity]
-    var updateType: PhysicsUpdateType
+    private var entities: [PhysicsEntity]
+    private var updateType: PhysicsUpdateType
     
-    init(entities: [PhysicsEntity], updateType: PhysicsUpdateType = .NaiveEuler) {
+    init(entities: [PhysicsEntity] = [], updateType: PhysicsUpdateType = .NaiveEuler) {
         self.entities = entities
         self.updateType = updateType
+    }
+    
+    public func setEntities(_ entities: [PhysicsEntity]) {
+        self.entities = entities
+    }
+    
+    public func addEntity(_ entity: PhysicsEntity) {
+        entities.append(entity)
+    }
+    
+    public func addEntities(_ entities: [PhysicsEntity]) {
+        self.entities += entities
     }
     
     public func update(deltaTime: Float) {

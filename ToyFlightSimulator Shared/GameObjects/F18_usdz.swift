@@ -261,8 +261,8 @@ class F18Usdz: Aircraft {
     var landingGearBeganRetracting: Bool = false
     var landingGearFinishedRetracting: Bool = false
     
-    init(scale: Float = 1.0, shouldUpdate: Bool = true) {
-        super.init(name: "F-18", modelType: .RC_F18, scale: scale, shouldUpdate: shouldUpdate)
+    init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
+        super.init(name: "F-18", modelType: .RC_F18, scale: scale, shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
         setupControlSurfaces()
     }
     
@@ -336,7 +336,7 @@ class F18Usdz: Aircraft {
     }
     
     override func doUpdate() {
-        if shouldUpdate {
+        if shouldUpdateOnPlayerInput {
             super.doUpdate()
         }
         

@@ -42,42 +42,48 @@ final class EulerSolver: PhysicsSolver {
                         let restitution = min(ei.restitution, ej.restitution)
                         let unormCollisionVector = collisionData.collisionVector * collisionData.penetrationDepth
                         
-                        if !entities[i].isStatic && !entities[j].isStatic {
-                            let newPosI = entities[i].getPosition() + unormCollisionVector
-                            entities[i].setPosition(newPosI)
-                            let eiVelo = (ei.velocity + collisionVector) * restitution
-                            entities[i].velocity = eiVelo
+                        // Hack to prevent infinite bouncing:
+                        if abs(collisionData.penetrationDepth) < 0.01 {
+                            entities[i].velocity = .zero
+                            entities[j].velocity = .zero
+                        } else {
+                            if !entities[i].isStatic && !entities[j].isStatic {
+                                let newPosI = entities[i].getPosition() + unormCollisionVector
+                                entities[i].setPosition(newPosI)
+                                let eiVelo = (ei.velocity + collisionVector) * restitution
+                                entities[i].velocity = eiVelo
+                                
+                                let newPosJ = entities[j].getPosition() - unormCollisionVector
+                                entities[j].setPosition(newPosJ)
+                                let ejVelo = (ej.velocity - collisionVector) * restitution
+                                entities[j].velocity = ejVelo
+                                
+                                continue
+                            }
                             
-                            let newPosJ = entities[j].getPosition() - unormCollisionVector
-                            entities[j].setPosition(newPosJ)
-                            let ejVelo = (ej.velocity - collisionVector) * restitution
-                            entities[j].velocity = ejVelo
+                            if !entities[i].isStatic && entities[j].isStatic {
+                                let newPos = entities[i].getPosition() + unormCollisionVector * 2
+                                entities[i].setPosition(newPos)
+                                let vX = collisionVector.x != 0 ? ei.velocity.x * -collisionVector.x * restitution : ei.velocity.x
+                                let vY = collisionVector.y != 0 ? ei.velocity.y * -collisionVector.y * restitution : ei.velocity.y
+                                let vZ = collisionVector.z != 0 ? ei.velocity.z * -collisionVector.z * restitution : ei.velocity.z
+                                let eiVelo: float3 = [vX, vY, vZ]
+                                entities[i].velocity = eiVelo
+                                
+                                continue
+                            }
                             
-                            continue
-                        }
-                        
-                        if !entities[i].isStatic && entities[j].isStatic {
-                            let newPos = entities[i].getPosition() + unormCollisionVector * 2
-                            entities[i].setPosition(newPos)
-                            let vX = collisionVector.x != 0 ? ei.velocity.x * -collisionVector.x * restitution : ei.velocity.x
-                            let vY = collisionVector.y != 0 ? ei.velocity.y * -collisionVector.y * restitution : ei.velocity.y
-                            let vZ = collisionVector.z != 0 ? ei.velocity.z * -collisionVector.z * restitution : ei.velocity.z
-                            let eiVelo: float3 = [vX, vY, vZ]
-                            entities[i].velocity = eiVelo
-                            
-                            continue
-                        }
-                        
-                        if entities[i].isStatic && !entities[j].isStatic {
-                            let newPos = entities[j].getPosition() - unormCollisionVector * 2
-                            entities[j].setPosition(newPos)
-                            let vX = collisionVector.x != 0 ? ej.velocity.x * -collisionVector.x * restitution : ej.velocity.x
-                            let vY = collisionVector.y != 0 ? ej.velocity.y * -collisionVector.y * restitution : ej.velocity.y
-                            let vZ = collisionVector.z != 0 ? ej.velocity.z * -collisionVector.z * restitution : ej.velocity.z
-                            let ejVelo: float3 = [vX, vY, vZ]
-                            entities[j].velocity = ejVelo
-                            
-                            continue
+                            if entities[i].isStatic && !entities[j].isStatic {
+                                let newPos = entities[j].getPosition() - unormCollisionVector * 2
+                                entities[j].setPosition(newPos)
+                                let vX = collisionVector.x != 0 ? ej.velocity.x * -collisionVector.x * restitution : ej.velocity.x
+                                let vY = collisionVector.y != 0 ? ej.velocity.y * -collisionVector.y * restitution : ej.velocity.y
+                                let vZ = collisionVector.z != 0 ? ej.velocity.z * -collisionVector.z * restitution : ej.velocity.z
+                                let ejVelo: float3 = [vX, vY, vZ]
+                                entities[j].velocity = ejVelo
+                                
+                                continue
+                            }
                         }
                     }
                 }

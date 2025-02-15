@@ -22,6 +22,7 @@ protocol PhysicsEntity {
     var acceleration: float3 { get set }
     var restitution: Float { get set }
     var isStatic: Bool { get set }
+    var shouldApplyGravity: Bool { get set }  // Hack...
     
     func setPosition(_ position: float3)
     func getPosition() -> float3
@@ -55,3 +56,11 @@ protocol PlanePhysicsEntity: PhysicsEntity {
 //    var collisionShape: CollisionShape { .Plane }
 //}
 
+class CollidableSphere: Sphere, SpherePhysicsEntity {
+    var collisionRadius: Float = 1.0
+}
+
+class CollidablePlane: Quad, PlanePhysicsEntity {
+    var collisionNormal: float3 = [0, 1, 0]
+//    var collisionShape: CollisionShape = .Plane
+}

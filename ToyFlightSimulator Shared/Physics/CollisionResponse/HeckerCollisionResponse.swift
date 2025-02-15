@@ -28,9 +28,26 @@ final class HeckerCollisionResponse {
                     
                     let alreadyCollided = entityA.collidedWith[entityB.id] ?? false
                     
+                    // TODO: To stop infinite bouncing -> check if relative velocity abs value is below threshold ?
+                    
                     if !alreadyCollided && PhysicsWorld.collided(entityA: entityA, entityB: entityB) {
                         entityA.collidedWith[entityB.id] = true
                         entityB.collidedWith[entityA.id] = true
+                        
+                        // Hack:
+                        let relVeloMagnitude = (entityA.velocity - entityB.velocity).magnitude
+                        // TODO: My units seem to be messed up, 'small' collisions seem to be ~ 0.7 m/s
+                        if relVeloMagnitude < 0.55 {
+                            entities[a].velocity = .zero
+                            entities[a].acceleration = .zero
+                            entities[a].shouldApplyGravity = false
+                            
+                            entities[b].velocity = .zero
+                            entities[b].acceleration = .zero
+                            entities[b].shouldApplyGravity = false
+                            
+                            continue
+                        }
                         
                         let collisionData = PhysicsWorld.getCollisionData(entityA, entityB)
                         let penetrationDepth = collisionData.penetrationDepth

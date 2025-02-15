@@ -9,7 +9,7 @@ import MetalKit
 
 class Aircraft: GameObject {
     public var containerNode: ContainerNode?
-    public var shouldUpdate: Bool
+    public var shouldUpdateOnPlayerInput: Bool
     
     private var _moveSpeed: Float = 25.0
     private var _turnSpeed: Float = 4.0
@@ -20,8 +20,8 @@ class Aircraft: GameObject {
         [0, 10, 20]
     }
     
-    init(name: String, modelType: ModelType, scale: Float = 1.0, shouldUpdate: Bool = true) {
-        self.shouldUpdate = shouldUpdate
+    init(name: String, modelType: ModelType, scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
+        self.shouldUpdateOnPlayerInput = shouldUpdateOnPlayerInput
         super.init(name: name, modelType: modelType)
         self.setScale(scale)
         print("[Aircraft init] name: \(name), scale: \(scale)")
@@ -31,7 +31,7 @@ class Aircraft: GameObject {
     override func doUpdate() {
         super.doUpdate()
         
-        if shouldUpdate && hasFocus {
+        if shouldUpdateOnPlayerInput && hasFocus {
             let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
             let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
             

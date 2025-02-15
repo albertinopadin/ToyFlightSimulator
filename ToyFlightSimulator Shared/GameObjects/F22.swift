@@ -17,8 +17,11 @@ class F22: Aircraft {
         [0, 14, 28]
     }
     
-    init(scale: Float = 1.0, shouldUpdate: Bool = true) {
-        super.init(name: Self.NAME, modelType: .Sketchfab_F22, scale: scale, shouldUpdate: shouldUpdate)
+    init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
+        super.init(name: Self.NAME,
+                   modelType: .Sketchfab_F22,
+                   scale: scale,
+                   shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
         rotateX(Float(90).toRadians)
         rotateZ(Float(90).toRadians)
         
