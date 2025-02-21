@@ -14,8 +14,8 @@ class FreeCamFlightboxScene: GameScene {
     var sidewinderMissile = Sidewinder()
     var aim120 = AIM120()
     
-//    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
-    let physicsWorld = PhysicsWorld(updateType: .HeckerVerlet)
+    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
+//    let physicsWorld = PhysicsWorld(updateType: .HeckerVerlet)
     var entities: [PhysicsEntity] = []
     
     private func addGround() {

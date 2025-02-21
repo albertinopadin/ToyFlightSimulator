@@ -28,9 +28,7 @@ protocol PhysicsEntity {
     func getPosition() -> float3
 }
 
-extension PhysicsEntity {
-    var id: String { UUID().uuidString }
-    
+extension PhysicsEntity {    
     static func ==(lhs: PhysicsEntity, rhs: PhysicsEntity) -> Bool {
         return lhs.id == rhs.id
     }

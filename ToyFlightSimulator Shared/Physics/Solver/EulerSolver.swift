@@ -33,6 +33,10 @@ final class EulerSolver: PhysicsSolver {
                     
                     let alreadyCollided = ei.collidedWith[ej.id] ?? false
                     
+//                    if alreadyCollided {
+//                        print("Already collided!")
+//                    }
+                    
                     if !alreadyCollided && PhysicsWorld.collided(entityA: ei, entityB: ej) {
                         ei.collidedWith[ej.id] = true
                         ej.collidedWith[ei.id] = true
@@ -43,7 +47,11 @@ final class EulerSolver: PhysicsSolver {
                         let unormCollisionVector = collisionData.collisionVector * collisionData.penetrationDepth
                         
                         // Hack to prevent infinite bouncing:
-                        if abs(collisionData.penetrationDepth) < 0.01 {
+                        let relativeVelo = (entities[i].velocity - entities[j].velocity).magnitude
+                        print("Relative velocity: \(relativeVelo)")
+                        print("Unorm collision vector: \(unormCollisionVector)")
+                        if relativeVelo < 0.55 {
+                            print("Relative velocity under threshold: \(relativeVelo)")
                             entities[i].velocity = .zero
                             entities[j].velocity = .zero
                         } else {
@@ -58,6 +66,9 @@ final class EulerSolver: PhysicsSolver {
                                 let ejVelo = (ej.velocity - collisionVector) * restitution
                                 entities[j].velocity = ejVelo
                                 
+                                print("eiVelo: \(eiVelo)")
+                                print("ejVelo: \(ejVelo)")
+                                
                                 continue
                             }
                             
@@ -70,17 +81,21 @@ final class EulerSolver: PhysicsSolver {
                                 let eiVelo: float3 = [vX, vY, vZ]
                                 entities[i].velocity = eiVelo
                                 
+                                print("eiVelo: \(eiVelo)")
+                                
                                 continue
                             }
                             
                             if entities[i].isStatic && !entities[j].isStatic {
-                                let newPos = entities[j].getPosition() - unormCollisionVector * 2
+                                let newPos = entities[j].getPosition() + unormCollisionVector * 2
                                 entities[j].setPosition(newPos)
                                 let vX = collisionVector.x != 0 ? ej.velocity.x * -collisionVector.x * restitution : ej.velocity.x
                                 let vY = collisionVector.y != 0 ? ej.velocity.y * -collisionVector.y * restitution : ej.velocity.y
                                 let vZ = collisionVector.z != 0 ? ej.velocity.z * -collisionVector.z * restitution : ej.velocity.z
                                 let ejVelo: float3 = [vX, vY, vZ]
                                 entities[j].velocity = ejVelo
+                                
+                                print("ejVelo: \(ejVelo)")
                                 
                                 continue
                             }

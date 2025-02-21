@@ -23,16 +23,15 @@ final class HeckerCollisionResponse {
         for a in 0..<entities.count {
             for b in 0..<entities.count {
                 if a != b {
-                    var entityA = entities[a]
-                    var entityB = entities[b]
+                    let entityA = entities[a]
+                    let entityB = entities[b]
                     
-                    let alreadyCollided = entityA.collidedWith[entityB.id] ?? false
+                    let alreadyCollided = entities[a].collidedWith[entities[b].id] ?? false
                     
                     // TODO: To stop infinite bouncing -> check if relative velocity abs value is below threshold ?
-                    
                     if !alreadyCollided && PhysicsWorld.collided(entityA: entityA, entityB: entityB) {
-                        entityA.collidedWith[entityB.id] = true
-                        entityB.collidedWith[entityA.id] = true
+                        entities[a].collidedWith[entityB.id] = true
+                        entities[b].collidedWith[entityA.id] = true
                         
                         // Hack:
                         let relVeloMagnitude = (entityA.velocity - entityB.velocity).magnitude

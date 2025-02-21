@@ -8,7 +8,8 @@
 import MetalKit
 
 class GameObject: Node, PhysicsEntity, Renderable, Hashable {
-    var collidedWith = [String : Bool]()
+    var id: String = UUID().uuidString
+    var collidedWith: [String : Bool] = [:]
     var collisionShape: CollisionShape = .Sphere
     var isStatic: Bool = false
     var shouldApplyGravity: Bool = true
