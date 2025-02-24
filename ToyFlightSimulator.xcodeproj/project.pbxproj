@@ -1398,6 +1398,7 @@
 		CE7F47EA28B758900082B197 /* ToyFlightSimulator Shared */ = {
 			isa = PBXGroup;
 			children = (
+				CEC6B0982D6BC7F400EE3C26 /* Audio */,
 				CE9625382CCCE1AF00CEA5A2 /* Physics */,
 				CE2ED260299394C900C81F47 /* Utils */,
 				CE7F48B928BB93550082B197 /* Core */,
@@ -1582,6 +1583,13 @@
 				CE96254B2CCCE2A500CEA5A2 /* PhysicsWorld.swift */,
 			);
 			path = World;
+			sourceTree = "<group>";
+		};
+		CEC6B0982D6BC7F400EE3C26 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Audio;
 			sourceTree = "<group>";
 		};
 		CED798452C9050A2003B6559 /* Render */ = {
