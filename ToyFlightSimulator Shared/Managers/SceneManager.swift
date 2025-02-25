@@ -38,6 +38,7 @@ final class SceneManager {
         _view = mtkView
         _rendererType = rendererType
         
+        // TODO: Is there a more elegant way to do this ???
         switch sceneType {
             case .Sandbox:
                 CurrentScene = SandboxScene(name: "Sandbox", rendererType: rendererType)
