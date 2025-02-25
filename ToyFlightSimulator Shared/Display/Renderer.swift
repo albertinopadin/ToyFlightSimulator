@@ -19,6 +19,9 @@ class Renderer: NSObject, MTKViewDelegate {
     // The semaphore used to control GPU-CPU synchronization of frames.
     private let inFlightSemaphore: DispatchSemaphore
     
+    // Not sure if this'll work:
+    private let engineThreadsSemaphore: DispatchSemaphore
+    
     var baseRenderPassDescriptor: MTLRenderPassDescriptor!
     
     public let rendererType: RendererType
@@ -41,12 +44,14 @@ class Renderer: NSObject, MTKViewDelegate {
     init(type: RendererType) {
         self.rendererType = type
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
+        engineThreadsSemaphore = DispatchSemaphore(value: 1)
         super.init()
     }
     
     init(_ mtkView: MTKView, type: RendererType) {
         self.rendererType = type
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
+        engineThreadsSemaphore = DispatchSemaphore(value: 1)
         super.init()
         metalView = mtkView
     }
@@ -60,6 +65,8 @@ class Renderer: NSObject, MTKViewDelegate {
         //inFlightSemaphore.wait()
         _ = inFlightSemaphore.wait(timeout: .distantFuture)
         
+        _ = engineThreadsSemaphore.wait(timeout: .distantFuture)
+        
         guard let commandBuffer = Engine.CommandQueue.makeCommandBuffer() else {
             fatalError("Failed to make command buffer from command queue")
         }
@@ -71,6 +78,7 @@ class Renderer: NSObject, MTKViewDelegate {
         // This indicates when the dynamic buffers, written this frame, will no longer be needed by Metal and the GPU.
         commandBuffer.addCompletedHandler { [weak self] _ in
             self?.inFlightSemaphore.signal()
+            self?.engineThreadsSemaphore.signal()
         }
         
         commandBuffer.commit()
