@@ -143,10 +143,10 @@ class TiledMultisampleRenderer: Renderer {
     }
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
+        encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") { [weak self] in
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBuffer])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            renderEncoder.setFragmentTexture(shadowResolveTexture, index: TFSTextureIndexShadow.index)
+            renderEncoder.setFragmentTexture(self?.shadowResolveTexture, index: TFSTextureIndexShadow.index)
             DrawManager.Draw(with: renderEncoder)
         }
     }
@@ -180,9 +180,9 @@ class TiledMultisampleRenderer: Renderer {
     }
     
     func encodeParticleComputePass(into commandBuffer: MTLCommandBuffer) {
-        encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
-            computeEncoder.setComputePipelineState(particleComputePipelineState)
-            let threadsPerGroup = MTLSize(width: particleComputePipelineState.threadExecutionWidth,
+        encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { [weak self] computeEncoder in
+            computeEncoder.setComputePipelineState(self!.particleComputePipelineState)
+            let threadsPerGroup = MTLSize(width: self!.particleComputePipelineState.threadExecutionWidth,
                                           height: 1,
                                           depth: 1)
             SceneManager.Compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
@@ -234,35 +234,35 @@ class TiledMultisampleRenderer: Renderer {
         }
         
         if let drawable = view.currentDrawable {
-            runDrawableCommands { commandBuffer in
+            runDrawableCommands { [weak self] commandBuffer in
                 commandBuffer.label = "GBuffer & Lighting Commands"
                 let viewColorAttachment = view.currentRenderPassDescriptor!.colorAttachments[TFSRenderTargetLighting.index]
-                tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index] = viewColorAttachment
+                self?.tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index] = viewColorAttachment
                 
-                encodeParticleComputePass(into: commandBuffer)
+                self?.encodeParticleComputePass(into: commandBuffer)
                 
-                encodeRenderPass(into: commandBuffer,
-                                 using: tiledDeferredRenderPassDescriptor,
+                self?.encodeRenderPass(into: commandBuffer,
+                                       using: self!.tiledDeferredRenderPassDescriptor,
                                  label: "GBuffer & Lighting Pass") { renderEncoder in
                     SceneManager.SetSceneConstants(with: renderEncoder)
                     SceneManager.SetDirectionalLightConstants(with: renderEncoder)
                     SceneManager.SetPointLightData(with: renderEncoder)
                     
-                    encodeGBufferStage(using: renderEncoder)
-                    encodeLightingStage(using: renderEncoder)
-                    encodeTransparencyStage(using: renderEncoder)
-                    encodeParticleRenderStage(using: renderEncoder)
+                    self?.encodeGBufferStage(using: renderEncoder)
+                    self?.encodeLightingStage(using: renderEncoder)
+                    self?.encodeTransparencyStage(using: renderEncoder)
+                    self?.encodeParticleRenderStage(using: renderEncoder)
                     
-                    encodeMSAAResolveStage(using: renderEncoder)
+                    self?.encodeMSAAResolveStage(using: renderEncoder)
                 }
                 
-                compositeRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .store
-                compositeRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawable.texture
+                self?.compositeRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .store
+                self?.compositeRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawable.texture
                 
-                encodeRenderPass(into: commandBuffer,
-                                 using: compositeRenderPassDescriptor,
-                                 label: "Composite Pass") { renderEncoder in
-                    encodeCompositeStage(using: renderEncoder)
+                self?.encodeRenderPass(into: commandBuffer,
+                                       using: self!.compositeRenderPassDescriptor,
+                                       label: "Composite Pass") { renderEncoder in
+                    self?.encodeCompositeStage(using: renderEncoder)
                 }
             
                 commandBuffer.present(drawable)
