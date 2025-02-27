@@ -34,6 +34,10 @@ struct GameStats: View {
                         .foregroundColor(.white)
                         .padding(5)
                     
+                    Text("Memory: \(gameStatsMgr.memoryFootprint())")
+                        .foregroundColor(.white)
+                        .padding(5)
+                    
                     Spacer()
                 }
                 .padding(10)
