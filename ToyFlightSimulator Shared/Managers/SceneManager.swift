@@ -118,6 +118,7 @@ final class SceneManager {
             GameTime.UpdateTime(deltaTime)
             CurrentScene?.updateCameras(deltaTime: deltaTime)
             CurrentScene?.update()
+            UpdateUniforms()
         }
     }
     
@@ -201,12 +202,18 @@ final class SceneManager {
         }
     }
     
-    // To be called by DrawManager (for now)
     public static func UpdateUniforms() {
         // TODO: Find best way to copy model constants into separate buffer...
-        for (_, var data) in modelDatas {
-            data.updateUniforms()
+        
+        for key in modelDatas.keys {
+            modelDatas[key]?.updateUniforms()
         }
+        
+        for key in transparentObjectDatas.keys {
+            transparentObjectDatas[key]?.updateUniforms()
+        }
+        
+        skyData.updateUniforms()
     }
     
     static var SubmeshCount: Int {

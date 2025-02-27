@@ -17,10 +17,7 @@ final class DrawManager {
     static func Draw(with renderEncoder: MTLRenderCommandEncoder,
                      withTransparency: Bool = false,
                      applyMaterials: Bool = true) {
-        for (model, var data) in SceneManager.modelDatas {
-            // !!!
-            data.updateUniforms()
-            
+        for (model, data) in SceneManager.modelDatas {
             if withTransparency {
                 if !data.transparentSubmeshes.isEmpty {
                     Draw(renderEncoder,
@@ -41,10 +38,7 @@ final class DrawManager {
         }
         
         if withTransparency {
-            for (model, var data) in SceneManager.transparentObjectDatas {
-                // !!!
-                data.updateUniforms()
-                
+            for (model, data) in SceneManager.transparentObjectDatas {
                 Draw(renderEncoder,
                      model: model,
                      uniforms: data.uniforms,
@@ -58,10 +52,7 @@ final class DrawManager {
     
     // I really don't like this long term...
     static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
-        for (model, var data) in SceneManager.modelDatas {
-            // !!!
-            data.updateUniforms()
-            
+        for (model, data) in SceneManager.modelDatas {
             Draw(renderEncoder,
                  model: model,
                  uniforms: data.uniforms,
