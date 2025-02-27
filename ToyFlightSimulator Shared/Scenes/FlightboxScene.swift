@@ -234,7 +234,8 @@ class FlightboxScene: GameScene {
         }
         
         TextureLoader.PrintCacheInfo()
-        print("Total Submesh count: \(DrawManager.SubmeshCount)")
+//        print("Total Submesh count: \(DrawManager.SubmeshCount)")
+        print("Total Submesh count: \(SceneManager.SubmeshCount)")
         
         entities.append(jet)
         physicsWorld.setEntities(entities)

@@ -14,8 +14,61 @@ enum SceneType {
     case BallPhysics
 }
 
+struct ModelData {
+    var gameObjects: [GameObject] = []
+    var uniforms: [ModelConstants] = []
+    var opaqueSubmeshes: [Submesh] = []
+    var transparentSubmeshes: [Submesh] = []
+    
+    mutating func addGameObject(_ gameObject: GameObject) {
+        self.gameObjects.append(gameObject)
+    }
+    
+    mutating func appendOpaque(submesh: Submesh) {
+        self.opaqueSubmeshes.append(submesh)
+    }
+    
+    mutating func appendTransparent(submesh: Submesh) {
+        self.transparentSubmeshes.append(submesh)
+    }
+    
+    // TODO: This kind of smells...
+    mutating func updateUniforms() {
+        self.uniforms = self.gameObjects.compactMap(\.modelConstants)
+    }
+}
+
+struct TransparentObjectData {
+    var gameObjects: [GameObject] = []
+    var models: [Model] = []
+    var uniforms: [ModelConstants] = []
+    
+    mutating func addGameObject(_ gameObject: GameObject) {
+        self.gameObjects.append(gameObject)
+    }
+    
+    mutating func addModel(_ model: Model) {
+        self.models.append(model)
+    }
+    
+    // TODO: This kind of smells...
+    mutating func updateUniforms() {
+        self.uniforms = self.gameObjects.compactMap(\.modelConstants)
+    }
+}
+
 final class SceneManager {
     public static var CurrentScene: GameScene?
+    private static var _sceneType: SceneType?
+    private static var _view: MTKView?
+    private static var _rendererType: RendererType?
+    
+    public static var modelDatas: [Model: ModelData] = [:]
+    public static var transparentObjectDatas: [Model: TransparentObjectData] = [:]
+    public static var particleObjects: [ParticleEmitterObject] = []
+    public static var skyData = ModelData()
+    public static var lines: [Line] = []
+    public static var icosahedrons: [Icosahedron] = []
     
     private static var _paused: Bool = false
     public static var Paused: Bool {
@@ -28,10 +81,6 @@ final class SceneManager {
             _view?.isPaused = newValue
         }
     }
-    
-    private static var _sceneType: SceneType?
-    private static var _view: MTKView?
-    private static var _rendererType: RendererType?
     
     public static func SetScene(_ sceneType: SceneType, mtkView: MTKView, rendererType: RendererType) {
         _sceneType = sceneType
@@ -71,6 +120,101 @@ final class SceneManager {
             CurrentScene?.update()
         }
     }
+    
+    // ----------------------------------------------------------------------------- //
+    
+    static func Register(_ gameObject: GameObject) {
+        switch gameObject {
+            case is SkyBox, is SkySphere:
+                RegisterSky(gameObject)
+            case is LightObject:
+                print("[DrawMgr RegisterObject] got LightObject")
+            case let icosahedron as Icosahedron:
+                icosahedrons.append(icosahedron)
+            case let line as Line:
+                lines.append(line)
+            case let particleObject as ParticleEmitterObject:
+                particleObjects.append(particleObject)
+            default:
+                RegisterObject(gameObject)
+        }
+    }
+    
+    static private func RegisterObject(_ gameObject: GameObject) {
+        if gameObject.isTransparent {
+            registerTransparentObject(gameObject)
+        } else {
+            if let _ = modelDatas[gameObject.model] {
+                modelDatas[gameObject.model]!.addGameObject(gameObject)
+            } else {
+                var modelData = ModelData()
+                modelData.addGameObject(gameObject)
+                
+                for mesh in gameObject.model.meshes {
+                    for submesh in mesh.submeshes {
+                        if isTransparent(submesh: submesh) {
+                            modelData.appendTransparent(submesh: submesh)
+                        } else {
+                            modelData.appendOpaque(submesh: submesh)
+                        }
+                    }
+                }
+                
+                modelDatas[gameObject.model] = modelData
+            }
+        }
+    }
+    
+    static private func registerTransparentObject(_ gameObject: GameObject) {
+        if let _ = transparentObjectDatas[gameObject.model] {
+            transparentObjectDatas[gameObject.model]!.addGameObject(gameObject)
+        } else {
+            var transparentObjectData = TransparentObjectData()
+            transparentObjectData.addGameObject(gameObject)
+            transparentObjectData.addModel(gameObject.model)
+            transparentObjectDatas[gameObject.model] = transparentObjectData
+        }
+    }
+    
+    static private func isTransparent(submesh: Submesh) -> Bool {
+        if let isTransparent = submesh.material?.isTransparent, isTransparent {
+            return true
+        }
+        
+        return false
+    }
+    
+    static private func RegisterSky(_ gameObject: GameObject) {
+        // TODO: Hack to set sky object - think of something better
+        if skyData.gameObjects.isEmpty {
+            skyData.gameObjects.append(gameObject)
+        }
+        
+        for mesh in gameObject.model.meshes {
+            for submesh in mesh.submeshes {
+                if let isTransparent = submesh.material?.isTransparent, isTransparent {
+                    skyData.appendTransparent(submesh: submesh)
+                } else {
+                    skyData.appendOpaque(submesh: submesh)
+                }
+            }
+        }
+    }
+    
+    // To be called by DrawManager (for now)
+    public static func UpdateUniforms() {
+        // TODO: Find best way to copy model constants into separate buffer...
+        for (_, var data) in modelDatas {
+            data.updateUniforms()
+        }
+    }
+    
+    static var SubmeshCount: Int {
+        return modelDatas.reduce(0) { $0 + $1.value.opaqueSubmeshes.count + $1.value.transparentSubmeshes.count }
+    }
+    
+    
+    // ----------------------------------------------------------------------------- //
     
     public static func SetSceneConstants(with renderEncoder: MTLRenderCommandEncoder) {
         CurrentScene?.setSceneConstants(with: renderEncoder)
