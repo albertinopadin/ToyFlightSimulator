@@ -63,7 +63,7 @@ final class SceneManager {
     private static var _view: MTKView?
     private static var _rendererType: RendererType?
     
-    public static var modelDatas: [Model: ModelData] = [:]
+    public static var modelDatas: [Model: ModelData] = [:]  // TODO -> wrap this in a thread safe container (?)
     public static var transparentObjectDatas: [Model: TransparentObjectData] = [:]
     public static var particleObjects: [ParticleEmitterObject] = []
     public static var skyData = ModelData()
