@@ -207,38 +207,38 @@ class SinglePassDeferredLightingRenderer: Renderer {
     }
     
     override func draw(in view: MTKView) {
-        super.draw(in: view)
-        
-        runDrawableCommands { commandBuffer in
-            commandBuffer.label = "Shadow Commands"
-            encodeShadowMapPass(into: commandBuffer)
-        }
-        
-        runDrawableCommands { commandBuffer in
-            commandBuffer.label = "GBuffer & Lighting Commands"
-            
-            if let drawableTexture = view.currentDrawable?.texture {
-                _gBufferAndLightingRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
-                _gBufferAndLightingRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
-                _gBufferAndLightingRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
-                
-                encodeRenderPass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
-                    renderEncoder in
-                    SceneManager.SetSceneConstants(with: renderEncoder)
-                    SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                    
-                    encodeGBufferStage(using: renderEncoder)
-                    encodeDirectionalLightingStage(using: renderEncoder)
-                    encodeTransparencyStage(using: renderEncoder)
-                    encodeLightMaskStage(using: renderEncoder)
-                    encodePointLightStage(using: renderEncoder)
-//                    encodeIcosahedronStage(using: renderEncoder)
-                    encodeSkyboxStage(using: renderEncoder)
-                }
+        render {
+            runDrawableCommands { commandBuffer in
+                commandBuffer.label = "Shadow Commands"
+                encodeShadowMapPass(into: commandBuffer)
             }
             
-            if let drawable = view.currentDrawable {
-                commandBuffer.present(drawable)
+            runDrawableCommands { commandBuffer in
+                commandBuffer.label = "GBuffer & Lighting Commands"
+                
+                if let drawableTexture = view.currentDrawable?.texture {
+                    _gBufferAndLightingRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
+                    _gBufferAndLightingRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
+                    _gBufferAndLightingRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
+                    
+                    encodeRenderPass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
+                        renderEncoder in
+                        SceneManager.SetSceneConstants(with: renderEncoder)
+                        SceneManager.SetDirectionalLightConstants(with: renderEncoder)
+                        
+                        encodeGBufferStage(using: renderEncoder)
+                        encodeDirectionalLightingStage(using: renderEncoder)
+                        encodeTransparencyStage(using: renderEncoder)
+                        encodeLightMaskStage(using: renderEncoder)
+                        encodePointLightStage(using: renderEncoder)
+    //                    encodeIcosahedronStage(using: renderEncoder)
+                        encodeSkyboxStage(using: renderEncoder)
+                    }
+                }
+                
+                if let drawable = view.currentDrawable {
+                    commandBuffer.present(drawable)
+                }
             }
         }
     }

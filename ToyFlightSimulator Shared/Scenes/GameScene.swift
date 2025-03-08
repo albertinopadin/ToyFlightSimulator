@@ -38,7 +38,6 @@ class GameScene: Node {
     func registerChildObject(_ child: Node) {
         if let childObj = child as? GameObject {
             if !(childObj is Camera) {
-//                DrawManager.Register(childObj)
                 SceneManager.Register(childObj)
             }
         }

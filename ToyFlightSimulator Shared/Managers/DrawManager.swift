@@ -180,32 +180,62 @@ final class DrawManager {
                              submeshes: [Submesh],
                              applyMaterials: Bool) {
         EncodeRender(using: renderEncoder, label: "Rendering \(model.name)") {
-            var uniforms = uniforms
-            renderEncoder.setVertexBytes(&uniforms,
-                                         length: ModelConstants.stride(uniforms.count),
-                                         index: TFSBufferModelConstants.index)
-            
-            for submesh in submeshes {
-                if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
-                    renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-                    
-                    if applyMaterials {
-                        submesh.material!.applyTextures(with: renderEncoder)
+            // Hack for now:
+            if !uniforms.isEmpty {
+                var uniforms = uniforms
+                renderEncoder.setVertexBytes(&uniforms,
+                                             length: ModelConstants.stride(uniforms.count),
+                                             index: TFSBufferModelConstants.index)
+                
+                for submesh in submeshes {
+                    if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
+                        renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
                         
-                        var materialProps = submesh.material!.properties
-                        renderEncoder.setFragmentBytes(&materialProps,
-                                                       length: MaterialProperties.stride,
-                                                       index: TFSBufferIndexMaterial.index)
+                        if applyMaterials {
+                            submesh.material!.applyTextures(with: renderEncoder)
+                            
+                            var materialProps = submesh.material!.properties
+                            renderEncoder.setFragmentBytes(&materialProps,
+                                                           length: MaterialProperties.stride,
+                                                           index: TFSBufferIndexMaterial.index)
+                        }
+                        
+                        renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                            indexCount: submesh.indexCount,
+                                                            indexType: submesh.indexType,
+                                                            indexBuffer: submesh.indexBuffer,
+                                                            indexBufferOffset: submesh.indexBufferOffset,
+                                                            instanceCount: submesh.parentMesh!.instanceCount * uniforms.count)
                     }
-                    
-                    renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                        indexCount: submesh.indexCount,
-                                                        indexType: submesh.indexType,
-                                                        indexBuffer: submesh.indexBuffer,
-                                                        indexBufferOffset: submesh.indexBufferOffset,
-                                                        instanceCount: submesh.parentMesh!.instanceCount * uniforms.count)
                 }
             }
+            
+//            var uniforms = uniforms
+//            renderEncoder.setVertexBytes(&uniforms,
+//                                         length: ModelConstants.stride(uniforms.count),
+//                                         index: TFSBufferModelConstants.index)
+//            
+//            for submesh in submeshes {
+//                if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
+//                    renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+//                    
+//                    if applyMaterials {
+//                        submesh.material!.applyTextures(with: renderEncoder)
+//                        
+//                        var materialProps = submesh.material!.properties
+//                        renderEncoder.setFragmentBytes(&materialProps,
+//                                                       length: MaterialProperties.stride,
+//                                                       index: TFSBufferIndexMaterial.index)
+//                    }
+//                    
+//                    renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+//                                                        indexCount: submesh.indexCount,
+//                                                        indexType: submesh.indexType,
+//                                                        indexBuffer: submesh.indexBuffer,
+//                                                        indexBufferOffset: submesh.indexBufferOffset,
+//                                                        instanceCount: submesh.parentMesh!.instanceCount * uniforms.count)
+//                }
+//            }
         }
     }
 }
