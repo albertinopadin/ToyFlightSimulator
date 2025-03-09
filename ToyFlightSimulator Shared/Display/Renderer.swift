@@ -55,19 +55,8 @@ class Renderer: NSObject, MTKViewDelegate {
         
         super.init()
         
+        updateThread = makeUpdateThread()
         updateSemaphore.signal()
-        updateThread = Thread {
-            while true {
-                _ = self.updateSemaphore.wait(timeout: .distantFuture)
-                // Hmm, using previous frame's dt to update next frame's scene graph...
-                // Using outside-provided delta time here causes issues
-                SceneManager.Update(deltaTime: self.deltaTime)
-                self.updateFrames += 1
-                self.renderSemaphore.signal()
-            }
-        }
-        updateThread.name = "UpdateThread"
-        updateThread.qualityOfService = .userInteractive
         updateThread.start()
     }
     
@@ -80,20 +69,28 @@ class Renderer: NSObject, MTKViewDelegate {
         super.init()
         metalView = mtkView
         
+        updateThread = makeUpdateThread()
         updateSemaphore.signal()
-        updateThread = Thread {
+        updateThread.start()
+    }
+    
+    func makeUpdateThread() -> Thread {
+        let ut = Thread {
             while true {
                 _ = self.updateSemaphore.wait(timeout: .distantFuture)
-                // Hmm, using previous frame's dt to update next frame's scene graph...
-                // Using outside-provided delta time here causes issues
+                let currentTime = DispatchTime.now().uptimeNanoseconds
+                self.deltaTime = Double(currentTime - self.previousTime) / 1e9
+                self.previousTime = currentTime
+                GameStatsManager.sharedInstance.recordDeltaTime(self.deltaTime)
                 SceneManager.Update(deltaTime: self.deltaTime)
                 self.updateFrames += 1
-                self.renderSemaphore.signal()
+//                self.renderSemaphore.signal()
+                self.updateSemaphore.signal()
             }
         }
-        updateThread.name = "UpdateThread"
-        updateThread.qualityOfService = .userInteractive
-        updateThread.start()
+        ut.name = "UpdateThread"
+        ut.qualityOfService = .userInteractive
+        return ut
     }
     
     // Heavily inspired by:
@@ -222,15 +219,9 @@ class Renderer: NSObject, MTKViewDelegate {
     }
     
     public func render(_ renderBlock: () -> ()) {
-        _ = renderSemaphore.wait(timeout: .distantFuture)
+//        _ = renderSemaphore.wait(timeout: .distantFuture)
+        _ = updateSemaphore.wait(timeout: .distantFuture)
         
-        let currentTime = DispatchTime.now().uptimeNanoseconds
-        deltaTime = Double(currentTime - previousTime) / 1e9
-        // Ugh...
-        deltaTime = min(0.01, deltaTime)
-//        print("[render] deltaTime: \(deltaTime)")
-        previousTime = currentTime
-        GameStatsManager.sharedInstance.recordDeltaTime(deltaTime)
         renderBlock()
         
         renderFrames += 1
