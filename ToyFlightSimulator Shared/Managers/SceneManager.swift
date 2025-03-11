@@ -14,9 +14,16 @@ enum SceneType {
     case BallPhysics
 }
 
+// Good Idea ... ?
+//enum UniformsDataType {
+//    case Model
+//    case TransparentModel
+//    case Sky
+//}
+
 struct ModelData {
     var gameObjects: [GameObject] = []
-    var uniforms: [ModelConstants] = []
+//    var uniforms: [ModelConstants] = []
     var opaqueSubmeshes: [Submesh] = []
     var transparentSubmeshes: [Submesh] = []
     
@@ -33,15 +40,20 @@ struct ModelData {
     }
     
     // TODO: This kind of smells...
-    mutating func updateUniforms() {
-        self.uniforms = self.gameObjects.compactMap(\.modelConstants)
-    }
+//    mutating func updateUniforms() {
+//        self.uniforms = self.gameObjects.compactMap(\.modelConstants)
+//    }
+}
+
+struct UniformsData {
+    let uniforms: [ModelConstants]
+    let opaqueSubmeshes: [Submesh]
+    let transparentSubmeshes: [Submesh]
 }
 
 struct TransparentObjectData {
     var gameObjects: [GameObject] = []
     var models: [Model] = []
-    var uniforms: [ModelConstants] = []
     
     mutating func addGameObject(_ gameObject: GameObject) {
         self.gameObjects.append(gameObject)
@@ -52,9 +64,14 @@ struct TransparentObjectData {
     }
     
     // TODO: This kind of smells...
-    mutating func updateUniforms() {
-        self.uniforms = self.gameObjects.compactMap(\.modelConstants)
-    }
+//    mutating func updateUniforms() {
+//        self.uniforms = self.gameObjects.compactMap(\.modelConstants)
+//    }
+}
+
+struct TransparentUniformsData {
+    let models: [Model]
+    let uniforms: [ModelConstants]
 }
 
 final class SceneManager {
@@ -118,7 +135,7 @@ final class SceneManager {
             GameTime.UpdateTime(deltaTime)
             CurrentScene?.updateCameras(deltaTime: deltaTime)
             CurrentScene?.update()
-            UpdateUniforms()
+//            UpdateUniforms()
         }
     }
     
@@ -202,21 +219,40 @@ final class SceneManager {
         }
     }
     
-    public static func UpdateUniforms() {
-        // TODO: Find best way to copy model constants into separate buffer...
+    // TODO: Find best way to copy model constants into separate buffer...
+    
+    public static func GetUniformsData() -> [Model: UniformsData] {
+        var uniformsData: [Model: UniformsData] = [:]
         
         for key in modelDatas.keys {
-            modelDatas[key]?.updateUniforms()
+            let modelData = modelDatas[key]!
+            uniformsData[key] = UniformsData(uniforms: modelData.gameObjects.compactMap(\.modelConstants),
+                                             opaqueSubmeshes: modelData.opaqueSubmeshes,
+                                             transparentSubmeshes: modelData.transparentSubmeshes)
         }
         
-        for key in transparentObjectDatas.keys {
-            transparentObjectDatas[key]?.updateUniforms()
-        }
-        
-        skyData.updateUniforms()
+        return uniformsData
     }
     
-    static var SubmeshCount: Int {
+    public static func GetTransparentUniformsData() -> [Model: TransparentUniformsData] {
+        var transparentUniformsData: [Model: TransparentUniformsData] = [:]
+        
+        for key in transparentObjectDatas.keys {
+            let modelData = transparentObjectDatas[key]!
+            transparentUniformsData[key] = TransparentUniformsData(models: modelData.models,
+                                                                   uniforms: modelData.gameObjects.compactMap(\.modelConstants))
+        }
+        
+        return transparentUniformsData
+    }
+    
+    public static func GetSkyUniformsData() -> UniformsData {
+        return UniformsData(uniforms: skyData.gameObjects.compactMap(\.modelConstants),
+                            opaqueSubmeshes: skyData.opaqueSubmeshes,
+                            transparentSubmeshes: skyData.transparentSubmeshes)
+    }
+    
+    public static var SubmeshCount: Int {
         return modelDatas.reduce(0) { $0 + $1.value.opaqueSubmeshes.count + $1.value.transparentSubmeshes.count }
     }
     

@@ -19,7 +19,7 @@ final class GameStatsManager: ObservableObject {
     private init() {}
     
     // TODO: Optimize this method using a true ring buffer (or better data structure)
-    public func recordDeltaTime(_ deltaTime: Double) {
+    public func recordRenderDeltaTime(_ deltaTime: Double) {
         if lastXFrameDeltaTime.count >= maxFrames {
             lastXFrameDeltaTime.removeFirst()
         }
@@ -30,7 +30,9 @@ final class GameStatsManager: ObservableObject {
         
         if frame >= maxFrames {
             let avgDeltaTime: Double = lastXFrameDeltaTime.reduce(0.0) { $0 + $1 } / Double(maxFrames)
-            rollingAverageFPS = 1 / avgDeltaTime
+            DispatchQueue.main.async {
+                self.rollingAverageFPS = 1 / avgDeltaTime
+            }
             frame = 0
         }
     }
