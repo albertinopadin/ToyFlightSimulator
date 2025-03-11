@@ -21,6 +21,8 @@ class Renderer: NSObject, MTKViewDelegate {
     // The semaphore used to control GPU-CPU synchronization of frames.
     private let inFlightSemaphore: DispatchSemaphore
     
+    private let updateSemaphore = DispatchSemaphore(value: 0)
+    
     private var updateThread: Thread!
     private var renderFrames: Int = 0
     private var updateFrames: Int = 0
@@ -68,6 +70,8 @@ class Renderer: NSObject, MTKViewDelegate {
     func makeUpdateThread() -> Thread {
         let ut = Thread {
             while true {
+                _ = self.updateSemaphore.wait(timeout: .distantFuture)
+                
                 let currentTime = DispatchTime.now().uptimeNanoseconds
                 let updateDeltaTime = Double(currentTime - self.updatePreviousTime) / 1e9
                 self.updatePreviousTime = currentTime
@@ -206,6 +210,8 @@ class Renderer: NSObject, MTKViewDelegate {
     }
     
     public func render(_ renderBlock: () -> ()) {
+        updateSemaphore.signal()
+        
         let currentTime = DispatchTime.now().uptimeNanoseconds
         self.renderDeltaTime = Double(currentTime - self.renderPreviousTime) / 1e9
         self.renderPreviousTime = currentTime
@@ -217,5 +223,7 @@ class Renderer: NSObject, MTKViewDelegate {
         
         print("[render] render frames: \(renderFrames)")
         print("[render] update frames: \(updateFrames)")
+        
+        updateSemaphore.signal()
     }
 }
