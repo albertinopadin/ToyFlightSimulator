@@ -12,19 +12,16 @@ class Renderer: NSObject, MTKViewDelegate {
     public static var ScreenSize = float2(100, 100)
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
     
-    private var previousTime: UInt64 = 0
-    private var deltaTime: Double = 0
+    private var updatePreviousTime: UInt64 = 0
+    private var renderPreviousTime: UInt64 = 0
+    private var renderDeltaTime: Double = 0
     
     // The max number of command buffers in flight
     let maxFramesInFlight = 3
     // The semaphore used to control GPU-CPU synchronization of frames.
     private let inFlightSemaphore: DispatchSemaphore
     
-    // Not sure if this'll work:
-    private let updateSemaphore: DispatchSemaphore
-    private let renderSemaphore: DispatchSemaphore
     private var updateThread: Thread!
-    
     private var renderFrames: Int = 0
     private var updateFrames: Int = 0
     
@@ -50,42 +47,32 @@ class Renderer: NSObject, MTKViewDelegate {
     init(type: RendererType) {
         self.rendererType = type
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
-        updateSemaphore = DispatchSemaphore(value: 0)
-        renderSemaphore = DispatchSemaphore(value: 0)
         
         super.init()
         
         updateThread = makeUpdateThread()
-        updateSemaphore.signal()
         updateThread.start()
     }
     
     init(_ mtkView: MTKView, type: RendererType) {
         self.rendererType = type
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
-        updateSemaphore = DispatchSemaphore(value: 0)
-        renderSemaphore = DispatchSemaphore(value: 0)
         
         super.init()
         metalView = mtkView
         
         updateThread = makeUpdateThread()
-        updateSemaphore.signal()
         updateThread.start()
     }
     
     func makeUpdateThread() -> Thread {
         let ut = Thread {
             while true {
-                _ = self.updateSemaphore.wait(timeout: .distantFuture)
                 let currentTime = DispatchTime.now().uptimeNanoseconds
-                self.deltaTime = Double(currentTime - self.previousTime) / 1e9
-                self.previousTime = currentTime
-                GameStatsManager.sharedInstance.recordDeltaTime(self.deltaTime)
-                SceneManager.Update(deltaTime: self.deltaTime)
+                let updateDeltaTime = Double(currentTime - self.updatePreviousTime) / 1e9
+                self.updatePreviousTime = currentTime
+                SceneManager.Update(deltaTime: updateDeltaTime)
                 self.updateFrames += 1
-//                self.renderSemaphore.signal()
-                self.updateSemaphore.signal()
             }
         }
         ut.name = "UpdateThread"
@@ -219,8 +206,10 @@ class Renderer: NSObject, MTKViewDelegate {
     }
     
     public func render(_ renderBlock: () -> ()) {
-//        _ = renderSemaphore.wait(timeout: .distantFuture)
-        _ = updateSemaphore.wait(timeout: .distantFuture)
+        let currentTime = DispatchTime.now().uptimeNanoseconds
+        self.renderDeltaTime = Double(currentTime - self.renderPreviousTime) / 1e9
+        self.renderPreviousTime = currentTime
+        GameStatsManager.sharedInstance.recordRenderDeltaTime(self.renderDeltaTime)
         
         renderBlock()
         
@@ -228,7 +217,5 @@ class Renderer: NSObject, MTKViewDelegate {
         
         print("[render] render frames: \(renderFrames)")
         print("[render] update frames: \(updateFrames)")
-        
-        updateSemaphore.signal()
     }
 }

@@ -17,7 +17,7 @@ final class DrawManager {
     static func Draw(with renderEncoder: MTLRenderCommandEncoder,
                      withTransparency: Bool = false,
                      applyMaterials: Bool = true) {
-        for (model, data) in SceneManager.modelDatas {
+        for (model, data) in SceneManager.GetUniformsData() {
             if withTransparency {
                 if !data.transparentSubmeshes.isEmpty {
                     Draw(renderEncoder,
@@ -38,7 +38,7 @@ final class DrawManager {
         }
         
         if withTransparency {
-            for (model, data) in SceneManager.transparentObjectDatas {
+            for (model, data) in SceneManager.GetTransparentUniformsData() {
                 Draw(renderEncoder,
                      model: model,
                      uniforms: data.uniforms,
@@ -52,7 +52,7 @@ final class DrawManager {
     
     // I really don't like this long term...
     static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
-        for (model, data) in SceneManager.modelDatas {
+        for (model, data) in SceneManager.GetUniformsData() {
             Draw(renderEncoder,
                  model: model,
                  uniforms: data.uniforms,
@@ -123,11 +123,11 @@ final class DrawManager {
             renderEncoder.setFragmentTexture(Assets.Textures[skyObj.textureType], index: TFSTextureIndexSkyBox.index)
             
             // !!!
-            let uniforms = SceneManager.skyData.uniforms
+            let uniformsData = SceneManager.GetSkyUniformsData()
             
             Draw(renderEncoder,
                  model: skyObj.model,
-                 uniforms: uniforms,
+                 uniforms: uniformsData.uniforms,
                  submeshes: SceneManager.skyData.opaqueSubmeshes,
                  applyMaterials: false)
         }
