@@ -23,7 +23,6 @@ enum SceneType {
 
 struct ModelData {
     var gameObjects: [GameObject] = []
-//    var uniforms: [ModelConstants] = []
     var opaqueSubmeshes: [Submesh] = []
     var transparentSubmeshes: [Submesh] = []
     
@@ -38,14 +37,9 @@ struct ModelData {
     mutating func appendTransparent(submesh: Submesh) {
         self.transparentSubmeshes.append(submesh)
     }
-    
-    // TODO: This kind of smells...
-//    mutating func updateUniforms() {
-//        self.uniforms = self.gameObjects.compactMap(\.modelConstants)
-//    }
 }
 
-struct UniformsData {
+struct UniformsData: Sendable {
     let uniforms: [ModelConstants]
     let opaqueSubmeshes: [Submesh]
     let transparentSubmeshes: [Submesh]
@@ -62,15 +56,9 @@ struct TransparentObjectData {
     mutating func addModel(_ model: Model) {
         self.models.append(model)
     }
-    
-    // TODO: This kind of smells...
-//    mutating func updateUniforms() {
-//        self.uniforms = self.gameObjects.compactMap(\.modelConstants)
-//    }
 }
 
-struct TransparentUniformsData {
-    let models: [Model]
+struct TransparentUniformsData: Sendable {
     let uniforms: [ModelConstants]
 }
 
@@ -239,8 +227,7 @@ final class SceneManager {
         
         for key in transparentObjectDatas.keys {
             let modelData = transparentObjectDatas[key]!
-            transparentUniformsData[key] = TransparentUniformsData(models: modelData.models,
-                                                                   uniforms: modelData.gameObjects.compactMap(\.modelConstants))
+            transparentUniformsData[key] = TransparentUniformsData(uniforms: modelData.gameObjects.compactMap(\.modelConstants))
         }
         
         return transparentUniformsData
