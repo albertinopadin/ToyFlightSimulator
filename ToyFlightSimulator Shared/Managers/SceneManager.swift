@@ -6,6 +6,7 @@
 //
 
 import MetalKit
+import os
 
 enum SceneType {
     case Sandbox
@@ -87,6 +88,8 @@ final class SceneManager {
         }
     }
     
+    private static let uniformsLock = OSAllocatedUnfairLock()
+    
     public static func SetScene(_ sceneType: SceneType, mtkView: MTKView, rendererType: RendererType) {
         _sceneType = sceneType
         _view = mtkView
@@ -121,9 +124,14 @@ final class SceneManager {
     public static func Update(deltaTime: Double) {
         if !Paused {
             GameTime.UpdateTime(deltaTime)
+            
+            // Lock when updating uniforms (model constants)
+            uniformsLock.lock()
+            
             CurrentScene?.updateCameras(deltaTime: deltaTime)
             CurrentScene?.update()
-//            UpdateUniforms()
+            
+            uniformsLock.unlock()
         }
     }
     
@@ -210,14 +218,16 @@ final class SceneManager {
     // TODO: Find best way to copy model constants into separate buffer...
     
     public static func GetUniformsData() -> [Model: UniformsData] {
+        // Lock when reading uniforms (model constants)
+        uniformsLock.lock()
         var uniformsData: [Model: UniformsData] = [:]
-        
         for key in modelDatas.keys {
             let modelData = modelDatas[key]!
             uniformsData[key] = UniformsData(uniforms: modelData.gameObjects.compactMap(\.modelConstants),
                                              opaqueSubmeshes: modelData.opaqueSubmeshes,
                                              transparentSubmeshes: modelData.transparentSubmeshes)
         }
+        uniformsLock.unlock()
         
         return uniformsData
     }
@@ -225,6 +235,7 @@ final class SceneManager {
     public static func GetTransparentUniformsData() -> [Model: TransparentUniformsData] {
         var transparentUniformsData: [Model: TransparentUniformsData] = [:]
         
+        // Lock here?
         for key in transparentObjectDatas.keys {
             let modelData = transparentObjectDatas[key]!
             transparentUniformsData[key] = TransparentUniformsData(uniforms: modelData.gameObjects.compactMap(\.modelConstants))
@@ -234,6 +245,7 @@ final class SceneManager {
     }
     
     public static func GetSkyUniformsData() -> UniformsData {
+        // Lock here?
         return UniformsData(uniforms: skyData.gameObjects.compactMap(\.modelConstants),
                             opaqueSubmeshes: skyData.opaqueSubmeshes,
                             transparentSubmeshes: skyData.transparentSubmeshes)
