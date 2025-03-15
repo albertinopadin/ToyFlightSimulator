@@ -38,6 +38,14 @@ struct GameStats: View {
                         .foregroundColor(.white)
                         .padding(5)
                     
+                    Text("Frames Rendered: \(gameStatsMgr.framesRendered)")
+                        .foregroundColor(.white)
+                        .padding(5)
+                    
+                    Text("Scene Updates: \(gameStatsMgr.sceneUpdates)")
+                        .foregroundColor(.white)
+                        .padding(5)
+                    
                     Spacer()
                 }
                 .padding(10)
@@ -45,7 +53,8 @@ struct GameStats: View {
             .frame(width: 200,
                    height: 100,
                    alignment: .topTrailing)
-            .padding(10)
+            .padding(.top, 80)
+            .padding(.trailing, 10)
             .foregroundColor(.black.opacity(0.80))
         }
         .frame(width: viewSize.width,
