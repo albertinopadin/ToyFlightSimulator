@@ -13,31 +13,15 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
     var viewSize: CGSize
     var refreshRate: FPS
     
-    func makeCoordinator() -> Renderer {
+    func makeCoordinator() -> Void {
         guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
             fatalError("Metal is not supported on this device")
         }
         
-        Engine.Start(device: defaultDevice)
         let rendererType: RendererType = .OrderIndependentTransparency
         // TODO: Single Pass renderer doesn't work due to a memory issue:
 //        let rendererType: RendererType = .SinglePassDeferredLighting
-        let renderer = initRenderer(type: rendererType)
-        return renderer
-    }
-    
-    func initRenderer(type: RendererType) -> Renderer {
-        switch type {
-            case .OrderIndependentTransparency:
-                // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
-                return OITRenderer()
-            case .SinglePassDeferredLighting:
-                return SinglePassDeferredLightingRenderer()
-            case .TiledDeferred:
-                return TiledDeferredRenderer()
-            case .ForwardPlusTileShading:
-                return TiledDeferredRenderer()  // TODO Change this out for actual Forward+ when it's ready
-        }
+        Engine.Start(device: defaultDevice, rendererType: rendererType)
     }
     
     func makeUIView(context: Context) -> GameView {
@@ -49,21 +33,23 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
         gameView.preferredFramesPerSecond = refreshRate.rawValue
         gameView.drawableSize = viewSize
         
-        context.coordinator.metalView = gameView
-        SceneManager.SetScene(Preferences.StartingSceneType, mtkView: gameView, rendererType: context.coordinator.rendererType)
+        Engine.renderer.metalView = gameView
+        SceneManager.SetScene(Preferences.StartingSceneType,
+                              mtkView: gameView,
+                              rendererType: Engine.renderer.rendererType)
         
         return gameView
     }
     
     func updateUIView(_ nsView: UIViewType, context: Context) {
-        context.coordinator.metalView.preferredFramesPerSecond = refreshRate.rawValue
+        Engine.renderer.metalView.preferredFramesPerSecond = refreshRate.rawValue
         
         // Query renderer to see if screen size has already been set: (is there a better way to do this...?)
-        if !((context.coordinator as? OITRenderer)?.alreadySetScreenSize ?? false) {
+        if !((Engine.renderer as? OITRenderer)?.alreadySetScreenSize ?? false) {
             let newSize = nsView.bounds.size
             print("[updateUIView] newSize: \(newSize)")
             if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
-                context.coordinator.metalView.drawableSize = nsView.bounds.size
+                Engine.renderer.metalView.drawableSize = nsView.bounds.size
             }
         }
     }

@@ -16,6 +16,9 @@ final class GameStatsManager: ObservableObject {
     private var frame = 0
     private var lastXFrameDeltaTime = [Double]()
     
+    @Published public var framesRendered: Int = 0
+    @Published public var sceneUpdates: Int = 0
+    
     private init() {}
     
     // TODO: Optimize this method using a true ring buffer (or better data structure)
@@ -34,6 +37,18 @@ final class GameStatsManager: ObservableObject {
                 self.rollingAverageFPS = 1 / avgDeltaTime
             }
             frame = 0
+        }
+    }
+    
+    public func frameRendered() {
+        DispatchQueue.main.async {
+            self.framesRendered += 1
+        }
+    }
+    
+    public func sceneUpdated() {
+        DispatchQueue.main.async {
+            self.sceneUpdates += 1
         }
     }
     

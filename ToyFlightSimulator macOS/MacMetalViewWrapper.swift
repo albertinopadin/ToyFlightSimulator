@@ -7,14 +7,6 @@
 
 import SwiftUI
 
-class TFSCoordinator {
-    var renderer: Renderer
-    
-    init(renderer: Renderer) {
-        self.renderer = renderer
-    }
-}
-
 struct MacMetalViewWrapper: NSViewRepresentable {
     typealias NSViewType = GameView
     
@@ -22,31 +14,15 @@ struct MacMetalViewWrapper: NSViewRepresentable {
     var refreshRate: FPS
     var rendererType: RendererType
     
-    func makeCoordinator() -> TFSCoordinator {
+    func makeCoordinator() -> Void {
         guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
             fatalError("Metal is not supported on this device")
         }
         
-        Engine.Start(device: defaultDevice)
-        let renderer = initRenderer(type: rendererType)
-        return TFSCoordinator(renderer: renderer)
+        Engine.Start(device: defaultDevice, rendererType: rendererType)
     }
     
-    func initRenderer(type: RendererType) -> Renderer {
-        switch type {
-            case .OrderIndependentTransparency:
-                // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
-                return OITRenderer()
-            case .SinglePassDeferredLighting:
-                return SinglePassDeferredLightingRenderer()
-            case .TiledDeferred:
-                return TiledDeferredRenderer()
-            case .TiledDeferredMSAA:
-                return TiledMultisampleRenderer()
-            case .ForwardPlusTileShading:
-                return ForwardPlusTileShadingRenderer()
-        }
-    }
+    
     
     func makeNSView(context: Context) -> GameView {
         let gameView = GameView()
@@ -57,32 +33,32 @@ struct MacMetalViewWrapper: NSViewRepresentable {
         gameView.preferredFramesPerSecond = refreshRate.rawValue
         gameView.drawableSize = viewSize
         
-        context.coordinator.renderer.metalView = gameView
+        Engine.renderer.metalView = gameView
         SceneManager.SetScene(Preferences.StartingSceneType,
                               mtkView: gameView,
-                              rendererType: context.coordinator.renderer.rendererType)
+                              rendererType: Engine.renderer.rendererType)
         
         return gameView
     }
     
     func updateNSView(_ nsView: NSViewType, context: Context) {
         print("[updateNSView] renderer type: \(rendererType)")
-        if rendererType != context.coordinator.renderer.rendererType {
+        if rendererType != Engine.renderer.rendererType {
 //            nsView.isPaused = true
             SceneManager.TeardownScene()
-            let newRenderer = initRenderer(type: rendererType)
+            let newRenderer = Engine.InitRenderer(type: rendererType)
             newRenderer.metalView = nsView
-            context.coordinator.renderer = newRenderer
+            Engine.renderer = newRenderer
             SceneManager.SetScene(Preferences.StartingSceneType,
                                   mtkView: nsView,
-                                  rendererType: context.coordinator.renderer.rendererType)
+                                  rendererType: Engine.renderer.rendererType)
             SceneManager.Paused = true
         }
         
         let newSize = nsView.bounds.size
         if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
-            context.coordinator.renderer.metalView.drawableSize = nsView.bounds.size
-            context.coordinator.renderer.metalView.preferredFramesPerSecond = refreshRate.rawValue
+            Engine.renderer.metalView.drawableSize = nsView.bounds.size
+            Engine.renderer.metalView.preferredFramesPerSecond = refreshRate.rawValue
         }
     }
 }
