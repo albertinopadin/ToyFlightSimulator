@@ -15,6 +15,7 @@ struct MacGameUIView: View {
     @State private var shouldDisplayGameStats: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
     @State private var rendererType: RendererType = .TiledDeferredMSAA
+    @State private var volume: Float = 15.0
     
     var body: some View {
         GeometryReader { geometry in
@@ -24,7 +25,10 @@ struct MacGameUIView: View {
                                     rendererType: rendererType)
                 
                 if shouldDisplayMenu {
-                    TFSMenu(framesPerSecond: $framesPerSecond, rendererType: $rendererType, viewSize: viewSize)
+                    TFSMenu(framesPerSecond: $framesPerSecond,
+                            rendererType: $rendererType,
+                            volume: $volume,
+                            viewSize: viewSize)
                 }
                 
                 if shouldDisplayGameStats {

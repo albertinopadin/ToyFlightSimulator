@@ -10,6 +10,7 @@ import SwiftUI
 struct TFSMenu: View {
     @Binding var framesPerSecond: FPS
     @Binding var rendererType: RendererType
+    @Binding var volume: Float
     
     var viewSize: CGSize
     
@@ -49,6 +50,18 @@ struct TFSMenu: View {
                             SceneManager.ResetScene()
                         }
                         .background(.blue)
+                        
+                        Slider(value: $volume, in: 0...100, step: 1) {
+                            Text("Game Volume:")
+                        }
+                        .onChange(of: volume) {
+                            AudioManager.SetVolume(volume / 100.0)
+                        }
+                        .frame(width: 500.0,
+                               height: 40.0,
+                               alignment: .center)
+                        
+                        Text("\(String(format: "%.0f", volume))")
                     }
                     .frame(width: geometry.size.width - 10,
                            height: geometry.size.height - 10,
@@ -73,5 +86,6 @@ struct TFSMenu: View {
 #Preview {
     TFSMenu(framesPerSecond: Binding<FPS>.constant(.FPS_120),
             rendererType: Binding<RendererType>.constant(.TiledDeferred),
+            volume: Binding<Float>.constant(15.0),
             viewSize: CGSize(width: 1920, height: 1080))
 }

@@ -19,4 +19,8 @@ final class AudioManager {
     public static func StopGameMusic() {
         audioSystem.stop()
     }
+    
+    public static func SetVolume(_ volume: Float) {
+        audioSystem.setVolume(volume)
+    }
 }
