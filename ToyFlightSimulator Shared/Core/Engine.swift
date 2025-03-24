@@ -18,6 +18,8 @@ class Engine {
     private static let updateSemaphore = DispatchSemaphore(value: 0)
     private static var updatePreviousTime: UInt64 = 0
     
+    private static var audioThread: Thread!
+    
     public static func Start(device: MTLDevice, rendererType: RendererType) {
         self.Device = device
         self.CommandQueue = device.makeCommandQueue()
@@ -32,6 +34,9 @@ class Engine {
         
         self.renderer = InitRenderer(type: rendererType)
         self.renderer.updateSemaphore = updateSemaphore
+        
+        audioThread = makeAudioThread()
+        audioThread.start()
     }
     
     public static func InitRenderer(type: RendererType) -> Renderer {
@@ -65,5 +70,14 @@ class Engine {
         ut.name = "UpdateThread"
         ut.qualityOfService = .userInteractive
         return ut
+    }
+    
+    private static func makeAudioThread() -> Thread {
+        let at = Thread {
+            AudioManager.StartGameMusic()
+        }
+        at.name = "AudioThread"
+        at.qualityOfService = .userInteractive
+        return at
     }
 }

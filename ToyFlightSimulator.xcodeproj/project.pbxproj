@@ -64,6 +64,20 @@
 		CE0602382A9C5686001F8CC3 /* FA-18F.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602372A9C5686001F8CC3 /* FA-18F.usdz */; };
 		CE0602392A9C5686001F8CC3 /* FA-18F.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602372A9C5686001F8CC3 /* FA-18F.usdz */; };
 		CE06023A2A9C5686001F8CC3 /* FA-18F.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602372A9C5686001F8CC3 /* FA-18F.usdz */; };
+		CE07DE2F2D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */; };
+		CE07DE302D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */; };
+		CE07DE312D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */; };
+		CE07DE322D8C1FEA000829FF /* TFSAudioSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */; };
+		CE07DE382D8D56DF000829FF /* LightningSpeed.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CE07DE362D8D56DF000829FF /* LightningSpeed.mp3 */; };
+		CE07DE392D8D56DF000829FF /* SunsetGlow.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CE07DE372D8D56DF000829FF /* SunsetGlow.mp3 */; };
+		CE07DE3A2D8D56DF000829FF /* LightningSpeed.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CE07DE362D8D56DF000829FF /* LightningSpeed.mp3 */; };
+		CE07DE3B2D8D56DF000829FF /* SunsetGlow.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CE07DE372D8D56DF000829FF /* SunsetGlow.mp3 */; };
+		CE07DE3C2D8D56DF000829FF /* LightningSpeed.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CE07DE362D8D56DF000829FF /* LightningSpeed.mp3 */; };
+		CE07DE3D2D8D56DF000829FF /* SunsetGlow.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CE07DE372D8D56DF000829FF /* SunsetGlow.mp3 */; };
+		CE07DE3F2D8FCE1B000829FF /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE3E2D8FCE17000829FF /* AudioManager.swift */; };
+		CE07DE402D8FCE1B000829FF /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE3E2D8FCE17000829FF /* AudioManager.swift */; };
+		CE07DE412D8FCE1B000829FF /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE3E2D8FCE17000829FF /* AudioManager.swift */; };
+		CE07DE422D8FCE1B000829FF /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE3E2D8FCE17000829FF /* AudioManager.swift */; };
 		CE085D4D2A7706B800AFD68B /* MacGameUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */; };
 		CE085D4F2A7735AE00AFD68B /* MacMetalViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */; };
 		CE0A46542B72102C009F596F /* GameStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0A46532B72102C009F596F /* GameStatsManager.swift */; };
@@ -768,8 +782,12 @@
 		CE06019C2A9364A4001F8CC3 /* Pilot Diffuse .jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Pilot Diffuse .jpg"; sourceTree = "<group>"; };
 		CE06019D2A9364A4001F8CC3 /* Pilot Specular.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Pilot Specular.jpg"; sourceTree = "<group>"; };
 		CE06022B2A945E38001F8CC3 /* F35.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F35.swift; sourceTree = "<group>"; };
-		CE0602312A9B480A001F8CC3 /* F-35A_Lightning_II.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = "F-35A_Lightning_II.usdz"; sourceTree = "<group>"; };
-		CE0602372A9C5686001F8CC3 /* FA-18F.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = "FA-18F.usdz"; sourceTree = "<group>"; };
+		CE0602312A9B480A001F8CC3 /* F-35A_Lightning_II.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = "F-35A_Lightning_II.usdz"; sourceTree = "<group>"; };
+		CE0602372A9C5686001F8CC3 /* FA-18F.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FA-18F.usdz"; sourceTree = "<group>"; };
+		CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSAudioSystem.swift; sourceTree = "<group>"; };
+		CE07DE362D8D56DF000829FF /* LightningSpeed.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = LightningSpeed.mp3; sourceTree = "<group>"; };
+		CE07DE372D8D56DF000829FF /* SunsetGlow.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = SunsetGlow.mp3; sourceTree = "<group>"; };
+		CE07DE3E2D8FCE17000829FF /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
 		CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacGameUIView.swift; sourceTree = "<group>"; };
 		CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMetalViewWrapper.swift; sourceTree = "<group>"; };
 		CE0A46532B72102C009F596F /* GameStatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatsManager.swift; sourceTree = "<group>"; };
@@ -955,7 +973,7 @@
 		CEC231322B25AC650081A26A /* PointLightObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointLightObject.swift; sourceTree = "<group>"; };
 		CEC6B09E2D80019600EE3C26 /* TFSLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSLock.swift; sourceTree = "<group>"; };
 		CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSCache.swift; sourceTree = "<group>"; };
-		CED3AA762B5D005700191002 /* F-22_Raptor.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = "F-22_Raptor.usdz"; sourceTree = "<group>"; };
+		CED3AA762B5D005700191002 /* F-22_Raptor.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = "F-22_Raptor.usdz"; sourceTree = "<group>"; };
 		CED3AA7A2B5D008200191002 /* F22.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F22.swift; sourceTree = "<group>"; };
 		CED3AA862B5D4DA300191002 /* ContainerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerNode.swift; sourceTree = "<group>"; };
 		CED7983B2C8FDE21003B6559 /* GameStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStats.swift; sourceTree = "<group>"; };
@@ -1057,6 +1075,39 @@
 				CE0602372A9C5686001F8CC3 /* FA-18F.usdz */,
 			);
 			path = RealityConverter;
+			sourceTree = "<group>";
+		};
+		CE07DE332D8D55C8000829FF /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				CE07DE352D8D55EF000829FF /* Music */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
+		CE07DE342D8D55D7000829FF /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				CE4127912B6B3EF000B01AEA /* Temple */,
+				CE0602352A9C5655001F8CC3 /* RealityConverter */,
+				CE0602302A9B47E0001F8CC3 /* CGTrader */,
+				CE06022F2A9B47C1001F8CC3 /* Sketchfab */,
+				CE3BFFB828E573800014A752 /* Quad */,
+				CE3BFFB928E573870014A752 /* Sphere */,
+				CE3BFFB728E573730014A752 /* Skysphere */,
+				CE3BFFBA28E573920014A752 /* F16 */,
+				CE2ED2892998A08300C81F47 /* F18 */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		CE07DE352D8D55EF000829FF /* Music */ = {
+			isa = PBXGroup;
+			children = (
+				CE07DE362D8D56DF000829FF /* LightningSpeed.mp3 */,
+				CE07DE372D8D56DF000829FF /* SunsetGlow.mp3 */,
+			);
+			path = Music;
 			sourceTree = "<group>";
 		};
 		CE2ED260299394C900C81F47 /* Utils */ = {
@@ -1192,6 +1243,7 @@
 		CE3BFF4528E1B0310014A752 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				CE07DE3E2D8FCE17000829FF /* AudioManager.swift */,
 				CE3BFF4628E1B05A0014A752 /* SceneManager.swift */,
 				CE50C0F92C956C7700202C45 /* DrawManager.swift */,
 				CE3BFF9128E451E50014A752 /* CameraManager.swift */,
@@ -1253,15 +1305,8 @@
 		CE3BFFB628E573690014A752 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				CE4127912B6B3EF000B01AEA /* Temple */,
-				CE0602352A9C5655001F8CC3 /* RealityConverter */,
-				CE0602302A9B47E0001F8CC3 /* CGTrader */,
-				CE06022F2A9B47C1001F8CC3 /* Sketchfab */,
-				CE3BFFB828E573800014A752 /* Quad */,
-				CE3BFFB928E573870014A752 /* Sphere */,
-				CE3BFFB728E573730014A752 /* Skysphere */,
-				CE3BFFBA28E573920014A752 /* F16 */,
-				CE2ED2892998A08300C81F47 /* F18 */,
+				CE07DE342D8D55D7000829FF /* Models */,
+				CE07DE332D8D55C8000829FF /* Audio */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1588,6 +1633,7 @@
 		CEC6B0982D6BC7F400EE3C26 /* Audio */ = {
 			isa = PBXGroup;
 			children = (
+				CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -1781,6 +1827,8 @@
 				CE06020D2A9364A5001F8CC3 /* Joint Strike Interior Specular.jpg in Resources */,
 				CE2ED2762997F09100C81F47 /* f16.obj in Resources */,
 				CE3BFFCD28E573C80014A752 /* sphere.obj in Resources */,
+				CE07DE3C2D8D56DF000829FF /* LightningSpeed.mp3 in Resources */,
+				CE07DE3D2D8D56DF000829FF /* SunsetGlow.mp3 in Resources */,
 				CE2ED2B32998A45700C81F47 /* Diffuse.jpg in Resources */,
 				CE3BFFDC28E573D60014A752 /* quad.obj in Resources */,
 				CE06020A2A9364A5001F8CC3 /* Joint Strike Body Normal.jpg in Resources */,
@@ -1811,6 +1859,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE07DE382D8D56DF000829FF /* LightningSpeed.mp3 in Resources */,
+				CE07DE392D8D56DF000829FF /* SunsetGlow.mp3 in Resources */,
 				CE2ED2872997F9B700C81F47 /* f16r.obj in Resources */,
 				CE2ED29C2998A44D00C81F47 /* FA-18F.obj in Resources */,
 				CE3BFFE528E573E40014A752 /* skysphere.obj in Resources */,
@@ -1859,6 +1909,8 @@
 				CE06021D2A9364A5001F8CC3 /* Joint Strike Interior Normal.jpg in Resources */,
 				CE2ED2AA2998A45500C81F47 /* FA-18F.mtl in Resources */,
 				CE0602262A9364A5001F8CC3 /* Pilot Diffuse .jpg in Resources */,
+				CE07DE3A2D8D56DF000829FF /* LightningSpeed.mp3 in Resources */,
+				CE07DE3B2D8D56DF000829FF /* SunsetGlow.mp3 in Resources */,
 				CE2ED2A52998A45500C81F47 /* Dirty.jpg in Resources */,
 				CE2ED29D2998A44E00C81F47 /* FA-18F.obj in Resources */,
 				CE2ED2882997F9B700C81F47 /* f16r.obj in Resources */,
@@ -1986,10 +2038,12 @@
 				CE50C1022C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
 				CE452FDE2A7CB48E001945B9 /* MeshLibrary.swift in Sources */,
 				CE452FD92A7CB489001945B9 /* Assets.swift in Sources */,
+				CE07DE422D8FCE1B000829FF /* AudioManager.swift in Sources */,
 				CE452FE32A7CB4A0001945B9 /* DebugCamera.swift in Sources */,
 				CE452FE12A7CB499001945B9 /* InputManager.swift in Sources */,
 				CE452FB92A7CB445001945B9 /* HIDDevice.swift in Sources */,
 				CE452FBD2A7CB453001945B9 /* Engine.swift in Sources */,
+				CE07DE2F2D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */,
 				CE452FF32A7CB4A6001945B9 /* Droppable.swift in Sources */,
 				CE387B3A2BCBDDE700F51DC4 /* ParticleEmitter.swift in Sources */,
 				CED3AA7D2B5D008200191002 /* F22.swift in Sources */,
@@ -2084,6 +2138,7 @@
 				CE3BFF3228E058C30014A752 /* Mouse.swift in Sources */,
 				CE2ED25D299223E900C81F47 /* Submesh.swift in Sources */,
 				CE3BFF8228E2FD6F0014A752 /* Renderable.swift in Sources */,
+				CE07DE312D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */,
 				CE3BFF2C28E0575A0014A752 /* Instanced.metal in Sources */,
 				CE79B6202B92E361009F2E49 /* BasicVertexDescriptors.swift in Sources */,
 				CE4127A92B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */,
@@ -2203,6 +2258,7 @@
 				CE9625442CCCE25D00CEA5A2 /* EulerSolver.swift in Sources */,
 				CEFC6F26296B61CA009B692B /* Line.swift in Sources */,
 				CE45304F2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift in Sources */,
+				CE07DE412D8FCE1B000829FF /* AudioManager.swift in Sources */,
 				CE4127972B6B3F2900B01AEA /* Temple.swift in Sources */,
 				CE50C0FF2C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
 				CE886A472985007A0013062D /* DirectionalLight.metal in Sources */,
@@ -2291,6 +2347,7 @@
 				CE96254F2CCCE2AE00CEA5A2 /* PhysicsWorld.swift in Sources */,
 				CE3BFF8328E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CE79B6412B932482009F2E49 /* TiledDeferredGBufferTextures.swift in Sources */,
+				CE07DE3F2D8FCE1B000829FF /* AudioManager.swift in Sources */,
 				CE7732072CA8F5EA0025286F /* TiledMSAAGBuffer.metal in Sources */,
 				CE3BFF7B28E2FC270014A752 /* SandboxScene.swift in Sources */,
 				CEC0C5952B4B2D3100863C38 /* Material.swift in Sources */,
@@ -2330,6 +2387,7 @@
 				CE79B6272B92E47E009F2E49 /* Texture.swift in Sources */,
 				CEFC6EC6295B55EA009B692B /* OrderIndependentTransparency.metal in Sources */,
 				CEC6B09F2D8001A300EE3C26 /* TFSLock.swift in Sources */,
+				CE07DE322D8C1FEA000829FF /* TFSAudioSystem.swift in Sources */,
 				CEFC6F23296B4200009B692B /* Sphere.swift in Sources */,
 				CEC6B48B2B45F8BD004A5AC7 /* TFSCache.swift in Sources */,
 				CE50C0F02C954F4A00202C45 /* Model.swift in Sources */,
@@ -2420,6 +2478,7 @@
 				CE3BFF5A28E1B2AD0014A752 /* RenderPipelineStateLibrary.swift in Sources */,
 				CE79B5F82B8F15BE009F2E49 /* BasicPipeline.swift in Sources */,
 				CE886A3C2983BF1B0013062D /* Skybox.metal in Sources */,
+				CE07DE402D8FCE1B000829FF /* AudioManager.swift in Sources */,
 				CE7C3D292A2F377B009C1E6F /* Joystick.swift in Sources */,
 				CE327B762C490D09004AF2D0 /* ParticleEmitterObject.swift in Sources */,
 				CE3BFFA528E452F00014A752 /* LightObject.swift in Sources */,
@@ -2464,6 +2523,7 @@
 				CE79B6472B932B29009F2E49 /* TiledDeferredGBuffer.metal in Sources */,
 				CEC0C5962B4B2D3100863C38 /* Material.swift in Sources */,
 				CE79B60D2B92E117009F2E49 /* BasicDepthStencils.swift in Sources */,
+				CE07DE302D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */,
 				CEB2DFD229D437990048D292 /* FreeCamFlightboxScene.swift in Sources */,
 				CEB264FC2CD48504005BCA88 /* PhysicsEntity.swift in Sources */,
 				CEC6B0A02D8001A300EE3C26 /* TFSLock.swift in Sources */,
