@@ -20,7 +20,7 @@ jobs:
                     -configuration Debug build
 
       - name: Run Unit Tests (macOS)
-        run: xcodebuild test
+        run: xcodebuild test \
                     -project ToyFlightSimulator.xcodeproj \
                     -scheme ToyFlightSimulator \
                     -sdk macosx \
