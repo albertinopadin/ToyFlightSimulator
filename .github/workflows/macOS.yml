@@ -1,0 +1,25 @@
+name: ToyFlightSimulator macOS Build and Test
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build and Test macOS App ToyFlightSimulator
+    runs-on: macos-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Build macOS App
+        run: xcodebuild -project ToyFlightSimulator.xcodeproj \
+                     -scheme ToyFlightSimulator \
+                     -sdk macosx \
+                     -configuration Debug build
+
+      - name: Run Unit Tests (macOS)
+        run: xcodebuild -project ToyFlightSimulator.xcodeproj \
+                     -scheme ToyFlightSimulator \
+                     -sdk macosx \
+                     -configuration Debug test
