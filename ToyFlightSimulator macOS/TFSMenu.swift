@@ -51,7 +51,7 @@ struct TFSMenu: View {
                         }
                         .background(.blue)
                         
-                        Slider(value: $volume, in: 0...100, step: 1) {
+                        Slider(value: $volume, in: 0...100) {
                             Text("Game Volume:")
                         }
                         .onChange(of: volume) {
