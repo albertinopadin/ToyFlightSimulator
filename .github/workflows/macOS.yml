@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     name: Build and Test macOS App ToyFlightSimulator
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - name: Check out code
         uses: actions/checkout@v3
