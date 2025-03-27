@@ -788,6 +788,7 @@
 		CE07DE362D8D56DF000829FF /* LightningSpeed.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = LightningSpeed.mp3; sourceTree = "<group>"; };
 		CE07DE372D8D56DF000829FF /* SunsetGlow.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = SunsetGlow.mp3; sourceTree = "<group>"; };
 		CE07DE3E2D8FCE17000829FF /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
+		CE07DE432D951748000829FF /* ToyFlightSimulator macOS.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ToyFlightSimulator macOS.xctestplan"; sourceTree = "<group>"; };
 		CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacGameUIView.swift; sourceTree = "<group>"; };
 		CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMetalViewWrapper.swift; sourceTree = "<group>"; };
 		CE0A46532B72102C009F596F /* GameStatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatsManager.swift; sourceTree = "<group>"; };
@@ -1431,6 +1432,7 @@
 		CE7F47E528B758900082B197 = {
 			isa = PBXGroup;
 			children = (
+				CE07DE432D951748000829FF /* ToyFlightSimulator macOS.xctestplan */,
 				CE7F47EA28B758900082B197 /* ToyFlightSimulator Shared */,
 				CE7F47F528B758920082B197 /* ToyFlightSimulator iOS */,
 				CE7F480528B758920082B197 /* ToyFlightSimulator tvOS */,

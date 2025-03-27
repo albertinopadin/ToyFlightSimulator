@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "C2C1AB53-F3B9-4DA0-9864-556AD0BDB63A",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:ToyFlightSimulator.xcodeproj",
+      "identifier" : "CE7F481328B758920082B197",
+      "name" : "ToyFlightSimulator macOS"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:ToyFlightSimulator.xcodeproj",
+        "identifier" : "CE452FA32A7CA810001945B9",
+        "name" : "ToyFlightSimulatorTests"
+      }
+    }
+  ],
+  "version" : 1
+}
