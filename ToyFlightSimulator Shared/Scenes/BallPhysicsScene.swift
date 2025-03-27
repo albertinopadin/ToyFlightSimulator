@@ -5,9 +5,15 @@
 //  Created by Albertino Padin on 10/26/24.
 //
 
+#if os(macOS)
 import AppKit
+typealias TFSColor = NSColor
+#else
+import UIKit
+typealias TFSColor = UIColor
+#endif
 
-let colors: [NSColor] = [
+let colors: [TFSColor] = [
     .blue,
     .black,
     .brown,
@@ -15,7 +21,6 @@ let colors: [NSColor] = [
     .darkGray,
     .gray,
     .green,
-    .highlightColor,
     .lightGray,
     .magenta,
     .orange,

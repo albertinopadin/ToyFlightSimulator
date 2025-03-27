@@ -85,7 +85,7 @@ struct Material: sizeable {
                     case .none:
                         print("Material \(material.name) property is none for semantic: \(semantic.toString())")
                     default:
-                        fatalError("Data for material property not found - name: \(material.name), class name: \(material.className), debug desc: \(material.debugDescription), for semantic: \(semantic.toString())")
+                        fatalError("Data for material property not found - name: \(material.name), debug desc: \(material.debugDescription), for semantic: \(semantic.toString())")
                 }
             }
         }
