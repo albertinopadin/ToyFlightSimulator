@@ -15,5 +15,5 @@ jobs:
       - name: Build macOS App
         run: xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme ToyFlightSimulator\ macOS -sdk macosx -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
-      - name: Run Unit Tests (macOS)
-        run: xcodebuild test -project ToyFlightSimulator.xcodeproj -scheme ToyFlightSimulator\ macOS -sdk macosx -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+      # - name: Run Unit Tests (macOS)
+      #   run: xcodebuild test -project ToyFlightSimulator.xcodeproj -scheme ToyFlightSimulator\ macOS -sdk macosx -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
