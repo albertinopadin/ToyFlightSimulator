@@ -1,6 +1,6 @@
-# ToyFlightSimulator
-
 [![ToyFlightSimulator macOS Build and Test](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/macOS.yml/badge.svg?branch=main)](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/macOS.yml)
+
+# ToyFlightSimulator
 
 ### Toy Flight Simulator implemented with Swift, SwiftUI and Metal
 
