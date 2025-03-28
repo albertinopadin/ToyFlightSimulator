@@ -14,13 +14,3 @@ public func timeit(body: ()->()) -> UInt64 {
     body()
     return DispatchTime.now().uptimeNanoseconds - start
 }
-
-@inlinable
-@inline(__always)
-public func timeit(body: @escaping () async -> ()) -> UInt64 {
-    let start = DispatchTime.now().uptimeNanoseconds
-    Task(priority: .userInitiated) {
-        await body()
-    }
-    return DispatchTime.now().uptimeNanoseconds - start
-}
