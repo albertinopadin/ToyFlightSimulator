@@ -1123,6 +1123,16 @@
 			path = Music;
 			sourceTree = "<group>";
 		};
+		CE0D38A42D994E530072425D /* Threads */ = {
+			isa = PBXGroup;
+			children = (
+				CE8D09652D98E709003C2248 /* AudioThread.swift */,
+				CE8D09612D98E6D2003C2248 /* UpdateThread.swift */,
+				CE8D095D2D98E6A7003C2248 /* TFSThread.swift */,
+			);
+			path = Threads;
+			sourceTree = "<group>";
+		};
 		CE2ED260299394C900C81F47 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
@@ -1528,9 +1538,7 @@
 		CE7F48B928BB93550082B197 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				CE8D09652D98E709003C2248 /* AudioThread.swift */,
-				CE8D09612D98E6D2003C2248 /* UpdateThread.swift */,
-				CE8D095D2D98E6A7003C2248 /* TFSThread.swift */,
+				CE0D38A42D994E530072425D /* Threads */,
 				CE3BFFB628E573690014A752 /* Resources */,
 				CE3BFF4928E1B1FA0014A752 /* Types */,
 				CE3BFF3028E058AE0014A752 /* Input */,

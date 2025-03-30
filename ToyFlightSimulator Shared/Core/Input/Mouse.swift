@@ -5,6 +5,8 @@
 //  Created by Albertino Padin on 9/25/22.
 //
 
+import os
+
 enum MOUSE_BUTTON_CODES: Int {
     case LEFT   = 0
     case RIGHT  = 1
@@ -17,66 +19,90 @@ enum MouseState: Int, CaseIterable {
 }
 
 class Mouse {
+    private static let lock = OSAllocatedUnfairLock()
+    
     private static let MOUSE_BUTTON_COUNT = 12
-    private static var mouseButtonList = [Bool](repeating: false, count: MOUSE_BUTTON_COUNT)
+    nonisolated(unsafe) private static var mouseButtonList = [Bool](repeating: false, count: MOUSE_BUTTON_COUNT)
     
-    private static var overallMousePosition = float2(0, 0)
-    private static var mousePositionDelta = float2(0, 0)
+    nonisolated(unsafe) private static var overallMousePosition = float2(0, 0)
+    nonisolated(unsafe) private static var mousePositionDelta = float2(0, 0)
     
-    private static var scrollWheelPosition: Float = 0
-    private static var scrollWheelChange: Float = 0.0
+    nonisolated(unsafe) private static var scrollWheelPosition: Float = 0
+    nonisolated(unsafe) private static var scrollWheelChange: Float = 0.0
     
     public static func SetMouseButtonPressed(button: Int) {
-        mouseButtonList[button] = true
+        lock.withLock {
+            mouseButtonList[button] = true
+        }
     }
     
     public static func SetMouseButtonReleased(button: Int) {
-        mouseButtonList[button] = false
+        lock.withLock {
+            mouseButtonList[button] = false
+        }
     }
     
     public static func IsMouseButtonPressed(button: MOUSE_BUTTON_CODES) -> Bool {
-        return mouseButtonList[Int(button.rawValue)]
+        lock.withLock {
+            return mouseButtonList[Int(button.rawValue)]
+        }
     }
     
     public static func SetOverallMousePosition(position: float2) {
-        overallMousePosition = position
+        lock.withLock {
+            overallMousePosition = position
+        }
     }
     
     public static func SetMousePositionChange(overallPosition: float2, deltaPosition: float2) {
-        overallMousePosition = overallPosition
-        mousePositionDelta = deltaPosition
+        lock.withLock {
+            overallMousePosition = overallPosition
+            mousePositionDelta = deltaPosition
+        }
     }
     
     public static func ScrollMouse(deltaY: Float) {
-        scrollWheelPosition += deltaY
-        scrollWheelChange += deltaY
+        lock.withLock {
+            scrollWheelPosition += deltaY
+            scrollWheelChange += deltaY
+        }
     }
     
     public static func GetMouseWindowPosition() -> float2 {
-        return overallMousePosition
+        lock.withLock {
+            return overallMousePosition
+        }
     }
     
     public static func GetDWheel() -> Float {
-        let position = scrollWheelChange
-        scrollWheelChange = 0
-        return -position
+        lock.withLock {
+            let position = scrollWheelChange
+            scrollWheelChange = 0
+            return -position
+        }
     }
     
     public static func GetDY() -> Float {
-        let result = mousePositionDelta.y
-        mousePositionDelta.y = 0
-        return result
+        lock.withLock {
+            let result = mousePositionDelta.y
+            mousePositionDelta.y = 0
+            return result
+        }
     }
     
     public static func GetDX() -> Float {
-        let result = mousePositionDelta.x
-        mousePositionDelta.x = 0
-        return result
+        lock.withLock {
+            let result = mousePositionDelta.x
+            mousePositionDelta.x = 0
+            return result
+        }
     }
     
     public static func GetMouseViewportPosition() -> float2 {
-        let x = (overallMousePosition.x - Renderer.ScreenSize.x * 0.5) / (Renderer.ScreenSize.x * 0.5)
-        let y = (overallMousePosition.y - Renderer.ScreenSize.y * 0.5) / (Renderer.ScreenSize.y * 0.5)
-        return float2(x, y)
+        lock.withLock {
+            let x = (overallMousePosition.x - Renderer.ScreenSize.x * 0.5) / (Renderer.ScreenSize.x * 0.5)
+            let y = (overallMousePosition.y - Renderer.ScreenSize.y * 0.5) / (Renderer.ScreenSize.y * 0.5)
+            return float2(x, y)
+        }
     }
 }
