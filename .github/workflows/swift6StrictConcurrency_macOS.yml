@@ -1,0 +1,22 @@
+name: ToyFlightSimulator macOS Build (with complete strict concurrency checking) > swift6
+
+on:
+  push:
+    branches: [swift6]
+
+jobs:
+  build:
+    name: Build macOS App ToyFlightSimulator
+    runs-on: macos-15
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Verify Xcode version
+        run: xcodebuild -version
+
+      - name: Verify Swift version
+        run: swift --version
+
+      - name: Build macOS App
+        run: xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme ToyFlightSimulator\ macOS -sdk macosx -configuration Debug SWIFT_STRICT_CONCURRENCY=complete CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

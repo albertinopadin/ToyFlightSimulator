@@ -1,4 +1,6 @@
-[![ToyFlightSimulator macOS Build and Test - Branch: main](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/macOS.yml/badge.svg?branch=main)](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/macOS.yml)
+[![ToyFlightSimulator macOS Build > main](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/macOS.yml/badge.svg)](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/macOS.yml)
+
+[![ToyFlightSimulator macOS Build (with complete strict concurrency checking) > swift6](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/swift6StrictConcurrency_macOS.yml/badge.svg)](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/swift6StrictConcurrency_macOS.yml)
 
 # ToyFlightSimulator
 
