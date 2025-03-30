@@ -1,4 +1,4 @@
-[![ToyFlightSimulator macOS Build and Test](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/macOS.yml/badge.svg?branch=main)](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/macOS.yml)
+[![ToyFlightSimulator macOS Build and Test - Branch: main](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/macOS.yml/badge.svg?branch=main)](https://github.com/albertinopadin/ToyFlightSimulator/actions/workflows/macOS.yml)
 
 # ToyFlightSimulator
 
