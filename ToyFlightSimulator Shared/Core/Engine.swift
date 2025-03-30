@@ -7,36 +7,43 @@
 
 import MetalKit
 
-class Engine {
-    public static var Device: MTLDevice!
-    public static var CommandQueue: MTLCommandQueue!
-    public static var DefaultLibrary: MTLLibrary!
+final class Engine {
+    nonisolated(unsafe) public static let Device: MTLDevice = {
+        guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
+            fatalError("[Engine] Metal is not supported on this device.")
+        }
+        return defaultDevice
+    }()
     
-    public static var renderer: Renderer!
+    nonisolated(unsafe) public static let CommandQueue: MTLCommandQueue = {
+        guard let commandQueue = Engine.Device.makeCommandQueue() else {
+            fatalError("[Engine] Could not create command queue.")
+        }
+        return commandQueue
+    }()
     
-    private static var updateThread: Thread!
-    private static let updateSemaphore = DispatchSemaphore(value: 0)
-    private static var updatePreviousTime: UInt64 = 0
+    nonisolated(unsafe) public static let DefaultLibrary: MTLLibrary = {
+        guard let defaultLibrary = Engine.Device.makeDefaultLibrary() else {
+            fatalError("[Engine] Could not create default library.")
+        }
+        return defaultLibrary
+    }()
     
-    private static var audioThread: Thread!
+    nonisolated(unsafe) public static var renderer: Renderer?
     
-    public static func Start(device: MTLDevice, rendererType: RendererType) {
-        self.Device = device
-        self.CommandQueue = device.makeCommandQueue()
-        self.DefaultLibrary = device.makeDefaultLibrary()
-        
+    nonisolated(unsafe) private static let updateThread = UpdateThread(name: "UpdateThread", qos: .userInteractive)
+    nonisolated(unsafe) private static let audioThread = AudioThread(name: "AudioThread", qos: .userInteractive)
+    
+    public static func Start(rendererType: RendererType) {
         Graphics.Initialize()
         Assets.Initialize()
         InputManager.Initialize()
         
-        updateThread = makeUpdateThread()
         updateThread.start()
-        
-        self.renderer = InitRenderer(type: rendererType)
-        self.renderer.updateSemaphore = updateSemaphore
-        
-        audioThread = makeAudioThread()
         audioThread.start()
+        
+        Engine.renderer = Engine.InitRenderer(type: rendererType)
+        Engine.renderer!.updateSemaphore = Engine.updateThread.updateSemaphore
     }
     
     public static func InitRenderer(type: RendererType) -> Renderer {
@@ -53,31 +60,5 @@ class Engine {
             case .ForwardPlusTileShading:
                 return ForwardPlusTileShadingRenderer()
         }
-    }
-    
-    private static func makeUpdateThread() -> Thread {
-        let ut = Thread {
-            while true {
-                _ = self.updateSemaphore.wait(timeout: .distantFuture)
-                
-                let currentTime = DispatchTime.now().uptimeNanoseconds
-                let updateDeltaTime = Double(currentTime - self.updatePreviousTime) / 1e9
-                self.updatePreviousTime = currentTime
-                SceneManager.Update(deltaTime: updateDeltaTime)
-                GameStatsManager.sharedInstance.sceneUpdated()
-            }
-        }
-        ut.name = "UpdateThread"
-        ut.qualityOfService = .userInteractive
-        return ut
-    }
-    
-    private static func makeAudioThread() -> Thread {
-        let at = Thread {
-            AudioManager.StartGameMusic()
-        }
-        at.name = "AudioThread"
-        at.qualityOfService = .userInteractive
-        return at
     }
 }

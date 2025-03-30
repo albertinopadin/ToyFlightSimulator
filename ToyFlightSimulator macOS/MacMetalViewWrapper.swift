@@ -15,11 +15,7 @@ struct MacMetalViewWrapper: NSViewRepresentable {
     var rendererType: RendererType
     
     func makeCoordinator() -> Void {
-        guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
-            fatalError("Metal is not supported on this device")
-        }
-        
-        Engine.Start(device: defaultDevice, rendererType: rendererType)
+        Engine.Start(rendererType: rendererType)
     }
     
     
@@ -33,17 +29,17 @@ struct MacMetalViewWrapper: NSViewRepresentable {
         gameView.preferredFramesPerSecond = refreshRate.rawValue
         gameView.drawableSize = viewSize
         
-        Engine.renderer.metalView = gameView
+        Engine.renderer!.metalView = gameView
         SceneManager.SetScene(Preferences.StartingSceneType,
                               mtkView: gameView,
-                              rendererType: Engine.renderer.rendererType)
+                              rendererType: Engine.renderer!.rendererType)
         
         return gameView
     }
     
     func updateNSView(_ nsView: NSViewType, context: Context) {
         print("[updateNSView] renderer type: \(rendererType)")
-        if rendererType != Engine.renderer.rendererType {
+        if rendererType != Engine.renderer!.rendererType {
 //            nsView.isPaused = true
             SceneManager.TeardownScene()
             let newRenderer = Engine.InitRenderer(type: rendererType)
@@ -51,14 +47,14 @@ struct MacMetalViewWrapper: NSViewRepresentable {
             Engine.renderer = newRenderer
             SceneManager.SetScene(Preferences.StartingSceneType,
                                   mtkView: nsView,
-                                  rendererType: Engine.renderer.rendererType)
+                                  rendererType: Engine.renderer!.rendererType)
             SceneManager.Paused = true
         }
         
         let newSize = nsView.bounds.size
         if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
-            Engine.renderer.metalView.drawableSize = nsView.bounds.size
-            Engine.renderer.metalView.preferredFramesPerSecond = refreshRate.rawValue
+            Engine.renderer!.metalView.drawableSize = nsView.bounds.size
+            Engine.renderer!.metalView.preferredFramesPerSecond = refreshRate.rawValue
         }
     }
 }
