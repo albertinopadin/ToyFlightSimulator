@@ -2,7 +2,7 @@ name: ToyFlightSimulator macOS Build and Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
@@ -11,6 +11,12 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+
+      - name: Verify Xcode version
+        run: xcodebuild -version
+
+      - name: Verify Swift version
+        run: swift --version
 
       - name: Build macOS App
         run: xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme ToyFlightSimulator\ macOS -sdk macosx -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
