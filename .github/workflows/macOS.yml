@@ -1,4 +1,4 @@
-name: ToyFlightSimulator macOS Build and Test > main
+name: ToyFlightSimulator macOS Build > main
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Build and Test macOS App ToyFlightSimulator
+    name: Build macOS App ToyFlightSimulator
     runs-on: macos-15
     steps:
       - name: Check out code
