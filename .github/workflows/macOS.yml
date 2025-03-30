@@ -1,4 +1,4 @@
-name: ToyFlightSimulator macOS Build and Test - Branch: main
+name: ToyFlightSimulator macOS Build and Test > main
 
 on:
   push:
