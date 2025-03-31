@@ -84,6 +84,10 @@
 		CE0A46552B72102C009F596F /* GameStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0A46532B72102C009F596F /* GameStatsManager.swift */; };
 		CE0A46562B72102C009F596F /* GameStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0A46532B72102C009F596F /* GameStatsManager.swift */; };
 		CE0A46572B72102C009F596F /* GameStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0A46532B72102C009F596F /* GameStatsManager.swift */; };
+		CE0D38A62D9A51370072425D /* LockUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D38A52D9A51310072425D /* LockUtils.swift */; };
+		CE0D38A72D9A51370072425D /* LockUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D38A52D9A51310072425D /* LockUtils.swift */; };
+		CE0D38A82D9A51370072425D /* LockUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D38A52D9A51310072425D /* LockUtils.swift */; };
+		CE0D38A92D9A51370072425D /* LockUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0D38A52D9A51310072425D /* LockUtils.swift */; };
 		CE0EF7272A46CD3B00F54A2C /* HotasConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */; };
 		CE0EF7292A46CF9F00F54A2C /* HIDDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF7282A46CF9F00F54A2C /* HIDDevice.swift */; };
 		CE0EF72B2A4705FE00F54A2C /* Throttle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EF72A2A4705FE00F54A2C /* Throttle.swift */; };
@@ -801,6 +805,7 @@
 		CE085D4C2A7706B800AFD68B /* MacGameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacGameUIView.swift; sourceTree = "<group>"; };
 		CE085D4E2A7735AE00AFD68B /* MacMetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMetalViewWrapper.swift; sourceTree = "<group>"; };
 		CE0A46532B72102C009F596F /* GameStatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatsManager.swift; sourceTree = "<group>"; };
+		CE0D38A52D9A51310072425D /* LockUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockUtils.swift; sourceTree = "<group>"; };
 		CE0EF7262A46CD3B00F54A2C /* HotasConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotasConfig.swift; sourceTree = "<group>"; };
 		CE0EF7282A46CF9F00F54A2C /* HIDDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDDevice.swift; sourceTree = "<group>"; };
 		CE0EF72A2A4705FE00F54A2C /* Throttle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Throttle.swift; sourceTree = "<group>"; };
@@ -1136,6 +1141,7 @@
 		CE2ED260299394C900C81F47 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				CE0D38A52D9A51310072425D /* LockUtils.swift */,
 				CEC6B09E2D80019600EE3C26 /* TFSLock.swift */,
 				CE7F484D28B771550082B197 /* TimeIt.swift */,
 				CE2ED261299394E500C81F47 /* ModelIO+Extensions.swift */,
@@ -2041,6 +2047,7 @@
 				CE452FFE2A7CB4AC001945B9 /* GameScene.swift in Sources */,
 				CE8A7A3F2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */,
 				CE452FB02A7CB3FF001945B9 /* RenderPipelineStateLibrary.swift in Sources */,
+				CE0D38A62D9A51370072425D /* LockUtils.swift in Sources */,
 				CE452FC82A7CB47F001945B9 /* OrderIndependentTransparency.metal in Sources */,
 				CE452FC92A7CB47F001945B9 /* PointLights.metal in Sources */,
 				CE452FC62A7CB47F001945B9 /* Final.metal in Sources */,
@@ -2222,6 +2229,7 @@
 				CE3DD2E929F37FE500787E53 /* Missile.swift in Sources */,
 				CE3BFF5028E1B2230014A752 /* Library.swift in Sources */,
 				CEC6B48A2B45F8BD004A5AC7 /* TFSCache.swift in Sources */,
+				CE0D38A92D9A51370072425D /* LockUtils.swift in Sources */,
 				CE3BFF4328E1AEF80014A752 /* Preferences.swift in Sources */,
 				CEAB38502981024E0087F7CB /* Transform.swift in Sources */,
 				CE3BFF8E28E2FE140014A752 /* Math.swift in Sources */,
@@ -2354,6 +2362,7 @@
 				CE77320B2CA901EA0025286F /* TiledMSAATransparency.metal in Sources */,
 				CEB2DFD129D437990048D292 /* FreeCamFlightboxScene.swift in Sources */,
 				CE41279A2B6B667800B01AEA /* Temple.swift in Sources */,
+				CE0D38A82D9A51370072425D /* LockUtils.swift in Sources */,
 				CE2ED29A2998A37F00C81F47 /* Aircraft.swift in Sources */,
 				CE79B63C2B931F19009F2E49 /* TiledDeferredPipeline.swift in Sources */,
 				CE7732152CAA9A240025286F /* Composition.metal in Sources */,
@@ -2547,6 +2556,7 @@
 				CE7F481728B758920082B197 /* AppDelegate.swift in Sources */,
 				CEAB384C297FB3720087F7CB /* SinglePassDeferredGBufferTextures.swift in Sources */,
 				CE79B6282B92E47E009F2E49 /* Texture.swift in Sources */,
+				CE0D38A72D9A51370072425D /* LockUtils.swift in Sources */,
 				CE3BFF9D28E4523D0014A752 /* Camera.swift in Sources */,
 				CE3BFF9428E451E50014A752 /* CameraManager.swift in Sources */,
 				CE387B542BE230FE00F51DC4 /* ComputePipelineStateLibrary.swift in Sources */,

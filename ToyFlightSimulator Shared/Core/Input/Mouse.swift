@@ -19,63 +19,75 @@ enum MouseState: Int, CaseIterable {
 }
 
 class Mouse {
-    private static let lock = OSAllocatedUnfairLock()
-    
     private static let MOUSE_BUTTON_COUNT = 12
+    
+    private static let mouseButtonListLock = OSAllocatedUnfairLock()
     nonisolated(unsafe) private static var mouseButtonList = [Bool](repeating: false, count: MOUSE_BUTTON_COUNT)
     
+    private static let overallMousePositionLock = OSAllocatedUnfairLock()
     nonisolated(unsafe) private static var overallMousePosition = float2(0, 0)
+    
+    private static let mousePositionDeltaLock = OSAllocatedUnfairLock()
     nonisolated(unsafe) private static var mousePositionDelta = float2(0, 0)
     
+    private static let scrollWheelPositionLock = OSAllocatedUnfairLock()
     nonisolated(unsafe) private static var scrollWheelPosition: Float = 0
+    
+    private static let scrollWheelChangeLock = OSAllocatedUnfairLock()
     nonisolated(unsafe) private static var scrollWheelChange: Float = 0.0
     
     public static func SetMouseButtonPressed(button: Int) {
-        lock.withLock {
+        withLock(mouseButtonListLock) {
             mouseButtonList[button] = true
         }
     }
     
     public static func SetMouseButtonReleased(button: Int) {
-        lock.withLock {
+        withLock(mouseButtonListLock) {
             mouseButtonList[button] = false
         }
     }
     
     public static func IsMouseButtonPressed(button: MOUSE_BUTTON_CODES) -> Bool {
-        lock.withLock {
+        return withLock(mouseButtonListLock) {
             return mouseButtonList[Int(button.rawValue)]
         }
     }
     
     public static func SetOverallMousePosition(position: float2) {
-        lock.withLock {
+        withLock(overallMousePositionLock) {
             overallMousePosition = position
         }
     }
     
     public static func SetMousePositionChange(overallPosition: float2, deltaPosition: float2) {
-        lock.withLock {
+        withLock(overallMousePositionLock) {
             overallMousePosition = overallPosition
+        }
+        
+        withLock(mousePositionDeltaLock) {
             mousePositionDelta = deltaPosition
         }
     }
     
     public static func ScrollMouse(deltaY: Float) {
-        lock.withLock {
+        withLock(scrollWheelPositionLock) {
             scrollWheelPosition += deltaY
+        }
+        
+        withLock(scrollWheelChangeLock) {
             scrollWheelChange += deltaY
         }
     }
     
     public static func GetMouseWindowPosition() -> float2 {
-        lock.withLock {
+        return withLock(overallMousePositionLock) {
             return overallMousePosition
         }
     }
     
     public static func GetDWheel() -> Float {
-        lock.withLock {
+        return withLock(scrollWheelChangeLock) {
             let position = scrollWheelChange
             scrollWheelChange = 0
             return -position
@@ -83,7 +95,7 @@ class Mouse {
     }
     
     public static func GetDY() -> Float {
-        lock.withLock {
+        return withLock(mousePositionDeltaLock) {
             let result = mousePositionDelta.y
             mousePositionDelta.y = 0
             return result
@@ -91,7 +103,7 @@ class Mouse {
     }
     
     public static func GetDX() -> Float {
-        lock.withLock {
+        return withLock(mousePositionDeltaLock) {
             let result = mousePositionDelta.x
             mousePositionDelta.x = 0
             return result
@@ -99,7 +111,7 @@ class Mouse {
     }
     
     public static func GetMouseViewportPosition() -> float2 {
-        lock.withLock {
+        return withLock(overallMousePositionLock) {
             let x = (overallMousePosition.x - Renderer.ScreenSize.x * 0.5) / (Renderer.ScreenSize.x * 0.5)
             let y = (overallMousePosition.y - Renderer.ScreenSize.y * 0.5) / (Renderer.ScreenSize.y * 0.5)
             return float2(x, y)
