@@ -12,7 +12,7 @@ enum SamplerStateType {
     case Linear
 }
 
-class SamplerStateLibrary: Library<SamplerStateType, MTLSamplerState> {
+final class SamplerStateLibrary: Library<SamplerStateType, MTLSamplerState>, @unchecked Sendable {
     private var library: [SamplerStateType: SamplerState] = [:]
     
     override func makeLibrary() {

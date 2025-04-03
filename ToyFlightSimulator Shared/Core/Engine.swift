@@ -35,7 +35,6 @@ final class Engine {
     nonisolated(unsafe) private static let audioThread = AudioThread(name: "AudioThread", qos: .userInteractive)
     
     public static func Start(rendererType: RendererType) {
-        Graphics.Initialize()
         Assets.Initialize()
         InputManager.Initialize()
         

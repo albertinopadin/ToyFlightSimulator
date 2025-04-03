@@ -11,7 +11,7 @@ enum MDLVertexDescriptorType {
     case Base
 }
 
-class MDLVertexDescriptorLibrary: Library<MDLVertexDescriptorType, MDLVertexDescriptor> {
+final class MDLVertexDescriptorLibrary: Library<MDLVertexDescriptorType, MDLVertexDescriptor>, @unchecked Sendable {
     private var _library: [MDLVertexDescriptorType: MDLVertexDescriptor] = [:]
     
     override func makeLibrary() {

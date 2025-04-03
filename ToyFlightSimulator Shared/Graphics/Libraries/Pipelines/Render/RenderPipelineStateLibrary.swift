@@ -55,7 +55,7 @@ enum RenderPipelineStateType {
     case Composite
 }
 
-class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState> {
+final class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState>, @unchecked Sendable {
     private var _library: [RenderPipelineStateType: RenderPipelineState] = [:]
     
     override func makeLibrary() {

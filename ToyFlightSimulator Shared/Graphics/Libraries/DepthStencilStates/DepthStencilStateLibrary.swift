@@ -27,7 +27,7 @@ enum DepthStencilStateType {
     case TiledDeferredLight
 }
 
-class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilState> {
+final class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilState>, @unchecked Sendable {
     private var _library: [DepthStencilStateType: DepthStencilState] = [:]
     
     override func makeLibrary() {

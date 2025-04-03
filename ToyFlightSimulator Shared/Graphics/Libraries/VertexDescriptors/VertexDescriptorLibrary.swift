@@ -27,7 +27,7 @@ enum VertexDescriptorType {
     case Skybox
 }
 
-class VertexDescriptorLibrary: Library<VertexDescriptorType, MTLVertexDescriptor> {
+final class VertexDescriptorLibrary: Library<VertexDescriptorType, MTLVertexDescriptor>, @unchecked Sendable {
     private var _library: [VertexDescriptorType: VertexDescriptor] = [:]
     
     override func makeLibrary() {
