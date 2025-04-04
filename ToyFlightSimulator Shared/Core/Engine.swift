@@ -5,24 +5,24 @@
 //  Created by Albertino Padin on 9/25/22.
 //
 
-import MetalKit
+@preconcurrency import MetalKit
 
 final class Engine {
-    nonisolated(unsafe) public static let Device: MTLDevice = {
+    public static let Device: MTLDevice = {
         guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
             fatalError("[Engine] Metal is not supported on this device.")
         }
         return defaultDevice
     }()
     
-    nonisolated(unsafe) public static let CommandQueue: MTLCommandQueue = {
+    public static let CommandQueue: MTLCommandQueue = {
         guard let commandQueue = Engine.Device.makeCommandQueue() else {
             fatalError("[Engine] Could not create command queue.")
         }
         return commandQueue
     }()
     
-    nonisolated(unsafe) public static let DefaultLibrary: MTLLibrary = {
+    public static let DefaultLibrary: MTLLibrary = {
         guard let defaultLibrary = Engine.Device.makeDefaultLibrary() else {
             fatalError("[Engine] Could not create default library.")
         }
@@ -55,6 +55,22 @@ final class Engine {
                 return TiledMultisampleRenderer()
             case .ForwardPlusTileShading:
                 return ForwardPlusTileShadingRenderer()
+        }
+    }
+    
+    public static var MetalView: MTKView? {
+        get {
+            return Engine.renderer?.metalView
+        }
+        
+        set {
+            Engine.renderer?.metalView = newValue!
+        }
+    }
+    
+    public static func PauseView(_ shouldPause: Bool) {
+        DispatchQueue.main.async {
+            Engine.renderer?.metalView.isPaused = shouldPause
         }
     }
 }

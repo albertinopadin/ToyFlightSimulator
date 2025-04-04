@@ -29,9 +29,8 @@ struct MacMetalViewWrapper: NSViewRepresentable {
         gameView.preferredFramesPerSecond = refreshRate.rawValue
         gameView.drawableSize = viewSize
         
-        Engine.renderer!.metalView = gameView
+        Engine.MetalView = gameView
         SceneManager.SetScene(Preferences.StartingSceneType,
-                              mtkView: gameView,
                               rendererType: Engine.renderer!.rendererType)
         
         return gameView
@@ -46,15 +45,14 @@ struct MacMetalViewWrapper: NSViewRepresentable {
             newRenderer.metalView = nsView
             Engine.renderer = newRenderer
             SceneManager.SetScene(Preferences.StartingSceneType,
-                                  mtkView: nsView,
                                   rendererType: Engine.renderer!.rendererType)
             SceneManager.Paused = true
         }
         
         let newSize = nsView.bounds.size
         if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
-            Engine.renderer!.metalView.drawableSize = nsView.bounds.size
-            Engine.renderer!.metalView.preferredFramesPerSecond = refreshRate.rawValue
+            Engine.MetalView!.drawableSize = nsView.bounds.size
+            Engine.MetalView!.preferredFramesPerSecond = refreshRate.rawValue
         }
     }
 }

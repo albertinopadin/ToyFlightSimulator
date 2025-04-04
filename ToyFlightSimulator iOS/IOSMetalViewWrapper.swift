@@ -29,23 +29,22 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
         gameView.preferredFramesPerSecond = refreshRate.rawValue
         gameView.drawableSize = viewSize
         
-        Engine.renderer!.metalView = gameView
+        Engine.MetalView = gameView
         SceneManager.SetScene(Preferences.StartingSceneType,
-                              mtkView: gameView,
                               rendererType: Engine.renderer!.rendererType)
         
         return gameView
     }
     
     func updateUIView(_ nsView: UIViewType, context: Context) {
-        Engine.renderer!.metalView.preferredFramesPerSecond = refreshRate.rawValue
+        Engine.MetalView!.preferredFramesPerSecond = refreshRate.rawValue
         
         // Query renderer to see if screen size has already been set: (is there a better way to do this...?)
         if !((Engine.renderer as? OITRenderer)?.alreadySetScreenSize ?? false) {
             let newSize = nsView.bounds.size
             print("[updateUIView] newSize: \(newSize)")
             if newSize.width > 0 && newSize.width.isNormal && newSize.height > 0 && newSize.height.isNormal {
-                Engine.renderer!.metalView.drawableSize = nsView.bounds.size
+                Engine.MetalView!.drawableSize = nsView.bounds.size
             }
         }
     }
