@@ -17,7 +17,7 @@ import UIKit
 typealias Event = UIEvent
 #endif
 
-class Keyboard {
+final class Keyboard {
     private static let KEY_COUNT: Int = 256
     
     private static let keysLock = OSAllocatedUnfairLock()

@@ -7,7 +7,7 @@
 
 import MetalKit
 
-class TiledDeferredRenderer: Renderer {
+final class TiledDeferredRenderer: Renderer {
     private static let ShadowTextureSize: Int = 8_192
     
     private let icosahedron = IcosahedronMesh()

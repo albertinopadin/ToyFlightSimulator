@@ -18,7 +18,7 @@ enum MouseState: Int, CaseIterable {
     case rightClick = 1
 }
 
-class Mouse {
+final class Mouse {
     private static let MOUSE_BUTTON_COUNT = 12
     
     private static let mouseButtonListLock = OSAllocatedUnfairLock()

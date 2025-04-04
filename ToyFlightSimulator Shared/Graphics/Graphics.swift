@@ -7,7 +7,7 @@
 
 import os
 
-class Graphics {
+final class Graphics {
     public static let Shaders = ShaderLibrary()
     public static let VertexDescriptors = VertexDescriptorLibrary()
     public static let RenderPipelineStates = RenderPipelineStateLibrary()
