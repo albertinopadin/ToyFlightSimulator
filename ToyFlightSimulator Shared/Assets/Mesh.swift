@@ -5,7 +5,7 @@
 //  Created by Albertino Padin on 2/6/23.
 //
 
-import MetalKit
+@preconcurrency import MetalKit
 
 class Mesh {
     public static let mtkMeshBufferAllocator = MTKMeshBufferAllocator(device: Engine.Device)

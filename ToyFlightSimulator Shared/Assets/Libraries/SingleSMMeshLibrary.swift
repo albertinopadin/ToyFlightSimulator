@@ -14,7 +14,7 @@ enum SingleSMMeshType {
     case F18_FuelTank
 }
 
-class SingleSMMeshLibrary: Library<SingleSMMeshType, SingleSMMesh> {
+final class SingleSMMeshLibrary: Library<SingleSMMeshType, SingleSMMesh>, @unchecked Sendable {
     private var _library: [SingleSMMeshType: SingleSMMesh] = [:]
     
     override func makeLibrary() {
