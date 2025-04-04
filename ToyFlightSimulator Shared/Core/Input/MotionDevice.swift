@@ -5,6 +5,7 @@
 //  Created by Albertino Padin on 8/6/23.
 //
 
+#if os(iOS)
 import CoreMotion
 
 enum MotionContinuousState {
@@ -17,7 +18,7 @@ enum MotionContinuousState {
     case MotionYawRaw
 }
 
-class MotionDevice {
+final class MotionDevice: @unchecked Sendable {
     let motionManager: CMMotionManager
     var timer: Timer? = nil
     var present: Bool = false
@@ -84,3 +85,4 @@ class MotionDevice {
         yawZero = motionContinuousStateMapping[.MotionYawRaw]!
     }
 }
+#endif

@@ -36,7 +36,6 @@ final class Engine {
     
     public static func Start(rendererType: RendererType) {
         Assets.Initialize()
-        InputManager.Initialize()
         
         updateThread.start()
         audioThread.start()

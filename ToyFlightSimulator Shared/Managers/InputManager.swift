@@ -39,35 +39,22 @@ struct KeycodeValue {
 }
 
 final class InputManager {
-    private static var controller: Controller!
-    private static var pitchAxisFlipped: Bool = true
+    private static let controller = Controller()
+    nonisolated(unsafe) private static var pitchAxisFlipped: Bool = true
     
     #if os(macOS)
-    private static var joystick: Joystick!
-    private static var throttle: Throttle!
+    private static let joystick = Joystick()
+    private static let throttle = Throttle()
     #endif
     
     #if os(iOS)
-    private static var motion: MotionDevice!
+    private static var motion = MotionDevice()
     public static var useMotion: Bool = true
     #endif
     
-    public static func Initialize() {
-        controller = Controller()
-        
-        #if os(macOS)
-        joystick = Joystick()
-        throttle = Throttle()
-        #endif
-        
-        #if os(iOS)
-        motion = MotionDevice()
-        #endif
-    }
-    
     // TODO: These three computed properties follow the same initialization pattern.
     //       Wonder if there is a generic way to do this...
-    private static var keysPressed: [Keycodes: Bool] = {
+    nonisolated(unsafe) private static var keysPressed: [Keycodes: Bool] = {
         var kp = [Keycodes: Bool]()
         for kc in Keycodes.allCases {
             kp[kc] = false
@@ -75,7 +62,7 @@ final class InputManager {
         return kp
     }()
     
-    private static var controllerDiscreteState: [ControllerState: Bool] = {
+    nonisolated(unsafe) private static var controllerDiscreteState: [ControllerState: Bool] = {
         var cds = [ControllerState: Bool]()
         for cs in ControllerState.allCases {
             cds[cs] = false
@@ -84,7 +71,7 @@ final class InputManager {
     }()
     
     // Perhaps instead of 'Discrete States' should name this 'Key Pressed' ???
-    private static var mouseDiscreteState: [MouseState: Bool] = {
+    nonisolated(unsafe) private static var mouseDiscreteState: [MouseState: Bool] = {
         var mds = [MouseState: Bool]()
         for mouseState in MouseState.allCases {
             mds[mouseState] = false
@@ -93,7 +80,7 @@ final class InputManager {
     }()
     
     #if os(macOS)
-    private static var joystickDiscreteState: [JoystickDiscreteState: Bool] = {
+    nonisolated(unsafe) private static var joystickDiscreteState: [JoystickDiscreteState: Bool] = {
         var jbp = [JoystickDiscreteState: Bool]()
         for jb in JoystickDiscreteState.allCases {
             jbp[jb] = false
@@ -102,11 +89,11 @@ final class InputManager {
     }()
     #endif
     
-    private static var mouseMappingsDiscrete: [DiscreteCommand: MouseState] = [
+    nonisolated(unsafe) private static var mouseMappingsDiscrete: [DiscreteCommand: MouseState] = [
         .ClickSelect: .leftClick
     ]
     
-    private static var keyboardMappingsContinuous: [ContinuousCommand: [KeycodeValue]] = [
+    nonisolated(unsafe) private static var keyboardMappingsContinuous: [ContinuousCommand: [KeycodeValue]] = [
         .MoveFwd: [KeycodeValue(keyCode: .w, value: 1.0), KeycodeValue(keyCode: .s, value: -1.0)],
         .MoveSide: [KeycodeValue(keyCode: .d, value: 1.0), KeycodeValue(keyCode: .a, value: -1.0)],
         .Pitch: [KeycodeValue(keyCode: .upArrow, value: pitchAxisFlipped ? -1.0 : 1.0),
@@ -115,7 +102,7 @@ final class InputManager {
         .Yaw: [KeycodeValue(keyCode: .e, value: -1.0), KeycodeValue(keyCode: .q, value: 1.0)]
     ]
     
-    private static var keyboardMappingsDiscrete: [DiscreteCommand: Keycodes] = [
+    nonisolated(unsafe) private static var keyboardMappingsDiscrete: [DiscreteCommand: Keycodes] = [
         .Pause: .p,
         .ResetLoadout: .l,
         .FireMissileAIM9: .space,
@@ -126,11 +113,11 @@ final class InputManager {
         .ToggleGear: .g
     ]
     
-    private static var multiKeyInputMappings: [SpecialUserCommand: [Keycodes]] = [
+    nonisolated(unsafe) private static var multiKeyInputMappings: [SpecialUserCommand: [Keycodes]] = [
         .ResetScene: [.command, .r]
     ]
     
-    private static var specialCommandsActive: [SpecialUserCommand: Bool] = {
+    nonisolated(unsafe) private static var specialCommandsActive: [SpecialUserCommand: Bool] = {
         var sca: [SpecialUserCommand: Bool] = [SpecialUserCommand: Bool]()
         for suc in SpecialUserCommand.allCases {
             sca[suc] = false
@@ -138,42 +125,42 @@ final class InputManager {
         return sca
     }()
     
-    private static var controllerMappingsContinuous: [ContinuousCommand: ControllerState] = [
+    nonisolated(unsafe) private static var controllerMappingsContinuous: [ContinuousCommand: ControllerState] = [
         .Roll: .RightStickX,
         .Pitch: .RightStickY,
         .MoveFwd: .LeftStickY,
         .MoveSide: .LeftStickX
     ]
     
-    private static var controllerMappingsDiscrete: [DiscreteCommand: ControllerState] = [
+    nonisolated(unsafe) private static var controllerMappingsDiscrete: [DiscreteCommand: ControllerState] = [
         .FireMissileAIM9: .RightTrigger,
         .DropBomb: .LeftTrigger
     ]
     
     #if os(macOS)
-    private static var joystickMappingsContinuous: [ContinuousCommand: JoystickContinuousState] = [
+    nonisolated(unsafe) private static var joystickMappingsContinuous: [ContinuousCommand: JoystickContinuousState] = [
         .Pitch: .JoystickY,
         .Roll: .JoystickX
     ]
     
-    private static var joystickMappingsDiscrete: [DiscreteCommand: JoystickDiscreteState] = [
+    nonisolated(unsafe) private static var joystickMappingsDiscrete: [DiscreteCommand: JoystickDiscreteState] = [
         .FireMissileAIM9: .TriggerFull,
         .FireMissileAIM120: .RedButton
     ]
     
-    private static var throttleMappingContinuous: [ContinuousCommand: ThrottleContinuousState] = [
+    nonisolated(unsafe) private static var throttleMappingContinuous: [ContinuousCommand: ThrottleContinuousState] = [
         .MoveFwd: .ThrottleRight
     ]
     #endif
     
     #if os(iOS)
-    private static var motionMappingContinuous: [ContinuousCommand: MotionContinuousState] = [
+    nonisolated(unsafe) private static var motionMappingContinuous: [ContinuousCommand: MotionContinuousState] = [
         .Pitch: .MotionPitch,
         .Roll: .MotionRoll,
         .Yaw: .MotionYaw
     ]
     
-    private static var touchContinuousState: [ContinuousCommand: Float] = [
+    nonisolated(unsafe) private static var touchContinuousState: [ContinuousCommand: Float] = [
         .MoveFwd: 0.0,
         .MoveSide: 0.0,
         .Pitch: 0.0,

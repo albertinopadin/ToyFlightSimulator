@@ -19,7 +19,7 @@ enum ThrottleDiscreteState: CaseIterable {
     case RadarAltimeter
 }
 
-class Throttle: HIDDevice {
+final class Throttle: HIDDevice, @unchecked Sendable {
     static let VALUE_RANGE_MIN: Float = 0.0
     static let VALUE_RAGE_MAX: Float = 5.0
     
@@ -69,11 +69,11 @@ class Throttle: HIDDevice {
                 if ioReturn == kIOReturnSuccess {
                     let elemValue = valuePtr.pointee.takeUnretainedValue()
                     let intValue: Int = IOHIDValueGetIntegerValue(elemValue)
-                    let scaledValue: Double = IOHIDValueGetScaledValue(elemValue,
-                                                                       UInt32(kIOHIDValueScaleTypeCalibrated))
+//                    let scaledValue: Double = IOHIDValueGetScaledValue(elemValue,
+//                                                                       UInt32(kIOHIDValueScaleTypeCalibrated))
                     
-                    let hidElemLogicalMin: Int = IOHIDElementGetLogicalMin(elem)
-                    let hidElemLogicalMax: Int = IOHIDElementGetLogicalMax(elem)
+//                    let hidElemLogicalMin: Int = IOHIDElementGetLogicalMin(elem)
+//                    let hidElemLogicalMax: Int = IOHIDElementGetLogicalMax(elem)
                     
                     // TODO: Get these values only once:
                     let hidElemPhysicalMin: Int = IOHIDElementGetPhysicalMin(elem)
