@@ -7,7 +7,7 @@
 
 import MetalKit
 
-class ForwardPlusTileShadingRenderer: Renderer {
+final class ForwardPlusTileShadingRenderer: Renderer {
     init() {
         super.init(type: .ForwardPlusTileShading)
     }

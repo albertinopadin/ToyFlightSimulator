@@ -7,7 +7,7 @@
 
 import MetalKit
 
-class Afterburner: ParticleEmitterObject {
+final class Afterburner: ParticleEmitterObject {
     static let afterburnerEmitter = ParticleEmitter.afterburner(size: CGSize(width: 40, height: 40))
                                                                 
     init(name: String) {

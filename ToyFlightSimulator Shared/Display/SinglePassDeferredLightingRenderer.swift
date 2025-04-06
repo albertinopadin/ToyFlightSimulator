@@ -7,7 +7,7 @@
 
 import MetalKit
 
-class SinglePassDeferredLightingRenderer: Renderer {
+final class SinglePassDeferredLightingRenderer: Renderer {
     // Create quad for fullscreen composition drawing
     private let _quadVertices: [TFSSimpleVertex] = [
         .init(position: .init(x: -1, y: -1)),
@@ -21,7 +21,7 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     private let _quadVertexBuffer: MTLBuffer!
     
-    private static var ShadowMapSize: Int = 8_192
+    private static let ShadowMapSize: Int = 8_192
     var shadowMap: MTLTexture?
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor!
     
@@ -41,7 +41,10 @@ class SinglePassDeferredLightingRenderer: Renderer {
     
     override var metalView: MTKView {
         didSet {
-            metalView.depthStencilPixelFormat = .depth32Float_stencil8
+            let mv = metalView
+            MainActor.assumeIsolated {
+                mv.depthStencilPixelFormat = .depth32Float_stencil8
+            }
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
             updateDrawableSize(size: drawableSize)
         }

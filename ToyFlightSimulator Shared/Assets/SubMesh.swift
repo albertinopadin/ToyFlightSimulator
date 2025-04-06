@@ -8,7 +8,7 @@
 import MetalKit
 
 final class Submesh: Sendable {
-    public var name: String = "Submesh"
+    public let name: String
     public var material: Material?
     public var parentMesh: Mesh?
     
@@ -30,12 +30,13 @@ final class Submesh: Sendable {
     public var indexBufferOffset: Int { return _indexBufferOffset }
     
     init(indices: [UInt32]) {
+        self.name = "SubmeshWithIndices-\(indices.count)"
         self._indices = indices
         self._indexCount = indices.count
         createIndexBuffer()
     }
     
-    init(mtkSubmesh: MTKSubmesh, mdlSubmesh: MDLSubmesh, name: String? = nil) {
+    init(mtkSubmesh: MTKSubmesh, mdlSubmesh: MDLSubmesh, name: String? = "Submesh") {
         _indexBuffer = mtkSubmesh.indexBuffer.buffer
         _indexBufferOffset = mtkSubmesh.indexBuffer.offset
         _indexCount = mtkSubmesh.indexCount

@@ -7,14 +7,14 @@
 
 import MetalKit
 
-class TiledMultisampleRenderer: Renderer {
+final class TiledMultisampleRenderer: Renderer {
     private static let sampleCount: Int = 4
     
     private static let tileWidth = 16
     private static let tileHeight = 16
     private static let imageBlockSampleLength = 32
     
-    private static var ShadowTextureSize: Int = 8_192
+    private static let ShadowTextureSize: Int = 8_192
     
     private var gBufferTextures = TiledDeferredGBufferTextures()
     
@@ -59,7 +59,11 @@ class TiledMultisampleRenderer: Renderer {
     
     override var metalView: MTKView {
         didSet {
-            metalView.depthStencilPixelFormat = .depth32Float
+            let mv = metalView
+            MainActor.assumeIsolated {
+                mv.depthStencilPixelFormat = .depth32Float
+            }
+            
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
             updateDrawableSize(size: drawableSize)
         }

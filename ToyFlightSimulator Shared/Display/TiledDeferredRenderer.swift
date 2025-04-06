@@ -41,7 +41,11 @@ final class TiledDeferredRenderer: Renderer {
     
     override var metalView: MTKView {
         didSet {
-            metalView.depthStencilPixelFormat = .depth32Float
+            let mv = metalView
+            MainActor.assumeIsolated {
+                mv.depthStencilPixelFormat = .depth32Float
+            }
+            
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
             updateDrawableSize(size: drawableSize)
         }

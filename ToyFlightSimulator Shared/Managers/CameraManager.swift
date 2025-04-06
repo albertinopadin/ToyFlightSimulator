@@ -6,8 +6,8 @@
 //
 
 final class CameraManager {
-    private static var _cameras: [CameraType: Camera] = [:]
-    public static var CurrentCamera: Camera!
+    nonisolated(unsafe) private static var _cameras: [CameraType: Camera] = [:]
+    nonisolated(unsafe) public static var CurrentCamera: Camera!
     
     public static func RegisterCamera(camera: Camera) {
         _cameras.updateValue(camera, forKey: camera.cameraType)

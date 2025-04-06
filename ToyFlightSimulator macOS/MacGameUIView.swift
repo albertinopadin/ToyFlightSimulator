@@ -48,14 +48,18 @@ struct MacGameUIView: View {
                 InputManager.HandleKeyPressedDebounced(keyCode: .escape) {
                     SceneManager.Paused.toggle()
                     withAnimation {
-                        shouldDisplayMenu.toggle()
+                        MainActor.assumeIsolated {
+                            shouldDisplayMenu.toggle()
+                        }
                     }
                 }
                 
                 // TODO: Certain keys (like shift) aren't detected:
                 InputManager.HandleKeyPressedDebounced(keyCode: .y) {
                     withAnimation {
-                        shouldDisplayGameStats.toggle()
+                        MainActor.assumeIsolated {
+                            shouldDisplayGameStats.toggle()
+                        }
                     }
                 }
             }

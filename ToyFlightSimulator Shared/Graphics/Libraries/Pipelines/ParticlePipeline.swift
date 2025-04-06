@@ -14,7 +14,7 @@ struct ParticleComputePipelineState: ComputePipelineState {
 }
 
 struct ParticleRenderPipelineState: RenderPipelineState {
-    static var enableBlending: Bool = true
+    static let enableBlending: Bool = true
     
     static func enableBlending(colorAttachment: MTLRenderPipelineColorAttachmentDescriptor) {
         colorAttachment.isBlendingEnabled = true
@@ -45,7 +45,7 @@ struct ParticleRenderPipelineState: RenderPipelineState {
 }
 
 struct ParticleMSAARenderPipelineState: RenderPipelineState {
-    static var enableBlending: Bool = true
+    static let enableBlending: Bool = true
     
     static func enableBlending(colorAttachment: MTLRenderPipelineColorAttachmentDescriptor) {
         colorAttachment.isBlendingEnabled = true

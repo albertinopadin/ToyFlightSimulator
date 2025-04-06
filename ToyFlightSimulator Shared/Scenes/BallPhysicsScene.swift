@@ -79,19 +79,6 @@ class BallPhysicsScene: GameScene {
         return sphrs
     }()
     
-//    let spheres: [CollidableSphere] = [{
-//        let sphereRadiusScale: Float = 0.4
-//        let sp = CollidableSphere()
-//        sp.collisionRadius = sphereRadiusScale
-//        sp.collisionShape = .Sphere
-//        sp.setScale(sphereRadiusScale)
-//        sp.mass = 1.0
-//        sp.restitution = 0.9
-//        sp.setPosition([0, 10, 0])
-//        sp.setColor(GRABBER_BLUE_COLOR)
-//        return sp
-//    }()]
-    
     private func addGround() {
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
         ground = CollidablePlane()
