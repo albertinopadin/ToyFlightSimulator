@@ -7,7 +7,7 @@
 
 import MetalKit
 
-final class Submesh: Sendable {
+final class Submesh: @unchecked Sendable {
     public let name: String
     public var material: Material?
     public var parentMesh: Mesh?
