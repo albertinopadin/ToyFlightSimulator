@@ -39,7 +39,7 @@ let colors: [TFSColor] = [
     .yellow
 ]
 
-class BallPhysicsScene: GameScene {
+final class BallPhysicsScene: GameScene {
     static let ballCount: Int = 27
     var ground: CollidablePlane!
     let debugCamera = DebugCamera()

@@ -5,7 +5,7 @@
 //  Created by Albertino Padin on 3/29/23.
 //
 
-class FreeCamFlightboxScene: GameScene {
+final class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
 //    var jet = F22(shouldUpdateOnPlayerInput: false)
     var jet = CollidableF22(shouldUpdateOnPlayerInput: false)

@@ -29,7 +29,7 @@ protocol PhysicsEntity {
 }
 
 extension PhysicsEntity {    
-    static func ==(lhs: PhysicsEntity, rhs: PhysicsEntity) -> Bool {
+    static func ==(lhs: Self, rhs: Self) -> Bool {
         return lhs.id == rhs.id
     }
     

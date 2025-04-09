@@ -34,16 +34,26 @@ final class HeckerCollisionResponse {
                         entities[b].collidedWith[entityA.id] = true
                         
                         // Hack:
+                        // TODO: This will fail if the static entity is not directly below the non-static
+                        //       entity. Need to figure out a better way...
                         let relVeloMagnitude = (entityA.velocity - entityB.velocity).magnitude
                         // TODO: My units seem to be messed up, 'small' collisions seem to be ~ 0.7 m/s
                         if relVeloMagnitude < 0.55 {
-                            entities[a].velocity = .zero
-                            entities[a].acceleration = .zero
-                            entities[a].shouldApplyGravity = false
+                            if entityB.isStatic {
+                                entities[a].velocity = .zero
+                                entities[a].acceleration = .zero
+                                entities[a].shouldApplyGravity = false
+                                
+                                print("[HeckerCollisionResponse resolveCollisions] Gravity should not apply to entity: \(entityA.id)")
+                            }
                             
-                            entities[b].velocity = .zero
-                            entities[b].acceleration = .zero
-                            entities[b].shouldApplyGravity = false
+                            if entityA.isStatic {
+                                entities[b].velocity = .zero
+                                entities[b].acceleration = .zero
+                                entities[b].shouldApplyGravity = false
+                                
+                                print("[HeckerCollisionResponse resolveCollisions] Gravity should not apply to entity: \(entityB.id)")
+                            }
                             
                             continue
                         }

@@ -9,7 +9,7 @@ class CollidableF22: F22, SpherePhysicsEntity {
     var collisionRadius: Float = 1.0
 }
 
-class FlightboxScene: GameScene {
+final class FlightboxScene: GameScene {
     var attachedCamera = AttachedCamera(fieldOfView: 75.0,
                                         near: 0.01,
                                         far: 1000000.0)

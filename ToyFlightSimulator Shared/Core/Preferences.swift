@@ -28,8 +28,8 @@ struct Preferences {
     
     public static let MainDepthStencilPixelFormat: MTLPixelFormat = .depth32Float_stencil8
     
-//    public static var StartingSceneType: SceneType = .Sandbox
-//    public static var StartingSceneType: SceneType = .FreeCamFlightbox
-//    public static var StartingSceneType: SceneType = .Flightbox
+//    public static let StartingSceneType: SceneType = .Sandbox
+//    public static let StartingSceneType: SceneType = .FreeCamFlightbox
+//    public static let StartingSceneType: SceneType = .Flightbox
     public static let StartingSceneType: SceneType = .BallPhysics
 }

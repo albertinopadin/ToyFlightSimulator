@@ -24,6 +24,8 @@ final class VerletSolver: PhysicsSolver {
                 
                 if entities[i].shouldApplyGravity {
                     newAcc += Self.applyForces(gravity: gravity)
+                } else {
+                    print("[VerletSolver step] Entity \(entities[i].id) not applying gravity")
                 }
                 
                 let nVelo = veloDtHalf + 0.5 * newAcc * deltaTime

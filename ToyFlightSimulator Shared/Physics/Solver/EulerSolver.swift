@@ -51,7 +51,7 @@ final class EulerSolver: PhysicsSolver {
                         print("Relative velocity: \(relativeVelo)")
                         print("Unorm collision vector: \(unormCollisionVector)")
                         if relativeVelo < 0.55 {
-                            print("Relative velocity under threshold: \(relativeVelo)")
+                            print("[EulerSolver resolveCollisions] Relative velocity under threshold: \(relativeVelo)")
                             entities[i].velocity = .zero
                             entities[j].velocity = .zero
                         } else {
