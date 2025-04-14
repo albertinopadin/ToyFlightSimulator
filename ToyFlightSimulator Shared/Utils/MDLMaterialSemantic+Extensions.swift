@@ -7,7 +7,7 @@
 
 import ModelIO
 
-extension ModelIO.MDLMaterialSemantic: Swift.CaseIterable {
+extension MDLMaterialSemantic {
     public static var allCases: [MDLMaterialSemantic] {
         get {
             return [

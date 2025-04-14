@@ -468,6 +468,7 @@
 		CE5D78292C917D0A00FB0E26 /* MDLMaterialSemantic+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5D78272C917D0A00FB0E26 /* MDLMaterialSemantic+Extensions.swift */; };
 		CE5D782A2C917D0A00FB0E26 /* MDLMaterialSemantic+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5D78272C917D0A00FB0E26 /* MDLMaterialSemantic+Extensions.swift */; };
 		CE5D782B2C917D0A00FB0E26 /* MDLMaterialSemantic+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5D78272C917D0A00FB0E26 /* MDLMaterialSemantic+Extensions.swift */; };
+		CE61B8E82DAD15B1009D8070 /* RendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE61B8E72DAD15AB009D8070 /* RendererTests.swift */; };
 		CE76930F29DD5DF600BBC718 /* SubMeshGameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76930E29DD5DF600BBC718 /* SubMeshGameObject.swift */; };
 		CE76931029DD5DF600BBC718 /* SubMeshGameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76930E29DD5DF600BBC718 /* SubMeshGameObject.swift */; };
 		CE76931129DD5DF600BBC718 /* SubMeshGameObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE76930E29DD5DF600BBC718 /* SubMeshGameObject.swift */; };
@@ -907,6 +908,7 @@
 		CE56921728EA9F7B00F6B42C /* AttachedCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachedCamera.swift; sourceTree = "<group>"; };
 		CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightboxScene.swift; sourceTree = "<group>"; };
 		CE5D78272C917D0A00FB0E26 /* MDLMaterialSemantic+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MDLMaterialSemantic+Extensions.swift"; sourceTree = "<group>"; };
+		CE61B8E72DAD15AB009D8070 /* RendererTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RendererTests.swift; sourceTree = "<group>"; };
 		CE76930E29DD5DF600BBC718 /* SubMeshGameObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubMeshGameObject.swift; sourceTree = "<group>"; };
 		CE76931229DD5F5500BBC718 /* SingleSMMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleSMMesh.swift; sourceTree = "<group>"; };
 		CE76931629DE75CB00BBC718 /* SingleSMMeshLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleSMMeshLibrary.swift; sourceTree = "<group>"; };
@@ -1393,6 +1395,7 @@
 		CE452FA52A7CA810001945B9 /* ToyFlightSimulatorTests */ = {
 			isa = PBXGroup;
 			children = (
+				CE61B8E72DAD15AB009D8070 /* RendererTests.swift */,
 				CE452FAD2A7CAC0F001945B9 /* NodeTests.swift */,
 			);
 			path = ToyFlightSimulatorTests;
@@ -2130,6 +2133,7 @@
 				CE387B412BDA316900F51DC4 /* Fire.swift in Sources */,
 				CE452FE52A7CB4A0001945B9 /* AttachedCamera.swift in Sources */,
 				CE452FD02A7CB47F001945B9 /* Lighting.metal in Sources */,
+				CE61B8E82DAD15B1009D8070 /* RendererTests.swift in Sources */,
 				CEC0C59C2B53BB7400863C38 /* ObjModel.swift in Sources */,
 				CE452FBA2A7CB44A001945B9 /* HotasConfig.swift in Sources */,
 				CE79B6132B92E130009F2E49 /* SinglePassDeferredDepthStencils.swift in Sources */,

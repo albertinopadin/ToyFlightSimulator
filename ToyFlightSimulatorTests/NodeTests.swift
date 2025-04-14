@@ -9,7 +9,6 @@ import XCTest
 @testable import ToyFlightSimulator
 
 final class NodeTests: XCTestCase {
-    
     func testSuccessfulInit() {
         let nodeName = "TestNode"
         let node = Node(name: nodeName)

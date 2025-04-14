@@ -7,7 +7,7 @@
 
 import MetalKit
 
-extension TFSVertexAttributes: CaseIterable {
+extension TFSVertexAttributes {
     // allCases must return sorted to make adding vertex attributes easy:
     public static var allCases: [TFSVertexAttributes] {
         return [

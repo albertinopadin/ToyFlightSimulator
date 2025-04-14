@@ -8,6 +8,7 @@
 import os
 
 @inlinable
+@inline(__always)
 func withLock<Value>(_ lock: OSAllocatedUnfairLock<Void>, body: () -> Value) -> Value {
     lock.lock()
     defer {
