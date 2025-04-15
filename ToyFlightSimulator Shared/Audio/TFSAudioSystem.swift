@@ -6,9 +6,9 @@
 //
 
 import Foundation
-import AVFoundation
+@preconcurrency import AVFoundation
 
-public class TFSAudioSystem {
+public final class TFSAudioSystem: Sendable {
     private let audioEngine: AVAudioEngine
     private let audioPlayer: AVAudioPlayerNode
     

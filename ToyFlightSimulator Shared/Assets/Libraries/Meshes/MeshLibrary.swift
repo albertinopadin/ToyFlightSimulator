@@ -25,7 +25,7 @@ enum MeshType {
     case Icosahedron
 }
 
-class MeshLibrary: Library<MeshType, Mesh> {
+final class MeshLibrary: Library<MeshType, Mesh>, @unchecked Sendable {
     private var _library: [MeshType: Mesh] = [:]
     
     override func makeLibrary() {

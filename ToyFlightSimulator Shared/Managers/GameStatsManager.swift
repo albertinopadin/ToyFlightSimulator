@@ -6,8 +6,9 @@
 //
 
 import Foundation
+@preconcurrency import Darwin
 
-final class GameStatsManager: ObservableObject {
+final class GameStatsManager: ObservableObject, @unchecked Sendable {
     static let sharedInstance = GameStatsManager()
     
     @Published public var rollingAverageFPS: Double = 0.0

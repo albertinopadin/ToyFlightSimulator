@@ -7,7 +7,7 @@
 
 import MetalKit
 
-extension TFSVertexAttributes: CaseIterable {
+extension TFSVertexAttributes {
     // allCases must return sorted to make adding vertex attributes easy:
     public static var allCases: [TFSVertexAttributes] {
         return [
@@ -27,7 +27,7 @@ enum VertexDescriptorType {
     case Skybox
 }
 
-class VertexDescriptorLibrary: Library<VertexDescriptorType, MTLVertexDescriptor> {
+final class VertexDescriptorLibrary: Library<VertexDescriptorType, MTLVertexDescriptor>, @unchecked Sendable {
     private var _library: [VertexDescriptorType: VertexDescriptor] = [:]
     
     override func makeLibrary() {

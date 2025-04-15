@@ -17,18 +17,19 @@ public enum ClearColors {
     static let SkyBlue   = MTLClearColor(red: 0.3, green: 0.4, blue: 0.8, alpha: 1.0)
 }
 
+// TODO: Think about how to properly model Game preferences (Graphics, Starting Scene, etc)
 struct Preferences {
-    public static var ClearColor: MTLClearColor = ClearColors.Black
+    public static let ClearColor: MTLClearColor = ClearColors.Black
     
-    public static var MainPixelFormat: MTLPixelFormat = .bgra8Unorm_srgb
+    public static let MainPixelFormat: MTLPixelFormat = .bgra8Unorm_srgb
 //    public static var MainPixelFormat: MTLPixelFormat = .bgra8Unorm
     
-    public static var MainDepthPixelFormat: MTLPixelFormat = .depth32Float
+    public static let MainDepthPixelFormat: MTLPixelFormat = .depth32Float
     
-    public static var MainDepthStencilPixelFormat: MTLPixelFormat = .depth32Float_stencil8
+    public static let MainDepthStencilPixelFormat: MTLPixelFormat = .depth32Float_stencil8
     
-//    public static var StartingSceneType: SceneType = .Sandbox
-//    public static var StartingSceneType: SceneType = .FreeCamFlightbox
-//    public static var StartingSceneType: SceneType = .Flightbox
-    public static var StartingSceneType: SceneType = .BallPhysics
+//    public static let StartingSceneType: SceneType = .Sandbox
+//    public static let StartingSceneType: SceneType = .FreeCamFlightbox
+//    public static let StartingSceneType: SceneType = .Flightbox
+    public static let StartingSceneType: SceneType = .BallPhysics
 }

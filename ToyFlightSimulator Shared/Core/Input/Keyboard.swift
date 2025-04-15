@@ -5,6 +5,8 @@
 //  Created by Albertino Padin on 9/25/22.
 //
 
+import os
+
 #if os(macOS)
 import AppKit
 typealias Event = NSEvent
@@ -15,12 +17,16 @@ import UIKit
 typealias Event = UIEvent
 #endif
 
-class Keyboard {
-    private static var KEY_COUNT: Int = 256
-    private static var keys = [Bool](repeating: false, count: KEY_COUNT)
+final class Keyboard {
+    private static let KEY_COUNT: Int = 256
+    
+    private static let keysLock = OSAllocatedUnfairLock()
+    nonisolated(unsafe) private static var keys = [Bool](repeating: false, count: KEY_COUNT)
     
     public static func SetKeyPressed(_ keyCode: UInt16, pressed: Bool) {
-        keys[Int(keyCode)] = pressed
+        withLock(keysLock) {
+            keys[Int(keyCode)] = pressed
+        }
     }
 
 #if os(macOS)

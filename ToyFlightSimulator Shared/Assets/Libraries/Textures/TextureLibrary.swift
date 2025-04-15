@@ -20,7 +20,7 @@ enum TextureType {
     case SkyMap
 }
 
-class TextureLibrary: Library<TextureType, MTLTexture> {
+final class TextureLibrary: Library<TextureType, MTLTexture>, @unchecked Sendable {
     private var _library: [TextureType: Texture] = [:]
     
     override func makeLibrary() {
@@ -28,6 +28,7 @@ class TextureLibrary: Library<TextureType, MTLTexture> {
         _library.updateValue(Texture(name: "SkyMap", label: "Sky Map"), forKey: .SkyMap)
     }
     
+    // TODO: Potentially need a lock here as this Library class allows mutation
     func setTexture(textureType: TextureType, texture: MTLTexture) {
         _library.updateValue(Texture(texture: texture), forKey: textureType)
     }

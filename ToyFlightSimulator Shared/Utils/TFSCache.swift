@@ -6,9 +6,13 @@
 //
 
 import Foundation
+import os
 
 // Much of the code from: https://www.swiftbysundell.com/articles/caching-in-swift/
-final class TFSCache<Key: Hashable, Value> {
+final class TFSCache<Key: Hashable, Value>: @unchecked Sendable {
+    private let cacheLock = OSAllocatedUnfairLock()
+    private let subscriptLock = OSAllocatedUnfairLock()
+    
     final class WrappedKey: NSObject {
         let key: Key
         
@@ -36,38 +40,46 @@ final class TFSCache<Key: Hashable, Value> {
     private let wrapped = NSCache<WrappedKey, Entry>()
     private var _count = 0
     public var count: Int {
-        get { return _count }
+        get { withLock(cacheLock) { return _count } }
     }
 
     func insert(_ value: Value, forKey key: Key) {
-        let entry = Entry(value: value)
-        wrapped.setObject(entry, forKey: WrappedKey(key))
+        withLock(cacheLock) {
+            let entry = Entry(value: value)
+            wrapped.setObject(entry, forKey: WrappedKey(key))
+        }
     }
 
     func value(forKey key: Key) -> Value? {
-        let entry = wrapped.object(forKey: WrappedKey(key))
-        return entry?.value
+        withLock(cacheLock) {
+            let entry = wrapped.object(forKey: WrappedKey(key))
+            return entry?.value
+        }
     }
 
     func removeValue(forKey key: Key) {
-        wrapped.removeObject(forKey: WrappedKey(key))
+        withLock(cacheLock) {
+            wrapped.removeObject(forKey: WrappedKey(key))
+        }
     }
 
     subscript(key: Key) -> Value? {
-        get { return value(forKey: key) }
+        get { withLock(subscriptLock) { value(forKey: key) } }
 
         set {
-            guard let value = newValue else {
-                if let _ = value(forKey: key) {
-                    removeValue(forKey: key)
-                    _count -= 1
+            withLock(subscriptLock) {
+                guard let value = newValue else {
+                    if let _ = value(forKey: key) {
+                        removeValue(forKey: key)
+                        _count -= 1
+                    }
+                    
+                    return
                 }
-
-                return
+                
+                insert(value, forKey: key)
+                _count += 1
             }
-
-            insert(value, forKey: key)
-            _count += 1
         }
     }
 }

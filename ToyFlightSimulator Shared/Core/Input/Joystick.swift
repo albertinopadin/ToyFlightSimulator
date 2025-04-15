@@ -24,7 +24,7 @@ enum JoystickDiscreteState: CaseIterable {
     case TrimRight
 }
 
-class Joystick: HIDDevice {
+final class Joystick: HIDDevice, @unchecked Sendable {
     let buttonDataRange = 0..<4
     let axisDataRange = 4..<12
     

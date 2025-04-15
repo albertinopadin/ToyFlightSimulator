@@ -6,20 +6,28 @@
 //
 
 import MetalKit
+import os
 
 final class LightManager {
-    private static var _lightObjects: [LightObject] = []
+    private static let lightLock = OSAllocatedUnfairLock()
+    nonisolated(unsafe) private static var _lightObjects: [LightObject] = []
     
     public static func AddLightObject(_ lightObject: LightObject) {
-        Self._lightObjects.append(lightObject)
+        withLock(lightLock) {
+            Self._lightObjects.append(lightObject)
+        }
     }
     
     public static func GetLightObjects(lightType: LightType) -> [LightObject] {
-        return Self._lightObjects.filter { $0.lightType == lightType }
+        withLock(lightLock) {
+            return Self._lightObjects.filter { $0.lightType == lightType }
+        }
     }
     
     public static func RemoveAllLights() {
-        Self._lightObjects.removeAll()
+        withLock(lightLock) {
+            Self._lightObjects.removeAll()
+        }
     }
 
     public static func GetDirectionalLightData(viewMatrix: float4x4) -> [LightData] {

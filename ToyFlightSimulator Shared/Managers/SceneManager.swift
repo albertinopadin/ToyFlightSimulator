@@ -64,19 +64,18 @@ struct TransparentUniformsData: Sendable {
 }
 
 final class SceneManager {
-    public static var CurrentScene: GameScene?
-    private static var _sceneType: SceneType?
-    private static var _view: MTKView?
-    private static var _rendererType: RendererType?
+    nonisolated(unsafe) public static var CurrentScene: GameScene?
+    nonisolated(unsafe) private static var _sceneType: SceneType?
+    nonisolated(unsafe) private static var _rendererType: RendererType?
     
-    public static var modelDatas: [Model: ModelData] = [:]  // TODO -> wrap this in a thread safe container (?)
-    public static var transparentObjectDatas: [Model: TransparentObjectData] = [:]
-    public static var particleObjects: [ParticleEmitterObject] = []
-    public static var skyData = ModelData()
-    public static var lines: [Line] = []
-    public static var icosahedrons: [Icosahedron] = []
+    nonisolated(unsafe) public static var modelDatas: [Model: ModelData] = [:]  // TODO -> wrap this in a thread safe container (?)
+    nonisolated(unsafe) public static var transparentObjectDatas: [Model: TransparentObjectData] = [:]
+    nonisolated(unsafe) public static var particleObjects: [ParticleEmitterObject] = []
+    nonisolated(unsafe) public static var skyData = ModelData()
+    nonisolated(unsafe) public static var lines: [Line] = []
+    nonisolated(unsafe) public static var icosahedrons: [Icosahedron] = []
     
-    private static var _paused: Bool = false
+    nonisolated(unsafe) private static var _paused: Bool = false
     public static var Paused: Bool {
         get {
             return _paused
@@ -84,15 +83,14 @@ final class SceneManager {
         
         set {
             _paused = newValue
-            _view?.isPaused = newValue
+            Engine.PauseView(newValue)
         }
     }
     
     private static let uniformsLock = OSAllocatedUnfairLock()
     
-    public static func SetScene(_ sceneType: SceneType, mtkView: MTKView, rendererType: RendererType) {
+    public static func SetScene(_ sceneType: SceneType, rendererType: RendererType) {
         _sceneType = sceneType
-        _view = mtkView
         _rendererType = rendererType
         
         // TODO: Is there a more elegant way to do this ???
@@ -109,15 +107,14 @@ final class SceneManager {
     }
     
     public static func ResetScene() {
-        if let _sceneType, let _view, let _rendererType {
-            SetScene(_sceneType, mtkView: _view, rendererType: _rendererType)
+        if let _sceneType, let _rendererType {
+            SetScene(_sceneType, rendererType: _rendererType)
         }
     }
     
     public static func TeardownScene() {
         CurrentScene?.teardownScene()
         _sceneType = nil
-        _view = nil
         _rendererType = nil
     }
     

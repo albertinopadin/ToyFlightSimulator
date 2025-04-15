@@ -27,18 +27,15 @@ struct ParticleDescriptor {
     var color: float4 = [0, 0, 0, 1]
 }
 
-class ParticleEmitter {
+final class ParticleEmitter: @unchecked Sendable {
     static let FIRE_COLOR = float4(1.0, 0.392, 0.1, 0.5)
     
-    private var _position: float3 = [0, 0, 0]
-    
-    var position: float3 {
-        get { _position }
-        set {
-            _position = newValue
-            self.particleDescriptor.position = _position
+    var position: float3  = [0, 0, 0] {
+        didSet {
+            self.particleDescriptor.position = self.position
         }
     }
+    
     var currentParticles: Int = 0
     var particleCount: Int = 0
     var birthRate: Int
@@ -57,7 +54,7 @@ class ParticleEmitter {
          birthDelay: Int,
          blending: Bool = false) {
         self.particleDescriptor = descriptor
-        self._position = particleDescriptor.position
+        self.position = particleDescriptor.position
         self.birthRate = birthRate
         self.birthDelay = birthDelay
         self.birthTimer = birthDelay

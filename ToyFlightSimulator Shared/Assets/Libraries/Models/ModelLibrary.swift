@@ -32,7 +32,7 @@ enum ModelType {
     case Temple
 }
 
-class ModelLibrary: Library<ModelType, Model> {
+final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
     private var _library: [ModelType: Model] = [:]
     
     override func makeLibrary() {

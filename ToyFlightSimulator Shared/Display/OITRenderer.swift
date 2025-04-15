@@ -7,7 +7,7 @@
 
 import MetalKit
 
-class OITRenderer: Renderer {
+final class OITRenderer: Renderer {
     #if os(iOS)
     public var alreadySetScreenSize: Bool = false  // Hack to prevent iOS from lowering resolution
     #endif
@@ -113,6 +113,7 @@ class OITRenderer: Renderer {
         }
     }
     
+    @MainActor
     func finalRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
         encodeRenderPass(into: commandBuffer, using: view.currentRenderPassDescriptor!, label: "Final Render Pass") { renderEncoder in
             encodeRenderStage(using: renderEncoder, label: "Final Render") {

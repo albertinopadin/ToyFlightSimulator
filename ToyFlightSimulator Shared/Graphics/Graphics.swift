@@ -5,35 +5,14 @@
 //  Created by Albertino Padin on 9/25/22.
 //
 
-class Graphics {
-    private static var _shaderLibrary: ShaderLibrary!
-    public static var Shaders: ShaderLibrary { return _shaderLibrary }
-    
-    private static var _vertexDescriptorLibrary: VertexDescriptorLibrary!
-    public static var VertexDescriptors: VertexDescriptorLibrary { return _vertexDescriptorLibrary }
-    
-    private static var _renderPipelineStateLibrary: RenderPipelineStateLibrary!
-    public static var RenderPipelineStates: RenderPipelineStateLibrary { return _renderPipelineStateLibrary }
-    
-    private static var _computePipelineStateLibrary: ComputePipelineStateLibrary!
-    public static var ComputePipelineStates: ComputePipelineStateLibrary { return _computePipelineStateLibrary }
-    
-    private static var _depthStencilStateLibrary: DepthStencilStateLibrary!
-    public static var DepthStencilStates: DepthStencilStateLibrary { return _depthStencilStateLibrary }
-    
-    private static var _samplerStateLibrary: SamplerStateLibrary!
-    public static var SamplerStates: SamplerStateLibrary { return _samplerStateLibrary }
-    
-    private static var _mdlVertexDescriptorLibrary: MDLVertexDescriptorLibrary!
-    public static var MDLVertexDescriptors: MDLVertexDescriptorLibrary { return _mdlVertexDescriptorLibrary }
-    
-    public static func Initialize() {
-        _shaderLibrary = ShaderLibrary()
-        _vertexDescriptorLibrary = VertexDescriptorLibrary()
-        _renderPipelineStateLibrary = RenderPipelineStateLibrary()
-        _computePipelineStateLibrary = ComputePipelineStateLibrary()
-        _depthStencilStateLibrary = DepthStencilStateLibrary()
-        _samplerStateLibrary = SamplerStateLibrary()
-        _mdlVertexDescriptorLibrary = MDLVertexDescriptorLibrary()
-    }
+import os
+
+final class Graphics {
+    public static let Shaders = ShaderLibrary()
+    public static let VertexDescriptors = VertexDescriptorLibrary()
+    public static let RenderPipelineStates = RenderPipelineStateLibrary()
+    public static let ComputePipelineStates = ComputePipelineStateLibrary()
+    public static let DepthStencilStates = DepthStencilStateLibrary()
+    public static let SamplerStates = SamplerStateLibrary()
+    public static let MDLVertexDescriptors = MDLVertexDescriptorLibrary()
 }

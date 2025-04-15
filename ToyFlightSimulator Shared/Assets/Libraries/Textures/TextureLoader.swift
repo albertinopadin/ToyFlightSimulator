@@ -5,7 +5,7 @@
 //  Created by Albertino Padin on 3/1/24.
 //
 
-import MetalKit
+@preconcurrency import MetalKit
 
 struct TextureLoader {
     public static let textureLoader = MTKTextureLoader(device: Engine.Device)

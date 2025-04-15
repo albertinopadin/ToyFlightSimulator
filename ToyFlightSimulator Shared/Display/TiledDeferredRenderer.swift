@@ -7,8 +7,8 @@
 
 import MetalKit
 
-class TiledDeferredRenderer: Renderer {
-    private static var ShadowTextureSize: Int = 8_192
+final class TiledDeferredRenderer: Renderer {
+    private static let ShadowTextureSize: Int = 8_192
     
     private let icosahedron = IcosahedronMesh()
     
@@ -41,7 +41,11 @@ class TiledDeferredRenderer: Renderer {
     
     override var metalView: MTKView {
         didSet {
-            metalView.depthStencilPixelFormat = .depth32Float
+            let mv = metalView
+            MainActor.assumeIsolated {
+                mv.depthStencilPixelFormat = .depth32Float
+            }
+            
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
             updateDrawableSize(size: drawableSize)
         }

@@ -5,11 +5,10 @@
 //  Created by Albertino Padin on 8/25/22.
 //
 
-import Metal
 import MetalKit
 
 class Renderer: NSObject, MTKViewDelegate {
-    public static var ScreenSize = float2(100, 100)
+    nonisolated(unsafe) public static var ScreenSize = float2(100, 100)
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
     
     private var renderPreviousTime: UInt64 = 0
@@ -35,10 +34,13 @@ class Renderer: NSObject, MTKViewDelegate {
         
         set {
             _metalView = newValue
-            updateScreenSize(size: _metalView.drawableSize)
-            createBaseRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
-                                           screenHeight: Int(Renderer.ScreenSize.y))
-            _metalView.delegate = self
+            
+            MainActor.assumeIsolated {
+                updateScreenSize(size: _metalView.drawableSize)
+                createBaseRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
+                                               screenHeight: Int(Renderer.ScreenSize.y))
+                _metalView.delegate = self
+            }
         }
     }
     

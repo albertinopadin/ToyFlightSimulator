@@ -6,7 +6,7 @@
 //
 
 import GameController
-
+import os
 
 enum ControllerState: CaseIterable {
     case LeftStickX
@@ -22,7 +22,8 @@ enum ControllerState: CaseIterable {
     case RightBumper
 }
 
-class Controller {
+final class Controller: @unchecked Sendable {
+    let gameControllerLock = OSAllocatedUnfairLock()
     var gameController: GCController?
     var present: Bool = false
     
@@ -50,9 +51,11 @@ class Controller {
     }
     
     func getState(_ state: ControllerState) -> Float {
-        guard let gamepad = gameController?.extendedGamepad else { return 0.0 }
-        guard let stateFn = controllerStateMapping[state] else { return 0.0 }
-        return stateFn(gamepad)
+        return withLock(gameControllerLock) {
+            guard let gamepad = gameController?.extendedGamepad else { return 0.0 }
+            guard let stateFn = controllerStateMapping[state] else { return 0.0 }
+            return stateFn(gamepad)
+        }
     }
     
     private func registerControllerObservers() {
@@ -80,14 +83,18 @@ class Controller {
     }
 
     private func controllerDidConnect(_ controller: GCController) {
-        print("Controller Connected!")
-        gameController = controller
-        present = true
+        withLock(gameControllerLock) {
+            print("Controller Connected!")
+            gameController = controller
+            present = true
+        }
     }
 
     private func controllerDidDisconnect(_ controller: GCController) {
-        print("Controller Disconnected!")
-        gameController = nil
-        present = false
+        withLock(gameControllerLock) {
+            print("Controller Disconnected!")
+            gameController = nil
+            present = false
+        }
     }
 }

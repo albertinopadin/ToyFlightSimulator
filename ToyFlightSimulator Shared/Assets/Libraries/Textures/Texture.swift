@@ -7,7 +7,7 @@
 
 import MetalKit
 
-public class Texture {
+final public class Texture {
     var texture: MTLTexture!
     
     init(texture: MTLTexture) {

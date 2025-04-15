@@ -67,7 +67,7 @@ enum ShaderType {
 }
 
 
-class ShaderLibrary: Library<ShaderType, MTLFunction> {
+final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable {
     private var _library: [ShaderType: Shader] = [:]
     
     override func makeLibrary() {

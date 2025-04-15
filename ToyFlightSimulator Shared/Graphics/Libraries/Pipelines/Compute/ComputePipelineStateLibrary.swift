@@ -11,7 +11,7 @@ enum ComputePipelineStateType {
     case Particle
 }
 
-class ComputePipelineStateLibrary: Library<ComputePipelineStateType, MTLComputePipelineState> {
+final class ComputePipelineStateLibrary: Library<ComputePipelineStateType, MTLComputePipelineState>, @unchecked Sendable {
     private var _library: [ComputePipelineStateType: ComputePipelineState] = [:]
     
     override func makeLibrary() {
