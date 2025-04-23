@@ -12,8 +12,9 @@ final class AudioManager {
     private static let sunsetGlowTrack = "SunsetGlow"
     
     public static func StartGameMusic() {
-        audioSystem.play(filename: sunsetGlowTrack)
+        audioSystem.start()
         audioSystem.setVolume(0.15)
+        audioSystem.play(filename: sunsetGlowTrack)
     }
     
     public static func StopGameMusic() {

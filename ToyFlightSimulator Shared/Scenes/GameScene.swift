@@ -62,6 +62,10 @@ class GameScene: Node {
     
     func postBuildScene() {
         SceneManager.Paused = false
+        
+        // TODO: Perhaps a more elegant solution would be to send a 
+        //       notification instead of calling Engine directly...?
+        Engine.SceneBuildFinished()
     }
     
     func teardownScene() {

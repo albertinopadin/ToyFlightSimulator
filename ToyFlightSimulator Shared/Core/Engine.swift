@@ -42,6 +42,12 @@ final class Engine {
         Engine.renderer!.updateSemaphore = Engine.updateThread.updateSemaphore
     }
     
+    // Not clear this belongs in the Engine class...
+    public static func SceneBuildFinished() {
+        // Starting audio only after scene has initialized to prevent crackling:
+        audioThread.startAudio()
+    }
+    
     public static func InitRenderer(type: RendererType) -> Renderer {
         switch type {
             case .OrderIndependentTransparency:

@@ -17,6 +17,7 @@ struct CollisionData {
 
 final class PhysicsWorld {
     public static let gravity: float3 = [0, -9.8, 0]
+//    public static let gravity: float3 = [0, -(9.8 * 9.8), 0]
     
     private var entities: [PhysicsEntity]
     private var updateType: PhysicsUpdateType
