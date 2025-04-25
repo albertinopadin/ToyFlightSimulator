@@ -30,14 +30,16 @@ final class Keyboard {
     }
 
 #if os(macOS)
-    public static func KeyDown(with event: NSEvent) -> Event {
+    public static func KeyDown(with event: Event) -> Event? {
         SetKeyPressed(event.keyCode, pressed: true)
-        return event
+        // Return nil to prevent beep sound
+        return nil
     }
     
-    public static func KeyUp(with event: NSEvent) -> Event {
+    public static func KeyUp(with event: Event) -> Event? {
         SetKeyPressed(event.keyCode, pressed: false)
-        return event
+        // Return nil to prevent beep sound
+        return nil
     }
 #endif
     
