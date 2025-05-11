@@ -9,7 +9,7 @@ import MetalKit
 
 struct BaseRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Simple,
                                                                         vertexShaderType: .BaseVertex,
                                                                         fragmentShaderType: .BaseFragment)
         renderPipelineDescriptor.label = "Base Render"
@@ -19,7 +19,7 @@ struct BaseRenderPipelineState: RenderPipelineState {
 
 struct MaterialRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Simple,
                                                                         vertexShaderType: .BaseVertex,
                                                                         fragmentShaderType: .MaterialFragment)
         renderPipelineDescriptor.label = "Material Render"
@@ -29,7 +29,7 @@ struct MaterialRenderPipelineState: RenderPipelineState {
 
 struct SkySphereRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Base,
+        let renderPipelineDescriptor = Self.getRenderPipelineDescriptor(vertexDescriptorType: .Simple,
                                                                         vertexShaderType: .SkySphereVertex,
                                                                         fragmentShaderType: .SkySphereFragment)
         renderPipelineDescriptor.label = "Sky Sphere Render"
@@ -41,7 +41,7 @@ struct FinalRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Final Render") { descriptor in
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.FinalVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.FinalFragment]
         }

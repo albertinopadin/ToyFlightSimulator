@@ -7,14 +7,14 @@
 
 import MetalKit
 
-public struct BaseVertexDescriptor: VertexDescriptor {
-    var name: String = "Base Vertex Descriptor"
+public struct SimpleVertexDescriptor: VertexDescriptor {
+    var name: String = "Simple Vertex Descriptor"
     var vertexDescriptor: MTLVertexDescriptor!
     var attributeIndex: Int = 0
     var bufferIndex: Int = 0
     var offset: Int = 0
     
-    init() {
+    init(withTesselation: Bool = false) {
         vertexDescriptor = MTLVertexDescriptor()
         
         for vertexAttribute in TFSVertexAttributes.allCases {
@@ -22,6 +22,11 @@ public struct BaseVertexDescriptor: VertexDescriptor {
         }
         
         vertexDescriptor.layouts[0].stride = Vertex.stride
+        
+        if withTesselation {
+            name.append(" with Tesselation")
+            vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
+        }
     }
 }
 

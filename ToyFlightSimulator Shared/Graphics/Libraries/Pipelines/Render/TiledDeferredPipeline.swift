@@ -22,7 +22,7 @@ struct TiledDeferredShadowPipelineState: RenderPipelineState {
             descriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = .invalid
             descriptor.depthAttachmentPixelFormat = .depth32Float
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
         })
     }()
 }
@@ -36,7 +36,7 @@ struct TiledDeferredGBufferPipelineState: RenderPipelineState {
             Self.setGBufferPixelFormatsForTiledDeferredPipeline(descriptor: descriptor)
             descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             
             // Testing
 //            Self.enableBlending(colorAttachmentDescriptor: descriptor.colorAttachments[TFSRenderTargetLighting.index])
@@ -75,7 +75,7 @@ struct TiledDeferredTransparencyPipelineState: RenderPipelineState {
     
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Transparent Render") { descriptor in
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredTransparencyVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredTransparencyFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat

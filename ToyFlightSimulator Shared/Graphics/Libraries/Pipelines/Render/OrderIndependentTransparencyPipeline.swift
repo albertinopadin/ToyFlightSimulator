@@ -46,7 +46,7 @@ struct TileRenderPipelineState: RenderPipelineState {
 
 struct OpaqueRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.GetOpaqueRenderPipelineDescriptor(vertexDescriptorType: .Base,
+        let renderPipelineDescriptor = Self.GetOpaqueRenderPipelineDescriptor(vertexDescriptorType: .Simple,
                                                                               vertexShaderType: .BaseVertex,
                                                                               fragmentShaderType: .BaseFragment)
         
@@ -57,7 +57,7 @@ struct OpaqueRenderPipelineState: RenderPipelineState {
 
 struct OpaqueMaterialRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
-        let renderPipelineDescriptor = Self.GetOpaqueRenderPipelineDescriptor(vertexDescriptorType: .Base,
+        let renderPipelineDescriptor = Self.GetOpaqueRenderPipelineDescriptor(vertexDescriptorType: .Simple,
                                                                               vertexShaderType: .BaseVertex,
                                                                               fragmentShaderType: .MaterialFragment)
         
@@ -69,7 +69,7 @@ struct OpaqueMaterialRenderPipelineState: RenderPipelineState {
 struct OrderIndependentTransparencyRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Transparent Render") { descriptor in
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.BaseVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TransparentMaterialFragment]
             

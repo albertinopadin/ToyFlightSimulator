@@ -51,8 +51,6 @@ enum ShaderType {
     case TiledDeferredTransparencyVertex
     case TiledDeferredTransparencyFragment
     
-    case ComputeParticles
-    
     case ParticlesVertex
     case ParticlesFragment
     
@@ -64,6 +62,11 @@ enum ShaderType {
     
     case CompositeVertex
     case CompositeFragment
+    
+    
+    // Compute Shaders:
+    case ComputeParticles
+    case ComputeTesselation
 }
 
 
@@ -129,9 +132,6 @@ final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable
         _library.updateValue(Shader(functionName: "vertex_particle"), forKey: .ParticlesVertex)
         _library.updateValue(Shader(functionName: "fragment_particle"), forKey: .ParticlesFragment)
         
-        // Compute Functions:
-        _library.updateValue(Shader(functionName: "compute_particle"), forKey: .ComputeParticles)
-        
         // MSAA:
         _library.updateValue(Shader(functionName: "tiled_msaa_gbuffer_fragment"), forKey: .TiledMSAAGBufferFragment)
         _library.updateValue(Shader(functionName: "tiled_msaa_transparency_fragment"), forKey: .TiledMSAATransparencyFragment)
@@ -141,6 +141,10 @@ final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable
         
         _library.updateValue(Shader(functionName: "compositeVertexShader"), forKey: .CompositeVertex)
         _library.updateValue(Shader(functionName: "compositeFragmentShader"), forKey: .CompositeFragment)
+        
+        // Compute Functions:
+        _library.updateValue(Shader(functionName: "compute_particle"), forKey: .ComputeParticles)
+        _library.updateValue(Shader(functionName: "compute_tesselation"), forKey: .ComputeTesselation)
     }
     
     override subscript(_ type: ShaderType) -> MTLFunction {

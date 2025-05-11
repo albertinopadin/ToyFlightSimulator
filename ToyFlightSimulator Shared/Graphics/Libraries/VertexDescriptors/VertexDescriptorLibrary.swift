@@ -22,18 +22,20 @@ extension TFSVertexAttributes {
 }
 
 enum VertexDescriptorType {
-    case Base
+    case Simple
     case PositionOnly
     case Skybox
+    case Tesselation
 }
 
 final class VertexDescriptorLibrary: Library<VertexDescriptorType, MTLVertexDescriptor>, @unchecked Sendable {
     private var _library: [VertexDescriptorType: VertexDescriptor] = [:]
     
     override func makeLibrary() {
-        _library.updateValue(BaseVertexDescriptor(), forKey: .Base)
+        _library.updateValue(SimpleVertexDescriptor(), forKey: .Simple)
         _library.updateValue(PositionOnlyVertexDescriptor(), forKey: .PositionOnly)
         _library.updateValue(SkyboxVertexDescriptor(), forKey: .Skybox)
+        _library.updateValue(SimpleVertexDescriptor(withTesselation: true), forKey: .Tesselation)
     }
     
     override subscript(type: VertexDescriptorType) -> MTLVertexDescriptor {

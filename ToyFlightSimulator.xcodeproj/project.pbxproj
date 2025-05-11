@@ -609,6 +609,14 @@
 		CE7F48D328BCB4DD0082B197 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48D228BCB4DD0082B197 /* GameView.swift */; };
 		CE7F48D428BCB4DD0082B197 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48D228BCB4DD0082B197 /* GameView.swift */; };
 		CE7F48D528BCB4DD0082B197 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F48D228BCB4DD0082B197 /* GameView.swift */; };
+		CE865C132DCDFA910048BBDA /* TesselationPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE865C122DCDFA780048BBDA /* TesselationPipeline.swift */; };
+		CE865C142DCDFA910048BBDA /* TesselationPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE865C122DCDFA780048BBDA /* TesselationPipeline.swift */; };
+		CE865C152DCDFA910048BBDA /* TesselationPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE865C122DCDFA780048BBDA /* TesselationPipeline.swift */; };
+		CE865C162DCDFA910048BBDA /* TesselationPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE865C122DCDFA780048BBDA /* TesselationPipeline.swift */; };
+		CE865C182DD0A48F0048BBDA /* Tesselation.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE865C172DD0A48F0048BBDA /* Tesselation.metal */; };
+		CE865C192DD0A48F0048BBDA /* Tesselation.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE865C172DD0A48F0048BBDA /* Tesselation.metal */; };
+		CE865C1A2DD0A48F0048BBDA /* Tesselation.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE865C172DD0A48F0048BBDA /* Tesselation.metal */; };
+		CE865C1B2DD0A48F0048BBDA /* Tesselation.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE865C172DD0A48F0048BBDA /* Tesselation.metal */; };
 		CE886A3B29825CB80013062D /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE886A3A29825CB80013062D /* Skybox.metal */; };
 		CE886A3C2983BF1B0013062D /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE886A3A29825CB80013062D /* Skybox.metal */; };
 		CE886A3D2983BF210013062D /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE886A3A29825CB80013062D /* Skybox.metal */; };
@@ -959,6 +967,8 @@
 		CE7F484528B770EB0082B197 /* MathUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathUtils.swift; sourceTree = "<group>"; };
 		CE7F484D28B771550082B197 /* TimeIt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeIt.swift; sourceTree = "<group>"; };
 		CE7F48D228BCB4DD0082B197 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		CE865C122DCDFA780048BBDA /* TesselationPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesselationPipeline.swift; sourceTree = "<group>"; };
+		CE865C172DD0A48F0048BBDA /* Tesselation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Tesselation.metal; sourceTree = "<group>"; };
 		CE886A3929810B800013062D /* TFSCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TFSCommon.h; sourceTree = "<group>"; };
 		CE886A3A29825CB80013062D /* Skybox.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Skybox.metal; sourceTree = "<group>"; };
 		CE886A3E2983BFB30013062D /* PointLights.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = PointLights.metal; sourceTree = "<group>"; };
@@ -1413,6 +1423,7 @@
 			isa = PBXGroup;
 			children = (
 				CE387B472BE22FF000F51DC4 /* ParticlePipeline.swift */,
+				CE865C122DCDFA780048BBDA /* TesselationPipeline.swift */,
 				CED798452C9050A2003B6559 /* Render */,
 				CED798462C9050CF003B6559 /* Compute */,
 			);
@@ -1597,6 +1608,7 @@
 				CE7732092CA901EA0025286F /* TiledMSAATransparency.metal */,
 				CE7732132CAA9A240025286F /* Composition.metal */,
 				CE7732182CAAA32F0025286F /* TiledMSAAResolve.metal */,
+				CE865C172DD0A48F0048BBDA /* Tesselation.metal */,
 			);
 			path = Shaders;
 			sourceTree = "<group>";
@@ -2105,6 +2117,7 @@
 				CEC231312B22F3E50081A26A /* Icosahedron.swift in Sources */,
 				CE79B62E2B92E4B8009F2E49 /* TextureLoader.swift in Sources */,
 				CE79B6182B92E153009F2E49 /* DepthStencilState.swift in Sources */,
+				CE865C192DD0A48F0048BBDA /* Tesselation.metal in Sources */,
 				CE50C1072C95921800202C45 /* SkyEntity.swift in Sources */,
 				CE50C0FD2C956C7700202C45 /* DrawManager.swift in Sources */,
 				CE96254D2CCCE2AE00CEA5A2 /* PhysicsWorld.swift in Sources */,
@@ -2119,6 +2132,7 @@
 				CE452FF82A7CB4A6001945B9 /* Missile.swift in Sources */,
 				CE9625422CCCE25D00CEA5A2 /* EulerSolver.swift in Sources */,
 				CE4530012A7CB4B1001945B9 /* MathUtils.swift in Sources */,
+				CE865C132DCDFA910048BBDA /* TesselationPipeline.swift in Sources */,
 				CE4530022A7CB4B1001945B9 /* Transform.swift in Sources */,
 				CE79B6522B95100F009F2E49 /* TiledDeferredPointLight.metal in Sources */,
 				CE79B6082B8F164E009F2E49 /* RenderPipelineState.swift in Sources */,
@@ -2273,6 +2287,7 @@
 				CE886A432984FFB00013062D /* GBuffer.metal in Sources */,
 				CE3BFF6428E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE2ED2C0299CBB3C00C81F47 /* SkyBox.swift in Sources */,
+				CE865C1A2DD0A48F0048BBDA /* Tesselation.metal in Sources */,
 				CE96253B2CCCE1C400CEA5A2 /* HeckerCollisionResponse.swift in Sources */,
 				CE3BFF7E28E2FCF50014A752 /* Node.swift in Sources */,
 				CE79B62B2B92E4B8009F2E49 /* TextureLoader.swift in Sources */,
@@ -2287,6 +2302,7 @@
 				CEC2312F2B22F3E50081A26A /* Icosahedron.swift in Sources */,
 				CE3BFF3428E058CE0014A752 /* Keycodes.swift in Sources */,
 				CEAB3840297CDE770087F7CB /* Shadow.metal in Sources */,
+				CE865C162DCDFA910048BBDA /* TesselationPipeline.swift in Sources */,
 				CE2ED2972998A10400C81F47 /* F18.swift in Sources */,
 				CEED93A729E3B2600020DC53 /* AircraftStore.swift in Sources */,
 				CE4530512A7F3EBF001945B9 /* FPS.swift in Sources */,
@@ -2329,6 +2345,7 @@
 				CE3BFF4C28E1B20D0014A752 /* GameTime.swift in Sources */,
 				CEAB384B297FB3720087F7CB /* SinglePassDeferredGBufferTextures.swift in Sources */,
 				CEB84E782A24A76400BEF778 /* InputManager.swift in Sources */,
+				CE865C182DD0A48F0048BBDA /* Tesselation.metal in Sources */,
 				CE79B6362B92ED1A009F2E49 /* TiledDeferredDepthStencils.swift in Sources */,
 				CE2ED2BD299CB91200C81F47 /* RendererType.swift in Sources */,
 				CE2ED2B92998A4CF00C81F47 /* F18.swift in Sources */,
@@ -2449,6 +2466,7 @@
 				CE886A482985007A0013062D /* DirectionalLight.metal in Sources */,
 				CE79B62C2B92E4B8009F2E49 /* TextureLoader.swift in Sources */,
 				CE3DD2EE2A020F4900787E53 /* Droppable.swift in Sources */,
+				CE865C152DCDFA910048BBDA /* TesselationPipeline.swift in Sources */,
 				CE3BFF8728E2FD9C0014A752 /* GameObject.swift in Sources */,
 				CE3BFFA428E452F00014A752 /* LightObject.swift in Sources */,
 				CE7F483B28B76FF60082B197 /* Renderer.swift in Sources */,
@@ -2565,6 +2583,7 @@
 				CE3BFF9428E451E50014A752 /* CameraManager.swift in Sources */,
 				CE387B542BE230FE00F51DC4 /* ComputePipelineStateLibrary.swift in Sources */,
 				CE79B6422B932482009F2E49 /* TiledDeferredGBufferTextures.swift in Sources */,
+				CE865C142DCDFA910048BBDA /* TesselationPipeline.swift in Sources */,
 				CE4127982B6B667600B01AEA /* Temple.swift in Sources */,
 				CE79B6472B932B29009F2E49 /* TiledDeferredGBuffer.metal in Sources */,
 				CEC0C5962B4B2D3100863C38 /* Material.swift in Sources */,
@@ -2580,6 +2599,7 @@
 				CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */,
 				CE0A46562B72102C009F596F /* GameStatsManager.swift in Sources */,
 				CE0EF7292A46CF9F00F54A2C /* HIDDevice.swift in Sources */,
+				CE865C1B2DD0A48F0048BBDA /* Tesselation.metal in Sources */,
 				CE3DD2EF2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE79B6022B8F160E009F2E49 /* SinglePassDeferredPipeline.swift in Sources */,
 				CE387B452BDE273B00F51DC4 /* ParticleEmitterEntity.swift in Sources */,

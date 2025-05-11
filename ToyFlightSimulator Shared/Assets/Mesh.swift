@@ -106,7 +106,7 @@ class Mesh {
     }
     
     internal static func createMdlVertexDescriptor() -> MDLVertexDescriptor {
-        let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Base])
+        let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Simple])
         descriptor.attribute(TFSVertexAttributePosition.rawValue).name      = MDLVertexAttributePosition
         descriptor.attribute(TFSVertexAttributePosition.rawValue).format    = .float3
         descriptor.attribute(TFSVertexAttributeColor.rawValue).name         = MDLVertexAttributeColor

@@ -19,7 +19,7 @@ extension RenderPipelineState {
 struct ShadowGenerationRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Shadow Generation Stage") { descriptor in
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]  // ???
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]  // ???
             descriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
             descriptor.depthAttachmentPixelFormat = .depth32Float
             // TODO: Should I set the render target pixel formats here?
@@ -30,7 +30,7 @@ struct ShadowGenerationRenderPipelineState: RenderPipelineState {
 struct GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "GBuffer Generation Stage") { descriptor in
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredGBufferVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredGBufferFragmentBase]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
@@ -49,7 +49,7 @@ struct GBufferGenerationBaseRenderPipelineState: RenderPipelineState {
 struct GBufferGenerationMaterialRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "GBuffer Generation Stage") { descriptor in
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredGBufferVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredGBufferFragmentMaterial]
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
@@ -88,7 +88,7 @@ struct TransparencyPipelineState: RenderPipelineState {
     
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Transparency Stage") { descriptor in
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredTransparencyVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredTransparencyFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat

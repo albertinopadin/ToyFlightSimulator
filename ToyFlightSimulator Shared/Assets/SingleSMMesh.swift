@@ -205,7 +205,7 @@ class SingleSMMesh {
             fatalError("Asset \(modelName) does not exist.")
         }
 
-        let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Base])
+        let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Simple])
         descriptor.attribute(TFSVertexAttributePosition.rawValue).name  = MDLVertexAttributePosition
         descriptor.attribute(TFSVertexAttributeColor.rawValue).name     = MDLVertexAttributeColor
         descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).name  = MDLVertexAttributeTextureCoordinate

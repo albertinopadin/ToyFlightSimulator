@@ -19,7 +19,7 @@ extension RenderPipelineState {
 struct TiledMSAAShadowPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Multisampled Shadow", block: { descriptor in
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = .invalid
             descriptor.depthAttachmentPixelFormat = .depth32Float
@@ -31,7 +31,7 @@ struct TiledMSAAShadowPipelineState: RenderPipelineState {
 struct TiledMSAAGBufferPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Multisampled GBuffer") { descriptor in
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredGBufferVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredGBufferFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
@@ -72,7 +72,7 @@ struct TiledMSAATransparencyPipelineState: RenderPipelineState {
 
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Transparent Render") { descriptor in
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Base]
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredTransparencyVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredTransparencyFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat

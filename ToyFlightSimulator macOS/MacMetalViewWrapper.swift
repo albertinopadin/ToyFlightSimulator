@@ -21,6 +21,10 @@ struct MacMetalViewWrapper: NSViewRepresentable {
     
     
     func makeNSView(context: Context) -> GameView {
+        guard let rendererType = Engine.renderer?.rendererType else {
+            fatalError("[MacMetalViewWrapper makeNSView] Engine does not have a specified renderer.")
+        }
+        
         let gameView = GameView()
         gameView.device = Engine.Device
         gameView.clearColor = Preferences.ClearColor
@@ -31,7 +35,7 @@ struct MacMetalViewWrapper: NSViewRepresentable {
         
         Engine.MetalView = gameView
         SceneManager.SetScene(Preferences.StartingSceneType,
-                              rendererType: Engine.renderer!.rendererType)
+                              rendererType: rendererType)
         
         return gameView
     }
@@ -45,7 +49,7 @@ struct MacMetalViewWrapper: NSViewRepresentable {
             newRenderer.metalView = nsView
             Engine.renderer = newRenderer
             SceneManager.SetScene(Preferences.StartingSceneType,
-                                  rendererType: Engine.renderer!.rendererType)
+                                  rendererType: rendererType)
             SceneManager.Paused = true
         }
         
