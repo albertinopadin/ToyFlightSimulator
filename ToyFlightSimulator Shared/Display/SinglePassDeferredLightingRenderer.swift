@@ -7,7 +7,7 @@
 
 import MetalKit
 
-final class SinglePassDeferredLightingRenderer: Renderer {
+final class SinglePassDeferredLightingRenderer: Renderer, ShadowRenderer {
     // Create quad for fullscreen composition drawing
     private let _quadVertices: [TFSSimpleVertex] = [
         .init(position: .init(x: -1, y: -1)),
@@ -21,9 +21,11 @@ final class SinglePassDeferredLightingRenderer: Renderer {
     
     private let _quadVertexBuffer: MTLBuffer!
     
-    private static let ShadowMapSize: Int = 8_192
-    var shadowMap: MTLTexture?
-    var shadowRenderPassDescriptor: MTLRenderPassDescriptor!
+    var shadowMap: MTLTexture
+    var shadowRenderPassDescriptor: MTLRenderPassDescriptor
+    
+    // For protocol conformance:
+    var shadowResolveTexture: MTLTexture? = nil
     
     private let _gBufferAndLightingRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
@@ -50,47 +52,25 @@ final class SinglePassDeferredLightingRenderer: Renderer {
         }
     }
     
-    public static func makeShadowMap(label: String) -> MTLTexture! {
-        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
-                                                                               width: Self.ShadowMapSize,
-                                                                               height: Self.ShadowMapSize,
-                                                                               mipmapped: false)
-        shadowTextureDescriptor.resourceOptions = .storageModePrivate
-        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
-        let sm = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor)!
-        sm.label = label
-        
-        return sm
-    }
     
-    public static func createShadowRenderPassDescriptor(shadowMapTexture: MTLTexture) -> MTLRenderPassDescriptor {
-        let mShadowRenderPassDescriptor = MTLRenderPassDescriptor()
-        mShadowRenderPassDescriptor.depthAttachment.texture = shadowMapTexture
-        mShadowRenderPassDescriptor.depthAttachment.loadAction = .clear
-        mShadowRenderPassDescriptor.depthAttachment.storeAction = .store
-        return mShadowRenderPassDescriptor
-    }
     
     init() {
         _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
                                                      length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
+        shadowMap = Self.makeShadowMap(label: "Shadow Map")
+        shadowRenderPassDescriptor = Self.createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
         super.init(type: .SinglePassDeferredLighting)
-        createShadowMap()
     }
     
     init(_ mtkView: MTKView) {
         _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
                                                      length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
+        shadowMap = Self.makeShadowMap(label: "Shadow Map")
+        shadowRenderPassDescriptor = Self.createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
         super.init(mtkView, type: .SinglePassDeferredLighting)
-        createShadowMap()
         let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
         print("[SPDL Renderer init] drawable size: \(drawableSize)")
         updateDrawableSize(size: drawableSize)
-    }
-    
-    func createShadowMap() {
-        shadowMap = Self.makeShadowMap(label: "Shadow Map")
-        shadowRenderPassDescriptor = Self.createShadowRenderPassDescriptor(shadowMapTexture: shadowMap!)
     }
     
     func setGBufferTextures(renderEncoder: MTLRenderCommandEncoder) {
@@ -173,26 +153,6 @@ final class SinglePassDeferredLightingRenderer: Renderer {
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setCullMode(.back)  //<-- This or not setting the cull mode works. WTF?
             DrawManager.DrawSky(with: renderEncoder)
-        }
-    }
-    
-    // TODO: Must be doing something wrong because there are strange artifacts, like:
-    //       - Seeing shadow of bombs and landing gear through aircraft
-    //       - Shadows on 'back side' of jet look odd
-    //       - If I pitch or roll jet, shadows look very different on adjacent panels in mesh.
-    // ADDENDUM: Might fix issues if I implement soft shadows...
-    func encodeShadowMapPass(into commandBuffer: MTLCommandBuffer) {
-        encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Map Pass") { renderEncoder in
-            SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-            encodeRenderStage(using: renderEncoder, label: "Shadow Generation Stage") {
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ShadowGeneration])
-                renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.ShadowGeneration])
-//                renderEncoder.setCullMode(.back)
-//                renderEncoder.setCullMode(.front)
-//                renderEncoder.setDepthBias(0.015, slopeScale: 7, clamp: 0.02)
-                renderEncoder.setDepthBias(0.1, slopeScale: 1, clamp: 0.0)
-                DrawManager.DrawShadows(with: renderEncoder)
-            }
         }
     }
     

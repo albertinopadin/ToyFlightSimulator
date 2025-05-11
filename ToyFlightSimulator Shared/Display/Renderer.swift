@@ -87,37 +87,6 @@ class Renderer: NSObject, MTKViewDelegate, BaseRenderer {
         commandBuffer.commit()
     }
     
-    func encodeComputePass(into commandBuffer: MTLCommandBuffer,
-                           label: String,
-                           _ encodingBlock: (MTLComputeCommandEncoder) -> Void) {
-        guard let computeEncoder = commandBuffer.makeComputeCommandEncoder() else {
-            fatalError("Failed to make compute command encoder.")
-        }
-        
-        computeEncoder.label = label
-        encodingBlock(computeEncoder)
-        computeEncoder.endEncoding()
-    }
-    
-    func encodeRenderPass(into commandBuffer: MTLCommandBuffer,
-                          using descriptor: MTLRenderPassDescriptor,
-                          label: String,
-                          _ encodingBlock: (MTLRenderCommandEncoder) -> Void) {
-        guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor) else {
-            fatalError("Failed to make render command encoder with: \(descriptor.description)")
-        }
-        
-        renderEncoder.label = label
-        encodingBlock(renderEncoder)
-        renderEncoder.endEncoding()
-    }
-    
-    func encodeRenderStage(using renderEncoder: MTLRenderCommandEncoder, label: String, _ encodingBlock: () -> Void) {
-        renderEncoder.pushDebugGroup(label)
-        encodingBlock()
-        renderEncoder.popDebugGroup()
-    }
-    
     // --- MTKViewDelegate methods ---
     public func updateScreenSize(size: CGSize) {
         print("[Renderer updateScreenSize] new size: \(size)")

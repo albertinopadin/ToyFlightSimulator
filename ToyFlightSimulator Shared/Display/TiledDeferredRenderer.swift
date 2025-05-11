@@ -7,15 +7,16 @@
 
 import MetalKit
 
-final class TiledDeferredRenderer: Renderer {
-    private static let ShadowTextureSize: Int = 8_192
-    
+final class TiledDeferredRenderer: Renderer, ShadowRenderer {
     private let icosahedron = IcosahedronMesh()
     
     private var gBufferTextures = TiledDeferredGBufferTextures()
     
-    private var shadowTexture: MTLTexture
-    private var shadowRenderPassDescriptor: MTLRenderPassDescriptor
+    var shadowMap: MTLTexture
+    var shadowRenderPassDescriptor: MTLRenderPassDescriptor
+    
+    // For protocol conformance:
+    var shadowResolveTexture: MTLTexture? = nil
     
     private var particleComputePipelineState: MTLComputePipelineState!  // TODO
     
@@ -51,20 +52,6 @@ final class TiledDeferredRenderer: Renderer {
         }
     }
     
-    static func makeShadowTexture(label: String) -> MTLTexture {
-        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
-                                                                               width: Self.ShadowTextureSize,
-                                                                               height: Self.ShadowTextureSize,
-                                                                               mipmapped: false)
-        shadowTextureDescriptor.resourceOptions = .storageModePrivate
-        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
-        guard let shadowTex = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor) else {
-            fatalError("Failed to create shadow texture")
-        }
-        shadowTex.label = label
-        return shadowTex
-    }
-    
     static func makeShadowRenderPassDescriptor(shadowTexture: MTLTexture) -> MTLRenderPassDescriptor {
         let mShadowRenderPassDescriptor = MTLRenderPassDescriptor()
         mShadowRenderPassDescriptor.depthAttachment.texture = shadowTexture
@@ -74,15 +61,15 @@ final class TiledDeferredRenderer: Renderer {
     }
     
     init() {
-        shadowTexture = Self.makeShadowTexture(label: "Shadow Texture")
-        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowTexture: shadowTexture)
+        shadowMap = Self.makeShadowMap(label: "Shadow Texture")
+        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowTexture: shadowMap)
         particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
         super.init(type: .TiledDeferred)
     }
     
     init(_ mtkView: MTKView) {
-        shadowTexture = Self.makeShadowTexture(label: "Shadow Texture")
-        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowTexture: shadowTexture)
+        shadowMap = Self.makeShadowMap(label: "Shadow Texture")
+        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowTexture: shadowMap)
         particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
         super.init(mtkView, type: .TiledDeferred)
     }
@@ -101,22 +88,11 @@ final class TiledDeferredRenderer: Renderer {
         renderPassDescriptor.stencilAttachment.storeAction = .dontCare
     }
     
-    func encodeShadowPass(into commandBuffer: MTLCommandBuffer) {
-        encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Pass") { renderEncoder in
-            encodeRenderStage(using: renderEncoder, label: "Shadow Texture Stage") {
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredShadow])
-                renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredShadow])
-                SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                DrawManager.Draw(with: renderEncoder)
-            }
-        }
-    }
-    
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredGBuffer])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            renderEncoder.setFragmentTexture(shadowTexture, index: TFSTextureIndexShadow.index)
+            renderEncoder.setFragmentTexture(shadowMap, index: TFSTextureIndexShadow.index)
             DrawManager.Draw(with: renderEncoder)
         }
     }
@@ -190,7 +166,7 @@ final class TiledDeferredRenderer: Renderer {
         render {
             runDrawableCommands { commandBuffer in
                 commandBuffer.label = "Shadow Commands"
-                encodeShadowPass(into: commandBuffer)
+                encodeShadowPassTiledDeferred(into: commandBuffer)
             }
             
             runDrawableCommands { commandBuffer in

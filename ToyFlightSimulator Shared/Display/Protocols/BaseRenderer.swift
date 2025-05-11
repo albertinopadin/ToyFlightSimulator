@@ -7,7 +7,7 @@
 
 import MetalKit
 
-protocol BaseRenderer {
+protocol BaseRenderer: RenderPassEncoder, ComputePassEncoder {
     var baseRenderPassDescriptor: MTLRenderPassDescriptor { get set }
 }
 
