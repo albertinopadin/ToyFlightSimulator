@@ -617,6 +617,10 @@
 		CE865C192DD0A48F0048BBDA /* Tesselation.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE865C172DD0A48F0048BBDA /* Tesselation.metal */; };
 		CE865C1A2DD0A48F0048BBDA /* Tesselation.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE865C172DD0A48F0048BBDA /* Tesselation.metal */; };
 		CE865C1B2DD0A48F0048BBDA /* Tesselation.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE865C172DD0A48F0048BBDA /* Tesselation.metal */; };
+		CE865C222DD0AFF50048BBDA /* BaseRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE865C212DD0AFCE0048BBDA /* BaseRenderer.swift */; };
+		CE865C232DD0AFF50048BBDA /* BaseRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE865C212DD0AFCE0048BBDA /* BaseRenderer.swift */; };
+		CE865C242DD0AFF50048BBDA /* BaseRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE865C212DD0AFCE0048BBDA /* BaseRenderer.swift */; };
+		CE865C252DD0AFF50048BBDA /* BaseRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE865C212DD0AFCE0048BBDA /* BaseRenderer.swift */; };
 		CE886A3B29825CB80013062D /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE886A3A29825CB80013062D /* Skybox.metal */; };
 		CE886A3C2983BF1B0013062D /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE886A3A29825CB80013062D /* Skybox.metal */; };
 		CE886A3D2983BF210013062D /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = CE886A3A29825CB80013062D /* Skybox.metal */; };
@@ -969,6 +973,7 @@
 		CE7F48D228BCB4DD0082B197 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		CE865C122DCDFA780048BBDA /* TesselationPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesselationPipeline.swift; sourceTree = "<group>"; };
 		CE865C172DD0A48F0048BBDA /* Tesselation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Tesselation.metal; sourceTree = "<group>"; };
+		CE865C212DD0AFCE0048BBDA /* BaseRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseRenderer.swift; sourceTree = "<group>"; };
 		CE886A3929810B800013062D /* TFSCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TFSCommon.h; sourceTree = "<group>"; };
 		CE886A3A29825CB80013062D /* Skybox.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Skybox.metal; sourceTree = "<group>"; };
 		CE886A3E2983BFB30013062D /* PointLights.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = PointLights.metal; sourceTree = "<group>"; };
@@ -1619,6 +1624,7 @@
 				CE4530502A7F3EBF001945B9 /* FPS.swift */,
 				CE7F48D228BCB4DD0082B197 /* GameView.swift */,
 				CE7F483928B76FF60082B197 /* Renderer.swift */,
+				CE865C212DD0AFCE0048BBDA /* BaseRenderer.swift */,
 				CE2ED2BB299CB8AA00C81F47 /* RendererType.swift */,
 				CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */,
 				CE886A4A298525D00013062D /* SinglePassDeferredLightingRenderer.swift */,
@@ -2081,6 +2087,7 @@
 				CE4530092A7CB4BA001945B9 /* TimeIt.swift in Sources */,
 				CE452FEB2A7CB4A6001945B9 /* GBU16.swift in Sources */,
 				CED3AA892B5D4DA300191002 /* ContainerNode.swift in Sources */,
+				CE865C222DD0AFF50048BBDA /* BaseRenderer.swift in Sources */,
 				CE9625462CCCE26700CEA5A2 /* VerletSolver.swift in Sources */,
 				CE4530542A7F3EC3001945B9 /* FPS.swift in Sources */,
 				CE50C1022C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
@@ -2251,6 +2258,7 @@
 				CE3BFF4328E1AEF80014A752 /* Preferences.swift in Sources */,
 				CEAB38502981024E0087F7CB /* Transform.swift in Sources */,
 				CE3BFF8E28E2FE140014A752 /* Math.swift in Sources */,
+				CE865C242DD0AFF50048BBDA /* BaseRenderer.swift in Sources */,
 				CE3BFF4B28E1B20D0014A752 /* GameTime.swift in Sources */,
 				CE327B742C490D09004AF2D0 /* ParticleEmitterObject.swift in Sources */,
 				CE7F483E28B770B00082B197 /* Colors.swift in Sources */,
@@ -2335,6 +2343,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CEAB38562981081E0087F7CB /* ShaderDefinitions.h in Sources */,
+				CE865C252DD0AFF50048BBDA /* BaseRenderer.swift in Sources */,
 				CEAB38572981081E0087F7CB /* Lighting.metal in Sources */,
 				CE79B5F72B8F15BE009F2E49 /* BasicPipeline.swift in Sources */,
 				CEAA40282C746F3800009894 /* ClickSelectable.swift in Sources */,
@@ -2584,6 +2593,7 @@
 				CE387B542BE230FE00F51DC4 /* ComputePipelineStateLibrary.swift in Sources */,
 				CE79B6422B932482009F2E49 /* TiledDeferredGBufferTextures.swift in Sources */,
 				CE865C142DCDFA910048BBDA /* TesselationPipeline.swift in Sources */,
+				CE865C232DD0AFF50048BBDA /* BaseRenderer.swift in Sources */,
 				CE4127982B6B667600B01AEA /* Temple.swift in Sources */,
 				CE79B6472B932B29009F2E49 /* TiledDeferredGBuffer.metal in Sources */,
 				CEC0C5962B4B2D3100863C38 /* Material.swift in Sources */,

@@ -7,7 +7,7 @@
 
 import MetalKit
 
-class Renderer: NSObject, MTKViewDelegate {
+class Renderer: NSObject, MTKViewDelegate, BaseRenderer {
     nonisolated(unsafe) public static var ScreenSize = float2(100, 100)
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
     
@@ -22,7 +22,7 @@ class Renderer: NSObject, MTKViewDelegate {
     // Used to control scene update frequency
     public var updateSemaphore: DispatchSemaphore?
     
-    var baseRenderPassDescriptor: MTLRenderPassDescriptor!
+    var baseRenderPassDescriptor: MTLRenderPassDescriptor
     
     public let rendererType: RendererType
     
@@ -37,8 +37,9 @@ class Renderer: NSObject, MTKViewDelegate {
             
             MainActor.assumeIsolated {
                 updateScreenSize(size: _metalView.drawableSize)
-                createBaseRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
-                                               screenHeight: Int(Renderer.ScreenSize.y))
+                Self.updateBaseRenderPassDescriptor(&baseRenderPassDescriptor,
+                                                    screenWidth: Int(Renderer.ScreenSize.x),
+                                                    screenHeight: Int(Renderer.ScreenSize.y))
                 _metalView.delegate = self
             }
         }
@@ -47,13 +48,16 @@ class Renderer: NSObject, MTKViewDelegate {
     init(type: RendererType) {
         self.rendererType = type
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
+        baseRenderPassDescriptor = Self.createBaseRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
+                                                                       screenHeight: Int(Renderer.ScreenSize.y))
         super.init()
     }
     
     init(_ mtkView: MTKView, type: RendererType) {
         self.rendererType = type
         inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
-        
+        baseRenderPassDescriptor = Self.createBaseRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
+                                                                       screenHeight: Int(Renderer.ScreenSize.y))
         super.init()
         metalView = mtkView
     }
@@ -114,53 +118,6 @@ class Renderer: NSObject, MTKViewDelegate {
         renderEncoder.popDebugGroup()
     }
     
-    private func createBaseRenderPassDescriptor(screenWidth: Int, screenHeight: Int) {
-        // --- BASE COLOR 0 TEXTURE ---
-        let base0TextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainPixelFormat,
-                                                                              width: screenWidth,
-                                                                              height: screenHeight,
-                                                                              mipmapped: false)
-        // Defining render target
-        base0TextureDescriptor.usage = [.renderTarget, .shaderRead]
-        let tex = Engine.Device.makeTexture(descriptor: base0TextureDescriptor)
-        Assets.Textures.setTexture(textureType: .BaseColorRender_0,
-                                   texture: tex!)
-        
-        // --- BASE COLOR 1 TEXTURE ---
-        let base1TextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainPixelFormat,
-                                                                              width: screenWidth,
-                                                                              height: screenHeight,
-                                                                              mipmapped: false)
-        // Defining render target
-        base1TextureDescriptor.usage = [.renderTarget, .shaderRead]
-        Assets.Textures.setTexture(textureType: .BaseColorRender_1,
-                                   texture: Engine.Device.makeTexture(descriptor: base1TextureDescriptor)!)
-        
-        // --- BASE DEPTH TEXTURE ---
-        let depthTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Preferences.MainDepthPixelFormat,
-                                                                              width: screenWidth,
-                                                                              height: screenHeight,
-                                                                              mipmapped: false)
-        // Defining render target
-        depthTextureDescriptor.usage = [.renderTarget, .shaderRead]
-        depthTextureDescriptor.storageMode = .private
-        Assets.Textures.setTexture(textureType: .BaseDepthRender,
-                                   texture: Engine.Device.makeTexture(descriptor: depthTextureDescriptor)!)
-        
-        baseRenderPassDescriptor = MTLRenderPassDescriptor()
-        baseRenderPassDescriptor.colorAttachments[0].texture = Assets.Textures[.BaseColorRender_0]
-        baseRenderPassDescriptor.colorAttachments[0].storeAction = .store
-        baseRenderPassDescriptor.colorAttachments[0].loadAction = .clear
-    
-        baseRenderPassDescriptor.colorAttachments[1].texture = Assets.Textures[.BaseColorRender_1]
-        baseRenderPassDescriptor.colorAttachments[1].storeAction = .store
-        baseRenderPassDescriptor.colorAttachments[1].loadAction = .clear
-    
-        baseRenderPassDescriptor.depthAttachment.texture = Assets.Textures[.BaseDepthRender]
-        baseRenderPassDescriptor.depthAttachment.storeAction = .store
-        baseRenderPassDescriptor.depthAttachment.loadAction = .clear
-    }
-    
     // --- MTKViewDelegate methods ---
     public func updateScreenSize(size: CGSize) {
         print("[Renderer updateScreenSize] new size: \(size)")
@@ -176,6 +133,9 @@ class Renderer: NSObject, MTKViewDelegate {
         // When window is resized
         if !size.width.isNaN && !size.height.isNaN {
             updateScreenSize(size: size)
+            Self.updateBaseRenderPassDescriptor(&baseRenderPassDescriptor,
+                                                screenWidth: Int(Renderer.ScreenSize.x),
+                                                screenHeight: Int(Renderer.ScreenSize.y))
         }
     }
     
