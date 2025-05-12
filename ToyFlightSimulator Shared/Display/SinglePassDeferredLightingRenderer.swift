@@ -7,7 +7,7 @@
 
 import MetalKit
 
-final class SinglePassDeferredLightingRenderer: Renderer, ShadowRenderer {
+final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering {
     // Create quad for fullscreen composition drawing
     private let _quadVertices: [TFSSimpleVertex] = [
         .init(position: .init(x: -1, y: -1)),
@@ -23,7 +23,6 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRenderer {
     
     var shadowMap: MTLTexture
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor
-    
     // For protocol conformance:
     var shadowResolveTexture: MTLTexture? = nil
     
@@ -58,7 +57,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRenderer {
         _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
                                                      length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
         shadowMap = Self.makeShadowMap(label: "Shadow Map")
-        shadowRenderPassDescriptor = Self.createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
+        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
         super.init(type: .SinglePassDeferredLighting)
     }
     
@@ -66,7 +65,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRenderer {
         _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
                                                      length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
         shadowMap = Self.makeShadowMap(label: "Shadow Map")
-        shadowRenderPassDescriptor = Self.createShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
+        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
         super.init(mtkView, type: .SinglePassDeferredLighting)
         let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
         print("[SPDL Renderer init] drawable size: \(drawableSize)")

@@ -1,5 +1,5 @@
 //
-//  ComputePassEncoder.swift
+//  ComputePassEncoding.swift
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 5/11/25.
@@ -7,9 +7,9 @@
 
 import MetalKit
 
-protocol ComputePassEncoder {}
+protocol ComputePassEncoding {}
 
-extension ComputePassEncoder {
+extension ComputePassEncoding {
     func encodeComputePass(into commandBuffer: MTLCommandBuffer,
                            label: String,
                            _ encodingBlock: (MTLComputeCommandEncoder) -> Void) {

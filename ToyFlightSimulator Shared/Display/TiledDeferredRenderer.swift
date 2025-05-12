@@ -7,18 +7,17 @@
 
 import MetalKit
 
-final class TiledDeferredRenderer: Renderer, ShadowRenderer {
+final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering {
     private let icosahedron = IcosahedronMesh()
     
     private var gBufferTextures = TiledDeferredGBufferTextures()
     
     var shadowMap: MTLTexture
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor
-    
     // For protocol conformance:
     var shadowResolveTexture: MTLTexture? = nil
     
-    private var particleComputePipelineState: MTLComputePipelineState!  // TODO
+    var particleComputePipelineState: MTLComputePipelineState
     
     private let tiledDeferredRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
@@ -52,24 +51,16 @@ final class TiledDeferredRenderer: Renderer, ShadowRenderer {
         }
     }
     
-    static func makeShadowRenderPassDescriptor(shadowTexture: MTLTexture) -> MTLRenderPassDescriptor {
-        let mShadowRenderPassDescriptor = MTLRenderPassDescriptor()
-        mShadowRenderPassDescriptor.depthAttachment.texture = shadowTexture
-        mShadowRenderPassDescriptor.depthAttachment.loadAction = .clear
-        mShadowRenderPassDescriptor.depthAttachment.storeAction = .store
-        return mShadowRenderPassDescriptor
-    }
-    
     init() {
         shadowMap = Self.makeShadowMap(label: "Shadow Texture")
-        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowTexture: shadowMap)
+        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
         particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
         super.init(type: .TiledDeferred)
     }
     
     init(_ mtkView: MTKView) {
         shadowMap = Self.makeShadowMap(label: "Shadow Texture")
-        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowTexture: shadowMap)
+        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
         particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
         super.init(mtkView, type: .TiledDeferred)
     }
@@ -141,24 +132,6 @@ final class TiledDeferredRenderer: Renderer, ShadowRenderer {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredTransparency])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             DrawManager.Draw(with: renderEncoder, withTransparency: true)
-        }
-    }
-    
-    func encodeParticleComputePass(into commandBuffer: MTLCommandBuffer) {
-        encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
-            computeEncoder.setComputePipelineState(particleComputePipelineState)
-            let threadsPerGroup = MTLSize(width: particleComputePipelineState.threadExecutionWidth,
-                                          height: 1,
-                                          depth: 1)
-            SceneManager.Compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
-        }
-    }
-    
-    func encodeParticleRenderStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeRenderStage(using: renderEncoder, label: "Particle Render Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Particle])
-            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            DrawManager.DrawParticles(with: renderEncoder)
         }
     }
     

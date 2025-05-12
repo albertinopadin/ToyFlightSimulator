@@ -1,5 +1,5 @@
 //
-//  BaseRenderer.swift
+//  BaseRendering.swift
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 5/11/25.
@@ -7,11 +7,11 @@
 
 import MetalKit
 
-protocol BaseRenderer: RenderPassEncoder, ComputePassEncoder {
+protocol BaseRendering: RenderPassEncoding, ComputePassEncoding {
     var baseRenderPassDescriptor: MTLRenderPassDescriptor { get set }
 }
 
-extension BaseRenderer {
+extension BaseRendering {
     static func createBaseRenderPassDescriptor(screenWidth: Int, screenHeight: Int) -> MTLRenderPassDescriptor {
         // --- BASE COLOR 0 TEXTURE ---
         makeBaseTexture(type: .BaseColorRender_0, screenWidth: screenWidth, screenHeight: screenHeight)

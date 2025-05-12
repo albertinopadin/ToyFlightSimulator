@@ -7,7 +7,7 @@
 
 import MetalKit
 
-class Renderer: NSObject, MTKViewDelegate, BaseRenderer {
+class Renderer: NSObject, MTKViewDelegate, BaseRendering {
     nonisolated(unsafe) public static var ScreenSize = float2(100, 100)
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
     

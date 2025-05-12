@@ -1,5 +1,5 @@
 //
-//  ShadowRenderer.swift
+//  ShadowRendering.swift
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 5/11/25.
@@ -7,14 +7,14 @@
 
 import MetalKit
 
-protocol ShadowRenderer: RenderPassEncoder {
+protocol ShadowRendering: RenderPassEncoding {
     static var ShadowMapSize: Int { get }
     var shadowMap: MTLTexture { get set }
     var shadowResolveTexture: MTLTexture? { get set }
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor { get set }
 }
 
-extension ShadowRenderer {
+extension ShadowRendering {
     static var ShadowMapSize: Int { 8_192 }
     
     public static func makeShadowMap(label: String, sampleCount: Int = 1) -> MTLTexture {
@@ -37,7 +37,7 @@ extension ShadowRenderer {
         return sm
     }
     
-    public static func createShadowRenderPassDescriptor(shadowMapTexture: MTLTexture) -> MTLRenderPassDescriptor {
+    public static func makeShadowRenderPassDescriptor(shadowMapTexture: MTLTexture) -> MTLRenderPassDescriptor {
         let mShadowRenderPassDescriptor = MTLRenderPassDescriptor()
         mShadowRenderPassDescriptor.depthAttachment.texture = shadowMapTexture
         mShadowRenderPassDescriptor.depthAttachment.loadAction = .clear

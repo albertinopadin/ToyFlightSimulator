@@ -7,7 +7,7 @@
 
 import MetalKit
 
-final class TiledMultisampleRenderer: Renderer, ShadowRenderer {
+final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRendering {
     private static let sampleCount: Int = 4
     
     private static let tileWidth = 16
@@ -20,7 +20,7 @@ final class TiledMultisampleRenderer: Renderer, ShadowRenderer {
     var shadowResolveTexture: MTLTexture?
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor
     
-    private var particleComputePipelineState: MTLComputePipelineState
+    var particleComputePipelineState: MTLComputePipelineState
     
     private let tiledDeferredRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
@@ -138,24 +138,6 @@ final class TiledMultisampleRenderer: Renderer, ShadowRenderer {
         }
     }
     
-    func encodeParticleComputePass(into commandBuffer: MTLCommandBuffer) {
-        encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
-            computeEncoder.setComputePipelineState(particleComputePipelineState)
-            let threadsPerGroup = MTLSize(width: particleComputePipelineState.threadExecutionWidth,
-                                          height: 1,
-                                          depth: 1)
-            SceneManager.Compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
-        }
-    }
-    
-    func encodeParticleRenderStage(using renderEncoder: MTLRenderCommandEncoder) {
-        encodeRenderStage(using: renderEncoder, label: "Particle Render Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ParticleMSAA])
-            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            DrawManager.DrawParticles(with: renderEncoder)
-        }
-    }
-    
     func encodeMSAAResolveStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "MSAA Resolve Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAAverageResolve])
@@ -208,7 +190,7 @@ final class TiledMultisampleRenderer: Renderer, ShadowRenderer {
                         encodeGBufferStage(using: renderEncoder)
                         encodeLightingStage(using: renderEncoder)
                         encodeTransparencyStage(using: renderEncoder)
-                        encodeParticleRenderStage(using: renderEncoder)
+                        encodeParticleRenderStage(using: renderEncoder, withMSAA: true)
                         
                         encodeMSAAResolveStage(using: renderEncoder)
                     }

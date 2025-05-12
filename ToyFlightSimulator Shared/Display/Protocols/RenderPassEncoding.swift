@@ -1,5 +1,5 @@
 //
-//  RenderPassEncoder.swift
+//  RenderPassEncoding.swift
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 5/11/25.
@@ -7,9 +7,9 @@
 
 import MetalKit
 
-protocol RenderPassEncoder {}
+protocol RenderPassEncoding {}
 
-extension RenderPassEncoder {
+extension RenderPassEncoding {
     func encodeRenderPass(into commandBuffer: MTLCommandBuffer,
                           using descriptor: MTLRenderPassDescriptor,
                           label: String,
