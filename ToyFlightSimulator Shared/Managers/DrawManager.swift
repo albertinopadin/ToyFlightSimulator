@@ -8,6 +8,7 @@
 import MetalKit
 
 final class DrawManager {
+    // TODO: Consider removing this as it's the same code as in RenderPassEncoding protocol extension:
     static func EncodeRender(using renderEncoder: MTLRenderCommandEncoder, label: String, _ encodingBlock: () -> Void) {
         renderEncoder.pushDebugGroup(label)
         encodingBlock()
@@ -137,7 +138,6 @@ final class DrawManager {
         for particleObject in SceneManager.particleObjects {
             if particleObject.shouldEmit && particleObject.emitter.currentParticles > 0 {
                 EncodeRender(using: renderEncoder, label: "Rendering \(particleObject.getName())") {
-//                    renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Particle])
                     renderEncoder.setVertexBuffer(particleObject.emitter.particleBuffer, offset: 0, index: 0)
                     renderEncoder.setVertexBytes(&particleObject.emitter.position, length: float3.stride, index: 2)
                     
@@ -154,6 +154,26 @@ final class DrawManager {
                                                  vertexCount: 1,
                                                  instanceCount: particleObject.emitter.currentParticles)
                 }
+            }
+        }
+    }
+    
+    static func DrawTessellatables(with renderEncoder: MTLRenderCommandEncoder) {
+        for tessellatable in SceneManager.tessellatables {
+            EncodeRender(using: renderEncoder, label: "Rendering \(tessellatable.getName())") {
+                renderEncoder.setVertexBytes(&tessellatable.modelConstants,
+                                             length: ModelConstants.stride,
+                                             index: TFSBufferModelConstants.index)
+                
+                tessellatable.setRenderState(renderEncoder)
+                
+                renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
+                                          patchStart: 0,
+                                          patchCount: tessellatable.patchCount,
+                                          patchIndexBuffer: nil,
+                                          patchIndexBufferOffset: 0,
+                                          instanceCount: 1,
+                                          baseInstance: 0)
             }
         }
     }

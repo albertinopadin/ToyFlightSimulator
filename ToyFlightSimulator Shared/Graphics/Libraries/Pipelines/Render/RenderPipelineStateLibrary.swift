@@ -53,6 +53,8 @@ enum RenderPipelineStateType {
     case ParticleMSAA
     
     case Composite
+    
+    case Tessellation
 }
 
 final class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState>, @unchecked Sendable {
@@ -101,6 +103,8 @@ final class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRend
         _library.updateValue(ParticleMSAARenderPipelineState(), forKey: .ParticleMSAA)
         
         _library.updateValue(TiledMSAACompositePipelineState(), forKey: .Composite)
+        
+        _library.updateValue(TessellationRenderPipelineState(), forKey: .Tessellation)
     }
     
     override subscript(type: RenderPipelineStateType) -> MTLRenderPipelineState {

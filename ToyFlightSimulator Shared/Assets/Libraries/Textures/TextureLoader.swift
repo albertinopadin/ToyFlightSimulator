@@ -29,7 +29,7 @@ struct TextureLoader {
             return cachedTexture
         } else {
             guard let url = Bundle.main.url(forResource: _textureName, withExtension: _textureExtension) else {
-                fatalError("ERROR::CREATING::TEXTURE::__\(_textureName!) does not exist")
+                fatalError("ERROR::CREATING::TEXTURE::\(_textureName!) does not exist")
             }
             
             let options: [MTKTextureLoader.Option: Any] = [

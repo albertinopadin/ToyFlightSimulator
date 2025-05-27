@@ -25,7 +25,7 @@ enum VertexDescriptorType {
     case Simple
     case PositionOnly
     case Skybox
-    case Tesselation
+    case Tessellation
 }
 
 final class VertexDescriptorLibrary: Library<VertexDescriptorType, MTLVertexDescriptor>, @unchecked Sendable {
@@ -35,7 +35,8 @@ final class VertexDescriptorLibrary: Library<VertexDescriptorType, MTLVertexDesc
         _library.updateValue(SimpleVertexDescriptor(), forKey: .Simple)
         _library.updateValue(PositionOnlyVertexDescriptor(), forKey: .PositionOnly)
         _library.updateValue(SkyboxVertexDescriptor(), forKey: .Skybox)
-        _library.updateValue(SimpleVertexDescriptor(withTesselation: true), forKey: .Tesselation)
+        _library.updateValue(SimpleVertexDescriptor(withTessellation: true), forKey: .Tessellation)
+//        _library.updateValue(TessellationVertexDescriptor(), forKey: .Tessellation)
     }
     
     override subscript(type: VertexDescriptorType) -> MTLVertexDescriptor {

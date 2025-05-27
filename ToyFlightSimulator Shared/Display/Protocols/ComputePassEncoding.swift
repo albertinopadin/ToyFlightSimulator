@@ -14,7 +14,7 @@ extension ComputePassEncoding {
                            label: String,
                            _ encodingBlock: (MTLComputeCommandEncoder) -> Void) {
         guard let computeEncoder = commandBuffer.makeComputeCommandEncoder() else {
-            fatalError("Failed to make compute command encoder.")
+            fatalError("Failed to make \(label) compute command encoder.")
         }
         
         computeEncoder.label = label

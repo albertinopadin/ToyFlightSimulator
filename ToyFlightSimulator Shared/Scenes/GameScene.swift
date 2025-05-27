@@ -129,7 +129,7 @@ class GameScene: Node {
         _sceneConstants.projectionMatrix = CameraManager.CurrentCamera.projectionMatrix
         _sceneConstants.projectionMatrixInverse = CameraManager.CurrentCamera.projectionMatrix.inverse
         _sceneConstants.totalGameTime = Float(GameTime.TotalGameTime)
-        _sceneConstants.cameraPosition = CameraManager.CurrentCamera.modelMatrix.columns.3.xyz
+        _sceneConstants.cameraPosition = CameraManager.GetCurrentCameraPosition()
     }
     
     func setSceneConstants(with renderEncoder: MTLRenderCommandEncoder) {

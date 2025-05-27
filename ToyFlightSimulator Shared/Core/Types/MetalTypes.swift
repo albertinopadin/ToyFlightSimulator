@@ -38,13 +38,26 @@ extension SIMD2:  sizeable {}
 extension SIMD3:  sizeable {}
 extension SIMD4:  sizeable {}
 
+extension float4x4: sizeable {}
+
 extension Particle: sizeable {}
+extension Terrain: sizeable {}
 
 public protocol HasNormal {
     var normal: float3 { get set }
 }
 
 struct Vertex: HasNormal, sizeable {
+    var position: float3 = [0, 0, 0]
+    var color: float4 = [0, 0, 0, 1]
+    var textureCoordinate: float2 = [0, 0]
+    var normal: float3 = [0, 0, 1]
+    var tangent: float3 = [1, 0, 0]
+    var bitangent: float3 = [0, 1, 0]
+}
+
+// TODO: Repeating myself:
+struct ControlPoint: HasNormal, sizeable {
     var position: float3 = [0, 0, 0]
     var color: float4 = [0, 0, 0, 1]
     var textureCoordinate: float2 = [0, 0]

@@ -7,18 +7,17 @@
 
 import MetalKit
 
-protocol ParticleRendering: RenderPassEncoding, ComputePassEncoding {
-    var particleComputePipelineState: MTLComputePipelineState { get set }
-}
+protocol ParticleRendering: RenderPassEncoding, ComputePassEncoding {}
 
 extension ParticleRendering {
     func encodeParticleComputePass(into commandBuffer: MTLCommandBuffer) {
         encodeComputePass(into: commandBuffer, label: "Particle Compute Pass") { computeEncoder in
+            let particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
             computeEncoder.setComputePipelineState(particleComputePipelineState)
             let threadsPerGroup = MTLSize(width: particleComputePipelineState.threadExecutionWidth,
                                           height: 1,
                                           depth: 1)
-            SceneManager.Compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
+            ComputeManager.ComputeParticles(with: computeEncoder, threadsPerGroup: threadsPerGroup)
         }
     }
     

@@ -89,8 +89,8 @@ typedef enum {
     TFSBufferPointLightsPosition    = 6,
     TFSBufferModelConstants         = 7,
     TFSBufferIndexSceneConstants    = 8,
-    TFSBufferIndexMaterial          = 9
-    
+    TFSBufferIndexMaterial          = 9,
+    TFSBufferIndexTerrain           = 10
 } TFSBufferIndices;
 
 // Attribute index values shared between shader and C code to ensure Metal shader vertex
@@ -188,6 +188,22 @@ struct Particle {
     float startScale;
     float endScale;
     vector_float3 startPosition;
+};
+
+// Temporary:
+typedef struct {
+    vector_float2 size;
+    float height;
+    uint32_t maxTessellation;
+} Terrain;
+
+struct ControlPoint {
+    vector_float3 position             [[ attribute(TFSVertexAttributePosition) ]];
+    vector_float4 color                [[ attribute(TFSVertexAttributeColor) ]];
+    vector_float2 textureCoordinate    [[ attribute(TFSVertexAttributeTexcoord) ]];
+    vector_float3 normal               [[ attribute(TFSVertexAttributeNormal) ]];
+    vector_float3 tangent              [[ attribute(TFSVertexAttributeTangent) ]];
+    vector_float3 bitangent            [[ attribute(TFSVertexAttributeBitangent) ]];
 };
 
 #endif /* TFSCommon_h */

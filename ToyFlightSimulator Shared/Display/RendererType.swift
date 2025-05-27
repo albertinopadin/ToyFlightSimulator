@@ -10,6 +10,7 @@ enum RendererType: String, CaseIterable, Identifiable {
     case SinglePassDeferredLighting = "Single-Pass Deferred Lighting"
     case TiledDeferred = "Tile Deferred"
     case TiledDeferredMSAA = "Tiled Deferred MSAA"
+    case TiledMSAATessellated = "Tiled Deferred MSAA Tessellated"
     case ForwardPlusTileShading = "Forward+"
     
     var id: String { rawValue }

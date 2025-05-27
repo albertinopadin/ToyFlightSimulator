@@ -20,22 +20,32 @@ final class FlightboxScene: GameScene {
     var pl2 = PointLightObject()
     let afterburner = Afterburner(name: "Afterburner")
     
-    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
+//    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
     var entities: [PhysicsEntity] = []
+    
+//    private func addGround() {
+//        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
+//        let ground = CollidablePlane()
+//        ground.collisionNormal = [0, 1, 0]
+//        ground.collisionShape = .Plane
+//        ground.restitution = 1.0
+//        ground.isStatic = true
+//        ground.setColor(groundColor)
+//        ground.rotateZ(Float(270).toRadians)
+//        ground.setScale(1000)
+//        addChild(ground)
+//        
+//        entities.append(ground)
+//    }
     
     private func addGround() {
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        let ground = CollidablePlane()
-        ground.collisionNormal = [0, 1, 0]
-        ground.collisionShape = .Plane
-        ground.restitution = 1.0
-        ground.isStatic = true
+        let ground = TerrainObject(size: [8, 8])
         ground.setColor(groundColor)
-        ground.rotateZ(Float(270).toRadians)
-        ground.setScale(1000)
+//        ground.rotateZ(Float(270).toRadians)
+        ground.rotateX(Float(-20).toRadians)
+        ground.setScale(10)
         addChild(ground)
-        
-        entities.append(ground)
     }
     
     override func buildScene() {
@@ -238,7 +248,7 @@ final class FlightboxScene: GameScene {
         print("Total Submesh count: \(SceneManager.SubmeshCount)")
         
         entities.append(jet)
-        physicsWorld.setEntities(entities)
+//        physicsWorld.setEntities(entities)
     }
     
     override func doUpdate() {
@@ -261,9 +271,9 @@ final class FlightboxScene: GameScene {
 //            print("Mouse position in viewport: \(Mouse.GetMouseViewportPosition())")
 //        }
         
-        if GameTime.DeltaTime < 1.0 {
-            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
-        }
+//        if GameTime.DeltaTime < 1.0 {
+//            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+//        }
     }
 }
 

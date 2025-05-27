@@ -79,3 +79,18 @@ struct VertexOut {
     float4 objectColor;
     bool useObjectColor;
 };
+
+// Temp:
+struct TessellationVertexOut {
+    float4 position [[ position ]];
+    float4 color;
+};
+
+//struct ControlPoint {
+//    vector_float3 position             [[ attribute(TFSVertexAttributePosition) ]];
+//    vector_float4 color                [[ attribute(TFSVertexAttributeColor) ]];
+//    vector_float2 textureCoordinate    [[ attribute(TFSVertexAttributeTexcoord) ]];
+//    vector_float3 normal               [[ attribute(TFSVertexAttributeNormal) ]];
+//    vector_float3 tangent              [[ attribute(TFSVertexAttributeTangent) ]];
+//    vector_float3 bitangent            [[ attribute(TFSVertexAttributeBitangent) ]];
+//};

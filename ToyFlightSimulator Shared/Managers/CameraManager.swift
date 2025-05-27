@@ -31,4 +31,8 @@ final class CameraManager {
             camera.update()
         }
     }
+    
+    public static func GetCurrentCameraPosition() -> float3 {
+        return CurrentCamera.modelMatrix.columns.3.xyz
+    }
 }

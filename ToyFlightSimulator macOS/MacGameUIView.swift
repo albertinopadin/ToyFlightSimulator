@@ -14,7 +14,8 @@ struct MacGameUIView: View {
     @State private var shouldDisplayMenu: Bool = false
     @State private var shouldDisplayGameStats: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
-    @State private var rendererType: RendererType = .TiledDeferredMSAA
+//    @State private var rendererType: RendererType = .TiledDeferredMSAA
+    @State private var rendererType: RendererType = .TiledMSAATessellated
     @State private var volume: Float = 15.0
     
     var body: some View {

@@ -63,10 +63,12 @@ enum ShaderType {
     case CompositeVertex
     case CompositeFragment
     
+    case TessellationVertex
+    case TessellationFragment
     
     // Compute Shaders:
     case ComputeParticles
-    case ComputeTesselation
+    case ComputeTessellation
 }
 
 
@@ -142,9 +144,12 @@ final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable
         _library.updateValue(Shader(functionName: "compositeVertexShader"), forKey: .CompositeVertex)
         _library.updateValue(Shader(functionName: "compositeFragmentShader"), forKey: .CompositeFragment)
         
+        _library.updateValue(Shader(functionName: "tessellation_vertex"), forKey: .TessellationVertex)
+        _library.updateValue(Shader(functionName: "tessellation_fragment"), forKey: .TessellationFragment)
+        
         // Compute Functions:
         _library.updateValue(Shader(functionName: "compute_particle"), forKey: .ComputeParticles)
-        _library.updateValue(Shader(functionName: "compute_tesselation"), forKey: .ComputeTesselation)
+        _library.updateValue(Shader(functionName: "compute_tessellation"), forKey: .ComputeTessellation)
     }
     
     override subscript(_ type: ShaderType) -> MTLFunction {

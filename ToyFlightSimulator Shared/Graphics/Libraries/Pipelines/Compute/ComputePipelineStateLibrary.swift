@@ -9,7 +9,7 @@ import MetalKit
 
 enum ComputePipelineStateType {
     case Particle
-    case Tesselation
+    case Tessellation
 }
 
 final class ComputePipelineStateLibrary: Library<ComputePipelineStateType, MTLComputePipelineState>, @unchecked Sendable {
@@ -17,7 +17,7 @@ final class ComputePipelineStateLibrary: Library<ComputePipelineStateType, MTLCo
     
     override func makeLibrary() {
         _library.updateValue(ParticleComputePipelineState(), forKey: .Particle)
-        _library.updateValue(TesselationComputePipelineState(), forKey: .Tesselation)
+        _library.updateValue(TessellationComputePipelineState(), forKey: .Tessellation)
     }
     
     override subscript(type: ComputePipelineStateType) -> MTLComputePipelineState {

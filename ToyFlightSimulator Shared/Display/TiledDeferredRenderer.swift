@@ -17,8 +17,6 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering 
     // For protocol conformance:
     var shadowResolveTexture: MTLTexture? = nil
     
-    var particleComputePipelineState: MTLComputePipelineState
-    
     private let tiledDeferredRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
         
@@ -54,14 +52,12 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering 
     init() {
         shadowMap = Self.makeShadowMap(label: "Shadow Texture")
         shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
-        particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
         super.init(type: .TiledDeferred)
     }
     
     init(_ mtkView: MTKView) {
         shadowMap = Self.makeShadowMap(label: "Shadow Texture")
         shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
-        particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
         super.init(mtkView, type: .TiledDeferred)
     }
     

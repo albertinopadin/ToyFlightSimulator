@@ -71,6 +71,7 @@ final class SceneManager {
     nonisolated(unsafe) public static var modelDatas: [Model: ModelData] = [:]  // TODO -> wrap this in a thread safe container (?)
     nonisolated(unsafe) public static var transparentObjectDatas: [Model: TransparentObjectData] = [:]
     nonisolated(unsafe) public static var particleObjects: [ParticleEmitterObject] = []
+    nonisolated(unsafe) public static var tessellatables: [Tessellatable] = []
     nonisolated(unsafe) public static var skyData = ModelData()
     nonisolated(unsafe) public static var lines: [Line] = []
     nonisolated(unsafe) public static var icosahedrons: [Icosahedron] = []
@@ -146,6 +147,8 @@ final class SceneManager {
                 lines.append(line)
             case let particleObject as ParticleEmitterObject:
                 particleObjects.append(particleObject)
+            case let tessellatable as Tessellatable:
+                tessellatables.append(tessellatable)
             default:
                 RegisterObject(gameObject)
         }
@@ -277,10 +280,5 @@ final class SceneManager {
     
     public static func SetAspectRatio(_ aspectRatio: Float) {
         CurrentScene?.setAspectRatio(aspectRatio)
-    }
-    
-    // TODO: Perhaps should have a ComputeMgr?
-    public static func Compute(with computeEncoder: MTLComputeCommandEncoder, threadsPerGroup: MTLSize) {
-        CurrentScene?.compute(with: computeEncoder, threadsPerGroup: threadsPerGroup)
     }
 }

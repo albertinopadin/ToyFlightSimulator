@@ -20,9 +20,13 @@ final public class Texture {
         setTexture(texture)
     }
     
-    init(name: String, label: String, scale: CGFloat = 1.0) {
+    init(name: String, label: String? = nil, scale: CGFloat = 1.0) {
         self.texture = TextureLoader.LoadTexture(name: name, scale: scale)
-        self.texture.label = label
+        if let label {
+            self.texture.label = label
+        } else {
+            self.texture.label = name
+        }
     }
             
     func setTexture(_ texture: MTLTexture) {

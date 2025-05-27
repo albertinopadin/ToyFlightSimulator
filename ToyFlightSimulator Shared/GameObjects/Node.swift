@@ -124,14 +124,27 @@ class Node: ClickSelectable {
     }
     
     // ---------------
-    func compute(with commandEncoder: MTLComputeCommandEncoder, threadsPerGroup: MTLSize) {
+    // TODO: Having compute function per "thing" is a hack
+    func computeParticles(with commandEncoder: MTLComputeCommandEncoder, threadsPerGroup: MTLSize) {
         // TODO: Either generalize this or make specific functions for each type of compute type
         if let entity = self as? ParticleEmitterEntity {
             entity.computeUpdate(commandEncoder, threadsPerGroup: threadsPerGroup)
         }
         
+        // TODO: Should batch up compute entities like we do with renderables to be more efficient
+        //       instead of traversing scene heirarchy
         for child in children {
-            child.compute(with: commandEncoder, threadsPerGroup: threadsPerGroup)
+            child.computeParticles(with: commandEncoder, threadsPerGroup: threadsPerGroup)
+        }
+    }
+    
+    func computeTerrainTessellation(with commandEncoder: MTLComputeCommandEncoder) {
+        if let entity = self as? Tessellatable {
+            entity.computeUpdate(commandEncoder)
+        }
+        
+        for child in children {
+            child.computeTerrainTessellation(with: commandEncoder)
         }
     }
     // ---------------

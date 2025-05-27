@@ -20,8 +20,6 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     var shadowResolveTexture: MTLTexture?
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor
     
-    var particleComputePipelineState: MTLComputePipelineState
-    
     private let tiledDeferredRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
         
@@ -73,7 +71,6 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
         shadowResolveTexture = Self.makeShadowMap(label: "Shadow Resolve Texture", sampleCount: 1)
         shadowRenderPassDescriptor = Self.makeMultiSampledShadowRenderPassDescriptor(shadowTexture: shadowMap,
                                                                                      resolveTexture: shadowResolveTexture!)
-        particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
         super.init(type: .TiledDeferredMSAA)
     }
     
@@ -83,7 +80,6 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
         shadowResolveTexture = Self.makeShadowMap(label: "Shadow Resolve Texture", sampleCount: 1)
         shadowRenderPassDescriptor = Self.makeMultiSampledShadowRenderPassDescriptor(shadowTexture: shadowMap,
                                                                                      resolveTexture: shadowResolveTexture!)
-        particleComputePipelineState = Graphics.ComputePipelineStates[.Particle]
         super.init(mtkView, type: .TiledDeferredMSAA)
     }
     
