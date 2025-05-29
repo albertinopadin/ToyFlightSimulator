@@ -8,13 +8,17 @@
 import MetalKit
 
 final class TerrainObject: GameObject, Tessellatable {
-    var patches: (horizontal: Int, vertical: Int) { (horizontal: 6, vertical: 6) }
+    var patches: (horizontal: Int, vertical: Int) { (horizontal: 32, vertical: 32) }
     var patchCount: Int { patches.horizontal * patches.vertical }
     
-    var heightMap: MTLTexture?
     var controlPointsBuffer: MTLBuffer?
     var tessellationFactorsBuffer: MTLBuffer?
+    
     var terrain: Terrain
+    let heightMap: MTLTexture
+    let grassTexture: MTLTexture
+    let cliffTexture: MTLTexture
+    let snowTexture: MTLTexture
     
     static func createControlPoints(patches: (horizontal: Int, vertical: Int),
                                     size: (width: Float, height: Float)) -> [ControlPoint] {
@@ -56,8 +60,19 @@ final class TerrainObject: GameObject, Tessellatable {
     }
     
     init(terrain: Terrain) {
+        guard let heightMap = Assets.Textures[.MountainHeightMap],
+              let grassTexture = Assets.Textures[.Grass],
+              let cliffTexture = Assets.Textures[.Cliff],
+              let snowTexture = Assets.Textures[.Snow]
+        else {
+            fatalError("[TerrainObject init] Missing required textures!")
+        }
+        
         self.terrain = terrain
-        self.heightMap = Assets.Textures[.MountainHeightMap]
+        self.heightMap = heightMap
+        self.grassTexture = grassTexture
+        self.cliffTexture = cliffTexture
+        self.snowTexture = snowTexture
         super.init(name: "Terrain", modelType: .Quad)
         let controlPointsSize = (width: self.terrain.size.x, height: self.terrain.size.y)
         self.controlPointsBuffer = makeControlPointsBuffer(size: controlPointsSize)
@@ -65,11 +80,6 @@ final class TerrainObject: GameObject, Tessellatable {
     }
     
     // TODO: Should these two functions live in Tessellatables ???
-//    func makeControlPointsBuffer(size: (width: Float, height: Float) = (2, 2)) -> MTLBuffer? {
-//        let controlPoints = Self.createControlPoints(patches: self.patches, size: size)
-//        return Engine.Device.makeBuffer(bytes: controlPoints, length: float3.stride * controlPoints.count)
-//    }
-    
     func makeControlPointsBuffer(size: (width: Float, height: Float) = (2, 2)) -> MTLBuffer? {
         let controlPoints = Self.createControlPoints(patches: self.patches, size: size)
         return Engine.Device.makeBuffer(bytes: controlPoints, length: ControlPoint.stride(controlPoints.count))
@@ -97,12 +107,13 @@ final class TerrainObject: GameObject, Tessellatable {
     }
     
     func setRenderState(_ renderEncoder: any MTLRenderCommandEncoder) {
-        if let heightMap {
-            renderEncoder.setVertexTexture(heightMap, index: 0)
-        }
-        
         renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
         renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)  // TFSBufferIndexMeshPositions.index
         renderEncoder.setVertexBytes(&terrain, length: Terrain.stride, index: TFSBufferIndexTerrain.index)
+        renderEncoder.setVertexTexture(heightMap, index: 0)
+        
+        renderEncoder.setFragmentTexture(grassTexture, index: 1)
+        renderEncoder.setFragmentTexture(cliffTexture, index: 2)
+        renderEncoder.setFragmentTexture(snowTexture, index: 3)
     }
 }

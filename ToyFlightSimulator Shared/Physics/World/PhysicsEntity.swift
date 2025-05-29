@@ -54,11 +54,15 @@ protocol PlanePhysicsEntity: PhysicsEntity {
 //    var collisionShape: CollisionShape { .Plane }
 //}
 
-class CollidableSphere: Sphere, SpherePhysicsEntity {
+final class CollidableSphere: Sphere, SpherePhysicsEntity {
     var collisionRadius: Float = 1.0
 }
 
-class CollidablePlane: Quad, PlanePhysicsEntity {
+final class CollidablePlane: Quad, PlanePhysicsEntity {
     var collisionNormal: float3 = [0, 1, 0]
 //    var collisionShape: CollisionShape = .Plane
+}
+
+final class CollidableF22: F22, SpherePhysicsEntity {
+    var collisionRadius: Float = 1.0
 }

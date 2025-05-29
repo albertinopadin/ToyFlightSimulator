@@ -10,8 +10,6 @@ import MetalKit
 protocol Tessellatable: GameObject {
     var patches: (horizontal: Int, vertical: Int) { get }
     var patchCount: Int { get }
-    
-    var heightMap: MTLTexture? { get set }
     var controlPointsBuffer: MTLBuffer? { get }
     var tessellationFactorsBuffer: MTLBuffer? { get }
     

@@ -5,10 +5,6 @@
 //  Created by Albertino Padin on 10/4/22.
 //
 
-class CollidableF22: F22, SpherePhysicsEntity {
-    var collisionRadius: Float = 1.0
-}
-
 final class FlightboxScene: GameScene {
     var attachedCamera = AttachedCamera(fieldOfView: 75.0,
                                         near: 0.01,
@@ -23,29 +19,19 @@ final class FlightboxScene: GameScene {
 //    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
     var entities: [PhysicsEntity] = []
     
-//    private func addGround() {
-//        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-//        let ground = CollidablePlane()
-//        ground.collisionNormal = [0, 1, 0]
-//        ground.collisionShape = .Plane
-//        ground.restitution = 1.0
-//        ground.isStatic = true
-//        ground.setColor(groundColor)
-//        ground.rotateZ(Float(270).toRadians)
-//        ground.setScale(1000)
-//        addChild(ground)
-//        
-//        entities.append(ground)
-//    }
-    
     private func addGround() {
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        let ground = TerrainObject(size: [8, 8])
+        let ground = CollidablePlane()
+        ground.collisionNormal = [0, 1, 0]
+        ground.collisionShape = .Plane
+        ground.restitution = 1.0
+        ground.isStatic = true
         ground.setColor(groundColor)
-//        ground.rotateZ(Float(270).toRadians)
-        ground.rotateX(Float(-20).toRadians)
-        ground.setScale(10)
+        ground.rotateZ(Float(270).toRadians)
+        ground.setScale(1000)
         addChild(ground)
+        
+        entities.append(ground)
     }
     
     override func buildScene() {

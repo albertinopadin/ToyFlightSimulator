@@ -341,6 +341,10 @@
 		CE4127AA2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */; };
 		CE4127AB2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */; };
 		CE4127AC2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */; };
+		CE4224452DE821B3009EC8AB /* FlightboxWithTerrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4224442DE82198009EC8AB /* FlightboxWithTerrain.swift */; };
+		CE4224462DE821B3009EC8AB /* FlightboxWithTerrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4224442DE82198009EC8AB /* FlightboxWithTerrain.swift */; };
+		CE4224472DE821B3009EC8AB /* FlightboxWithTerrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4224442DE82198009EC8AB /* FlightboxWithTerrain.swift */; };
+		CE4224482DE821B3009EC8AB /* FlightboxWithTerrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4224442DE82198009EC8AB /* FlightboxWithTerrain.swift */; };
 		CE452FAE2A7CAC0F001945B9 /* NodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE452FAD2A7CAC0F001945B9 /* NodeTests.swift */; };
 		CE452FAF2A7CB365001945B9 /* Node.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF7D28E2FCF50014A752 /* Node.swift */; };
 		CE452FB02A7CB3FF001945B9 /* RenderPipelineStateLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3BFF5728E1B2AD0014A752 /* RenderPipelineStateLibrary.swift */; };
@@ -942,6 +946,7 @@
 		CE4127932B6B3F0300B01AEA /* Temple.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Temple.obj; sourceTree = "<group>"; };
 		CE4127962B6B3F2900B01AEA /* Temple.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Temple.swift; sourceTree = "<group>"; };
 		CE4127A82B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForwardPlusTileShadingRenderer.swift; sourceTree = "<group>"; };
+		CE4224442DE82198009EC8AB /* FlightboxWithTerrain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightboxWithTerrain.swift; sourceTree = "<group>"; };
 		CE452FA42A7CA810001945B9 /* ToyFlightSimulatorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ToyFlightSimulatorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE452FAD2A7CAC0F001945B9 /* NodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeTests.swift; sourceTree = "<group>"; };
 		CE4530492A7F3823001945B9 /* ToyFlightSimulatorIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToyFlightSimulatorIOSApp.swift; sourceTree = "<group>"; };
@@ -1264,11 +1269,12 @@
 		CE3BFF2E28E057F50014A752 /* Scenes */ = {
 			isa = PBXGroup;
 			children = (
-				CE9625322CCCD32600CEA5A2 /* BallPhysicsScene.swift */,
 				CE3BFF7528E2FC0A0014A752 /* GameScene.swift */,
 				CE3BFF7928E2FC270014A752 /* SandboxScene.swift */,
+				CE9625322CCCD32600CEA5A2 /* BallPhysicsScene.swift */,
 				CE56921B28EC1D2F00F6B42C /* FlightboxScene.swift */,
 				CEB2DFCF29D437990048D292 /* FreeCamFlightboxScene.swift */,
+				CE4224442DE82198009EC8AB /* FlightboxWithTerrain.swift */,
 			);
 			path = Scenes;
 			sourceTree = "<group>";
@@ -2197,6 +2203,7 @@
 				CE327B772C490D09004AF2D0 /* ParticleEmitterObject.swift in Sources */,
 				CEC231352B25AC650081A26A /* PointLightObject.swift in Sources */,
 				CE452FC42A7CB46F001945B9 /* DepthStencilStateLibrary.swift in Sources */,
+				CE4224482DE821B3009EC8AB /* FlightboxWithTerrain.swift in Sources */,
 				CEC231312B22F3E50081A26A /* Icosahedron.swift in Sources */,
 				CE79B62E2B92E4B8009F2E49 /* TextureLoader.swift in Sources */,
 				CE79B6182B92E153009F2E49 /* DepthStencilState.swift in Sources */,
@@ -2377,6 +2384,7 @@
 				CE9625352CCCD33200CEA5A2 /* BallPhysicsScene.swift in Sources */,
 				CEFC6E3129531C0C009B692B /* Triangle.swift in Sources */,
 				CE79B6452B932B29009F2E49 /* TiledDeferredGBuffer.metal in Sources */,
+				CE4224452DE821B3009EC8AB /* FlightboxWithTerrain.swift in Sources */,
 				CE886A432984FFB00013062D /* GBuffer.metal in Sources */,
 				CE3BFF6428E1B2DF0014A752 /* SamplerStateLibrary.swift in Sources */,
 				CE2ED2C0299CBB3C00C81F47 /* SkyBox.swift in Sources */,
@@ -2467,6 +2475,7 @@
 				CE3BFFAC28E453310014A752 /* Quad.swift in Sources */,
 				CE2ED263299394E500C81F47 /* ModelIO+Extensions.swift in Sources */,
 				CE8A7A3D2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */,
+				CE4224462DE821B3009EC8AB /* FlightboxWithTerrain.swift in Sources */,
 				CED798492C9055D3003B6559 /* MTKMesh+Extensions.swift in Sources */,
 				CEC0C59A2B53BB7400863C38 /* ObjModel.swift in Sources */,
 				CE76D2CA2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */,
@@ -2757,6 +2766,7 @@
 				CE7F48D528BCB4DD0082B197 /* GameView.swift in Sources */,
 				CE3DD2F32A02309300787E53 /* GBU16.swift in Sources */,
 				CEFC6F28296B61CA009B692B /* Line.swift in Sources */,
+				CE4224472DE821B3009EC8AB /* FlightboxWithTerrain.swift in Sources */,
 				CE387B4A2BE22FF000F51DC4 /* ParticlePipeline.swift in Sources */,
 				CE327B712C47670D004AF2D0 /* Afterburner.swift in Sources */,
 				CE886A492985007A0013062D /* DirectionalLight.metal in Sources */,

@@ -89,13 +89,32 @@ tessellation_vertex(patch_control_point<ControlPoint> controlPoints      [[ stag
     
     TessellationVertexOut out {
         .position = position,
-        .color = float4(color.r)
+        .color = float4(color.r),
+        .height = height,
+        .uv = xy
     };
     
     return out;
 }
 
 fragment float4
-tessellation_fragment(TessellationVertexOut in [[ stage_in ]]) {
-    return in.color;
+tessellation_fragment(TessellationVertexOut in              [[ stage_in ]],
+                      texture2d<float>      grassTexture    [[ texture(1) ]],
+                      texture2d<float>      cliffTexture    [[ texture(2) ]],
+                      texture2d<float>      snowTexture     [[ texture(3) ]]) {
+//    return in.color;
+    
+    constexpr sampler sample;
+    float tiling = 1.0;  // Get this passed in ???
+    float4 color;
+    
+    if (in.height < -0.5) {
+        color = grassTexture.sample(sample, in.uv * tiling);
+    } else if (in.height < 0.3) {
+        color = cliffTexture.sample(sample, in.uv * tiling);
+    } else {
+        color = snowTexture.sample(sample, in.uv * tiling);
+    }
+    
+    return color;
 }
