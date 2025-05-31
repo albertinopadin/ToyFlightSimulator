@@ -115,8 +115,10 @@ typedef enum {
     TFSTextureIndexParticle  = 5,
     TFSTextureIndexSkyBox    = 6,
     
-    TFSNumMeshTextures = TFSTextureIndexNormal + 1
-    
+    TFSTextureIndexGrass     = 7,
+    TFSTextureIndexCliff     = 8,
+    TFSTextureIndexSnow      = 9,
+    TFSTextureIndexHeightMap = 10
 } TFSTextureIndices;
 
 typedef enum {

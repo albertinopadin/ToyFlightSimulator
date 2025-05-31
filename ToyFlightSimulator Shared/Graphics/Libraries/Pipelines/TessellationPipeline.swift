@@ -14,10 +14,6 @@ struct TessellationRenderPipelineState: RenderPipelineState {
             descriptor.vertexFunction = Graphics.Shaders[.TessellationVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TessellationFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
-//            descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
-            descriptor.depthAttachmentPixelFormat = .invalid
-//            descriptor.rasterSampleCount = 4  // TODO: Refactor to set this dynamically
-            
             Self.setGBufferPixelFormatsForTiledMultisampledPipeline(descriptor: descriptor)
             descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8

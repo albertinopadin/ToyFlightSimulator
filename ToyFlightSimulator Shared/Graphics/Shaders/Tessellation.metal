@@ -59,7 +59,7 @@ vertex TessellationVertexOut
 tessellation_vertex(patch_control_point<ControlPoint> controlPoints      [[ stage_in ]],
                     constant SceneConstants           &sceneConstants    [[ buffer(TFSBufferIndexSceneConstants) ]],
                     constant ModelConstants           &modelConstants    [[ buffer(TFSBufferModelConstants) ]],
-                    texture2d<float>                  heightMap          [[ texture(0) ]],
+                    texture2d<float>                  heightMap          [[ texture(TFSTextureIndexHeightMap) ]],
                     constant Terrain                  &terrain           [[ buffer(TFSBufferIndexTerrain) ]],
                     float2                            patchCoord         [[ position_in_patch ]],
                     uint                              patchId            [[ patch_id ]]) {
@@ -97,13 +97,33 @@ tessellation_vertex(patch_control_point<ControlPoint> controlPoints      [[ stag
     return out;
 }
 
-fragment float4
+//fragment float4
+//tessellation_fragment(TessellationVertexOut in              [[ stage_in ]],
+//                      texture2d<float>      grassTexture    [[ texture(1) ]],
+//                      texture2d<float>      cliffTexture    [[ texture(2) ]],
+//                      texture2d<float>      snowTexture     [[ texture(3) ]]) {
+//    constexpr sampler sample;
+//    float tiling = 1.0;  // Get this passed in ??? 
+//    float4 color;
+//    
+//    if (in.height < -0.5) {
+//        color = grassTexture.sample(sample, in.uv * tiling);
+//    } else if (in.height < 0.3) {
+//        color = cliffTexture.sample(sample, in.uv * tiling);
+//    } else {
+//        color = snowTexture.sample(sample, in.uv * tiling);
+//    }
+//    
+//    return color;
+//}
+
+fragment GBufferOut
 tessellation_fragment(TessellationVertexOut in              [[ stage_in ]],
-                      texture2d<float>      grassTexture    [[ texture(1) ]],
-                      texture2d<float>      cliffTexture    [[ texture(2) ]],
-                      texture2d<float>      snowTexture     [[ texture(3) ]]) {
-//    return in.color;
-    
+                      texture2d<float>      grassTexture    [[ texture(TFSTextureIndexGrass) ]],
+                      texture2d<float>      cliffTexture    [[ texture(TFSTextureIndexCliff) ]],
+                      texture2d<float>      snowTexture     [[ texture(TFSTextureIndexSnow) ]],
+                      texture2d<half>       normalTexture   [[ texture(TFSTextureIndexNormal) ]],
+                      depth2d_ms<float>     shadowTexture   [[ texture(TFSTextureIndexShadow) ]]) {
     constexpr sampler sample;
     float tiling = 1.0;  // Get this passed in ???
     float4 color;
@@ -116,5 +136,19 @@ tessellation_fragment(TessellationVertexOut in              [[ stage_in ]],
         color = snowTexture.sample(sample, in.uv * tiling);
     }
     
-    return color;
+    // TODO:
+//    color.a = Lighting::CalculateShadowMSAA(in.shadowPosition, shadowTexture);
+    
+    float4 normal = float4(0.0, 1.0, 0.0, 1.0);  // TODO
+    
+    if (!is_null_texture(normalTexture)) {
+        normal = float4(normalTexture.sample(sample, in.uv));
+    }
+    
+    GBufferOut out {
+        .albedo = color,
+        .normal = normal,
+        .position = in.position
+    };
+    return out;
 }

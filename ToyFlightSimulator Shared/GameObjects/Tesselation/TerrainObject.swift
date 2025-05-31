@@ -110,10 +110,10 @@ final class TerrainObject: GameObject, Tessellatable {
         renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
         renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)  // TFSBufferIndexMeshPositions.index
         renderEncoder.setVertexBytes(&terrain, length: Terrain.stride, index: TFSBufferIndexTerrain.index)
-        renderEncoder.setVertexTexture(heightMap, index: 0)
+        renderEncoder.setVertexTexture(heightMap, index: TFSTextureIndexHeightMap.index)
         
-        renderEncoder.setFragmentTexture(grassTexture, index: 1)
-        renderEncoder.setFragmentTexture(cliffTexture, index: 2)
-        renderEncoder.setFragmentTexture(snowTexture, index: 3)
+        renderEncoder.setFragmentTexture(grassTexture, index: TFSTextureIndexGrass.index)
+        renderEncoder.setFragmentTexture(cliffTexture, index: TFSTextureIndexCliff.index)
+        renderEncoder.setFragmentTexture(snowTexture, index: TFSTextureIndexSnow.index)
     }
 }
