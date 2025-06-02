@@ -97,28 +97,28 @@ tessellation_vertex(patch_control_point<ControlPoint> controlPoints      [[ stag
     return out;
 }
 
-//fragment float4
-//tessellation_fragment(TessellationVertexOut in              [[ stage_in ]],
-//                      texture2d<float>      grassTexture    [[ texture(1) ]],
-//                      texture2d<float>      cliffTexture    [[ texture(2) ]],
-//                      texture2d<float>      snowTexture     [[ texture(3) ]]) {
-//    constexpr sampler sample;
-//    float tiling = 1.0;  // Get this passed in ??? 
-//    float4 color;
-//    
-//    if (in.height < -0.5) {
-//        color = grassTexture.sample(sample, in.uv * tiling);
-//    } else if (in.height < 0.3) {
-//        color = cliffTexture.sample(sample, in.uv * tiling);
-//    } else {
-//        color = snowTexture.sample(sample, in.uv * tiling);
-//    }
-//    
-//    return color;
-//}
+fragment float4
+tessellation_fragment(TessellationVertexOut in              [[ stage_in ]],
+                      texture2d<float>      grassTexture    [[ texture(TFSTextureIndexGrass) ]],
+                      texture2d<float>      cliffTexture    [[ texture(TFSTextureIndexCliff) ]],
+                      texture2d<float>      snowTexture     [[ texture(TFSTextureIndexSnow) ]]) {
+    constexpr sampler sample;
+    float tiling = 1.0;  // Get this passed in ??? 
+    float4 color;
+    
+    if (in.height < -0.5) {
+        color = grassTexture.sample(sample, in.uv * tiling);
+    } else if (in.height < 0.3) {
+        color = cliffTexture.sample(sample, in.uv * tiling);
+    } else {
+        color = snowTexture.sample(sample, in.uv * tiling);
+    }
+    
+    return color;
+}
 
 fragment GBufferOut
-tessellation_fragment(TessellationVertexOut in              [[ stage_in ]],
+tessellation_gbuffer_fragment(TessellationVertexOut in              [[ stage_in ]],
                       texture2d<float>      grassTexture    [[ texture(TFSTextureIndexGrass) ]],
                       texture2d<float>      cliffTexture    [[ texture(TFSTextureIndexCliff) ]],
                       texture2d<float>      snowTexture     [[ texture(TFSTextureIndexSnow) ]],

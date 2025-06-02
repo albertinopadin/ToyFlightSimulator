@@ -77,7 +77,8 @@ final class FlightboxWithTerrain: GameScene {
         let f16 = F16(shouldUpdateOnPlayerInput: false)
         f16.setPosition(0, jetPos.y + 10, jetPos.z - 15)
         f16.rotateY(Float(-90).toRadians)
-        f16.setScale(4.0)
+//        f16.setScale(4.0)
+        f16.setScale(10.0)
         addChild(f16)
         
 //        quadMaterial.shininess = 10

@@ -36,6 +36,15 @@ struct LessEqualWrite_DepthStencilState: DepthStencilState {
     }()
 }
 
+struct LessNoWrite_DepthStencilState: DepthStencilState {
+    var depthStencilState: MTLDepthStencilState = {
+        makeDepthStencilState(label: "DepthCompareLessAndNoWrite") { depthStencilDescriptor in
+            depthStencilDescriptor.isDepthWriteEnabled = false
+            depthStencilDescriptor.depthCompareFunction = .less
+        }
+    }()
+}
+
 struct LessEqualNoWrite_DepthStencilState: DepthStencilState {
     var depthStencilState: MTLDepthStencilState = {
         makeDepthStencilState(label: "DepthCompareLessEqualAndNoWrite") { depthStencilDescriptor in

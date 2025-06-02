@@ -65,6 +65,7 @@ enum ShaderType {
     
     case TessellationVertex
     case TessellationFragment
+    case TessellationGBufferFragment
     
     // Compute Shaders:
     case ComputeParticles
@@ -146,6 +147,7 @@ final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable
         
         _library.updateValue(Shader(functionName: "tessellation_vertex"), forKey: .TessellationVertex)
         _library.updateValue(Shader(functionName: "tessellation_fragment"), forKey: .TessellationFragment)
+        _library.updateValue(Shader(functionName: "tessellation_gbuffer_fragment"), forKey: .TessellationGBufferFragment)
         
         // Compute Functions:
         _library.updateValue(Shader(functionName: "compute_particle"), forKey: .ComputeParticles)

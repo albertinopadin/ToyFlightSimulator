@@ -18,6 +18,10 @@ final class DrawManager {
     static func Draw(with renderEncoder: MTLRenderCommandEncoder,
                      withTransparency: Bool = false,
                      applyMaterials: Bool = true) {
+        // Test:
+//        renderEncoder.setFrontFacing(.counterClockwise)
+//        renderEncoder.setCullMode(.front)
+        
         for (model, data) in SceneManager.GetUniformsData() {
             if withTransparency {
                 if !data.transparentSubmeshes.isEmpty {

@@ -11,6 +11,7 @@ enum DepthStencilStateType {
     case AlwaysNoWrite
     case Less
     case LessEqualWrite
+    case LessNoWrite
     case LessEqualNoWrite
     
     case ShadowGeneration
@@ -34,6 +35,7 @@ final class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthSte
         _library.updateValue(AlwaysNoWrite_DepthStencilState(), forKey: .AlwaysNoWrite)
         _library.updateValue(Less_DepthStencilState(), forKey: .Less)
         _library.updateValue(LessEqualWrite_DepthStencilState(), forKey: .LessEqualWrite)
+        _library.updateValue(LessNoWrite_DepthStencilState(), forKey: .LessNoWrite)
         _library.updateValue(LessEqualNoWrite_DepthStencilState(), forKey: .LessEqualNoWrite)
         
         _library.updateValue(ShadowGenerationDepthStencilState(), forKey: .ShadowGeneration)
