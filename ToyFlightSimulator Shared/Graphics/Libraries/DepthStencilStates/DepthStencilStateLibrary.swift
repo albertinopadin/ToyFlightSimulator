@@ -26,6 +26,7 @@ enum DepthStencilStateType {
     case TiledDeferredShadow
     case TiledDeferredGBuffer
     case TiledDeferredLight
+    case TiledDeferredTransparency
 }
 
 final class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthStencilState>, @unchecked Sendable {
@@ -50,6 +51,7 @@ final class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthSte
         _library.updateValue(TiledDeferredShadowDepthStencilState(), forKey: .TiledDeferredShadow)
         _library.updateValue(TiledDeferredGBufferDepthStencilState(), forKey: .TiledDeferredGBuffer)
         _library.updateValue(TiledDeferredLightingDepthStencilState(), forKey: .TiledDeferredLight)
+        _library.updateValue(TiledDeferredGBufferTransparencyDepthStencilState(), forKey: .TiledDeferredTransparency)
     }
     
     override subscript(type: DepthStencilStateType) -> MTLDepthStencilState {

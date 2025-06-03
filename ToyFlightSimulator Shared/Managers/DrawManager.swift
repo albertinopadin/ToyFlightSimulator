@@ -215,6 +215,12 @@ final class DrawManager {
                     if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
                         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
                         
+                        // Clear any previously set textures
+                        // TODO: Maybe order the objects so you don't have to set/clear over and over in same draw call...
+                        renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexBaseColor.index)
+                        renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexNormal.index)
+                        renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexSpecular.index)
+                        
                         if applyMaterials {
                             submesh.material!.applyTextures(with: renderEncoder)
                             

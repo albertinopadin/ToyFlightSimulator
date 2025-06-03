@@ -98,9 +98,7 @@ final class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRend
         _library.updateValue(TiledMSAADirectionalLightPipelineState(), forKey: .TiledMSAADirectionalLight)
         _library.updateValue(TiledMSAAPointLightPipelineState(), forKey: .TiledMSAAPointLight)
         _library.updateValue(TiledMSAATransparencyPipelineState(), forKey: .TiledMSAATransparency)
-        
         _library.updateValue(TiledMSAAAverageResolvePipelineState(), forKey: .TiledMSAAAverageResolve)
-        
         _library.updateValue(ParticleMSAARenderPipelineState(), forKey: .ParticleMSAA)
         
         _library.updateValue(TiledMSAACompositePipelineState(), forKey: .Composite)

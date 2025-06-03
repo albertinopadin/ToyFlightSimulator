@@ -129,8 +129,9 @@ final class TiledMSAATessellatedRenderer: Renderer, ShadowRendering, ParticleRen
     func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAATransparency])
-            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
+//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessNoWrite])
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredTransparency])
             DrawManager.Draw(with: renderEncoder, withTransparency: true)
         }
     }
