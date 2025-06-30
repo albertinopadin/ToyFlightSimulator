@@ -145,20 +145,4 @@ struct Material: sizeable {
             }
         }
     }
-    
-    public mutating func applyTextures(with renderEncoder: MTLRenderCommandEncoder) {
-        renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
-        
-        if let baseColorTexture {
-            renderEncoder.setFragmentTexture(baseColorTexture, index: TFSTextureIndexBaseColor.index)
-        }
-        
-        if let normalMapTexture {
-            renderEncoder.setFragmentTexture(normalMapTexture, index: TFSTextureIndexNormal.index)
-        }
-        
-        if let specularTexture {
-            renderEncoder.setFragmentTexture(specularTexture, index: TFSTextureIndexSpecular.index)
-        }
-    }
 }

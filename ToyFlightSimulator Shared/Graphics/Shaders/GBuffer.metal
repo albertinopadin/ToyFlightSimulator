@@ -35,6 +35,17 @@ typedef struct {
     bool useObjectColor;
 } ColorInOut;
 
+constexpr sampler baseShadowSampler(coord::normalized,
+                                    filter::linear,
+                                    address::clamp_to_edge,
+                                    compare_func::less);
+
+constexpr sampler shadowSampler(coord::normalized,
+                                filter::linear,
+                                mip_filter::none,
+                                address::clamp_to_edge,
+                                compare_func::less);
+
 vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ stage_in ]],
                                  constant SceneConstants    &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                  constant ModelConstants    *modelConstants [[ buffer(TFSBufferModelConstants) ]],
@@ -80,14 +91,9 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
     
     eye_normal = normalize(eye_normal);
     
-    constexpr sampler shadowSampler(coord::normalized,
-                                    filter::linear,
-                                    address::clamp_to_edge,
-                                    compare_func::less);
-    
     // Compare the depth value in the shadow map to the depth value of the fragment in the sun's.
     // frame of reference.  If the sample is occluded, it will be zero.
-    float shadow_sample = shadowMap.sample_compare(shadowSampler, in.shadow_coord.xy, in.shadow_coord.z);
+    float shadow_sample = shadowMap.sample_compare(baseShadowSampler, in.shadow_coord.xy, in.shadow_coord.z);
     
     // Store shadow with albedo in unused fourth channel;
     // Store the specular contribution with the normal in unused fourth channel.
@@ -137,12 +143,6 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut                   in  
     half3 eye_normal = normalize(tangent_normal.x * in.tangent +
                                  tangent_normal.y * in.bitangent +
                                  tangent_normal.z * in.normal);
-    
-    constexpr sampler shadowSampler(coord::normalized,
-                                    filter::linear,
-                                    mip_filter::none,
-                                    address::clamp_to_edge,
-                                    compare_func::less);
     
     // Compare the depth value in the shadow map to the depth value of the fragment in the sun's.
     // frame of reference.  If the sample is occluded, it will be zero.

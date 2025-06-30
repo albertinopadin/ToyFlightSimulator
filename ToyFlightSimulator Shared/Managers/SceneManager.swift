@@ -118,6 +118,16 @@ final class SceneManager {
     
     public static func TeardownScene() {
         CurrentScene?.teardownScene()
+        
+        // Clear all collections to prevent memory leaks
+        modelDatas.removeAll()
+        transparentObjectDatas.removeAll()
+        particleObjects.removeAll()
+        tessellatables.removeAll()
+        skyData = ModelData()
+        lines.removeAll()
+        icosahedrons.removeAll()
+        
         _sceneType = nil
         _rendererType = nil
     }
@@ -236,13 +246,13 @@ final class SceneManager {
     }
     
     public static func GetTransparentUniformsData() -> [Model: TransparentUniformsData] {
+        uniformsLock.lock()
         var transparentUniformsData: [Model: TransparentUniformsData] = [:]
-        
-        // Lock here?
         for key in transparentObjectDatas.keys {
             let modelData = transparentObjectDatas[key]!
             transparentUniformsData[key] = TransparentUniformsData(uniforms: modelData.gameObjects.compactMap(\.modelConstants))
         }
+        uniformsLock.unlock()
         
         return transparentUniformsData
     }

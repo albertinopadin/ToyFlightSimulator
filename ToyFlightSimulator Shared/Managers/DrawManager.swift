@@ -204,7 +204,6 @@ final class DrawManager {
                              submeshes: [Submesh],
                              applyMaterials: Bool) {
         EncodeRender(using: renderEncoder, label: "Rendering \(model.name)") {
-            // Hack for now:
             if !uniforms.isEmpty {
                 var uniforms = uniforms
                 renderEncoder.setVertexBytes(&uniforms,
@@ -215,14 +214,8 @@ final class DrawManager {
                     if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
                         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
                         
-                        // Clear any previously set textures
-                        // TODO: Maybe order the objects so you don't have to set/clear over and over in same draw call...
-                        renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexBaseColor.index)
-                        renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexNormal.index)
-                        renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexSpecular.index)
-                        
                         if applyMaterials {
-                            submesh.material!.applyTextures(with: renderEncoder)
+                            applyMaterialTextures(submesh.material!, with: renderEncoder)
                             
                             var materialProps = submesh.material!.properties
                             renderEncoder.setFragmentBytes(&materialProps,
@@ -239,33 +232,28 @@ final class DrawManager {
                     }
                 }
             }
-            
-//            var uniforms = uniforms
-//            renderEncoder.setVertexBytes(&uniforms,
-//                                         length: ModelConstants.stride(uniforms.count),
-//                                         index: TFSBufferModelConstants.index)
-//            
-//            for submesh in submeshes {
-//                if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
-//                    renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-//                    
-//                    if applyMaterials {
-//                        submesh.material!.applyTextures(with: renderEncoder)
-//                        
-//                        var materialProps = submesh.material!.properties
-//                        renderEncoder.setFragmentBytes(&materialProps,
-//                                                       length: MaterialProperties.stride,
-//                                                       index: TFSBufferIndexMaterial.index)
-//                    }
-//                    
-//                    renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-//                                                        indexCount: submesh.indexCount,
-//                                                        indexType: submesh.indexType,
-//                                                        indexBuffer: submesh.indexBuffer,
-//                                                        indexBufferOffset: submesh.indexBufferOffset,
-//                                                        instanceCount: submesh.parentMesh!.instanceCount * uniforms.count)
-//                }
-//            }
+        }
+    }
+    
+    private static func applyMaterialTextures(_ material: Material, with renderEncoder: MTLRenderCommandEncoder) {
+        renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
+        
+        if let baseColorTexture = material.baseColorTexture {
+            renderEncoder.setFragmentTexture(baseColorTexture, index: TFSTextureIndexBaseColor.index)
+        } else {
+            renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexBaseColor.index)
+        }
+        
+        if let normalMapTexture = material.normalMapTexture {
+            renderEncoder.setFragmentTexture(normalMapTexture, index: TFSTextureIndexNormal.index)
+        } else {
+            renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexNormal.index)
+        }
+        
+        if let specularTexture = material.specularTexture {
+            renderEncoder.setFragmentTexture(specularTexture, index: TFSTextureIndexSpecular.index)
+        } else {
+            renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexSpecular.index)
         }
     }
 }
