@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:developer.apple.com)",
+      "WebFetch(domain:www.3dgep.com)",
+      "WebFetch(domain:metalbyexample.com)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(xcodebuild build:*)"
+    ],
+    "deny": []
+  }
+}

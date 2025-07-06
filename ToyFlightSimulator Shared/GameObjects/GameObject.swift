@@ -24,9 +24,29 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
     
     public var model: Model!
     public var modelConstants = ModelConstants()
+    public var meshVisibility: [String: Bool] = [:]  // Control which meshes are visible
     
     public var isTransparent: Bool {
         return (modelConstants.useObjectColor && modelConstants.objectColor.w < 1.0)
+    }
+    
+    // Get visible meshes based on meshVisibility settings
+    public var visibleMeshes: [Mesh] {
+        if meshVisibility.isEmpty {
+            return model.meshes  // If no visibility settings, show all
+        }
+        
+        if let usdModel = model as? UsdModel {
+            return model.meshes.enumerated().compactMap { index, mesh in
+                // Check if this mesh should be visible
+                if let isVisible = meshVisibility[mesh.name], !isVisible {
+                    return nil
+                }
+                return mesh
+            }
+        }
+        
+        return model.meshes
     }
     
     init(name: String, modelType: ModelType) {

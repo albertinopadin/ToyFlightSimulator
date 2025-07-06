@@ -9,6 +9,7 @@ import Foundation
 import MetalKit
 
 class UsdModel: Model {
+    var meshIndices: [String: Int] = [:]  // Map mesh names to their indices
     init(_ modelName: String, fileExtension: ModelExtension = .USDZ) {
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: fileExtension.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")
@@ -26,7 +27,13 @@ class UsdModel: Model {
         for i in 0..<asset.count {
             let child = asset.object(at: i)
             print("[UsdModel init] \(modelName) child name: \(child.name)")
-            usdMeshes.append(contentsOf: Self.makeMeshes(object: child, vertexDescriptor: descriptor))
+            let newMeshes = Self.makeMeshes(object: child, vertexDescriptor: descriptor)
+            
+            // Track mesh indices by name
+            for mesh in newMeshes {
+                meshIndices[mesh.name] = usdMeshes.count
+                usdMeshes.append(mesh)
+            }
         }
         
         // Invert Z in meshes due to USD being right handed coord system:
@@ -35,6 +42,7 @@ class UsdModel: Model {
         super.init(name: modelName, meshes: usdMeshes)
         
         print("[UsdModel init] Num meshes for \(modelName): \(meshes.count)")
+        print("[UsdModel init] Mesh indices: \(meshIndices)")
     }
     
     private static func makeMeshes(object: MDLObject, vertexDescriptor: MDLVertexDescriptor) -> [Mesh] {
@@ -44,6 +52,15 @@ class UsdModel: Model {
         
         if let mesh = object as? MDLMesh {
             print("[UsdModel makeMeshes] object named \(object.name) is MDLMesh")
+            print("[UsdModel makeMeshes] submesh count: \(mesh.submeshes?.count ?? 0)")
+            
+            // Log submesh names if available
+            if let submeshes = mesh.submeshes as? [MDLSubmesh] {
+                for (index, submesh) in submeshes.enumerated() {
+                    print("[UsdModel makeMeshes] Submesh \(index): \(submesh.name)")
+                }
+            }
+            
             let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
             meshes.append(newMesh)
         }

@@ -45,6 +45,9 @@ final class FlightboxScene: GameScene {
         let jet = CollidableF22(scale: 0.25)
 //        let jet = Temple(scale: 0.02)
         
+        // Set focus on jet to enable input handling
+        jet.hasFocus = true
+        
         addCamera(attachedCamera)
         
         let container = ContainerNode(camera: attachedCamera, cameraOffset: jet.cameraOffset)
