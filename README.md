@@ -8,6 +8,12 @@
 
 ## Devlog
 
+7/20/2025 - Tessellated Terrain initial implementation; Moved to Swift 6; Implemented multithreading with 3 threads - main (UI / Rendering), update (physics), and audio.
+
+![TessellatedTerrain](images/TFS_TessellatedTerrain.png)
+
+---
+
 12/4/24 - Initial physics implementation (both naive Euler and Verlet with collision response).
 
 [Toy Flight Sim 12-4-24 Ball Physics Scene](https://www.youtube.com/watch?v=r0PpmTpkbZw)
