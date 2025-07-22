@@ -7,10 +7,11 @@
 
 class GBU16: Droppable {
     init() {
-        super.init(name: "GBU16_JDAM", modelType: .F18, meshType: .F18_GBU16)
+        super.init(name: "GBU16_JDAM", modelType: .F18_GBU16_Right, meshType: .F18_GBU16_Right)
     }
     
-    init(modelName: String, submeshName: String) {
-        super.init(name: "GBU16_JDAM", modelName: modelName, submeshName: submeshName)
+    init(modelType: ModelType) {
+        let meshType: SingleSMMeshType = modelType == .F18_GBU16_Left ? .F18_GBU16_Left : .F18_GBU16_Right
+        super.init(name: "GBU16_JDAM", modelType: modelType, meshType: meshType)
     }
 }

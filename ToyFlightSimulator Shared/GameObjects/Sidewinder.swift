@@ -7,10 +7,11 @@
 
 class Sidewinder: Missile {
     init() {
-        super.init(name: "Sidewinder",  modelType: .F18, meshType: .F18_Sidewinder)
+        super.init(name: "Sidewinder",  modelType: .F18_Sidewinder_Right, meshType: .F18_Sidewinder_Right)
     }
     
-    init(modelName: String, submeshName: String) {
-        super.init(name: "Sidewinder", modelName: modelName, submeshName: submeshName)
+    init(modelType: ModelType) {
+        let meshType: SingleSMMeshType = modelType == .F18_Sidewinder_Right ? .F18_Sidewinder_Right : .F18_Sidewinder_Left
+        super.init(name: "AIM9_Sidewinder", modelType: modelType, meshType: meshType)
     }
 }

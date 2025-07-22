@@ -8,25 +8,15 @@
 import MetalKit
 
 class SubMeshGameObject: GameObject {
-    private var _singleSMMesh: SingleSMMesh!
+    private var _singleSMMesh: SingleSubmeshMesh!
     var submeshName: String = ""
     
     init(name: String,
          modelType: ModelType,
          meshType: SingleSMMeshType,
          submeshOrigin: float3 = float3(0, 0, 0)) {
-        super.init(name: name, modelType: .None)
+        super.init(name: name, modelType: modelType)
         _singleSMMesh = Assets.SingleSMMeshes[meshType]
-        _singleSMMesh.setSubmeshOrigin(submeshOrigin)
-    }
-    
-    init(name: String,
-         modelName: String,
-         submeshName: String,
-         submeshOrigin: float3 = float3(0, 0, 0)) {
-        super.init(name: name, modelType: .None)
-        self.submeshName = submeshName
-        _singleSMMesh = SingleSMMesh.createSingleSMMeshFromModel(modelName: modelName, submeshName: submeshName)
         _singleSMMesh.setSubmeshOrigin(submeshOrigin)
     }
     

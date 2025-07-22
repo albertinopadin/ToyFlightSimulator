@@ -8,7 +8,7 @@
 import Foundation
 import MetalKit
 
-class ObjModel: Model {
+final class ObjModel: Model {
     init(_ modelName: String) {
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: ModelExtension.OBJ.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")

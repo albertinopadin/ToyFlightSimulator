@@ -25,7 +25,7 @@ class Aircraft: GameObject {
         super.init(name: name, modelType: modelType)
         self.setScale(scale)
         print("[Aircraft init] name: \(name), scale: \(scale)")
-        self.hasFocus = true
+        self.hasFocus = true  // TODO: This doesn't look right...
     }
     
     override func doUpdate() {

@@ -162,6 +162,8 @@ final class SceneManager {
                 particleObjects.append(particleObject)
             case let tessellatable as Tessellatable:
                 tessellatables.append(tessellatable)
+            case let subMeshGameObject as SubMeshGameObject:
+                RegisterSubMeshObject(subMeshGameObject)
             default:
                 RegisterObject(gameObject)
         }
@@ -174,33 +176,53 @@ final class SceneManager {
             if let _ = modelDatas[gameObject.model] {
                 modelDatas[gameObject.model]!.addGameObject(gameObject)
             } else {
-                var modelData = ModelData()
-                modelData.addGameObject(gameObject)
-                
-                for mesh in gameObject.model.meshes {
-                    for submesh in mesh.submeshes {
-                        if isTransparent(submesh: submesh) {
-                            modelData.appendTransparent(submesh: submesh)
-                        } else {
-                            modelData.appendOpaque(submesh: submesh)
-                        }
-                    }
-                }
-                
-                modelDatas[gameObject.model] = modelData
+                modelDatas[gameObject.model] = CreateModelData(gameObject: gameObject)
             }
         }
+    }
+    
+    static private func CreateModelData(gameObject: GameObject) -> ModelData {
+        var modelData = ModelData()
+        modelData.addGameObject(gameObject)
+        
+        for mesh in gameObject.model.meshes {
+            for submesh in mesh.submeshes {
+                if gameObject.shouldRenderSubmesh(submesh) {
+                    if isTransparent(submesh: submesh) {
+                        modelData.appendTransparent(submesh: submesh)
+                    } else {
+                        modelData.appendOpaque(submesh: submesh)
+                    }
+                }
+            }
+        }
+        
+        return modelData
+    }
+    
+    // TODO: Eventually we can remove this method:
+    static private func RegisterSubMeshObject(_ subMeshObject: SubMeshGameObject) {
+        print("[SceneMgr RegisterSubMeshObject] registering \(subMeshObject.getName()) with model \(subMeshObject.model.name)")
+        RegisterObject(subMeshObject)
     }
     
     static private func registerTransparentObject(_ gameObject: GameObject) {
         if let _ = transparentObjectDatas[gameObject.model] {
             transparentObjectDatas[gameObject.model]!.addGameObject(gameObject)
         } else {
-            var transparentObjectData = TransparentObjectData()
-            transparentObjectData.addGameObject(gameObject)
-            transparentObjectData.addModel(gameObject.model)
-            transparentObjectDatas[gameObject.model] = transparentObjectData
+            transparentObjectDatas[gameObject.model] = CreateTransparentObjectData(gameObject: gameObject)
         }
+    }
+    
+    static private func registerTransparentSubMeshObject(_ subMeshObject: SubMeshGameObject) {
+        
+    }
+    
+    static private func CreateTransparentObjectData(gameObject: GameObject) -> TransparentObjectData {
+        var transparentObjectData = TransparentObjectData()
+        transparentObjectData.addGameObject(gameObject)
+        transparentObjectData.addModel(gameObject.model)
+        return transparentObjectData
     }
     
     static private func isTransparent(submesh: Submesh) -> Bool {

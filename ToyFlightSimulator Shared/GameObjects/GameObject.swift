@@ -9,6 +9,8 @@ import MetalKit
 
 class GameObject: Node, PhysicsEntity, Renderable, Hashable {
     var id: String = UUID().uuidString
+    
+    // Physics stuff:
     var collidedWith: [String : Bool] = [:]
     var collisionShape: CollisionShape = .Sphere
     var isStatic: Bool = false
@@ -33,7 +35,6 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
         super.init(name: name)
         model = Assets.Models[modelType]
         model.parent = self
-        
         print("GameObject init; named \(self.getName())")
     }
     
@@ -50,5 +51,9 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
     public func setColor(_ color: float4) {
         modelConstants.objectColor = color
         modelConstants.useObjectColor = true
+    }
+    
+    public func shouldRenderSubmesh(_ submesh: Submesh) -> Bool {
+        return true
     }
 }

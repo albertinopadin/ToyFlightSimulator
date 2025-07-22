@@ -8,7 +8,7 @@
 import Foundation
 import MetalKit
 
-class UsdModel: Model {
+final class UsdModel: Model {
     init(_ modelName: String, fileExtension: ModelExtension = .USDZ) {
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: fileExtension.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")

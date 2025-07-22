@@ -18,32 +18,34 @@ struct SingleMeshVertexMetadata {
     let maxZ: Float
 }
 
-class SingleSMMesh {
-    public var name: String = "SingleSMMesh"
-    private var _vertices: [Vertex] = []
-    private var _vertexCount: Int = 0
-    private var _vertexBuffer: MTLBuffer!
-    private var _instanceCount: Int = 1
+class SingleSubmeshMesh: Mesh {
     internal var _submesh: Submesh!
     public let vertexMetadata: SingleMeshVertexMetadata
 
     init(mtkMesh: MTKMesh, submesh: Submesh) {
+        // Centralize vertices:
+        let vertBuf = mtkMesh.vertexBuffers[0].buffer
+        vertexMetadata = SingleSubmeshMesh.getVertexMetadata(submesh: submesh,
+                                                             vertexBuffer: vertBuf,
+                                                             vertexCount: mtkMesh.vertexCount)
+        
+        super.init()
+        
         name = submesh.name
 
         if mtkMesh.vertexBuffers.count > 1 {
-            print("[SingleSMMesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
+            print("[SingleSubmeshMesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
         }
-        self._vertexBuffer = mtkMesh.vertexBuffers[0].buffer
+        self.vertexBuffer = vertBuf
         self._vertexCount = mtkMesh.vertexCount
         _submesh = submesh
+        _submesh.parentMesh = self
         
-        // Centralize vertices:
-        vertexMetadata = SingleSMMesh.getVertexMetadata(submesh: _submesh, vertexBuffer: _vertexBuffer, vertexCount: _vertexCount)
+        self.submeshes = [_submesh]
         
-        print("[SingleSMMesh init] \(name) Initial average vertex position: \(vertexMetadata.initialPositionInParentMesh)")
-        print("[SingleSMMesh init] \(name) vertex count: \(vertexMetadata.uniqueVertices)")
-        
-        print("[SingleSMMesh init] \(name) mesh vertex metadata: \(vertexMetadata)")
+        print("[SingleSubmeshMesh init] \(name) Initial average vertex position: \(vertexMetadata.initialPositionInParentMesh)")
+        print("[SingleSubmeshMesh init] \(name) vertex count: \(vertexMetadata.uniqueVertices)")
+        print("[SingleSubmeshMesh init] \(name) mesh vertex metadata: \(vertexMetadata)")
         
         translateSubmeshVertices(delta: -vertexMetadata.initialPositionInParentMesh)
     }
@@ -57,9 +59,7 @@ class SingleSMMesh {
                                                                                                     capacity: vertexCount)
         var indexBufferPointer: UnsafeMutablePointer<UInt32> =
                                 submesh.indexBuffer.contents().bindMemory(to: UInt32.self, capacity: submesh.indexCount)
-        
         indexBufferPointer += submesh.indexBufferOffset
-        
         handleBlock(vertexBufferPointer, indexBufferPointer)
     }
     
@@ -125,7 +125,7 @@ class SingleSMMesh {
     
     public func translateSubmeshVertices(delta: float3) {
         var indexDict: [UInt32: Bool] = [:]
-        SingleSMMesh.processVertices(submesh: _submesh, vertexBuffer: _vertexBuffer, vertexCount: _vertexCount) {
+        SingleSubmeshMesh.processVertices(submesh: _submesh, vertexBuffer: vertexBuffer, vertexCount: _vertexCount) {
             vertexBufferPointer, indexBufferPointer in
             for i in 0..<_submesh.indexCount {
                 let index: UInt32 = indexBufferPointer[i]
@@ -146,9 +146,9 @@ class SingleSMMesh {
     
     private func createBuffer() {
         if _vertices.count > 0 {
-            _vertexBuffer = Engine.Device.makeBuffer(bytes: _vertices,
-                                                     length: Vertex.stride(_vertices.count),
-                                                     options: [])
+            vertexBuffer = Engine.Device.makeBuffer(bytes: _vertices,
+                                                    length: Vertex.stride(_vertices.count),
+                                                    options: [])
         }
     }
     
@@ -165,7 +165,7 @@ class SingleSMMesh {
 
     private static func makeSingleSMMeshWithSubmeshNamed(_ submeshName: String,
                                                          object: MDLObject,
-                                                         vertexDescriptor: MDLVertexDescriptor) -> SingleSMMesh? {
+                                                         vertexDescriptor: MDLVertexDescriptor) -> SingleSubmeshMesh? {
         if let mdlMesh = object as? MDLMesh {
             if let mdlSubmesh = getMdlSubmeshNamed(submeshName, mdlMesh: mdlMesh) {
                 mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
@@ -178,10 +178,10 @@ class SingleSMMesh {
                 
                 let metalKitMesh = try! MTKMesh(mesh: mdlMesh, device: Engine.Device)
                 let mtkSubmesh = metalKitMesh.submeshes.filter({ $0.name == submeshName })[0]
-                print("[SingleSMMesh makeSingleSMMeshWithSubmeshNamed] Creating Submesh...")
-                let submesh = Submesh(mtkSubmesh: mtkSubmesh, 
+                print("[SingleSubmeshMesh makeSingleSMMeshWithSubmeshNamed] Creating Submesh...")
+                let submesh = Submesh(mtkSubmesh: mtkSubmesh,
                                       mdlSubmesh: mdlSubmesh)
-                return SingleSMMesh(mtkMesh: metalKitMesh, submesh: submesh)
+                return SingleSubmeshMesh(mtkMesh: metalKitMesh, submesh: submesh)
             }
         }
 
@@ -198,7 +198,7 @@ class SingleSMMesh {
         return nil
     }
 
-    public static func createSingleSMMeshFromModel(modelName: String, submeshName: String, ext: String = "obj") -> SingleSMMesh {
+    public static func createSingleSMMeshFromModel(modelName: String, submeshName: String, ext: String = "obj") -> SingleSubmeshMesh {
         print("[createSingleSMMeshFromModel] model name: \(modelName)")
 
         guard let assetURL = Bundle.main.url(forResource: modelName, withExtension: ext) else {
@@ -223,57 +223,12 @@ class SingleSMMesh {
         let child = asset.childObjects(of: MDLObject.self)[0]
         print("[createSingleSMMeshFromModel] \(modelName) child name: \(child.name)")
         
-        guard let cMesh = SingleSMMesh.makeSingleSMMeshWithSubmeshNamed(submeshName,
+        guard let cMesh = SingleSubmeshMesh.makeSingleSMMeshWithSubmeshNamed(submeshName,
                                                                         object: child,
                                                                         vertexDescriptor: descriptor) else {
-            fatalError("[SingleSMMesh makeMeshWithSubmeshNamed] Could not find any submesh named \(submeshName)")
+            fatalError("[SingleSubmeshMesh makeMeshWithSubmeshNamed] Could not find any submesh named \(submeshName)")
         }
         
         return cMesh
     }
-
-    func setInstanceCount(_ count: Int) {
-        self._instanceCount = count
-    }
-
-    func drawPrimitives(_ renderEncoder: MTLRenderCommandEncoder,
-                        material: MaterialProperties? = nil,
-                        applyMaterials: Bool = true,
-                        baseColorTextureType: TextureType = .None,
-                        normalMapTextureType: TextureType = .None,
-                        specularTextureType: TextureType = .None) {
-        if let _vertexBuffer {
-            renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
-
-//            if applyMaterials {
-//                _submesh.material?.applyTextures(with: renderEncoder,
-//                                                 baseColorTextureType: baseColorTextureType,
-//                                                 normalMapTextureType: normalMapTextureType,
-//                                                 specularTextureType: specularTextureType)
-////                _submesh.applyMaterial(with: renderEncoder, customMaterial: material)
-////                _submesh.applyMaterial(with: renderEncoder)
-//            }
-
-            renderEncoder.drawIndexedPrimitives(type: _submesh.primitiveType,
-                                                indexCount: _submesh.indexCount,
-                                                indexType: _submesh.indexType,
-                                                indexBuffer: _submesh.indexBuffer,
-                                                indexBufferOffset: _submesh.indexBufferOffset,
-                                                instanceCount: _instanceCount)
-        }
-    }
-
-    func drawShadowPrimitives(_ renderEncoder: MTLRenderCommandEncoder) {
-        if let _vertexBuffer = _vertexBuffer {
-            renderEncoder.setVertexBuffer(_vertexBuffer, offset: 0, index: 0)
-
-            renderEncoder.drawIndexedPrimitives(type: _submesh.primitiveType,
-                                                indexCount: _submesh.indexCount,
-                                                indexType: _submesh.indexType,
-                                                indexBuffer: _submesh.indexBuffer,
-                                                indexBufferOffset: _submesh.indexBufferOffset,
-                                                instanceCount: _instanceCount)
-        }
-    }
 }
-

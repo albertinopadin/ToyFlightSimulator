@@ -7,7 +7,7 @@
 
 final class Assets {
     public static let Meshes = MeshLibrary()
-    public static let SingleSMMeshes = SingleSMMeshLibrary()
+    public static let SingleSMMeshes = SingleSubmeshMeshLibrary()
     public static let Textures = TextureLibrary()
     public static let Models = ModelLibrary()
 }

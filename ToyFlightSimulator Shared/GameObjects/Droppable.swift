@@ -14,10 +14,6 @@ class Droppable: SubMeshGameObject {
         super.init(name: name, modelType: modelType, meshType: meshType)
     }
     
-    init(name: String, modelName: String, submeshName: String) {
-        super.init(name: name, modelName: modelName, submeshName: submeshName)
-    }
-    
     func drop(forwardComponent: Float) {
         self.forwardVelocityComponent = forwardComponent
     }

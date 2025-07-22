@@ -13,10 +13,6 @@ class Missile: SubMeshGameObject {
         super.init(name: name, modelType: modelType, meshType: meshType)
     }
     
-    init(name: String, modelName: String, submeshName: String) {
-        super.init(name: name, modelName: modelName, submeshName: submeshName)
-    }
-    
     func fire(direction: float3, speed: Float) {
         self.direction = direction
         self.speed = speed
@@ -25,6 +21,7 @@ class Missile: SubMeshGameObject {
     override func doUpdate() {
         let currentPos = self.getPosition()
 //        print("[Missile doUpdate] currentPos: \(currentPos)")
+        // TODO: This is hardcoded from scene origin
         if abs(currentPos.x) > 1000 || abs(currentPos.y) > 1000 || abs(currentPos.z) > 1000 {
             // Reap from scene
             print("Removing self {\(self.getName()), \(self.getID())} from scene.")

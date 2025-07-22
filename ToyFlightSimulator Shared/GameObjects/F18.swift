@@ -7,13 +7,23 @@
 
 import MetalKit
 
-class Store {
-    var remaining: Int
-    var submeshNames: [String]
+//class Store {
+//    var remaining: Int
+//    var submeshNames: [String]
+//
+//    init(remaining: Int, submeshNames: [String]) {
+//        self.remaining = remaining
+//        self.submeshNames = submeshNames
+//    }
+//}
 
-    init(remaining: Int, submeshNames: [String]) {
+final class Store {
+    var remaining: Int
+    var modelTypes: [ModelType]
+    
+    init(remaining: Int, modelTypes: [ModelType]) {
         self.remaining = remaining
-        self.submeshNames = submeshNames
+        self.modelTypes = modelTypes
     }
 }
 
@@ -38,13 +48,19 @@ class F18: Aircraft {
         FuelTankName
     ]
     
+//    let stores: [String: Store] = [
+//        AIM9Name: Store(remaining: 2, submeshNames: ["AIM-9XL_Paint", "AIM-9XR_Paint"]),
+//        AIM120Name: Store(remaining: 2, submeshNames: ["AIM-120DL_Paint", "AIM-120DR_Paint"]),
+//        GBU16Name: Store(remaining: 2, submeshNames: ["GBU-16L_Paint", "GBU-16R_Paint"]),
+//        FuelTankName: Store(remaining: 3, submeshNames: ["TankWingL_Paint", "TankWingR_Paint", "TankCenter_Paint"])
+//    ]
+        
     let stores: [String: Store] = [
-        AIM9Name: Store(remaining: 2, submeshNames: ["AIM-9XL_Paint", "AIM-9XR_Paint"]),
-        AIM120Name: Store(remaining: 2, submeshNames: ["AIM-120DL_Paint", "AIM-120DR_Paint"]),
-        GBU16Name: Store(remaining: 2, submeshNames: ["GBU-16L_Paint", "GBU-16R_Paint"]),
-        FuelTankName: Store(remaining: 3, submeshNames: ["TankWingL_Paint", "TankWingR_Paint", "TankCenter_Paint"])
+        AIM9Name: Store(remaining: 2, modelTypes: [.F18_Sidewinder_Left, .F18_Sidewinder_Right]),
+        AIM120Name: Store(remaining: 2, modelTypes: [.F18_AIM120_Left, .F18_AIM120_Right]),
+        GBU16Name: Store(remaining: 2, modelTypes: [.F18_GBU16_Left, .F18_GBU16_Right]),
+        FuelTankName: Store(remaining: 3, modelTypes: [.F18_FuelTank_Left, .F18_FuelTank_Right, .F18_FuelTank_Center])
     ]
-    
     
 //    var landingGear: [String] = [
 //
@@ -231,36 +247,36 @@ class F18: Aircraft {
     let nOriginZ: Float = 0.25
     
     let leftAileron = SubMeshGameObject(name: "Left_Aileron",
-                                        modelName: F18_ModelName,
-                                        submeshName: "EleronsL_Paint")
+                                        modelType: .F18_Aileron_Left,
+                                        meshType: .F18_Aileron_Left)
     
-    let rightAileron = SubMeshGameObject(name: "Right_Aileron",
-                                         modelName: F18_ModelName,
-                                         submeshName: "EleronsR_Paint")
+    let rightAileron = SubMeshGameObject(name: "Left_Aileron",
+                                         modelType: .F18_Aileron_Right,
+                                         meshType: .F18_Aileron_Right)
     
-    let leftElevon = SubMeshGameObject(name: "Right_Elevon",
-                                       modelName: F18_ModelName,
-                                       submeshName: "ElevatorL_Paint")
+    let leftElevon = SubMeshGameObject(name: "Left_Elevon",
+                                       modelType: .F18_Elevon_Left,
+                                       meshType: .F18_Elevon_Left)
     
     let rightElevon = SubMeshGameObject(name: "Right_Elevon",
-                                        modelName: F18_ModelName,
-                                        submeshName: "ElevatorR_Paint")
+                                        modelType: .F18_Elevon_Right,
+                                        meshType: .F18_Elevon_Right)
     
     let leftFlap = SubMeshGameObject(name: "Left_Flap",
-                                     modelName: F18_ModelName,
-                                     submeshName: "FlapsL_Paint")
+                                     modelType: .F18_Flap_Left,
+                                     meshType: .F18_Flap_Left)
     
     let rightFlap = SubMeshGameObject(name: "Right_Flap",
-                                      modelName: F18_ModelName,
-                                      submeshName: "FlapsR_Paint")
+                                      modelType: .F18_Flap_Right,
+                                      meshType: .F18_Flap_Right)
     
     let leftRudder = SubMeshGameObject(name: "Left_Rudder",
-                                           modelName: F18_ModelName,
-                                           submeshName: "RudderL_Paint")
-
+                                       modelType: .F18_Rudder_Left,
+                                       meshType: .F18_Rudder_Left)
+    
     let rightRudder = SubMeshGameObject(name: "Right_Rudder",
-                                        modelName: F18_ModelName,
-                                        submeshName: "RudderR_Paint")
+                                        modelType: .F18_Rudder_Right,
+                                        meshType: .F18_Rudder_Right)
     
     var flapsDeployed: Bool = false
     var flapsDegrees: Float = 0.0
@@ -361,14 +377,14 @@ class F18: Aircraft {
         submeshGameObject.setScale(node.getScale())
     }
     
-    func weaponRelease(store: Store, handleBlock: (String) -> Void) {
+    func weaponRelease(store: Store, handleBlock: (ModelType) -> Void) {
         if store.remaining > 0 {
-            let storeIdx = store.submeshNames.count - store.remaining
-            let storeToRelease = store.submeshNames[storeIdx]
+            let storeIdx = store.modelTypes.count - store.remaining
+            let storeToRelease = store.modelTypes[storeIdx]
             print("Store to release: \(storeToRelease)")
             handleBlock(storeToRelease)
             store.remaining -= 1
-            submeshesToDisplay[storeToRelease] = false
+//            submeshesToDisplay[storeToRelease] = false
         }
     }
     
@@ -532,10 +548,11 @@ class F18: Aircraft {
     
     private func checkStoresCommands(with node: Node) {
         InputManager.HasDiscreteCommandDebounced(command: .FireMissileAIM9) {
+            print("[F18 checkStoresCommands] Fire AIM9")
             let aim9s = stores[F18.AIM9Name]!
             weaponRelease(store: aim9s) { storeToRelease in
                 print("Fox 2!")
-                let sidewinder = Sidewinder(modelName: F18.F18_ModelName, submeshName: storeToRelease)
+                let sidewinder = Sidewinder(modelType: storeToRelease)
                 sidewinder.fire(direction: node.getFwdVector(), speed: 0.5)
                 weaponReleaseSetup(with: node, submeshGameObject: sidewinder)
                 node.parent!.addChild(sidewinder)
@@ -543,10 +560,11 @@ class F18: Aircraft {
         }
         
         InputManager.HasDiscreteCommandDebounced(command: .FireMissileAIM120) {
+            print("[F18 checkStoresCommands] Fire AIM120")
             let aim120s = stores[F18.AIM120Name]!
             weaponRelease(store: aim120s) { storeToRelease in
                 print("Fox 3!")
-                let amraam = AIM120(modelName: F18.F18_ModelName, submeshName: storeToRelease)
+                let amraam = AIM120(modelType: storeToRelease)
                 amraam.fire(direction: node.getFwdVector(), speed: 0.5)
                 weaponReleaseSetup(with: node, submeshGameObject: amraam)
                 node.parent!.addChild(amraam)
@@ -557,7 +575,7 @@ class F18: Aircraft {
             let gbu16s = stores[F18.GBU16Name]!
             weaponRelease(store: gbu16s) { storeToRelease in
                 print("Dropping JDAM!")
-                let jdam = GBU16(modelName: F18.F18_ModelName, submeshName: storeToRelease)
+                let jdam = GBU16(modelType: storeToRelease)
                 jdam.drop(forwardComponent: 0.02)
                 weaponReleaseSetup(with: node, submeshGameObject: jdam)
                 node.parent!.addChild(jdam)
@@ -568,24 +586,33 @@ class F18: Aircraft {
             let fuelTanks = stores[F18.FuelTankName]!
             weaponRelease(store: fuelTanks) { storeToRelease in
                 print("Jettisoning fuel tank!")
-                let fuelTank = FuelTank(modelName: F18.F18_ModelName, submeshName: storeToRelease)
+                let fuelTank = FuelTank(modelType: storeToRelease)
                 fuelTank.drop(forwardComponent: 0.0)
                 weaponReleaseSetup(with: node, submeshGameObject: fuelTank)
                 node.parent!.addChild(fuelTank)
             }
         }
         
-        if InputManager.DiscreteCommand(.ResetLoadout) {
-            // Reset loadout
-            for storeName in F18.storesNames {
-                let store = stores[storeName]!
-                if store.remaining < store.submeshNames.count {
-                    store.remaining = store.submeshNames.count
-                    for smn in store.submeshNames {
-                        submeshesToDisplay[smn] = true
-                    }
-                }
-            }
+//        if InputManager.DiscreteCommand(.ResetLoadout) {
+//            // Reset loadout
+//            for storeName in F18.storesNames {
+//                let store = stores[storeName]!
+//                if store.remaining < store.submeshNames.count {
+//                    store.remaining = store.submeshNames.count
+//                    for smn in store.submeshNames {
+//                        submeshesToDisplay[smn] = true
+//                    }
+//                }
+//            }
+//        }
+    }
+    
+    override func shouldRenderSubmesh(_ submesh: Submesh) -> Bool {
+        print("[F18 shouldRenderSubmesh] \(submesh.name)")
+        if let shouldDisplay = submeshesToDisplay[submesh.name] {
+            return shouldDisplay
         }
+        
+        return false
     }
 }
