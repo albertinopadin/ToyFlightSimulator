@@ -200,9 +200,29 @@ final class SceneManager {
         return modelData
     }
     
-    // TODO: Eventually we can remove this method:
+    // TODO: Eventually we can remove this method (?):
     static private func RegisterSubMeshObject(_ subMeshObject: SubMeshGameObject) {
         print("[SceneMgr RegisterSubMeshObject] registering \(subMeshObject.getName()) with model \(subMeshObject.model.name)")
+        
+        if let parentObj = subMeshObject.parentMeshGameObject,
+           let modelData = modelDatas[parentObj.model],
+           let gameObj = modelData.gameObjects.first(where: { $0.getID() == parentObj.id }) {
+            if !gameObj.shouldRenderSubmesh(subMeshObject.submeshName) {
+                var idx = -1
+                for (meshIdx, oMesh) in modelData.opaqueSubmeshes.enumerated() {
+                    if oMesh.name == subMeshObject.submeshName {
+                        idx = meshIdx
+                        break
+                    }
+                }
+                
+                if idx >= 0 {
+                    print("[RegisterSubMeshObject] removing submesh \(subMeshObject.submeshName) from model \(parentObj.model.name) [idx: \(idx)]")
+                    modelDatas[parentObj.model]!.opaqueSubmeshes.remove(at: idx)
+                }
+            }
+        }
+        
         RegisterObject(subMeshObject)
     }
     

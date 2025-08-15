@@ -8,7 +8,9 @@
 import MetalKit
 
 class GameObject: Node, PhysicsEntity, Renderable, Hashable {
-    var id: String = UUID().uuidString
+    var id: String {
+        return getID()
+    }
     
     // Physics stuff:
     var collidedWith: [String : Bool] = [:]
@@ -20,12 +22,12 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
     var acceleration: float3 = [0, 0, 0]
     var restitution: Float = 1.0
     
+    public var model: Model!
+    public var modelConstants = ModelConstants()
+    
     static func == (lhs: GameObject, rhs: GameObject) -> Bool {
         return lhs.getID() == rhs.getID()
     }
-    
-    public var model: Model!
-    public var modelConstants = ModelConstants()
     
     public var isTransparent: Bool {
         return (modelConstants.useObjectColor && modelConstants.objectColor.w < 1.0)
@@ -34,6 +36,9 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
     init(name: String, modelType: ModelType) {
         super.init(name: name)
         model = Assets.Models[modelType]
+        // TODO: This actually doesn't make sense because this parent gets overwritten everytime a new object with the same
+        //       model is created. Either remove this or if you want to keep track of which GO's are assoicated with what
+        //       models use a list you append the GO to.
         model.parent = self
         print("GameObject init; named \(self.getName())")
     }
@@ -54,6 +59,10 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
     }
     
     public func shouldRenderSubmesh(_ submesh: Submesh) -> Bool {
+        return true
+    }
+    
+    public func shouldRenderSubmesh(_ submeshName: String) -> Bool {
         return true
     }
 }

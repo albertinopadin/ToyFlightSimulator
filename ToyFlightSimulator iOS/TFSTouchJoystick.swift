@@ -23,7 +23,7 @@ struct TFSTouchJoystick: View {
                     state = value.translation
                 }
             )
-            .onChange(of: joystickPosition) { newValue in
+            .onChange(of: joystickPosition) { oldValue, newValue in
                 print("Joystick position changed: \(newValue)")
                 // Height / Width are flipped as we're in landscape:
                 InputManager.SetContinuous(command: .Pitch, value: Float(newValue.height / 100).clamped(to: -1...1))

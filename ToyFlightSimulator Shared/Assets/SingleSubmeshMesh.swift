@@ -19,6 +19,8 @@ struct SingleMeshVertexMetadata {
 }
 
 class SingleSubmeshMesh: Mesh {
+    private static let initialScale: Float = 1.0
+    
     internal var _submesh: Submesh!
     public let vertexMetadata: SingleMeshVertexMetadata
 
@@ -48,6 +50,11 @@ class SingleSubmeshMesh: Mesh {
         print("[SingleSubmeshMesh init] \(name) mesh vertex metadata: \(vertexMetadata)")
         
         translateSubmeshVertices(delta: -vertexMetadata.initialPositionInParentMesh)
+    }
+    
+    public func translateSubmeshVerticesToMatchParentScale(_ parentScale: Float) {
+        translateSubmeshVertices(delta: Self.initialScale * -vertexMetadata.initialPositionInParentMesh)
+        translateSubmeshVertices(delta: parentScale * vertexMetadata.initialPositionInParentMesh)
     }
     
     private static func processVertices(submesh: Submesh,

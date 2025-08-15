@@ -14,7 +14,8 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
     var refreshRate: FPS
     
     func makeCoordinator() -> Void {
-        let rendererType: RendererType = .OrderIndependentTransparency
+//        let rendererType: RendererType = .OrderIndependentTransparency
+        let rendererType: RendererType = .TiledMSAATessellated
         // TODO: Single Pass renderer doesn't work due to a memory issue:
 //        let rendererType: RendererType = .SinglePassDeferredLighting
         Engine.Start(rendererType: rendererType)

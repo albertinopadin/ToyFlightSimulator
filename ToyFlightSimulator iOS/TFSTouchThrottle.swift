@@ -31,7 +31,7 @@ struct TFSTouchThrottle: View {
         .rotationEffect(Angle(degrees: -90))
         .frame(width: 200, height: 100)
         .position(x: 120, y: viewSize.height - 100)
-        .onChange(of: throttle) { newValue in
+        .onChange(of: throttle) { oldValue, newValue in
             print("Throttle changed: \(newValue)")
             InputManager.SetContinuous(command: .MoveFwd, value: throttle)
         }

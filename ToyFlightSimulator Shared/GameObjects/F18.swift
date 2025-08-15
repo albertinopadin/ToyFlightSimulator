@@ -551,10 +551,13 @@ class F18: Aircraft {
             print("[F18 checkStoresCommands] Fire AIM9")
             let aim9s = stores[F18.AIM9Name]!
             weaponRelease(store: aim9s) { storeToRelease in
-                print("Fox 2!")
+                print("Fox 2! [SCALE: \(self.getScale())]")
                 let sidewinder = Sidewinder(modelType: storeToRelease)
+                sidewinder.parentMeshGameObject = self
+                sidewinder.setScale(self.getScale())
                 sidewinder.fire(direction: node.getFwdVector(), speed: 0.5)
                 weaponReleaseSetup(with: node, submeshGameObject: sidewinder)
+                submeshesToDisplay[sidewinder.submeshName] = false
                 node.parent!.addChild(sidewinder)
             }
         }
@@ -565,8 +568,11 @@ class F18: Aircraft {
             weaponRelease(store: aim120s) { storeToRelease in
                 print("Fox 3!")
                 let amraam = AIM120(modelType: storeToRelease)
+                amraam.parentMeshGameObject = self
+                amraam.setScale(self.getScale())
                 amraam.fire(direction: node.getFwdVector(), speed: 0.5)
                 weaponReleaseSetup(with: node, submeshGameObject: amraam)
+                submeshesToDisplay[amraam.submeshName] = false
                 node.parent!.addChild(amraam)
             }
         }
@@ -576,8 +582,11 @@ class F18: Aircraft {
             weaponRelease(store: gbu16s) { storeToRelease in
                 print("Dropping JDAM!")
                 let jdam = GBU16(modelType: storeToRelease)
+                jdam.parentMeshGameObject = self
+                jdam.setScale(self.getScale())
                 jdam.drop(forwardComponent: 0.02)
                 weaponReleaseSetup(with: node, submeshGameObject: jdam)
+                submeshesToDisplay[jdam.submeshName] = false
                 node.parent!.addChild(jdam)
             }
         }
@@ -587,8 +596,11 @@ class F18: Aircraft {
             weaponRelease(store: fuelTanks) { storeToRelease in
                 print("Jettisoning fuel tank!")
                 let fuelTank = FuelTank(modelType: storeToRelease)
+                fuelTank.parentMeshGameObject = self
+                fuelTank.setScale(self.getScale())
                 fuelTank.drop(forwardComponent: 0.0)
                 weaponReleaseSetup(with: node, submeshGameObject: fuelTank)
+                submeshesToDisplay[fuelTank.submeshName] = false
                 node.parent!.addChild(fuelTank)
             }
         }
@@ -610,6 +622,15 @@ class F18: Aircraft {
     override func shouldRenderSubmesh(_ submesh: Submesh) -> Bool {
         print("[F18 shouldRenderSubmesh] \(submesh.name)")
         if let shouldDisplay = submeshesToDisplay[submesh.name] {
+            return shouldDisplay
+        }
+        
+        return false
+    }
+    
+    override func shouldRenderSubmesh(_ submeshName: String) -> Bool {
+        print("[F18 shouldRenderSubmesh] \(submeshName)")
+        if let shouldDisplay = submeshesToDisplay[submeshName] {
             return shouldDisplay
         }
         

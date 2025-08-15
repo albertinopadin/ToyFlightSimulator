@@ -43,7 +43,7 @@ final class Keyboard {
     }
 #endif
     
-    public static func SetCommandKeyPressed(event: Event) -> Event {
+    @MainActor public static func SetCommandKeyPressed(event: Event) -> Event {
 //        print("[SetCommandKeyPressed] event modifier flags: \(event.modifierFlags)")
         if event.modifierFlags.contains(.command) {
             keys[Int(Keycodes.command.rawValue)] = true

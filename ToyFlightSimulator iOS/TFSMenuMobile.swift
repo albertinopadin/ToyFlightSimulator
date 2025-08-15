@@ -44,7 +44,7 @@ struct TFSMenuMobile: View {
                         Toggle("Use Motion Control", isOn: $useMotionControl)
                             .frame(maxWidth: geometry.size.width * 0.35)
                             .padding()
-                            .onChange(of: useMotionControl) { newValue in
+                            .onChange(of: useMotionControl) { oldValue, newValue in
                                 InputManager.useMotion = newValue
                             }
                         

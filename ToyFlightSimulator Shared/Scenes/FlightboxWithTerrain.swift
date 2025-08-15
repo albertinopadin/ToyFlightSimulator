@@ -33,7 +33,8 @@ final class FlightboxWithTerrain: GameScene {
 //        let jet = F35(scale: 0.8)
 //        let jet = F22(scale: 0.25)
 //        let jet = CollidableF22(scale: 0.25)
-        let jet = F18(scale: 1.0)
+        let jet = F18(scale: 1.4)
+//        let jet = F18(scale: 1.0)
         
         addCamera(attachedCamera)
         
@@ -65,9 +66,9 @@ final class FlightboxWithTerrain: GameScene {
         sun.setLightBrightness(1.0)
 //        sun.setLightBrightness(0.2)
         sun.setLightColor(1, 1, 1)
-        sun.setLightAmbientIntensity(0.04)
-//        sun.setLightDiffuseIntensity(0.15)
-        sun.setLightDiffuseIntensity(0)
+        sun.setLightAmbientIntensity(0.4)
+        sun.setLightDiffuseIntensity(0.5)
+//        sun.setLightDiffuseIntensity(0)
         addLight(sun)
         
         let sunBall = Sphere()

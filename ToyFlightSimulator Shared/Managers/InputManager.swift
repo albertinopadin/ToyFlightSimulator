@@ -5,6 +5,8 @@
 //  Created by Albertino Padin on 5/29/23.
 //
 
+import Foundation
+
 enum DiscreteCommand {
     case FireMissileAIM9
     case FireMissileAIM120
@@ -40,6 +42,7 @@ struct KeycodeValue {
 
 final class InputManager {
     private static let controller = Controller()
+    private static let dQueue = DispatchQueue(label: "input_manager_queue")
     nonisolated(unsafe) private static var pitchAxisFlipped: Bool = true
     
     #if os(macOS)
@@ -48,8 +51,8 @@ final class InputManager {
     #endif
     
     #if os(iOS)
-    private static var motion = MotionDevice()
-    public static var useMotion: Bool = true
+    private static let motion = MotionDevice()
+    nonisolated(unsafe) public static var useMotion: Bool = true
     #endif
     
     // TODO: These three computed properties follow the same initialization pattern.
@@ -330,12 +333,15 @@ final class InputManager {
         #endif
         
         #if os(iOS)
-        if useMotion && motion.present {
-            let motionValue = GetMotionContinuousValue(command)
-            continuousValue += motionValue
+        self.dQueue.sync {
+            if useMotion && motion.present {
+                let motionValue = GetMotionContinuousValue(command)
+                continuousValue += motionValue
+            }
+            
+            continuousValue += touchContinuousState[command] ?? 0.0
         }
         
-        continuousValue += touchContinuousState[command] ?? 0.0
         #endif
         
         return continuousValue
@@ -388,7 +394,9 @@ final class InputManager {
     
     #if os(iOS)
     static func SetContinuous(command: ContinuousCommand, value: Float) {
-        touchContinuousState[command] = value
+        self.dQueue.sync {
+            touchContinuousState[command] = value
+        }
     }
     #endif
 }

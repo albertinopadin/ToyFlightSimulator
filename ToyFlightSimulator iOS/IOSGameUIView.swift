@@ -41,7 +41,7 @@ struct IOSGameUIView: View {
             .onAppear(perform: {
                 print("On Appear geometry size: \(geometry.size)")
             })
-            .onChange(of: geometry.size) { newSize in
+            .onChange(of: geometry.size) { oldSize, newSize in
                 print("Geometry changed size: \(newSize)")
             }
         }
@@ -51,13 +51,17 @@ struct IOSGameUIView: View {
             
             Timer.scheduledTimer(withTimeInterval: 1 / 30, repeats: true) { _ in
                 InputManager.HandleKeyPressedDebounced(keyCode: .escape) {
-                    toggleMenu()
+                    MainActor.assumeIsolated {
+                        toggleMenu()
+                    }
                 }
             }
             
             Timer.scheduledTimer(withTimeInterval: 0.2, repeats: false) { _ in
-                InputManager.ZeroMotionDevice()
-                InputManager.useMotion = useMotionControl
+                MainActor.assumeIsolated {
+                    InputManager.ZeroMotionDevice()
+                    InputManager.useMotion = useMotionControl
+                }
             }
         })
         .gesture(
