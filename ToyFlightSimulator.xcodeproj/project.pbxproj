@@ -442,6 +442,18 @@
 		CE4530522A7F3EBF001945B9 /* FPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4530502A7F3EBF001945B9 /* FPS.swift */; };
 		CE4530532A7F3EBF001945B9 /* FPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4530502A7F3EBF001945B9 /* FPS.swift */; };
 		CE4530542A7F3EC3001945B9 /* FPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4530502A7F3EBF001945B9 /* FPS.swift */; };
+		CE4D8E0E2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */; };
+		CE4D8E0F2E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */; };
+		CE4D8E102E5A9954003A9666 /* AABB.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0A2E5A9954003A9666 /* AABB.swift */; };
+		CE4D8E112E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */; };
+		CE4D8E122E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */; };
+		CE4D8E132E5A9954003A9666 /* AABB.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0A2E5A9954003A9666 /* AABB.swift */; };
+		CE4D8E142E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */; };
+		CE4D8E152E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */; };
+		CE4D8E162E5A9954003A9666 /* AABB.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0A2E5A9954003A9666 /* AABB.swift */; };
+		CE4D8E172E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */; };
+		CE4D8E182E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */; };
+		CE4D8E192E5A9954003A9666 /* AABB.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0A2E5A9954003A9666 /* AABB.swift */; };
 		CE50C0EF2C954F4A00202C45 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0EE2C954F4A00202C45 /* Model.swift */; };
 		CE50C0F02C954F4A00202C45 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0EE2C954F4A00202C45 /* Model.swift */; };
 		CE50C0F12C954F4A00202C45 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0EE2C954F4A00202C45 /* Model.swift */; };
@@ -957,6 +969,9 @@
 		CE45304C2A7F3E36001945B9 /* IOSGameUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSGameUIView.swift; sourceTree = "<group>"; };
 		CE45304E2A7F3E6D001945B9 /* IOSMetalViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSMetalViewWrapper.swift; sourceTree = "<group>"; };
 		CE4530502A7F3EBF001945B9 /* FPS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FPS.swift; sourceTree = "<group>"; };
+		CE4D8E0A2E5A9954003A9666 /* AABB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AABB.swift; sourceTree = "<group>"; };
+		CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadPhaseCollisionDetector.swift; sourceTree = "<group>"; };
+		CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadPhaseTypes.swift; sourceTree = "<group>"; };
 		CE50C0EE2C954F4A00202C45 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 		CE50C0F42C95564300202C45 /* ModelLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelLibrary.swift; sourceTree = "<group>"; };
 		CE50C0F92C956C7700202C45 /* DrawManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawManager.swift; sourceTree = "<group>"; };
@@ -1475,6 +1490,16 @@
 			path = ToyFlightSimulatorTests;
 			sourceTree = "<group>";
 		};
+		CE4D8E0D2E5A9954003A9666 /* BroadPhase */ = {
+			isa = PBXGroup;
+			children = (
+				CE4D8E0A2E5A9954003A9666 /* AABB.swift */,
+				CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */,
+				CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */,
+			);
+			path = BroadPhase;
+			sourceTree = "<group>";
+		};
 		CE50C0F32C95562F00202C45 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -1730,6 +1755,7 @@
 		CE9625382CCCE1AF00CEA5A2 /* Physics */ = {
 			isa = PBXGroup;
 			children = (
+				CE4D8E0D2E5A9954003A9666 /* BroadPhase */,
 				CE96254A2CCCE29900CEA5A2 /* World */,
 				CE96253F2CCCE23A00CEA5A2 /* Solver */,
 				CE96253E2CCCE1F200CEA5A2 /* CollisionResponse */,
@@ -2236,6 +2262,9 @@
 				CE79B6522B95100F009F2E49 /* TiledDeferredPointLight.metal in Sources */,
 				CE79B6082B8F164E009F2E49 /* RenderPipelineState.swift in Sources */,
 				CE45300A2A7CB4BA001945B9 /* Colors.swift in Sources */,
+				CE4D8E112E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */,
+				CE4D8E122E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */,
+				CE4D8E132E5A9954003A9666 /* AABB.swift in Sources */,
 				CE79B61E2B92E312009F2E49 /* VertexDescriptor.swift in Sources */,
 				CE4127992B6B667600B01AEA /* Temple.swift in Sources */,
 				CE452FAE2A7CAC0F001945B9 /* NodeTests.swift in Sources */,
@@ -2418,6 +2447,9 @@
 				CEED93A729E3B2600020DC53 /* AircraftStore.swift in Sources */,
 				CE4530512A7F3EBF001945B9 /* FPS.swift in Sources */,
 				CE3BFFA728E453260014A752 /* Sun.swift in Sources */,
+				CE4D8E142E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */,
+				CE4D8E152E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */,
+				CE4D8E162E5A9954003A9666 /* AABB.swift in Sources */,
 				CE7732112CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */,
 				CE7F483A28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE3DD2F12A02309300787E53 /* GBU16.swift in Sources */,
@@ -2468,6 +2500,9 @@
 				CE7732102CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */,
 				CE79B6502B95100F009F2E49 /* TiledDeferredPointLight.metal in Sources */,
 				CE76931C29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
+				CE4D8E0E2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */,
+				CE4D8E0F2E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */,
+				CE4D8E102E5A9954003A9666 /* AABB.swift in Sources */,
 				CE50C1002C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
 				CE3DD2F62A039B0700787E53 /* FuelTank.swift in Sources */,
 				CE79B5FC2B8F15E2009F2E49 /* OrderIndependentTransparencyPipeline.swift in Sources */,
@@ -2733,6 +2768,9 @@
 				CEFC6E2F2952EA44009B692B /* Cube.swift in Sources */,
 				CE0A46562B72102C009F596F /* GameStatsManager.swift in Sources */,
 				CE0EF7292A46CF9F00F54A2C /* HIDDevice.swift in Sources */,
+				CE4D8E172E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */,
+				CE4D8E182E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */,
+				CE4D8E192E5A9954003A9666 /* AABB.swift in Sources */,
 				CE865C1B2DD0A48F0048BBDA /* Tessellation.metal in Sources */,
 				CE3DD2EF2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE79B6022B8F160E009F2E49 /* SinglePassDeferredPipeline.swift in Sources */,

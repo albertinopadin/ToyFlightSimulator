@@ -22,6 +22,14 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
     var acceleration: float3 = [0, 0, 0]
     var restitution: Float = 1.0
     
+    // Default AABB implementation for GameObjects
+    func getAABB() -> AABB {
+        // Default implementation - can be overridden by subclasses
+        // For now, use a simple box based on scale
+        let halfExtents = getScale() * 0.5
+        return AABB(center: getPosition(), halfExtents: halfExtents)
+    }
+    
     public var model: Model!
     public var modelConstants = ModelConstants()
     

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import simd
 
 enum CollisionShape {
     case Sphere
@@ -26,6 +27,9 @@ protocol PhysicsEntity {
     
     func setPosition(_ position: float3)
     func getPosition() -> float3
+    
+    // Broad-phase collision detection support
+    func getAABB() -> AABB
 }
 
 extension PhysicsEntity {    
@@ -36,23 +40,57 @@ extension PhysicsEntity {
     mutating func reset() {
         collidedWith.removeAll()
     }
+    
+    // Computed property for dynamic check (inverse of static)
+    var isDynamic: Bool {
+        return !isStatic
+    }
 }
 
 protocol SpherePhysicsEntity: PhysicsEntity {
     var collisionRadius: Float { get set }
 }
 
-//extension SpherePhysicsEntity {
-//    var collisionShape: CollisionShape { .Sphere }
-//}
+extension SpherePhysicsEntity {
+    // Default AABB implementation for spheres
+    func getAABB() -> AABB {
+        return AABB(center: getPosition(), radius: collisionRadius)
+    }
+}
 
 protocol PlanePhysicsEntity: PhysicsEntity {
     var collisionNormal: float3 { get set }
 }
 
-//extension PlanePhysicsEntity {
-//    var collisionShape: CollisionShape { .Plane }
-//}
+extension PlanePhysicsEntity {
+    // Default AABB implementation for planes
+    // Using a large box to represent an "infinite" plane
+    func getAABB() -> AABB {
+        let position = getPosition()
+        let largeExtent: Float = 10000.0  // Large enough to cover the game world
+        
+        // Create a thin but wide AABB based on the plane's normal
+        if abs(collisionNormal.y) > 0.9 {
+            // Horizontal plane (normal points up/down)
+            return AABB(
+                min: float3(position.x - largeExtent, position.y - 1.0, position.z - largeExtent),
+                max: float3(position.x + largeExtent, position.y + 1.0, position.z + largeExtent)
+            )
+        } else if abs(collisionNormal.x) > 0.9 {
+            // Vertical plane (normal points left/right)
+            return AABB(
+                min: float3(position.x - 1.0, position.y - largeExtent, position.z - largeExtent),
+                max: float3(position.x + 1.0, position.y + largeExtent, position.z + largeExtent)
+            )
+        } else {
+            // Vertical plane (normal points forward/back)
+            return AABB(
+                min: float3(position.x - largeExtent, position.y - largeExtent, position.z - 1.0),
+                max: float3(position.x + largeExtent, position.y + largeExtent, position.z + 1.0)
+            )
+        }
+    }
+}
 
 final class CollidableSphere: Sphere, SpherePhysicsEntity {
     var collisionRadius: Float = 1.0
