@@ -21,6 +21,7 @@ final class PhysicsWorld {
     
     private var entities: [PhysicsEntity]
     private var updateType: PhysicsUpdateType
+    private var broadPhase = BroadPhaseCollisionDetector()
     
     init(entities: [PhysicsEntity] = [], updateType: PhysicsUpdateType = .NaiveEuler) {
         self.entities = entities
@@ -44,21 +45,26 @@ final class PhysicsWorld {
             entity.reset()
         }
         
+        // Update broad-phase collision detection
+        broadPhase.update(entities: entities)
+        let potentialPairs = broadPhase.getPotentialCollisionPairs()
+        
         switch self.updateType {
             case .NaiveEuler:
-                naiveUpdate(deltaTime: deltaTime)
+                naiveUpdate(deltaTime: deltaTime, collisionPairs: potentialPairs)
                 
             case .HeckerVerlet:
-                heckerVerletUpdate(deltaTime: deltaTime)
+                heckerVerletUpdate(deltaTime: deltaTime, collisionPairs: potentialPairs)
         }
     }
     
-    private func naiveUpdate(deltaTime: Float) {
+    private func naiveUpdate(deltaTime: Float, collisionPairs: [(PhysicsEntity, PhysicsEntity)]) {
+        // For now, naive update doesn't handle collisions, but we pass pairs for future use
         EulerSolver.step(deltaTime: deltaTime, gravity: PhysicsWorld.gravity, entities: &self.entities)
     }
     
-    private func heckerVerletUpdate(deltaTime: Float) {
-        HeckerCollisionResponse.resolveCollisions(deltaTime: deltaTime, entities: &entities)
+    private func heckerVerletUpdate(deltaTime: Float, collisionPairs: [(PhysicsEntity, PhysicsEntity)]) {
+        HeckerCollisionResponse.resolveCollisions(deltaTime: deltaTime, entities: &entities, collisionPairs: collisionPairs)
         VerletSolver.step(deltaTime: deltaTime, gravity: PhysicsWorld.gravity, entities: &entities)
     }
     
