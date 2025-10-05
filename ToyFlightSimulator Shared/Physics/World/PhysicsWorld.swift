@@ -16,12 +16,15 @@ struct CollisionData {
 }
 
 final class PhysicsWorld {
-    public static let gravity: float3 = [0, -9.8, 0]
-//    public static let gravity: float3 = [0, -(9.8 * 9.8), 0]
+//    public static let gravity: float3 = [0, -9.8, 0]
+    public static let gravity: float3 = [0, -(9.8 * 9.8), 0]
     
     private var entities: [PhysicsEntity]
     private var updateType: PhysicsUpdateType
     private var broadPhase = BroadPhaseCollisionDetector()
+    
+    // Performance testing flags
+    public var useBroadPhase: Bool = true
     
     init(entities: [PhysicsEntity] = [], updateType: PhysicsUpdateType = .NaiveEuler) {
         self.entities = entities
@@ -45,19 +48,31 @@ final class PhysicsWorld {
             entity.reset()
         }
         
-        // Update broad-phase collision detection
-        broadPhase.update(entities: entities)
-        let potentialPairs = broadPhase.getPotentialCollisionPairs()
-        
-        switch self.updateType {
-            case .NaiveEuler:
-                naiveUpdate(deltaTime: deltaTime, collisionPairs: potentialPairs)
-                
-            case .HeckerVerlet:
-                heckerVerletUpdate(deltaTime: deltaTime, collisionPairs: potentialPairs)
+        if useBroadPhase {
+            // Use optimized broad-phase collision detection
+            broadPhase.update(entities: entities)
+            let potentialPairs = broadPhase.getPotentialCollisionPairs()
+            
+            switch self.updateType {
+                case .NaiveEuler:
+                    naiveUpdate(deltaTime: deltaTime, collisionPairs: potentialPairs)
+                    
+                case .HeckerVerlet:
+                    heckerVerletUpdate(deltaTime: deltaTime, collisionPairs: potentialPairs)
+            }
+        } else {
+            // Use original O(n²) algorithm for comparison
+            switch self.updateType {
+                case .NaiveEuler:
+                    naiveUpdateOriginal(deltaTime: deltaTime)
+                    
+                case .HeckerVerlet:
+                    heckerVerletUpdateOriginal(deltaTime: deltaTime)
+            }
         }
     }
     
+    // Optimized update methods using broad-phase pairs
     private func naiveUpdate(deltaTime: Float, collisionPairs: [(PhysicsEntity, PhysicsEntity)]) {
         // For now, naive update doesn't handle collisions, but we pass pairs for future use
         EulerSolver.step(deltaTime: deltaTime, gravity: PhysicsWorld.gravity, entities: &self.entities)
@@ -66,6 +81,21 @@ final class PhysicsWorld {
     private func heckerVerletUpdate(deltaTime: Float, collisionPairs: [(PhysicsEntity, PhysicsEntity)]) {
         HeckerCollisionResponse.resolveCollisions(deltaTime: deltaTime, entities: &entities, collisionPairs: collisionPairs)
         VerletSolver.step(deltaTime: deltaTime, gravity: PhysicsWorld.gravity, entities: &entities)
+    }
+    
+    // Original O(n²) update methods for comparison
+    private func naiveUpdateOriginal(deltaTime: Float) {
+        EulerSolver.step(deltaTime: deltaTime, gravity: PhysicsWorld.gravity, entities: &self.entities)
+    }
+    
+    private func heckerVerletUpdateOriginal(deltaTime: Float) {
+        HeckerCollisionResponse.resolveCollisions(deltaTime: deltaTime, entities: &entities)
+        VerletSolver.step(deltaTime: deltaTime, gravity: PhysicsWorld.gravity, entities: &entities)
+    }
+    
+    // Get broad-phase statistics for performance analysis
+    public func getBroadPhaseStats() -> (totalChecks: Int, checksSaved: Int) {
+        return broadPhase.getStatistics()
     }
     
     static func getDistance(_ pointA: float3, _ pointB: float3) -> Float {

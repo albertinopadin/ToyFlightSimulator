@@ -206,9 +206,16 @@ final class DrawManager {
         EncodeRender(using: renderEncoder, label: "Rendering \(model.name)") {
             if !uniforms.isEmpty {
                 var uniforms = uniforms
-                renderEncoder.setVertexBytes(&uniforms,
-                                             length: ModelConstants.stride(uniforms.count),
-                                             index: TFSBufferModelConstants.index)
+//                renderEncoder.setVertexBytes(&uniforms,
+//                                             length: ModelConstants.stride(uniforms.count),
+//                                             index: TFSBufferModelConstants.index)
+                
+                // ***** Super not optimized! *****
+                let uniformsBuffer = Engine.Device.makeBuffer(bytes: &uniforms,
+                                                              length: ModelConstants.stride(uniforms.count))
+                
+                renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: TFSBufferModelConstants.index)
+                // *********************************
                 
                 for submesh in submeshes {
                     if let vertexBuffer = submesh.parentMesh!.vertexBuffer {

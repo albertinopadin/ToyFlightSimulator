@@ -40,7 +40,7 @@ let colors: [TFSColor] = [
 ]
 
 final class BallPhysicsScene: GameScene {
-    static let ballCount: Int = 27
+    static let ballCount: Int = 500
     var ground: CollidablePlane!
     let debugCamera = DebugCamera()
     var physicsWorld: PhysicsWorld!
@@ -113,6 +113,7 @@ final class BallPhysicsScene: GameScene {
         let entities: [PhysicsEntity] = spheres + [ground]
 //        physicsWorld = PhysicsWorld(entities: entities, updateType: .NaiveEuler)
         physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
+        physicsWorld.useBroadPhase = true
         
         for sphere in spheres {
             self.addChild(sphere)

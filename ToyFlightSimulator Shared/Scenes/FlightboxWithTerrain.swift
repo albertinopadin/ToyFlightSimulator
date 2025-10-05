@@ -15,7 +15,7 @@ final class FlightboxWithTerrain: GameScene {
     
     let afterburner = Afterburner(name: "Afterburner")
     
-//    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
+    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
     var entities: [PhysicsEntity] = []
     
     private func addGround() {
@@ -32,8 +32,8 @@ final class FlightboxWithTerrain: GameScene {
         
 //        let jet = F35(scale: 0.8)
 //        let jet = F22(scale: 0.25)
-//        let jet = CollidableF22(scale: 0.25)
-        let jet = F18(scale: 1.4)
+        let jet = CollidableF22(scale: 0.25)
+//        let jet = F18(scale: 1.4)
 //        let jet = F18(scale: 1.0)
         
         addCamera(attachedCamera)
@@ -117,7 +117,7 @@ final class FlightboxWithTerrain: GameScene {
         print("Total Submesh count: \(SceneManager.SubmeshCount)")
         
         entities.append(jet)
-//        physicsWorld.setEntities(entities)
+        physicsWorld.setEntities(entities)
     }
     
     override func doUpdate() {
@@ -136,9 +136,9 @@ final class FlightboxWithTerrain: GameScene {
 //            print("Mouse position in viewport: \(Mouse.GetMouseViewportPosition())")
 //        }
         
-//        if GameTime.DeltaTime < 1.0 {
-//            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
-//        }
+        if GameTime.DeltaTime < 1.0 {
+            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+        }
     }
 }
 

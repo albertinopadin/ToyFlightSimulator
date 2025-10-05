@@ -134,6 +134,11 @@ final class BroadPhaseCollisionDetector {
         lastFrameStats = BroadPhaseStats()
     }
     
+    /// Get statistics for performance analysis
+    func getStatistics() -> (totalChecks: Int, checksSaved: Int) {
+        return (lastFrameStats.checksPerformed, lastFrameStats.checksSaved)
+    }
+    
     // MARK: - Private Methods
     
     /// Check if we need to perform a full sort

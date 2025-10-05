@@ -443,17 +443,17 @@
 		CE4530532A7F3EBF001945B9 /* FPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4530502A7F3EBF001945B9 /* FPS.swift */; };
 		CE4530542A7F3EC3001945B9 /* FPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4530502A7F3EBF001945B9 /* FPS.swift */; };
 		CE4D8E0E2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */; };
-		CE4D8E0F2E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */; };
 		CE4D8E102E5A9954003A9666 /* AABB.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0A2E5A9954003A9666 /* AABB.swift */; };
 		CE4D8E112E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */; };
-		CE4D8E122E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */; };
 		CE4D8E132E5A9954003A9666 /* AABB.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0A2E5A9954003A9666 /* AABB.swift */; };
 		CE4D8E142E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */; };
-		CE4D8E152E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */; };
 		CE4D8E162E5A9954003A9666 /* AABB.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0A2E5A9954003A9666 /* AABB.swift */; };
 		CE4D8E172E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */; };
-		CE4D8E182E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */; };
 		CE4D8E192E5A9954003A9666 /* AABB.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E0A2E5A9954003A9666 /* AABB.swift */; };
+		CE4D8E1B2E5CEC24003A9666 /* PhysicsStressTestScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E1A2E5CEC24003A9666 /* PhysicsStressTestScene.swift */; };
+		CE4D8E1C2E5CEC24003A9666 /* PhysicsStressTestScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E1A2E5CEC24003A9666 /* PhysicsStressTestScene.swift */; };
+		CE4D8E1D2E5CEC24003A9666 /* PhysicsStressTestScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E1A2E5CEC24003A9666 /* PhysicsStressTestScene.swift */; };
+		CE4D8E1E2E5CEC24003A9666 /* PhysicsStressTestScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4D8E1A2E5CEC24003A9666 /* PhysicsStressTestScene.swift */; };
 		CE50C0EF2C954F4A00202C45 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0EE2C954F4A00202C45 /* Model.swift */; };
 		CE50C0F02C954F4A00202C45 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0EE2C954F4A00202C45 /* Model.swift */; };
 		CE50C0F12C954F4A00202C45 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE50C0EE2C954F4A00202C45 /* Model.swift */; };
@@ -971,7 +971,7 @@
 		CE4530502A7F3EBF001945B9 /* FPS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FPS.swift; sourceTree = "<group>"; };
 		CE4D8E0A2E5A9954003A9666 /* AABB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AABB.swift; sourceTree = "<group>"; };
 		CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadPhaseCollisionDetector.swift; sourceTree = "<group>"; };
-		CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadPhaseTypes.swift; sourceTree = "<group>"; };
+		CE4D8E1A2E5CEC24003A9666 /* PhysicsStressTestScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhysicsStressTestScene.swift; sourceTree = "<group>"; };
 		CE50C0EE2C954F4A00202C45 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 		CE50C0F42C95564300202C45 /* ModelLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelLibrary.swift; sourceTree = "<group>"; };
 		CE50C0F92C956C7700202C45 /* DrawManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawManager.swift; sourceTree = "<group>"; };
@@ -1289,6 +1289,7 @@
 		CE3BFF2E28E057F50014A752 /* Scenes */ = {
 			isa = PBXGroup;
 			children = (
+				CE4D8E1A2E5CEC24003A9666 /* PhysicsStressTestScene.swift */,
 				CE3BFF7528E2FC0A0014A752 /* GameScene.swift */,
 				CE3BFF7928E2FC270014A752 /* SandboxScene.swift */,
 				CE9625322CCCD32600CEA5A2 /* BallPhysicsScene.swift */,
@@ -1495,7 +1496,6 @@
 			children = (
 				CE4D8E0A2E5A9954003A9666 /* AABB.swift */,
 				CE4D8E0B2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift */,
-				CE4D8E0C2E5A9954003A9666 /* BroadPhaseTypes.swift */,
 			);
 			path = BroadPhase;
 			sourceTree = "<group>";
@@ -1901,7 +1901,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1430;
-				LastUpgradeCheck = 1630;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					CE452FA32A7CA810001945B9 = {
 						CreatedOnToolsVersion = 14.3.1;
@@ -2127,6 +2127,7 @@
 				CE76D2CC2C96BF0B00384F7F /* SinglePassDeferredTransparency.metal in Sources */,
 				CE327B722C47670D004AF2D0 /* Afterburner.swift in Sources */,
 				CE865C472DDB2F740048BBDA /* TerrainObject.swift in Sources */,
+				CE4D8E1D2E5CEC24003A9666 /* PhysicsStressTestScene.swift in Sources */,
 				CE4530082A7CB4B5001945B9 /* OITRenderer.swift in Sources */,
 				CE452FF62A7CB4A6001945B9 /* AircraftStore.swift in Sources */,
 				CE7732122CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */,
@@ -2263,7 +2264,6 @@
 				CE79B6082B8F164E009F2E49 /* RenderPipelineState.swift in Sources */,
 				CE45300A2A7CB4BA001945B9 /* Colors.swift in Sources */,
 				CE4D8E112E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */,
-				CE4D8E122E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */,
 				CE4D8E132E5A9954003A9666 /* AABB.swift in Sources */,
 				CE79B61E2B92E312009F2E49 /* VertexDescriptor.swift in Sources */,
 				CE4127992B6B667600B01AEA /* Temple.swift in Sources */,
@@ -2312,6 +2312,7 @@
 				CE3BFFAF28E572EC0014A752 /* SkySphere.metal in Sources */,
 				CE7732162CAA9A240025286F /* Composition.metal in Sources */,
 				CE865C462DDB2F740048BBDA /* TerrainObject.swift in Sources */,
+				CE4D8E1E2E5CEC24003A9666 /* PhysicsStressTestScene.swift in Sources */,
 				CE79B64A2B951000009F2E49 /* TiledDeferredDirectionalLight.metal in Sources */,
 				CE2ED2992998A14200C81F47 /* Aircraft.swift in Sources */,
 				CE8A7A3C2B98190600C024EA /* ProgrammaticMeshes.swift in Sources */,
@@ -2448,7 +2449,6 @@
 				CE4530512A7F3EBF001945B9 /* FPS.swift in Sources */,
 				CE3BFFA728E453260014A752 /* Sun.swift in Sources */,
 				CE4D8E142E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */,
-				CE4D8E152E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */,
 				CE4D8E162E5A9954003A9666 /* AABB.swift in Sources */,
 				CE7732112CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */,
 				CE7F483A28B76FF60082B197 /* Renderer.swift in Sources */,
@@ -2501,7 +2501,6 @@
 				CE79B6502B95100F009F2E49 /* TiledDeferredPointLight.metal in Sources */,
 				CE76931C29DE79CE00BBC718 /* Sidewinder.swift in Sources */,
 				CE4D8E0E2E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */,
-				CE4D8E0F2E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */,
 				CE4D8E102E5A9954003A9666 /* AABB.swift in Sources */,
 				CE50C1002C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
 				CE3DD2F62A039B0700787E53 /* FuelTank.swift in Sources */,
@@ -2630,6 +2629,7 @@
 				CE3BFFA428E452F00014A752 /* LightObject.swift in Sources */,
 				CE7F483B28B76FF60082B197 /* Renderer.swift in Sources */,
 				CE7F48D428BCB4DD0082B197 /* GameView.swift in Sources */,
+				CE4D8E1B2E5CEC24003A9666 /* PhysicsStressTestScene.swift in Sources */,
 				CEC0C59F2B53BEDF00863C38 /* UsdModel.swift in Sources */,
 				CE4127AA2B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */,
 				CE79B6162B92E153009F2E49 /* DepthStencilState.swift in Sources */,
@@ -2769,8 +2769,8 @@
 				CE0A46562B72102C009F596F /* GameStatsManager.swift in Sources */,
 				CE0EF7292A46CF9F00F54A2C /* HIDDevice.swift in Sources */,
 				CE4D8E172E5A9954003A9666 /* BroadPhaseCollisionDetector.swift in Sources */,
-				CE4D8E182E5A9954003A9666 /* BroadPhaseTypes.swift in Sources */,
 				CE4D8E192E5A9954003A9666 /* AABB.swift in Sources */,
+				CE4D8E1C2E5CEC24003A9666 /* PhysicsStressTestScene.swift in Sources */,
 				CE865C1B2DD0A48F0048BBDA /* Tessellation.metal in Sources */,
 				CE3DD2EF2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE79B6022B8F160E009F2E49 /* SinglePassDeferredPipeline.swift in Sources */,
@@ -2962,6 +2962,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OBJC_BRIDGING_HEADER = "ToyFlightSimulator Shared/Graphics/Shaders/TFSCommon.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -3022,6 +3023,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OBJC_BRIDGING_HEADER = "ToyFlightSimulator Shared/Graphics/Shaders/TFSCommon.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
@@ -3161,7 +3163,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
+				ENABLE_RESOURCE_ACCESS_USB = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ToyFlightSimulator-macOS-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Toy Flight Simulator";
@@ -3197,7 +3203,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
+				ENABLE_RESOURCE_ACCESS_USB = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ToyFlightSimulator-macOS-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Toy Flight Simulator";

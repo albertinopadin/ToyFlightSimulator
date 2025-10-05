@@ -189,19 +189,21 @@ final class InputManager {
     }
     
     static func HandleKeyPressedDebounced(keyCode: Keycodes, _ handleBlock: () -> Void) {
-        guard let _ = keysPressed[keyCode] else {
-            print("[InputManager handleKeyPressedDebounced] WARNING: Unknown Key Code: \(keyCode)")
-            return
-        }
-        
-        if Keyboard.IsKeyPressed(keyCode) {
-            if !keysPressed[keyCode]! {
-                keysPressed[keyCode] = true
-                handleBlock()
+        dQueue.sync {
+            guard let _ = keysPressed[keyCode] else {
+                print("[InputManager handleKeyPressedDebounced] WARNING: Unknown Key Code: \(keyCode)")
+                return
             }
-        } else {
-            if keysPressed[keyCode]! {
-                keysPressed[keyCode] = false
+            
+            if Keyboard.IsKeyPressed(keyCode) {
+                if !keysPressed[keyCode]! {
+                    keysPressed[keyCode] = true
+                    handleBlock()
+                }
+            } else {
+                if keysPressed[keyCode]! {
+                    keysPressed[keyCode] = false
+                }
             }
         }
     }

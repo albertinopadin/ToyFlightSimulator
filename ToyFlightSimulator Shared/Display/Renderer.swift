@@ -80,8 +80,12 @@ class Renderer: NSObject, MTKViewDelegate, BaseRendering {
         // Add completion hander which signals inFlightSemaphore
         // when Metal and the GPU has fully finished processing the commands encoded for this frame.
         // This indicates when the dynamic buffers, written this frame, will no longer be needed by Metal and the GPU.
-        commandBuffer.addCompletedHandler { [weak self] _ in
-            self?.inFlightSemaphore.signal()
+//        commandBuffer.addCompletedHandler { [weak self] _ in
+//            self?.inFlightSemaphore.signal()
+//        }
+        
+        commandBuffer.addCompletedHandler { [inFlightSemaphore] _ in
+            inFlightSemaphore.signal()
         }
         
         commandBuffer.commit()
