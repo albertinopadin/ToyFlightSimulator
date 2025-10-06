@@ -38,13 +38,18 @@ final class FlightboxWithTerrain: GameScene {
         
         addCamera(attachedCamera)
         
-        let container = ContainerNode(camera: attachedCamera, cameraOffset: jet.cameraOffset)
-        container.addChild(jet)
-        container.setPositionZ(4)
-        container.setPositionY(100)
-        addChild(container)
+//        let container = ContainerNode(camera: attachedCamera, cameraOffset: jet.cameraOffset)
+//        container.addChild(jet)
+//        container.setPositionZ(4)
+//        container.setPositionY(100)
+//        addChild(container)
+//        
+//        let jetPos = container.getPosition()
         
-        let jetPos = container.getPosition()
+        attachedCamera.attach(to: jet, offset: jet.cameraOffset)
+        jet.setPosition(0, 100, 4)
+        addChild(jet)
+        let jetPos = jet.getPosition()
         
         capsule.setPosition(-8, jetPos.y, -10)
         capsule.rotateZ(Float(90).toRadians)
@@ -116,8 +121,8 @@ final class FlightboxWithTerrain: GameScene {
         TextureLoader.PrintCacheInfo()
         print("Total Submesh count: \(SceneManager.SubmeshCount)")
         
-        entities.append(jet)
-        physicsWorld.setEntities(entities)
+//        entities.append(jet)
+//        physicsWorld.setEntities(entities)
     }
     
     override func doUpdate() {
@@ -136,9 +141,9 @@ final class FlightboxWithTerrain: GameScene {
 //            print("Mouse position in viewport: \(Mouse.GetMouseViewportPosition())")
 //        }
         
-        if GameTime.DeltaTime < 1.0 {
-            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
-        }
+//        if GameTime.DeltaTime < 1.0 {
+//            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+//        }
     }
 }
 

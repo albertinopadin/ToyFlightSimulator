@@ -13,8 +13,12 @@ class F22: Aircraft {
     let afterburnerLeft = Afterburner(name: "F-22 Left Afterburner")
     let afterburnerRight = Afterburner(name: "F-22 Right Afterburner")
     
+//    override var cameraOffset: float3 {
+//        [0, 14, 28]
+//    }
+    
     override var cameraOffset: float3 {
-        [0, 14, 28]
+        [0, 0, 100]
     }
     
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {

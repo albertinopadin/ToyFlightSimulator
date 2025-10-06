@@ -395,11 +395,13 @@ class F18: Aircraft {
         
         self.checkControlCommands()
         
-        if let containerNode {
-            self.checkStoresCommands(with: containerNode)
-        } else {
-            self.checkStoresCommands(with: self)
-        }
+        self.checkStoresCommands(with: self)
+        
+//        if let containerNode {
+//            self.checkStoresCommands(with: containerNode)
+//        } else {
+//            self.checkStoresCommands(with: self)
+//        }
         
         // Extract this out into own method:
         InputManager.HasDiscreteCommandDebounced(command: .ToggleFlaps) {
