@@ -11,7 +11,6 @@ class AttachedCamera: Camera {
     private var _moveSpeed: Float = 4.0
     private var _turnSpeed: Float = 1.0
     private static let NAME: String = "AttachedCamera"
-    public var relativeRotation = Float(-15).toRadians
     
     init() {
         super.init(name: AttachedCamera.NAME, cameraType: .Attached, aspectRatio: Renderer.AspectRatio)
@@ -26,12 +25,8 @@ class AttachedCamera: Camera {
                    far: far)
     }
     
-    public func attach(to node: Node, offset: float3 = [0, 2, 4]) {
-//        self.setRotationX(relativeRotation)
-//        rotateX(Float(-90).toRadians)
-//        rotateY(Float(-90).toRadians)
-//        rotateZ(Float(-90).toRadians)
-        
+    public func attach(to node: Node, offset: float3 = [0, 2, 4], rotation: float3 = [Float(-15).toRadians, 0, 0]) {
+        self.rotate3Axis(deltaX: rotation.x, deltaY: rotation.y, deltaZ: rotation.z)
         self.setPosition(offset)
         node.addChild(self)
     }

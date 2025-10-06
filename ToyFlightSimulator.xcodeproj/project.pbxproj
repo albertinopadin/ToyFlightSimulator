@@ -797,9 +797,6 @@
 		CED3AA7B2B5D008200191002 /* F22.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA7A2B5D008200191002 /* F22.swift */; };
 		CED3AA7C2B5D008200191002 /* F22.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA7A2B5D008200191002 /* F22.swift */; };
 		CED3AA7D2B5D008200191002 /* F22.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA7A2B5D008200191002 /* F22.swift */; };
-		CED3AA872B5D4DA300191002 /* ContainerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA862B5D4DA300191002 /* ContainerNode.swift */; };
-		CED3AA882B5D4DA300191002 /* ContainerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA862B5D4DA300191002 /* ContainerNode.swift */; };
-		CED3AA892B5D4DA300191002 /* ContainerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED3AA862B5D4DA300191002 /* ContainerNode.swift */; };
 		CED7983C2C8FDE21003B6559 /* GameStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED7983B2C8FDE21003B6559 /* GameStats.swift */; };
 		CED7983E2C8FE0BA003B6559 /* TFSMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED7983D2C8FE0BA003B6559 /* TFSMenu.swift */; };
 		CED798402C8FE2D8003B6559 /* TFSMenuMobile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED7983F2C8FE2D8003B6559 /* TFSMenuMobile.swift */; };
@@ -1079,7 +1076,6 @@
 		CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSCache.swift; sourceTree = "<group>"; };
 		CED3AA762B5D005700191002 /* F-22_Raptor.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = "F-22_Raptor.usdz"; sourceTree = "<group>"; };
 		CED3AA7A2B5D008200191002 /* F22.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F22.swift; sourceTree = "<group>"; };
-		CED3AA862B5D4DA300191002 /* ContainerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerNode.swift; sourceTree = "<group>"; };
 		CED7983B2C8FDE21003B6559 /* GameStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStats.swift; sourceTree = "<group>"; };
 		CED7983D2C8FE0BA003B6559 /* TFSMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSMenu.swift; sourceTree = "<group>"; };
 		CED7983F2C8FE2D8003B6559 /* TFSMenuMobile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSMenuMobile.swift; sourceTree = "<group>"; };
@@ -1310,7 +1306,6 @@
 				CEAA40262C746EE100009894 /* ClickSelectable.swift */,
 				CE50C1032C95921800202C45 /* SkyEntity.swift */,
 				CE3BFF7D28E2FCF50014A752 /* Node.swift */,
-				CED3AA862B5D4DA300191002 /* ContainerNode.swift */,
 				CE3BFF8528E2FD9C0014A752 /* GameObject.swift */,
 				CE76930E29DD5DF600BBC718 /* SubMeshGameObject.swift */,
 				CE3BFFA228E452F00014A752 /* LightObject.swift */,
@@ -2200,7 +2195,6 @@
 				CE452FCF2A7CB47F001945B9 /* Instanced.metal in Sources */,
 				CE4530092A7CB4BA001945B9 /* TimeIt.swift in Sources */,
 				CE452FEB2A7CB4A6001945B9 /* GBU16.swift in Sources */,
-				CED3AA892B5D4DA300191002 /* ContainerNode.swift in Sources */,
 				CE865C222DD0AFF50048BBDA /* BaseRendering.swift in Sources */,
 				CE9625462CCCE26700CEA5A2 /* VerletSolver.swift in Sources */,
 				CE4530542A7F3EC3001945B9 /* FPS.swift in Sources */,
@@ -2404,7 +2398,6 @@
 				CE3BFF9228E451E50014A752 /* CameraManager.swift in Sources */,
 				CE3BFF5428E1B29C0014A752 /* ShaderLibrary.swift in Sources */,
 				CEFC6E2D2952EA44009B692B /* Cube.swift in Sources */,
-				CED3AA872B5D4DA300191002 /* ContainerNode.swift in Sources */,
 				CE3DD2ED2A020F4900787E53 /* Droppable.swift in Sources */,
 				CE387B4D2BE230BD00F51DC4 /* ComputePipelineState.swift in Sources */,
 				CE7BAC942A9F19A4007B8AAF /* F18_usdz.swift in Sources */,
@@ -2722,7 +2715,6 @@
 				CE3BFF3C28E059AD0014A752 /* Graphics.swift in Sources */,
 				CE79B6322B92E605009F2E49 /* TiledDeferredRenderer.swift in Sources */,
 				CE886A412983BFB30013062D /* PointLights.metal in Sources */,
-				CED3AA882B5D4DA300191002 /* ContainerNode.swift in Sources */,
 				CE865C3A2DD18FD40048BBDA /* ParticleRendering.swift in Sources */,
 				CE865C282DD0B75E0048BBDA /* ShadowRendering.swift in Sources */,
 				CE79B6512B95100F009F2E49 /* TiledDeferredPointLight.metal in Sources */,

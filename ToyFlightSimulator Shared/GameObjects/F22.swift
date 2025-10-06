@@ -18,7 +18,7 @@ class F22: Aircraft {
 //    }
     
     override var cameraOffset: float3 {
-        [0, 0, 100]
+        [0, 65, 125]
     }
     
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
@@ -26,17 +26,13 @@ class F22: Aircraft {
                    modelType: .Sketchfab_F22,
                    scale: scale,
                    shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
-        rotateX(Float(90).toRadians)
-        rotateZ(Float(90).toRadians)
         
         afterburnerLeft.off()
-        afterburnerLeft.rotate(deltaAngle: Float(-90).toRadians, axis: Y_AXIS)
-        afterburnerLeft.setPosition(-23, -7, 1)
+        afterburnerLeft.setPosition(-7, 1, 30)
         addChild(afterburnerLeft)
         
         afterburnerRight.off()
-        afterburnerRight.rotate(deltaAngle: Float(-90).toRadians, axis: Y_AXIS)
-        afterburnerRight.setPosition(-23, 7, 1)
+        afterburnerRight.setPosition(7, 1, 30)
         addChild(afterburnerRight)
     }
     

@@ -46,12 +46,8 @@ final class FlightboxScene: GameScene {
 //        let jet = Temple(scale: 0.02)
         
         addCamera(attachedCamera)
-        
-        let container = ContainerNode(camera: attachedCamera, cameraOffset: jet.cameraOffset)
-        container.addChild(jet)
-        container.setPositionZ(4)
-        container.setPositionY(10)
-        addChild(container)
+        attachedCamera.attach(to: jet)
+        jet.setPosition(0, 10, 4)
         
         capsule.setPosition(-8, 10, -10)
         capsule.rotateZ(Float(90).toRadians)
@@ -115,7 +111,7 @@ final class FlightboxScene: GameScene {
         }
         
         let f16 = F16(shouldUpdateOnPlayerInput: false)
-        f16.setPosition(0, container.getPositionY() + 10, container.getPositionZ() - 15)
+        f16.setPosition(0, jet.getPositionY() + 10, jet.getPositionZ() - 15)
         f16.rotateY(Float(-90).toRadians)
         f16.setScale(4.0)
         addChild(f16)
@@ -160,7 +156,7 @@ final class FlightboxScene: GameScene {
                              color: [1, 0, 0, 1])
         addChild(debugLine)
         
-        let jetPos = container.getPosition()
+        let jetPos = jet.getPosition()
         
         let sphereBluePos = float3(x: jetPos.x + 1, y: jetPos.y, z: jetPos.z - 2)
         let sphereBlue = Sphere()

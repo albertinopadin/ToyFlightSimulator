@@ -37,15 +37,6 @@ final class FlightboxWithTerrain: GameScene {
 //        let jet = F18(scale: 1.0)
         
         addCamera(attachedCamera)
-        
-//        let container = ContainerNode(camera: attachedCamera, cameraOffset: jet.cameraOffset)
-//        container.addChild(jet)
-//        container.setPositionZ(4)
-//        container.setPositionY(100)
-//        addChild(container)
-//        
-//        let jetPos = container.getPosition()
-        
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)
         jet.setPosition(0, 100, 4)
         addChild(jet)
