@@ -122,4 +122,24 @@ enum Transform {
 //        return float3(x: -x, y: -y, z: z)  // Left-handed coordinate system
         return float3(x: -x, y: -y, z: z)
     }
+    
+    // Y-forward, Z-right, X-up → Z-forward, X-right, Y-up
+    static let transformZXYToXYZ = float4x4(
+        float4(0, 1, 0, 0),   // X: was Y
+        float4(0, 0, -1, 0),  // Y: was X
+        float4(-1, 0, 0, 0),  // Z: was Z
+        float4(0, 0, 0, 1)
+    )
+    
+    // X-right, Y-fwd, Z-up → X-right, Y-up, Z-forward
+    static let transformXZYToXYZ = float4x4(
+        float4(1, 0, 0, 0),   // X: was X
+        float4(0, 0, 1, 0),   // Y: was Z
+        float4(0, 1, 0, 0),   // Z: was Y
+        float4(0, 0, 0, 1)
+    )
+}
+
+extension float4x4 {
+    public static let identity: float4x4 = matrix_identity_float4x4
 }

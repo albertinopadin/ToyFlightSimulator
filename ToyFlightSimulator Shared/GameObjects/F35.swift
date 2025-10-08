@@ -17,8 +17,5 @@ class F35: Aircraft {
                    modelType: .Sketchfab_F35,
                    scale: scale,
                    shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
-//        rotateY(Float(180).toRadians)
-        rotateX(Float(90).toRadians)
-        rotateY(Float(180).toRadians)
     }
 }

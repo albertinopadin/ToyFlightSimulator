@@ -9,7 +9,7 @@ import Foundation
 import MetalKit
 
 final class UsdModel: Model {
-    init(_ modelName: String, fileExtension: ModelExtension = .USDZ) {
+    init(_ modelName: String, fileExtension: ModelExtension = .USDZ, transform: float4x4? = nil) {
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: fileExtension.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")
         }
@@ -32,20 +32,11 @@ final class UsdModel: Model {
         // Invert Z in meshes due to USD being right handed coord system:
 //        invertMeshZ()  // Not needed for F-22
         
-        
-        // TODO: Move this to a more appropriate place (aka maybe the specific GameObject ???)
-        // Create coordinate system transformation matrix
-        // Y-forward, Z-right, X-up → Z-forward, X-right, Y-up
-        let transformMatrix = float4x4(
-            SIMD4<Float>(0, 1, 0, 0),  // X: was Y
-            SIMD4<Float>(0, 0, -1, 0),  // Y: was X
-            SIMD4<Float>(-1, 0, 0, 0),  // Z: was Z
-            SIMD4<Float>(0, 0, 0, 1)
-        )
-        
         super.init(name: modelName, meshes: usdMeshes)
         
-        transformMeshes(transform: transformMatrix)
+        if let transform {
+            transformMeshesBasis(transform: transform)
+        }
         
         print("[UsdModel init] Num meshes for \(modelName): \(meshes.count)")
     }
@@ -70,7 +61,7 @@ final class UsdModel: Model {
     }
     
     // TODO: Parallelize this:
-    private func transformMeshes(transform: float4x4) {
+    private func transformMeshesBasis(transform: float4x4) {
         for mesh in meshes {
             let vertexBuffer = mesh.vertexBuffer!
             let count = vertexBuffer.length / Vertex.stride

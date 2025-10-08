@@ -71,8 +71,8 @@ final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
         _library.updateValue(ObjModel("FA-18F"), forKey: .F18)
         
         _library.updateValue(UsdModel("FA-18F"), forKey: .RC_F18)
-        _library.updateValue(UsdModel("F-35A_Lightning_II"), forKey: .Sketchfab_F35)
-        _library.updateValue(UsdModel("F-22_Raptor"), forKey: .Sketchfab_F22)
+        _library.updateValue(UsdModel("F-35A_Lightning_II", transform: Transform.transformXZYToXYZ), forKey: .Sketchfab_F35)
+        _library.updateValue(UsdModel("F-22_Raptor", transform: Transform.transformZXYToXYZ), forKey: .Sketchfab_F22)
         
         _library.updateValue(Model(name: "Plane", mesh: PlaneMesh()), forKey: .Plane)
         _library.updateValue(Model(name: "Icosahedron", mesh: IcosahedronMesh()), forKey: .Icosahedron)

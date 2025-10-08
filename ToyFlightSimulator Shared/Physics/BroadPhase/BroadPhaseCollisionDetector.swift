@@ -40,6 +40,10 @@ final class BroadPhaseCollisionDetector {
         staticEntities = entities.filter { $0.isStatic }
         let dynamicEntities = entities.filter { $0.isDynamic }
         
+        if dynamicEntities.isEmpty {
+            return
+        }
+        
         // Check if we need a full sort or can use insertion sort
         let needsFullSort = shouldPerformFullSort(dynamicEntities)
         
