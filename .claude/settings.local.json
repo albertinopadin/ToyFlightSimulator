@@ -4,7 +4,9 @@
       "WebSearch",
       "mcp__sequential-thinking__sequentialthinking",
       "Bash(xcodebuild build:*)",
-      "mcp__mcpxcodebuild__build"
+      "mcp__mcpxcodebuild__build",
+      "Bash(cat:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
