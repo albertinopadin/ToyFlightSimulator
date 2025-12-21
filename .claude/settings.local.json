@@ -6,7 +6,11 @@
       "Bash(xcodebuild build:*)",
       "mcp__mcpxcodebuild__build",
       "Bash(cat:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(tree -L 2:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(swift build:*)"
     ],
     "deny": [],
     "ask": []

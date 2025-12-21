@@ -28,6 +28,22 @@ enum SingleSMMeshType {
     case F18_Flap_Right
     case F18_Rudder_Left
     case F18_Rudder_Right
+
+    // Landing Gear - Nose
+    case F18_NoseGear_Strut
+    case F18_NoseGear_Wheels
+    case F18_NoseGear_DoorLeft
+    case F18_NoseGear_DoorRight
+
+    // Landing Gear - Main Left
+    case F18_MainGearL_Strut
+    case F18_MainGearL_Wheel
+    case F18_MainGearL_Door
+
+    // Landing Gear - Main Right
+    case F18_MainGearR_Strut
+    case F18_MainGearR_Wheel
+    case F18_MainGearR_Door
 }
 
 final class SingleSubmeshMeshLibrary: Library<SingleSMMeshType, SingleSubmeshMesh>, @unchecked Sendable {
@@ -81,6 +97,35 @@ final class SingleSubmeshMeshLibrary: Library<SingleSMMeshType, SingleSubmeshMes
         
         _library.updateValue(f18LeftRudder, forKey: .F18_Rudder_Left)
         _library.updateValue(f18RightRudder, forKey: .F18_Rudder_Right)
+
+        // Landing Gear - Nose
+        let f18NoseGearStrut = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "MainStrut_Paint")
+        let f18NoseGearWheels = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "NoseWheels_Paint")
+        let f18NoseGearDoorLeft = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "NoseDoors1A_Paint")
+        let f18NoseGearDoorRight = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "NoseDoors1B_Paint")
+
+        _library.updateValue(f18NoseGearStrut, forKey: .F18_NoseGear_Strut)
+        _library.updateValue(f18NoseGearWheels, forKey: .F18_NoseGear_Wheels)
+        _library.updateValue(f18NoseGearDoorLeft, forKey: .F18_NoseGear_DoorLeft)
+        _library.updateValue(f18NoseGearDoorRight, forKey: .F18_NoseGear_DoorRight)
+
+        // Landing Gear - Main Left
+        let f18MainGearLStrut = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "MainStrutL_Paint")
+        let f18MainGearLWheel = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "WheelMainL_Paint")
+        let f18MainGearLDoor = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "GearDoors1L_Paint")
+
+        _library.updateValue(f18MainGearLStrut, forKey: .F18_MainGearL_Strut)
+        _library.updateValue(f18MainGearLWheel, forKey: .F18_MainGearL_Wheel)
+        _library.updateValue(f18MainGearLDoor, forKey: .F18_MainGearL_Door)
+
+        // Landing Gear - Main Right
+        let f18MainGearRStrut = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "MainStrutR_Paint")
+        let f18MainGearRWheel = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "WheelMainR_Paint")
+        let f18MainGearRDoor = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "GearDoors1R_Paint")
+
+        _library.updateValue(f18MainGearRStrut, forKey: .F18_MainGearR_Strut)
+        _library.updateValue(f18MainGearRWheel, forKey: .F18_MainGearR_Wheel)
+        _library.updateValue(f18MainGearRDoor, forKey: .F18_MainGearR_Door)
     }
     
     override subscript(type: SingleSMMeshType) -> SingleSubmeshMesh {

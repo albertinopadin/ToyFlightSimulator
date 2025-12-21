@@ -51,6 +51,22 @@ enum ModelType {
     case F18_Flap_Right
     case F18_Rudder_Left
     case F18_Rudder_Right
+
+    // Landing Gear - Nose
+    case F18_NoseGear_Strut
+    case F18_NoseGear_Wheels
+    case F18_NoseGear_DoorLeft
+    case F18_NoseGear_DoorRight
+
+    // Landing Gear - Main Left
+    case F18_MainGearL_Strut
+    case F18_MainGearL_Wheel
+    case F18_MainGearL_Door
+
+    // Landing Gear - Main Right
+    case F18_MainGearR_Strut
+    case F18_MainGearR_Wheel
+    case F18_MainGearR_Door
 }
 
 final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
@@ -118,6 +134,35 @@ final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
         _library.updateValue(Model(name: "F18_Flap_Right", mesh: rightFlapMesh), forKey: .F18_Flap_Right)
         _library.updateValue(Model(name: "F18_Rudder_Left", mesh: leftRudderMesh), forKey: .F18_Rudder_Left)
         _library.updateValue(Model(name: "F18_Rudder_Right", mesh: rightRudderMesh), forKey: .F18_Rudder_Right)
+
+        // Landing Gear - Nose
+        let noseGearStrutMesh = Assets.SingleSMMeshes[.F18_NoseGear_Strut]
+        let noseGearWheelsMesh = Assets.SingleSMMeshes[.F18_NoseGear_Wheels]
+        let noseGearDoorLeftMesh = Assets.SingleSMMeshes[.F18_NoseGear_DoorLeft]
+        let noseGearDoorRightMesh = Assets.SingleSMMeshes[.F18_NoseGear_DoorRight]
+
+        _library.updateValue(Model(name: "F18_NoseGear_Strut", mesh: noseGearStrutMesh), forKey: .F18_NoseGear_Strut)
+        _library.updateValue(Model(name: "F18_NoseGear_Wheels", mesh: noseGearWheelsMesh), forKey: .F18_NoseGear_Wheels)
+        _library.updateValue(Model(name: "F18_NoseGear_DoorLeft", mesh: noseGearDoorLeftMesh), forKey: .F18_NoseGear_DoorLeft)
+        _library.updateValue(Model(name: "F18_NoseGear_DoorRight", mesh: noseGearDoorRightMesh), forKey: .F18_NoseGear_DoorRight)
+
+        // Landing Gear - Main Left
+        let mainGearLStrutMesh = Assets.SingleSMMeshes[.F18_MainGearL_Strut]
+        let mainGearLWheelMesh = Assets.SingleSMMeshes[.F18_MainGearL_Wheel]
+        let mainGearLDoorMesh = Assets.SingleSMMeshes[.F18_MainGearL_Door]
+
+        _library.updateValue(Model(name: "F18_MainGearL_Strut", mesh: mainGearLStrutMesh), forKey: .F18_MainGearL_Strut)
+        _library.updateValue(Model(name: "F18_MainGearL_Wheel", mesh: mainGearLWheelMesh), forKey: .F18_MainGearL_Wheel)
+        _library.updateValue(Model(name: "F18_MainGearL_Door", mesh: mainGearLDoorMesh), forKey: .F18_MainGearL_Door)
+
+        // Landing Gear - Main Right
+        let mainGearRStrutMesh = Assets.SingleSMMeshes[.F18_MainGearR_Strut]
+        let mainGearRWheelMesh = Assets.SingleSMMeshes[.F18_MainGearR_Wheel]
+        let mainGearRDoorMesh = Assets.SingleSMMeshes[.F18_MainGearR_Door]
+
+        _library.updateValue(Model(name: "F18_MainGearR_Strut", mesh: mainGearRStrutMesh), forKey: .F18_MainGearR_Strut)
+        _library.updateValue(Model(name: "F18_MainGearR_Wheel", mesh: mainGearRWheelMesh), forKey: .F18_MainGearR_Wheel)
+        _library.updateValue(Model(name: "F18_MainGearR_Door", mesh: mainGearRDoorMesh), forKey: .F18_MainGearR_Door)
     }
     
     override subscript(type: ModelType) -> Model {

@@ -290,17 +290,17 @@ class F18: Aircraft {
     
     let leftRudderControlSurfaceRotationAxis = normalize(float3(-0.25, 0.8, 0.30))
     let rightRudderControlSurfaceRotationAxis = normalize(float3(0.25, 0.8, 0.30))
-    
-    var landingGearDeployed: Bool = false
-    var landingGearDegrees: Float = 0.0
-    var landingGearBeganExtending: Bool = false
-    var landingGearFinishedExtending: Bool = false
-    var landingGearBeganRetracting: Bool = false
-    var landingGearFinishedRetracting: Bool = false
+
+    // Landing Gear Assemblies
+    let noseGear = NoseGearAssembly()
+    let leftMainGear = MainGearAssembly(side: .left)
+    let rightMainGear = MainGearAssembly(side: .right)
+    let gearAnimator = LandingGearAnimator()
     
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
         super.init(name: "F-18", modelType: .F18, scale: scale, shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
         setupControlSurfaces()
+        setupLandingGear()
     }
     
     func setupControlSurfaces() {
@@ -368,7 +368,31 @@ class F18: Aircraft {
         rightRudder.setPosition(rightRudderPosition)
         addChild(rightRudder)
     }
-    
+
+    func setupLandingGear() {
+        // Attach landing gear assemblies to aircraft
+        noseGear.attachTo(aircraft: self)
+        leftMainGear.attachTo(aircraft: self)
+        rightMainGear.attachTo(aircraft: self)
+
+        // Hide the static gear submeshes since we're replacing them with animated ones
+        // Nose gear
+        submeshesToDisplay["MainStrut_Paint"] = false
+        submeshesToDisplay["NoseWheels_Paint"] = false
+        submeshesToDisplay["NoseDoors1A_Paint"] = false
+        submeshesToDisplay["NoseDoors1B_Paint"] = false
+
+        // Main gear left
+        submeshesToDisplay["MainStrutL_Paint"] = false
+        submeshesToDisplay["WheelMainL_Paint"] = false
+        submeshesToDisplay["GearDoors1L_Paint"] = false
+
+        // Main gear right
+        submeshesToDisplay["MainStrutR_Paint"] = false
+        submeshesToDisplay["WheelMainR_Paint"] = false
+        submeshesToDisplay["GearDoors1R_Paint"] = false
+    }
+
     func weaponReleaseSetup(with node: Node, submeshGameObject: SubMeshGameObject) {
         let releasePosition = submeshGameObject.getPosition() + submeshGameObject.getInitialPositionInParentMesh()
         let rotatedPosition = (node.rotationMatrix * float4(releasePosition, 1)).xyz
@@ -440,94 +464,18 @@ class F18: Aircraft {
             flapsFinishedRetracting = false
         }
         
-        // TODO: Perhaps extract this out to general function:
+        // Landing Gear Animation
         InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) {
-            if !landingGearDeployed {
-                landingGearBeganExtending = true
-            } else {
-                landingGearBeganRetracting = true
-            }
+            gearAnimator.toggle()
         }
-        
-        if landingGearBeganExtending {
-            if landingGearDegrees > 0.0 {
-                landingGearDegrees -= 1.0
-                // TODO
-            }
-        } else {
-            landingGearFinishedExtending = true
-        }
-        
-        if landingGearBeganRetracting {
-            if landingGearDegrees < 90.0 {
-                landingGearDegrees += 1.0
-                // TODO
-            }
-        } else {
-            landingGearFinishedRetracting = true
-        }
-        
-        if landingGearFinishedExtending || landingGearFinishedRetracting {
-            landingGearDeployed.toggle()
-            landingGearBeganExtending = false
-            landingGearFinishedExtending = false
-            landingGearBeganRetracting = false
-            landingGearFinishedRetracting = false
-        }
-        
-        // TODO: Figure out how to move individual submesh without re-instantiating it:
-//        InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) {
-//            print("Toggling gear \(gearDown ? "up": "down")")
-//
-//            for noseGearSubmeshName in noseWheelGearSubmeshNames {
-//                if let submesh = self._mesh._childMeshes.map({
-//                    $0._submeshes.filter({ $0.name == noseGearSubmeshName })
-//                }).first?.first {
-//                    print("Found \(noseGearSubmeshName)")
-//                    if gearDown {
-////                        submesh.submeshConstants.submeshModelMatrix = Transform.rotationMatrix(radians: Float(1.0).toRadians,
-////                                                                                               axis: X_AXIS)
-//                        submesh.submeshConstants.submeshModelMatrix = simd_float4x4(simd_quatf(angle: Float(-10.0).toRadians,
-//                                                                                               axis: getRightVector()))
-//
-//                    } else {
-////                        submesh.submeshConstants.submeshModelMatrix = Transform.rotationMatrix(radians: Float(-1.0).toRadians,
-////                                                                                               axis: X_AXIS)
-//                        submesh.submeshConstants.submeshModelMatrix = matrix_identity_float4x4
-//                    }
-//                }
-//            }
-//
-//            gearDown.toggle()
-//        }
-        
-        
-//        let noseGearRotation = simd_float4x4(simd_quatf(angle: Float(-0.25).toRadians, axis: getRightVector()))
-//        let noseGearRotation = simd_float4x4(simd_quatf(angle: Float(-0.5).toRadians, axis: X_AXIS))
-//        let noseGearTranslationToOrigin = Transform.translationMatrix(-self.getPosition())
-//        let noseGearTranslationBack = Transform.translationMatrix(self.getPosition())
-        
 
-//        for noseGearSubmeshName in noseWheelGearSubmeshNames {
-//            if let submesh = self._mesh._childMeshes.map({
-//                $0._submeshes.filter({ $0.name == noseGearSubmeshName })
-//            }).first?.first {
-////                if appliedTranslation {
-////                    submesh.submeshConstants.submeshModelMatrix = noseGearRotation * submesh.submeshConstants.submeshModelMatrix
-////                } else {
-////                    submesh.submeshConstants.submeshModelMatrix = noseGearTranslation * noseGearRotation * submesh.submeshConstants.submeshModelMatrix
-////                }
-//
-////                submesh.submeshConstants.submeshModelMatrix = submesh.submeshConstants.submeshModelMatrix * noseGearRotation
-//
-////                submesh.submeshConstants.submeshModelMatrix = noseGearTranslationBack * noseGearRotation * noseGearTranslationToOrigin * submesh.submeshConstants.submeshModelMatrix
-//
-//                submesh.submeshConstants.submeshModelMatrix = noseGearRotation * submesh.submeshConstants.submeshModelMatrix
-//            }
-//        }
-//
-//        appliedTranslation = true
-        
+        // Update gear animation each frame if animating
+        if gearAnimator.update() {
+            noseGear.animate(with: gearAnimator)
+            leftMainGear.animate(with: gearAnimator)
+            rightMainGear.animate(with: gearAnimator)
+        }
+
     }
     
     private func checkControlCommands() {

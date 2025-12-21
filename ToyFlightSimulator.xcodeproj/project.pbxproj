@@ -791,6 +791,18 @@
 		CEC6B48B2B45F8BD004A5AC7 /* TFSCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */; };
 		CEC6B48C2B45F8BD004A5AC7 /* TFSCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */; };
 		CEC6B48D2B45F8BD004A5AC7 /* TFSCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */; };
+		CECB921D2EF7711B00AEE29A /* MainGearAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921B2EF7711B00AEE29A /* MainGearAssembly.swift */; };
+		CECB921E2EF7711B00AEE29A /* LandingGearAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921A2EF7711B00AEE29A /* LandingGearAnimator.swift */; };
+		CECB921F2EF7711B00AEE29A /* NoseGearAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921C2EF7711B00AEE29A /* NoseGearAssembly.swift */; };
+		CECB92202EF7711B00AEE29A /* MainGearAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921B2EF7711B00AEE29A /* MainGearAssembly.swift */; };
+		CECB92212EF7711B00AEE29A /* LandingGearAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921A2EF7711B00AEE29A /* LandingGearAnimator.swift */; };
+		CECB92222EF7711B00AEE29A /* NoseGearAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921C2EF7711B00AEE29A /* NoseGearAssembly.swift */; };
+		CECB92232EF7711B00AEE29A /* MainGearAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921B2EF7711B00AEE29A /* MainGearAssembly.swift */; };
+		CECB92242EF7711B00AEE29A /* LandingGearAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921A2EF7711B00AEE29A /* LandingGearAnimator.swift */; };
+		CECB92252EF7711B00AEE29A /* NoseGearAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921C2EF7711B00AEE29A /* NoseGearAssembly.swift */; };
+		CECB92262EF7711B00AEE29A /* MainGearAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921B2EF7711B00AEE29A /* MainGearAssembly.swift */; };
+		CECB92272EF7711B00AEE29A /* LandingGearAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921A2EF7711B00AEE29A /* LandingGearAnimator.swift */; };
+		CECB92282EF7711B00AEE29A /* NoseGearAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB921C2EF7711B00AEE29A /* NoseGearAssembly.swift */; };
 		CED3AA772B5D005700191002 /* F-22_Raptor.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA762B5D005700191002 /* F-22_Raptor.usdz */; };
 		CED3AA782B5D005700191002 /* F-22_Raptor.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA762B5D005700191002 /* F-22_Raptor.usdz */; };
 		CED3AA792B5D005700191002 /* F-22_Raptor.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CED3AA762B5D005700191002 /* F-22_Raptor.usdz */; };
@@ -1074,6 +1086,9 @@
 		CEC231322B25AC650081A26A /* PointLightObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointLightObject.swift; sourceTree = "<group>"; };
 		CEC6B09E2D80019600EE3C26 /* TFSLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSLock.swift; sourceTree = "<group>"; };
 		CEC6B4892B45F8BD004A5AC7 /* TFSCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSCache.swift; sourceTree = "<group>"; };
+		CECB921A2EF7711B00AEE29A /* LandingGearAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandingGearAnimator.swift; sourceTree = "<group>"; };
+		CECB921B2EF7711B00AEE29A /* MainGearAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainGearAssembly.swift; sourceTree = "<group>"; };
+		CECB921C2EF7711B00AEE29A /* NoseGearAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoseGearAssembly.swift; sourceTree = "<group>"; };
 		CED3AA762B5D005700191002 /* F-22_Raptor.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = "F-22_Raptor.usdz"; sourceTree = "<group>"; };
 		CED3AA7A2B5D008200191002 /* F22.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F22.swift; sourceTree = "<group>"; };
 		CED7983B2C8FDE21003B6559 /* GameStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStats.swift; sourceTree = "<group>"; };
@@ -1334,6 +1349,9 @@
 				CEC2312E2B22F3E50081A26A /* Icosahedron.swift */,
 				CEC231322B25AC650081A26A /* PointLightObject.swift */,
 				CE4127962B6B3F2900B01AEA /* Temple.swift */,
+				CECB921A2EF7711B00AEE29A /* LandingGearAnimator.swift */,
+				CECB921B2EF7711B00AEE29A /* MainGearAssembly.swift */,
+				CECB921C2EF7711B00AEE29A /* NoseGearAssembly.swift */,
 			);
 			path = GameObjects;
 			sourceTree = "<group>";
@@ -2104,6 +2122,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE452FB62A7CB439001945B9 /* Keycodes.swift in Sources */,
+				CECB92262EF7711B00AEE29A /* MainGearAssembly.swift in Sources */,
+				CECB92272EF7711B00AEE29A /* LandingGearAnimator.swift in Sources */,
+				CECB92282EF7711B00AEE29A /* NoseGearAssembly.swift in Sources */,
 				CE387B552BE230FE00F51DC4 /* ComputePipelineStateLibrary.swift in Sources */,
 				CE452FEF2A7CB4A6001945B9 /* F16.swift in Sources */,
 				CE77321B2CAAA32F0025286F /* TiledMSAAResolve.metal in Sources */,
@@ -2288,6 +2309,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE3BFF6028E1B2D10014A752 /* DepthStencilStateLibrary.swift in Sources */,
+				CECB92232EF7711B00AEE29A /* MainGearAssembly.swift in Sources */,
+				CECB92242EF7711B00AEE29A /* LandingGearAnimator.swift in Sources */,
+				CECB92252EF7711B00AEE29A /* NoseGearAssembly.swift in Sources */,
 				CE0601662A83796B001F8CC3 /* CapsuleObject.swift in Sources */,
 				CE3BFF2A28E056EB0014A752 /* Base.metal in Sources */,
 				CE3BFF1F28E054880014A752 /* MetalTypes.swift in Sources */,
@@ -2488,6 +2512,9 @@
 				CE865C182DD0A48F0048BBDA /* Tessellation.metal in Sources */,
 				CE79B6362B92ED1A009F2E49 /* TiledDeferredDepthStencils.swift in Sources */,
 				CE2ED2BD299CB91200C81F47 /* RendererType.swift in Sources */,
+				CECB921D2EF7711B00AEE29A /* MainGearAssembly.swift in Sources */,
+				CECB921E2EF7711B00AEE29A /* LandingGearAnimator.swift in Sources */,
+				CECB921F2EF7711B00AEE29A /* NoseGearAssembly.swift in Sources */,
 				CE2ED2B92998A4CF00C81F47 /* F18.swift in Sources */,
 				CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
 				CE7732102CA904E10025286F /* TiledMultisampleRenderer.swift in Sources */,
@@ -2641,6 +2668,9 @@
 				CE452FD52A7CB489001945B9 /* Mesh.swift in Sources */,
 				CE79B61D2B92E312009F2E49 /* VertexDescriptor.swift in Sources */,
 				CE77321A2CAAA32F0025286F /* TiledMSAAResolve.metal in Sources */,
+				CECB92202EF7711B00AEE29A /* MainGearAssembly.swift in Sources */,
+				CECB92212EF7711B00AEE29A /* LandingGearAnimator.swift in Sources */,
+				CECB92222EF7711B00AEE29A /* NoseGearAssembly.swift in Sources */,
 				CE3BFF3D28E059B60014A752 /* ShaderDefinitions.h in Sources */,
 				CE50C1012C9584F200202C45 /* TiledDeferredTransparency.metal in Sources */,
 				CE452FD32A7CB489001945B9 /* Submesh.swift in Sources */,
