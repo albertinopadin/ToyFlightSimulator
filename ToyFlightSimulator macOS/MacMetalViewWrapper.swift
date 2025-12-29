@@ -29,7 +29,7 @@ struct MacMetalViewWrapper: NSViewRepresentable {
         gameView.device = Engine.Device
         gameView.clearColor = Preferences.ClearColor
         gameView.colorPixelFormat = Preferences.MainPixelFormat
-        gameView.framebufferOnly = false
+        gameView.framebufferOnly = false  // TODO: Setting this to false incurs performance penalty
         gameView.preferredFramesPerSecond = refreshRate.rawValue
         gameView.drawableSize = viewSize
         
