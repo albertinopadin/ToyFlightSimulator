@@ -21,13 +21,9 @@ final class UsdModel: Model {
         
         asset.loadTextures()
         
-        var usdMeshes: [Mesh] = []
+        print("[UsdModel init] asset has \(asset.count) top level objects.")
         
-        for i in 0..<asset.count {
-            let child = asset.object(at: i)
-            print("[UsdModel init] \(modelName) child name: \(child.name)")
-            usdMeshes.append(contentsOf: Self.makeMeshes(object: child, vertexDescriptor: descriptor))
-        }
+        let usdMeshes: [Mesh] = Self.GetMeshes(asset: asset, descriptor: descriptor)
         
         // Invert Z in meshes due to USD being right handed coord system:
 //        invertMeshZ()  // Not needed for F-22
@@ -41,24 +37,17 @@ final class UsdModel: Model {
         print("[UsdModel init] Num meshes for \(modelName): \(meshes.count)")
     }
     
-    private static func makeMeshes(object: MDLObject, vertexDescriptor: MDLVertexDescriptor) -> [Mesh] {
-        var meshes = [Mesh]()
-        
-        print("[UsdModel makeMeshes] object named \(object.name): \(object)")
-        
-        if let mesh = object as? MDLMesh {
-            print("[UsdModel makeMeshes] object named \(object.name) is MDLMesh")
-            let newMesh = Mesh(mdlMesh: mesh, vertexDescriptor: vertexDescriptor)
-            meshes.append(newMesh)
-        }
-        
-        for child in object.children.objects {
-            let childMeshes = Self.makeMeshes(object: child, vertexDescriptor: vertexDescriptor)
-            meshes.append(contentsOf: childMeshes)
-        }
-        
-        return meshes
+    private static func GetMeshes(asset: MDLAsset, descriptor: MDLVertexDescriptor) -> [Mesh] {
+        let mdlMeshes = asset.childObjects(of: MDLMesh.self) as? [MDLMesh] ?? []
+        return mdlMeshes.map { Mesh(mdlMesh: $0, vertexDescriptor: descriptor) }
     }
+    
+    // TODO:
+//    private func loadSkeleton(asset: MDLAsset) {
+//        let skeletons = asset.childObjects(of: MDLSkeleton.self) as? [MDLSkeleton] ?? []
+//        print("[Model loadSkeleton] num skeletons: \(skeletons.count)")
+//        skeleton = Skeleton(mdlSkeleton: skeletons.first)
+//    }
     
     // TODO: Parallelize this:
     private func transformMeshesBasis(transform: float4x4) {
