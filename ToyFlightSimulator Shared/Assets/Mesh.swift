@@ -23,12 +23,18 @@ class Mesh {
     internal var _vertexCount: Int = 0
     internal var _metalKitMesh: MTKMesh? = nil
     
+    public var skin: Skin?
+    public var transform: TransformComponent?
+    
     init() {
         createMesh()
         createBuffer()
     }
     
-    init(mdlMesh: MDLMesh, vertexDescriptor: MDLVertexDescriptor, addTangentBases: Bool = true) {
+    init(mdlMesh: MDLMesh,
+         mtkMesh: MTKMesh,
+         addTangentBases: Bool = true,
+         vertexDescriptor: MDLVertexDescriptor? = nil) {
         print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
         name = mdlMesh.name
         
@@ -42,41 +48,8 @@ class Mesh {
                                     bitangentAttributeNamed: MDLVertexAttributeBitangent)
         }
         
-        mdlMesh.vertexDescriptor = vertexDescriptor
-        do {
-            print("[Mesh init] instantiating MTKMesh...")
-            _metalKitMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
-            print("[Mesh init] MTKMesh: \(String(describing: _metalKitMesh))")
-            if _metalKitMesh!.vertexBuffers.count > 1 {
-                print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
-            }
-            self.vertexBuffer = _metalKitMesh!.vertexBuffers[0].buffer
-            self._vertexCount = _metalKitMesh!.vertexCount
-            for i in 0..<_metalKitMesh!.submeshes.count {
-                let mtkSubmesh = _metalKitMesh!.submeshes[i]
-                let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
-                let submesh = Submesh(mtkSubmesh: mtkSubmesh, 
-                                      mdlSubmesh: mdlSubmesh)
-                addSubmesh(submesh)
-            }
-        } catch {
-            print("ERROR::LOADING_MDLMESH::__::\(error.localizedDescription)")
-        }
-        
-        print("Num submeshes for \(mdlMesh.name): \(submeshes.count)")
-    }
-    
-    init(mtkMesh: MTKMesh, mdlMesh: MDLMesh, addTangentBases: Bool = true) {
-        name = mtkMesh.name
-        
-        if addTangentBases {
-            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                                    normalAttributeNamed: MDLVertexAttributeNormal,
-                                    tangentAttributeNamed: MDLVertexAttributeTangent)
-            
-            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                                    tangentAttributeNamed: MDLVertexAttributeTangent,
-                                    bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        if let vertexDescriptor {
+            mdlMesh.vertexDescriptor = vertexDescriptor
         }
         
         self._metalKitMesh = mtkMesh
@@ -89,9 +62,45 @@ class Mesh {
         for i in 0..<mtkMesh.submeshes.count {
             let mtkSubmesh = mtkMesh.submeshes[i]
             let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
-            let submesh = Submesh(mtkSubmesh: mtkSubmesh, 
+            let submesh = Submesh(mtkSubmesh: mtkSubmesh,
                                   mdlSubmesh: mdlSubmesh)
             addSubmesh(submesh)
+        }
+        
+        print("[Mesh init] Num submeshes for \(mdlMesh.name): \(submeshes.count)")
+    }
+    
+    convenience init(asset: MDLAsset,
+                     mdlMesh: MDLMesh,
+                     vertexDescriptor: MDLVertexDescriptor,
+                     addTangentBases: Bool = true) {
+        do {
+            print("[Mesh init] instantiating MTKMesh...")
+            let mtkMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
+            print("[Mesh init] MTKMesh: \(String(describing: mtkMesh))")
+            self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, addTangentBases: addTangentBases)
+        } catch {
+            fatalError("ERROR::LOADING_MDLMESH::__::\(error.localizedDescription)")
+        }
+        
+        if mdlMesh.transform != nil {
+            transform = TransformComponent(
+                object: mdlMesh,
+                startTime: asset.startTime,
+                endTime: asset.endTime
+            )
+        }
+    }
+    
+    convenience init(asset: MDLAsset, mtkMesh: MTKMesh, mdlMesh: MDLMesh, addTangentBases: Bool = true) {
+        self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, addTangentBases: addTangentBases)
+        
+        if mdlMesh.transform != nil {
+            transform = TransformComponent(
+                object: mdlMesh,
+                startTime: asset.startTime,
+                endTime: asset.endTime
+            )
         }
     }
     

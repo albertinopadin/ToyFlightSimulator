@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 60;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -1092,6 +1092,10 @@
 		CEFC6F25296B61CA009B692B /* Line.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Line.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		CEA8D6172F0654960058B5EA /* Animation */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Animation; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		CE452FA12A7CA810001945B9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -1571,6 +1575,7 @@
 		CE7F47EA28B758900082B197 /* ToyFlightSimulator Shared */ = {
 			isa = PBXGroup;
 			children = (
+				CEA8D6172F0654960058B5EA /* Animation */,
 				CEC6B0982D6BC7F400EE3C26 /* Audio */,
 				CE9625382CCCE1AF00CEA5A2 /* Physics */,
 				CE2ED260299394C900C81F47 /* Utils */,
@@ -1832,6 +1837,9 @@
 			dependencies = (
 				CE452FA92A7CA810001945B9 /* PBXTargetDependency */,
 			);
+			fileSystemSynchronizedGroups = (
+				CEA8D6172F0654960058B5EA /* Animation */,
+			);
 			name = ToyFlightSimulatorTests;
 			productName = ToyFlightSimulatorMacTests;
 			productReference = CE452FA42A7CA810001945B9 /* ToyFlightSimulatorTests.xctest */;
@@ -1848,6 +1856,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CEA8D6172F0654960058B5EA /* Animation */,
 			);
 			name = "ToyFlightSimulator iOS";
 			productName = "ToyFlightSimulator iOS";
@@ -1866,6 +1877,9 @@
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				CEA8D6172F0654960058B5EA /* Animation */,
+			);
 			name = "ToyFlightSimulator tvOS";
 			productName = "ToyFlightSimulator tvOS";
 			productReference = CE7F480428B758920082B197 /* ToyFlightSimulator.app */;
@@ -1882,6 +1896,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CEA8D6172F0654960058B5EA /* Animation */,
 			);
 			name = "ToyFlightSimulator macOS";
 			productName = "ToyFlightSimulator macOS";

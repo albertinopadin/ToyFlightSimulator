@@ -23,6 +23,10 @@ class Model: Hashable {
         return lhs.id == rhs.id
     }
     
+    static func GetMeshes(asset: MDLAsset, mdlMeshes: [MDLMesh], descriptor: MDLVertexDescriptor) -> [Mesh] {
+        return mdlMeshes.map { Mesh(asset: asset, mdlMesh: $0, vertexDescriptor: descriptor) }
+    }
+    
     init(name: String, meshes: [Mesh]) {
         self.id = UUID().uuidString
         self.name = name
@@ -37,4 +41,8 @@ class Model: Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(self.id)
     }
+    
+    // TODO: might want to refactor this...
+    // Override this in UsdModel for now...
+    public func update() { }
 }

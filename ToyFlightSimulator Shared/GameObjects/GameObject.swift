@@ -55,6 +55,9 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
         super.update()
         modelConstants.modelMatrix = self.modelMatrix
         modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
+        
+        // TODO: hmm... might want to refactor this later...
+        model.update()
     }
     
     func hash(into hasher: inout Hasher) {
