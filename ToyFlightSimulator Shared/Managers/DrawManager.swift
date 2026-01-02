@@ -15,54 +15,66 @@ final class DrawManager {
         renderEncoder.popDebugGroup()
     }
     
-    static func Draw(with renderEncoder: MTLRenderCommandEncoder,
-                     withTransparency: Bool = false,
-                     applyMaterials: Bool = true) {
+    static func DrawOpaque(with renderEncoder: MTLRenderCommandEncoder,
+                           applyMaterials: Bool = true) {
         // Test:
 //        renderEncoder.setFrontFacing(.counterClockwise)
 //        renderEncoder.setCullMode(.front)
         
         for (model, data) in SceneManager.GetUniformsData() {
-            if withTransparency {
-                if !data.transparentSubmeshes.isEmpty {
+            for meshData in data.meshDatas {
+                if !meshData.opaqueSubmeshes.isEmpty {
                     Draw(renderEncoder,
                          model: model,
                          uniforms: data.uniforms,
-                         submeshes: data.transparentSubmeshes,
-                         applyMaterials: applyMaterials)
-                }
-            } else {
-                if !data.opaqueSubmeshes.isEmpty {
-                    Draw(renderEncoder,
-                         model: model,
-                         uniforms: data.uniforms,
-                         submeshes: data.opaqueSubmeshes,
+                         mesh: meshData.mesh,
+                         submeshes: meshData.opaqueSubmeshes,
                          applyMaterials: applyMaterials)
                 }
             }
         }
         
-        if withTransparency {
-            for (model, data) in SceneManager.GetTransparentUniformsData() {
+        DrawLines(with: renderEncoder)
+    }
+    
+    static func DrawTransparent(with renderEncoder: MTLRenderCommandEncoder,
+                                applyMaterials: Bool = true) {
+        for (model, data) in SceneManager.GetUniformsData() {
+            for meshData in data.meshDatas {
+                if !meshData.transparentSubmeshes.isEmpty {
+                    Draw(renderEncoder,
+                         model: model,
+                         uniforms: data.uniforms,
+                         mesh: meshData.mesh,
+                         submeshes: meshData.transparentSubmeshes,
+                         applyMaterials: applyMaterials)
+                }
+            }
+        }
+        
+        for (model, data) in SceneManager.GetTransparentUniformsData() {
+            for mesh in model.meshes {
                 Draw(renderEncoder,
                      model: model,
                      uniforms: data.uniforms,
+                     mesh: mesh,
                      submeshes: model.meshes.flatMap { $0.submeshes },
                      applyMaterials: applyMaterials)
             }
-        } else {
-            DrawLines(with: renderEncoder)
         }
     }
     
     // I really don't like this long term...
     static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
         for (model, data) in SceneManager.GetUniformsData() {
-            Draw(renderEncoder,
-                 model: model,
-                 uniforms: data.uniforms,
-                 submeshes: data.opaqueSubmeshes,
-                 applyMaterials: false)
+            for meshData in data.meshDatas {
+                Draw(renderEncoder,
+                     model: model,
+                     uniforms: data.uniforms,
+                     mesh: meshData.mesh,
+                     submeshes: meshData.opaqueSubmeshes,
+                     applyMaterials: false)
+            }
         }
     }
     
@@ -98,12 +110,15 @@ final class DrawManager {
     static func DrawPointLights(with renderEncoder: MTLRenderCommandEncoder) {
         let pointLights = LightManager.GetLightObjects(lightType: Point)
         let uniforms = pointLights.map { $0.modelConstants }
+        let pointLightModel = Assets.Models[.Icosahedron]
+        let submeshes = pointLightModel.meshes.flatMap { $0.submeshes }
         
         if !pointLights.isEmpty {
             Draw(renderEncoder,
-                 model: Assets.Models[.Icosahedron],
+                 model: pointLightModel,
                  uniforms: uniforms,
-                 submeshes: Assets.Models[.Icosahedron].meshes.flatMap { $0.submeshes },  // TODO: Just get this once instead
+                 mesh: pointLightModel.meshes.first!,
+                 submeshes: submeshes,
                  applyMaterials: true)
         }
     }
@@ -112,11 +127,14 @@ final class DrawManager {
         if !SceneManager.icosahedrons.isEmpty {
             // !!!
             let uniforms = SceneManager.icosahedrons.map { $0.modelConstants }
+            let icosahedronModel = Assets.Models[.Icosahedron]
+            let icosahedronSubmeshes = SceneManager.icosahedrons.first!.model.meshes.flatMap { $0.submeshes }
             
             Draw(renderEncoder,
-                 model: Assets.Models[.Icosahedron],
+                 model: icosahedronModel,
                  uniforms: uniforms,
-                 submeshes: SceneManager.icosahedrons.first!.model.meshes.flatMap { $0.submeshes },
+                 mesh: icosahedronModel.meshes.first!,
+                 submeshes: icosahedronSubmeshes,
                  applyMaterials: true)
         }
     }
@@ -133,7 +151,8 @@ final class DrawManager {
             Draw(renderEncoder,
                  model: skyObj.model,
                  uniforms: uniformsData.uniforms,
-                 submeshes: SceneManager.skyData.opaqueSubmeshes,
+                 mesh: skyObj.model.meshes.first!,
+                 submeshes: SceneManager.skyData.meshDatas.first!.opaqueSubmeshes,
                  applyMaterials: false)
         }
     }
@@ -201,6 +220,7 @@ final class DrawManager {
     static private func Draw(_ renderEncoder: MTLRenderCommandEncoder,
                              model: Model,
                              uniforms: [ModelConstants],
+                             mesh: Mesh,
                              submeshes: [Submesh],
                              applyMaterials: Bool) {
         EncodeRender(using: renderEncoder, label: "Rendering \(model.name)") {
@@ -211,11 +231,36 @@ final class DrawManager {
 //                                             index: TFSBufferModelConstants.index)
                 
                 // ***** Super not optimized! *****
+//                let uniformsBuffer = Engine.Device.makeBuffer(bytes: &uniforms,
+//                                                              length: ModelConstants.stride(uniforms.count))
+//                
+//                renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: TFSBufferModelConstants.index)
+                // *********************************
+                
+                /*
+                 * ------------------------------- Animation -------------------------------
+                 */
+                if let paletteBuffer = mesh.skin?.jointMatrixPaletteBuffer {
+                    renderEncoder.setVertexBuffer(paletteBuffer,
+                                                  offset: 0,
+                                                  index: TFSBufferIndexJointBuffer.index)
+                }
+                
+                // TODO2: Below code will animate *ALL* models that use the same mesh which is
+                //        probably *NOT* what we want. Hack for now to make this work...
+                let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
+                for idx in 0..<uniforms.count {
+                    uniforms[idx].modelMatrix *= currentLocalTransform
+                }
+                
                 let uniformsBuffer = Engine.Device.makeBuffer(bytes: &uniforms,
                                                               length: ModelConstants.stride(uniforms.count))
                 
                 renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: TFSBufferModelConstants.index)
-                // *********************************
+                
+                /*
+                 * ---------------------------------------------------------------------------
+                 */
                 
                 for submesh in submeshes {
                     if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
@@ -235,7 +280,7 @@ final class DrawManager {
                                                             indexType: submesh.indexType,
                                                             indexBuffer: submesh.indexBuffer,
                                                             indexBufferOffset: submesh.indexBufferOffset,
-                                                            instanceCount: submesh.parentMesh!.instanceCount * uniforms.count)
+                                                            instanceCount: mesh.instanceCount * uniforms.count)
                     }
                 }
             }

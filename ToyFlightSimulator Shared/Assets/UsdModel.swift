@@ -136,10 +136,12 @@ final class UsdModel: Model {
         
         if let skeleton,
            let animation = animationClips.first {
+            print("[UsdModel update] Updating animation clip \(animation.key) & pose for \(self.name)")
             let animationClip = animation.value
             skeleton.updatePose(at: currentTime, animationClip: animationClip)
         }
         
+        // TODO: Can this go inside the if let above ???
         for index in 0..<meshes.count {
             var mesh = meshes[index]
             mesh.transform?.getCurrentTransform(at: currentTime)

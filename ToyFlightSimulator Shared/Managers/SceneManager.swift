@@ -24,14 +24,11 @@ enum SceneType {
 //    case Sky
 //}
 
-struct ModelData {
-    var gameObjects: [GameObject] = []
+struct MeshData: @unchecked Sendable {
+    let mesh: Mesh
+    
     var opaqueSubmeshes: [Submesh] = []
     var transparentSubmeshes: [Submesh] = []
-    
-    mutating func addGameObject(_ gameObject: GameObject) {
-        self.gameObjects.append(gameObject)
-    }
     
     mutating func appendOpaque(submesh: Submesh) {
         self.opaqueSubmeshes.append(submesh)
@@ -42,10 +39,24 @@ struct ModelData {
     }
 }
 
+struct ModelData {
+    var gameObjects: [GameObject] = []
+    var meshDatas: [MeshData] = []
+    
+    mutating func addGameObject(_ gameObject: GameObject) {
+        self.gameObjects.append(gameObject)
+    }
+    
+    mutating func addMeshData(_ meshData: MeshData) {
+        self.meshDatas.append(meshData)
+    }
+}
+
 struct UniformsData: Sendable {
     let uniforms: [ModelConstants]
-    let opaqueSubmeshes: [Submesh]
-    let transparentSubmeshes: [Submesh]
+//    let opaqueSubmeshes: [Submesh]
+//    let transparentSubmeshes: [Submesh]
+    let meshDatas: [MeshData]
 }
 
 struct TransparentObjectData {
@@ -70,7 +81,8 @@ final class SceneManager {
     nonisolated(unsafe) private static var _sceneType: SceneType?
     nonisolated(unsafe) private static var _rendererType: RendererType?
     
-    nonisolated(unsafe) public static var modelDatas: [Model: ModelData] = [:]  // TODO -> wrap this in a thread safe container (?)
+    // TODO -> wrap this in a thread safe container (?):
+    nonisolated(unsafe) public static var modelDatas: [Model: ModelData] = [:]
     nonisolated(unsafe) public static var transparentObjectDatas: [Model: TransparentObjectData] = [:]
     nonisolated(unsafe) public static var particleObjects: [ParticleEmitterObject] = []
     nonisolated(unsafe) public static var tessellatables: [Tessellatable] = []
@@ -189,15 +201,18 @@ final class SceneManager {
         modelData.addGameObject(gameObject)
         
         for mesh in gameObject.model.meshes {
+            var meshData = MeshData(mesh: mesh)
+            
             for submesh in mesh.submeshes {
                 if gameObject.shouldRenderSubmesh(submesh) {
                     if isTransparent(submesh: submesh) {
-                        modelData.appendTransparent(submesh: submesh)
+                        meshData.appendTransparent(submesh: submesh)
                     } else {
-                        modelData.appendOpaque(submesh: submesh)
+                        meshData.appendOpaque(submesh: submesh)
                     }
                 }
             }
+            modelData.addMeshData(meshData)
         }
         
         return modelData
@@ -211,17 +226,21 @@ final class SceneManager {
            let modelData = modelDatas[parentObj.model],
            let gameObj = modelData.gameObjects.first(where: { $0.getID() == parentObj.id }) {
             if !gameObj.shouldRenderSubmesh(subMeshObject.submeshName) {
-                var idx = -1
-                for (meshIdx, oMesh) in modelData.opaqueSubmeshes.enumerated() {
-                    if oMesh.name == subMeshObject.submeshName {
-                        idx = meshIdx
-                        break
+                var meshDataIdx = -1
+                var meshToRemoveIdx = -1
+                meshDataLoop: for (mdIdx, meshData) in modelData.meshDatas.enumerated() {
+                    for (meshIdx, oMesh) in meshData.opaqueSubmeshes.enumerated() {
+                        if oMesh.name == subMeshObject.submeshName {
+                            meshDataIdx = mdIdx
+                            meshToRemoveIdx = meshIdx
+                            break meshDataLoop
+                        }
                     }
                 }
                 
-                if idx >= 0 {
-                    print("[RegisterSubMeshObject] removing submesh \(subMeshObject.submeshName) from model \(parentObj.model.name) [idx: \(idx)]")
-                    modelDatas[parentObj.model]!.opaqueSubmeshes.remove(at: idx)
+                if meshToRemoveIdx >= 0 {
+                    print("[RegisterSubMeshObject] removing submesh \(subMeshObject.submeshName) from model \(parentObj.model.name) [idx: \(meshToRemoveIdx)]")
+                    modelDatas[parentObj.model]!.meshDatas[meshDataIdx].opaqueSubmeshes.remove(at: meshToRemoveIdx)
                 }
             }
         }
@@ -263,18 +282,19 @@ final class SceneManager {
         }
         
         for mesh in gameObject.model.meshes {
+            var skyMeshData = MeshData(mesh: mesh)
             for submesh in mesh.submeshes {
                 if let isTransparent = submesh.material?.isTransparent, isTransparent {
-                    skyData.appendTransparent(submesh: submesh)
+                    skyMeshData.appendTransparent(submesh: submesh)
                 } else {
-                    skyData.appendOpaque(submesh: submesh)
+                    skyMeshData.appendOpaque(submesh: submesh)
                 }
             }
+            skyData.addMeshData(skyMeshData)
         }
     }
     
     // TODO: Find best way to copy model constants into separate buffer...
-    
     public static func GetUniformsData() -> [Model: UniformsData] {
         // Lock when reading uniforms (model constants)
         uniformsLock.lock()
@@ -282,8 +302,7 @@ final class SceneManager {
         for key in modelDatas.keys {
             let modelData = modelDatas[key]!
             uniformsData[key] = UniformsData(uniforms: modelData.gameObjects.compactMap(\.modelConstants),
-                                             opaqueSubmeshes: modelData.opaqueSubmeshes,
-                                             transparentSubmeshes: modelData.transparentSubmeshes)
+                                             meshDatas: modelData.meshDatas)
         }
         uniformsLock.unlock()
         
@@ -305,12 +324,13 @@ final class SceneManager {
     public static func GetSkyUniformsData() -> UniformsData {
         // Lock here?
         return UniformsData(uniforms: skyData.gameObjects.compactMap(\.modelConstants),
-                            opaqueSubmeshes: skyData.opaqueSubmeshes,
-                            transparentSubmeshes: skyData.transparentSubmeshes)
+                            meshDatas: skyData.meshDatas)
     }
     
     public static var SubmeshCount: Int {
-        return modelDatas.reduce(0) { $0 + $1.value.opaqueSubmeshes.count + $1.value.transparentSubmeshes.count }
+        return modelDatas.map {
+            $0.value.meshDatas.reduce(0) { $0 + $1.opaqueSubmeshes.count + $1.transparentSubmeshes.count }
+        }.reduce(0, +)
     }
     
     

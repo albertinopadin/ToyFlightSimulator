@@ -102,7 +102,7 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBuffer])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             renderEncoder.setFragmentTexture(shadowResolveTexture, index: TFSTextureIndexShadow.index)
-            DrawManager.Draw(with: renderEncoder)
+            DrawManager.DrawOpaque(with: renderEncoder)
         }
     }
     
@@ -130,7 +130,7 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAATransparency])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            DrawManager.Draw(with: renderEncoder, withTransparency: true)
+            DrawManager.DrawTransparent(with: renderEncoder)
         }
     }
     

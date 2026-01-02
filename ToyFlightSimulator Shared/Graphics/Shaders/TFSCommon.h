@@ -90,7 +90,8 @@ typedef enum {
     TFSBufferModelConstants         = 7,
     TFSBufferIndexSceneConstants    = 8,
     TFSBufferIndexMaterial          = 9,
-    TFSBufferIndexTerrain           = 10
+    TFSBufferIndexTerrain           = 10,
+    TFSBufferIndexJointBuffer       = 11
 } TFSBufferIndices;
 
 // Attribute index values shared between shader and C code to ensure Metal shader vertex

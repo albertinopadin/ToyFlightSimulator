@@ -102,7 +102,7 @@ final class TiledMSAATessellatedRenderer: Renderer, ShadowRendering, ParticleRen
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBuffer])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             renderEncoder.setFragmentTexture(shadowResolveTexture, index: TFSTextureIndexShadow.index)
-            DrawManager.Draw(with: renderEncoder)
+            DrawManager.DrawOpaque(with: renderEncoder)
         }
     }
     
@@ -132,7 +132,7 @@ final class TiledMSAATessellatedRenderer: Renderer, ShadowRendering, ParticleRen
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessNoWrite])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredTransparency])
-            DrawManager.Draw(with: renderEncoder, withTransparency: true)
+            DrawManager.DrawTransparent(with: renderEncoder)
         }
     }
     

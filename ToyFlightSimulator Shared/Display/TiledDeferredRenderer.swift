@@ -80,7 +80,7 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering 
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredGBuffer])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             renderEncoder.setFragmentTexture(shadowMap, index: TFSTextureIndexShadow.index)
-            DrawManager.Draw(with: renderEncoder)
+            DrawManager.DrawOpaque(with: renderEncoder)
         }
     }
     
@@ -127,7 +127,7 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering 
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredTransparency])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            DrawManager.Draw(with: renderEncoder, withTransparency: true)
+            DrawManager.DrawTransparent(with: renderEncoder)
         }
     }
     

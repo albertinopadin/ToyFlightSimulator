@@ -82,7 +82,7 @@ extension ShadowRendering {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredShadow])
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredShadow])
                 SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                DrawManager.Draw(with: renderEncoder)
+                DrawManager.DrawOpaque(with: renderEncoder)  // TODO: Why not DrawShadows ???
             }
         }
     }
@@ -93,7 +93,7 @@ extension ShadowRendering {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAShadow])
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredShadow])
                 SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                DrawManager.Draw(with: renderEncoder)
+                DrawManager.DrawOpaque(with: renderEncoder)
             }
         }
     }

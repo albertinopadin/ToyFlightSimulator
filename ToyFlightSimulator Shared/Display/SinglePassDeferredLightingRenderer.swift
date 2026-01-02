@@ -92,7 +92,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering {
 //            renderEncoder.setCullMode(.back)
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setFragmentTexture(shadowMap, index: TFSTextureIndexShadow.index)
-            DrawManager.Draw(with: renderEncoder)
+            DrawManager.DrawOpaque(with: renderEncoder)
         }
     }
     
@@ -116,7 +116,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredTransparency])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            DrawManager.Draw(with: renderEncoder, withTransparency: true)
+            DrawManager.DrawTransparent(with: renderEncoder)
         }
     }
     
