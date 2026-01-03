@@ -66,6 +66,8 @@ struct ControlPoint: HasNormal, sizeable {
     var normal: float3 = [0, 0, 1]
     var tangent: float3 = [1, 0, 0]
     var bitangent: float3 = [0, 1, 0]
+    var joints: simd_ushort4 = [0, 0, 0, 0]  // TODO: There can be more joints than just 4
+    var jointWeights: float4 = [0, 0, 0, 0]
 }
 
 extension ModelConstants: sizeable {}

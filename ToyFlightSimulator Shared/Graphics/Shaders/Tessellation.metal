@@ -20,14 +20,15 @@ float getCameraDistance(float3 pointA, float3 pointB, float3 cameraPosition, flo
 }
 
 // This kernel computes tessellation for quads (for things like terrain)
-kernel void compute_tessellation(constant float                          *edgeFactors    [[ buffer(0) ]],
-                                 constant float                          *insideFactors  [[ buffer(1) ]],
-                                 device MTLQuadTessellationFactorsHalf   *factors        [[ buffer(2) ]],
-                                 uint                                    pid             [[ thread_position_in_grid ]],
-                                 constant float4                         &cameraPosition [[ buffer(3) ]],
-                                 constant float4x4                       &modelMatrix    [[ buffer(4) ]],
-                                 constant float3                         *controlPoints  [[ buffer(5) ]],
-                                 constant Terrain                        &terrain        [[ buffer(TFSBufferIndexTerrain) ]]) {
+kernel void compute_tessellation(
+  constant float                          *edgeFactors    [[ buffer(0) ]],
+  constant float                          *insideFactors  [[ buffer(1) ]],
+  device MTLQuadTessellationFactorsHalf   *factors        [[ buffer(2) ]],
+  uint                                    pid             [[ thread_position_in_grid ]],
+  constant float4                         &cameraPosition [[ buffer(3) ]],
+  constant float4x4                       &modelMatrix    [[ buffer(4) ]],
+  constant float3                         *controlPoints  [[ buffer(5) ]],
+  constant Terrain                        &terrain        [[ buffer(TFSBufferIndexTerrain) ]]) {
     uint index = pid * 4;  // 4 is the number of control points per patch; may want to dynamically supply this
     float totalTessellation = 0;
     
