@@ -724,6 +724,10 @@
 		CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A335293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
 		CE98A336293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */; };
+		CEA8D6322F094AFC0058B5EA /* RenderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA8D6312F094AF40058B5EA /* RenderState.swift */; };
+		CEA8D6332F094AFC0058B5EA /* RenderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA8D6312F094AF40058B5EA /* RenderState.swift */; };
+		CEA8D6342F094AFC0058B5EA /* RenderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA8D6312F094AF40058B5EA /* RenderState.swift */; };
+		CEA8D6352F094AFC0058B5EA /* RenderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA8D6312F094AF40058B5EA /* RenderState.swift */; };
 		CEAA40272C746EE100009894 /* ClickSelectable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAA40262C746EE100009894 /* ClickSelectable.swift */; };
 		CEAA40282C746F3800009894 /* ClickSelectable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAA40262C746EE100009894 /* ClickSelectable.swift */; };
 		CEAA40292C746F3800009894 /* ClickSelectable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAA40262C746EE100009894 /* ClickSelectable.swift */; };
@@ -1056,6 +1060,7 @@
 		CE9625452CCCE26200CEA5A2 /* VerletSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerletSolver.swift; sourceTree = "<group>"; };
 		CE96254B2CCCE2A500CEA5A2 /* PhysicsWorld.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhysicsWorld.swift; sourceTree = "<group>"; };
 		CE98A333293871B500C79C81 /* MDLVertexDescriptorLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDLVertexDescriptorLibrary.swift; sourceTree = "<group>"; };
+		CEA8D6312F094AF40058B5EA /* RenderState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderState.swift; sourceTree = "<group>"; };
 		CEAA40262C746EE100009894 /* ClickSelectable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickSelectable.swift; sourceTree = "<group>"; };
 		CEAB3837297CCB2F0087F7CB /* OITRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OITRenderer.swift; sourceTree = "<group>"; };
 		CEAB383F297CDE770087F7CB /* Shadow.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shadow.metal; sourceTree = "<group>"; };
@@ -1707,6 +1712,7 @@
 			children = (
 				CE865C352DD0BBA80048BBDA /* Protocols */,
 				CE4530502A7F3EBF001945B9 /* FPS.swift */,
+				CEA8D6312F094AF40058B5EA /* RenderState.swift */,
 				CE7F48D228BCB4DD0082B197 /* GameView.swift */,
 				CE2ED2BB299CB8AA00C81F47 /* RendererType.swift */,
 				CE7F483928B76FF60082B197 /* Renderer.swift */,
@@ -2176,6 +2182,7 @@
 				CE387B462BDE273B00F51DC4 /* ParticleEmitterEntity.swift in Sources */,
 				CE79B6482B932B29009F2E49 /* TiledDeferredGBuffer.metal in Sources */,
 				CE79B60E2B92E117009F2E49 /* BasicDepthStencils.swift in Sources */,
+				CEA8D6342F094AFC0058B5EA /* RenderState.swift in Sources */,
 				CE452FE92A7CB4A6001945B9 /* Sphere.swift in Sources */,
 				CE79B63E2B931F19009F2E49 /* TiledDeferredPipeline.swift in Sources */,
 				CE452FFB2A7CB4A6001945B9 /* Aircraft.swift in Sources */,
@@ -2360,6 +2367,7 @@
 				CEAB3838297CCB2F0087F7CB /* OITRenderer.swift in Sources */,
 				CE45304B2A7F3A91001945B9 /* Keyboard.swift in Sources */,
 				CE98A334293871B500C79C81 /* MDLVertexDescriptorLibrary.swift in Sources */,
+				CEA8D6322F094AFC0058B5EA /* RenderState.swift in Sources */,
 				CE79B63B2B931F19009F2E49 /* TiledDeferredPipeline.swift in Sources */,
 				CE886A3B29825CB80013062D /* Skybox.metal in Sources */,
 				CE50C0F52C95564300202C45 /* ModelLibrary.swift in Sources */,
@@ -2600,6 +2608,7 @@
 				CE387B532BE230FE00F51DC4 /* ComputePipelineStateLibrary.swift in Sources */,
 				CE327B702C47670D004AF2D0 /* Afterburner.swift in Sources */,
 				CE9625482CCCE26700CEA5A2 /* VerletSolver.swift in Sources */,
+				CEA8D6332F094AFC0058B5EA /* RenderState.swift in Sources */,
 				CE3BFFB028E572EC0014A752 /* SkySphere.metal in Sources */,
 				CE865C4C2DDF09370048BBDA /* Tessellatable.swift in Sources */,
 				CE3BFF4E28E1B2150014A752 /* MetalTypes.swift in Sources */,
@@ -2724,6 +2733,7 @@
 				CE3E526528E9B15C00BBE8A0 /* SkySphere.swift in Sources */,
 				CE3BFF5E28E1B2BC0014A752 /* VertexDescriptorLibrary.swift in Sources */,
 				CE79B62D2B92E4B8009F2E49 /* TextureLoader.swift in Sources */,
+				CEA8D6352F094AFC0058B5EA /* RenderState.swift in Sources */,
 				CE3BFF7828E2FC0A0014A752 /* GameScene.swift in Sources */,
 				CE0601672A83796B001F8CC3 /* CapsuleObject.swift in Sources */,
 				CE3BFF7C28E2FC270014A752 /* SandboxScene.swift in Sources */,

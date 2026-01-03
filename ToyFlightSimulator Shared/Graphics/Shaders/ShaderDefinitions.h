@@ -20,6 +20,9 @@ struct VertexIn {
     float3 normal               [[ attribute(TFSVertexAttributeNormal) ]];
     float3 tangent              [[ attribute(TFSVertexAttributeTangent) ]];
     float3 bitangent            [[ attribute(TFSVertexAttributeBitangent) ]];
+    /* Animation */
+    ushort4 joints              [[ attribute(TFSVertexAttributeJoints) ]];
+    float4 jointWeights         [[ attribute(TFSVertexAttributeJointWeights) ]];
 };
 
 struct RasterizerData {

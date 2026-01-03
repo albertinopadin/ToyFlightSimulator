@@ -80,7 +80,7 @@ typedef struct {
 // Buffer index values shared between shader and C code to ensure Metal shader buffer inputs match
 // Metal API buffer set calls
 typedef enum {
-    TFSBufferIndexMeshPositions     = 0,
+    TFSBufferIndexMeshVertex        = 0,
     TFSBufferIndexMeshGenerics      = 1,
     TFSBufferFrameData              = 2,
     TFSBufferDirectionalLightsNum   = 3,
@@ -97,12 +97,14 @@ typedef enum {
 // Attribute index values shared between shader and C code to ensure Metal shader vertex
 // attribute indices match the Metal API vertex descriptor attribute indices
 typedef enum {
-    TFSVertexAttributePosition  = 0,
-    TFSVertexAttributeColor     = 1,
-    TFSVertexAttributeTexcoord  = 2,
-    TFSVertexAttributeNormal    = 3,
-    TFSVertexAttributeTangent   = 4,
-    TFSVertexAttributeBitangent = 5
+    TFSVertexAttributePosition     = 0,
+    TFSVertexAttributeColor        = 1,
+    TFSVertexAttributeTexcoord     = 2,
+    TFSVertexAttributeNormal       = 3,
+    TFSVertexAttributeTangent      = 4,
+    TFSVertexAttributeBitangent    = 5,
+    TFSVertexAttributeJoints       = 6,
+    TFSVertexAttributeJointWeights = 7
 } TFSVertexAttributes;
 
 // Texture index values shared between shader and C code to ensure Metal shader texture indices

@@ -16,7 +16,9 @@ extension TFSVertexAttributes {
             TFSVertexAttributeNormal,
             TFSVertexAttributeTangent,
             TFSVertexAttributeBitangent,
-            TFSVertexAttributeColor
+            TFSVertexAttributeColor,
+            TFSVertexAttributeJoints,
+            TFSVertexAttributeJointWeights
         ].sorted(by: { $0.rawValue < $1.rawValue })
     }
 }

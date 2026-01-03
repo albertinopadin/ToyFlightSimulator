@@ -15,7 +15,7 @@ typedef struct {
 } LightMaskOut;
 
 vertex LightMaskOut
-light_mask_vertex(const device float4         * vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
+light_mask_vertex(const device float4         * vertices        [[ buffer(TFSBufferIndexMeshVertex) ]],
                   const device LightData      * light_data      [[ buffer(TFSBufferPointLightsData) ]],
                   constant SceneConstants     & sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                   uint                          iid             [[ instance_id ]],
@@ -40,7 +40,7 @@ typedef struct {
 
 
 vertex LightInOut
-deferred_point_lighting_vertex(const device float4          *vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
+deferred_point_lighting_vertex(const device float4          *vertices        [[ buffer(TFSBufferIndexMeshVertex) ]],
                                const device LightData       *light_data      [[ buffer(TFSBufferPointLightsData) ]],
                                constant SceneConstants      &sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                                uint                          iid             [[ instance_id ]],
@@ -134,7 +134,7 @@ deferred_point_lighting_fragment(LightInOut                in           [[ stage
 
 
 // For testing:
-vertex LightInOut icosahedron_vertex(const device float4          *vertices        [[ buffer(TFSBufferIndexMeshPositions) ]],
+vertex LightInOut icosahedron_vertex(const device float4          *vertices        [[ buffer(TFSBufferIndexMeshVertex) ]],
                                      constant ModelConstants      &modelConstants  [[ buffer(TFSBufferModelConstants) ]],
                                      constant SceneConstants      &sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                                      uint                          vid             [[ vertex_id ]]) {

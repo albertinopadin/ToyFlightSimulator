@@ -104,7 +104,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering {
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setVertexBuffer(_quadVertexBuffer,
                                           offset: 0,
-                                          index: TFSBufferIndexMeshPositions.index)
+                                          index: TFSBufferIndexMeshVertex.index)
             
             // Draw full screen quad
             renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)

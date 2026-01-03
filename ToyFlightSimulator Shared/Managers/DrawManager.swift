@@ -15,8 +15,7 @@ final class DrawManager {
         renderEncoder.popDebugGroup()
     }
     
-    static func DrawOpaque(with renderEncoder: MTLRenderCommandEncoder,
-                           applyMaterials: Bool = true) {
+    static func DrawOpaque(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
         // Test:
 //        renderEncoder.setFrontFacing(.counterClockwise)
 //        renderEncoder.setCullMode(.front)
@@ -24,6 +23,35 @@ final class DrawManager {
         for (model, data) in SceneManager.GetUniformsData() {
             for meshData in data.meshDatas {
                 if !meshData.opaqueSubmeshes.isEmpty {
+                    /*
+                     * ------------------------------- Animation -------------------------------
+                     */
+                    
+                    if let paletteBuffer = meshData.mesh.skin?.jointMatrixPaletteBuffer {
+                        renderEncoder.setVertexBuffer(paletteBuffer,
+                                                      offset: 0,
+                                                      index: TFSBufferIndexJointBuffer.index)
+                        
+                        // Hack for now to set the proper PSO:
+                        if RenderState.CurrentPipelineStateType != .TiledMSAAGBufferAnimated {
+                            RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
+                            RenderState.CurrentPipelineStateType = .TiledMSAAGBufferAnimated
+                            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBufferAnimated])
+                        }
+                    } else {
+                        // TODO: Will only work with Tiled renderer for now:
+                        if RenderState.CurrentPipelineStateType == .TiledMSAAGBufferAnimated {
+                            renderEncoder.setVertexBuffer(nil,
+                                                          offset: 0,
+                                                          index: TFSBufferIndexJointBuffer.index)
+                            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[RenderState.PreviousPipelineStateType])
+                            RenderState.CurrentPipelineStateType = RenderState.PreviousPipelineStateType
+                        }
+                    }
+                    /*
+                     * ---------------------------------------------------------------------------
+                     */
+                    
                     Draw(renderEncoder,
                          model: model,
                          uniforms: data.uniforms,
@@ -37,11 +65,39 @@ final class DrawManager {
         DrawLines(with: renderEncoder)
     }
     
-    static func DrawTransparent(with renderEncoder: MTLRenderCommandEncoder,
-                                applyMaterials: Bool = true) {
+    static func DrawTransparent(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
         for (model, data) in SceneManager.GetUniformsData() {
             for meshData in data.meshDatas {
                 if !meshData.transparentSubmeshes.isEmpty {
+                    /*
+                     * ------------------------------- Animation -------------------------------
+                     */
+                    
+                    if let paletteBuffer = meshData.mesh.skin?.jointMatrixPaletteBuffer {
+                        renderEncoder.setVertexBuffer(paletteBuffer,
+                                                      offset: 0,
+                                                      index: TFSBufferIndexJointBuffer.index)
+                        
+                        // Hack for now to set the proper PSO:
+                        if RenderState.CurrentPipelineStateType != .TiledMSAAGBufferAnimated {
+                            RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
+                            RenderState.CurrentPipelineStateType = .TiledMSAAGBufferAnimated
+                            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBufferAnimated])
+                        }
+                    } else {
+                        // TODO: Will only work with Tiled renderer for now:
+                        if RenderState.CurrentPipelineStateType == .TiledMSAAGBufferAnimated {
+                            renderEncoder.setVertexBuffer(nil,
+                                                          offset: 0,
+                                                          index: TFSBufferIndexJointBuffer.index)
+                            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[RenderState.PreviousPipelineStateType])
+                            RenderState.CurrentPipelineStateType = RenderState.PreviousPipelineStateType
+                        }
+                    }
+                    /*
+                     * ---------------------------------------------------------------------------
+                     */
+                    
                     Draw(renderEncoder,
                          model: model,
                          uniforms: data.uniforms,
@@ -68,6 +124,36 @@ final class DrawManager {
     static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
         for (model, data) in SceneManager.GetUniformsData() {
             for meshData in data.meshDatas {
+                /*
+                 * ------------------------------- Animation -------------------------------
+                 */
+                
+                if let paletteBuffer = meshData.mesh.skin?.jointMatrixPaletteBuffer {
+                    renderEncoder.setVertexBuffer(paletteBuffer,
+                                                  offset: 0,
+                                                  index: TFSBufferIndexJointBuffer.index)
+                    
+                    // Hack for now to set the proper PSO:
+                    if RenderState.CurrentPipelineStateType != .TiledMSAAShadowAnimated {
+                        RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
+                        RenderState.CurrentPipelineStateType = .TiledMSAAShadowAnimated
+                        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAShadowAnimated])
+                    }
+                } else {
+                    // TODO: Will only work with Tiled renderer for now:
+                    if RenderState.CurrentPipelineStateType == .TiledMSAAShadowAnimated {
+                        renderEncoder.setVertexBuffer(nil,
+                                                      offset: 0,
+                                                      index: TFSBufferIndexJointBuffer.index)
+                        
+                        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[RenderState.PreviousPipelineStateType])
+                        RenderState.CurrentPipelineStateType = RenderState.PreviousPipelineStateType
+                    }
+                }
+                /*
+                 * ---------------------------------------------------------------------------
+                 */
+                
                 Draw(renderEncoder,
                      model: model,
                      uniforms: data.uniforms,
@@ -226,25 +312,10 @@ final class DrawManager {
         EncodeRender(using: renderEncoder, label: "Rendering \(model.name)") {
             if !uniforms.isEmpty {
                 var uniforms = uniforms
-//                renderEncoder.setVertexBytes(&uniforms,
-//                                             length: ModelConstants.stride(uniforms.count),
-//                                             index: TFSBufferModelConstants.index)
-                
-                // ***** Super not optimized! *****
-//                let uniformsBuffer = Engine.Device.makeBuffer(bytes: &uniforms,
-//                                                              length: ModelConstants.stride(uniforms.count))
-//                
-//                renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: TFSBufferModelConstants.index)
-                // *********************************
                 
                 /*
                  * ------------------------------- Animation -------------------------------
                  */
-                if let paletteBuffer = mesh.skin?.jointMatrixPaletteBuffer {
-                    renderEncoder.setVertexBuffer(paletteBuffer,
-                                                  offset: 0,
-                                                  index: TFSBufferIndexJointBuffer.index)
-                }
                 
                 // TODO2: Below code will animate *ALL* models that use the same mesh which is
                 //        probably *NOT* what we want. Hack for now to make this work...
@@ -253,14 +324,16 @@ final class DrawManager {
                     uniforms[idx].modelMatrix *= currentLocalTransform
                 }
                 
+                /*
+                 * ---------------------------------------------------------------------------
+                 */
+                
+                // ***** Super not optimized! *****
                 let uniformsBuffer = Engine.Device.makeBuffer(bytes: &uniforms,
                                                               length: ModelConstants.stride(uniforms.count))
                 
                 renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: TFSBufferModelConstants.index)
-                
-                /*
-                 * ---------------------------------------------------------------------------
-                 */
+                // *********************************
                 
                 for submesh in submeshes {
                     if let vertexBuffer = submesh.parentMesh!.vertexBuffer {

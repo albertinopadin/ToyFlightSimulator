@@ -17,7 +17,7 @@ struct QuadInOut
 };
 
 vertex QuadInOut
-deferred_directional_lighting_vertex(constant TFSSimpleVertex * vertices       [[ buffer(TFSBufferIndexMeshPositions) ]],
+deferred_directional_lighting_vertex(constant TFSSimpleVertex * vertices       [[ buffer(TFSBufferIndexMeshVertex) ]],
                                      constant SceneConstants  & sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                      uint                       vid            [[ vertex_id ]])
 {

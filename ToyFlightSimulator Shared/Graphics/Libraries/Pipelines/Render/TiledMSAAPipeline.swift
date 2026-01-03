@@ -28,11 +28,38 @@ struct TiledMSAAShadowPipelineState: RenderPipelineState {
     }()
 }
 
+struct TiledMSAAShadowAnimatedPipelineState: RenderPipelineState {
+    var renderPipelineState: MTLRenderPipelineState = {
+        createRenderPipelineState(label: "Tiled Multisampled Shadow Animated", block: { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
+            descriptor.vertexFunction = Graphics.Shaders[.ShadowAnimatedVertex]
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = .invalid
+            descriptor.depthAttachmentPixelFormat = .depth32Float
+            descriptor.rasterSampleCount = 4  // TODO: Refactor to set this dynamically
+        })
+    }()
+}
+
 struct TiledMSAAGBufferPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Multisampled GBuffer") { descriptor in
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredGBufferVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredGBufferFragment]
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
+            Self.setGBufferPixelFormatsForTiledMultisampledPipeline(descriptor: descriptor)
+            descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
+            descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
+            descriptor.rasterSampleCount = 4  // TODO: Refactor to set this dynamically
+        }
+    }()
+}
+
+struct TiledMSAAGBufferAnimatedPipelineState: RenderPipelineState {
+    var renderPipelineState: MTLRenderPipelineState = {
+        createRenderPipelineState(label: "Tiled Multisampled GBuffer") { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
+            descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredGBufferAnimatedVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredGBufferFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             Self.setGBufferPixelFormatsForTiledMultisampledPipeline(descriptor: descriptor)

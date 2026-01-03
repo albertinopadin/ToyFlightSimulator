@@ -18,7 +18,8 @@ public struct SimpleVertexDescriptor: VertexDescriptor {
         vertexDescriptor = MTLVertexDescriptor()
         
         for vertexAttribute in TFSVertexAttributes.allCases {
-            addAttributeWithOffset(format: getFormatForVertexAttribute(vertexAttribute), bufferIndex: 0)
+            addAttributeWithOffset(format: getFormatForVertexAttribute(vertexAttribute),
+                                   bufferIndex: TFSBufferIndexMeshVertex.index)
         }
         
         vertexDescriptor.layouts[0].stride = Vertex.stride
@@ -39,7 +40,8 @@ public struct PositionOnlyVertexDescriptor: VertexDescriptor {
     
     init() {
         vertexDescriptor = MTLVertexDescriptor()
-        addAttributeWithOffset(format: getFormatForVertexAttribute(TFSVertexAttributePosition), bufferIndex: 0)
+        addAttributeWithOffset(format: getFormatForVertexAttribute(TFSVertexAttributePosition),
+                               bufferIndex: TFSBufferIndexMeshVertex.index)
         vertexDescriptor.layouts[0].stride = float4.stride
     }
 }
@@ -53,8 +55,10 @@ public struct TessellationVertexDescriptor: VertexDescriptor {
     
     init() {
         vertexDescriptor = MTLVertexDescriptor()
-        addAttributeWithOffset(format: getFormatForVertexAttribute(TFSVertexAttributePosition), bufferIndex: 0)
-        addAttributeWithOffset(format: getFormatForVertexAttribute(TFSVertexAttributeColor), bufferIndex: 0)
+        addAttributeWithOffset(format: getFormatForVertexAttribute(TFSVertexAttributePosition),
+                               bufferIndex: TFSBufferIndexMeshVertex.index)
+        addAttributeWithOffset(format: getFormatForVertexAttribute(TFSVertexAttributeColor),
+                               bufferIndex: TFSBufferIndexMeshVertex.index)
         vertexDescriptor.layouts[0].stride = float4.stride * 2
         vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
     }
@@ -72,12 +76,12 @@ public struct SkyboxVertexDescriptor: VertexDescriptor {
         
         addAttribute(attributeIdx: 0,
                      format: .float3,
-                     bufferIndex: 0,
+                     bufferIndex: TFSBufferIndexMeshVertex.index,
                      m_offset: 0)
 
         addAttribute(attributeIdx: 1,
                      format: .float3,
-                     bufferIndex: 0,
+                     bufferIndex: TFSBufferIndexMeshVertex.index,
                      m_offset: getOffsetForFormat(.float3))
 
         vertexDescriptor.layouts[0].stride = 36

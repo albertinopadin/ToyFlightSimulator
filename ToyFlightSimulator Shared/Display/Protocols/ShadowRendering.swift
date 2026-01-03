@@ -64,7 +64,8 @@ extension ShadowRendering {
         encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Map Pass") { renderEncoder in
             SceneManager.SetDirectionalLightConstants(with: renderEncoder)
             encodeRenderStage(using: renderEncoder, label: "Shadow Generation Stage") {
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ShadowGeneration])
+//                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ShadowGeneration])
+                setRenderPipelineState(renderEncoder, state: .ShadowGeneration)
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.ShadowGeneration])
 //                renderEncoder.setCullMode(.back)
 //                renderEncoder.setCullMode(.front)
@@ -79,7 +80,8 @@ extension ShadowRendering {
     func encodeShadowPassTiledDeferred(into commandBuffer: MTLCommandBuffer) {
         encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Pass") { renderEncoder in
             encodeRenderStage(using: renderEncoder, label: "Shadow Texture Stage") {
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredShadow])
+//                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredShadow])
+                setRenderPipelineState(renderEncoder, state: .TiledDeferredShadow)
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredShadow])
                 SceneManager.SetDirectionalLightConstants(with: renderEncoder)
                 DrawManager.DrawOpaque(with: renderEncoder)  // TODO: Why not DrawShadows ???
@@ -90,10 +92,12 @@ extension ShadowRendering {
     func encodeMSAAShadowPass(into commandBuffer: MTLCommandBuffer) {
         encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "MSAA Shadow Pass") { renderEncoder in
             encodeRenderStage(using: renderEncoder, label: "Shadow Texture Stage") {
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAShadow])
+//                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAShadow])
+                setRenderPipelineState(renderEncoder, state: .TiledMSAAShadow)
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredShadow])
                 SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                DrawManager.DrawOpaque(with: renderEncoder)
+//                DrawManager.DrawOpaque(with: renderEncoder)
+                DrawManager.DrawShadows(with: renderEncoder)
             }
         }
     }

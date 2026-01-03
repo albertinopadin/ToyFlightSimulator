@@ -11,12 +11,15 @@ using namespace metal;
 #import "ShaderDefinitions.h"
 #import "Lighting.metal"
 
-vertex VertexOut 
-tiled_deferred_gbuffer_vertex(VertexIn                in              [[ stage_in ]],
-                              constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-                              constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
-                              constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
-                              uint                    instanceId      [[ instance_id ]]) {
+//constant bool hasSkeleton [[ function_constant(0) ]];
+
+vertex VertexOut
+tiled_deferred_gbuffer_vertex(
+           VertexIn       in              [[ stage_in ]],
+  constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+  constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+  constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+           uint           instanceId      [[ instance_id ]]) {
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 worldPosition = modelInstance.modelMatrix * float4(in.position, 1);
     float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
@@ -24,6 +27,51 @@ tiled_deferred_gbuffer_vertex(VertexIn                in              [[ stage_i
     VertexOut out {
         .position = position,
         .normal = in.normal,
+        .uv = in.textureCoordinate,
+        .worldPosition = worldPosition.xyz / worldPosition.w,
+        .worldNormal = modelInstance.normalMatrix * in.normal,
+        .worldTangent = modelInstance.normalMatrix * in.tangent,
+        .worldBitangent = modelInstance.normalMatrix * in.bitangent,
+        .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition,
+        .instanceId = instanceId,
+        .objectColor = modelInstance.objectColor,
+        .useObjectColor = modelInstance.useObjectColor
+    };
+    return out;
+}
+
+vertex VertexOut 
+tiled_deferred_gbuffer_animated_vertex(
+           VertexIn       in              [[ stage_in ]],
+  constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+  constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+  constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+  constant float4x4       *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
+           uint           instanceId      [[ instance_id ]]) {
+    ModelConstants modelInstance = modelConstants[instanceId];
+    float4 worldPosition = modelInstance.modelMatrix * float4(in.position, 1);
+    float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
+    float4 normal = float4(in.normal, 0);
+    
+    // Hope this works, ugh...
+    if (jointMatrices != nullptr) {
+        float4 weights = in.jointWeights;
+        ushort4 joints = in.joints;
+        
+        position = weights.x * (jointMatrices[joints.x] * position) +
+                weights.y * (jointMatrices[joints.y] * position) +
+                weights.z * (jointMatrices[joints.z] * position) +
+                weights.w * (jointMatrices[joints.w] * position);
+        
+        normal = weights.x * (jointMatrices[joints.x] * normal) +
+                weights.y * (jointMatrices[joints.y] * normal) +
+                weights.z * (jointMatrices[joints.z] * normal) +
+                weights.w * (jointMatrices[joints.w] * normal);
+    }
+    
+    VertexOut out {
+        .position = position,
+        .normal = normal.xyz,
         .uv = in.textureCoordinate,
         .worldPosition = worldPosition.xyz / worldPosition.w,
         .worldNormal = modelInstance.normalMatrix * in.normal,

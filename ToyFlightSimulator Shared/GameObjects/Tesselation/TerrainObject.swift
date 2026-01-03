@@ -108,7 +108,7 @@ final class TerrainObject: GameObject, Tessellatable {
     
     func setRenderState(_ renderEncoder: any MTLRenderCommandEncoder) {
         renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
-        renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)  // TFSBufferIndexMeshPositions.index
+        renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: TFSBufferIndexMeshVertex.index)
         renderEncoder.setVertexBytes(&terrain, length: Terrain.stride, index: TFSBufferIndexTerrain.index)
         renderEncoder.setVertexTexture(heightMap, index: TFSTextureIndexHeightMap.index)
         

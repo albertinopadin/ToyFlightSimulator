@@ -99,7 +99,8 @@ final class TiledMSAATessellatedRenderer: Renderer, ShadowRendering, ParticleRen
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBuffer])
+//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBuffer])
+            setRenderPipelineState(renderEncoder, state: .TiledMSAAGBuffer)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             renderEncoder.setFragmentTexture(shadowResolveTexture, index: TFSTextureIndexShadow.index)
             DrawManager.DrawOpaque(with: renderEncoder)
@@ -116,7 +117,8 @@ final class TiledMSAATessellatedRenderer: Renderer, ShadowRendering, ParticleRen
     
     func encodeDirectionalLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Directional Light Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAADirectionalLight])
+//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAADirectionalLight])
+            setRenderPipelineState(renderEncoder, state: .TiledMSAADirectionalLight)
             // Draw full screen quad
             renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
         }
@@ -128,7 +130,8 @@ final class TiledMSAATessellatedRenderer: Renderer, ShadowRendering, ParticleRen
     
     func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAATransparency])
+//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAATransparency])
+            setRenderPipelineState(renderEncoder, state: .TiledMSAATransparency)
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessNoWrite])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredTransparency])
@@ -138,7 +141,8 @@ final class TiledMSAATessellatedRenderer: Renderer, ShadowRendering, ParticleRen
     
     func encodeMSAAResolveStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "MSAA Resolve Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAAverageResolve])
+//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAAverageResolve])
+            setRenderPipelineState(renderEncoder, state: .TiledMSAAAverageResolve)
             renderEncoder.dispatchThreadsPerTile(MTLSize(width: 16, height: 16, depth: 1))
         }
     }
@@ -146,7 +150,8 @@ final class TiledMSAATessellatedRenderer: Renderer, ShadowRendering, ParticleRen
     func encodeCompositeStage(using renderEncoder: MTLRenderCommandEncoder) {
         let resolveTexture = tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].resolveTexture
         encodeRenderStage(using: renderEncoder, label: "Composite Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Composite])
+//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Composite])
+            setRenderPipelineState(renderEncoder, state: .Composite)
             renderEncoder.setFragmentTexture(resolveTexture, index: 0)
             renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
         }

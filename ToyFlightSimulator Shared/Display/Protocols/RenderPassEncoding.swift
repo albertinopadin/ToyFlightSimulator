@@ -10,6 +10,12 @@ import MetalKit
 protocol RenderPassEncoding {}
 
 extension RenderPassEncoding {
+    func setRenderPipelineState(_ renderEncoder: MTLRenderCommandEncoder, state: RenderPipelineStateType) {
+        RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
+        RenderState.CurrentPipelineStateType = state
+        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[state])
+    }
+    
     func encodeRenderPass(into commandBuffer: MTLCommandBuffer,
                           using descriptor: MTLRenderPassDescriptor,
                           label: String,

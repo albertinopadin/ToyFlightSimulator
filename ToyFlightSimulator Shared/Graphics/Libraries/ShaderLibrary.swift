@@ -67,6 +67,10 @@ enum ShaderType {
     case TessellationFragment
     case TessellationGBufferFragment
     
+    // Animated:
+    case ShadowAnimatedVertex
+    case TiledDeferredGBufferAnimatedVertex
+    
     // Compute Shaders:
     case ComputeParticles
     case ComputeTessellation
@@ -84,6 +88,7 @@ final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable
         _library.updateValue(Shader(functionName: "quad_pass_vertex"), forKey: .QuadPassVertex)
         
         _library.updateValue(Shader(functionName: "shadow_vertex"), forKey: .ShadowVertex)
+        _library.updateValue(Shader(functionName: "shadow_animated_vertex"), forKey: .ShadowAnimatedVertex)
         _library.updateValue(Shader(functionName: "gbuffer_vertex"), forKey: .SinglePassDeferredGBufferVertex)
         _library.updateValue(Shader(functionName: "deferred_directional_lighting_vertex"),
                              forKey: .SinglePassDeferredDirectionalLightVertex)
@@ -148,6 +153,13 @@ final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable
         _library.updateValue(Shader(functionName: "tessellation_vertex"), forKey: .TessellationVertex)
         _library.updateValue(Shader(functionName: "tessellation_fragment"), forKey: .TessellationFragment)
         _library.updateValue(Shader(functionName: "tessellation_gbuffer_fragment"), forKey: .TessellationGBufferFragment)
+        
+//        let functionConstants = makeFunctionConstants(hasSkeleton: hasSkeleton)
+        /* TODO: Will figure out proper way to use function constants later...
+         */
+        
+        _library.updateValue(Shader(functionName: "tiled_deferred_gbuffer_animated_vertex"),
+                             forKey: .TiledDeferredGBufferAnimatedVertex)
         
         // Compute Functions:
         _library.updateValue(Shader(functionName: "compute_particle"), forKey: .ComputeParticles)

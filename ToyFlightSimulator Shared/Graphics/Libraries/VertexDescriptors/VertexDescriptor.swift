@@ -41,6 +41,8 @@ extension VertexDescriptor {
             return float3.size
         case .float4:
             return float4.size
+        case .ushort4:
+            return simd_ushort4.size
         default:
             return float4.size
         }
@@ -53,6 +55,10 @@ extension VertexDescriptor {
             case TFSVertexAttributePosition, TFSVertexAttributeNormal, TFSVertexAttributeTangent, TFSVertexAttributeBitangent:
                 return .float3
             case TFSVertexAttributeColor:
+                return .float4
+            case TFSVertexAttributeJoints:
+                return .ushort4
+            case TFSVertexAttributeJointWeights:
                 return .float4
             default:
                 return .float3

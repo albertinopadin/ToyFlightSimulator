@@ -33,13 +33,16 @@ enum RenderPipelineStateType {
     // For Tiled Deferred:
     case TiledDeferredShadow
     case TiledDeferredGBuffer
+    case TiledDeferredGBufferAnimated
     case TiledDeferredDirectionalLight
     case TiledDeferredPointLight
     case TiledDeferredTransparency
     
     // Tiled MSAA:
     case TiledMSAAShadow
+    case TiledMSAAShadowAnimated
     case TiledMSAAGBuffer
+    case TiledMSAAGBufferAnimated
     case TiledMSAADirectionalLight
     case TiledMSAAPointLight
     case TiledMSAATransparency
@@ -86,6 +89,7 @@ final class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRend
         
         _library.updateValue(TiledDeferredShadowPipelineState(), forKey: .TiledDeferredShadow)
         _library.updateValue(TiledDeferredGBufferPipelineState(), forKey: .TiledDeferredGBuffer)
+        _library.updateValue(TiledDeferredGBufferAnimatedPipelineState(), forKey: .TiledDeferredGBufferAnimated)
         _library.updateValue(TiledDeferredDirectionalLightPipelineState(), forKey: .TiledDeferredDirectionalLight)
         _library.updateValue(TiledDeferredPointLightPipelineState(), forKey: .TiledDeferredPointLight)
         _library.updateValue(TiledDeferredTransparencyPipelineState(), forKey: .TiledDeferredTransparency)
@@ -94,7 +98,9 @@ final class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRend
         
         // MSAA:
         _library.updateValue(TiledMSAAShadowPipelineState(), forKey: .TiledMSAAShadow)
+        _library.updateValue(TiledMSAAShadowAnimatedPipelineState(), forKey: .TiledMSAAShadowAnimated)
         _library.updateValue(TiledMSAAGBufferPipelineState(), forKey: .TiledMSAAGBuffer)
+        _library.updateValue(TiledMSAAGBufferAnimatedPipelineState(), forKey: .TiledMSAAGBufferAnimated)
         _library.updateValue(TiledMSAADirectionalLightPipelineState(), forKey: .TiledMSAADirectionalLight)
         _library.updateValue(TiledMSAAPointLightPipelineState(), forKey: .TiledMSAAPointLight)
         _library.updateValue(TiledMSAATransparencyPipelineState(), forKey: .TiledMSAATransparency)
