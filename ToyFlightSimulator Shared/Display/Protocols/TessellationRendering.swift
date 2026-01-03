@@ -30,7 +30,8 @@ extension TessellationRendering {
     
     func encodeTessellationRenderPass(with renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Tessellation") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TessellationGBuffer])
+//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TessellationGBuffer])
+            setRenderPipelineState(renderEncoder, state: .TessellationGBuffer)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             DrawManager.DrawTessellatables(with: renderEncoder)
         }

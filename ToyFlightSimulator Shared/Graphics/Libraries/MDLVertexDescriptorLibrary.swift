@@ -30,25 +30,33 @@ public struct BaseMDLVertexDescriptor {
     var offset: Int = 0
     
     init() {
+        let vertexBufferIdx = TFSBufferIndexMeshVertex.index
+        
         mdlVertexDescriptor = MDLVertexDescriptor()
         
         // Position
-        addAttribute(name: MDLVertexAttributePosition, format: .float3, bufferIndex: 0)
+        addAttribute(name: MDLVertexAttributePosition, format: .float3, bufferIndex: vertexBufferIdx)
         
         // Color
-        addAttribute(name: MDLVertexAttributeColor, format: .float4, bufferIndex: 0)
+        addAttribute(name: MDLVertexAttributeColor, format: .float4, bufferIndex: vertexBufferIdx)
         
         // Texture Coordinate
-        addAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, bufferIndex: 0)
+        addAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, bufferIndex: vertexBufferIdx)
         
         // Normal
-        addAttribute(name: MDLVertexAttributeNormal, format: .float3, bufferIndex: 0)
+        addAttribute(name: MDLVertexAttributeNormal, format: .float3, bufferIndex: vertexBufferIdx)
         
         // Tangent
-        addAttribute(name: MDLVertexAttributeTangent, format: .float3, bufferIndex: 0)
+        addAttribute(name: MDLVertexAttributeTangent, format: .float3, bufferIndex: vertexBufferIdx)
         
         // Bitangent
-        addAttribute(name: MDLVertexAttributeBitangent, format: .float3, bufferIndex: 0)
+        addAttribute(name: MDLVertexAttributeBitangent, format: .float3, bufferIndex: vertexBufferIdx)
+        
+        // Joint Indices
+        addAttribute(name: MDLVertexAttributeJointIndices, format: .uShort4, bufferIndex: vertexBufferIdx)
+        
+        // Joint Weights
+        addAttribute(name: MDLVertexAttributeJointWeights, format: .float4, bufferIndex: vertexBufferIdx)
         
         (mdlVertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride = Vertex.stride
     }
@@ -70,6 +78,8 @@ public struct BaseMDLVertexDescriptor {
             return float3.size
         case .float4:
             return float4.size
+        case .uShort4:
+            return simd_ushort4.size
         default:
             return float4.size
         }

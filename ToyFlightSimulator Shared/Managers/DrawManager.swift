@@ -27,27 +27,8 @@ final class DrawManager {
                      * ------------------------------- Animation -------------------------------
                      */
                     
-                    if let paletteBuffer = meshData.mesh.skin?.jointMatrixPaletteBuffer {
-                        renderEncoder.setVertexBuffer(paletteBuffer,
-                                                      offset: 0,
-                                                      index: TFSBufferIndexJointBuffer.index)
-                        
-                        // Hack for now to set the proper PSO:
-                        if RenderState.CurrentPipelineStateType != .TiledMSAAGBufferAnimated {
-                            RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
-                            RenderState.CurrentPipelineStateType = .TiledMSAAGBufferAnimated
-                            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBufferAnimated])
-                        }
-                    } else {
-                        // TODO: Will only work with Tiled renderer for now:
-                        if RenderState.CurrentPipelineStateType == .TiledMSAAGBufferAnimated {
-                            renderEncoder.setVertexBuffer(nil,
-                                                          offset: 0,
-                                                          index: TFSBufferIndexJointBuffer.index)
-                            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[RenderState.PreviousPipelineStateType])
-                            RenderState.CurrentPipelineStateType = RenderState.PreviousPipelineStateType
-                        }
-                    }
+//                    SetupAnimation(renderEncoder, mesh: meshData.mesh)
+                    
                     /*
                      * ---------------------------------------------------------------------------
                      */
@@ -73,27 +54,8 @@ final class DrawManager {
                      * ------------------------------- Animation -------------------------------
                      */
                     
-                    if let paletteBuffer = meshData.mesh.skin?.jointMatrixPaletteBuffer {
-                        renderEncoder.setVertexBuffer(paletteBuffer,
-                                                      offset: 0,
-                                                      index: TFSBufferIndexJointBuffer.index)
-                        
-                        // Hack for now to set the proper PSO:
-                        if RenderState.CurrentPipelineStateType != .TiledMSAAGBufferAnimated {
-                            RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
-                            RenderState.CurrentPipelineStateType = .TiledMSAAGBufferAnimated
-                            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBufferAnimated])
-                        }
-                    } else {
-                        // TODO: Will only work with Tiled renderer for now:
-                        if RenderState.CurrentPipelineStateType == .TiledMSAAGBufferAnimated {
-                            renderEncoder.setVertexBuffer(nil,
-                                                          offset: 0,
-                                                          index: TFSBufferIndexJointBuffer.index)
-                            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[RenderState.PreviousPipelineStateType])
-                            RenderState.CurrentPipelineStateType = RenderState.PreviousPipelineStateType
-                        }
-                    }
+//                    SetupAnimation(renderEncoder, mesh: meshData.mesh)
+                    
                     /*
                      * ---------------------------------------------------------------------------
                      */
@@ -120,6 +82,32 @@ final class DrawManager {
         }
     }
     
+    static func SetupAnimation(_ renderEncoder: MTLRenderCommandEncoder,
+                               mesh: Mesh,
+                               animationPipelineStateType: RenderPipelineStateType = .TiledMSAAGBufferAnimated) {
+        if let paletteBuffer = mesh.skin?.jointMatrixPaletteBuffer {
+            renderEncoder.setVertexBuffer(paletteBuffer,
+                                          offset: 0,
+                                          index: TFSBufferIndexJointBuffer.index)
+            
+            // Hack for now to set the proper PSO:
+            if RenderState.CurrentPipelineStateType != animationPipelineStateType {
+                RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
+                RenderState.CurrentPipelineStateType = animationPipelineStateType
+                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[animationPipelineStateType])
+            }
+        } else {
+            // TODO: Will only work with Tiled renderer for now:
+            if RenderState.CurrentPipelineStateType == animationPipelineStateType {
+                renderEncoder.setVertexBuffer(nil,
+                                              offset: 0,
+                                              index: TFSBufferIndexJointBuffer.index)
+                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[RenderState.PreviousPipelineStateType])
+                RenderState.CurrentPipelineStateType = RenderState.PreviousPipelineStateType
+            }
+        }
+    }
+    
     // I really don't like this long term...
     static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
         for (model, data) in SceneManager.GetUniformsData() {
@@ -128,28 +116,8 @@ final class DrawManager {
                  * ------------------------------- Animation -------------------------------
                  */
                 
-                if let paletteBuffer = meshData.mesh.skin?.jointMatrixPaletteBuffer {
-                    renderEncoder.setVertexBuffer(paletteBuffer,
-                                                  offset: 0,
-                                                  index: TFSBufferIndexJointBuffer.index)
-                    
-                    // Hack for now to set the proper PSO:
-                    if RenderState.CurrentPipelineStateType != .TiledMSAAShadowAnimated {
-                        RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
-                        RenderState.CurrentPipelineStateType = .TiledMSAAShadowAnimated
-                        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAShadowAnimated])
-                    }
-                } else {
-                    // TODO: Will only work with Tiled renderer for now:
-                    if RenderState.CurrentPipelineStateType == .TiledMSAAShadowAnimated {
-                        renderEncoder.setVertexBuffer(nil,
-                                                      offset: 0,
-                                                      index: TFSBufferIndexJointBuffer.index)
-                        
-                        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[RenderState.PreviousPipelineStateType])
-                        RenderState.CurrentPipelineStateType = RenderState.PreviousPipelineStateType
-                    }
-                }
+//                SetupAnimation(renderEncoder, mesh: meshData.mesh, animationPipelineStateType: .TiledMSAAShadowAnimated)
+                
                 /*
                  * ---------------------------------------------------------------------------
                  */
@@ -319,10 +287,10 @@ final class DrawManager {
                 
                 // TODO2: Below code will animate *ALL* models that use the same mesh which is
                 //        probably *NOT* what we want. Hack for now to make this work...
-                let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
-                for idx in 0..<uniforms.count {
-                    uniforms[idx].modelMatrix *= currentLocalTransform
-                }
+//                let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
+//                for idx in 0..<uniforms.count {
+//                    uniforms[idx].modelMatrix *= currentLocalTransform
+//                }
                 
                 /*
                  * ---------------------------------------------------------------------------

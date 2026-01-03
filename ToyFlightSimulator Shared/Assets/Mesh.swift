@@ -116,18 +116,22 @@ class Mesh {
     
     internal static func createMdlVertexDescriptor() -> MDLVertexDescriptor {
         let descriptor = MTKModelIOVertexDescriptorFromMetal(Graphics.VertexDescriptors[.Simple])
-        descriptor.attribute(TFSVertexAttributePosition.rawValue).name      = MDLVertexAttributePosition
-        descriptor.attribute(TFSVertexAttributePosition.rawValue).format    = .float3
-        descriptor.attribute(TFSVertexAttributeColor.rawValue).name         = MDLVertexAttributeColor
-        descriptor.attribute(TFSVertexAttributeColor.rawValue).format       = .float4
-        descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).name      = MDLVertexAttributeTextureCoordinate
-        descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).format    = .float2
-        descriptor.attribute(TFSVertexAttributeNormal.rawValue).name        = MDLVertexAttributeNormal
-        descriptor.attribute(TFSVertexAttributeNormal.rawValue).format      = .float3
-        descriptor.attribute(TFSVertexAttributeTangent.rawValue).name       = MDLVertexAttributeTangent
-        descriptor.attribute(TFSVertexAttributeTangent.rawValue).format     = .float3
-        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name     = MDLVertexAttributeBitangent
-        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).format   = .float3
+        descriptor.attribute(TFSVertexAttributePosition.rawValue).name       = MDLVertexAttributePosition
+        descriptor.attribute(TFSVertexAttributePosition.rawValue).format     = .float3
+        descriptor.attribute(TFSVertexAttributeColor.rawValue).name          = MDLVertexAttributeColor
+        descriptor.attribute(TFSVertexAttributeColor.rawValue).format        = .float4
+        descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).name       = MDLVertexAttributeTextureCoordinate
+        descriptor.attribute(TFSVertexAttributeTexcoord.rawValue).format     = .float2
+        descriptor.attribute(TFSVertexAttributeNormal.rawValue).name         = MDLVertexAttributeNormal
+        descriptor.attribute(TFSVertexAttributeNormal.rawValue).format       = .float3
+        descriptor.attribute(TFSVertexAttributeTangent.rawValue).name        = MDLVertexAttributeTangent
+        descriptor.attribute(TFSVertexAttributeTangent.rawValue).format      = .float3
+        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).name      = MDLVertexAttributeBitangent
+        descriptor.attribute(TFSVertexAttributeBitangent.rawValue).format    = .float3
+        descriptor.attribute(TFSVertexAttributeJoints.rawValue).name         = MDLVertexAttributeJointIndices
+        descriptor.attribute(TFSVertexAttributeJoints.rawValue).format       = .uShort4
+        descriptor.attribute(TFSVertexAttributeJointWeights.rawValue).name   = MDLVertexAttributeJointWeights
+        descriptor.attribute(TFSVertexAttributeJointWeights.rawValue).format = .float4
         return descriptor
     }
     
