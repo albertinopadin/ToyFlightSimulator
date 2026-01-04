@@ -25,6 +25,8 @@ struct VertexIn {
     float4 jointWeights         [[ attribute(TFSVertexAttributeJointWeights) ]];
 };
 
+using ControlPoint = VertexIn;
+
 struct RasterizerData {
     float4 position [[ position ]];
     float4 color;

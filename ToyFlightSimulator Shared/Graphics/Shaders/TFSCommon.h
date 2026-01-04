@@ -202,16 +202,4 @@ typedef struct {
     uint32_t maxTessellation;
 } Terrain;
 
-struct ControlPoint {
-    vector_float3 position             [[ attribute(TFSVertexAttributePosition) ]];
-    vector_float4 color                [[ attribute(TFSVertexAttributeColor) ]];
-    vector_float2 textureCoordinate    [[ attribute(TFSVertexAttributeTexcoord) ]];
-    vector_float3 normal               [[ attribute(TFSVertexAttributeNormal) ]];
-    vector_float3 tangent              [[ attribute(TFSVertexAttributeTangent) ]];
-    vector_float3 bitangent            [[ attribute(TFSVertexAttributeBitangent) ]];
-    /* Animation */
-    vector_ushort4 joints              [[ attribute(TFSVertexAttributeJoints) ]];
-    vector_float4 jointWeights         [[ attribute(TFSVertexAttributeJointWeights) ]];
-};
-
 #endif /* TFSCommon_h */
