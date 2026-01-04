@@ -27,7 +27,7 @@ final class DrawManager {
                      * ------------------------------- Animation -------------------------------
                      */
                     
-//                    SetupAnimation(renderEncoder, mesh: meshData.mesh)
+                    SetupAnimation(renderEncoder, mesh: meshData.mesh)
                     
                     /*
                      * ---------------------------------------------------------------------------
@@ -54,7 +54,7 @@ final class DrawManager {
                      * ------------------------------- Animation -------------------------------
                      */
                     
-//                    SetupAnimation(renderEncoder, mesh: meshData.mesh)
+                    SetupAnimation(renderEncoder, mesh: meshData.mesh)
                     
                     /*
                      * ---------------------------------------------------------------------------
@@ -116,7 +116,7 @@ final class DrawManager {
                  * ------------------------------- Animation -------------------------------
                  */
                 
-//                SetupAnimation(renderEncoder, mesh: meshData.mesh, animationPipelineStateType: .TiledMSAAShadowAnimated)
+                SetupAnimation(renderEncoder, mesh: meshData.mesh, animationPipelineStateType: .TiledMSAAShadowAnimated)
                 
                 /*
                  * ---------------------------------------------------------------------------
@@ -287,10 +287,10 @@ final class DrawManager {
                 
                 // TODO2: Below code will animate *ALL* models that use the same mesh which is
                 //        probably *NOT* what we want. Hack for now to make this work...
-//                let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
-//                for idx in 0..<uniforms.count {
-//                    uniforms[idx].modelMatrix *= currentLocalTransform
-//                }
+                let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
+                for idx in 0..<uniforms.count {
+                    uniforms[idx].modelMatrix *= currentLocalTransform
+                }
                 
                 /*
                  * ---------------------------------------------------------------------------

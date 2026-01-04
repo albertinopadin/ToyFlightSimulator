@@ -58,17 +58,7 @@ struct Vertex: HasNormal, sizeable {
     var jointWeights: float4 = [0, 0, 0, 0]
 }
 
-// TODO: Repeating myself:
-struct ControlPoint: HasNormal, sizeable {
-    var position: float3 = [0, 0, 0]
-    var color: float4 = [0, 0, 0, 1]
-    var textureCoordinate: float2 = [0, 0]
-    var normal: float3 = [0, 0, 1]
-    var tangent: float3 = [1, 0, 0]
-    var bitangent: float3 = [0, 1, 0]
-    var joints: simd_ushort4 = [0, 0, 0, 0]  // TODO: There can be more joints than just 4
-    var jointWeights: float4 = [0, 0, 0, 0]
-}
+typealias ControlPoint = Vertex
 
 extension ModelConstants: sizeable {}
 

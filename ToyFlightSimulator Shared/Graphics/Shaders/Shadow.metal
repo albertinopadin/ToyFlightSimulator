@@ -49,11 +49,6 @@ vertex ShadowOutput shadow_animated_vertex(
                 weights.y * (jointMatrices[joints.y] * position) +
                 weights.z * (jointMatrices[joints.z] * position) +
                 weights.w * (jointMatrices[joints.w] * position);
-        
-//        normal = weights.x * (jointMatrices[joints.x] * normal) +
-//                weights.y * (jointMatrices[joints.y] * normal) +
-//                weights.z * (jointMatrices[joints.z] * normal) +
-//                weights.w * (jointMatrices[joints.w] * normal);
     }
     
     ShadowOutput out = {
