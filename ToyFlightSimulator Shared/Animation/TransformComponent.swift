@@ -45,22 +45,63 @@ struct TransformComponent {
     let duration: Float
     var currentTransform: float4x4 = .identity
 
-    init(object: MDLObject, startTime: TimeInterval, endTime: TimeInterval) {
+    init(object: MDLObject, startTime: TimeInterval, endTime: TimeInterval, basisTransform: float4x4? = nil) {
         duration = Float(endTime - startTime)
+        
         let timeStride = stride(
             from: startTime,
             to: endTime,
             by: 1 / TimeInterval(FPS.FPS_120.rawValue)
         )
+        
+//        keyTransforms = Array(timeStride).map { time in
+//            MDLTransform.globalTransform(with: object, atTime: time)
+//        }
+        
         keyTransforms = Array(timeStride).map { time in
-            MDLTransform.globalTransform(
-                with: object,
-                atTime: time
-            )
+            var transform: float4x4 = .identity
+            if let basisTransform {
+                print("[TransformComponent init] basis transform present!")
+                transform = basisTransform
+            }
+            
+            return MDLTransform.globalTransform(with: object, atTime: time) * transform
+//            return transform * MDLTransform.globalTransform(with: object, atTime: time)
         }
     }
+    
+    public func printKeyTransforms() {
+        print("[TransformComponent key transform] count: \(keyTransforms.count)")
+        for (i, kt) in keyTransforms.enumerated() {
+            print("[TransformComponent key transform] key transform \(i):")
+            prettyPrintMatrix(kt)
+        }
+    }
+    
+    private func prettyPrintMatrix(_ matrix: float4x4) {
+        for i in 0..<4 {
+            print("[TransformComponent key transform]:  \(stringWithPrecision(matrix[i].x)),     \(stringWithPrecision(matrix[i].y)),    \(stringWithPrecision(matrix[i].z)),     \(stringWithPrecision(matrix[i].w))")
+        }
+    }
+    
+    private func stringWithPrecision(_ num: any BinaryFloatingPoint, precision: Int = 4) -> String {
+        return String(format: "%.\(precision)f", num as! CVarArg)
+    }
 
-    mutating func getCurrentTransform(at time: Float) {
+//    mutating func setCurrentTransform(at time: Float) {
+//        guard duration > 0 else {
+//            currentTransform = .identity
+//            return
+//        }
+//        let frame = Int(fmod(time, duration) * Float(FPS.FPS_120.rawValue))
+//        if frame < keyTransforms.count {
+//            currentTransform = keyTransforms[frame]
+//        } else {
+//            currentTransform = keyTransforms.last ?? .identity
+//        }
+//    }
+    
+    mutating func setCurrentTransform(at time: Float, position: float3, rotationMatrix: float4x4, scale: float3) {
         guard duration > 0 else {
             currentTransform = .identity
             return
@@ -72,4 +113,32 @@ struct TransformComponent {
             currentTransform = keyTransforms.last ?? .identity
         }
     }
+    
+//    mutating func setCurrentTransform(at time: Float, position: float3, rotationMatrix: float4x4, scale: float3) {
+//        guard duration > 0 else {
+//            currentTransform = .identity
+//            return
+//        }
+//        let frame = Int(fmod(time, duration) * Float(FPS.FPS_120.rawValue))
+//        if frame < keyTransforms.count {
+//            currentTransform = Transform.rotationMatrix(radians: Float(180).toRadians, axis: Y_AXIS) * Transform.scaleMatrix(float3(repeating: 0.15)) * keyTransforms[frame]
+//        } else {
+//            currentTransform = keyTransforms.last ?? .identity
+//            currentTransform = Transform.rotationMatrix(radians: Float(180).toRadians, axis: Y_AXIS) * Transform.scaleMatrix(float3(repeating: 0.15)) * currentTransform
+//        }
+//    }
+    
+//    mutating func setCurrentTransform(at time: Float, position: float3, rotationMatrix: float4x4, scale: float3) {
+//        guard duration > 0 else {
+//            currentTransform = .identity
+//            return
+//        }
+//        let frame = Int(fmod(time, duration) * Float(FPS.FPS_120.rawValue))
+//        if frame < keyTransforms.count {
+//            currentTransform = keyTransforms[frame] * Transform.scaleMatrix(float3(repeating: 0.15))
+//        } else {
+//            currentTransform = keyTransforms.last ?? .identity
+//            currentTransform = currentTransform * Transform.scaleMatrix(float3(repeating: 0.15))
+//        }
+//    }
 }

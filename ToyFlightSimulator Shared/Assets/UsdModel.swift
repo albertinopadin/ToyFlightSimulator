@@ -12,7 +12,7 @@ final class UsdModel: Model {
     var skeleton: Skeleton?
     var animationClips: [String: AnimationClip] = [:]
     
-    init(_ modelName: String, fileExtension: ModelExtension = .USDZ, transform: float4x4? = nil) {
+    init(_ modelName: String, fileExtension: ModelExtension = .USDZ, basisTransform: float4x4? = nil) {
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: fileExtension.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")
         }
@@ -31,16 +31,15 @@ final class UsdModel: Model {
         // Debugging:
         Self.InspectMeshes(mdlMeshes: mdlMeshes)
         
-        let usdMeshes: [Mesh] = Self.GetMeshes(asset: asset, mdlMeshes: mdlMeshes, descriptor: descriptor)
-        
-        // Invert Z in meshes due to USD being right handed coord system:
-//        invertMeshZ()  // Not needed for F-22
+        let usdMeshes: [Mesh] = Self.GetMeshes(asset: asset,
+                                               mdlMeshes: mdlMeshes,
+                                               descriptor: descriptor,
+                                               basisTransform: basisTransform)
         
         super.init(name: modelName, meshes: usdMeshes)
         
-        if let transform {
-            transformMeshesBasis(transform: transform)
-        }
+        // Invert Z in meshes due to USD being right handed coord system:
+//        invertMeshZ()  // Not needed for F-22
         
         print("[UsdModel init] loading \(modelName) skeleton...")
         self.skeleton = loadSkeleton(asset: asset)
@@ -103,22 +102,6 @@ final class UsdModel: Model {
         }
     }
     
-    // TODO: Parallelize this:
-    private func transformMeshesBasis(transform: float4x4) {
-        for mesh in meshes {
-            let vertexBuffer = mesh.vertexBuffer!
-            let count = vertexBuffer.length / Vertex.stride
-            var pointer = vertexBuffer.contents().bindMemory(to: Vertex.self, capacity: count)
-            for _ in 0..<count {
-                pointer.pointee.position = simd_mul(float4(pointer.pointee.position, 1), transform).xyz
-                pointer.pointee.normal = simd_mul(float4(pointer.pointee.normal, 1), transform).xyz
-                pointer.pointee.tangent = simd_mul(float4(pointer.pointee.tangent, 1), transform).xyz
-                pointer.pointee.bitangent = simd_mul(float4(pointer.pointee.bitangent, 1), transform).xyz
-                pointer = pointer.advanced(by: 1)
-            }
-        }
-    }
-    
     private func invertMeshZ() {
         for mesh in meshes {
             let vertexBuffer = mesh.vertexBuffer!
@@ -131,12 +114,12 @@ final class UsdModel: Model {
         }
     }
     
-    override func update() {
+    override func update(position: float3, rotationMatrix: float4x4, scale: float3) {
         let currentTime = Float(GameTime.TotalGameTime)
         
         if let skeleton,
            let animation = animationClips.first {
-            print("[UsdModel update] Updating animation clip \(animation.key) & pose for \(self.name)")
+//            print("[UsdModel update] Updating animation clip \(animation.key) & pose for \(self.name)")
             let animationClip = animation.value
             skeleton.updatePose(at: currentTime, animationClip: animationClip)
         }
@@ -144,7 +127,10 @@ final class UsdModel: Model {
         // TODO: Can this go inside the if let above ???
         for index in 0..<meshes.count {
             var mesh = meshes[index]
-            mesh.transform?.getCurrentTransform(at: currentTime)
+            mesh.transform?.setCurrentTransform(at: currentTime,
+                                                position: position,
+                                                rotationMatrix: rotationMatrix,
+                                                scale: scale)
             mesh.skin?.updatePalette(skeleton: skeleton)
             meshes[index] = mesh
         }

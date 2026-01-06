@@ -138,6 +138,20 @@ enum Transform {
         float4(0, 1, 0, 0),   // Z: was Y
         float4(0, 0, 0, 1)
     )
+    
+    static let transformXYMinusZToXYZ: float4x4 = .init(
+        float4(1, 0, 0, 0),
+        float4(0, 1, 0, 0),
+        float4(0, 0,-1, 0),
+        float4(0, 0, 0, 1)
+    )
+    
+    static let transformXMinusZYToXYZ = float4x4(
+        float4(1, 0, 0, 0),   // X: was X
+        float4(0, 0, 1, 0),   // Y: was Z
+        float4(0, -1, 0, 0),   // Z: was Y
+        float4(0, 0, 0, 1)
+    )
 }
 
 extension float4x4 {

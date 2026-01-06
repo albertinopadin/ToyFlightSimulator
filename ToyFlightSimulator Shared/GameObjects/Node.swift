@@ -228,8 +228,9 @@ class Node: ClickSelectable {
     func getRotationX() -> Float { return Transform.decomposeToEulers(_rotationMatrix).x }
     func getRotationY() -> Float { return Transform.decomposeToEulers(_rotationMatrix).y }
     func getRotationZ() -> Float { return Transform.decomposeToEulers(_rotationMatrix).z }
+    func getRotationMatrix() -> float4x4 { return _rotationMatrix }
     
-    //Scaling
+    // Scaling
     func setScale(_ scale: float3) {
         self._scale = scale
         updateModelMatrix()
