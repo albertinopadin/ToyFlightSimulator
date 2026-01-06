@@ -287,39 +287,10 @@ final class DrawManager {
                 
                 // TODO2: Below code will animate *ALL* models that use the same mesh which is
                 //        probably *NOT* what we want. Hack for now to make this work...
-//                let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
-//                for idx in 0..<uniforms.count {
-//                    uniforms[idx].modelMatrix *= currentLocalTransform
-//                }
-                
-                if let currentLocalTransform = mesh.transform?.currentTransform {
-//                    print("[Draw] model \(model.name) has current transform.")
-                    for idx in 0..<uniforms.count {
-                        uniforms[idx].modelMatrix *= currentLocalTransform
-                    }
+                let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
+                for idx in 0..<uniforms.count {
+                    uniforms[idx].modelMatrix *= currentLocalTransform
                 }
-                
-//                for idx in 0..<uniforms.count {
-//                    uniforms[idx].modelMatrix = currentLocalTransform
-//                }
-                
-//                var currentTransform: float4x4 = .identity
-//                if let currentLocalTransform = mesh.transform?.currentTransform {
-//                    if let modelParent = model.parent {
-////                        currentTransform = currentLocalTransform * Transform.scaleMatrix(modelParent.getScale())
-////                        modelParent.getPosition()
-////                        modelParent.get
-//                        currentTransform = modelParent.modelMatrix * currentLocalTransform
-////                        currentTransform = Transform.scaleMatrix(modelParent.getScale()) * modelParent.getRotationMatrix() * Transform.translationMatrix(modelParent.getPosition()) * currentLocalTransform
-//                    }
-//                    
-////                    currentTransform = Transform.scaleMatrix(float3(repeating: 0.15)) * Transform.translationMatrix(float3(0, 100, 4)) * currentLocalTransform
-//                }
-//                
-//                for idx in 0..<uniforms.count {
-//                    uniforms[idx].modelMatrix *= currentTransform
-////                    uniforms[idx].modelMatrix = currentTransform
-//                }
                 
                 /*
                  * ---------------------------------------------------------------------------

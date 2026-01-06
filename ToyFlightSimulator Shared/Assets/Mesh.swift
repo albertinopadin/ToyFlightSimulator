@@ -90,16 +90,10 @@ class Mesh {
         }
         
         if mdlMesh.transform != nil {
-//            transformMdlMeshBasis(asset: asset, mdlMesh: mdlMesh, basisTransform: basisTransform)
-            
             transform = TransformComponent(object: mdlMesh,
                                            startTime: asset.startTime,
                                            endTime: asset.endTime,
                                            basisTransform: basisTransform)
-            
-//            if asset.url!.lastPathComponent == "F-35A_Lightning_II.usdz" {
-//                transform?.printKeyTransforms()
-//            }
         }
     }
     
@@ -111,42 +105,12 @@ class Mesh {
         self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, addTangentBases: addTangentBases, basisTransform: basisTransform)
         
         if mdlMesh.transform != nil {
-//            transformMdlMeshBasis(asset: asset, mdlMesh: mdlMesh, basisTransform: basisTransform)
-            
             transform = TransformComponent(object: mdlMesh,
                                            startTime: asset.startTime,
                                            endTime: asset.endTime,
                                            basisTransform: basisTransform)
-            
-//            if asset.url!.lastPathComponent == "F-35A_Lightning_II.usdz" {
-//                transform?.printKeyTransforms()
-//            }
         }
     }
-    
-//    private func transformMdlMeshBasis(asset: MDLAsset, mdlMesh: MDLMesh, basisTransform: float4x4? = nil) {
-//        if let basisTransform,
-//           var ogTransformMatrix = mdlMesh.transform?.matrix {
-//            if asset.url!.lastPathComponent == "F-35A_Lightning_II.usdz" {
-//                print("[Mesh transformMdlMeshBasis] asset \(asset.url!.lastPathComponent) mdlMesh \(mdlMesh.name); ogTransformMatrix:")
-//                print("[Mesh transformMdlMeshBasis] Is ogTransformMatrix identity? : \(ogTransformMatrix == .identity)")
-//                prettyPrintMatrix(ogTransformMatrix)
-//            }
-//            // Maybe break out the position, rotation and scale individually like we do in Model ... ?
-//            mdlMesh.transform?.matrix = ogTransformMatrix * basisTransform
-////            mdlMesh.transform?.matrix = basisTransform * ogTransformMatrix
-//            
-////            ogTransformMatrix.rotate(angle: <#T##Float#>, axis: <#T##float3#>)
-////            ogTransformMatrix.translate(direction: <#T##float3#>)
-////            ogTransformMatrix.scale(axis: <#T##float3#>)
-//        }
-//    }
-    
-//    private func prettyPrintMatrix(_ matrix: float4x4) {
-//        for i in 0..<4 {
-//            print("[Mesh transformMdlMeshBasis] row \(i):  \(matrix[i].x), \(matrix[i].y), \(matrix[i].z), \(matrix[i].w)")
-//        }
-//    }
     
     func createMesh() { }
     

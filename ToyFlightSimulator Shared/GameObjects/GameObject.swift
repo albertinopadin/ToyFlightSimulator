@@ -57,7 +57,6 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
         modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
         
         // TODO: hmm... might want to refactor this later...
-//        model.update()
         model.update()
     }
     

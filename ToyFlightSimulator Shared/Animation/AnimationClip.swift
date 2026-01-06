@@ -125,7 +125,6 @@ class AnimationClip {
         let rotation = jointAnimation.getRotation(at: time) ?? simd_quatf(matrix_identity_float4x4)
         let translation = jointAnimation.getTranslation(at: time) ?? float3.zero
         let scale = jointAnimation.getScale(at: time) ?? float3.one
-//        let pose = float4x4(translation: translation) * float4x4(rotation) * float4x4(scaling: scale)
         let pose = Transform.translationMatrix(translation) * float4x4(rotation) * Transform.scaleMatrix(scale)
         return pose
     }

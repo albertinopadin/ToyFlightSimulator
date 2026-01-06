@@ -72,11 +72,6 @@ final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
         
         _library.updateValue(UsdModel("FA-18F"), forKey: .RC_F18)
         
-//        _library.updateValue(UsdModel("F-35A_Lightning_II",
-//                                      basisTransform: Transform.transformXZYToXYZ), forKey: .Sketchfab_F35)
-        
-//        _library.updateValue(UsdModel("F-35A_Lightning_II"), forKey: .Sketchfab_F35)
-        
         _library.updateValue(UsdModel("F-35A_Lightning_II",
                                       basisTransform: Transform.rotationMatrix(radians: Float(180).toRadians,
                                                                                axis: Y_AXIS)),
