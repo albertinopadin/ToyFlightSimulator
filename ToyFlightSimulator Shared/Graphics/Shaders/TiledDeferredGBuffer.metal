@@ -49,8 +49,7 @@ tiled_deferred_gbuffer_animated_vertex(
   constant float4x4       *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
            uint           instanceId      [[ instance_id ]]) {
     ModelConstants modelInstance = modelConstants[instanceId];
-    float4 worldPosition = modelInstance.modelMatrix * float4(in.position, 1);
-    float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
+    float4 position = float4(in.position, 1);
     float4 normal = float4(in.normal, 0);
     
     // Hope this works, ugh...
@@ -69,8 +68,11 @@ tiled_deferred_gbuffer_animated_vertex(
                 weights.w * (jointMatrices[joints.w] * normal);
     }
     
+    
+    float4 worldPosition = modelInstance.modelMatrix * position;
+    
     VertexOut out {
-        .position = position,
+        .position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition,
         .normal = normal.xyz,
         .uv = in.textureCoordinate,
         .worldPosition = worldPosition.xyz / worldPosition.w,

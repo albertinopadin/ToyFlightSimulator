@@ -97,9 +97,9 @@ class Mesh {
                                            endTime: asset.endTime,
                                            basisTransform: basisTransform)
             
-            if asset.url!.lastPathComponent == "F-35A_Lightning_II.usdz" {
-                transform?.printKeyTransforms()
-            }
+//            if asset.url!.lastPathComponent == "F-35A_Lightning_II.usdz" {
+//                transform?.printKeyTransforms()
+//            }
         }
     }
     
@@ -118,9 +118,9 @@ class Mesh {
                                            endTime: asset.endTime,
                                            basisTransform: basisTransform)
             
-            if asset.url!.lastPathComponent == "F-35A_Lightning_II.usdz" {
-                transform?.printKeyTransforms()
-            }
+//            if asset.url!.lastPathComponent == "F-35A_Lightning_II.usdz" {
+//                transform?.printKeyTransforms()
+//            }
         }
     }
     

@@ -50,5 +50,5 @@ class Model: Hashable {
     
     // TODO: might want to refactor this...
     // Override this in UsdModel for now...
-    public func update(position: float3, rotationMatrix: float4x4, scale: float3) { }
+    public func update() { }
 }

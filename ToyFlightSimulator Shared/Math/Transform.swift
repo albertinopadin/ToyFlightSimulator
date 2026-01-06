@@ -140,7 +140,7 @@ enum Transform {
     )
     
     static let transformXYMinusZToXYZ: float4x4 = .init(
-        float4(1, 0, 0, 0),
+        float4(-1, 0, 0, 0),
         float4(0, 1, 0, 0),
         float4(0, 0,-1, 0),
         float4(0, 0, 0, 1)
@@ -152,6 +152,35 @@ enum Transform {
         float4(0, -1, 0, 0),   // Z: was Y
         float4(0, 0, 0, 1)
     )
+
+    /// Decomposes a 4x4 TRS matrix into translation, rotation (as matrix), and scale components.
+    /// Assumes the matrix was constructed as T * R * S (translation * rotation * scale).
+    static func decomposeTRS(_ matrix: float4x4) -> (translation: float3, rotation: float4x4, scale: float3) {
+        // Extract translation from column 3
+        let translation = float3(matrix.columns.3.x, matrix.columns.3.y, matrix.columns.3.z)
+
+        // Extract scale as the length of each column in the upper-left 3x3
+        let scaleX = length(float3(matrix.columns.0.x, matrix.columns.0.y, matrix.columns.0.z))
+        let scaleY = length(float3(matrix.columns.1.x, matrix.columns.1.y, matrix.columns.1.z))
+        let scaleZ = length(float3(matrix.columns.2.x, matrix.columns.2.y, matrix.columns.2.z))
+        let scale = float3(scaleX, scaleY, scaleZ)
+
+        // Extract rotation by normalizing each column (removing scale)
+        let col0 = float4(matrix.columns.0.x / scaleX, matrix.columns.0.y / scaleX, matrix.columns.0.z / scaleX, 0)
+        let col1 = float4(matrix.columns.1.x / scaleY, matrix.columns.1.y / scaleY, matrix.columns.1.z / scaleY, 0)
+        let col2 = float4(matrix.columns.2.x / scaleZ, matrix.columns.2.y / scaleZ, matrix.columns.2.z / scaleZ, 0)
+        let col3 = float4(0, 0, 0, 1)
+        let rotation = float4x4(col0, col1, col2, col3)
+
+        return (translation, rotation, scale)
+    }
+
+    /// Reconstructs a 4x4 matrix from translation and rotation only (no scale).
+    static func matrixFromTR(translation: float3, rotation: float4x4) -> float4x4 {
+        var result = rotation
+        result.columns.3 = float4(translation, 1)
+        return result
+    }
 }
 
 extension float4x4 {

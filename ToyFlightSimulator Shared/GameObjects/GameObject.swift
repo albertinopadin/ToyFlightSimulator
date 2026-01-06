@@ -58,7 +58,7 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
         
         // TODO: hmm... might want to refactor this later...
 //        model.update()
-        model.update(position: self.getPosition(), rotationMatrix: self.getRotationMatrix(), scale: self.getScale())
+        model.update()
     }
     
     func hash(into hasher: inout Hasher) {

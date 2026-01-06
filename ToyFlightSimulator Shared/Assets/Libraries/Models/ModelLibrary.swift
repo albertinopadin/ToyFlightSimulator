@@ -75,10 +75,12 @@ final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
 //        _library.updateValue(UsdModel("F-35A_Lightning_II",
 //                                      basisTransform: Transform.transformXZYToXYZ), forKey: .Sketchfab_F35)
         
-        _library.updateValue(UsdModel("F-35A_Lightning_II"), forKey: .Sketchfab_F35)
+//        _library.updateValue(UsdModel("F-35A_Lightning_II"), forKey: .Sketchfab_F35)
         
-//        _library.updateValue(UsdModel("F-35A_Lightning_II",
-//                                      basisTransform: Transform.transformXMinusZYToXYZ), forKey: .Sketchfab_F35)
+        _library.updateValue(UsdModel("F-35A_Lightning_II",
+                                      basisTransform: Transform.rotationMatrix(radians: Float(180).toRadians,
+                                                                               axis: Y_AXIS)),
+                             forKey: .Sketchfab_F35)
         
         _library.updateValue(UsdModel("F-22_Raptor",
                                       basisTransform: Transform.transformZXYToXYZ), forKey: .Sketchfab_F22)

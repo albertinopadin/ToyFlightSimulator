@@ -30,7 +30,8 @@ final class FlightboxWithTerrain: GameScene {
     override func buildScene() {
         addGround()
         
-        let jet = F35(scale: 0.8)
+//        let jet = F35(scale: 0.8)
+        let jet = F35(scale: 0.15)
 //        let jet = F22(scale: 0.25)
 //        let jet = CollidableF22(scale: 0.25)
 //        let jet = F18(scale: 1.4)

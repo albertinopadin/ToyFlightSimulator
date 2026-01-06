@@ -59,14 +59,31 @@ struct TransformComponent {
 //        }
         
         keyTransforms = Array(timeStride).map { time in
-            var transform: float4x4 = .identity
+            let globalTransform = MDLTransform.globalTransform(with: object, atTime: time)
+
+            // Decompose the USDZ transform into T, R, S components.
+            // The globalTransform's translation is in WORLD coordinates (after USDZ scale applied),
+            // so we must normalize it by dividing by the scale to get model-local translation.
+            // This allows GameObject.setScale() to be the sole source of scale.
+            let (worldTranslation, rotation, scale) = Transform.decomposeTRS(globalTransform)
+
+            // Normalize translation: convert from world coords back to model-local coords
+            // by dividing by the USDZ scale. Avoid division by zero.
+            let normalizedTranslation = float3(
+                scale.x > 0.0001 ? worldTranslation.x / scale.x : worldTranslation.x,
+                scale.y > 0.0001 ? worldTranslation.y / scale.y : worldTranslation.y,
+                scale.z > 0.0001 ? worldTranslation.z / scale.z : worldTranslation.z
+            )
+
+            let transformWithoutScale = Transform.matrixFromTR(translation: normalizedTranslation, rotation: rotation)
+
             if let basisTransform {
-                print("[TransformComponent init] basis transform present!")
-                transform = basisTransform
+                // Apply conjugation to convert transform to game coordinate system
+                // This matches how basisTransform is applied in Skeleton.updatePose()
+                let basisInverse = basisTransform.inverse
+                return basisTransform * transformWithoutScale * basisInverse
             }
-            
-            return MDLTransform.globalTransform(with: object, atTime: time) * transform
-//            return transform * MDLTransform.globalTransform(with: object, atTime: time)
+            return transformWithoutScale
         }
     }
     
@@ -101,7 +118,20 @@ struct TransformComponent {
 //        }
 //    }
     
-    mutating func setCurrentTransform(at time: Float, position: float3, rotationMatrix: float4x4, scale: float3) {
+//    mutating func setCurrentTransform(at time: Float, position: float3, rotationMatrix: float4x4, scale: float3) {
+//        guard duration > 0 else {
+//            currentTransform = .identity
+//            return
+//        }
+//        let frame = Int(fmod(time, duration) * Float(FPS.FPS_120.rawValue))
+//        if frame < keyTransforms.count {
+//            currentTransform = keyTransforms[frame]
+//        } else {
+//            currentTransform = keyTransforms.last ?? .identity
+//        }
+//    }
+    
+    mutating func setCurrentTransform(at time: Float) {
         guard duration > 0 else {
             currentTransform = .identity
             return

@@ -48,8 +48,12 @@ class Skeleton {
     let restTransforms: [float4x4]
     var currentPose: [float4x4] = []
 
-    init?(mdlSkeleton: MDLSkeleton?) {
+    /// Optional basis transform for coordinate system conversion (e.g., USDZ to game coords)
+    let basisTransform: float4x4?
+
+    init?(mdlSkeleton: MDLSkeleton?, basisTransform: float4x4? = nil) {
         guard let mdlSkeleton, !mdlSkeleton.jointPaths.isEmpty else { return nil }
+        self.basisTransform = basisTransform
         jointPaths = mdlSkeleton.jointPaths
         parentIndices = Skeleton.getParentIndices(jointPaths: jointPaths)
         bindTransforms = mdlSkeleton.jointBindTransforms.float4x4Array
@@ -76,15 +80,15 @@ class Skeleton {
     
     func updatePose(at currentTime: Float, animationClip: AnimationClip) {
         let time = fmod(currentTime, animationClip.duration)
-        
+
         var localPose = [float4x4](repeating: .identity, count: jointPaths.count)
-        
+
         for index in 0..<jointPaths.count {
             let pose = animationClip.getPose(at: time * animationClip.speed,
                                              jointPath: jointPaths[index]) ?? restTransforms[index]
             localPose[index] = pose
         }
-        
+
         var worldPose: [float4x4] = []
         for index in 0..<parentIndices.count {
             let parentIndex = parentIndices[index]
@@ -95,11 +99,21 @@ class Skeleton {
                 worldPose.append(localMatrix)
             }
         }
-        
+
         for index in 0..<worldPose.count {
             worldPose[index] *= bindTransforms[index].inverse
         }
-        
+
+        // Apply basis transform to convert joint matrices to the game's coordinate system.
+        // This is necessary when the mesh vertices have been transformed by basisTransform,
+        // so the joint matrices must also be conjugated: B * J * B^(-1)
+        if let basisTransform {
+            let basisInverse = basisTransform.inverse
+            for index in 0..<worldPose.count {
+                worldPose[index] = basisTransform * worldPose[index] * basisInverse
+            }
+        }
+
         currentPose = worldPose
     }
 }
