@@ -397,12 +397,6 @@ class F18: Aircraft {
         
         self.checkStoresCommands(with: self)
         
-//        if let containerNode {
-//            self.checkStoresCommands(with: containerNode)
-//        } else {
-//            self.checkStoresCommands(with: self)
-//        }
-        
         // Extract this out into own method:
         InputManager.HasDiscreteCommandDebounced(command: .ToggleFlaps) {
             if !flapsDeployed {
@@ -453,6 +447,7 @@ class F18: Aircraft {
             if landingGearDegrees > 0.0 {
                 landingGearDegrees -= 1.0
                 // TODO
+//                self.model.animate
             }
         } else {
             landingGearFinishedExtending = true

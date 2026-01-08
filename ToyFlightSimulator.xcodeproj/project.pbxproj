@@ -64,10 +64,6 @@
 		CE0602382A9C5686001F8CC3 /* FA-18F.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602372A9C5686001F8CC3 /* FA-18F.usdz */; };
 		CE0602392A9C5686001F8CC3 /* FA-18F.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602372A9C5686001F8CC3 /* FA-18F.usdz */; };
 		CE06023A2A9C5686001F8CC3 /* FA-18F.usdz in Resources */ = {isa = PBXBuildFile; fileRef = CE0602372A9C5686001F8CC3 /* FA-18F.usdz */; };
-		CE07DE2F2D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */; };
-		CE07DE302D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */; };
-		CE07DE312D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */; };
-		CE07DE322D8C1FEA000829FF /* TFSAudioSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */; };
 		CE07DE382D8D56DF000829FF /* LightningSpeed.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CE07DE362D8D56DF000829FF /* LightningSpeed.mp3 */; };
 		CE07DE392D8D56DF000829FF /* SunsetGlow.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CE07DE372D8D56DF000829FF /* SunsetGlow.mp3 */; };
 		CE07DE3A2D8D56DF000829FF /* LightningSpeed.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CE07DE362D8D56DF000829FF /* LightningSpeed.mp3 */; };
@@ -867,7 +863,6 @@
 		CE06022B2A945E38001F8CC3 /* F35.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = F35.swift; sourceTree = "<group>"; };
 		CE0602312A9B480A001F8CC3 /* F-35A_Lightning_II.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = "F-35A_Lightning_II.usdz"; sourceTree = "<group>"; };
 		CE0602372A9C5686001F8CC3 /* FA-18F.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FA-18F.usdz"; sourceTree = "<group>"; };
-		CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFSAudioSystem.swift; sourceTree = "<group>"; };
 		CE07DE362D8D56DF000829FF /* LightningSpeed.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = LightningSpeed.mp3; sourceTree = "<group>"; };
 		CE07DE372D8D56DF000829FF /* SunsetGlow.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = SunsetGlow.mp3; sourceTree = "<group>"; };
 		CE07DE3E2D8FCE17000829FF /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
@@ -1099,6 +1094,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CEA8D6172F0654960058B5EA /* Animation */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Animation; sourceTree = "<group>"; };
+		CEA8D6692F0F7D720058B5EA /* Audio */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Audio; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1581,7 +1577,7 @@
 			isa = PBXGroup;
 			children = (
 				CEA8D6172F0654960058B5EA /* Animation */,
-				CEC6B0982D6BC7F400EE3C26 /* Audio */,
+				CEA8D6692F0F7D720058B5EA /* Audio */,
 				CE9625382CCCE1AF00CEA5A2 /* Physics */,
 				CE2ED260299394C900C81F47 /* Utils */,
 				CE7F48B928BB93550082B197 /* Core */,
@@ -1796,14 +1792,6 @@
 			path = World;
 			sourceTree = "<group>";
 		};
-		CEC6B0982D6BC7F400EE3C26 /* Audio */ = {
-			isa = PBXGroup;
-			children = (
-				CE07DE2E2D8C1FE9000829FF /* TFSAudioSystem.swift */,
-			);
-			path = Audio;
-			sourceTree = "<group>";
-		};
 		CED798452C9050A2003B6559 /* Render */ = {
 			isa = PBXGroup;
 			children = (
@@ -1845,6 +1833,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				CEA8D6172F0654960058B5EA /* Animation */,
+				CEA8D6692F0F7D720058B5EA /* Audio */,
 			);
 			name = ToyFlightSimulatorTests;
 			productName = ToyFlightSimulatorMacTests;
@@ -1865,6 +1854,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				CEA8D6172F0654960058B5EA /* Animation */,
+				CEA8D6692F0F7D720058B5EA /* Audio */,
 			);
 			name = "ToyFlightSimulator iOS";
 			productName = "ToyFlightSimulator iOS";
@@ -1885,6 +1875,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				CEA8D6172F0654960058B5EA /* Animation */,
+				CEA8D6692F0F7D720058B5EA /* Audio */,
 			);
 			name = "ToyFlightSimulator tvOS";
 			productName = "ToyFlightSimulator tvOS";
@@ -1905,6 +1896,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				CEA8D6172F0654960058B5EA /* Animation */,
+				CEA8D6692F0F7D720058B5EA /* Audio */,
 			);
 			name = "ToyFlightSimulator macOS";
 			productName = "ToyFlightSimulator macOS";
@@ -2231,7 +2223,6 @@
 				CE452FE12A7CB499001945B9 /* InputManager.swift in Sources */,
 				CE452FB92A7CB445001945B9 /* HIDDevice.swift in Sources */,
 				CE452FBD2A7CB453001945B9 /* Engine.swift in Sources */,
-				CE07DE2F2D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */,
 				CE452FF32A7CB4A6001945B9 /* Droppable.swift in Sources */,
 				CE387B3A2BCBDDE700F51DC4 /* ParticleEmitter.swift in Sources */,
 				CED3AA7D2B5D008200191002 /* F22.swift in Sources */,
@@ -2343,7 +2334,6 @@
 				CE2ED25D299223E900C81F47 /* Submesh.swift in Sources */,
 				CE3BFF8228E2FD6F0014A752 /* Renderable.swift in Sources */,
 				CE865C3D2DD3A75A0048BBDA /* TessellationRendering.swift in Sources */,
-				CE07DE312D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */,
 				CE3BFF2C28E0575A0014A752 /* Instanced.metal in Sources */,
 				CE79B6202B92E361009F2E49 /* BasicVertexDescriptors.swift in Sources */,
 				CE4127A92B6D8A9700B01AEA /* ForwardPlusTileShadingRenderer.swift in Sources */,
@@ -2624,7 +2614,6 @@
 				CE79B6272B92E47E009F2E49 /* Texture.swift in Sources */,
 				CEFC6EC6295B55EA009B692B /* OrderIndependentTransparency.metal in Sources */,
 				CEC6B09F2D8001A300EE3C26 /* TFSLock.swift in Sources */,
-				CE07DE322D8C1FEA000829FF /* TFSAudioSystem.swift in Sources */,
 				CEFC6F23296B4200009B692B /* Sphere.swift in Sources */,
 				CEC6B48B2B45F8BD004A5AC7 /* TFSCache.swift in Sources */,
 				CE50C0F02C954F4A00202C45 /* Model.swift in Sources */,
@@ -2776,7 +2765,6 @@
 				CEC0C5962B4B2D3100863C38 /* Material.swift in Sources */,
 				CE79B60D2B92E117009F2E49 /* BasicDepthStencils.swift in Sources */,
 				CE865C3F2DD3A75A0048BBDA /* TessellationRendering.swift in Sources */,
-				CE07DE302D8C1FE9000829FF /* TFSAudioSystem.swift in Sources */,
 				CEB2DFD229D437990048D292 /* FreeCamFlightboxScene.swift in Sources */,
 				CEB264FC2CD48504005BCA88 /* PhysicsEntity.swift in Sources */,
 				CEC6B0A02D8001A300EE3C26 /* TFSLock.swift in Sources */,
