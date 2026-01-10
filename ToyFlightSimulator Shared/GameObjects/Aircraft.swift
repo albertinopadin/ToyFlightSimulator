@@ -9,11 +9,25 @@ import MetalKit
 
 class Aircraft: GameObject {
     public var shouldUpdateOnPlayerInput: Bool
-    
+
     private var _moveSpeed: Float = 25.0
     private var _turnSpeed: Float = 4.0
-    
-    internal var gearDown: Bool = true
+
+    /// Optional animator for controlling aircraft animations (gear, flaps, etc.)
+    /// Subclasses should set this if they use skeletal animation.
+    var animator: AircraftAnimator?
+
+    /// Returns true if the landing gear is down.
+    /// Uses the animator's state if available, otherwise returns the legacy gearDown flag.
+    var isGearDown: Bool {
+        if let animator = animator {
+            return animator.isGearDown
+        }
+        return _legacyGearDown
+    }
+
+    /// Legacy gear state for aircraft without animators (e.g., OBJ models)
+    private var _legacyGearDown: Bool = true
     
     public var cameraOffset: float3 {
         [0, 10, 20]

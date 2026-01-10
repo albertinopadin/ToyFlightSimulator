@@ -24,9 +24,9 @@ final class UsdModel: Model {
     /// Stored basis transform for coordinate system conversion (passed to Skeleton for animation)
     private let basisTransform: float4x4?
 
-    // Testing
-    private var elapsedAnimationDuration: Float = 0
-    private var previousTime: Float = 0
+    /// Flag indicating whether this model has an external animator controlling its animations.
+    /// When true, the model's update() method will not drive animations automatically.
+    var hasExternalAnimator: Bool = false
     
     init(_ modelName: String, fileExtension: ModelExtension = .USDZ, basisTransform: float4x4? = nil) {
         self.basisTransform = basisTransform
@@ -66,9 +66,10 @@ final class UsdModel: Model {
         print("[UsdModel init] Num meshes: \(meshes.count), Num skeletons: \(skeletons.count), Num animations: \(animationClips.count)")
         
         printAllMeshTransformDurations()
-        
-        // Hack because some models have their animation transforms in a different basis than their vertices... ugh
-        zeroAnimations()
+
+        // Initialize to the end of the animation (gear down position)
+        // This ensures models start in a sensible default pose
+        initializeAnimationPose(at: animationDuration)
     }
     
     private static func InspectMeshes(mdlMeshes: [MDLMesh]) {
@@ -224,111 +225,46 @@ final class UsdModel: Model {
     }
     
     override func update() {
-        let currentTime = Float(GameTime.TotalGameTime)
-        updateAnimations(at: currentTime)
+        // If an external animator (like AircraftAnimator) is controlling this model,
+        // skip the built-in animation update. The animator will call updatePose directly.
+        guard !hasExternalAnimator else { return }
+
+        // For models without external animators, animations remain at their initial pose
+        // (set by initializeAnimationPose during init)
     }
-    
-    func zeroAnimations() {
-        updateAnimations(at: 0)
-        previousTime = 0
-    }
-    
-    func updateAnimations(at time: Float) {
-        if previousTime == 0 {
-            previousTime = time
-        } else {
-            elapsedAnimationDuration += time - previousTime
-            previousTime = time
-        }
-        
-//        animateForwards(by: elapsedAnimationDuration)
-        animateReverse(by: elapsedAnimationDuration)
-    }
-    
-    func animateForwards(by elapsedTime: Float) {
-        // Update ALL skeletons with their respective animation clips
+
+    /// Initializes all skeletons and meshes to a specific animation time.
+    /// Called during init to set the initial pose (e.g., gear down at animation end).
+    /// - Parameter time: The animation time to set (0 = start, duration = end)
+    func initializeAnimationPose(at time: Float) {
+        // Update all skeletons with their respective animation clips
         for (skeletonPath, skeleton) in skeletons {
-            // Find the animation clip associated with this skeleton
             if let animationName = skeletonAnimationMap[skeletonPath],
                let animationClip = animationClips[animationName] {
-                
-                if elapsedTime <= animationClip.duration {
-                    skeleton.updatePose(at: elapsedTime, animationClip: animationClip)
-                }
+                skeleton.updatePose(at: time, animationClip: animationClip)
             } else if let firstClip = animationClips.values.first {
-                // Fallback: use the first animation clip if no specific association exists
-                if elapsedTime <= firstClip.duration {
-                    skeleton.updatePose(at: elapsedTime, animationClip: firstClip)
-                }
+                skeleton.updatePose(at: time, animationClip: firstClip)
             }
         }
-        
-        // Update each mesh with its own skeleton
-        for index in 0..<meshes.count {
-            let mesh = meshes[index]
-            
-            // Update TransformComponent animation (non-skeletal mesh animation)
-            if let transform = mesh.transform {
-                if elapsedTime <= transform.duration {
-                    mesh.transform?.setCurrentTransform(at: elapsedTime)
-                    
-                    // Update skin with the CORRECT skeleton for this mesh
-                    if let skeletonPath = meshSkeletonMap[index],
-                       let skeleton = skeletons[skeletonPath] {
-                        mesh.skin?.updatePalette(skeleton: skeleton)
-                    } else if skeletons.count == 1, let onlySkeleton = skeletons.values.first {
-                        // Fallback: if only one skeleton exists, use it
-                        mesh.skin?.updatePalette(skeleton: onlySkeleton)
-                    }
-                    
-                    meshes[index] = mesh
-                }
+
+        // Update each mesh's transform and skin
+        for (index, mesh) in meshes.enumerated() {
+            if mesh.transform != nil {
+                mesh.transform?.setCurrentTransform(at: time)
+            }
+
+            if let skeletonPath = meshSkeletonMap[index],
+               let skeleton = skeletons[skeletonPath] {
+                mesh.skin?.updatePalette(skeleton: skeleton)
+            } else if skeletons.count == 1, let onlySkeleton = skeletons.values.first {
+                mesh.skin?.updatePalette(skeleton: onlySkeleton)
             }
         }
     }
-    
-    func animateReverse(by elapsedTime: Float) {
-        // Update ALL skeletons with their respective animation clips
-        for (skeletonPath, skeleton) in skeletons {
-            // Find the animation clip associated with this skeleton
-            if let animationName = skeletonAnimationMap[skeletonPath],
-               let animationClip = animationClips[animationName] {
-                let countdownTime = animationClip.duration - elapsedTime
-                if countdownTime >= 0 {
-                    skeleton.updatePose(at: countdownTime, animationClip: animationClip)
-                }
-            } else if let firstClip = animationClips.values.first {
-                // Fallback: use the first animation clip if no specific association exists
-                let countdownTime = firstClip.duration - elapsedTime
-                if countdownTime >= 0 {
-                    skeleton.updatePose(at: countdownTime, animationClip: firstClip)
-                }
-            }
-        }
-        
-        // Update each mesh with its own skeleton
-        for index in 0..<meshes.count {
-            let mesh = meshes[index]
-            
-            // Update TransformComponent animation (non-skeletal mesh animation)
-            if let transform = mesh.transform {
-                let countdownTime = transform.duration - elapsedTime
-                if countdownTime >= 0 {
-                    mesh.transform?.setCurrentTransform(at: countdownTime)
-                    
-                    // Update skin with the CORRECT skeleton for this mesh
-                    if let skeletonPath = meshSkeletonMap[index],
-                       let skeleton = skeletons[skeletonPath] {
-                        mesh.skin?.updatePalette(skeleton: skeleton)
-                    } else if skeletons.count == 1, let onlySkeleton = skeletons.values.first {
-                        // Fallback: if only one skeleton exists, use it
-                        mesh.skin?.updatePalette(skeleton: onlySkeleton)
-                    }
-                    
-                    meshes[index] = mesh
-                }
-            }
-        }
+
+    /// Returns the total animation duration (from the first animation clip)
+    var animationDuration: Float {
+        return animationClips.values.first?.duration ?? 0
     }
     
     override func triggerAnimation(_ name: String) {
