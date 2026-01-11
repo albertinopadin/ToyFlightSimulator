@@ -18,11 +18,11 @@ enum GearState {
 /// Aircraft-specific animation controller that manages landing gear and other aircraft animations.
 /// This class serves as the high-level animation interface for aircraft, handling state machines
 /// for gear, flaps, etc., while delegating low-level skeleton/skin updates to the UsdModel's data.
-final class AircraftAnimator: AnimationController {
+class AircraftAnimator: AnimationController {
     // MARK: - Properties
 
     /// Reference to the UsdModel containing animation data (skeletons, clips, skins)
-    private weak var model: UsdModel?
+    internal weak var model: UsdModel?
 
     /// Current playback state
     private(set) var playbackState: AnimationPlaybackState = .stopped
@@ -31,7 +31,7 @@ final class AircraftAnimator: AnimationController {
     private(set) var currentTime: Float = 0
 
     /// Total duration of the current animation
-    private(set) var duration: Float = 0
+//    private(set) var duration: Float = 0
 
     /// Playback speed multiplier
     private var playbackSpeed: Float = 1.0
@@ -51,7 +51,7 @@ final class AircraftAnimator: AnimationController {
     private(set) var gearAnimationProgress: Float = 1.0
 
     /// Duration for gear extension/retraction animation in seconds
-    var gearAnimationDuration: Float = 3.0
+    var gearAnimationDuration: Float = 0
 
     // MARK: - Initialization
 
@@ -62,13 +62,19 @@ final class AircraftAnimator: AnimationController {
 
         // Determine the animation duration from the model's animation clips
         if let firstClip = model.animationClips.values.first {
-            self.duration = firstClip.duration
+//            self.duration = firstClip.duration
             self.gearAnimationDuration = firstClip.duration
+        }
+        
+        print("[AC Animator init] model: \(model.name)")
+        for (key, clip) in model.animationClips {
+            print("[AC Animator init] Clip key: \(key), name: \(clip.name), duration: \(clip.duration)s")
         }
 
         // Start with gear down (animation at end position)
         self.gearAnimationProgress = 1.0
-        self.currentTime = duration
+//        self.gearAnimationProgress = 0.8
+        self.currentTime = self.gearAnimationDuration
         updateSkeletonPoses()
     }
 
@@ -91,12 +97,12 @@ final class AircraftAnimator: AnimationController {
         gearAnimationProgress = playbackSpeed >= 0 ? 0 : 1.0
     }
 
-    func setNormalizedTime(_ t: Float) {
-        let clampedT = max(0, min(1, t))
-        currentTime = clampedT * duration
-        gearAnimationProgress = clampedT
-        updateSkeletonPoses()
-    }
+//    func setNormalizedTime(_ t: Float) {
+//        let clampedT = max(0, min(1, t))
+//        currentTime = clampedT * duration
+//        gearAnimationProgress = clampedT
+//        updateSkeletonPoses()
+//    }
 
     func update(deltaTime: Float) {
         updateGearStateMachine(deltaTime: deltaTime)
@@ -169,7 +175,7 @@ final class AircraftAnimator: AnimationController {
                 playbackState = .stopped
                 print("[AircraftAnimator] Gear extension complete")
             }
-            updateSkeletonPoses()
+            didUpdateGearStateMachine()
 
         case .retracting:
             // Animate from 1 (down) to 0 (up)
@@ -180,20 +186,27 @@ final class AircraftAnimator: AnimationController {
                 playbackState = .stopped
                 print("[AircraftAnimator] Gear retraction complete")
             }
-            updateSkeletonPoses()
+            didUpdateGearStateMachine()
 
         case .up, .down:
             // No animation in progress
             break
         }
     }
+    
+    // This will animate everything; override in subclass to only animate gear
+    func didUpdateGearStateMachine() {
+//        updateSkeletonPoses()
+    }
 
     /// Updates all skeleton poses and mesh skins based on current animation progress
-    private func updateSkeletonPoses() {
+    internal func updateSkeletonPoses() {
+        print("[AC Animator updateSkeletonPoses] entered method")
         guard let model = model else { return }
 
         // Calculate animation time from progress
-        let animationTime = gearAnimationProgress * duration
+        let animationTime = gearAnimationProgress * gearAnimationDuration
+        print("[AC Animator updateSkeletonPoses] Animation time: \(animationTime)")
 
         // Update each skeleton with its associated animation clip
         for (skeletonPath, skeleton) in model.skeletons {
@@ -211,15 +224,53 @@ final class AircraftAnimator: AnimationController {
         for (index, mesh) in model.meshes.enumerated() {
             // Update TransformComponent if present (non-skeletal mesh animation)
             if mesh.transform != nil {
-                mesh.transform?.setCurrentTransform(at: animationTime)
+                mesh.transform!.setCurrentTransform(at: animationTime)
             }
 
             // Update skin with the correct skeleton for this mesh
             if let skeletonPath = model.meshSkeletonMap[index],
                let skeleton = model.skeletons[skeletonPath] {
                 mesh.skin?.updatePalette(skeleton: skeleton)
-            } else if model.skeletons.count == 1,
-                      let onlySkeleton = model.skeletons.values.first {
+            } else if model.skeletons.count == 1, let onlySkeleton = model.skeletons.values.first {
+                // Fallback: if only one skeleton exists, use it
+                mesh.skin?.updatePalette(skeleton: onlySkeleton)
+            }
+        }
+    }
+    
+    /// Updates specific skeleton poses and mesh skins based on current animation progress
+    internal func updateSkeletonPoses(skeletons: [String: Skeleton]) {
+        guard let model = model else { return }
+
+        // Calculate animation time from progress
+        let animationTime = gearAnimationProgress * gearAnimationDuration
+
+        // Update each skeleton with its associated animation clip
+        for (skeletonPath, skeleton) in skeletons {
+            // Find the animation clip associated with this skeleton
+            if let clipName = model.skeletonAnimationMap[skeletonPath],
+               let clip = model.animationClips[clipName] {
+                skeleton.updatePose(at: animationTime, animationClip: clip)
+            } else if let firstClip = model.animationClips.values.first {
+                // Fallback: use first available clip
+                skeleton.updatePose(at: animationTime, animationClip: firstClip)
+            }
+        }
+
+        // Update mesh transforms and skins
+        // TODO: This is inefficient as it loops through all meshes instead of only the needed ones
+        //       Maybe need a skeleton -> mesh map ???
+        for (index, mesh) in model.meshes.enumerated() {
+            // Update TransformComponent if present (non-skeletal mesh animation)
+            if mesh.transform != nil {
+                mesh.transform!.setCurrentTransform(at: animationTime)
+            }
+
+            // Update skin with the correct skeleton for this mesh
+            if let skeletonPath = model.meshSkeletonMap[index],
+               let skeleton = skeletons[skeletonPath] {
+                mesh.skin?.updatePalette(skeleton: skeleton)
+            } else if model.skeletons.count == 1, let onlySkeleton = model.skeletons.values.first {
                 // Fallback: if only one skeleton exists, use it
                 mesh.skin?.updatePalette(skeleton: onlySkeleton)
             }
@@ -234,7 +285,7 @@ final class AircraftAnimator: AnimationController {
         [AircraftAnimator State]
           Gear State: \(gearState)
           Gear Progress: \(String(format: "%.2f", gearAnimationProgress))
-          Animation Time: \(String(format: "%.2f", currentTime)) / \(String(format: "%.2f", duration))
+          Animation Time: \(String(format: "%.2f", currentTime)) / \(String(format: "%.2f", self.gearAnimationDuration))
           Playback State: \(playbackState)
         """)
     }

@@ -101,12 +101,25 @@ struct TransformComponent {
         return String(format: "%.\(precision)f", num as! CVarArg)
     }
     
+//    mutating func setCurrentTransform(at time: Float) {
+//        guard duration > 0 else {
+//            currentTransform = .identity
+//            return
+//        }
+//        let frame = Int(fmod(time, duration) * Float(FPS.FPS_120.rawValue))
+//        if frame < keyTransforms.count {
+//            currentTransform = keyTransforms[frame]
+//        } else {
+//            currentTransform = keyTransforms.last ?? .identity
+//        }
+//    }
+    
     mutating func setCurrentTransform(at time: Float) {
         guard duration > 0 else {
             currentTransform = .identity
             return
         }
-        let frame = Int(fmod(time, duration) * Float(FPS.FPS_120.rawValue))
+        let frame = Int(min(time, duration) * Float(FPS.FPS_120.rawValue))
         if frame < keyTransforms.count {
             currentTransform = keyTransforms[frame]
         } else {

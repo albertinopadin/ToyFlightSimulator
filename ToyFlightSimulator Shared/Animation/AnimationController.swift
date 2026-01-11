@@ -28,10 +28,10 @@ protocol AnimationController: AnyObject {
     var currentTime: Float { get }
 
     /// The total duration of the current animation
-    var duration: Float { get }
+//    var duration: Float { get }
 
     /// The normalized time (0.0 to 1.0) representing progress through the animation
-    var normalizedTime: Float { get }
+//    var normalizedTime: Float { get }
 
     /// Play an animation clip by name
     /// - Parameters:
@@ -48,7 +48,7 @@ protocol AnimationController: AnyObject {
 
     /// Set the animation to a specific normalized time
     /// - Parameter t: Normalized time (0.0 = start, 1.0 = end)
-    func setNormalizedTime(_ t: Float)
+//    func setNormalizedTime(_ t: Float)
 
     /// Update the animation state. Called every frame.
     /// - Parameter deltaTime: Time elapsed since last update in seconds
@@ -61,8 +61,8 @@ extension AnimationController {
         return playbackState == .playing
     }
 
-    var normalizedTime: Float {
-        guard duration > 0 else { return 0 }
-        return currentTime / duration
-    }
+//    var normalizedTime: Float {
+//        guard duration > 0 else { return 0 }
+//        return currentTime / duration
+//    }
 }

@@ -13,22 +13,6 @@ enum ModelExtension: String {
     case USDZ = "usdz"
 }
 
-// TODO:
-struct ModelAnimation {
-    let name: String
-    let skeletonPaths: [String]
-    let meshes: [Mesh]
-    let duration: TimeInterval
-    
-    public func animateForwards() {
-        
-    }
-    
-    public func animateReverse() {
-        
-    }
-}
-
 class Model: Hashable {
     public let id: String
     public let name: String

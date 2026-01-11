@@ -79,7 +79,8 @@ class Skeleton {
     }
     
     func updatePose(at currentTime: Float, animationClip: AnimationClip) {
-        let time = fmod(currentTime, animationClip.duration)
+//        let time = fmod(currentTime, animationClip.duration)
+        let time = min(currentTime, animationClip.duration)
 
         var localPose = [float4x4](repeating: .identity, count: jointPaths.count)
 
