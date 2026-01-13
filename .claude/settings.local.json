@@ -6,7 +6,13 @@
       "Bash(xcodebuild build:*)",
       "mcp__mcpxcodebuild__build",
       "Bash(cat:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebFetch(domain:docs.unity3d.com)",
+      "WebFetch(domain:diegogiacomelli.com.br)",
+      "WebFetch(domain:dev.epicgames.com)",
+      "WebFetch(domain:www.gamedeveloper.com)",
+      "WebFetch(domain:vlad.website)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []
