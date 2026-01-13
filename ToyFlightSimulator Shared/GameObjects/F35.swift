@@ -29,11 +29,10 @@ class F35: Aircraft {
             return
         }
 
-        // Create the animator and tell the model it has an external controller
+        // Create the animator (AnimationLayerSystem handles hasExternalAnimator flag)
         animator = F35Animator(model: usdModel)
-        usdModel.hasExternalAnimator = true
 
-        print("[F35] AircraftAnimator initialized with duration: \(animator?.gearAnimationDuration ?? 0)")
+        print("[F35] F35Animator initialized with duration: \(animator?.gearAnimationDuration ?? 0)")
     }
 
     override func doUpdate() {

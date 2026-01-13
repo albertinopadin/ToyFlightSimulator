@@ -51,7 +51,4 @@ class Model: Hashable {
     // TODO: might want to refactor this...
     // Override this in UsdModel for now...
     public func update() { }
-    
-    // Override in UsdModel subclass
-    public func triggerAnimation(_ name: String) { }
 }

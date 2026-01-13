@@ -266,11 +266,4 @@ final class UsdModel: Model {
     var animationDuration: Float {
         return animationClips.values.first?.duration ?? 0
     }
-    
-    override func triggerAnimation(_ name: String) {
-        print("[UsdModel triggerAnimation] animation name: \(name)")
-//        if let modelAnimation = modelAnimations[name] {
-//            
-//        }
-    }
 }

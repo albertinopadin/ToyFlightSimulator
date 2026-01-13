@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Represents the state of the landing gear
+/// Represents the state of the landing gear (legacy compatibility)
 enum GearState {
     case up          // Gear fully retracted
     case extending   // Gear in the process of extending
@@ -16,42 +16,64 @@ enum GearState {
 }
 
 /// Aircraft-specific animation controller that manages landing gear and other aircraft animations.
-/// This class serves as the high-level animation interface for aircraft, handling state machines
-/// for gear, flaps, etc., while delegating low-level skeleton/skin updates to the UsdModel's data.
+/// This class serves as the high-level animation interface for aircraft, using AnimationLayerSystem
+/// internally to manage multiple independent animation channels.
 class AircraftAnimator: AnimationController {
     // MARK: - Properties
 
     /// Reference to the UsdModel containing animation data (skeletons, clips, skins)
     internal weak var model: UsdModel?
 
-    /// Current playback state
+    /// Internal layer system that manages animation channels
+    internal var layerSystem: AnimationLayerSystem?
+
+    /// Current playback state (legacy compatibility)
     private(set) var playbackState: AnimationPlaybackState = .stopped
 
-    /// Current animation time in seconds
+    /// Current animation time in seconds (legacy compatibility)
     private(set) var currentTime: Float = 0
 
-    /// Total duration of the current animation
-//    private(set) var duration: Float = 0
-
-    /// Playback speed multiplier
+    /// Playback speed multiplier (legacy compatibility)
     private var playbackSpeed: Float = 1.0
 
-    /// Whether the animation should loop
+    /// Whether the animation should loop (legacy compatibility)
     private var shouldLoop: Bool = false
 
-    /// Name of the currently playing animation clip
+    /// Name of the currently playing animation clip (legacy compatibility)
     private var currentClipName: String?
 
-    // MARK: - Gear State Machine
+    // MARK: - Landing Gear Channel Access
 
-    /// Current state of the landing gear
-    private(set) var gearState: GearState = .down
+    /// The landing gear channel ID (standard across all aircraft)
+    static let landingGearChannelID = "landingGear"
+
+    /// Direct access to the landing gear channel
+    var landingGearChannel: BinaryAnimationChannel? {
+        layerSystem?.channel(Self.landingGearChannelID, as: BinaryAnimationChannel.self)
+    }
+
+    // MARK: - Gear State (Legacy Compatibility)
+
+    /// Current state of the landing gear (maps to channel state)
+    var gearState: GearState {
+        guard let channel = landingGearChannel else { return .down }
+        switch channel.state {
+        case .inactive: return .up
+        case .activating: return .extending
+        case .active: return .down
+        case .deactivating: return .retracting
+        }
+    }
 
     /// Animation progress for the landing gear (0.0 = fully up, 1.0 = fully down)
-    private(set) var gearAnimationProgress: Float = 1.0
+    var gearAnimationProgress: Float {
+        landingGearChannel?.progress ?? 1.0
+    }
 
     /// Duration for gear extension/retraction animation in seconds
-    var gearAnimationDuration: Float = 0
+    var gearAnimationDuration: Float {
+        landingGearChannel?.transitionDuration ?? 0
+    }
 
     // MARK: - Initialization
 
@@ -60,22 +82,43 @@ class AircraftAnimator: AnimationController {
     init(model: UsdModel) {
         self.model = model
 
-        // Determine the animation duration from the model's animation clips
-        if let firstClip = model.animationClips.values.first {
-//            self.duration = firstClip.duration
-            self.gearAnimationDuration = firstClip.duration
-        }
-        
-        print("[AC Animator init] model: \(model.name)")
-        for (key, clip) in model.animationClips {
-            print("[AC Animator init] Clip key: \(key), name: \(clip.name), duration: \(clip.duration)s")
-        }
+        // Create the layer system
+        self.layerSystem = AnimationLayerSystem(model: model)
 
-        // Start with gear down (animation at end position)
-        self.gearAnimationProgress = 1.0
-//        self.gearAnimationProgress = 0.8
-        self.currentTime = self.gearAnimationDuration
-        updateSkeletonPoses()
+        print("[AircraftAnimator init] model: \(model.name)")
+        for (key, clip) in model.animationClips {
+            print("[AircraftAnimator init] Clip key: \(key), name: \(clip.name), duration: \(clip.duration)s")
+        }
+    }
+
+    /// Subclasses should call this to register their channels after init
+    func setupChannels() {
+        // Base implementation does nothing
+        // Subclasses override to register aircraft-specific channels
+    }
+
+    // MARK: - Channel Management
+
+    /// Register an animation channel
+    /// - Parameter channel: The channel to register
+    func registerChannel(_ channel: AnimationChannel) {
+        layerSystem?.registerChannel(channel)
+    }
+
+    /// Get a channel by ID
+    /// - Parameter id: The channel ID
+    /// - Returns: The channel if found
+    func channel(_ id: String) -> AnimationChannel? {
+        layerSystem?.channel(id)
+    }
+
+    /// Get a typed channel by ID
+    /// - Parameters:
+    ///   - id: The channel ID
+    ///   - type: The expected channel type
+    /// - Returns: The channel cast to the specified type
+    func channel<T: AnimationChannel>(_ id: String, as type: T.Type) -> T? {
+        layerSystem?.channel(id, as: type)
     }
 
     // MARK: - AnimationController Protocol
@@ -94,187 +137,60 @@ class AircraftAnimator: AnimationController {
     func stop() {
         playbackState = .stopped
         currentTime = 0
-        gearAnimationProgress = playbackSpeed >= 0 ? 0 : 1.0
     }
-
-//    func setNormalizedTime(_ t: Float) {
-//        let clampedT = max(0, min(1, t))
-//        currentTime = clampedT * duration
-//        gearAnimationProgress = clampedT
-//        updateSkeletonPoses()
-//    }
 
     func update(deltaTime: Float) {
-        updateGearStateMachine(deltaTime: deltaTime)
+        // Delegate to the layer system
+        layerSystem?.update(deltaTime: deltaTime)
     }
 
-    // MARK: - Gear Control API
+    // MARK: - Gear Control API (Legacy Compatibility)
 
     /// Initiates landing gear extension
     /// Only works when gear is fully up
     func extendGear() {
-        guard gearState == .up else {
-            print("[AircraftAnimator] Cannot extend gear - current state: \(gearState)")
+        guard let channel = landingGearChannel else {
+            print("[AircraftAnimator] No landing gear channel registered")
             return
         }
-        print("[AircraftAnimator] Beginning gear extension")
-        gearState = .extending
-        playbackState = .playing
+        channel.activate()
+        playbackState = channel.isAnimating ? .playing : .stopped
     }
 
     /// Initiates landing gear retraction
     /// Only works when gear is fully down
     func retractGear() {
-        guard gearState == .down else {
-            print("[AircraftAnimator] Cannot retract gear - current state: \(gearState)")
+        guard let channel = landingGearChannel else {
+            print("[AircraftAnimator] No landing gear channel registered")
             return
         }
-        print("[AircraftAnimator] Beginning gear retraction")
-        gearState = .retracting
-        playbackState = .playing
+        channel.deactivate()
+        playbackState = channel.isAnimating ? .playing : .stopped
     }
 
     /// Toggles landing gear between extended and retracted states
     func toggleGear() {
-        switch gearState {
-        case .up:
-            extendGear()
-        case .down:
-            retractGear()
-        case .extending, .retracting:
-            print("[AircraftAnimator] Gear animation in progress, ignoring toggle")
+        guard let channel = landingGearChannel else {
+            print("[AircraftAnimator] No landing gear channel registered")
+            return
         }
+        channel.toggle()
+        playbackState = channel.isAnimating ? .playing : .stopped
     }
 
     /// Returns true if the gear is fully down
     var isGearDown: Bool {
-        return gearState == .down
+        landingGearChannel?.isActive ?? true
     }
 
     /// Returns true if the gear is fully up
     var isGearUp: Bool {
-        return gearState == .up
+        landingGearChannel?.isInactive ?? false
     }
 
     /// Returns true if a gear animation is in progress
     var isGearAnimating: Bool {
-        return gearState == .extending || gearState == .retracting
-    }
-
-    // MARK: - Private Methods
-
-    /// Updates the gear state machine based on elapsed time
-    private func updateGearStateMachine(deltaTime: Float) {
-        switch gearState {
-        case .extending:
-            // Animate from 0 (up) to 1 (down)
-            gearAnimationProgress += deltaTime / gearAnimationDuration
-            if gearAnimationProgress >= 1.0 {
-                gearAnimationProgress = 1.0
-                gearState = .down
-                playbackState = .stopped
-                print("[AircraftAnimator] Gear extension complete")
-            }
-            didUpdateGearStateMachine()
-
-        case .retracting:
-            // Animate from 1 (down) to 0 (up)
-            gearAnimationProgress -= deltaTime / gearAnimationDuration
-            if gearAnimationProgress <= 0.0 {
-                gearAnimationProgress = 0.0
-                gearState = .up
-                playbackState = .stopped
-                print("[AircraftAnimator] Gear retraction complete")
-            }
-            didUpdateGearStateMachine()
-
-        case .up, .down:
-            // No animation in progress
-            break
-        }
-    }
-    
-    // This will animate everything; override in subclass to only animate gear
-    func didUpdateGearStateMachine() {
-//        updateSkeletonPoses()
-    }
-
-    /// Updates all skeleton poses and mesh skins based on current animation progress
-    internal func updateSkeletonPoses() {
-        print("[AC Animator updateSkeletonPoses] entered method")
-        guard let model = model else { return }
-
-        // Calculate animation time from progress
-        let animationTime = gearAnimationProgress * gearAnimationDuration
-        print("[AC Animator updateSkeletonPoses] Animation time: \(animationTime)")
-
-        // Update each skeleton with its associated animation clip
-        for (skeletonPath, skeleton) in model.skeletons {
-            // Find the animation clip associated with this skeleton
-            if let clipName = model.skeletonAnimationMap[skeletonPath],
-               let clip = model.animationClips[clipName] {
-                skeleton.updatePose(at: animationTime, animationClip: clip)
-            } else if let firstClip = model.animationClips.values.first {
-                // Fallback: use first available clip
-                skeleton.updatePose(at: animationTime, animationClip: firstClip)
-            }
-        }
-
-        // Update mesh transforms and skins
-        for (index, mesh) in model.meshes.enumerated() {
-            // Update TransformComponent if present (non-skeletal mesh animation)
-            if mesh.transform != nil {
-                mesh.transform!.setCurrentTransform(at: animationTime)
-            }
-
-            // Update skin with the correct skeleton for this mesh
-            if let skeletonPath = model.meshSkeletonMap[index],
-               let skeleton = model.skeletons[skeletonPath] {
-                mesh.skin?.updatePalette(skeleton: skeleton)
-            } else if model.skeletons.count == 1, let onlySkeleton = model.skeletons.values.first {
-                // Fallback: if only one skeleton exists, use it
-                mesh.skin?.updatePalette(skeleton: onlySkeleton)
-            }
-        }
-    }
-    
-    /// Updates specific skeleton poses and mesh skins based on current animation progress
-    internal func updateSkeletonPoses(skeletons: [String: Skeleton]) {
-        guard let model = model else { return }
-
-        // Calculate animation time from progress
-        let animationTime = gearAnimationProgress * gearAnimationDuration
-
-        // Update each skeleton with its associated animation clip
-        for (skeletonPath, skeleton) in skeletons {
-            // Find the animation clip associated with this skeleton
-            if let clipName = model.skeletonAnimationMap[skeletonPath],
-               let clip = model.animationClips[clipName] {
-                skeleton.updatePose(at: animationTime, animationClip: clip)
-            } else if let firstClip = model.animationClips.values.first {
-                // Fallback: use first available clip
-                skeleton.updatePose(at: animationTime, animationClip: firstClip)
-            }
-        }
-
-        // Update mesh transforms and skins
-        // TODO: This is inefficient as it loops through all meshes instead of only the needed ones
-        //       Maybe need a skeleton -> mesh map ???
-        for (index, mesh) in model.meshes.enumerated() {
-            // Update TransformComponent if present (non-skeletal mesh animation)
-            if mesh.transform != nil {
-                mesh.transform!.setCurrentTransform(at: animationTime)
-            }
-
-            // Update skin with the correct skeleton for this mesh
-            if let skeletonPath = model.meshSkeletonMap[index],
-               let skeleton = skeletons[skeletonPath] {
-                mesh.skin?.updatePalette(skeleton: skeleton)
-            } else if model.skeletons.count == 1, let onlySkeleton = model.skeletons.values.first {
-                // Fallback: if only one skeleton exists, use it
-                mesh.skin?.updatePalette(skeleton: onlySkeleton)
-            }
-        }
+        landingGearChannel?.isAnimating ?? false
     }
 
     // MARK: - Debug
@@ -285,8 +201,11 @@ class AircraftAnimator: AnimationController {
         [AircraftAnimator State]
           Gear State: \(gearState)
           Gear Progress: \(String(format: "%.2f", gearAnimationProgress))
-          Animation Time: \(String(format: "%.2f", currentTime)) / \(String(format: "%.2f", self.gearAnimationDuration))
+          Gear Duration: \(String(format: "%.2f", gearAnimationDuration))s
           Playback State: \(playbackState)
+          Channels: \(layerSystem?.channelIDs ?? [])
         """)
+
+        layerSystem?.debugPrintState()
     }
 }
