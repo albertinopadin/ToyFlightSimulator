@@ -34,10 +34,11 @@ final class F35Animator: AircraftAnimator {
         }
 
         // Register all channels defined in F35AnimationConfig
-        let channels = F35AnimationConfig.createAllChannels(for: model)
-        for channel in channels {
-            registerChannel(channel)
-            print("[F35Animator] Registered channel: \(channel.id)")
+//        let channels = F35AnimationConfig.createAllChannels(for: model)
+        let channelSets = F35AnimationConfig.createAllChannelSets(for: model)
+        for channelSet in channelSets {
+            registerChannelSet(channelSet)
+            print("[F35Animator] Registered channel set: \(channelSet.id)")
         }
     }
 

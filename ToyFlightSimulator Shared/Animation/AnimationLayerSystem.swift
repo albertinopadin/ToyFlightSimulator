@@ -18,12 +18,16 @@ final class AnimationLayerSystem {
 
     /// Registered animation channels, keyed by their unique ID
     private var channels: [String: AnimationChannel] = [:]
+    
+    private var channelSets: [String: AnimationChannelSet] = [:]
 
     /// Order in which channels are evaluated (for deterministic updates)
     private var evaluationOrder: [String] = []
+    
+    private var channelSetEvaluationOrder: [String] = []
 
     /// Whether debug logging is enabled
-    var debugLogging: Bool = false
+    var debugLogging: Bool = true
 
     // MARK: - Computed Properties
 
@@ -52,8 +56,8 @@ final class AnimationLayerSystem {
 
         if debugLogging {
             print("[AnimationLayerSystem] Initialized for model: \(model.name)")
-            print("[AnimationLayerSystem] Available skeletons: \(model.skeletons.keys)")
-            print("[AnimationLayerSystem] Available clips: \(model.animationClips.keys)")
+            print("[AnimationLayerSystem] \(model.skeletons.count) Available skeletons: \(model.skeletons.keys)")
+            print("[AnimationLayerSystem] \(model.animationClips.count) Available clips: \(model.animationClips.keys)")
         }
     }
 
@@ -118,29 +122,81 @@ final class AnimationLayerSystem {
     func hasChannel(_ id: String) -> Bool {
         channels[id] != nil
     }
+    
+    /// Register a new animation channel set
+    /// - Parameter channelSet: The channel set to register
+    func registerChannelSet(_ channelSet: AnimationChannelSet) {
+        let id = channelSet.id
+
+        if channelSets[id] != nil {
+            print("[AnimationLayerSystem] Warning: Replacing existing channel set '\(id)'")
+            channelSetEvaluationOrder.removeAll { $0 == id }
+        }
+
+        channelSets[id] = channelSet
+        channelSetEvaluationOrder.append(id)
+
+        if debugLogging {
+//            print("[AnimationLayerSystem] Registered channel set '\(id)' with mask: \(channel.mask)")
+            print("[AnimationLayerSystem] Registered channel set '\(id)'")
+        }
+    }
+    
+    func channelSet(_ id: String) -> AnimationChannelSet? {
+        return channelSets[id]
+    }
+    
+    func hasChannelSet(_ id: String) -> Bool {
+        channelSets[id] != nil
+    }
 
     // MARK: - Update
 
     /// Update all channels and refresh poses for any that changed
     /// - Parameter deltaTime: Time since last update in seconds
+//    func update(deltaTime: Float) {
+//        guard let model = model else { return }
+//
+//        // Update all channel state machines
+//        for id in evaluationOrder {
+//            channels[id]?.update(deltaTime: deltaTime)
+//        }
+//
+//        // Update poses for dirty channels
+//        for id in evaluationOrder {
+//            guard let channel = channels[id], channel.isDirty else { continue }
+//
+//            if debugLogging {
+//                print("[AnimationLayerSystem] Updating poses for dirty channel '\(id)'")
+//            }
+//
+//            updatePoses(for: channel, model: model)
+//            channel.clearDirty()
+//        }
+//    }
+    
     func update(deltaTime: Float) {
         guard let model = model else { return }
 
         // Update all channel state machines
-        for id in evaluationOrder {
-            channels[id]?.update(deltaTime: deltaTime)
+        for id in channelSetEvaluationOrder {
+            channelSets[id]?.update(deltaTime: deltaTime)
         }
 
         // Update poses for dirty channels
-        for id in evaluationOrder {
-            guard let channel = channels[id], channel.isDirty else { continue }
-
-            if debugLogging {
-                print("[AnimationLayerSystem] Updating poses for dirty channel '\(id)'")
+        for id in channelSetEvaluationOrder {
+            if let channelSet = channelSets[id] {
+                for channel in channelSet.channels {
+                    guard channel.isDirty else { continue }
+                    
+                    if debugLogging {
+                        print("[AnimationLayerSystem] Updating poses for dirty channel '\(channel.id)'")
+                    }
+                    
+                    updatePoses(for: channel, model: model)
+                    channel.clearDirty()
+                }
             }
-
-            updatePoses(for: channel, model: model)
-            channel.clearDirty()
         }
     }
 
@@ -186,30 +242,41 @@ final class AnimationLayerSystem {
 
         // Update mesh transforms and skins for affected meshes
         for (index, mesh) in model.meshes.enumerated() {
+            // TODO: Make this code work so this is efficient and actually targets the correct meshes:
+            
             // Check if this mesh is directly affected by the mask
-            let meshDirectlyAffected = mask.contains(meshIndex: index)
-
-            // Check if this mesh's skeleton is affected
-            var meshSkeletonAffected = false
-            if let skeletonPath = model.meshSkeletonMap[index] {
-                meshSkeletonAffected = affectedSkeletonPaths.contains(skeletonPath)
-            }
-
-            // Skip if this mesh is not affected
-            guard meshDirectlyAffected || meshSkeletonAffected || mask.isEmpty else { continue }
+//            let meshDirectlyAffected = mask.contains(meshIndex: index)
+//
+//            // Check if this mesh's skeleton is affected
+//            var meshSkeletonAffected = false
+//            if let skeletonPath = model.meshSkeletonMap[index] {
+//                meshSkeletonAffected = affectedSkeletonPaths.contains(skeletonPath) ||
+//                                        model.meshSkeletonMap[index] == skeletonPath
+//                
+//            }
+//
+//            // Skip if this mesh is not affected
+//            guard meshDirectlyAffected || meshSkeletonAffected || mask.isEmpty else { continue }
 
             // Update transform component if present (for non-skeletal mesh animation)
             if mesh.transform != nil {
-                mesh.transform?.setCurrentTransform(at: animTime)
+                print("[AnimationLayerSystem] Set mesh \(index) transform at time \(animTime)")
+                mesh.transform!.setCurrentTransform(at: animTime)
             }
 
             // Update skin with skeleton pose
             if let skeletonPath = model.meshSkeletonMap[index],
                let skeleton = model.skeletons[skeletonPath] {
                 mesh.skin?.updatePalette(skeleton: skeleton)
+                if debugLogging {
+                    print("[AnimationLayerSystem] Updated mesh skin palette with skeleton '\(skeletonPath)' at time \(animTime)")
+                }
             } else if model.skeletons.count == 1, let onlySkeleton = model.skeletons.values.first {
                 // Fallback: if only one skeleton exists, use it
                 mesh.skin?.updatePalette(skeleton: onlySkeleton)
+                if debugLogging {
+                    print("[AnimationLayerSystem] Updated ONLY mesh skin palette at time \(animTime)")
+                }
             }
         }
     }
@@ -225,22 +292,41 @@ final class AnimationLayerSystem {
             print("[AnimationLayerSystem] Force updating all poses")
         }
 
-        for id in evaluationOrder {
-            if let channel = channels[id] {
-                updatePoses(for: channel, model: model)
+//        for id in evaluationOrder {
+//            if let channel = channels[id] {
+//                updatePoses(for: channel, model: model)
+//            }
+//        }
+        
+        for id in channelSetEvaluationOrder {
+            if let channelSet = channelSets[id] {
+                for channel in channelSet.channels {
+                    updatePoses(for: channel, model: model)
+                }
             }
         }
     }
 
     /// Reset all channels to their default state
     func resetAllChannels() {
-        for channel in channels.values {
-            if let binary = channel as? BinaryAnimationChannel {
-                binary.setInactiveImmediate()
-            } else if let continuous = channel as? ContinuousAnimationChannel {
-                continuous.setValueImmediate(continuous.range.min)
+//        for channel in channels.values {
+//            if let binary = channel as? BinaryAnimationChannel {
+//                binary.setInactiveImmediate()
+//            } else if let continuous = channel as? ContinuousAnimationChannel {
+//                continuous.setValueImmediate(continuous.range.min)
+//            }
+//        }
+        
+        for channelSet in channelSets.values {
+            for channel in channelSet.channels {
+                if let binary = channel as? BinaryAnimationChannel {
+                    binary.setInactiveImmediate()
+                } else if let continuous = channel as? ContinuousAnimationChannel {
+                    continuous.setValueImmediate(continuous.range.min)
+                }
             }
         }
+        
         forceUpdateAllPoses()
 
         if debugLogging {

@@ -48,31 +48,46 @@ class AircraftAnimator: AnimationController {
     static let landingGearChannelID = "landingGear"
 
     /// Direct access to the landing gear channel
-    var landingGearChannel: BinaryAnimationChannel? {
-        layerSystem?.channel(Self.landingGearChannelID, as: BinaryAnimationChannel.self)
+    // TODO: Using ChannelSet now:
+//    var landingGearChannel: BinaryAnimationChannel? {
+//        layerSystem?.channel(Self.landingGearChannelID, as: BinaryAnimationChannel.self)
+//    }
+    
+    var landingGearChannelSet: AnimationChannelSet? {
+        layerSystem?.channelSet(Self.landingGearChannelID)
     }
 
     // MARK: - Gear State (Legacy Compatibility)
 
     /// Current state of the landing gear (maps to channel state)
+//    var gearState: GearState {
+//        guard let channel = landingGearChannel else { return .down }
+//        switch channel.state {
+//        case .inactive: return .up
+//        case .activating: return .extending
+//        case .active: return .down
+//        case .deactivating: return .retracting
+//        }
+//    }
+    
     var gearState: GearState {
-        guard let channel = landingGearChannel else { return .down }
-        switch channel.state {
-        case .inactive: return .up
-        case .activating: return .extending
-        case .active: return .down
-        case .deactivating: return .retracting
+        guard let channelSet = landingGearChannelSet else { return .down }
+        switch channelSet.state {
+            case .inactive: return .up
+            case .activating: return .extending
+            case .active: return .down
+            case .deactivating: return .retracting
         }
     }
 
     /// Animation progress for the landing gear (0.0 = fully up, 1.0 = fully down)
     var gearAnimationProgress: Float {
-        landingGearChannel?.progress ?? 1.0
+        landingGearChannelSet?.progress ?? 1.0
     }
 
     /// Duration for gear extension/retraction animation in seconds
     var gearAnimationDuration: Float {
-        landingGearChannel?.transitionDuration ?? 0
+        landingGearChannelSet?.transitionDuration ?? 0
     }
 
     // MARK: - Initialization
@@ -103,6 +118,10 @@ class AircraftAnimator: AnimationController {
     /// - Parameter channel: The channel to register
     func registerChannel(_ channel: AnimationChannel) {
         layerSystem?.registerChannel(channel)
+    }
+    
+    func registerChannelSet(_ channelSet: AnimationChannelSet) {
+        layerSystem?.registerChannelSet(channelSet)
     }
 
     /// Get a channel by ID
@@ -149,48 +168,49 @@ class AircraftAnimator: AnimationController {
     /// Initiates landing gear extension
     /// Only works when gear is fully up
     func extendGear() {
-        guard let channel = landingGearChannel else {
-            print("[AircraftAnimator] No landing gear channel registered")
+        guard let channelSet = landingGearChannelSet else {
+            print("[AircraftAnimator] No landing gear channel set registered")
             return
         }
-        channel.activate()
-        playbackState = channel.isAnimating ? .playing : .stopped
+        channelSet.activate()
+        playbackState = channelSet.isAnimating ? .playing : .stopped
     }
 
     /// Initiates landing gear retraction
     /// Only works when gear is fully down
     func retractGear() {
-        guard let channel = landingGearChannel else {
-            print("[AircraftAnimator] No landing gear channel registered")
+        guard let channelSet = landingGearChannelSet else {
+            print("[AircraftAnimator] No landing gear channel set registered")
             return
         }
-        channel.deactivate()
-        playbackState = channel.isAnimating ? .playing : .stopped
+        channelSet.deactivate()
+        playbackState = channelSet.isAnimating ? .playing : .stopped
     }
 
     /// Toggles landing gear between extended and retracted states
     func toggleGear() {
-        guard let channel = landingGearChannel else {
-            print("[AircraftAnimator] No landing gear channel registered")
+        guard let channelSet = landingGearChannelSet else {
+            print("[AircraftAnimator] No landing gear channel set registered")
             return
         }
-        channel.toggle()
-        playbackState = channel.isAnimating ? .playing : .stopped
+        channelSet.toggle()
+        print("[AircraftAnimator] Toggled Landing Gear")
+        playbackState = channelSet.isAnimating ? .playing : .stopped
     }
 
     /// Returns true if the gear is fully down
     var isGearDown: Bool {
-        landingGearChannel?.isActive ?? true
+        landingGearChannelSet?.isActive ?? true
     }
 
     /// Returns true if the gear is fully up
     var isGearUp: Bool {
-        landingGearChannel?.isInactive ?? false
+        landingGearChannelSet?.isInactive ?? false
     }
 
     /// Returns true if a gear animation is in progress
     var isGearAnimating: Bool {
-        landingGearChannel?.isAnimating ?? false
+        landingGearChannelSet?.isAnimating ?? false
     }
 
     // MARK: - Debug
