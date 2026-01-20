@@ -7,56 +7,6 @@
 
 import Foundation
 
-// TODO: Move this to more appropriate place:
-struct AnimationChannelSet {
-    let id: String
-    let channels: [AnimationChannel]
-    
-    func update(deltaTime: Float) {
-        channels.forEach { $0.update(deltaTime: deltaTime) }
-    }
-    
-    // Hack:
-    public var state: BinaryAnimationChannel.State {
-        return (channels.first as? BinaryAnimationChannel)?.state ?? .inactive
-    }
-    
-    // Hack:
-    public var progress: Float {
-        return (channels.first as? BinaryAnimationChannel)?.progress ?? 0.0
-    }
-    
-    // Hack:
-    public var transitionDuration: Float {
-        return (channels.first as? BinaryAnimationChannel)?.transitionDuration ?? 0.0
-    }
-    
-    // OMG So many hacks:
-    public func activate() {
-        channels.forEach { ($0 as? BinaryAnimationChannel)?.activate() }
-    }
-    
-    public func deactivate() {
-        channels.forEach { ($0 as? BinaryAnimationChannel)?.deactivate() }
-    }
-    
-    public func toggle() {
-        channels.forEach { ($0 as? BinaryAnimationChannel)?.toggle() }
-    }
-    
-    public var isAnimating: Bool {
-        return (channels.first as? BinaryAnimationChannel)?.isAnimating ?? false
-    }
-    
-    public var isActive: Bool {
-        return (channels.first as? BinaryAnimationChannel)?.isActive ?? false
-    }
-    
-    public var isInactive: Bool {
-        return (channels.first as? BinaryAnimationChannel)?.isInactive ?? false
-    }
-}
-
 /// Channel configuration for F-35 Lightning II aircraft.
 /// Defines all animation channels available on this aircraft model.
 struct F35AnimationConfig {
@@ -130,9 +80,26 @@ struct F35AnimationConfig {
     static func createLandingGearChannelSet(for model: UsdModel) -> AnimationChannelSet {
         var channels: [AnimationChannel] = []
         
+        print("[createLandingGearChannelSet] model meshSkeletonMap: \(model.meshSkeletonMap)")
+        print("[createLandingGearChannelSet] model skeletonAnimationMap: \(model.skeletonAnimationMap)")
+        
         // For now using all animation clips since the F-35 model only has landing gear animations:
         for (i, animationClip) in model.animationClips.values.enumerated() {
-            let mask = AnimationMask(jointPaths: animationClip.jointPaths)
+            guard let skeletonAnimation = model.skeletonAnimationMap.first(where: {
+                $0.value == animationClip.name
+            }) else {
+                fatalError("F-35 model has no animation clip named: \(animationClip.name)")
+            }
+            
+            let meshIndices = model.meshSkeletonMap.filter { $0.value == skeletonAnimation.key }.map { $0.key }
+            
+            print("[createLandingGearChannelSet] meshIndices: \(meshIndices) for animationClip: \(animationClip.name)")
+            
+            guard !meshIndices.isEmpty else {
+                fatalError("F-35 model has no mesh indices for animation clip: \(animationClip.name)")
+            }
+            
+            let mask = AnimationMask(jointPaths: animationClip.jointPaths, meshIndices: meshIndices)
             
             let channel = BinaryAnimationChannel(
 //                id: "\(landingGearChannelID)_\(i)",

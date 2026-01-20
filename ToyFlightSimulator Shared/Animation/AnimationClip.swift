@@ -48,7 +48,8 @@ class AnimationClip {
     var jointPaths: [String] = []
 
     init(animation: MDLPackedJointAnimation) {
-        self.name = URL(string: animation.name)?.lastPathComponent ?? "Untitled"
+//        self.name = URL(string: animation.name)?.lastPathComponent ?? "Untitled"
+        self.name = animation.name
         jointPaths = animation.jointPaths
         var duration: Float = 0
         for (jointIndex, jointPath) in animation.jointPaths.enumerated() {

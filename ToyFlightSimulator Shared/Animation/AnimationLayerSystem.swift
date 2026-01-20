@@ -245,18 +245,21 @@ final class AnimationLayerSystem {
             // TODO: Make this code work so this is efficient and actually targets the correct meshes:
             
             // Check if this mesh is directly affected by the mask
-//            let meshDirectlyAffected = mask.contains(meshIndex: index)
-//
-//            // Check if this mesh's skeleton is affected
-//            var meshSkeletonAffected = false
-//            if let skeletonPath = model.meshSkeletonMap[index] {
-//                meshSkeletonAffected = affectedSkeletonPaths.contains(skeletonPath) ||
-//                                        model.meshSkeletonMap[index] == skeletonPath
-//                
-//            }
-//
-//            // Skip if this mesh is not affected
-//            guard meshDirectlyAffected || meshSkeletonAffected || mask.isEmpty else { continue }
+            let meshDirectlyAffected = mask.contains(meshIndex: index)
+
+            // Check if this mesh's skeleton is affected
+            var meshSkeletonAffected = false
+            if let skeletonPath = model.meshSkeletonMap[index] {
+                meshSkeletonAffected = affectedSkeletonPaths.contains(skeletonPath) ||
+                                        model.meshSkeletonMap[index] == skeletonPath
+                
+            }
+
+            // Skip if this mesh is not affected
+            guard meshDirectlyAffected || meshSkeletonAffected || mask.isEmpty || mesh.transform != nil else {
+                print("[AnimationLayerSystem updatePose] Skipping mesh \(index) as it is not affected by the animation")
+                continue
+            }
 
             // Update transform component if present (for non-skeletal mesh animation)
             if mesh.transform != nil {

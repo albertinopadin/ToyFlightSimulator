@@ -39,6 +39,8 @@ struct AnimationMask {
     init(jointPaths: [String], meshIndices: [Int]) {
         self.jointPaths = Set(jointPaths)
         self.meshIndices = Set(meshIndices)
+        
+        print("[AnimationMask init] jointPaths: \(jointPaths), meshIndices: \(meshIndices)")
     }
 
     // MARK: - Query Methods

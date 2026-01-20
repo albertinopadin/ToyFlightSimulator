@@ -171,6 +171,11 @@ final class UsdModel: Model {
             // Create the skin and record the mesh-to-skeleton mapping
             let skin = Skin(animationBindComponent: animationBindComponent, skeleton: skeleton)
             meshes[index].skin = skin
+            
+            if meshSkeletonMap[index] != nil {
+                print("[UsdModel loadSkins] Warning: Overwriting existing mesh-to-skeleton mapping for mesh[\(index)]")
+            }
+            
             meshSkeletonMap[index] = skeletonPath
             print("[UsdModel loadSkins] mesh[\(index)] '\(mdlMeshes[index].name)': Created skin with skeleton '\(skeletonPath)'")
         }
