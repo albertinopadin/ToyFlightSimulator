@@ -86,6 +86,7 @@ final class UsdModel: Model {
     
     /// Loads ALL skeletons from the asset into the skeletons dictionary, keyed by path
     private func loadSkeletons(asset: MDLAsset) {
+        print("[UsdModel loadSkeletons] Number of animations in asset \(String(describing: asset.url)): \(asset.animations.count)")
         let mdlSkeletons = asset.childObjects(of: MDLSkeleton.self) as? [MDLSkeleton] ?? []
         print("[UsdModel loadSkeletons] Found \(mdlSkeletons.count) skeletons")
 
@@ -128,6 +129,16 @@ final class UsdModel: Model {
     
     private func loadSkins(mdlMeshes: [MDLMesh]) {
         for index in 0..<mdlMeshes.count {
+            // Testing:
+            if mdlMeshes[index].components.count > 1 || mdlMeshes[index].children.count > 1 {
+                print("[UsdModel loadSkins] Model \(self.name) > Number of components in mesh \(index): \(mdlMeshes[index].components.count)")
+                print("[UsdModel loadSkins] Model \(self.name) > Number of children in mesh \(index): \(mdlMeshes[index].children.count)")
+                
+                for component in mdlMeshes[index].components {
+                    print("[UsdModel loadSkins] Model \(self.name) > mesh \(index), Component: \(component)")
+                }
+            }
+            
             let animationBindComponent = mdlMeshes[index].componentConforming(to: MDLComponent.self)
                 as? MDLAnimationBindComponent
 
