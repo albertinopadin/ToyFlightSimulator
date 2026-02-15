@@ -1,109 +1,191 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code working with this Metal-based flight simulator for macOS/iOS/tvOS.
 
 ## Build Commands
 
-### macOS
 ```bash
-# Build Debug configuration
+# macOS Debug
 xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulator macOS" -sdk macosx -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
-# Build Release configuration
+# macOS Release
 xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulator macOS" -sdk macosx -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
-# Run tests
+# macOS Tests
 xcodebuild test -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulator macOS" -sdk macosx -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
-```
 
-### iOS
-```bash
-# Build for iOS Simulator
+# iOS Simulator
 xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulator iOS" -sdk iphonesimulator -configuration Debug
 ```
 
-### Running the Application
-After building, the application can be run through Xcode or by executing the built product directly:
-```bash
-# macOS (after Debug build)
-./build/Debug/ToyFlightSimulator\ macOS.app/Contents/MacOS/ToyFlightSimulator\ macOS
+## Project Layout
+
+```
+ToyFlightSimulator Shared/     # Cross-platform engine (168 Swift files, 22 Metal shaders)
+  Animation/                   # Skeletal animation, channels, layer system
+    Aircraft/                  # Aircraft-specific animators (F35, etc.)
+    Channels/                  # Binary/Continuous animation channels, channel sets, masks
+  Assets/                      # Asset management and libraries
+    Libraries/Meshes/          # MeshLibrary, procedural meshes
+    Libraries/Textures/        # TextureLoader (singleton cache), TextureLibrary
+    Libraries/Models/          # ModelLibrary (OBJ/USDZ loading)
+  Audio/                       # TFSAudioSystem (AVAudioEngine wrapper)
+  Core/
+    Input/                     # Keyboard, Mouse, Joystick (HOTAS), Controller, MotionDevice
+    Threads/                   # UpdateThread (game logic), AudioThread
+    Resources/Models/          # 3D model files (F16, F18, F35, Temple, etc.)
+  Display/                     # Renderers and protocols
+    Protocols/                 # BaseRendering, ShadowRendering, ParticleRendering, etc.
+  GameObjects/                 # Node → GameObject hierarchy, Aircraft, Weapons, Cameras, Particles
+  Graphics/
+    Shaders/                   # All .metal files + TFSCommon.h shared definitions
+    Libraries/Pipelines/       # Render/Compute pipeline states (~62 pipeline types)
+  Managers/                    # SceneManager, CameraManager, LightManager, AudioManager
+  Math/                        # Math utilities
+  Physics/                     # PhysicsWorld, solvers, collision detection
+  Scenes/                      # GameScene subclasses (Flightbox, Sandbox, etc.)
+  Utils/                       # TFSCache, TFSLock, ModelIO extensions
+ToyFlightSimulator macOS/      # AppDelegate, GameViewController, TFSMenu, SwiftUI wrappers
+ToyFlightSimulator iOS/        # SwiftUI app entry, touch controls (virtual joystick/throttle)
+ToyFlightSimulator tvOS/       # tvOS target
+ToyFlightSimulatorTests/       # NodeTests, RendererTests
 ```
 
-## Architecture Overview
+## Architecture
 
-### Rendering Pipeline
-The project implements multiple advanced rendering techniques, each with its own pipeline:
+### Initialization Flow
+1. Platform entry point creates SwiftUI view containing MetalViewWrapper
+2. MetalViewWrapper's `makeCoordinator()` calls `Engine.Start(rendererType:)` which starts UpdateThread + AudioThread
+3. `makeNSView/makeUIView` creates `GameView` (MTKView subclass), sets `Engine.MetalView`
+4. `SceneManager.SetScene()` creates a GameScene subclass which calls `buildScene()` to populate scene graph
+5. Renderer assigned as MTKView delegate starts the render loop
 
-1. **Order Independent Transparency (OIT)** - Uses image blocks for proper transparency rendering
-2. **Single Pass Deferred Lighting** - GBuffer pass followed by lighting calculation with shadow mapping
-3. **Tiled Deferred Rendering** - Divides screen into tiles for efficient light culling
-4. **Forward Plus Tile Shading** - Modern forward rendering with light culling
-5. **Tiled MSAA with Tessellation** - Anti-aliasing with terrain tessellation support
+### Engine (Core/Engine.swift)
+Static lazy initialization of `MTLDevice`, `MTLCommandQueue`, `MTLLibrary`. Owns renderer, UpdateThread, AudioThread.
 
-Renderer selection is done through `RendererType` enum and can be changed at runtime via the menu.
+### Scene Graph
+- **Node**: Base class with transform hierarchy (position, rotation, scale). `modelMatrix = parentModelMatrix * localMatrix`. Children updated recursively via `update()` → `doUpdate()`.
+- **GameObject**: Extends Node. Has `Model` (meshes + materials), `ModelConstants` (shader uniforms), implements `PhysicsEntity` protocol. `Hashable` for collection use.
+- **GameScene**: Root node. `buildScene()` overridden by subclasses. `addChild()` auto-registers with SceneManager. Has `addCamera()`, `addLight()` helpers.
 
-### Scene Graph Architecture
-- **Node**: Base class providing transform hierarchy (position, rotation, scale)
-- **GameObject**: Extends Node with rendering capabilities (mesh, material, textures)
-- **Scene**: Contains root nodes and manages the scene graph
-- All transforms are hierarchical - child transforms are relative to parent
+### Scenes (Scenes/)
+`GameScene` subclasses: `FlightboxScene`, `FlightboxWithTerrain`, `FreeCamFlightboxScene`, `SandboxScene`, `BallPhysicsScene`, `PhysicsStressTestScene`. Default starting scene set in `Preferences.StartingSceneType`.
 
-### Resource Management
-- **Texture Caching**: `TextureLoader` implements a singleton cache to prevent duplicate texture loading
-- **Model Loading**: Supports OBJ (with MTL), USDZ formats through ModelIO
-- **Mesh Library**: Pre-built meshes (sphere, cube, quad) are cached in `MeshLibrary`
+### SceneManager (Managers/SceneManager.swift)
+Batches GameObjects by Model type for instanced rendering. Separates opaque/transparent submeshes. Provides `GetUniformsData()` / `GetTransparentUniformsData()` for efficient draw call batching. Thread-safe via `OSAllocatedUnfairLock`.
 
-### Physics Integration
-The physics system (`PhysicsWorld`) runs independently and updates game objects:
-- Supports Euler and Verlet integration
-- Collision detection and response using Hecker's method
-- Physics entities must implement `PhysicsEntity` protocol
+### Rendering System
 
-### Threading Model
-- **Main Thread**: Rendering and UI updates
-- **Update Thread**: Game logic and physics updates (60 Hz)
-- **Audio Thread**: Background music playback
-- Thread synchronization uses custom `TFSLock` (wrapper around os_unfair_lock)
+**6 Renderer Types** (`RendererType` enum, switchable at runtime via menu):
 
-### Input Handling
-Platform-specific input is abstracted:
-- **macOS**: Keyboard, Mouse, GameController, HOTAS support
-- **iOS**: Touch controls with virtual joystick/throttle
-- Input state is centralized in `InputManager` singleton
+| Renderer | Shadow | GBuffer | MSAA | Tessellation | Particles |
+|----------|--------|---------|------|--------------|-----------|
+| SinglePassDeferredLighting | 8K depth32F | 3 (albedo+spec, normal+shadow, depth) memoryless | No | No | No |
+| TiledDeferred | 8K depth32F | 4 (albedo, normal 16F, position 16F, lighting) memoryless | No | No | Yes |
+| TiledDeferredMSAA | 8K depth32F 4x | 4 targets, 4x MSAA | 4x | No | Yes |
+| TiledMSAATessellated | 8K depth32F 4x | 4 targets, 4x MSAA | 4x | Yes | Yes |
+| OrderIndependentTransparency | None | None (image blocks) | No | No | No |
+| ForwardPlusTileShading | — | — | — | — | — (stub) |
+
+**Render pass flow** (typical deferred): Shadow map pass → GBuffer generation → Directional lighting → Transparency → Point light volumes (stencil-masked icosahedrons) → Skybox → (Particles if supported)
+
+**Key rendering protocols** (Display/Protocols/): `RenderPassEncoding`, `ComputePassEncoding`, `ShadowRendering`, `ParticleRendering`, `TessellationRendering`. Renderers compose these via protocol conformance.
+
+**Pipeline states**: ~62 types in `RenderPipelineStateLibrary` enum, created via factory pattern. Each renderer type has its own set of pipelines defined in dedicated files (SinglePassDeferredPipeline, TiledDeferredPipeline, etc.).
+
+**Frame pacing**: `inFlightSemaphore` with max 3 frames in flight. Command buffer completion handler signals semaphore.
+
+### Shader System (Graphics/Shaders/)
+22 Metal files. Shared definitions in `TFSCommon.h` (buffer indices, vertex attributes, texture indices, render target indices, struct definitions for ModelConstants, SceneConstants, MaterialProperties, LightData, Particle, Terrain). `ShaderDefinitions.h` has GBuffer output struct with raster order groups.
+
+**Pixel formats** (Preferences.swift): `bgra8Unorm_srgb` (main), `depth32Float` (depth), `depth32Float_stencil8` (depth+stencil).
+
+### Asset System (Assets/)
+**Assets** singleton: `Assets.Meshes` (MeshLibrary), `Assets.Textures` (TextureLibrary), `Assets.Models` (ModelLibrary), `Assets.SingleSMMeshes` (SingleSubmeshMeshLibrary). All use generic `Library<Key, Value>` base with lazy init.
+
+**TextureLoader**: Singleton MTKTextureLoader with 3-level TFSCache (by String, URL, MDLTexture). Auto-generates mipmaps, uses `.private` storage mode. Thread-safe.
+
+**Model loading**: `ObjModel` (OBJ+MTL via ModelIO), `UsdModel` (USDZ with skeleton/animation/skin support). Both use custom vertex descriptor (position, color, texcoord, normal, tangent, bitangent, joints, jointWeights). Supports basis transform for coordinate system conversion.
+
+**SingleSubmeshMeshLibrary**: Extracts individual submeshes from parent models (F18 weapons, control surfaces, fuel tanks) without duplicating vertex data.
+
+**Procedural meshes**: Triangle, Quad, Cube, Sphere, Capsule, Plane, Skybox, SkySphere, Icosahedron.
+
+### Animation System (Animation/)
+**AnimationController** protocol with playback state management. **AnimationLayerSystem** manages multiple channels with dirty-flag optimization.
+
+**Channel types**:
+- `BinaryAnimationChannel`: Two-state (landing gear up/down). States: inactive → activating → active → deactivating. Progress-based smooth transitions.
+- `ContinuousAnimationChannel`: Variable-position (flaps, control surfaces). Value range with `transitionSpeed`.
+
+**AnimationChannelSet**: Groups related channels (e.g., landing gear uses multiple joints). **AnimationMask** for selective joint targeting. Skeleton/skin palette updates per channel.
+
+**Aircraft animators**: `AircraftAnimator` base → `F35Animator`. Tie into `Aircraft.isGearDown` property.
+
+### Physics (Physics/)
+**PhysicsWorld**: Manages entities, runs in UpdateThread. **Solvers**: `EulerSolver` (explicit), `VerletSolver` (implicit). **Collision**: `BroadPhaseCollisionDetector` (sweep-and-prune on X-axis with frame coherence), `HeckerCollisionResponse` (sphere-sphere, sphere-plane). **PhysicsEntity** protocol on GameObject (mass, velocity, acceleration, restitution, AABB).
+
+### Input (Core/Input/)
+Platform-abstracted via `InputManager` singleton. **macOS**: Keyboard (256-key state array), Mouse (buttons + delta + scroll), GameController (GCController), Joystick/Throttle (Thrustmaster Warthog HOTAS via IOKit HID). **iOS**: CoreMotion (attitude at 60Hz), TFSTouchJoystick/TFSTouchThrottle. Commands: `DiscreteCommands` (fire, toggle gear/flaps), `ContinuousCommands` (pitch, roll, yaw, move). Debouncing for discrete commands.
+
+### Camera System (GameObjects/Cameras/)
+`Camera` base (FOV, near/far, projection matrix). `DebugCamera` (WASD + mouselook). `AttachedCamera` (parents to node, follows aircraft). `CameraManager` singleton handles registration and switching. Toggle with 'C' key.
+
+### Lighting (GameObjects/LightObject.swift, Managers/LightManager.swift)
+`LightObject` extends GameObject. Types: Directional, Point. Shadow matrices computed per frame. `Sun` subclass for main directional light. `LightManager` singleton (thread-safe) provides light data arrays to shaders. Point lights rendered as icosahedron instances with stencil masking.
+
+### Particles (GameObjects/Particles/)
+`ParticleEmitter` descriptor-based (birth rate, life, speed, scale, color). Predefined: Fire (1200 particles, upward), Afterburner (1200, forward). Compute shader updates positions, render stage draws with appropriate pipeline.
+
+### Threading
+- **Main Thread**: Rendering (MTKView delegate), UI, input capture
+- **UpdateThread**: Game logic + physics at semaphore-driven rate. Delta time from `DispatchTime.now().uptimeNanoseconds`
+- **AudioThread**: Lazy start after scene built. AVAudioEngine for MP3 playback
+- **Synchronization**: `OSAllocatedUnfairLock` (managers, caches, input state), `DispatchSemaphore` (render ↔ update sync, frame pacing)
+
+### Platform Differences
+- **macOS**: NSViewRepresentable bridge (`MacMetalViewWrapper`), SwiftUI menu for renderer selection, keyboard/mouse/HOTAS input, `GameViewController` captures key events
+- **iOS**: UIViewRepresentable bridge (`IOSMetalViewWrapper`), hardcoded `TiledMSAATessellated` renderer, touch controls overlay, CoreMotion input
 
 ## Key Development Patterns
 
 ### Adding New Game Objects
-1. Extend `GameObject` or appropriate base class
+1. Extend `GameObject` (or `Aircraft` for vehicles)
 2. Override `doUpdate()` for per-frame logic
-3. Implement custom vertex/fragment functions if needed
-4. Add to scene in appropriate `Scene` subclass
+3. Add to scene via `addChild()` in a `GameScene.buildScene()` override
+4. SceneManager auto-registers for batched rendering
 
 ### Adding New Shaders
-1. Add Metal shader functions to appropriate .metal file
-2. Create pipeline state in relevant pipeline library
-3. Update renderer to use new pipeline for specific objects
+1. Add Metal functions to appropriate .metal file (or new file)
+2. Add enum case to `RenderPipelineStateType`
+3. Create pipeline state struct in relevant pipeline library file
+4. Register in `RenderPipelineStateLibrary.makeLibrary()`
+5. Use in renderer via `setRenderPipelineState(encoder, state: .NewType)`
 
-### Performance Considerations
-- Use instanced rendering for multiple identical objects
-- Batch draw calls by material/texture
-- Update only changed uniforms
-- Use compute shaders for parallel operations (particle systems)
+### Adding New Models
+1. Place model files in `Core/Resources/Models/`
+2. Add `ModelType` enum case in `ModelLibrary`
+3. Initialize as `ObjModel("name")` or `UsdModel("name", fileExtension: .USDZ)` in `ModelLibrary.makeLibrary()`
+4. Access via `Assets.Models[.NewModel]`
 
-## Testing Specific Functionality
+### Adding New Scenes
+1. Create `GameScene` subclass
+2. Override `buildScene()` to add objects, cameras, lights
+3. Add `SceneType` enum case
+4. Register in `SceneManager.SetScene()` switch
 
-### Test a Single Renderer
-```swift
-// In GameViewController, modify renderer initialization:
-renderer = SinglePassDeferredLightingRenderer()
-```
+### Adding New Renderers
+1. Create renderer class extending `Renderer`
+2. Conform to needed protocols (`ShadowRendering`, `ParticleRendering`, etc.)
+3. Add `RendererType` enum case
+4. Register in `Engine.InitRenderer()` switch
 
-### Debug Camera Controls
-- Press 'C' to toggle between attached and debug camera
-- Debug camera: WASD + mouse for free movement
-- Attached camera: Follows selected aircraft
+## Debugging
 
-### Performance Profiling
-- Use Xcode's GPU Frame Capture for detailed GPU analysis
-- Monitor FPS counter (displayed in top-left)
-- Check memory usage in Xcode's Debug navigator
+- **'C' key**: Toggle debug/attached camera. Debug: WASD + mouselook. Attached: follows aircraft
+- **'Y' key**: Toggle stats display (FPS)
+- **ESC**: Toggle menu
+- **Cmd+R**: Reset scene
+- **Xcode GPU Frame Capture**: Detailed GPU analysis
+- **Xcode Debug Navigator**: Memory usage monitoring
+- All textures are labeled for GPU debugger identification
