@@ -17,14 +17,14 @@ enum GearState {
 
 /// Aircraft-specific animation controller that manages landing gear and other aircraft animations.
 /// This class serves as the high-level animation interface for aircraft, using AnimationLayerSystem
-/// internally to manage multiple independent animation layers.
+/// internally to manage multiple independent animation layers (groups of channels).
 class AircraftAnimator: AnimationController {
     // MARK: - Properties
 
     /// Reference to the UsdModel containing animation data (skeletons, clips, skins)
     internal weak var model: UsdModel?
 
-    /// Internal layer system that manages animation layers
+    /// Internal layer system that manages animation layers and channels
     internal var layerSystem: AnimationLayerSystem?
 
     /// Current playback state (legacy compatibility)
@@ -42,37 +42,22 @@ class AircraftAnimator: AnimationController {
     /// Name of the currently playing animation clip (legacy compatibility)
     private var currentClipName: String?
 
-    // MARK: - Landing Gear layer Access
+    // MARK: - Landing Gear Layer Access
 
     /// The landing gear layer ID (standard across all aircraft)
-    static let landingGearlayerID = "landingGear"
+    static let landingGearLayerID = "landingGear"
 
     /// Direct access to the landing gear layer
-    // TODO: Using layerSet now:
-//    var landingGearlayer: BinaryAnimationLayer? {
-//        layerSystem?.layer(Self.landingGearlayerID, as: BinaryAnimationLayer.self)
-//    }
-    
-    var landingGearlayerSet: AnimationLayerSet? {
-        layerSystem?.layerSet(Self.landingGearlayerID)
+    var landingGearLayer: AnimationLayer? {
+        layerSystem?.layer(Self.landingGearLayerID)
     }
 
     // MARK: - Gear State (Legacy Compatibility)
 
     /// Current state of the landing gear (maps to layer state)
-//    var gearState: GearState {
-//        guard let layer = landingGearlayer else { return .down }
-//        switch layer.state {
-//        case .inactive: return .up
-//        case .activating: return .extending
-//        case .active: return .down
-//        case .deactivating: return .retracting
-//        }
-//    }
-    
     var gearState: GearState {
-        guard let layerSet = landingGearlayerSet else { return .down }
-        switch layerSet.state {
+        guard let layer = landingGearLayer else { return .down }
+        switch layer.state {
             case .inactive: return .up
             case .activating: return .extending
             case .active: return .down
@@ -82,12 +67,12 @@ class AircraftAnimator: AnimationController {
 
     /// Animation progress for the landing gear (0.0 = fully up, 1.0 = fully down)
     var gearAnimationProgress: Float {
-        landingGearlayerSet?.progress ?? 1.0
+        landingGearLayer?.progress ?? 1.0
     }
 
     /// Duration for gear extension/retraction animation in seconds
     var gearAnimationDuration: Float {
-        landingGearlayerSet?.transitionDuration ?? 0
+        landingGearLayer?.transitionDuration ?? 0
     }
 
     // MARK: - Initialization
@@ -107,37 +92,39 @@ class AircraftAnimator: AnimationController {
     }
 
     /// Subclasses should call this to register their layers after init
-    func setuplayers() {
+    func setupLayers() {
         // Base implementation does nothing
         // Subclasses override to register aircraft-specific layers
     }
 
-    // MARK: - layer Management
+    // MARK: - Layer Management
 
-    /// Register an animation layer
+    /// Register an animation channel
+    /// - Parameter channel: The channel to register
+    func registerChannel(_ channel: AnimationChannel) {
+        layerSystem?.registerChannel(channel)
+    }
+
+    /// Register an animation layer (group of channels)
     /// - Parameter layer: The layer to register
-    func registerlayer(_ layer: AnimationLayer) {
-        layerSystem?.registerlayer(layer)
-    }
-    
-    func registerlayerSet(_ layerSet: AnimationLayerSet) {
-        layerSystem?.registerlayerSet(layerSet)
+    func registerLayer(_ layer: AnimationLayer) {
+        layerSystem?.registerLayer(layer)
     }
 
-    /// Get a layer by ID
-    /// - Parameter id: The layer ID
-    /// - Returns: The layer if found
-    func layer(_ id: String) -> AnimationLayer? {
-        layerSystem?.layer(id)
+    /// Get a channel by ID
+    /// - Parameter id: The channel ID
+    /// - Returns: The channel if found
+    func channel(_ id: String) -> AnimationChannel? {
+        layerSystem?.channel(id)
     }
 
-    /// Get a typed layer by ID
+    /// Get a typed channel by ID
     /// - Parameters:
-    ///   - id: The layer ID
-    ///   - type: The expected layer type
-    /// - Returns: The layer cast to the specified type
-    func layer<T: AnimationLayer>(_ id: String, as type: T.Type) -> T? {
-        layerSystem?.layer(id, as: type)
+    ///   - id: The channel ID
+    ///   - type: The expected channel type
+    /// - Returns: The channel cast to the specified type
+    func channel<T: AnimationChannel>(_ id: String, as type: T.Type) -> T? {
+        layerSystem?.channel(id, as: type)
     }
 
     // MARK: - AnimationController Protocol
@@ -168,49 +155,49 @@ class AircraftAnimator: AnimationController {
     /// Initiates landing gear extension
     /// Only works when gear is fully up
     func extendGear() {
-        guard let layerSet = landingGearlayerSet else {
-            print("[AircraftAnimator] No landing gear layer set registered")
+        guard let layer = landingGearLayer else {
+            print("[AircraftAnimator] No landing gear layer registered")
             return
         }
-        layerSet.activate()
-        playbackState = layerSet.isAnimating ? .playing : .stopped
+        layer.activate()
+        playbackState = layer.isAnimating ? .playing : .stopped
     }
 
     /// Initiates landing gear retraction
     /// Only works when gear is fully down
     func retractGear() {
-        guard let layerSet = landingGearlayerSet else {
-            print("[AircraftAnimator] No landing gear layer set registered")
+        guard let layer = landingGearLayer else {
+            print("[AircraftAnimator] No landing gear layer registered")
             return
         }
-        layerSet.deactivate()
-        playbackState = layerSet.isAnimating ? .playing : .stopped
+        layer.deactivate()
+        playbackState = layer.isAnimating ? .playing : .stopped
     }
 
     /// Toggles landing gear between extended and retracted states
     func toggleGear() {
-        guard let layerSet = landingGearlayerSet else {
-            print("[AircraftAnimator] No landing gear layer set registered")
+        guard let layer = landingGearLayer else {
+            print("[AircraftAnimator] No landing gear layer registered")
             return
         }
-        layerSet.toggle()
+        layer.toggle()
         print("[AircraftAnimator] Toggled Landing Gear")
-        playbackState = layerSet.isAnimating ? .playing : .stopped
+        playbackState = layer.isAnimating ? .playing : .stopped
     }
 
     /// Returns true if the gear is fully down
     var isGearDown: Bool {
-        landingGearlayerSet?.isActive ?? true
+        landingGearLayer?.isActive ?? true
     }
 
     /// Returns true if the gear is fully up
     var isGearUp: Bool {
-        landingGearlayerSet?.isInactive ?? false
+        landingGearLayer?.isInactive ?? false
     }
 
     /// Returns true if a gear animation is in progress
     var isGearAnimating: Bool {
-        landingGearlayerSet?.isAnimating ?? false
+        landingGearLayer?.isAnimating ?? false
     }
 
     // MARK: - Debug
@@ -223,7 +210,7 @@ class AircraftAnimator: AnimationController {
           Gear Progress: \(String(format: "%.2f", gearAnimationProgress))
           Gear Duration: \(String(format: "%.2f", gearAnimationDuration))s
           Playback State: \(playbackState)
-          layers: \(layerSystem?.layerIDs ?? [])
+          Channels: \(layerSystem?.channelIDs ?? [])
         """)
 
         layerSystem?.debugPrintState()

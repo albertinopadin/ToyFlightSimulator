@@ -24,7 +24,7 @@ xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulat
 ToyFlightSimulator Shared/     # Cross-platform engine (168 Swift files, 22 Metal shaders)
   Animation/                   # Skeletal animation, channels, layer system
     Aircraft/                  # Aircraft-specific animators (F35, etc.)
-    Channels/                  # Binary/Continuous animation channels, channel sets, masks
+    Layers/                    # AnimationChannel protocol, Binary/Continuous channels, AnimationLayer, masks
   Assets/                      # Asset management and libraries
     Libraries/Meshes/          # MeshLibrary, procedural meshes
     Libraries/Textures/        # TextureLoader (singleton cache), TextureLibrary
@@ -112,13 +112,13 @@ Batches GameObjects by Model type for instanced rendering. Separates opaque/tran
 **Procedural meshes**: Triangle, Quad, Cube, Sphere, Capsule, Plane, Skybox, SkySphere, Icosahedron.
 
 ### Animation System (Animation/)
-**AnimationController** protocol with playback state management. **AnimationLayerSystem** manages multiple channels with dirty-flag optimization.
+**AnimationController** protocol with playback state management. **AnimationLayerSystem** manages layers and channels with dirty-flag optimization.
 
-**Channel types**:
+**Channel types** (individual animated elements):
 - `BinaryAnimationChannel`: Two-state (landing gear up/down). States: inactive → activating → active → deactivating. Progress-based smooth transitions.
 - `ContinuousAnimationChannel`: Variable-position (flaps, control surfaces). Value range with `transitionSpeed`.
 
-**AnimationChannelSet**: Groups related channels (e.g., landing gear uses multiple joints). **AnimationMask** for selective joint targeting. Skeleton/skin palette updates per channel.
+**AnimationLayer**: Groups related channels that animate together to form a discrete animation (e.g., all the channels needed to extend the landing gear). **AnimationMask** for selective joint targeting. Skeleton/skin palette updates per channel.
 
 **Aircraft animators**: `AircraftAnimator` base → `F35Animator`. Tie into `Aircraft.isGearDown` property.
 

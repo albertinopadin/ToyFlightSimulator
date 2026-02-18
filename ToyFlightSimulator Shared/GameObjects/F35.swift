@@ -29,7 +29,7 @@ class F35: Aircraft {
             return
         }
 
-        // Create the animator (AnimationLayerSystem handles hasExternalAnimator flag)
+        // Create the animator (AnimationLayerSystem sets hasExternalAnimator flag)
         animator = F35Animator(model: usdModel)
 
         print("[F35] F35Animator initialized with duration: \(animator?.gearAnimationDuration ?? 0)")

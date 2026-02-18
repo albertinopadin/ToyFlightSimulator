@@ -7,26 +7,25 @@
 
 import Foundation
 
-/// layer configuration for F-35 Lightning II aircraft.
-/// Defines all animation layers available on this aircraft model.
+/// Animation configuration for F-35 Lightning II aircraft.
+/// Defines all animation layers and channels available on this aircraft model.
 struct F35AnimationConfig {
-    // MARK: - layer IDs
+    // MARK: - Layer IDs
 
     /// Standard layer ID for landing gear
-//    static let landingGearlayerID = "landingGear"
-    static let landingGearlayerSetID = "landingGear"
+    static let landingGearLayerID = "landingGear"
 
     // Future layer IDs:
-    // static let weaponBaylayerID = "weaponBay"
-    // static let canopylayerID = "canopy"
-    // static let flapslayerID = "flaps"
+    // static let weaponBayLayerID = "weaponBay"
+    // static let canopyLayerID = "canopy"
+    // static let flapsLayerID = "flaps"
 
-    // MARK: - layer Creation
+    // MARK: - Channel Creation
 
-    /// Creates the landing gear layer for F-35
+    /// Creates the landing gear channel for F-35
     /// - Parameter model: The UsdModel containing animation data
-    /// - Returns: A configured BinaryAnimationLayer for landing gear
-    static func createLandingGearlayer(for model: UsdModel) -> BinaryAnimationLayer {
+    /// - Returns: A configured BinaryAnimationChannel for landing gear
+    static func createLandingGearChannel(for model: UsdModel) -> BinaryAnimationChannel {
         // Get all joint paths from the model's skeletons
         let allJointPaths = model.skeletons.values.flatMap { $0.jointPaths }
 
@@ -41,14 +40,12 @@ struct F35AnimationConfig {
                    lowercased.contains("landing")
         }
 
-        print("[F35AnimConfig createLandingGearlayer] gearJointPaths: \(gearJointPaths)")
-        
+        print("[F35AnimConfig createLandingGearChannel] gearJointPaths: \(gearJointPaths)")
+
         // If no specific gear joints found, use all joints (full model animation)
         let jointPaths = gearJointPaths.isEmpty ? allJointPaths : gearJointPaths
         let animClip = model.animationClips.first?.value
-//        animClip.
         let jointAnim = animClip?.jointAnimation.values.first as? Animation
-//        let bb = jointAnim.
 
         let mask = AnimationMask(jointPaths: jointPaths)
 
@@ -57,17 +54,15 @@ struct F35AnimationConfig {
 
         // Get the animation clip
         let animationClip = model.animationClips.values.first
-        
-        print("[F35AnimConfig createLandingGearlayer] animationClips: \(model.animationClips.count)")
 
-        print("[F35AnimationConfig] Creating landing gear layer:")
+        print("[F35AnimConfig createLandingGearChannel] animationClips: \(model.animationClips.count)")
+
+        print("[F35AnimationConfig] Creating landing gear channel:")
         print("  - Joint paths in mask: \(jointPaths.count)")
         print("  - Animation duration: \(duration)s")
         print("  - Animation clip: \(animationClip?.name ?? "none")")
 
-        // TODO: Maybe use something like a layer Set (set of layers involved in gear animation)
-        return BinaryAnimationLayer(
-//            id: landingGearlayerID,
+        return BinaryAnimationChannel(
             id: "landingGear",
             mask: mask,
             transitionDuration: duration,
@@ -76,13 +71,16 @@ struct F35AnimationConfig {
             timeRange: (start: 0, end: duration)
         )
     }
-    
-    static func createLandingGearlayerSet(for model: UsdModel) -> AnimationLayerSet {
-        var layers: [AnimationLayer] = []
-        
-        print("[createLandingGearlayerSet] model meshSkeletonMap: \(model.meshSkeletonMap)")
-        print("[createLandingGearlayerSet] model skeletonAnimationMap: \(model.skeletonAnimationMap)")
-        
+
+    /// Creates the landing gear layer (group of channels) for F-35
+    /// - Parameter model: The UsdModel containing animation data
+    /// - Returns: A configured AnimationLayer grouping all landing gear channels
+    static func createLandingGearLayer(for model: UsdModel) -> AnimationLayer {
+        var channels: [AnimationChannel] = []
+
+        print("[createLandingGearLayer] model meshSkeletonMap: \(model.meshSkeletonMap)")
+        print("[createLandingGearLayer] model skeletonAnimationMap: \(model.skeletonAnimationMap)")
+
         // For now using all animation clips since the F-35 model only has landing gear animations:
         for (i, animationClip) in model.animationClips.values.enumerated() {
             guard let skeletonAnimation = model.skeletonAnimationMap.first(where: {
@@ -90,19 +88,18 @@ struct F35AnimationConfig {
             }) else {
                 fatalError("F-35 model has no animation clip named: \(animationClip.name)")
             }
-            
+
             let meshIndices = model.meshSkeletonMap.filter { $0.value == skeletonAnimation.key }.map { $0.key }
-            
-            print("[createLandingGearlayerSet] meshIndices: \(meshIndices) for animationClip: \(animationClip.name)")
-            
+
+            print("[createLandingGearLayer] meshIndices: \(meshIndices) for animationClip: \(animationClip.name)")
+
             guard !meshIndices.isEmpty else {
                 fatalError("F-35 model has no mesh indices for animation clip: \(animationClip.name)")
             }
-            
+
             let mask = AnimationMask(jointPaths: animationClip.jointPaths, meshIndices: meshIndices)
-            
-            let layer = BinaryAnimationLayer(
-//                id: "\(landingGearlayerID)_\(i)",
+
+            let channel = BinaryAnimationChannel(
                 id: "landingGear_\(i)",
                 mask: mask,
                 transitionDuration: animationClip.duration,
@@ -110,76 +107,66 @@ struct F35AnimationConfig {
                 animationClip: animationClip,
                 timeRange: (start: 0, end: animationClip.duration)
             )
-            
-            layers.append(layer)
+
+            channels.append(channel)
         }
-        
-        return AnimationLayerSet(id: landingGearlayerSetID, layers: layers)
+
+        return AnimationLayer(id: landingGearLayerID, channels: channels)
     }
 
     /// Creates all animation layers for the F-35
     /// - Parameter model: The UsdModel containing animation data
     /// - Returns: Array of configured animation layers
-//    static func createAlllayers(for model: UsdModel) -> [AnimationLayer] {
-//        var layers: [AnimationLayer] = []
-//
-//        // Landing gear is the primary layer
-//        layers.append(createLandingGearlayer(for: model))
-//
-//        // Future layers can be added here:
-//        // layers.append(createWeaponBaylayer(for: model))
-//        // layers.append(createCanopylayer(for: model))
-//        // layers.append(createFlapslayer(for: model))
-//
-//        return layers
-//    }
-    
-    static func createLayerSets(for model: UsdModel) -> [AnimationLayerSet] {
-        var layerSets: [AnimationLayerSet] = []
+    static func createLayers(for model: UsdModel) -> [AnimationLayer] {
+        var layers: [AnimationLayer] = []
 
-        // Landing gear is the primary layer set:
-        layerSets.append(createLandingGearlayerSet(for: model))
+        // Landing gear is the primary layer:
+        layers.append(createLandingGearLayer(for: model))
 
-        // Future layer sets can be added here:
-        // layerSets.append(createWeaponBaylayer(for: model))
-        // layerSets.append(createCanopylayer(for: model))
-        // layerSets.append(createFlapslayer(for: model))
+        // Future layers can be added here:
+        // layers.append(createWeaponBayLayer(for: model))
+        // layers.append(createCanopyLayer(for: model))
+        // layers.append(createFlapsLayer(for: model))
 
-        return layerSets
+        return layers
     }
 
-    // MARK: - Future layer Definitions
+    // MARK: - Future Channel/Layer Definitions
 
     /*
     /// Creates weapon bay doors layer (future)
-    static func createWeaponBaylayer(for model: UsdModel) -> BinaryAnimationLayer {
+    static func createWeaponBayLayer(for model: UsdModel) -> AnimationLayer {
         let bayJointPaths = model.skeletons.values.flatMap { $0.jointPaths }
             .filter { $0.lowercased().contains("bay") || $0.lowercased().contains("weapon") }
 
         let mask = AnimationMask(jointPaths: bayJointPaths)
 
-        return BinaryAnimationLayer(
+        let channel = BinaryAnimationChannel(
             id: "weaponBay",
             mask: mask,
             transitionDuration: 2.0,
             initialState: .inactive
         )
+
+        return AnimationLayer(id: "weaponBay", channels: [channel])
     }
 
     /// Creates flaps layer (future)
-    static func createFlapslayer(for model: UsdModel) -> ContinuousAnimationLayer {
+    static func createFlapsLayer(for model: UsdModel) -> AnimationLayer {
         let flapJointPaths = model.skeletons.values.flatMap { $0.jointPaths }
             .filter { $0.lowercased().contains("flap") }
 
         let mask = AnimationMask(jointPaths: flapJointPaths)
 
-        return ContinuousAnimationLayer(
+        let channel = ContinuousAnimationChannel(
             id: "flaps",
             mask: mask,
             range: (0.0, 1.0),
             transitionSpeed: 0.5,
             initialValue: 0.0
         )
+
+        return AnimationLayer(id: "flaps", channels: [channel])
     }
     */
 }

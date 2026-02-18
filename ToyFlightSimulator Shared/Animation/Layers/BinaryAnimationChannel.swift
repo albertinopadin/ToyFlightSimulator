@@ -1,5 +1,5 @@
 //
-//  BinaryAnimationLayer.swift
+//  BinaryAnimationChannel.swift
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 1/13/26.
@@ -7,13 +7,13 @@
 
 import Foundation
 
-/// Animation layer for two-state animations.
+/// Animation channel for two-state animations.
 /// Used for components that have discrete on/off states like landing gear (up/down),
 /// canopy (open/closed), air brake (deployed/retracted), etc.
-final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
+final class BinaryAnimationChannel: AnimationChannel, StatefulAnimationChannel {
     // MARK: - State Definition
 
-    /// Represents the possible states of a binary animation layer
+    /// Represents the possible states of a binary animation channel
     enum State {
         case inactive      // Fully in the "off" position (e.g., gear up, canopy closed)
         case activating    // Transitioning from inactive to active
@@ -21,7 +21,7 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
         case deactivating  // Transitioning from active to inactive
     }
 
-    // MARK: - AnimationLayer Properties
+    // MARK: - AnimationChannel Properties
 
     let id: String
     let mask: AnimationMask
@@ -30,9 +30,9 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
 
     private(set) var isDirty: Bool = false
 
-    // MARK: - Binary layer Properties
+    // MARK: - Binary Channel Properties
 
-    /// Current state of this layer
+    /// Current state of this channel
     private(set) var state: State
 
     /// Animation progress from 0.0 (inactive) to 1.0 (active)
@@ -47,12 +47,12 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
 
     // MARK: - Computed Properties
 
-    /// True if the layer is fully in the active state
+    /// True if the channel is fully in the active state
     var isActive: Bool {
         state == .active
     }
 
-    /// True if the layer is fully in the inactive state
+    /// True if the channel is fully in the inactive state
     var isInactive: Bool {
         state == .inactive
     }
@@ -69,10 +69,10 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
 
     // MARK: - Initialization
 
-    /// Creates a new binary animation layer
+    /// Creates a new binary animation channel
     /// - Parameters:
-    ///   - id: Unique identifier for this layer
-    ///   - mask: Defines which joints/meshes this layer controls
+    ///   - id: Unique identifier for this channel
+    ///   - mask: Defines which joints/meshes this channel controls
     ///   - transitionDuration: Time for transitions in seconds
     ///   - initialState: Starting state (default: .inactive)
     ///   - animationClip: Optional animation clip to use
@@ -110,10 +110,10 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
     /// Only works when fully inactive
     func activate() {
         guard state == .inactive else {
-            print("[BinaryAnimationLayer '\(id)'] Cannot activate - current state: \(state)")
+            print("[BinaryAnimationChannel '\(id)'] Cannot activate - current state: \(state)")
             return
         }
-        print("[BinaryAnimationLayer '\(id)'] Beginning activation")
+        print("[BinaryAnimationChannel '\(id)'] Beginning activation")
         state = .activating
         isDirty = true
     }
@@ -122,10 +122,10 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
     /// Only works when fully active
     func deactivate() {
         guard state == .active else {
-            print("[BinaryAnimationLayer '\(id)'] Cannot deactivate - current state: \(state)")
+            print("[BinaryAnimationChannel '\(id)'] Cannot deactivate - current state: \(state)")
             return
         }
-        print("[BinaryAnimationLayer '\(id)'] Beginning deactivation")
+        print("[BinaryAnimationChannel '\(id)'] Beginning deactivation")
         state = .deactivating
         isDirty = true
     }
@@ -139,7 +139,7 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
         case .active:
             deactivate()
         case .activating, .deactivating:
-            print("[BinaryAnimationLayer '\(id)'] Animation in progress, ignoring toggle")
+            print("[BinaryAnimationChannel '\(id)'] Animation in progress, ignoring toggle")
         }
     }
 
@@ -179,7 +179,7 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
         isDirty = true
     }
 
-    // MARK: - AnimationLayer Methods
+    // MARK: - AnimationChannel Methods
 
     func update(deltaTime: Float) {
         guard transitionDuration > 0 else { return }
@@ -190,7 +190,7 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
             if progress >= 1.0 {
                 progress = 1.0
                 state = .active
-                print("[BinaryAnimationLayer '\(id)'] Activation complete")
+                print("[BinaryAnimationChannel '\(id)'] Activation complete")
             }
             isDirty = true
 
@@ -199,7 +199,7 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
             if progress <= 0.0 {
                 progress = 0.0
                 state = .inactive
-                print("[BinaryAnimationLayer '\(id)'] Deactivation complete")
+                print("[BinaryAnimationChannel '\(id)'] Deactivation complete")
             }
             isDirty = true
 
@@ -217,7 +217,7 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
         // Default: use progress * duration
         return progress * transitionDuration
     }
-    
+
     func clearDirty() {
         isDirty = false
     }
@@ -225,19 +225,19 @@ final class BinaryAnimationLayer: AnimationLayer, StatefulAnimationLayer {
 
 // MARK: - CustomStringConvertible
 
-extension BinaryAnimationLayer: CustomStringConvertible {
+extension BinaryAnimationChannel: CustomStringConvertible {
     var description: String {
-        "BinaryAnimationLayer('\(id)', state: \(state), progress: \(String(format: "%.2f", progress)))"
+        "BinaryAnimationChannel('\(id)', state: \(state), progress: \(String(format: "%.2f", progress)))"
     }
 }
 
 // MARK: - Debug Helpers
 
-extension BinaryAnimationLayer {
+extension BinaryAnimationChannel {
     /// Print current state for debugging
     func debugPrintState() {
         print("""
-        [BinaryAnimationLayer '\(id)']
+        [BinaryAnimationChannel '\(id)']
           State: \(state)
           Progress: \(String(format: "%.2f", progress))
           Duration: \(String(format: "%.2f", transitionDuration))s

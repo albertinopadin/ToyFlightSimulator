@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Defines which joints and meshes an animation layer controls.
+/// Defines which joints and meshes an animation channel controls.
 /// Used to isolate animation updates to only the affected parts of a model.
 struct AnimationMask {
     /// Joint paths that this mask includes (e.g., "Armature/LandingGear/MainGearLeft")

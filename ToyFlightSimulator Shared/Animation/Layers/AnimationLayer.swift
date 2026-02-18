@@ -2,77 +2,56 @@
 //  AnimationLayer.swift
 //  ToyFlightSimulator
 //
-//  Created by Albertino Padin on 1/13/26.
+//  Created by Albertino Padin on 1/19/26.
 //
 
-import Foundation
+/// An animation layer groups related animation channels that should animate together
+/// to form a discrete animation (e.g., all the channels needed to extend the landing gear).
+struct AnimationLayer {
+    let id: String
+    let channels: [AnimationChannel]
 
-/// Protocol defining the interface for animation layers.
-/// Each layer controls a specific animatable subsystem (landing gear, flaps, ailerons, etc.)
-/// and maintains its own state machine and timing independent of other layers.
-protocol AnimationLayer: AnyObject {
-    /// Unique identifier for this layer (e.g., "landingGear", "flaps", "leftAileron")
-    var id: String { get }
-
-    /// Mask defining which joints and meshes this layer affects
-    var mask: AnimationMask { get }
-
-    /// Weight of this layer's contribution (0.0 to 1.0)
-    /// Default is 1.0 (full contribution)
-    var weight: Float { get set }
-
-    /// Whether this layer has changed and needs a pose update
-    var isDirty: Bool { get }
-
-    /// The animation clip this layer uses (if any)
-    var animationClip: AnimationClip? { get set }
-
-    /// Update the layer's internal state machine
-    /// - Parameter deltaTime: Time since last update in seconds
-    func update(deltaTime: Float)
-
-    /// Get the current animation time for this layer based on its state
-    /// - Returns: The time value to sample from the animation clip
-    func getAnimationTime() -> Float
-
-    /// Clear the dirty flag after poses have been updated
-    func clearDirty()
-}
-
-// MARK: - Default Implementations
-
-extension AnimationLayer {
-    /// Default weight is full contribution
-    var weight: Float {
-        get { 1.0 }
-        set { /* Subclasses can override to make this settable */ }
+    func update(deltaTime: Float) {
+        channels.forEach { $0.update(deltaTime: deltaTime) }
     }
-}
 
-// MARK: - layer State Protocol
+    // Hack:
+    public var state: BinaryAnimationChannel.State {
+        return (channels.first as? BinaryAnimationChannel)?.state ?? .inactive
+    }
 
-/// Protocol for layers that have discrete states (used by binary layers)
-protocol StatefulAnimationLayer: AnimationLayer {
-    associatedtype StateType
+    // Hack:
+    public var progress: Float {
+        return (channels.first as? BinaryAnimationChannel)?.progress ?? 0.0
+    }
 
-    /// The current state of this layer
-    var state: StateType { get }
+    // Hack:
+    public var transitionDuration: Float {
+        return (channels.first as? BinaryAnimationChannel)?.transitionDuration ?? 0.0
+    }
 
-    /// Whether the layer is currently animating between states
-    var isAnimating: Bool { get }
-}
+    // OMG So many hacks:
+    public func activate() {
+        channels.forEach { ($0 as? BinaryAnimationChannel)?.activate() }
+    }
 
-// MARK: - layer Value Protocol
+    public func deactivate() {
+        channels.forEach { ($0 as? BinaryAnimationChannel)?.deactivate() }
+    }
 
-/// Protocol for layers that have continuous values (used by continuous layers)
-protocol ValuedAnimationLayer: AnimationLayer {
-    /// The current value of this layer
-    var value: Float { get }
+    public func toggle() {
+        channels.forEach { ($0 as? BinaryAnimationChannel)?.toggle() }
+    }
 
-    /// The target value this layer is transitioning to
-    var targetValue: Float { get }
+    public var isAnimating: Bool {
+        return (channels.first as? BinaryAnimationChannel)?.isAnimating ?? false
+    }
 
-    /// Set the target value for this layer
-    /// - Parameter newValue: The new target value
-    func setValue(_ newValue: Float)
+    public var isActive: Bool {
+        return (channels.first as? BinaryAnimationChannel)?.isActive ?? false
+    }
+
+    public var isInactive: Bool {
+        return (channels.first as? BinaryAnimationChannel)?.isInactive ?? false
+    }
 }

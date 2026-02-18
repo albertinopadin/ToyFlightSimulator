@@ -1,5 +1,5 @@
 //
-//  ContinuousAnimationLayer.swift
+//  ContinuousAnimationChannel.swift
 //  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 1/13/26.
@@ -7,11 +7,11 @@
 
 import Foundation
 
-/// Animation layer for variable-position animations.
+/// Animation channel for variable-position animations.
 /// Used for components that have continuous values like flaps (0-100%),
 /// control surfaces (ailerons, elevators, rudder at -100% to +100%), etc.
-final class ContinuousAnimationLayer: AnimationLayer, ValuedAnimationLayer {
-    // MARK: - AnimationLayer Properties
+final class ContinuousAnimationChannel: AnimationChannel, ValuedAnimationChannel {
+    // MARK: - AnimationChannel Properties
 
     let id: String
     let mask: AnimationMask
@@ -20,9 +20,9 @@ final class ContinuousAnimationLayer: AnimationLayer, ValuedAnimationLayer {
 
     private(set) var isDirty: Bool = false
 
-    // MARK: - Continuous layer Properties
+    // MARK: - Continuous Channel Properties
 
-    /// Current value of this layer
+    /// Current value of this channel
     private(set) var value: Float
 
     /// Target value for smooth transitions
@@ -69,10 +69,10 @@ final class ContinuousAnimationLayer: AnimationLayer, ValuedAnimationLayer {
 
     // MARK: - Initialization
 
-    /// Creates a new continuous animation layer
+    /// Creates a new continuous animation channel
     /// - Parameters:
-    ///   - id: Unique identifier for this layer
-    ///   - mask: Defines which joints/meshes this layer controls
+    ///   - id: Unique identifier for this channel
+    ///   - mask: Defines which joints/meshes this channel controls
     ///   - range: Valid value range (default: 0.0 to 1.0)
     ///   - transitionSpeed: Speed of value changes in units per second
     ///   - initialValue: Starting value (default: 0.0)
@@ -151,7 +151,7 @@ final class ContinuousAnimationLayer: AnimationLayer, ValuedAnimationLayer {
         setValue(mapped)
     }
 
-    // MARK: - AnimationLayer Methods
+    // MARK: - AnimationChannel Methods
 
     func update(deltaTime: Float) {
         guard isTransitioning else { return }
@@ -186,19 +186,19 @@ final class ContinuousAnimationLayer: AnimationLayer, ValuedAnimationLayer {
 
 // MARK: - CustomStringConvertible
 
-extension ContinuousAnimationLayer: CustomStringConvertible {
+extension ContinuousAnimationChannel: CustomStringConvertible {
     var description: String {
-        "ContinuousAnimationLayer('\(id)', value: \(String(format: "%.2f", value)), target: \(String(format: "%.2f", targetValue)))"
+        "ContinuousAnimationChannel('\(id)', value: \(String(format: "%.2f", value)), target: \(String(format: "%.2f", targetValue)))"
     }
 }
 
 // MARK: - Debug Helpers
 
-extension ContinuousAnimationLayer {
+extension ContinuousAnimationChannel {
     /// Print current state for debugging
     func debugPrintState() {
         print("""
-        [ContinuousAnimationLayer '\(id)']
+        [ContinuousAnimationChannel '\(id)']
           Value: \(String(format: "%.3f", value))
           Target: \(String(format: "%.3f", targetValue))
           Normalized: \(String(format: "%.3f", normalizedValue))
