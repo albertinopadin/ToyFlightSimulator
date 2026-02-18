@@ -7,43 +7,43 @@
 
 import Foundation
 
-/// Manages multiple animation channels and coordinates pose updates.
-/// Each channel controls a specific animatable subsystem (landing gear, flaps, etc.)
-/// and the layer system ensures only dirty channels trigger pose recalculations.
+/// Manages multiple animation layers and coordinates pose updates.
+/// Each layer controls a specific animatable subsystem (landing gear, flaps, etc.)
+/// and the layer system ensures only dirty layers trigger pose recalculations.
 final class AnimationLayerSystem {
     // MARK: - Properties
 
     /// Reference to the model containing animation data (skeletons, clips, skins)
     private weak var model: UsdModel?
 
-    /// Registered animation channels, keyed by their unique ID
-    private var channels: [String: AnimationChannel] = [:]
+    /// Registered animation layers, keyed by their unique ID
+    private var layers: [String: AnimationLayer] = [:]
     
-    private var channelSets: [String: AnimationChannelSet] = [:]
+    private var layerSets: [String: AnimationLayerSet] = [:]
 
-    /// Order in which channels are evaluated (for deterministic updates)
+    /// Order in which layers are evaluated (for deterministic updates)
     private var evaluationOrder: [String] = []
     
-    private var channelSetEvaluationOrder: [String] = []
+    private var layerSetEvaluationOrder: [String] = []
 
     /// Whether debug logging is enabled
     var debugLogging: Bool = true
 
     // MARK: - Computed Properties
 
-    /// All registered channel IDs
-    var channelIDs: [String] {
-        Array(channels.keys)
+    /// All registered layer IDs
+    var layerIDs: [String] {
+        Array(layers.keys)
     }
 
-    /// Number of registered channels
-    var channelCount: Int {
-        channels.count
+    /// Number of registered layers
+    var layerCount: Int {
+        layers.count
     }
 
-    /// Whether any channel is currently dirty (needs pose update)
-    var hasDirtyChannels: Bool {
-        channels.values.contains { $0.isDirty }
+    /// Whether any layer is currently dirty (needs pose update)
+    var hasDirtylayers: Bool {
+        layers.values.contains { $0.isDirty }
     }
 
     // MARK: - Initialization
@@ -61,140 +61,140 @@ final class AnimationLayerSystem {
         }
     }
 
-    // MARK: - Channel Management
+    // MARK: - layer Management
 
-    /// Register a new animation channel
-    /// - Parameter channel: The channel to register
-    func registerChannel(_ channel: AnimationChannel) {
-        let id = channel.id
+    /// Register a new animation layer
+    /// - Parameter layer: The layer to register
+    func registerlayer(_ layer: AnimationLayer) {
+        let id = layer.id
 
-        if channels[id] != nil {
-            print("[AnimationLayerSystem] Warning: Replacing existing channel '\(id)'")
+        if layers[id] != nil {
+            print("[AnimationLayerSystem] Warning: Replacing existing layer '\(id)'")
             evaluationOrder.removeAll { $0 == id }
         }
 
-        channels[id] = channel
+        layers[id] = layer
         evaluationOrder.append(id)
 
-        // If channel doesn't have an animation clip assigned, try to find a matching one
-        if channel.animationClip == nil, let model = model {
-            // Try to find a clip that might match this channel
+        // If layer doesn't have an animation clip assigned, try to find a matching one
+        if layer.animationClip == nil, let model = model {
+            // Try to find a clip that might match this layer
             if let firstClip = model.animationClips.values.first {
-                channel.animationClip = firstClip
+                layer.animationClip = firstClip
             }
         }
 
         if debugLogging {
-            print("[AnimationLayerSystem] Registered channel '\(id)' with mask: \(channel.mask)")
+            print("[AnimationLayerSystem] Registered layer '\(id)' with mask: \(layer.mask)")
         }
     }
 
-    /// Unregister a channel by its ID
-    /// - Parameter id: The channel ID to remove
-    func unregisterChannel(_ id: String) {
-        channels.removeValue(forKey: id)
+    /// Unregister a layer by its ID
+    /// - Parameter id: The layer ID to remove
+    func unregisterlayer(_ id: String) {
+        layers.removeValue(forKey: id)
         evaluationOrder.removeAll { $0 == id }
 
         if debugLogging {
-            print("[AnimationLayerSystem] Unregistered channel '\(id)'")
+            print("[AnimationLayerSystem] Unregistered layer '\(id)'")
         }
     }
 
-    /// Get a channel by its ID
-    /// - Parameter id: The channel ID
-    /// - Returns: The channel if found, nil otherwise
-    func channel(_ id: String) -> AnimationChannel? {
-        channels[id]
+    /// Get a layer by its ID
+    /// - Parameter id: The layer ID
+    /// - Returns: The layer if found, nil otherwise
+    func layer(_ id: String) -> AnimationLayer? {
+        layers[id]
     }
 
-    /// Get a typed channel by its ID
+    /// Get a typed layer by its ID
     /// - Parameters:
-    ///   - id: The channel ID
-    ///   - type: The expected channel type
-    /// - Returns: The channel cast to the specified type, or nil if not found or wrong type
-    func channel<T: AnimationChannel>(_ id: String, as type: T.Type) -> T? {
-        channels[id] as? T
+    ///   - id: The layer ID
+    ///   - type: The expected layer type
+    /// - Returns: The layer cast to the specified type, or nil if not found or wrong type
+    func layer<T: AnimationLayer>(_ id: String, as type: T.Type) -> T? {
+        layers[id] as? T
     }
 
-    /// Check if a channel with the given ID exists
-    /// - Parameter id: The channel ID to check
-    /// - Returns: True if the channel exists
-    func hasChannel(_ id: String) -> Bool {
-        channels[id] != nil
+    /// Check if a layer with the given ID exists
+    /// - Parameter id: The layer ID to check
+    /// - Returns: True if the layer exists
+    func haslayer(_ id: String) -> Bool {
+        layers[id] != nil
     }
     
-    /// Register a new animation channel set
-    /// - Parameter channelSet: The channel set to register
-    func registerChannelSet(_ channelSet: AnimationChannelSet) {
-        let id = channelSet.id
+    /// Register a new animation layer set
+    /// - Parameter layerSet: The layer set to register
+    func registerlayerSet(_ layerSet: AnimationLayerSet) {
+        let id = layerSet.id
 
-        if channelSets[id] != nil {
-            print("[AnimationLayerSystem] Warning: Replacing existing channel set '\(id)'")
-            channelSetEvaluationOrder.removeAll { $0 == id }
+        if layerSets[id] != nil {
+            print("[AnimationLayerSystem] Warning: Replacing existing layer set '\(id)'")
+            layerSetEvaluationOrder.removeAll { $0 == id }
         }
 
-        channelSets[id] = channelSet
-        channelSetEvaluationOrder.append(id)
+        layerSets[id] = layerSet
+        layerSetEvaluationOrder.append(id)
 
         if debugLogging {
-//            print("[AnimationLayerSystem] Registered channel set '\(id)' with mask: \(channel.mask)")
-            print("[AnimationLayerSystem] Registered channel set '\(id)'")
+//            print("[AnimationLayerSystem] Registered layer set '\(id)' with mask: \(layer.mask)")
+            print("[AnimationLayerSystem] Registered layer set '\(id)'")
         }
     }
     
-    func channelSet(_ id: String) -> AnimationChannelSet? {
-        return channelSets[id]
+    func layerSet(_ id: String) -> AnimationLayerSet? {
+        return layerSets[id]
     }
     
-    func hasChannelSet(_ id: String) -> Bool {
-        channelSets[id] != nil
+    func haslayerSet(_ id: String) -> Bool {
+        layerSets[id] != nil
     }
 
     // MARK: - Update
 
-    /// Update all channels and refresh poses for any that changed
+    /// Update all layers and refresh poses for any that changed
     /// - Parameter deltaTime: Time since last update in seconds
 //    func update(deltaTime: Float) {
 //        guard let model = model else { return }
 //
-//        // Update all channel state machines
+//        // Update all layer state machines
 //        for id in evaluationOrder {
-//            channels[id]?.update(deltaTime: deltaTime)
+//            layers[id]?.update(deltaTime: deltaTime)
 //        }
 //
-//        // Update poses for dirty channels
+//        // Update poses for dirty layers
 //        for id in evaluationOrder {
-//            guard let channel = channels[id], channel.isDirty else { continue }
+//            guard let layer = layers[id], layer.isDirty else { continue }
 //
 //            if debugLogging {
-//                print("[AnimationLayerSystem] Updating poses for dirty channel '\(id)'")
+//                print("[AnimationLayerSystem] Updating poses for dirty layer '\(id)'")
 //            }
 //
-//            updatePoses(for: channel, model: model)
-//            channel.clearDirty()
+//            updatePoses(for: layer, model: model)
+//            layer.clearDirty()
 //        }
 //    }
     
     func update(deltaTime: Float) {
         guard let model = model else { return }
 
-        // Update all channel state machines
-        for id in channelSetEvaluationOrder {
-            channelSets[id]?.update(deltaTime: deltaTime)
+        // Update all layer state machines
+        for id in layerSetEvaluationOrder {
+            layerSets[id]?.update(deltaTime: deltaTime)
         }
 
-        // Update poses for dirty channels
-        for id in channelSetEvaluationOrder {
-            if let channelSet = channelSets[id] {
-                for channel in channelSet.channels {
-                    guard channel.isDirty else { continue }
+        // Update poses for dirty layers
+        for id in layerSetEvaluationOrder {
+            if let layerSet = layerSets[id] {
+                for layer in layerSet.layers {
+                    guard layer.isDirty else { continue }
                     
                     if debugLogging {
-                        print("[AnimationLayerSystem] Updating poses for dirty channel '\(channel.id)'")
+                        print("[AnimationLayerSystem] Updating poses for dirty layer '\(layer.id)'")
                     }
                     
-                    updatePoses(for: channel, model: model)
-                    channel.clearDirty()
+                    updatePoses(for: layer, model: model)
+                    layer.clearDirty()
                 }
             }
         }
@@ -202,23 +202,23 @@ final class AnimationLayerSystem {
 
     // MARK: - Pose Updates
 
-    /// Update skeleton and mesh poses for a single channel
+    /// Update skeleton and mesh poses for a single layer
     /// - Parameters:
-    ///   - channel: The channel to update poses for
+    ///   - layer: The layer to update poses for
     ///   - model: The model containing animation data
-    private func updatePoses(for channel: AnimationChannel, model: UsdModel) {
-        let animTime = channel.getAnimationTime()
-        let mask = channel.mask
+    private func updatePoses(for layer: AnimationLayer, model: UsdModel) {
+        let animTime = layer.getAnimationTime()
+        let mask = layer.mask
 
         if debugLogging {
-            print("[AnimationLayerSystem] Channel '\(channel.id)' animation time: \(animTime)")
+            print("[AnimationLayerSystem] layer '\(layer.id)' animation time: \(animTime)")
         }
 
-        // Determine which skeletons are affected by this channel's mask
+        // Determine which skeletons are affected by this layer's mask
         var affectedSkeletonPaths: Set<String> = []
 
         for (skeletonPath, skeleton) in model.skeletons {
-            // Check if any joints in this skeleton are in the channel mask
+            // Check if any joints in this skeleton are in the layer mask
             let hasAffectedJoints = skeleton.jointPaths.contains { mask.contains(jointPath: $0) }
 
             if hasAffectedJoints || mask.jointPaths.isEmpty {
@@ -226,7 +226,7 @@ final class AnimationLayerSystem {
                 affectedSkeletonPaths.insert(skeletonPath)
 
                 // Find the animation clip to use
-                let clip = channel.animationClip
+                let clip = layer.animationClip
                     ?? model.animationClips[model.skeletonAnimationMap[skeletonPath] ?? ""]
                     ?? model.animationClips.values.first
 
@@ -296,35 +296,35 @@ final class AnimationLayerSystem {
         }
 
 //        for id in evaluationOrder {
-//            if let channel = channels[id] {
-//                updatePoses(for: channel, model: model)
+//            if let layer = layers[id] {
+//                updatePoses(for: layer, model: model)
 //            }
 //        }
         
-        for id in channelSetEvaluationOrder {
-            if let channelSet = channelSets[id] {
-                for channel in channelSet.channels {
-                    updatePoses(for: channel, model: model)
+        for id in layerSetEvaluationOrder {
+            if let layerSet = layerSets[id] {
+                for layer in layerSet.layers {
+                    updatePoses(for: layer, model: model)
                 }
             }
         }
     }
 
-    /// Reset all channels to their default state
-    func resetAllChannels() {
-//        for channel in channels.values {
-//            if let binary = channel as? BinaryAnimationChannel {
+    /// Reset all layers to their default state
+    func resetAlllayers() {
+//        for layer in layers.values {
+//            if let binary = layer as? BinaryAnimationLayer {
 //                binary.setInactiveImmediate()
-//            } else if let continuous = channel as? ContinuousAnimationChannel {
+//            } else if let continuous = layer as? ContinuousAnimationLayer {
 //                continuous.setValueImmediate(continuous.range.min)
 //            }
 //        }
         
-        for channelSet in channelSets.values {
-            for channel in channelSet.channels {
-                if let binary = channel as? BinaryAnimationChannel {
+        for layerSet in layerSets.values {
+            for layer in layerSet.layers {
+                if let binary = layer as? BinaryAnimationLayer {
                     binary.setInactiveImmediate()
-                } else if let continuous = channel as? ContinuousAnimationChannel {
+                } else if let continuous = layer as? ContinuousAnimationLayer {
                     continuous.setValueImmediate(continuous.range.min)
                 }
             }
@@ -333,23 +333,23 @@ final class AnimationLayerSystem {
         forceUpdateAllPoses()
 
         if debugLogging {
-            print("[AnimationLayerSystem] Reset all channels to default state")
+            print("[AnimationLayerSystem] Reset all layers to default state")
         }
     }
 
-    /// Set a specific channel to a normalized progress/value
+    /// Set a specific layer to a normalized progress/value
     /// - Parameters:
-    ///   - channelID: The channel ID
+    ///   - layerID: The layer ID
     ///   - normalizedValue: Value from 0.0 to 1.0
-    func setChannelValue(_ channelID: String, normalizedValue: Float) {
-        guard let channel = channels[channelID] else {
-            print("[AnimationLayerSystem] Warning: Channel '\(channelID)' not found")
+    func setlayerValue(_ layerID: String, normalizedValue: Float) {
+        guard let layer = layers[layerID] else {
+            print("[AnimationLayerSystem] Warning: layer '\(layerID)' not found")
             return
         }
 
-        if let binary = channel as? BinaryAnimationChannel {
+        if let binary = layer as? BinaryAnimationLayer {
             binary.setProgress(normalizedValue)
-        } else if let continuous = channel as? ContinuousAnimationChannel {
+        } else if let continuous = layer as? ContinuousAnimationLayer {
             continuous.setNormalizedValue(normalizedValue)
         }
     }
@@ -358,18 +358,18 @@ final class AnimationLayerSystem {
 // MARK: - Debug Helpers
 
 extension AnimationLayerSystem {
-    /// Print current state of all channels
+    /// Print current state of all layers
     func debugPrintState() {
         print("[AnimationLayerSystem] State:")
         print("  Model: \(model?.name ?? "nil")")
-        print("  Channels (\(channels.count)):")
+        print("  layers (\(layers.count)):")
 
         for id in evaluationOrder {
-            if let channel = channels[id] {
-                print("    - \(id): dirty=\(channel.isDirty), time=\(channel.getAnimationTime())")
-                if let binary = channel as? BinaryAnimationChannel {
+            if let layer = layers[id] {
+                print("    - \(id): dirty=\(layer.isDirty), time=\(layer.getAnimationTime())")
+                if let binary = layer as? BinaryAnimationLayer {
                     print("      state=\(binary.state), progress=\(binary.progress)")
-                } else if let continuous = channel as? ContinuousAnimationChannel {
+                } else if let continuous = layer as? ContinuousAnimationLayer {
                     print("      value=\(continuous.value), target=\(continuous.targetValue)")
                 }
             }
@@ -386,10 +386,10 @@ extension AnimationLayerSystem {
         print("[AnimationLayerSystem] Mask Coverage Analysis:")
 
         for id in evaluationOrder {
-            guard let channel = channels[id] else { continue }
-            let mask = channel.mask
+            guard let layer = layers[id] else { continue }
+            let mask = layer.mask
 
-            print("  Channel '\(id)':")
+            print("  layer '\(id)':")
             print("    Joint paths in mask: \(mask.jointPaths.count)")
             print("    Mesh indices in mask: \(mask.meshIndices.count)")
 
