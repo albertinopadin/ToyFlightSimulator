@@ -20,58 +20,6 @@ struct F35AnimationConfig {
     // static let canopyLayerID = "canopy"
     // static let flapsLayerID = "flaps"
 
-    // MARK: - Channel Creation
-
-    /// Creates the landing gear channel for F-35
-    /// - Parameter model: The UsdModel containing animation data
-    /// - Returns: A configured BinaryAnimationChannel for landing gear
-    static func createLandingGearChannel(for model: UsdModel) -> BinaryAnimationChannel {
-        // Get all joint paths from the model's skeletons
-        let allJointPaths = model.skeletons.values.flatMap { $0.jointPaths }
-
-        // Filter to find landing gear related joints
-        // The F-35 model may have joints named with gear/wheel/strut/door patterns
-        let gearJointPaths = allJointPaths.filter { path in
-            let lowercased = path.lowercased()
-            return lowercased.contains("gear") ||
-                   lowercased.contains("wheel") ||
-                   lowercased.contains("strut") ||
-                   lowercased.contains("door") ||
-                   lowercased.contains("landing")
-        }
-
-        print("[F35AnimConfig createLandingGearChannel] gearJointPaths: \(gearJointPaths)")
-
-        // If no specific gear joints found, use all joints (full model animation)
-        let jointPaths = gearJointPaths.isEmpty ? allJointPaths : gearJointPaths
-        let animClip = model.animationClips.first?.value
-        let jointAnim = animClip?.jointAnimation.values.first as? Animation
-
-        let mask = AnimationMask(jointPaths: jointPaths)
-
-        // Get duration from the first animation clip
-        let duration = model.animationClips.values.first?.duration ?? 4.0
-
-        // Get the animation clip
-        let animationClip = model.animationClips.values.first
-
-        print("[F35AnimConfig createLandingGearChannel] animationClips: \(model.animationClips.count)")
-
-        print("[F35AnimationConfig] Creating landing gear channel:")
-        print("  - Joint paths in mask: \(jointPaths.count)")
-        print("  - Animation duration: \(duration)s")
-        print("  - Animation clip: \(animationClip?.name ?? "none")")
-
-        return BinaryAnimationChannel(
-            id: "landingGear",
-            mask: mask,
-            transitionDuration: duration,
-            initialState: .active,  // Start with gear down
-            animationClip: animationClip,
-            timeRange: (start: 0, end: duration)
-        )
-    }
-
     /// Creates the landing gear layer (group of channels) for F-35
     /// - Parameter model: The UsdModel containing animation data
     /// - Returns: A configured AnimationLayer grouping all landing gear channels
