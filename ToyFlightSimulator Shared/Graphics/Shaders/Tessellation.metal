@@ -27,7 +27,7 @@ kernel void compute_tessellation(
   uint                                    pid             [[ thread_position_in_grid ]],
   constant float4                         &cameraPosition [[ buffer(3) ]],
   constant float4x4                       &modelMatrix    [[ buffer(4) ]],
-  constant float3                         *controlPoints  [[ buffer(5) ]],
+  constant TerrainControlPoint            *controlPoints  [[ buffer(5) ]],
   constant Terrain                        &terrain        [[ buffer(TFSBufferIndexTerrain) ]]) {
     uint index = pid * 4;  // 4 is the number of control points per patch; may want to dynamically supply this
     float totalTessellation = 0;
@@ -40,8 +40,8 @@ kernel void compute_tessellation(
         }
         int edgeIndex = pointBIndex;
         
-        float cameraDistance = getCameraDistance(controlPoints[pointAIndex + index],
-                                                 controlPoints[pointBIndex + index],
+        float cameraDistance = getCameraDistance(controlPoints[pointAIndex + index].position,
+                                                 controlPoints[pointBIndex + index].position,
                                                  cameraPosition.xyz,
                                                  modelMatrix);
         
@@ -57,13 +57,13 @@ kernel void compute_tessellation(
 
 [[ patch(quad, 4) ]]
 vertex TessellationVertexOut
-tessellation_vertex(patch_control_point<ControlPoint> controlPoints      [[ stage_in ]],
-                    constant SceneConstants           &sceneConstants    [[ buffer(TFSBufferIndexSceneConstants) ]],
-                    constant ModelConstants           &modelConstants    [[ buffer(TFSBufferModelConstants) ]],
-                    texture2d<float>                  heightMap          [[ texture(TFSTextureIndexHeightMap) ]],
-                    constant Terrain                  &terrain           [[ buffer(TFSBufferIndexTerrain) ]],
-                    float2                            patchCoord         [[ position_in_patch ]],
-                    uint                              patchId            [[ patch_id ]]) {
+tessellation_vertex(patch_control_point<TerrainControlPoint> controlPoints      [[ stage_in ]],
+                    constant SceneConstants                  &sceneConstants    [[ buffer(TFSBufferIndexSceneConstants) ]],
+                    constant ModelConstants                  &modelConstants    [[ buffer(TFSBufferModelConstants) ]],
+                    texture2d<float>                         heightMap          [[ texture(TFSTextureIndexHeightMap) ]],
+                    constant Terrain                         &terrain           [[ buffer(TFSBufferIndexTerrain) ]],
+                    float2                                   patchCoord         [[ position_in_patch ]],
+                    uint                                     patchId            [[ patch_id ]]) {
     float u = patchCoord.x;
     float v = patchCoord.y;
     

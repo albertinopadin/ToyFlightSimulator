@@ -57,9 +57,7 @@ public struct TessellationVertexDescriptor: VertexDescriptor {
         vertexDescriptor = MTLVertexDescriptor()
         addAttributeWithOffset(format: getFormatForVertexAttribute(TFSVertexAttributePosition),
                                bufferIndex: TFSBufferIndexMeshVertex.index)
-        addAttributeWithOffset(format: getFormatForVertexAttribute(TFSVertexAttributeColor),
-                               bufferIndex: TFSBufferIndexMeshVertex.index)
-        vertexDescriptor.layouts[0].stride = float4.stride * 2
+        vertexDescriptor.layouts[0].stride = TerrainControlPoint.stride
         vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
     }
 }

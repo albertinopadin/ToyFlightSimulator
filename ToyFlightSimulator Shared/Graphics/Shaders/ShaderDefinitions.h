@@ -27,6 +27,10 @@ struct VertexIn {
 
 using ControlPoint = VertexIn;
 
+struct TerrainControlPoint {
+    float3 position [[ attribute(TFSVertexAttributePosition) ]];
+};
+
 struct RasterizerData {
     float4 position [[ position ]];
     float4 color;

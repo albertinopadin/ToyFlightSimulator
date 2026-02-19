@@ -21,7 +21,7 @@ final class TerrainObject: GameObject, Tessellatable {
     let snowTexture: MTLTexture
     
     static func createControlPoints(patches: (horizontal: Int, vertical: Int),
-                                    size: (width: Float, height: Float)) -> [ControlPoint] {
+                                    size: (width: Float, height: Float)) -> [TerrainControlPoint] {
         var points: [float3] = []
         let width = 1 / Float(patches.horizontal)
         let height = 1 / Float(patches.vertical)
@@ -50,7 +50,7 @@ final class TerrainObject: GameObject, Tessellatable {
             ]
         }
         
-        return points.map { ControlPoint(position: $0) }
+        return points.map { TerrainControlPoint(position: $0) }
     }
     
     convenience init(size: float2 = [2, 2], height: Float = 1.0) {
@@ -82,7 +82,7 @@ final class TerrainObject: GameObject, Tessellatable {
     // TODO: Should these two functions live in Tessellatables ???
     func makeControlPointsBuffer(size: (width: Float, height: Float) = (2, 2)) -> MTLBuffer? {
         let controlPoints = Self.createControlPoints(patches: self.patches, size: size)
-        return Engine.Device.makeBuffer(bytes: controlPoints, length: ControlPoint.stride(controlPoints.count))
+        return Engine.Device.makeBuffer(bytes: controlPoints, length: TerrainControlPoint.stride(controlPoints.count))
     }
     
     func makeTessellationFactorsBuffer() -> MTLBuffer? {

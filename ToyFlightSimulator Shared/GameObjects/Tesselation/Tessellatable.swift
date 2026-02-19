@@ -14,7 +14,7 @@ protocol Tessellatable: GameObject {
     var tessellationFactorsBuffer: MTLBuffer? { get }
     
     static func createControlPoints(patches: (horizontal: Int, vertical: Int),
-                                    size: (width: Float, height: Float)) -> [ControlPoint]
+                                    size: (width: Float, height: Float)) -> [TerrainControlPoint]
     
     func computeUpdate(_ computeEncoder: MTLComputeCommandEncoder)
     func setRenderState(_ renderEncoder: MTLRenderCommandEncoder)

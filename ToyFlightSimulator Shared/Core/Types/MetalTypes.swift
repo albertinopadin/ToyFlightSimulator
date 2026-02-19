@@ -60,6 +60,10 @@ struct Vertex: HasNormal, sizeable {
 
 typealias ControlPoint = Vertex
 
+struct TerrainControlPoint: sizeable {
+    var position: float3 = [0, 0, 0]
+}
+
 extension ModelConstants: sizeable {}
 
 extension SceneConstants: sizeable {}
