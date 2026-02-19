@@ -103,7 +103,7 @@ final class TerrainObject: GameObject, Tessellatable {
         let gridSize = MTLSize(width: patchCount, height: 1, depth: 1)
         let threadsPerGroup = MTLSize(width: width, height: 1, depth: 1)
         
-        computeEncoder.dispatchThreadgroups(gridSize, threadsPerThreadgroup: threadsPerGroup)
+        computeEncoder.dispatchThreads(gridSize, threadsPerThreadgroup: threadsPerGroup)
     }
     
     func setRenderState(_ renderEncoder: any MTLRenderCommandEncoder) {
