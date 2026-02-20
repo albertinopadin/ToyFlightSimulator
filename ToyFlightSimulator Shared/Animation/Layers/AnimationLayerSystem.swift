@@ -29,7 +29,7 @@ final class AnimationLayerSystem {
     private var layerEvaluationOrder: [String] = []
 
     /// Whether debug logging is enabled
-    var debugLogging: Bool = true
+    var debugLogging: Bool = false
 
     // MARK: - Computed Properties
 
@@ -245,13 +245,17 @@ final class AnimationLayerSystem {
 
             // Skip if this mesh is not affected
             guard meshDirectlyAffected || meshSkeletonAffected || mask.isEmpty || mesh.transform != nil else {
-                print("[AnimationLayerSystem updatePose] Skipping mesh \(index) as it is not affected by the animation")
+                if debugLogging {
+                    print("[AnimationLayerSystem updatePose] Skipping mesh \(index) as it is not affected by the animation")
+                }
                 continue
             }
 
             // Update transform component if present (for non-skeletal mesh animation)
             if mesh.transform != nil {
-                print("[AnimationLayerSystem] Set mesh \(index) transform at time \(animTime)")
+                if debugLogging {
+                    print("[AnimationLayerSystem] Set mesh \(index) transform at time \(animTime)")
+                }
                 mesh.transform!.setCurrentTransform(at: animTime)
             }
 
