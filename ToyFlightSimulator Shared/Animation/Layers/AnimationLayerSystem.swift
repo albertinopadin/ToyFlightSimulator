@@ -49,6 +49,8 @@ final class AnimationLayerSystem {
 
     /// Cached single skeleton when model has exactly one (avoids repeated dictionary access)
     private var singleSkeleton: Skeleton?
+    
+    private let debugLogging: Bool = false
 
     // MARK: - Computed Properties
 
@@ -73,6 +75,12 @@ final class AnimationLayerSystem {
         // Cache single-skeleton fallback
         if model.skeletons.count == 1 {
             singleSkeleton = model.skeletons.values.first
+        }
+        
+        if debugLogging {
+            print("[AnimationLayerSystem] Initialized for model: \(model.name)")
+            print("[AnimationLayerSystem] \(model.skeletons.count) Available skeletons: \(model.skeletons.keys)")
+            print("[AnimationLayerSystem] \(model.animationClips.count) Available clips: \(model.animationClips.keys)")
         }
     }
 
@@ -100,6 +108,10 @@ final class AnimationLayerSystem {
         if let model = model {
             channelMappings[id] = buildMapping(for: channel, model: model)
         }
+        
+        if debugLogging {
+            print("[AnimationLayerSystem] Registered channel '\(id)' with mask: \(channel.mask)")
+        }
     }
 
     /// Unregister a channel by its ID
@@ -107,6 +119,10 @@ final class AnimationLayerSystem {
     func unregisterChannel(_ id: String) {
         channelsByID.removeValue(forKey: id)
         channelMappings.removeValue(forKey: id)
+        
+        if debugLogging {
+            print("[AnimationLayerSystem] Unregistered channel '\(id)'")
+        }
     }
 
     /// Get a channel by its ID
@@ -153,6 +169,10 @@ final class AnimationLayerSystem {
         for channel in layer.channels {
             registerChannel(channel)
         }
+        
+        if debugLogging {
+            print("[AnimationLayerSystem] Registered layer '\(id)'")
+        }
     }
 
     /// Get a layer by its ID
@@ -197,6 +217,10 @@ final class AnimationLayerSystem {
     ///   - model: The model containing animation data
     private func updatePoses(for channel: AnimationChannel, model: UsdModel) {
         let animTime = channel.getAnimationTime()
+        
+        if debugLogging {
+            print("[AnimationLayerSystem] Channel '\(channel.id)' animation time: \(animTime)")
+        }
 
         guard let mapping = channelMappings[channel.id] else {
             // Fallback for channels registered without a mapping (shouldn't happen)
@@ -245,6 +269,9 @@ final class AnimationLayerSystem {
 
                 if let clip = clip {
                     skeleton.updatePose(at: animTime, animationClip: clip)
+                    if debugLogging {
+                        print("[AnimationLayerSystem] Updated skeleton '\(skeletonPath)' at time \(animTime)")
+                    }
                 }
             }
         }
@@ -265,8 +292,14 @@ final class AnimationLayerSystem {
             if let skeletonPath = model.meshSkeletonMap[index],
                let skeleton = model.skeletons[skeletonPath] {
                 mesh.skin?.updatePalette(skeleton: skeleton)
+                if debugLogging {
+                    print("[AnimationLayerSystem] Updated mesh skin palette with skeleton '\(skeletonPath)' at time \(animTime)")
+                }
             } else if let fallback = singleSkeleton {
                 mesh.skin?.updatePalette(skeleton: fallback)
+                if debugLogging {
+                    print("[AnimationLayerSystem] Updated ONLY mesh skin palette at time \(animTime)")
+                }
             }
         }
     }
@@ -337,6 +370,10 @@ final class AnimationLayerSystem {
     /// Useful for initialization or when scrubbing animations.
     func forceUpdateAllPoses() {
         guard let model = model else { return }
+        
+        if debugLogging {
+            print("[AnimationLayerSystem] Force updating all poses")
+        }
 
         for layer in orderedLayers {
             for channel in layer.channels {
@@ -355,6 +392,10 @@ final class AnimationLayerSystem {
                     continuous.setValueImmediate(continuous.range.min)
                 }
             }
+        }
+        
+        if debugLogging {
+            print("[AnimationLayerSystem] Reset all channels to default state")
         }
 
         forceUpdateAllPoses()
