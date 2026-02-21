@@ -8,6 +8,12 @@
 
 ## Devlog
 
+2/21/26 - Implemented animations (initially just landing gear retraction and extension for F-35 model).
+
+![Toy Flight Sim 2-21-26 Landing Gear Animation](https://www.youtube.com/watch?v=MqskHRHT-Wo)
+
+---
+
 7/20/2025 - Tessellated Terrain initial implementation; Moved to Swift 6; Implemented multithreading with 3 threads - main (UI / Rendering), update (physics), and audio.
 
 ![TessellatedTerrain](images/TFS_TessellatedTerrain.png)
