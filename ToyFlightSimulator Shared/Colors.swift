@@ -15,3 +15,4 @@ let GREEN_COLOR: float4 = [0, 1, 0, 1]
 let BLUE_COLOR: float4 = [0, 0, 1, 1]
 
 let GRABBER_BLUE_COLOR: float4 = [0.1686, 0.4196, 0.8941, 1]
+let PINK_DEBUG_COLOR: float4 = [1, 0, 195/255, 1]

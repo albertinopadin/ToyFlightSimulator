@@ -69,7 +69,7 @@ extension ModelConstants: sizeable {}
 extension SceneConstants: sizeable {}
 
 extension MaterialProperties: sizeable {
-    init(color: float4 = BLACK_COLOR,
+    init(color: float4 = PINK_DEBUG_COLOR,
          ambient: float3 = [0.1, 0.1, 0.1],
          diffuse: float3 = [1, 1, 1],
          specular: float3 = [1, 1, 1],
@@ -86,8 +86,8 @@ extension MaterialProperties: sizeable {
     }
     
     init() {
-        self.init(color: BLACK_COLOR,
-                  ambient: [0.1, 0.1, 0.1], 
+        self.init(color: PINK_DEBUG_COLOR,
+                  ambient: [0.1, 0.1, 0.1],
                   diffuse: [1, 1, 1],
                   specular: [1, 1, 1],
                   shininess: 2.0,

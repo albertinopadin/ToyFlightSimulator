@@ -13,8 +13,6 @@ final class FlightboxWithTerrain: GameScene {
     var quad = Quad()
     var capsule = CapsuleObject()
     
-    let afterburner = Afterburner(name: "Afterburner")
-    
     let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
     var entities: [PhysicsEntity] = []
     
@@ -31,8 +29,9 @@ final class FlightboxWithTerrain: GameScene {
         addGround()
         
 //        let jet = F35(scale: 0.8)
-        let jet = F35(scale: 0.15)
+//        let jet = F35(scale: 0.15)
 //        let jet = F22(scale: 0.25)
+        let jet = F22_CGTrader(scale: 3.0)
 //        let jet = CollidableF22(scale: 0.25)
 //        let jet = F18(scale: 1.4)
 //        let jet = F18(scale: 1.0)

@@ -23,7 +23,10 @@ enum ModelType {
     case F18
     
     case RC_F18
+    
     case CGTrader_F35
+    case CGTrader_F22
+    
     case Sketchfab_F35
     case Sketchfab_F22
     
@@ -71,6 +74,10 @@ final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
         _library.updateValue(ObjModel("FA-18F"), forKey: .F18)
         
         _library.updateValue(UsdModel("FA-18F"), forKey: .RC_F18)
+        
+        _library.updateValue(UsdModel("cgtrader_F22",
+                                      fileExtension: .USDZ,
+                                      basisTransform: Transform.transformXZYToXYZ), forKey: .CGTrader_F22)
         
         _library.updateValue(UsdModel("F-35A_Lightning_II",
                                       basisTransform: Transform.rotationMatrix(radians: Float(180).toRadians,

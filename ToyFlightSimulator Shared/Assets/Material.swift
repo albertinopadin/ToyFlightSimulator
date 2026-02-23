@@ -38,6 +38,7 @@ struct Material: sizeable {
                         if let stringValue = property.stringValue {
                             print("Material property string value: \(stringValue)")
                             // TODO: This smells nasty
+                            // Check if string is empty (WTF?)
                             let texture = TextureLoader.Texture(name: stringValue)
                             populateTexture(texture, for: semantic)
                         }
@@ -73,6 +74,9 @@ struct Material: sizeable {
                         switch semantic {
                             case .opacity:
                                 properties.opacity = property.floatValue
+                                // ambient occlusion, ao scale, anisotropic rotation, clearcoat, clearcoat gloss,
+                                // interface index of refraction, material index of refraction, none (WTF???),
+                                // roughness, sheen, sheen tint, specular, specular tint, subsurface, 
                             default:
                                 print("Property was not opacity")
                         }
@@ -80,6 +84,7 @@ struct Material: sizeable {
                         print("Material \(material.name) property is float2 for semantic: \(semantic.toString())")
                     case .float3:
                         print("Material \(material.name) property is float3 for semantic: \(semantic.toString())")
+                        // base color, emission
                     case .float4:
                         print("Material \(material.name) property is float4 for semantic: \(semantic.toString())")
                     case .none:
@@ -107,6 +112,9 @@ struct Material: sizeable {
                 ambientOcclusionTexture = texture
             case .opacity:
                 opacityTexture = texture
+            case .emission:
+                // TODO
+                print("[Material populateTexture] Emission not implemented!")
             default:
                 print("Got string for semantic \(semantic.toString())")
                 
