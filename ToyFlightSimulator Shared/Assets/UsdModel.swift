@@ -28,12 +28,17 @@ final class UsdModel: Model {
     /// When true, the model's update() method will not drive animations automatically.
     var hasExternalAnimator: Bool = false
     
-    init(_ modelName: String, fileExtension: ModelExtension = .USDZ, basisTransform: float4x4? = nil) {
-        self.basisTransform = basisTransform
+    convenience init(_ modelName: String, fileExtension: ModelExtension = .USDZ, basisTransform: float4x4? = nil) {
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: fileExtension.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")
         }
 
+        self.init(modelName, assetUrl: assetUrl, basisTransform: basisTransform)
+    }
+    
+    init(_ modelName: String, assetUrl: URL, basisTransform: float4x4? = nil) {
+        self.basisTransform = basisTransform
+        
         let descriptor = Mesh.createMdlVertexDescriptor()
         let asset = MDLAsset(url: assetUrl,
                              vertexDescriptor: descriptor,

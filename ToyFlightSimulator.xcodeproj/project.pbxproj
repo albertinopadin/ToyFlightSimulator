@@ -163,6 +163,7 @@
 /* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		CE0BA9F42F4DB4FD00751074 /* scripts */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = scripts; sourceTree = "<group>"; };
 		CEA8DBDD2F0F8E9F0058B5EA /* ToyFlightSimulator Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (CEA8DF5E2F0F8E9F0058B5EA /* PBXFileSystemSynchronizedBuildFileExceptionSet */, CEA8DF5F2F0F8E9F0058B5EA /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, CEA8DF602F0F8E9F0058B5EA /* PBXFileSystemSynchronizedBuildFileExceptionSet */, CEA8DF612F0F8E9F0058B5EA /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, CEA8DF622F0F8E9F0058B5EA /* PBXFileSystemSynchronizedBuildFileExceptionSet */, CEA8DF632F0F8E9F0058B5EA /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, CEA8DF642F0F8E9F0058B5EA /* PBXFileSystemSynchronizedBuildFileExceptionSet */, CEA8DF652F0F8E9F0058B5EA /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "ToyFlightSimulator Shared"; sourceTree = "<group>"; };
 		CEA8DF6C2F0F8EBC0058B5EA /* ToyFlightSimulator tvOS */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "ToyFlightSimulator tvOS"; sourceTree = "<group>"; };
 		CEA8DF732F0F8ED50058B5EA /* ToyFlightSimulatorTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ToyFlightSimulatorTests; sourceTree = "<group>"; };
@@ -205,6 +206,7 @@
 		CE7F47E528B758900082B197 = {
 			isa = PBXGroup;
 			children = (
+				CE0BA9F42F4DB4FD00751074 /* scripts */,
 				CE07DE432D951748000829FF /* ToyFlightSimulator macOS.xctestplan */,
 				CEA8DBDD2F0F8E9F0058B5EA /* ToyFlightSimulator Shared */,
 				CEA8DF942F0F91010058B5EA /* ToyFlightSimulator iOS */,

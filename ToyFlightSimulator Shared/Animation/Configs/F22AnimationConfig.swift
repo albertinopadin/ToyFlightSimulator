@@ -22,6 +22,7 @@ struct F22AnimationConfig {
 
         print("[F22 createLandingGearLayer] model meshSkeletonMap: \(model.meshSkeletonMap)")
         print("[F22 createLandingGearLayer] model skeletonAnimationMap: \(model.skeletonAnimationMap)")
+        print("[F22 createLandingGearLayer] model skeleton: \(model.skeletons["/root/Armature/Armature"]!.jointPaths)")
 
         // For now using all animation clips since the F-35 model only has landing gear animations:
         for (i, animationClip) in model.animationClips.values.enumerated() {
