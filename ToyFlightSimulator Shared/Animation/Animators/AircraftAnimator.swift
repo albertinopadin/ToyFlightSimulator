@@ -46,10 +46,16 @@ class AircraftAnimator: AnimationController {
 
     /// The landing gear layer ID (standard across all aircraft)
     static let landingGearLayerID = "landingGear"
+    
+    static let flaperonLayerID = "flaperons"
 
     /// Direct access to the landing gear layer
     var landingGearLayer: AnimationLayer? {
         layerSystem?.layer(Self.landingGearLayerID)
+    }
+    
+    var flaperonLayer: AnimationLayer? {
+        layerSystem?.layer(Self.flaperonLayerID)
     }
 
     // MARK: - Gear State (Legacy Compatibility)
@@ -183,6 +189,18 @@ class AircraftAnimator: AnimationController {
         layer.toggle()
         print("[AircraftAnimator] Toggled Landing Gear")
         playbackState = layer.isAnimating ? .playing : .stopped
+    }
+    
+    func rollFlaperons(value: Float) {
+        guard let layer = flaperonLayer else {
+            print("[AircraftAnimator] No flaperon layer registered")
+            return
+        }
+        
+        for case let flaperonChannel as ContinuousAnimationChannel in layer.channels {
+//            flaperonChannel.setValueImmediate(value)
+            flaperonChannel.setNormalizedValue(value)
+        }
     }
 
     /// Returns true if the gear is fully down

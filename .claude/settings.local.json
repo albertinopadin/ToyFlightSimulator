@@ -12,7 +12,11 @@
       "WebFetch(domain:dev.epicgames.com)",
       "WebFetch(domain:www.gamedeveloper.com)",
       "WebFetch(domain:vlad.website)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:godotengine.org)",
+      "WebFetch(domain:forums.unrealengine.com)",
+      "WebFetch(domain:docs.godotengine.org)",
+      "WebFetch(domain:docs.flightsimulator.com)"
     ],
     "deny": [],
     "ask": []

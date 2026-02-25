@@ -42,6 +42,12 @@ class F22_CGTrader: Aircraft {
                 print("[F22_CGTrader doUpdate] toggling gear")
                 self.animator?.toggleGear()
             }
+            
+            let rollValue = InputManager.ContinuousCommand(.Roll)
+            if abs(rollValue) > 0 {
+                print("[F22_CGTrader doUpdate] roll value \(rollValue)")
+            }
+            self.animator?.rollFlaperons(value: rollValue)
         }
 
         // Update the animator each frame

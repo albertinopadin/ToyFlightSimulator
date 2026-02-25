@@ -98,6 +98,7 @@ final class AnimationLayerSystem {
         channelsByID[id] = channel
 
         // If channel doesn't have an animation clip assigned, try to find a matching one
+        // BUG ???
         if channel.animationClip == nil, let model = model {
             if let firstClip = model.animationClips.values.first {
                 channel.animationClip = firstClip
@@ -218,18 +219,26 @@ final class AnimationLayerSystem {
     private func updatePoses(for channel: AnimationChannel, model: UsdModel) {
         let animTime = channel.getAnimationTime()
         
+        if channel.id.starts(with: "flaperon") {
+            print("Updating pose for flaperon, animTime: \(animTime)")
+        }
+        
         if debugLogging {
             print("[AnimationLayerSystem] Channel '\(channel.id)' animation time: \(animTime)")
         }
 
         guard let mapping = channelMappings[channel.id] else {
             // Fallback for channels registered without a mapping (shouldn't happen)
+            print("Calling updatePosesFallback for unmapped channel")
             updatePosesFallback(for: channel, model: model, animTime: animTime)
             return
         }
 
         // Update affected skeletons
         for entry in mapping.skeletonEntries {
+            if channel.id.starts(with: "flaperon") {
+                print("Updating pose for skeleton at path: \(entry.path) with clip: \(entry.clip.name)")
+            }
             model.skeletons[entry.path]?.updatePose(at: animTime, animationClip: entry.clip)
         }
 

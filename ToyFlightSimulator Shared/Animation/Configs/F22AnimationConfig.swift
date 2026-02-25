@@ -8,6 +8,7 @@
 struct F22AnimationConfig {
     /// Standard layer ID for landing gear
     static let landingGearLayerID = "landingGear"
+    static let flaperonLayerID = "flaperons"
 
     // Future layer IDs:
     // static let weaponBayLayerID = "weaponBay"
@@ -65,6 +66,7 @@ struct F22AnimationConfig {
 
         // Landing gear is the primary layer:
         layers.append(createLandingGearLayer(for: model))
+        layers.append(createFlaperonLayer(for: model))
 
         // Future layers can be added here:
         // layers.append(createWeaponBayLayer(for: model))
@@ -72,6 +74,30 @@ struct F22AnimationConfig {
         // layers.append(createFlapsLayer(for: model))
 
         return layers
+    }
+    
+    static func createFlaperonLayer(for model: UsdModel) -> AnimationLayer {
+        let flapJointPaths = model.skeletons.values.flatMap { $0.jointPaths }
+            .filter { $0.lowercased().contains("flaperon") }
+
+        var channels: [AnimationChannel] = []
+        
+        for (i, jp) in flapJointPaths.enumerated() {
+            let mask = AnimationMask(jointPaths: [jp])
+
+            let channel = ContinuousAnimationChannel(
+                id: "flaperon_\(i)",
+                mask: mask,
+                range: (-1.0, 1.0),
+                transitionSpeed: 0.5,
+                initialValue: 0.0
+            )
+            
+            channels.append(channel)
+        }
+        
+
+        return AnimationLayer(id: flaperonLayerID, channels: channels)
     }
 
     // MARK: - Future Channel/Layer Definitions
