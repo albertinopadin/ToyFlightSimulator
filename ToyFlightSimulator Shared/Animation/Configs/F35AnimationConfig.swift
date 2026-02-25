@@ -26,9 +26,6 @@ struct F35AnimationConfig {
     static func createLandingGearLayer(for model: UsdModel) -> AnimationLayer {
         var channels: [AnimationChannel] = []
 
-        print("[createLandingGearLayer] model meshSkeletonMap: \(model.meshSkeletonMap)")
-        print("[createLandingGearLayer] model skeletonAnimationMap: \(model.skeletonAnimationMap)")
-
         // For now using all animation clips since the F-35 model only has landing gear animations:
         for (i, animationClip) in model.animationClips.values.enumerated() {
             guard let skeletonAnimation = model.skeletonAnimationMap.first(where: {

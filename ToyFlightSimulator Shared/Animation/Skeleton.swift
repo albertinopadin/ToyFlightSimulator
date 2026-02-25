@@ -48,6 +48,12 @@ class Skeleton {
     let restTransforms: [float4x4]
     var currentPose: [float4x4] = []
 
+    /// Persistent local poses, updated incrementally by clip and procedural channels.
+    /// Initialized to rest transforms. Clip channels write to joints in their mask,
+    /// procedural channels override their targeted joints. evaluateWorldPoses() then
+    /// computes the final world-space currentPose from these local poses.
+    private(set) var localPoses: [float4x4]
+
     /// Optional basis transform for coordinate system conversion (e.g., USDZ to game coords)
     let basisTransform: float4x4?
 
@@ -58,6 +64,7 @@ class Skeleton {
         parentIndices = Skeleton.getParentIndices(jointPaths: jointPaths)
         bindTransforms = mdlSkeleton.jointBindTransforms.float4x4Array
         restTransforms = mdlSkeleton.jointRestTransforms.float4x4Array
+        localPoses = restTransforms
     }
 
     static func getParentIndices(jointPaths: [String]) -> [Int?] {
@@ -77,23 +84,69 @@ class Skeleton {
             self.jointPaths.firstIndex(of: jointPath)
         }
     }
-    
-    func updatePose(at currentTime: Float, animationClip: AnimationClip) {
-//        let time = fmod(currentTime, animationClip.duration)
-        let time = min(currentTime, animationClip.duration)
 
-        var localPose = [float4x4](repeating: .identity, count: jointPaths.count)
+    // MARK: - Legacy Full-Skeleton Update (Backward Compatibility)
+
+    /// Updates the full skeleton pose from an animation clip. Writes all joints to localPoses
+    /// and immediately evaluates world poses. Convenience wrapper around applyClip + evaluateWorldPoses.
+    func updatePose(at currentTime: Float, animationClip: AnimationClip) {
+        let time = min(currentTime, animationClip.duration)
 
         for index in 0..<jointPaths.count {
             let pose = animationClip.getPose(at: time * animationClip.speed,
                                              jointPath: jointPaths[index]) ?? restTransforms[index]
-            localPose[index] = pose
+            localPoses[index] = pose
         }
 
-        var worldPose: [float4x4] = []
+        evaluateWorldPoses()
+    }
+
+    // MARK: - Incremental Pose API
+
+    /// Applies an animation clip to localPoses, filtered by a mask.
+    /// Only joints whose paths are in the mask are updated; others are left unchanged.
+    /// Call evaluateWorldPoses() after all channels have applied their data.
+    ///
+    /// - Parameters:
+    ///   - currentTime: The time to sample the clip at
+    ///   - animationClip: The clip to sample
+    ///   - mask: Only joints in this mask are written to localPoses
+    func applyClip(at currentTime: Float, animationClip: AnimationClip, mask: AnimationMask) {
+        let time = min(currentTime, animationClip.duration)
+
+        for index in 0..<jointPaths.count {
+            let jointPath = jointPaths[index]
+            guard mask.jointPaths.isEmpty || mask.contains(jointPath: jointPath) else { continue }
+
+            let pose = animationClip.getPose(at: time * animationClip.speed,
+                                             jointPath: jointPath) ?? restTransforms[index]
+            localPoses[index] = pose
+        }
+    }
+
+    /// Applies procedural rotation overrides to specific joints in localPoses.
+    /// Each override is a rotation matrix that is multiplied with the joint's rest transform:
+    ///   localPoses[joint] = restTransform * rotationOverride
+    /// Only the specified joints are modified; all others are left unchanged.
+    /// Call evaluateWorldPoses() after all channels have applied their data.
+    ///
+    /// - Parameter overrides: Dictionary of joint path -> local rotation matrix to apply
+    func applyProceduralOverrides(_ overrides: [String: float4x4]) {
+        for (jointPath, rotationOverride) in overrides {
+            guard let index = jointPaths.firstIndex(of: jointPath) else { continue }
+            localPoses[index] = restTransforms[index] * rotationOverride
+        }
+    }
+
+    /// Computes world-space currentPose from the accumulated localPoses.
+    /// Call this once per frame after all clip and procedural channels have written to localPoses.
+    func evaluateWorldPoses() {
+        var worldPose = [float4x4]()
+        worldPose.reserveCapacity(parentIndices.count)
+
         for index in 0..<parentIndices.count {
             let parentIndex = parentIndices[index]
-            let localMatrix = localPose[index]
+            let localMatrix = localPoses[index]
             if let parentIndex {
                 worldPose.append(worldPose[parentIndex] * localMatrix)
             } else {

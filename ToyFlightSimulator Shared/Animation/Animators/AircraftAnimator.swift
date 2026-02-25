@@ -47,7 +47,7 @@ class AircraftAnimator: AnimationController {
     /// The landing gear layer ID (standard across all aircraft)
     static let landingGearLayerID = "landingGear"
     
-    static let flaperonLayerID = "flaperons"
+    static let flaperonLayerID = "flaperon"
 
     /// Direct access to the landing gear layer
     var landingGearLayer: AnimationLayer? {
@@ -191,15 +191,16 @@ class AircraftAnimator: AnimationController {
         playbackState = layer.isAnimating ? .playing : .stopped
     }
     
+    /// Sets flaperon deflection from roll input.
+    /// - Parameter value: Roll input value, typically -1.0 (full left) to 1.0 (full right)
     func rollFlaperons(value: Float) {
         guard let layer = flaperonLayer else {
             print("[AircraftAnimator] No flaperon layer registered")
             return
         }
-        
-        for case let flaperonChannel as ContinuousAnimationChannel in layer.channels {
-//            flaperonChannel.setValueImmediate(value)
-            flaperonChannel.setNormalizedValue(value)
+
+        for case let channel as ProceduralAnimationChannel in layer.channels {
+            channel.setValue(value)
         }
     }
 

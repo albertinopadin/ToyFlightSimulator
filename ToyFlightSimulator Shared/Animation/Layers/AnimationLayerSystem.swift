@@ -10,8 +10,9 @@ import Foundation
 /// Pre-computed mapping from a channel to the skeletons and meshes it affects.
 /// Built once at registration time so the per-frame update path does zero discovery work.
 struct ChannelMapping {
-    /// Skeleton paths affected by this channel, paired with the clip to use
-    let skeletonEntries: [(path: String, clip: AnimationClip)]
+    /// Skeleton paths affected by this channel, paired with the clip to use.
+    /// Clip is nil for procedural channels that don't sample from clips.
+    let skeletonEntries: [(path: String, clip: AnimationClip?)]
 
     /// Mesh indices that need transform and/or skin updates
     let affectedMeshIndices: [Int]
@@ -28,7 +29,8 @@ struct ChannelMapping {
 /// - Layers stored in an array for zero-overhead frame iteration (no dictionary lookups)
 /// - Skeleton/mesh affinity pre-computed at registration time via `ChannelMapping`
 /// - Single-skeleton fallback cached once at init
-/// - Single merged loop in `update()` for state + dirty pose updates
+/// - Two-phase update: (1) apply all channel data to skeleton localPoses,
+///   (2) evaluate world poses and update skins once per affected skeleton
 final class AnimationLayerSystem {
     // MARK: - Properties
 
@@ -49,7 +51,7 @@ final class AnimationLayerSystem {
 
     /// Cached single skeleton when model has exactly one (avoids repeated dictionary access)
     private var singleSkeleton: Skeleton?
-    
+
     private let debugLogging: Bool = false
 
     // MARK: - Computed Properties
@@ -76,7 +78,7 @@ final class AnimationLayerSystem {
         if model.skeletons.count == 1 {
             singleSkeleton = model.skeletons.values.first
         }
-        
+
         if debugLogging {
             print("[AnimationLayerSystem] Initialized for model: \(model.name)")
             print("[AnimationLayerSystem] \(model.skeletons.count) Available skeletons: \(model.skeletons.keys)")
@@ -97,9 +99,11 @@ final class AnimationLayerSystem {
 
         channelsByID[id] = channel
 
-        // If channel doesn't have an animation clip assigned, try to find a matching one
-        // BUG ???
-        if channel.animationClip == nil, let model = model {
+        // If clip-based channel doesn't have an animation clip assigned, try to find a matching one.
+        // Skip for procedural channels — they don't use clips.
+        if !(channel is ProceduralAnimationChannel),
+           channel.animationClip == nil,
+           let model = model {
             if let firstClip = model.animationClips.values.first {
                 channel.animationClip = firstClip
             }
@@ -109,7 +113,7 @@ final class AnimationLayerSystem {
         if let model = model {
             channelMappings[id] = buildMapping(for: channel, model: model)
         }
-        
+
         if debugLogging {
             print("[AnimationLayerSystem] Registered channel '\(id)' with mask: \(channel.mask)")
         }
@@ -120,7 +124,7 @@ final class AnimationLayerSystem {
     func unregisterChannel(_ id: String) {
         channelsByID.removeValue(forKey: id)
         channelMappings.removeValue(forKey: id)
-        
+
         if debugLogging {
             print("[AnimationLayerSystem] Unregistered channel '\(id)'")
         }
@@ -170,7 +174,7 @@ final class AnimationLayerSystem {
         for channel in layer.channels {
             registerChannel(channel)
         }
-        
+
         if debugLogging {
             print("[AnimationLayerSystem] Registered layer '\(id)'")
         }
@@ -194,63 +198,38 @@ final class AnimationLayerSystem {
     // MARK: - Update (Hot Path)
 
     /// Update all layers and refresh poses for any channels that changed.
-    /// Single merged loop: updates layer state machines then immediately processes dirty channels.
+    /// Two-phase approach:
+    ///   Phase 1: Update channel state machines and apply data to skeleton localPoses
+    ///   Phase 2: Evaluate world poses and update skins once per affected skeleton
     /// - Parameter deltaTime: Time since last update in seconds
     func update(deltaTime: Float) {
         guard let model = model else { return }
 
+        var dirtySkeletonPaths = Set<String>()
+        var dirtyMeshIndices = Set<Int>()
+
+        // Phase 1: Update channels and apply to skeleton localPoses
         for layer in orderedLayers {
             layer.update(deltaTime: deltaTime)
 
             for channel in layer.channels {
                 guard channel.isDirty else { continue }
-                updatePoses(for: channel, model: model)
+                applyChannelToLocalPoses(channel, model: model,
+                                         dirtySkeletonPaths: &dirtySkeletonPaths,
+                                         dirtyMeshIndices: &dirtyMeshIndices)
                 channel.clearDirty()
             }
         }
-    }
 
-    // MARK: - Pose Updates (Hot Path)
-
-    /// Update skeleton and mesh poses for a single channel using pre-computed mappings.
-    /// - Parameters:
-    ///   - channel: The channel to update poses for
-    ///   - model: The model containing animation data
-    private func updatePoses(for channel: AnimationChannel, model: UsdModel) {
-        let animTime = channel.getAnimationTime()
-        
-        if channel.id.starts(with: "flaperon") {
-            print("Updating pose for flaperon, animTime: \(animTime)")
-        }
-        
-        if debugLogging {
-            print("[AnimationLayerSystem] Channel '\(channel.id)' animation time: \(animTime)")
+        // Phase 2: Evaluate world poses once per dirty skeleton, then update skins
+        for skeletonPath in dirtySkeletonPaths {
+            model.skeletons[skeletonPath]?.evaluateWorldPoses()
         }
 
-        guard let mapping = channelMappings[channel.id] else {
-            // Fallback for channels registered without a mapping (shouldn't happen)
-            print("Calling updatePosesFallback for unmapped channel")
-            updatePosesFallback(for: channel, model: model, animTime: animTime)
-            return
-        }
-
-        // Update affected skeletons
-        for entry in mapping.skeletonEntries {
-            if channel.id.starts(with: "flaperon") {
-                print("Updating pose for skeleton at path: \(entry.path) with clip: \(entry.clip.name)")
-            }
-            model.skeletons[entry.path]?.updatePose(at: animTime, animationClip: entry.clip)
-        }
-
-        // Update affected meshes (transforms and skins)
-        for meshIndex in mapping.affectedMeshIndices {
+        for meshIndex in dirtyMeshIndices {
             let mesh = model.meshes[meshIndex]
-
-            // Update transform component if present (for non-skeletal mesh animation)
-            mesh.transform?.setCurrentTransform(at: animTime)
-
-            // Update skin with skeleton pose
-            if let skeleton = mapping.meshSkeletonLookup[meshIndex] {
+            if let skeletonPath = model.meshSkeletonMap[meshIndex],
+               let skeleton = model.skeletons[skeletonPath] {
                 mesh.skin?.updatePalette(skeleton: skeleton)
             } else if let fallback = singleSkeleton {
                 mesh.skin?.updatePalette(skeleton: fallback)
@@ -258,29 +237,79 @@ final class AnimationLayerSystem {
         }
     }
 
-    /// Fallback pose update that discovers affected skeletons/meshes at runtime.
+    // MARK: - Pose Application (Hot Path)
+
+    /// Apply a single channel's data to skeleton localPoses (Phase 1).
+    /// For clip-based channels: samples the animation clip and writes to skeleton localPoses.
+    /// For procedural channels: computes rotation overrides and writes to skeleton localPoses.
+    /// Does NOT evaluate world poses — that happens in Phase 2.
+    private func applyChannelToLocalPoses(
+        _ channel: AnimationChannel,
+        model: UsdModel,
+        dirtySkeletonPaths: inout Set<String>,
+        dirtyMeshIndices: inout Set<Int>
+    ) {
+        guard let mapping = channelMappings[channel.id] else {
+            print("[AnimationLayerSystem] Warning: No mapping for channel '\(channel.id)', using fallback")
+            applyChannelFallback(channel, model: model,
+                                 dirtySkeletonPaths: &dirtySkeletonPaths,
+                                 dirtyMeshIndices: &dirtyMeshIndices)
+            return
+        }
+
+        if let proceduralChannel = channel as? ProceduralAnimationChannel {
+            // Procedural path: apply direct joint overrides to localPoses
+            let overrides = proceduralChannel.getJointOverrides()
+            for entry in mapping.skeletonEntries {
+                model.skeletons[entry.path]?.applyProceduralOverrides(overrides)
+                dirtySkeletonPaths.insert(entry.path)
+            }
+        } else {
+            // Clip-based path: sample animation clip and write to localPoses
+            let animTime = channel.getAnimationTime()
+
+            if debugLogging {
+                print("[AnimationLayerSystem] Channel '\(channel.id)' animation time: \(animTime)")
+            }
+
+            for entry in mapping.skeletonEntries {
+                guard let clip = entry.clip else { continue }
+                model.skeletons[entry.path]?.applyClip(at: animTime, animationClip: clip, mask: channel.mask)
+                dirtySkeletonPaths.insert(entry.path)
+            }
+
+            // Update transform components for non-skeletal mesh animation (clip-based only)
+            for meshIndex in mapping.affectedMeshIndices {
+                model.meshes[meshIndex].transform?.setCurrentTransform(at: animTime)
+            }
+        }
+
+        dirtyMeshIndices.formUnion(mapping.affectedMeshIndices)
+    }
+
+    /// Fallback pose application that discovers affected skeletons/meshes at runtime.
     /// Only used if a channel somehow has no pre-computed mapping.
-    private func updatePosesFallback(for channel: AnimationChannel, model: UsdModel, animTime: Float) {
-        print("[updatePosesFallback] AnimationLayerSystem: Falling back to generic channel pose update.")
-        
+    private func applyChannelFallback(
+        _ channel: AnimationChannel,
+        model: UsdModel,
+        dirtySkeletonPaths: inout Set<String>,
+        dirtyMeshIndices: inout Set<Int>
+    ) {
         let mask = channel.mask
-        var affectedSkeletonPaths: Set<String> = []
+        let animTime = channel.getAnimationTime()
 
         for (skeletonPath, skeleton) in model.skeletons {
             let hasAffectedJoints = skeleton.jointPaths.contains { mask.contains(jointPath: $0) }
 
             if hasAffectedJoints || mask.jointPaths.isEmpty {
-                affectedSkeletonPaths.insert(skeletonPath)
-
                 let clip = channel.animationClip
                     ?? model.animationClips[model.skeletonAnimationMap[skeletonPath] ?? ""]
                     ?? model.animationClips.values.first
 
                 if let clip = clip {
+                    // Use legacy full-skeleton update for fallback
                     skeleton.updatePose(at: animTime, animationClip: clip)
-                    if debugLogging {
-                        print("[AnimationLayerSystem] Updated skeleton '\(skeletonPath)' at time \(animTime)")
-                    }
+                    dirtySkeletonPaths.insert(skeletonPath)
                 }
             }
         }
@@ -289,7 +318,7 @@ final class AnimationLayerSystem {
             let meshDirectlyAffected = mask.contains(meshIndex: index)
             var meshSkeletonAffected = false
             if let skeletonPath = model.meshSkeletonMap[index] {
-                meshSkeletonAffected = affectedSkeletonPaths.contains(skeletonPath)
+                meshSkeletonAffected = dirtySkeletonPaths.contains(skeletonPath)
             }
 
             guard meshDirectlyAffected || meshSkeletonAffected || mask.isEmpty || mesh.transform != nil else {
@@ -297,19 +326,7 @@ final class AnimationLayerSystem {
             }
 
             mesh.transform?.setCurrentTransform(at: animTime)
-
-            if let skeletonPath = model.meshSkeletonMap[index],
-               let skeleton = model.skeletons[skeletonPath] {
-                mesh.skin?.updatePalette(skeleton: skeleton)
-                if debugLogging {
-                    print("[AnimationLayerSystem] Updated mesh skin palette with skeleton '\(skeletonPath)' at time \(animTime)")
-                }
-            } else if let fallback = singleSkeleton {
-                mesh.skin?.updatePalette(skeleton: fallback)
-                if debugLogging {
-                    print("[AnimationLayerSystem] Updated ONLY mesh skin palette at time \(animTime)")
-                }
-            }
+            dirtyMeshIndices.insert(index)
         }
     }
 
@@ -319,9 +336,10 @@ final class AnimationLayerSystem {
     /// Called once at registration time, never during the frame loop.
     private func buildMapping(for channel: AnimationChannel, model: UsdModel) -> ChannelMapping {
         let mask = channel.mask
+        let isProcedural = channel is ProceduralAnimationChannel
 
         // Determine affected skeletons and their clips
-        var skeletonEntries: [(path: String, clip: AnimationClip)] = []
+        var skeletonEntries: [(path: String, clip: AnimationClip?)] = []
         var affectedSkeletonPaths: Set<String> = []
 
         for (skeletonPath, skeleton) in model.skeletons {
@@ -330,11 +348,14 @@ final class AnimationLayerSystem {
             if hasAffectedJoints || mask.jointPaths.isEmpty {
                 affectedSkeletonPaths.insert(skeletonPath)
 
-                let clip = channel.animationClip
-                    ?? model.animationClips[model.skeletonAnimationMap[skeletonPath] ?? ""]
-                    ?? model.animationClips.values.first
+                if isProcedural {
+                    // Procedural channels don't need a clip
+                    skeletonEntries.append((path: skeletonPath, clip: nil))
+                } else {
+                    let clip = channel.animationClip
+                        ?? model.animationClips[model.skeletonAnimationMap[skeletonPath] ?? ""]
+                        ?? model.animationClips.values.first
 
-                if let clip = clip {
                     skeletonEntries.append((path: skeletonPath, clip: clip))
                 }
             }
@@ -379,14 +400,33 @@ final class AnimationLayerSystem {
     /// Useful for initialization or when scrubbing animations.
     func forceUpdateAllPoses() {
         guard let model = model else { return }
-        
+
         if debugLogging {
             print("[AnimationLayerSystem] Force updating all poses")
         }
 
+        var dirtySkeletonPaths = Set<String>()
+        var dirtyMeshIndices = Set<Int>()
+
         for layer in orderedLayers {
             for channel in layer.channels {
-                updatePoses(for: channel, model: model)
+                applyChannelToLocalPoses(channel, model: model,
+                                         dirtySkeletonPaths: &dirtySkeletonPaths,
+                                         dirtyMeshIndices: &dirtyMeshIndices)
+            }
+        }
+
+        for skeletonPath in dirtySkeletonPaths {
+            model.skeletons[skeletonPath]?.evaluateWorldPoses()
+        }
+
+        for meshIndex in dirtyMeshIndices {
+            let mesh = model.meshes[meshIndex]
+            if let skeletonPath = model.meshSkeletonMap[meshIndex],
+               let skeleton = model.skeletons[skeletonPath] {
+                mesh.skin?.updatePalette(skeleton: skeleton)
+            } else if let fallback = singleSkeleton {
+                mesh.skin?.updatePalette(skeleton: fallback)
             }
         }
     }
@@ -399,10 +439,12 @@ final class AnimationLayerSystem {
                     binary.setInactiveImmediate()
                 } else if let continuous = channel as? ContinuousAnimationChannel {
                     continuous.setValueImmediate(continuous.range.min)
+                } else if let procedural = channel as? ProceduralAnimationChannel {
+                    procedural.setValueImmediate(0.0)
                 }
             }
         }
-        
+
         if debugLogging {
             print("[AnimationLayerSystem] Reset all channels to default state")
         }
@@ -424,6 +466,8 @@ final class AnimationLayerSystem {
             binary.setProgress(normalizedValue)
         } else if let continuous = channel as? ContinuousAnimationChannel {
             continuous.setNormalizedValue(normalizedValue)
+        } else if let procedural = channel as? ProceduralAnimationChannel {
+            procedural.setValue(normalizedValue)
         }
     }
 
@@ -455,6 +499,8 @@ extension AnimationLayerSystem {
                     print("      state=\(binary.state), progress=\(binary.progress)")
                 } else if let continuous = channel as? ContinuousAnimationChannel {
                     print("      value=\(continuous.value), target=\(continuous.targetValue)")
+                } else if let procedural = channel as? ProceduralAnimationChannel {
+                    print("      value=\(procedural.value), target=\(procedural.targetValue)")
                 }
             }
         }
