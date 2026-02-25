@@ -41,7 +41,23 @@ struct F22AnimationConfig {
                 fatalError("F-22 model has no mesh indices for animation clip: \(animationClip.name)")
             }
 
-            let mask = AnimationMask(jointPaths: animationClip.jointPaths, meshIndices: meshIndices)
+            // Filter to only landing gear joints — the clip contains keyframes for ALL
+            // skeleton joints, but we must not write to joints owned by other channels
+            // (e.g. flaperons), or we'll overwrite their procedural poses with rest pose.
+            let landingGearBoneNames: Set<String> = [
+                "RightMainBayBone", "LeftMainBayBone",
+                "FrontWheelBayLeftBone", "FrontWheelBayRightBone", "FrontWheelBone",
+                "LeftSideBayTopBone", "LeftSideBayBottomBone",
+                "RightSideBayTopBone", "RightSideBayBottomBone",
+                "RightWheelBone", "LeftWheelBone",
+                "LeftWheelBayBottom", "LeftWheelBayTop",
+                "RightWheelBayTop", "RightWheelBayBottom",
+            ]
+            let gearJointPaths = animationClip.jointPaths.filter { path in
+                let name = path.split(separator: "/").last.map(String.init) ?? path
+                return landingGearBoneNames.contains(name)
+            }
+            let mask = AnimationMask(jointPaths: gearJointPaths, meshIndices: meshIndices)
 
             let channel = BinaryAnimationChannel(
                 id: "landingGear_\(i)",
