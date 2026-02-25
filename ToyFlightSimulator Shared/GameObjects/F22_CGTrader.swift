@@ -42,8 +42,16 @@ class F22_CGTrader: Aircraft {
                 self.animator?.toggleGear()
             }
             
+            let pitchValue = InputManager.ContinuousCommand(.Pitch)
+            self.animator?.pitchHorizontalStabilizers(value: pitchValue)
+            
             let rollValue = InputManager.ContinuousCommand(.Roll)
+            self.animator?.rollAilerons(value: rollValue)
             self.animator?.rollFlaperons(value: rollValue)
+//            self.animator?.rollHorizontalStabilizers(value: rollValue)
+            
+            let yawValue = InputManager.ContinuousCommand(.Yaw)
+            self.animator?.yawRudders(value: yawValue)
         }
 
         // Update the animator each frame

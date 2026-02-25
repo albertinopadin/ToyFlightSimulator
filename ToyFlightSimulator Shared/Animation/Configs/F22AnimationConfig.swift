@@ -9,6 +9,9 @@ struct F22AnimationConfig {
     /// Standard layer ID for landing gear
     static let landingGearLayerID = "landingGear"
     static let flaperonLayerID = "flaperon"  // TODO: Provide this to the aircraft animator so you don't have to redeclare
+    static let aileronLayerID = "aileron"
+    static let horizontalStabilizerLayerID = "horizontalStabilizer"
+    static let rudderLayerID = "rudder"
 
     // Future layer IDs:
     // static let weaponBayLayerID = "weaponBay"
@@ -82,22 +85,77 @@ struct F22AnimationConfig {
 
         // Landing gear is the primary layer:
         layers.append(createLandingGearLayer(for: model))
+        layers.append(createAileronLayer(for: model))
         layers.append(createFlaperonLayer(for: model))
+        layers.append(createHorizontalStabilizerLayer(for: model))
+        layers.append(createRudderLayer(for: model))
 
         // Future layers can be added here:
         // layers.append(createWeaponBayLayer(for: model))
         // layers.append(createCanopyLayer(for: model))
-        // layers.append(createFlapsLayer(for: model))
 
         return layers
     }
     
     /// Maximum flaperon deflection angle in radians (~25 degrees)
-    static let flaperonMaxDeflection: Float = 25.0 * (.pi / 180.0)
+    static let aileronMaxDeflection: Float = Float(25.0).toRadians
 
     /// Rotation axis for flaperons in bone-local space.
     /// Verify against the model's bone orientation — may need to be adjusted.
-    static let flaperonRotationAxis: float3 = float3(0, 1, 0).normalize()
+    static let aileronRotationAxis: float3 = float3(0, 1, 0)
+    
+    /// Creates the aileron layer using procedural animation channels.
+    /// Ailerons are driven by player roll input, not animation clips.
+    static func createAileronLayer(for model: UsdModel) -> AnimationLayer {
+        let allJointPaths = model.skeletons.values.flatMap { $0.jointPaths }
+        let leftAileronPath = allJointPaths.first { $0.hasSuffix("LeftAileron") }
+        let rightAileronPath = allJointPaths.first { $0.hasSuffix("RightAileron") }
+
+        var jointConfigs: [ProceduralJointConfig] = []
+
+        if let left = leftAileronPath {
+            jointConfigs.append(ProceduralJointConfig(
+                jointPath: left,
+                axis: aileronRotationAxis,
+                maxDeflection: aileronMaxDeflection,
+                inverted: false
+            ))
+        } else {
+            print("[F22AnimationConfig] Warning: LeftAileron joint not found in skeleton")
+        }
+
+        if let right = rightAileronPath {
+            jointConfigs.append(ProceduralJointConfig(
+                jointPath: right,
+                axis: aileronRotationAxis,
+                maxDeflection: aileronMaxDeflection,
+                inverted: false  // Opposite deflection for roll
+            ))
+        } else {
+            print("[F22AnimationConfig] Warning: RightAileron joint not found in skeleton")
+        }
+
+        let allPaths = jointConfigs.map { $0.jointPath }
+        let mask = AnimationMask(jointPaths: allPaths)
+
+        let channel = ProceduralAnimationChannel(
+            id: "ailerons",
+            mask: mask,
+            range: (-1.0, 1.0),
+            transitionSpeed: 5.0,  // Fast response for control surfaces
+            initialValue: 0.0,
+            jointConfigs: jointConfigs
+        )
+
+        return AnimationLayer(id: aileronLayerID, channels: [channel])
+    }
+    
+    /// Maximum flaperon deflection angle in radians (~25 degrees)
+    static let flaperonMaxDeflection: Float = Float(25.0).toRadians
+
+    /// Rotation axis for flaperons in bone-local space.
+    /// Verify against the model's bone orientation — may need to be adjusted.
+    static let flaperonRotationAxis: float3 = float3(0, 1, 0)
 
     /// Creates the flaperon layer using procedural animation channels.
     /// Flaperons are driven by player roll input, not animation clips.
@@ -143,6 +201,112 @@ struct F22AnimationConfig {
         )
 
         return AnimationLayer(id: flaperonLayerID, channels: [channel])
+    }
+    
+    /// Maximum horizontal stab deflection angle in radians (~25 degrees)
+    static let horizontalStabMaxDeflection: Float = Float(25.0).toRadians
+
+    /// Rotation axis for horizontal stab in bone-local space.
+    /// Verify against the model's bone orientation — may need to be adjusted.
+    static let horizontalStabRotationAxis: float3 = float3(1, 0, 0)
+    
+    /// Creates the horizonal stab layer using procedural animation channels.
+    /// Stabs are driven by player pitch input, not animation clips.
+    static func createHorizontalStabilizerLayer(for model: UsdModel) -> AnimationLayer {
+        let allJointPaths = model.skeletons.values.flatMap { $0.jointPaths }
+        let leftHStabPath = allJointPaths.first { $0.hasSuffix("LeftHorzStablizer") }
+        let rightHStabPath = allJointPaths.first { $0.hasSuffix("RightHorzStablizer") }
+
+        var jointConfigs: [ProceduralJointConfig] = []
+
+        if let left = leftHStabPath {
+            jointConfigs.append(ProceduralJointConfig(
+                jointPath: left,
+                axis: horizontalStabRotationAxis,
+                maxDeflection: horizontalStabMaxDeflection,
+                inverted: true
+            ))
+        } else {
+            print("[F22AnimationConfig] Warning: LeftHorzStablizer joint not found in skeleton")
+        }
+
+        if let right = rightHStabPath {
+            jointConfigs.append(ProceduralJointConfig(
+                jointPath: right,
+                axis: horizontalStabRotationAxis,
+                maxDeflection: horizontalStabMaxDeflection,
+                inverted: true  // Same direction for pitch
+            ))
+        } else {
+            print("[F22AnimationConfig] Warning: RightHorzStablizer joint not found in skeleton")
+        }
+
+        let allPaths = jointConfigs.map { $0.jointPath }
+        let mask = AnimationMask(jointPaths: allPaths)
+
+        let channel = ProceduralAnimationChannel(
+            id: "horizontalStabilizers",
+            mask: mask,
+            range: (-1.0, 1.0),
+            transitionSpeed: 5.0,  // Fast response for control surfaces
+            initialValue: 0.0,
+            jointConfigs: jointConfigs
+        )
+
+        return AnimationLayer(id: horizontalStabilizerLayerID, channels: [channel])
+    }
+    
+    /// Maximum rudder deflection angle in radians (~25 degrees)
+    static let rudderMaxDeflection: Float = Float(35.0).toRadians
+
+    /// Rotation axis for rudder in bone-local space.
+    /// Verify against the model's bone orientation — may need to be adjusted.
+    static let rudderRotationAxis: float3 = float3(0, 1, 0)
+    
+    /// Creates the rudder layer using procedural animation channels.
+    /// Rudders are driven by player rudder input, not animation clips.
+    static func createRudderLayer(for model: UsdModel) -> AnimationLayer {
+        let allJointPaths = model.skeletons.values.flatMap { $0.jointPaths }
+        let leftRudderPath = allJointPaths.first { $0.hasSuffix("LeftRudder") }
+        let rightRudderPath = allJointPaths.first { $0.hasSuffix("RightRudder") }
+
+        var jointConfigs: [ProceduralJointConfig] = []
+
+        if let left = leftRudderPath {
+            jointConfigs.append(ProceduralJointConfig(
+                jointPath: left,
+                axis: rudderRotationAxis,
+                maxDeflection: rudderMaxDeflection,
+                inverted: false
+            ))
+        } else {
+            print("[F22AnimationConfig] Warning: LeftRudder joint not found in skeleton")
+        }
+
+        if let right = rightRudderPath {
+            jointConfigs.append(ProceduralJointConfig(
+                jointPath: right,
+                axis: rudderRotationAxis,
+                maxDeflection: rudderMaxDeflection,
+                inverted: false  // Same direction for rudder
+            ))
+        } else {
+            print("[F22AnimationConfig] Warning: RightRudder joint not found in skeleton")
+        }
+
+        let allPaths = jointConfigs.map { $0.jointPath }
+        let mask = AnimationMask(jointPaths: allPaths)
+
+        let channel = ProceduralAnimationChannel(
+            id: "rudders",
+            mask: mask,
+            range: (-1.0, 1.0),
+            transitionSpeed: 5.0,  // Fast response for control surfaces
+            initialValue: 0.0,
+            jointConfigs: jointConfigs
+        )
+
+        return AnimationLayer(id: rudderLayerID, channels: [channel])
     }
 
     // MARK: - Future Channel/Layer Definitions

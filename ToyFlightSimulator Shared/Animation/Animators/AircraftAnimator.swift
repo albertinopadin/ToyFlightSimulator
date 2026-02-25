@@ -46,8 +46,10 @@ class AircraftAnimator: AnimationController {
 
     /// The landing gear layer ID (standard across all aircraft)
     static let landingGearLayerID = "landingGear"
-    
     static let flaperonLayerID = "flaperon"
+    static let aileronLayerID = "aileron"
+    static let horizontalStabilizerLayerID = "horizontalStabilizer"
+    static let rudderLayerID = "rudder"
 
     /// Direct access to the landing gear layer
     var landingGearLayer: AnimationLayer? {
@@ -56,6 +58,18 @@ class AircraftAnimator: AnimationController {
     
     var flaperonLayer: AnimationLayer? {
         layerSystem?.layer(Self.flaperonLayerID)
+    }
+    
+    var aileronLayer: AnimationLayer? {
+        layerSystem?.layer(Self.aileronLayerID)
+    }
+    
+    var horizontalStabilizerLayer: AnimationLayer? {
+        layerSystem?.layer(Self.horizontalStabilizerLayerID)
+    }
+    
+    var rudderLayer: AnimationLayer? {
+        layerSystem?.layer(Self.rudderLayerID)
     }
 
     // MARK: - Gear State (Legacy Compatibility)
@@ -191,6 +205,19 @@ class AircraftAnimator: AnimationController {
         playbackState = layer.isAnimating ? .playing : .stopped
     }
     
+    /// Sets aileron deflection from roll input.
+    /// - Parameter value: Roll input value, typically -1.0 (full left) to 1.0 (full right)
+    func rollAilerons(value: Float) {
+        guard let layer = aileronLayer else {
+            print("[AircraftAnimator] No aileron layer registered")
+            return
+        }
+
+        for case let channel as ProceduralAnimationChannel in layer.channels {
+            channel.setValue(value)
+        }
+    }
+    
     /// Sets flaperon deflection from roll input.
     /// - Parameter value: Roll input value, typically -1.0 (full left) to 1.0 (full right)
     func rollFlaperons(value: Float) {
@@ -203,6 +230,45 @@ class AircraftAnimator: AnimationController {
             channel.setValue(value)
         }
     }
+    
+    // TODO:
+//    /// Sets horizontal stabilizer deflection from roll input.
+//    /// - Parameter value: Roll input value, typically -1.0 (full left) to 1.0 (full right)
+//    func rollHorizontalStabilizers(value: Float) {
+//        guard let layer = horizontalStabilizerLayer else {
+//            print("[AircraftAnimator] No horizontal stab layer registered")
+//            return
+//        }
+//
+//        for case let channel as ProceduralAnimationChannel in layer.channels {
+//            channel.setValue(value)
+//        }
+//    }
+    
+    /// Sets horizontal stabilizer deflection from pitch input.
+    /// - Parameter value: Pitch input value, typically -1.0 (full up) to 1.0 (full down)
+    func pitchHorizontalStabilizers(value: Float) {
+        guard let layer = horizontalStabilizerLayer else {
+            print("[AircraftAnimator] No horizontal stab layer registered")
+            return
+        }
+
+        for case let channel as ProceduralAnimationChannel in layer.channels {
+            channel.setValue(value)
+        }
+    }
+    
+    func yawRudders(value: Float) {
+        guard let layer = rudderLayer else {
+            print("[AircraftAnimator] No rudder layer registered")
+            return
+        }
+        
+        for case let channel as ProceduralAnimationChannel in layer.channels {
+            channel.setValue(value)
+        }
+    }
+    
 
     /// Returns true if the gear is fully down
     var isGearDown: Bool {
