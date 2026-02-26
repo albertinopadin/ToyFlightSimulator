@@ -8,6 +8,12 @@
 
 ## Devlog
 
+2/26/26 - Procedural animations for control surfaces (aircraft does have to have bones for each surface).
+
+[Toy Flight Sim 2-26-26 Procedural Animations for control surfaces](https://www.youtube.com/watch?v=The_Cete9wU)
+
+---
+
 2/21/26 - Implemented animations (initially just landing gear retraction and extension for F-35 model).
 
 [Toy Flight Sim 2-21-26 Landing Gear Animation](https://www.youtube.com/watch?v=MqskHRHT-Wo)
