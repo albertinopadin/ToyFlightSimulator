@@ -210,50 +210,59 @@ struct F22AnimationConfig {
     /// Verify against the model's bone orientation — may need to be adjusted.
     static let horizontalStabRotationAxis: float3 = float3(1, 0, 0)
     
-    /// Creates the horizonal stab layer using procedural animation channels.
-    /// Stabs are driven by player pitch input, not animation clips.
+    /// Channel IDs for horizontal stabilizers (used by AircraftAnimator for input mixing)
+    static let horizontalStabLeftChannelID = "horizontalStab_left"
+    static let horizontalStabRightChannelID = "horizontalStab_right"
+
+    /// Creates the horizontal stab layer with separate left/right channels.
+    /// Each channel targets one surface so the animator can set independent
+    /// pre-mixed deflection values (pitch + roll for left, pitch - roll for right).
     static func createHorizontalStabilizerLayer(for model: UsdModel) -> AnimationLayer {
         let allJointPaths = model.skeletons.values.flatMap { $0.jointPaths }
         let leftHStabPath = allJointPaths.first { $0.hasSuffix("LeftHorzStablizer") }
         let rightHStabPath = allJointPaths.first { $0.hasSuffix("RightHorzStablizer") }
 
-        var jointConfigs: [ProceduralJointConfig] = []
+        var channels: [AnimationChannel] = []
 
         if let left = leftHStabPath {
-            jointConfigs.append(ProceduralJointConfig(
-                jointPath: left,
-                axis: horizontalStabRotationAxis,
-                maxDeflection: horizontalStabMaxDeflection,
-                inverted: true
-            ))
+            let channel = ProceduralAnimationChannel(
+                id: horizontalStabLeftChannelID,
+                mask: AnimationMask(jointPaths: [left]),
+                range: (-1.0, 1.0),
+                transitionSpeed: 5.0,
+                initialValue: 0.0,
+                jointConfigs: [ProceduralJointConfig(
+                    jointPath: left,
+                    axis: horizontalStabRotationAxis,
+                    maxDeflection: horizontalStabMaxDeflection,
+                    inverted: true
+                )]
+            )
+            channels.append(channel)
         } else {
             print("[F22AnimationConfig] Warning: LeftHorzStablizer joint not found in skeleton")
         }
 
         if let right = rightHStabPath {
-            jointConfigs.append(ProceduralJointConfig(
-                jointPath: right,
-                axis: horizontalStabRotationAxis,
-                maxDeflection: horizontalStabMaxDeflection,
-                inverted: true  // Same direction for pitch
-            ))
+            let channel = ProceduralAnimationChannel(
+                id: horizontalStabRightChannelID,
+                mask: AnimationMask(jointPaths: [right]),
+                range: (-1.0, 1.0),
+                transitionSpeed: 5.0,
+                initialValue: 0.0,
+                jointConfigs: [ProceduralJointConfig(
+                    jointPath: right,
+                    axis: horizontalStabRotationAxis,
+                    maxDeflection: horizontalStabMaxDeflection,
+                    inverted: true
+                )]
+            )
+            channels.append(channel)
         } else {
             print("[F22AnimationConfig] Warning: RightHorzStablizer joint not found in skeleton")
         }
 
-        let allPaths = jointConfigs.map { $0.jointPath }
-        let mask = AnimationMask(jointPaths: allPaths)
-
-        let channel = ProceduralAnimationChannel(
-            id: "horizontalStabilizers",
-            mask: mask,
-            range: (-1.0, 1.0),
-            transitionSpeed: 5.0,  // Fast response for control surfaces
-            initialValue: 0.0,
-            jointConfigs: jointConfigs
-        )
-
-        return AnimationLayer(id: horizontalStabilizerLayerID, channels: [channel])
+        return AnimationLayer(id: horizontalStabilizerLayerID, channels: channels)
     }
     
     /// Maximum rudder deflection angle in radians (~25 degrees)

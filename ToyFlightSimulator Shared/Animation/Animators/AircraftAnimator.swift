@@ -231,30 +231,26 @@ class AircraftAnimator: AnimationController {
         }
     }
     
-    // TODO:
-//    /// Sets horizontal stabilizer deflection from roll input.
-//    /// - Parameter value: Roll input value, typically -1.0 (full left) to 1.0 (full right)
-//    func rollHorizontalStabilizers(value: Float) {
-//        guard let layer = horizontalStabilizerLayer else {
-//            print("[AircraftAnimator] No horizontal stab layer registered")
-//            return
-//        }
-//
-//        for case let channel as ProceduralAnimationChannel in layer.channels {
-//            channel.setValue(value)
-//        }
-//    }
-    
-    /// Sets horizontal stabilizer deflection from pitch input.
-    /// - Parameter value: Pitch input value, typically -1.0 (full up) to 1.0 (full down)
-    func pitchHorizontalStabilizers(value: Float) {
+    /// Sets horizontal stabilizer deflection by mixing pitch and roll inputs.
+    /// On the real F-22, stabilators provide both pitch (symmetric) and roll (differential) authority.
+    /// The mixing formula matches real fly-by-wire logic:
+    ///   left  = pitchInput + rollInput
+    ///   right = pitchInput - rollInput
+    /// - Parameters:
+    ///   - pitchInput: Pitch input value, typically -1.0 (full down) to 1.0 (full up)
+    ///   - rollInput: Roll input value, typically -1.0 (full left) to 1.0 (full right)
+    func deflectHorizontalStabilizers(pitchInput: Float, rollInput: Float) {
         guard let layer = horizontalStabilizerLayer else {
             print("[AircraftAnimator] No horizontal stab layer registered")
             return
         }
 
         for case let channel as ProceduralAnimationChannel in layer.channels {
-            channel.setValue(value)
+            if channel.id == F22AnimationConfig.horizontalStabLeftChannelID {
+                channel.setValue(pitchInput + rollInput)
+            } else if channel.id == F22AnimationConfig.horizontalStabRightChannelID {
+                channel.setValue(pitchInput - rollInput)
+            }
         }
     }
     
