@@ -7,7 +7,7 @@
 
 import MetalKit
 
-final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering {
+final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, @unchecked Sendable {
     // Create quad for fullscreen composition drawing
     private let _quadVertices: [TFSSimpleVertex] = [
         .init(position: .init(x: -1, y: -1)),

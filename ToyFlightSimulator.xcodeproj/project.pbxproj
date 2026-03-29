@@ -103,7 +103,7 @@
 		CEA8DF642F0F8E9F0058B5EA /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Assets/Assets.xcassets,
+				AssetPipeline/Assets.xcassets,
 				Core/Resources/Audio/Music/LightningSpeed.mp3,
 				Core/Resources/Audio/Music/SunsetGlow.mp3,
 				Core/Resources/Models/F16/f16.mtl,

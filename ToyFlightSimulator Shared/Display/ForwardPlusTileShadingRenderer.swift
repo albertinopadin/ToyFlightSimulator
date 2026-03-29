@@ -8,7 +8,7 @@
 import MetalKit
 
 // TODO: Implement this renderer
-final class ForwardPlusTileShadingRenderer: Renderer {
+final class ForwardPlusTileShadingRenderer: Renderer, @unchecked Sendable {
     init() {
         super.init(type: .ForwardPlusTileShading)
     }

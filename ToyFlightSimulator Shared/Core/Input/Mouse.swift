@@ -1,6 +1,6 @@
 //
 //  Mouse.swift
-//  ToyFlightSimulator iOS
+//  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 9/25/22.
 //

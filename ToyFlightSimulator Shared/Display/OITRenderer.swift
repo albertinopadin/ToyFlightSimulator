@@ -7,7 +7,7 @@
 
 import MetalKit
 
-final class OITRenderer: Renderer {
+final class OITRenderer: Renderer, @unchecked Sendable {
     #if os(iOS)
     public var alreadySetScreenSize: Bool = false  // Hack to prevent iOS from lowering resolution
     #endif

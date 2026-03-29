@@ -16,9 +16,19 @@ class PlaneMesh: Mesh {
                                geometryType: .triangles,
                                allocator: Self.mtkMeshBufferAllocator)
         mdlPlane.vertexDescriptor = Graphics.MDLVertexDescriptors[.Base]
+        
+//        mdlPlane.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+//                                 tangentAttributeNamed: MDLVertexAttributeTangent,
+//                                 bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        
+        // Compute tangent basis BEFORE creating MTKMesh so the data is in the shared buffer
         mdlPlane.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                                 tangentAttributeNamed: MDLVertexAttributeTangent,
-                                 bitangentAttributeNamed: MDLVertexAttributeBitangent)
+                                  normalAttributeNamed: MDLVertexAttributeNormal,
+                                  tangentAttributeNamed: MDLVertexAttributeTangent)
+        mdlPlane.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                  tangentAttributeNamed: MDLVertexAttributeTangent,
+                                  bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        
         let mtkMesh = try! MTKMesh(mesh: mdlPlane, device: Engine.Device)
         
         // TODO: Figure out why mesh seems to have normals opposite of front faces, which
@@ -43,17 +53,27 @@ class SphereMesh: Mesh {
                                 allocator: Self.mtkMeshBufferAllocator)
         
         mdlSphere.vertexDescriptor = Graphics.MDLVertexDescriptors[.Base]
+        
+        // Compute tangent basis BEFORE creating MTKMesh so the data is in the shared buffer
+        mdlSphere.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                  normalAttributeNamed: MDLVertexAttributeNormal,
+                                  tangentAttributeNamed: MDLVertexAttributeTangent)
+        mdlSphere.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                  tangentAttributeNamed: MDLVertexAttributeTangent,
+                                  bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        
         let mtkMesh = try! MTKMesh(mesh: mdlSphere, device: Engine.Device)
 
         let vertexLayoutStride = (mtkMesh.vertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride
         for meshBuffer in mtkMesh.vertexBuffers {
             for i in 0..<mtkMesh.vertexCount {
-                let colorPosition = (i * vertexLayoutStride) + float4.stride
+                let colorPosition = (i * vertexLayoutStride) + float3.stride
                 meshBuffer.buffer.contents().advanced(by: colorPosition).copyMemory(from: &_color, byteCount: float4.stride)
             }
         }
         
-        super.init(mdlMesh: mdlSphere, mtkMesh: mtkMesh)
+        // Pass addTangentBases: false since we already computed them above
+        super.init(mdlMesh: mdlSphere, mtkMesh: mtkMesh, addTangentBases: false)
     }
 }
 
@@ -71,17 +91,27 @@ class CapsuleMesh: Mesh {
                                  allocator: Self.mtkMeshBufferAllocator)
         
         mdlCapsule.vertexDescriptor = Graphics.MDLVertexDescriptors[.Base]
+        
+        // Compute tangent basis BEFORE creating MTKMesh so the data is in the shared buffer
+        mdlCapsule.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                  normalAttributeNamed: MDLVertexAttributeNormal,
+                                  tangentAttributeNamed: MDLVertexAttributeTangent)
+        mdlCapsule.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                  tangentAttributeNamed: MDLVertexAttributeTangent,
+                                  bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        
         let mtkMesh = try! MTKMesh(mesh: mdlCapsule, device: Engine.Device)
         
         let vertexLayoutStride = (mtkMesh.vertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride
         for meshBuffer in mtkMesh.vertexBuffers {
             for i in 0..<mtkMesh.vertexCount {
-                let colorPosition = (i * vertexLayoutStride) + float4.stride
+                let colorPosition = (i * vertexLayoutStride) + float3.stride
                 meshBuffer.buffer.contents().advanced(by: colorPosition).copyMemory(from: &_color, byteCount: float4.stride)
             }
         }
         
-        super.init(mdlMesh: mdlCapsule, mtkMesh: mtkMesh)
+        // Pass addTangentBases: false since we already computed them above
+        super.init(mdlMesh: mdlCapsule, mtkMesh: mtkMesh, addTangentBases: false)
     }
 }
 

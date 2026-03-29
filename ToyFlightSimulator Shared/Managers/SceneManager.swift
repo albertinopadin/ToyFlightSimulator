@@ -40,7 +40,7 @@ struct MeshData: @unchecked Sendable {
 }
 
 struct ModelData {
-    var gameObjects: [GameObject] = []
+    var gameObjects = ContiguousArray<GameObject>()
     var meshDatas: [MeshData] = []
     
     mutating func addGameObject(_ gameObject: GameObject) {
@@ -54,8 +54,6 @@ struct ModelData {
 
 struct UniformsData: Sendable {
     let uniforms: [ModelConstants]
-//    let opaqueSubmeshes: [Submesh]
-//    let transparentSubmeshes: [Submesh]
     let meshDatas: [MeshData]
 }
 

@@ -7,7 +7,7 @@
 
 import MetalKit
 
-final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering {
+final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering, @unchecked Sendable {
     private let icosahedron = IcosahedronMesh()
     
     private var gBufferTextures = TiledDeferredGBufferTextures()

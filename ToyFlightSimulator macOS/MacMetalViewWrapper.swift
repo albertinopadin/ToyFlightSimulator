@@ -32,6 +32,7 @@ struct MacMetalViewWrapper: NSViewRepresentable {
         gameView.framebufferOnly = false // TODO: Setting this to false incurs performance penalty
         gameView.preferredFramesPerSecond = refreshRate.rawValue
         gameView.drawableSize = viewSize
+//        gameView.sampleCount = 4  // TODO
         
         Engine.MetalView = gameView
         SceneManager.SetScene(Preferences.StartingSceneType,

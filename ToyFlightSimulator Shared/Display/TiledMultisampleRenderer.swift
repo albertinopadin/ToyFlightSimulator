@@ -7,7 +7,7 @@
 
 import MetalKit
 
-final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRendering {
+final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRendering, @unchecked Sendable {
     private static let sampleCount: Int = 4
     
     private static let tileWidth = 16
@@ -153,6 +153,7 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     var firstRun: Bool = true
     
     override func draw(in view: MTKView) {
+        // TODO: Why not put this in the metalView didSet...?
         view.sampleCount = Self.sampleCount
         
         if firstRun {

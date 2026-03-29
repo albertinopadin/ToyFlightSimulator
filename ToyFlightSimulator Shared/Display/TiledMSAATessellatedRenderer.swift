@@ -7,7 +7,11 @@
 
 import MetalKit
 
-final class TiledMSAATessellatedRenderer: Renderer, ShadowRendering, ParticleRendering, TessellationRendering {
+final class TiledMSAATessellatedRenderer:   Renderer,
+                                            ShadowRendering,
+                                            ParticleRendering,
+                                            TessellationRendering,
+                                            @unchecked Sendable {
     private static let sampleCount: Int = 4
     
     private static let tileWidth = 16

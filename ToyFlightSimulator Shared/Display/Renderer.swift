@@ -7,7 +7,8 @@
 
 import MetalKit
 
-class Renderer: NSObject, MTKViewDelegate, BaseRendering {
+// @unchecked Sendable because Renderer manages its own thread safety via inFlightSemaphore
+class Renderer: NSObject, MTKViewDelegate, BaseRendering, @unchecked Sendable {
     nonisolated(unsafe) public static var ScreenSize = float2(100, 100)
     public static var AspectRatio: Float { return ScreenSize.x / ScreenSize.y }
     
