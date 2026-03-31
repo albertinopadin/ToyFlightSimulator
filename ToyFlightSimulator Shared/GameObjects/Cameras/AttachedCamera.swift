@@ -36,6 +36,17 @@ class AttachedCamera: Camera {
         super.updateModelMatrix()
         viewMatrix = modelMatrix.inverse
     }
+
+    override func update() {
+        super.update()
+        // Recompute viewMatrix when world matrix changed (e.g. parent aircraft moved).
+        // updateModelMatrix() only fires when the camera's OWN transform changes;
+        // this catches the parent-propagation case.
+        if worldMatrixDirty {
+//            viewMatrix = modelMatrix.inverse
+            self.updateModelMatrix()
+        }
+    }
     
     override func doUpdate() {
         if Mouse.IsMouseButtonPressed(button: .RIGHT) {

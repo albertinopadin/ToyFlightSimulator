@@ -26,8 +26,10 @@ final class CameraManager {
     }
     
     public static func Update(deltaTime: Double) {
-        // Update all cameras so we can easily switch
         for camera in _cameras.values {
+            // Parented cameras (e.g. AttachedCamera) are updated during the
+            // scene graph traversal. Only update unparented cameras here:
+            guard camera.parent == nil else { continue }
             camera.update()
         }
     }

@@ -23,6 +23,7 @@ class Renderer: NSObject, MTKViewDelegate, BaseRendering, @unchecked Sendable {
     
     // Used to control scene update frequency
     public var updateSemaphore: DispatchSemaphore?
+    public var updateDoneSemaphore: DispatchSemaphore?
     
     var baseRenderPassDescriptor: MTLRenderPassDescriptor
     
@@ -124,17 +125,21 @@ class Renderer: NSObject, MTKViewDelegate, BaseRendering, @unchecked Sendable {
         self.renderPreviousTime = currentTime
         GameStatsManager.sharedInstance.recordRenderDeltaTime(self.renderDeltaTime)
 
+        // Tell the update thread which ring buffer slot to write into, then wake it.
+        // The slot is safe from GPU access: with maxFramesInFlight=3 command-buffer
+        // pairs and 3 ring-buffer slots, the GPU finished with this slot ≥1 frame ago.
+        SceneManager.nextFrameIndex = renderFrameCounter % Renderer.maxFramesInFlight
+        updateSemaphore?.signal()
+
+        // Wait for the update thread to finish writing ring buffer + scene constants
+        // so we read fully consistent, fresh data (1-frame latency, no mismatch):
+        _ = updateDoneSemaphore?.wait(timeout: .distantFuture)
+
         DrawManager.BeginFrame(frameIndex: renderFrameCounter)
 
         renderBlock()
 
         GameStatsManager.sharedInstance.frameRendered()
-
-        // Tell the update thread which ring buffer slot to write into next,
-        // then signal it. The update thread writes ModelConstants directly into
-        // the ring buffer during its update, eliminating GetUniformsData entirely.
-        SceneManager.nextFrameIndex = renderFrameCounter % Renderer.maxFramesInFlight
         renderFrameCounter += 1
-        updateSemaphore?.signal()
     }
 }

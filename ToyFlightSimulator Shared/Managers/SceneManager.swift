@@ -411,15 +411,15 @@ final class SceneManager {
     public static func SetSceneConstants(with renderEncoder: MTLRenderCommandEncoder) {
         CurrentScene?.setSceneConstants(with: renderEncoder)
     }
-    
+
     public static func SetDirectionalLightConstants(with renderEncoder: MTLRenderCommandEncoder) {
         CurrentScene?.setDirectionalLightConstants(with: renderEncoder)
     }
-    
+
     public static func SetPointLightConstants(with renderEncoder: MTLRenderCommandEncoder) {
         CurrentScene?.setPointLightConstants(with: renderEncoder)
     }
-    
+
     public static func SetDirectionalLightData(with renderEncoder: MTLRenderCommandEncoder) {
         CurrentScene?.setDirectionalLightData(with: renderEncoder)
     }

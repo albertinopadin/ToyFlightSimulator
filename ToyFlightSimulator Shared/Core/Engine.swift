@@ -42,6 +42,7 @@ final class Engine {
         
         Engine.renderer = Engine.InitRenderer(type: rendererType)
         Engine.renderer!.updateSemaphore = Engine.updateThread.updateSemaphore
+        Engine.renderer!.updateDoneSemaphore = Engine.updateThread.updateDoneSemaphore
     }
     
     // Not clear this belongs in the Engine class...

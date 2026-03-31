@@ -11,6 +11,7 @@ final class DrawManager {
     // ===================== Uniforms/ModelConstants Ring Buffer ===================== //
     nonisolated(unsafe) private static var uniformsRingBuffers: [MTLBuffer] = []
     nonisolated(unsafe) private static var currentFrameIndex: Int = 0
+    public static var currentRenderFrameIndex: Int { currentFrameIndex }
     nonisolated(unsafe) private static var currentBufferOffset: Int = 0
     private static let initialBufferSize = 32 * 1024 * 1024  // 32 MB initial capacity
 
