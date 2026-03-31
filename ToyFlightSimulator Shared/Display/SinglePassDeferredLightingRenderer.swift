@@ -95,7 +95,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, @unch
             DrawManager.DrawOpaque(with: renderEncoder)
         }
     }
-    
+
     func encodeDirectionalLightingStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Directional Lighting Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredDirectionalLighting])
@@ -119,7 +119,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, @unch
             DrawManager.DrawTransparent(with: renderEncoder)
         }
     }
-    
+
     func encodeLightMaskStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Point Light Mask Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.LightMask])

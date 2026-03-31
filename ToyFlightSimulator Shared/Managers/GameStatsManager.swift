@@ -17,7 +17,7 @@ final class GameStatsManager: ObservableObject, @unchecked Sendable {
     private var frame = 0
     private var lastXFrameDeltaTime = [Double]()
     
-    @Published public var framesRendered: Int = 0
+    @Published public var frameCounter: Int = 0
     @Published public var sceneUpdates: Int = 0
     
     private init() {}
@@ -43,7 +43,7 @@ final class GameStatsManager: ObservableObject, @unchecked Sendable {
     
     public func frameRendered() {
         DispatchQueue.main.async {
-            self.framesRendered += 1
+            self.frameCounter += 1
         }
     }
     

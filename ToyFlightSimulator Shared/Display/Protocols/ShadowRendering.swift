@@ -75,7 +75,7 @@ extension ShadowRendering {
             }
         }
     }
-    
+
     // TODO: Merge / Refactor into single func
     func encodeShadowPassTiledDeferred(into commandBuffer: MTLCommandBuffer) {
         encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Pass") { renderEncoder in
@@ -88,7 +88,7 @@ extension ShadowRendering {
             }
         }
     }
-    
+
     func encodeMSAAShadowPass(into commandBuffer: MTLCommandBuffer) {
         encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "MSAA Shadow Pass") { renderEncoder in
             encodeRenderStage(using: renderEncoder, label: "Shadow Texture Stage") {

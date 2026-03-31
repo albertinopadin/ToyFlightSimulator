@@ -8,6 +8,114 @@
 import MetalKit
 
 final class DrawManager {
+    // ===================== Uniforms/ModelConstants Ring Buffer ===================== //
+    nonisolated(unsafe) private static var uniformsRingBuffers: [MTLBuffer] = []
+    nonisolated(unsafe) private static var currentFrameIndex: Int = 0
+    nonisolated(unsafe) private static var currentBufferOffset: Int = 0
+    private static let initialBufferSize = 32 * 1024 * 1024  // 32 MB initial capacity
+
+    // Per-frame end offset after update thread writes, so render thread continues from there:
+    nonisolated(unsafe) private static var updateEndOffsets: [Int] = [0, 0, 0]
+
+    public static func InitializeRingBuffers() {
+        for i in 0..<Renderer.maxFramesInFlight {
+            guard let buf = Engine.Device.makeBuffer(length: initialBufferSize, options: .storageModeShared) else {
+                fatalError("Failed to create uniforms ring buffer")
+            }
+
+            buf.label = "Uniforms Ring Buffer \(i)"
+            uniformsRingBuffers.append(buf)
+        }
+    }
+
+    // Called by the UPDATE thread before writing ModelConstants for a frame:
+    static func BeginFrameForUpdate(frameIndex: Int) {
+        // Reset write offset for this frame's buffer slot.
+        // Safe: only the update thread calls this, and the inFlightSemaphore
+        // ensures the GPU is done with this slot before we reuse it.
+        currentBufferOffset = 0
+    }
+
+    // Called by the UPDATE thread after finishing all ModelConstants writes:
+    static func finishUpdateWrites(frameIndex: Int) {
+        updateEndOffsets[frameIndex] = currentBufferOffset
+    }
+
+    // Called by the RENDER thread at the start of each frame.
+    // Continues from where the update thread stopped writing.
+    static func BeginFrame(frameIndex: Int) {
+        currentFrameIndex = frameIndex % Renderer.maxFramesInFlight
+        currentBufferOffset = updateEndOffsets[currentFrameIndex]
+    }
+
+    /// Write ModelConstants from a ContiguousArray of GameObjects into the ring buffer.
+    /// Returns the byte offset where the data was written, or nil on failure.
+    /// Called by the update thread during SceneManager.writeFrameSnapshot().
+    static func writeModelConstants(
+        gameObjects: ContiguousArray<GameObject>,
+        frameIndex: Int
+    ) -> Int? {
+        guard !gameObjects.isEmpty else { return nil }
+
+        let count = gameObjects.count
+        let size = ModelConstants.stride(count)
+        let alignment = 256
+        let alignedOffset = (currentBufferOffset + alignment - 1) & ~(alignment - 1)
+
+        var ringBuffer = uniformsRingBuffers[frameIndex]
+
+        // Grow buffer if needed:
+        if alignedOffset + size > ringBuffer.length {
+            let newSize = max(ringBuffer.length * 2, alignedOffset + size)
+            guard let grown = Engine.Device.makeBuffer(length: newSize, options: .storageModeShared) else {
+                return nil
+            }
+            grown.label = "Uniforms Ring Buffer \(frameIndex)"
+            memcpy(grown.contents(), ringBuffer.contents(), alignedOffset)
+            uniformsRingBuffers[frameIndex] = grown
+            ringBuffer = grown
+        }
+
+        // Write each GameObject's modelConstants directly into the ring buffer:
+        let dst = ringBuffer.contents().advanced(by: alignedOffset)
+            .assumingMemoryBound(to: ModelConstants.self)
+        for i in 0..<count {
+            dst[i] = gameObjects[i].modelConstants
+        }
+
+        currentBufferOffset = alignedOffset + size
+        return alignedOffset
+    }
+
+    // Write uniforms into the ring buffer (used for animation fallback and ad-hoc draws).
+    // Returns (buffer, offset):
+    private static func writeUniformsToRingBuffer(_ uniforms: inout [ModelConstants]) -> (buffer: MTLBuffer, offset: Int)? {
+        guard !uniforms.isEmpty else { return nil }
+
+        let size = ModelConstants.stride(uniforms.count)
+        let alignment = 256
+        let alignedOffset = (currentBufferOffset + alignment - 1) & ~(alignment - 1)
+
+        var ringBuffer = uniformsRingBuffers[currentFrameIndex]
+
+        // Grow buffer if needed:
+        if alignedOffset + size > ringBuffer.length {
+            let newSize = max(ringBuffer.length * 2, alignedOffset + size)
+            guard let grown = Engine.Device.makeBuffer(length: newSize, options: .storageModeShared) else {
+                return nil
+            }
+            grown.label = "Uniforms Ring Buffer \(currentFrameIndex)"
+            memcpy(grown.contents(), ringBuffer.contents(), alignedOffset)
+            uniformsRingBuffers[currentFrameIndex] = grown
+            ringBuffer = grown
+        }
+
+        memcpy(ringBuffer.contents().advanced(by: alignedOffset), &uniforms, size)
+        currentBufferOffset = alignedOffset + size
+
+        return (ringBuffer, alignedOffset)
+    }
+    
     // TODO: Consider removing this as it's the same code as in RenderPassEncoding protocol extension:
     static func EncodeRender(using renderEncoder: MTLRenderCommandEncoder, label: String, _ encodingBlock: () -> Void) {
         renderEncoder.pushDebugGroup(label)
@@ -15,69 +123,53 @@ final class DrawManager {
         renderEncoder.popDebugGroup()
     }
     
+    // Draw opaque objects from pre-written ring buffer snapshots (no allocation, no lock):
     static func DrawOpaque(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
-        // Test:
-//        renderEncoder.setFrontFacing(.counterClockwise)
-//        renderEncoder.setCullMode(.front)
-        
-        for (model, data) in SceneManager.GetUniformsData() {
-            for meshData in data.meshDatas {
+        let snapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
+        for (model, region) in snapshot {
+            for meshData in region.meshDatas {
                 if !meshData.opaqueSubmeshes.isEmpty {
-                    /*
-                     * ------------------------------- Animation -------------------------------
-                     */
-                    
                     SetupAnimation(renderEncoder, mesh: meshData.mesh)
-                    
-                    /*
-                     * ---------------------------------------------------------------------------
-                     */
-                    
-                    Draw(renderEncoder,
-                         model: model,
-                         uniforms: data.uniforms,
-                         mesh: meshData.mesh,
-                         submeshes: meshData.opaqueSubmeshes,
-                         applyMaterials: applyMaterials)
+                    DrawFromRingBuffer(renderEncoder,
+                                       model: model,
+                                       region: region,
+                                       mesh: meshData.mesh,
+                                       submeshes: meshData.opaqueSubmeshes,
+                                       applyMaterials: applyMaterials)
                 }
             }
         }
-        
+
         DrawLines(with: renderEncoder)
     }
-    
+
     static func DrawTransparent(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
-        for (model, data) in SceneManager.GetUniformsData() {
-            for meshData in data.meshDatas {
+        // Opaque models with transparent submeshes:
+        let opaqueSnapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
+        for (model, region) in opaqueSnapshot {
+            for meshData in region.meshDatas {
                 if !meshData.transparentSubmeshes.isEmpty {
-                    /*
-                     * ------------------------------- Animation -------------------------------
-                     */
-                    
                     SetupAnimation(renderEncoder, mesh: meshData.mesh)
-                    
-                    /*
-                     * ---------------------------------------------------------------------------
-                     */
-                    
-                    Draw(renderEncoder,
-                         model: model,
-                         uniforms: data.uniforms,
-                         mesh: meshData.mesh,
-                         submeshes: meshData.transparentSubmeshes,
-                         applyMaterials: applyMaterials)
+                    DrawFromRingBuffer(renderEncoder,
+                                       model: model,
+                                       region: region,
+                                       mesh: meshData.mesh,
+                                       submeshes: meshData.transparentSubmeshes,
+                                       applyMaterials: applyMaterials)
                 }
             }
         }
-        
-        for (model, data) in SceneManager.GetTransparentUniformsData() {
-            for mesh in model.meshes {
-                Draw(renderEncoder,
-                     model: model,
-                     uniforms: data.uniforms,
-                     mesh: mesh,
-                     submeshes: model.meshes.flatMap { $0.submeshes },
-                     applyMaterials: applyMaterials)
+
+        // Fully transparent objects:
+        let transparentSnapshot = SceneManager.getTransparentSnapshot(frameIndex: currentFrameIndex)
+        for (model, region) in transparentSnapshot {
+            for meshData in region.meshDatas {
+                DrawFromRingBuffer(renderEncoder,
+                                   model: model,
+                                   region: region,
+                                   mesh: meshData.mesh,
+                                   submeshes: meshData.transparentSubmeshes,
+                                   applyMaterials: applyMaterials)
             }
         }
     }
@@ -108,26 +200,17 @@ final class DrawManager {
         }
     }
     
-    // I really don't like this long term...
     static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
-        for (model, data) in SceneManager.GetUniformsData() {
-            for meshData in data.meshDatas {
-                /*
-                 * ------------------------------- Animation -------------------------------
-                 */
-                
+        let snapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
+        for (model, region) in snapshot {
+            for meshData in region.meshDatas {
                 SetupAnimation(renderEncoder, mesh: meshData.mesh, animationPipelineStateType: .TiledMSAAShadowAnimated)
-                
-                /*
-                 * ---------------------------------------------------------------------------
-                 */
-                
-                Draw(renderEncoder,
-                     model: model,
-                     uniforms: data.uniforms,
-                     mesh: meshData.mesh,
-                     submeshes: meshData.opaqueSubmeshes,
-                     applyMaterials: false)
+                DrawFromRingBuffer(renderEncoder,
+                                   model: model,
+                                   region: region,
+                                   mesh: meshData.mesh,
+                                   submeshes: meshData.opaqueSubmeshes,
+                                   applyMaterials: false)
             }
         }
     }
@@ -198,16 +281,15 @@ final class DrawManager {
             let pso: RenderPipelineStateType = ((skyObj as? SkyBox) != nil) ? .Skybox : .SkySphere
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[pso])
             renderEncoder.setFragmentTexture(Assets.Textures[skyObj.textureType], index: TFSTextureIndexSkyBox.index)
-            
-            // !!!
-            let uniformsData = SceneManager.GetSkyUniformsData()
-            
-            Draw(renderEncoder,
-                 model: skyObj.model,
-                 uniforms: uniformsData.uniforms,
-                 mesh: skyObj.model.meshes.first!,
-                 submeshes: SceneManager.skyData.meshDatas.first!.opaqueSubmeshes,
-                 applyMaterials: false)
+
+            if let skyRegion = SceneManager.getSkySnapshot(frameIndex: currentFrameIndex) {
+                DrawFromRingBuffer(renderEncoder,
+                                   model: skyObj.model,
+                                   region: skyRegion,
+                                   mesh: skyObj.model.meshes.first!,
+                                   submeshes: SceneManager.skyData.meshDatas.first!.opaqueSubmeshes,
+                                   applyMaterials: false)
+            }
         }
     }
     
@@ -271,6 +353,66 @@ final class DrawManager {
         }
     }
     
+    /// Draw objects whose ModelConstants are already in the ring buffer (written by update thread).
+    /// Applies mesh animation transform if needed, writing a modified copy to the ring buffer.
+    static private func DrawFromRingBuffer(
+        _ renderEncoder: MTLRenderCommandEncoder,
+        model: Model,
+        region: RingBufferRegion,
+        mesh: Mesh,
+        submeshes: [Submesh],
+        applyMaterials: Bool
+    ) {
+        EncodeRender(using: renderEncoder, label: "Rendering \(model.name)") {
+            guard region.count > 0 else { return }
+
+            let ringBuffer = uniformsRingBuffers[currentFrameIndex]
+            let localTransform = mesh.transform?.currentTransform ?? .identity
+
+            if localTransform != .identity {
+                // Mesh has an animation transform — copy and multiply, write to new ring buffer region:
+                var tempUniforms = [ModelConstants](
+                    UnsafeBufferPointer(
+                        start: ringBuffer.contents().advanced(by: region.offset)
+                            .assumingMemoryBound(to: ModelConstants.self),
+                        count: region.count
+                    )
+                )
+                for i in 0..<tempUniforms.count {
+                    tempUniforms[i].modelMatrix *= localTransform
+                }
+                guard let (animBuffer, animOffset) = writeUniformsToRingBuffer(&tempUniforms) else { return }
+                renderEncoder.setVertexBuffer(animBuffer, offset: animOffset, index: TFSBufferModelConstants.index)
+            } else {
+                // No animation — bind ring buffer region directly (ZERO COPY):
+                renderEncoder.setVertexBuffer(ringBuffer, offset: region.offset, index: TFSBufferModelConstants.index)
+            }
+
+            for submesh in submeshes {
+                if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
+                    renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+
+                    if applyMaterials {
+                        applyMaterialTextures(submesh.material!, with: renderEncoder)
+
+                        var materialProps = submesh.material!.properties
+                        renderEncoder.setFragmentBytes(&materialProps,
+                                                       length: MaterialProperties.stride,
+                                                       index: TFSBufferIndexMaterial.index)
+                    }
+
+                    renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                        indexCount: submesh.indexCount,
+                                                        indexType: submesh.indexType,
+                                                        indexBuffer: submesh.indexBuffer,
+                                                        indexBufferOffset: submesh.indexBufferOffset,
+                                                        instanceCount: mesh.instanceCount * region.count)
+                }
+            }
+        }
+    }
+
+    /// Legacy Draw for ad-hoc objects not in the ring buffer (point lights, icosahedrons, etc.)
     static private func Draw(_ renderEncoder: MTLRenderCommandEncoder,
                              model: Model,
                              uniforms: [ModelConstants],
@@ -280,28 +422,14 @@ final class DrawManager {
         EncodeRender(using: renderEncoder, label: "Rendering \(model.name)") {
             if !uniforms.isEmpty {
                 var uniforms = uniforms
-                
-                /*
-                 * ------------------------------- Animation -------------------------------
-                 */
-                
-                // TODO2: Below code will animate *ALL* models that use the same mesh which is
-                //        probably *NOT* what we want. Hack for now to make this work...
+
                 let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
                 for idx in 0..<uniforms.count {
                     uniforms[idx].modelMatrix *= currentLocalTransform
                 }
-                
-                /*
-                 * ---------------------------------------------------------------------------
-                 */
-                
-                // ***** Super not optimized! *****
-                let uniformsBuffer = Engine.Device.makeBuffer(bytes: &uniforms,
-                                                              length: ModelConstants.stride(uniforms.count))
-                
-                renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: TFSBufferModelConstants.index)
-                // *********************************
+
+                guard let (ringBuffer, offset) = writeUniformsToRingBuffer(&uniforms) else { return }
+                renderEncoder.setVertexBuffer(ringBuffer, offset: offset, index: TFSBufferModelConstants.index)
                 
                 for submesh in submeshes {
                     if let vertexBuffer = submesh.parentMesh!.vertexBuffer {

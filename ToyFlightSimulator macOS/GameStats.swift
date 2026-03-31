@@ -43,7 +43,7 @@ struct GameStats: View {
                             .foregroundColor(.white)
                             .padding(5)
                         
-                        Text("Frames Rendered: \(gameStatsMgr.framesRendered)")
+                        Text("Frames Rendered: \(gameStatsMgr.frameCounter)")
                             .foregroundColor(.white)
                             .padding(5)
                         

@@ -38,6 +38,8 @@ final class Engine {
         updateThread.start()
         audioThread.start()
         
+        DrawManager.InitializeRingBuffers()
+        
         Engine.renderer = Engine.InitRenderer(type: rendererType)
         Engine.renderer!.updateSemaphore = Engine.updateThread.updateSemaphore
     }

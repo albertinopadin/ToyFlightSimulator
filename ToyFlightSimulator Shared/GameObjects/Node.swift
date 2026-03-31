@@ -21,6 +21,14 @@ class Node: ClickSelectable {
     private var _modelMatrix = matrix_identity_float4x4
     private var _rotationMatrix = matrix_identity_float4x4
     
+    /// True when position, rotation, or scale has changed since last update.
+    /// Starts true so the first frame computes the initial matrix.
+    private var _transformDirty: Bool = true
+    
+    /// True when this node's world matrix changed (own transform or parent change).
+    /// Read by GameObject to decide whether to recompute modelConstants.
+    private(set) var worldMatrixDirty: Bool = true
+    
     var parent: Node? = nil
     var children: [Node] = []
     
@@ -68,6 +76,17 @@ class Node: ClickSelectable {
         _modelMatrix = Transform.translationMatrix(_position) * _rotationMatrix * Transform.scaleMatrix(_scale)
     }
     
+    /// Marks this node and all descendants as needing matrix recomputation.
+    func markTransformDirty() {
+        guard !_transformDirty else { return }  // Already dirty - skip subtree walk
+        
+        _transformDirty = true
+        
+        for child in children {
+            child.markTransformDirty()
+        }
+    }
+    
     // Override these when needed:
     func afterTranslation() { }
     func afterRotation() { }
@@ -79,8 +98,24 @@ class Node: ClickSelectable {
     func update() {
         doUpdate()
         
+        let needsUpdate = _transformDirty
+        
+        if needsUpdate {
+            // Note: updateModelMatrix() is already called eagerly by setPosition/rotate/setScale,
+            // so _modelMatrix is up-to-date. We only need to clear the flag here.
+            // When _transformDirty was set by a parent propagation, the local matrix hasn't
+            // changed — only parentModelMatrix was updated, which is handled in the child loop.
+            _transformDirty = false
+        }
+
+        worldMatrixDirty = needsUpdate
+
         for child in children {
-            child.parentModelMatrix = self.modelMatrix
+            if needsUpdate {
+                child.parentModelMatrix = self.modelMatrix
+                child._transformDirty = true
+            }
+            
             child.update()
         }
         
@@ -174,10 +209,18 @@ class Node: ClickSelectable {
     func getName()->String{ return _name }
     func getID()->String { return _id }
     
+    @inline(__always)
+    func updateModelMatrixAndMarkTransformDirty(_ body: () -> Void) {
+        body()
+        updateModelMatrix()
+        markTransformDirty()
+    }
+    
     //Positioning and Movement
     func setPosition(_ position: float3) {
-        self._position = position
-        updateModelMatrix()
+        updateModelMatrixAndMarkTransformDirty {
+            self._position = position
+        }
         afterTranslation()
     }
     func setPosition(_ x: Float, _ y: Float, _ z: Float) { setPosition([x, y, z]) }
@@ -196,9 +239,10 @@ class Node: ClickSelectable {
     
     //Rotating
     func setRotation(angle: Float, axis: float3) {
-        let normalizedAxis = simd_normalize(axis)
-        _rotationMatrix = simd_float4x4(simd_quatf(angle: angle, axis: normalizedAxis))
-        updateModelMatrix()
+        updateModelMatrixAndMarkTransformDirty {
+            let normalizedAxis = simd_normalize(axis)
+            _rotationMatrix = simd_float4x4(simd_quatf(angle: angle, axis: normalizedAxis))
+        }
         afterRotation()
     }
     
@@ -207,9 +251,10 @@ class Node: ClickSelectable {
     func setRotationZ(_ zRotation: Float) { setRotation(angle: zRotation, axis: getFwdVector())}
     
     func rotate(deltaAngle: Float, axis: float3) {
-        let normalizedAxis = simd_normalize(axis)
-        _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: normalizedAxis)) * _rotationMatrix
-        updateModelMatrix()
+        updateModelMatrixAndMarkTransformDirty {
+            let normalizedAxis = simd_normalize(axis)
+            _rotationMatrix = simd_float4x4(simd_quatf(angle: deltaAngle, axis: normalizedAxis)) * _rotationMatrix
+        }
         afterRotation()
     }
 //    func rotateX(_ delta: Float){ rotate(deltaAngle: delta, axis: X_AXIS) }
@@ -232,8 +277,9 @@ class Node: ClickSelectable {
     
     // Scaling
     func setScale(_ scale: float3) {
-        self._scale = scale
-        updateModelMatrix()
+        updateModelMatrixAndMarkTransformDirty {
+            self._scale = scale
+        }
         afterScale()
     }
     func setScale(_ x: Float, _ y: Float, _ z: Float) { setScale([x, y, z]) }

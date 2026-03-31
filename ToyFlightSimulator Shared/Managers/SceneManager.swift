@@ -57,6 +57,14 @@ struct UniformsData: Sendable {
     let meshDatas: [MeshData]
 }
 
+/// A region in the per-frame ring buffer that holds pre-written ModelConstants.
+/// Written by the update thread, read by the render thread — no lock needed.
+struct RingBufferRegion {
+    let offset: Int       // Byte offset into the ring buffer
+    let count: Int        // Number of ModelConstants written
+    let meshDatas: [MeshData]
+}
+
 struct TransparentObjectData {
     var gameObjects: [GameObject] = []
     var models: [Model] = []
@@ -88,6 +96,17 @@ final class SceneManager {
     nonisolated(unsafe) public static var lines: [Line] = []
     nonisolated(unsafe) public static var icosahedrons: [Icosahedron] = []
     
+    // ===================== Per-Frame Ring Buffer Snapshots ===================== //
+    // Triple-buffered snapshots: update thread writes, render thread reads.
+    // Indexed by frameIndex % maxFramesInFlight.
+    nonisolated(unsafe) private static var opaqueSnapshots: [[Model: RingBufferRegion]] = [[:], [:], [:]]
+    nonisolated(unsafe) private static var transparentSnapshots: [[Model: RingBufferRegion]] = [[:], [:], [:]]
+    nonisolated(unsafe) private static var skySnapshots: [RingBufferRegion?] = [nil, nil, nil]
+
+    /// Frame index for the next update. Set by the render thread before signaling update.
+    nonisolated(unsafe) public static var nextFrameIndex: Int = 0
+    // ========================================================================= //
+    
     nonisolated(unsafe) private static var _paused: Bool = false
     public static var Paused: Bool {
         get {
@@ -100,7 +119,7 @@ final class SceneManager {
         }
     }
     
-    private static let uniformsLock = OSAllocatedUnfairLock()
+    // uniformsLock removed: ring buffer snapshots eliminate shared mutable state between threads.
     
     public static func SetScene(_ sceneType: SceneType, rendererType: RendererType) {
         _sceneType = sceneType
@@ -141,6 +160,11 @@ final class SceneManager {
         lines.removeAll()
         icosahedrons.removeAll()
         
+        // Clear ring buffer snapshots:
+        opaqueSnapshots = [[:], [:], [:]]
+        transparentSnapshots = [[:], [:], [:]]
+        skySnapshots = [nil, nil, nil]
+        
         _sceneType = nil
         _rendererType = nil
     }
@@ -148,15 +172,99 @@ final class SceneManager {
     public static func Update(deltaTime: Double) {
         if !Paused {
             GameTime.UpdateTime(deltaTime)
-            
-            // Lock when updating uniforms (model constants)
-            uniformsLock.lock()
-            
+
             CurrentScene?.updateCameras(deltaTime: deltaTime)
             CurrentScene?.update()
-            
-            uniformsLock.unlock()
+
+            // After all GameObjects have updated their modelConstants,
+            // write them directly into the ring buffer for the next frame.
+            // No lock needed: update thread writes here, render thread reads
+            // from a different frame's snapshot (guarded by inFlightSemaphore).
+            writeFrameSnapshot(frameIndex: nextFrameIndex)
         }
+    }
+
+    /// Write all ModelConstants directly into the ring buffer for the given frame slot.
+    /// Called by the update thread after scene update completes.
+    private static func writeFrameSnapshot(frameIndex: Int) {
+        DrawManager.BeginFrameForUpdate(frameIndex: frameIndex)
+
+        // Opaque objects:
+        var opaque: [Model: RingBufferRegion] = [:]
+        opaque.reserveCapacity(modelDatas.count)
+        for (model, modelData) in modelDatas {
+            guard !modelData.gameObjects.isEmpty else { continue }
+            if let offset = DrawManager.writeModelConstants(
+                gameObjects: modelData.gameObjects,
+                frameIndex: frameIndex
+            ) {
+                opaque[model] = RingBufferRegion(
+                    offset: offset,
+                    count: modelData.gameObjects.count,
+                    meshDatas: modelData.meshDatas
+                )
+            }
+        }
+        opaqueSnapshots[frameIndex] = opaque
+
+        // Transparent objects:
+        var transparent: [Model: RingBufferRegion] = [:]
+        transparent.reserveCapacity(transparentObjectDatas.count)
+        for (model, objData) in transparentObjectDatas {
+            guard !objData.gameObjects.isEmpty else { continue }
+            // Transparent objects use ContiguousArray via a temporary:
+            let gameObjects = ContiguousArray(objData.gameObjects)
+            if let offset = DrawManager.writeModelConstants(
+                gameObjects: gameObjects,
+                frameIndex: frameIndex
+            ) {
+                transparent[model] = RingBufferRegion(
+                    offset: offset,
+                    count: gameObjects.count,
+                    meshDatas: model.meshes.map { mesh in
+                        MeshData(mesh: mesh,
+                                 opaqueSubmeshes: [],
+                                 transparentSubmeshes: mesh.submeshes)
+                    }
+                )
+            }
+        }
+        transparentSnapshots[frameIndex] = transparent
+
+        // Sky:
+        if !skyData.gameObjects.isEmpty {
+            let gameObjects = skyData.gameObjects
+            if let offset = DrawManager.writeModelConstants(
+                gameObjects: gameObjects,
+                frameIndex: frameIndex
+            ) {
+                skySnapshots[frameIndex] = RingBufferRegion(
+                    offset: offset,
+                    count: gameObjects.count,
+                    meshDatas: skyData.meshDatas
+                )
+            }
+        } else {
+            skySnapshots[frameIndex] = nil
+        }
+
+        // Record end offset so render thread starts from here for ad-hoc draws:
+        DrawManager.finishUpdateWrites(frameIndex: frameIndex)
+    }
+
+    /// Get the opaque snapshot for the current frame (called by render thread).
+    public static func getOpaqueSnapshot(frameIndex: Int) -> [Model: RingBufferRegion] {
+        return opaqueSnapshots[frameIndex]
+    }
+
+    /// Get the transparent snapshot for the current frame (called by render thread).
+    public static func getTransparentSnapshot(frameIndex: Int) -> [Model: RingBufferRegion] {
+        return transparentSnapshots[frameIndex]
+    }
+
+    /// Get the sky snapshot for the current frame (called by render thread).
+    public static func getSkySnapshot(frameIndex: Int) -> RingBufferRegion? {
+        return skySnapshots[frameIndex]
     }
     
     // ----------------------------------------------------------------------------- //
@@ -292,46 +400,12 @@ final class SceneManager {
         }
     }
     
-    // TODO: Find best way to copy model constants into separate buffer...
-    public static func GetUniformsData() -> [Model: UniformsData] {
-        // Lock when reading uniforms (model constants)
-        uniformsLock.lock()
-        var uniformsData: [Model: UniformsData] = [:]
-        for key in modelDatas.keys {
-            let modelData = modelDatas[key]!
-            uniformsData[key] = UniformsData(uniforms: modelData.gameObjects.compactMap(\.modelConstants),
-                                             meshDatas: modelData.meshDatas)
-        }
-        uniformsLock.unlock()
-        
-        return uniformsData
-    }
-    
-    public static func GetTransparentUniformsData() -> [Model: TransparentUniformsData] {
-        uniformsLock.lock()
-        var transparentUniformsData: [Model: TransparentUniformsData] = [:]
-        for key in transparentObjectDatas.keys {
-            let modelData = transparentObjectDatas[key]!
-            transparentUniformsData[key] = TransparentUniformsData(uniforms: modelData.gameObjects.compactMap(\.modelConstants))
-        }
-        uniformsLock.unlock()
-        
-        return transparentUniformsData
-    }
-    
-    public static func GetSkyUniformsData() -> UniformsData {
-        // Lock here?
-        return UniformsData(uniforms: skyData.gameObjects.compactMap(\.modelConstants),
-                            meshDatas: skyData.meshDatas)
-    }
-    
     public static var SubmeshCount: Int {
         return modelDatas.map {
             $0.value.meshDatas.reduce(0) { $0 + $1.opaqueSubmeshes.count + $1.transparentSubmeshes.count }
         }.reduce(0, +)
     }
-    
-    
+
     // ----------------------------------------------------------------------------- //
     
     public static func SetSceneConstants(with renderEncoder: MTLRenderCommandEncoder) {

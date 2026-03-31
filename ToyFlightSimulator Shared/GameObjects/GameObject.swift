@@ -33,6 +33,9 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
     public var model: Model!
     public var modelConstants = ModelConstants()
     
+    // Index into persistent instance buffer. -1 if not registered:
+    var instanceBufferIndex: Int = -1
+    
     static func == (lhs: GameObject, rhs: GameObject) -> Bool {
         return lhs.getID() == rhs.getID()
     }
@@ -53,8 +56,11 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
     
     override func update() {
         super.update()
-        modelConstants.modelMatrix = self.modelMatrix
-        modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
+        
+        if worldMatrixDirty {
+            modelConstants.modelMatrix = self.modelMatrix
+            modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
+        }
         
         // TODO: hmm... might want to refactor this later...
         model.update()

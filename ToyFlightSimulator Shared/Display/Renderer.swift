@@ -14,9 +14,10 @@ class Renderer: NSObject, MTKViewDelegate, BaseRendering, @unchecked Sendable {
     
     private var renderPreviousTime: UInt64 = 0
     private var renderDeltaTime: Double = 0
+    private var renderFrameCounter: Int = 0
     
     // The max number of command buffers in flight
-    let maxFramesInFlight = 3
+    public static let maxFramesInFlight = 3
     // The semaphore used to control GPU-CPU synchronization of frames.
     private let inFlightSemaphore: DispatchSemaphore
     
@@ -48,7 +49,7 @@ class Renderer: NSObject, MTKViewDelegate, BaseRendering, @unchecked Sendable {
     
     init(type: RendererType) {
         self.rendererType = type
-        inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
+        inFlightSemaphore = DispatchSemaphore(value: Self.maxFramesInFlight)
         baseRenderPassDescriptor = Self.createBaseRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
                                                                        screenHeight: Int(Renderer.ScreenSize.y))
         super.init()
@@ -56,7 +57,7 @@ class Renderer: NSObject, MTKViewDelegate, BaseRendering, @unchecked Sendable {
     
     init(_ mtkView: MTKView, type: RendererType) {
         self.rendererType = type
-        inFlightSemaphore = DispatchSemaphore(value: maxFramesInFlight)
+        inFlightSemaphore = DispatchSemaphore(value: Self.maxFramesInFlight)
         baseRenderPassDescriptor = Self.createBaseRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
                                                                        screenHeight: Int(Renderer.ScreenSize.y))
         super.init()
@@ -118,17 +119,22 @@ class Renderer: NSObject, MTKViewDelegate, BaseRendering, @unchecked Sendable {
     }
     
     public func render(_ renderBlock: () -> ()) {
-        updateSemaphore?.signal()
-        
         let currentTime = DispatchTime.now().uptimeNanoseconds
         self.renderDeltaTime = Double(currentTime - self.renderPreviousTime) / 1e9
         self.renderPreviousTime = currentTime
         GameStatsManager.sharedInstance.recordRenderDeltaTime(self.renderDeltaTime)
-        
+
+        DrawManager.BeginFrame(frameIndex: renderFrameCounter)
+
         renderBlock()
-        
+
         GameStatsManager.sharedInstance.frameRendered()
-        
+
+        // Tell the update thread which ring buffer slot to write into next,
+        // then signal it. The update thread writes ModelConstants directly into
+        // the ring buffer during its update, eliminating GetUniformsData entirely.
+        SceneManager.nextFrameIndex = renderFrameCounter % Renderer.maxFramesInFlight
+        renderFrameCounter += 1
         updateSemaphore?.signal()
     }
 }
