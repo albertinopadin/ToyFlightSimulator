@@ -26,7 +26,11 @@
       "WebFetch(domain:chrisdoescoding.com)",
       "WebFetch(domain:dcs-modding-guideline.fandom.com)",
       "WebFetch(domain:www.numberanalytics.com)",
-      "WebFetch(domain:animcoding.com)"
+      "WebFetch(domain:animcoding.com)",
+      "WebFetch(domain:medium.com)",
+      "Bash(grep -l \"BaseRenderPipelineState\\\\|MaterialRenderPipelineState\\\\|SkySphereRenderPipelineState\" /Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator/**/*.swift)",
+      "Bash(grep -r 'func draw\\(in' '/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator' --include=*.swift)",
+      "Bash(xcodebuild test:*)"
     ],
     "deny": [],
     "ask": []
