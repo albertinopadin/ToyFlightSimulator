@@ -74,10 +74,11 @@ struct TransformComponent {
             let transformWithoutScale = Transform.matrixFromTR(translation: normalizedTranslation, rotation: rotation)
 
             if let basisTransform {
-                // Apply conjugation to convert transform to game coordinate system
-                // This matches how basisTransform is applied in Skeleton.updatePose()
+                // Apply conjugation to convert transform to game coordinate system.
+                // Mesh uses v_engine = v_model * B, shader uses J * v,
+                // so: J_engine = B^-1 * J_model * B
                 let basisInverse = basisTransform.inverse
-                return basisTransform * transformWithoutScale * basisInverse
+                return basisInverse * transformWithoutScale * basisTransform
             }
             return transformWithoutScale
         }

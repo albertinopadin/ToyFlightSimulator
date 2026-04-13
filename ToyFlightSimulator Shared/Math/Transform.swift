@@ -152,6 +152,15 @@ enum Transform {
         float4(0, -1, 0, 0),   // Z: was Y
         float4(0, 0, 0, 1)
     )
+    
+    static let transformYMinusZXToXYZ = float4x4(
+        float4(0, 1, 0, 0),   // X: was Y
+        float4(0, 0, -1, 0),   // Y: was -Z
+        float4(1, 0, 0, 0),   // Z: was X
+        float4(0, 0, 0, 1)
+    )
+
+
 
     /// Decomposes a 4x4 TRS matrix into translation, rotation (as matrix), and scale components.
     /// Assumes the matrix was constructed as T * R * S (translation * rotation * scale).

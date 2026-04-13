@@ -36,7 +36,7 @@ class SandboxScene: GameScene {
         let quad5 = createQuad(color: RED_COLOR, position: [1, 1, -4])
         quad4.addChild(quad5)
         quad4.addChild(f16Camera)
-        f16Camera.setPosition(0, 0, 5)
+        f16Camera.setPosition(0, 0, -5)
         
         addChild(quad1)
         addChild(quad2)

@@ -159,12 +159,13 @@ class Skeleton {
         }
 
         // Apply basis transform to convert joint matrices to the game's coordinate system.
-        // This is necessary when the mesh vertices have been transformed by basisTransform,
-        // so the joint matrices must also be conjugated: B * J * B^(-1)
+        // Mesh vertices are transformed as v_engine = v_model * B (row-vector convention),
+        // while the shader skins as v_skinned = J * v (column-vector convention).
+        // The correct conjugation is: J_engine = B^-1 * J_model * B
         if let basisTransform {
             let basisInverse = basisTransform.inverse
             for index in 0..<worldPose.count {
-                worldPose[index] = basisTransform * worldPose[index] * basisInverse
+                worldPose[index] = basisInverse * worldPose[index] * basisTransform
             }
         }
 

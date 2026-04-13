@@ -9,7 +9,7 @@ class F35: Aircraft {
     static let NAME: String = "F-35"
 
     override var cameraOffset: float3 {
-        [0, -2, 24]
+        [0, -2, -24]
     }
 
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {

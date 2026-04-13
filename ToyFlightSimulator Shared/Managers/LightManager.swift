@@ -32,7 +32,7 @@ final class LightManager {
 
     public static func GetDirectionalLightData(viewMatrix: float4x4) -> [LightData] {
         let lightObjs = Self.GetLightObjects(lightType: Directional)
-        lightObjs.forEach { $0.lightData.lightEyeDirection = normalize(viewMatrix * float4(-$0.getPosition(), 1)).xyz }
+        lightObjs.forEach { $0.lightData.lightEyeDirection = normalize(viewMatrix * float4($0.getPosition(), 1)).xyz }
         return lightObjs.map { $0.lightData }
     }
     

@@ -9,7 +9,7 @@ import Foundation
 import MetalKit
 
 final class ObjModel: Model {
-    init(_ modelName: String) {
+    init(_ modelName: String, basisTransform: float4x4? = nil) {
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: ModelExtension.OBJ.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")
         }
@@ -30,7 +30,7 @@ final class ObjModel: Model {
         
         let mdlMeshes = asset.childObjects(of: MDLMesh.self) as? [MDLMesh] ?? []
         
-        let objMeshes = Self.GetMeshes(asset: asset, mdlMeshes: mdlMeshes, descriptor: descriptor)
+        let objMeshes = Self.GetMeshes(asset: asset, mdlMeshes: mdlMeshes, descriptor: descriptor, basisTransform: basisTransform)
         
         super.init(name: modelName, meshes: objMeshes)
     }

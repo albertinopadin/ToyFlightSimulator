@@ -113,7 +113,7 @@ final class ParticleEmitter: @unchecked Sendable {
         descriptor.positionXRange = -1...1
         descriptor.positionYRange = -1...1
         descriptor.positionZRange = -1...1
-        descriptor.direction = [0, 0, 1]
+        descriptor.direction = [0, 0, -1]
         descriptor.directionRange = -0.1...0.1
         descriptor.speed = 1.0
         descriptor.pointSize = Float(size.width)

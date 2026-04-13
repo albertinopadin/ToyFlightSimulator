@@ -186,7 +186,7 @@ class Node: ClickSelectable {
     
     func getFwdVector() -> float3 {
         let forward = modelMatrix.columns.2
-        return normalize([-forward.x, -forward.y, -forward.z])
+        return normalize([forward.x, forward.y, forward.z])
     }
     
     func getUpVector() -> float3 {

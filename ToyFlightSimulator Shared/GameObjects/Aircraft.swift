@@ -30,7 +30,7 @@ class Aircraft: GameObject {
     private var _legacyGearDown: Bool = true
     
     public var cameraOffset: float3 {
-        [0, 10, 20]
+        [0, 10, -20]
     }
     
     init(name: String, modelType: ModelType, scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
@@ -48,9 +48,9 @@ class Aircraft: GameObject {
             let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
             let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
             
-            self.rotateZ(deltaTurn * InputManager.ContinuousCommand(.Roll))
-            self.rotateX(deltaTurn * InputManager.ContinuousCommand(.Pitch))
-            self.rotateY(deltaTurn * InputManager.ContinuousCommand(.Yaw))
+            self.rotateZ(-deltaTurn * InputManager.ContinuousCommand(.Roll))
+            self.rotateX(-deltaTurn * InputManager.ContinuousCommand(.Pitch))
+            self.rotateY(-deltaTurn * InputManager.ContinuousCommand(.Yaw))
             
             self.moveAlongVector(getFwdVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveFwd))
             self.moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))

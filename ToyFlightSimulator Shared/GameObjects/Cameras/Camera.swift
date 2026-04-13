@@ -43,23 +43,21 @@ class Camera: GameObject {
         self.near = near
         self.far = far
         
-        self.projectionMatrix = matrix_float4x4.perspective(degreesFov: fieldOfView,
-                                                            aspectRatio: aspectRatio,
-                                                            near: near,
-                                                            far: far)
+        self.projectionMatrix = Transform.perspectiveProjection(fieldOfView.toRadians,
+                                                                aspectRatio,
+                                                                near,
+                                                                far)
     }
-    
+
     func setAspectRatio(_ aspectRatio: Float) {
-        projectionMatrix = matrix_float4x4.perspective(degreesFov: fieldOfView,
-                                                       aspectRatio: aspectRatio,
-                                                       near: near,
-                                                       far: far)
+        projectionMatrix = Transform.perspectiveProjection(fieldOfView.toRadians,
+                                                           aspectRatio,
+                                                           near,
+                                                           far)
     }
     
     override func updateModelMatrix() {
         super.updateModelMatrix()
-        _viewMatrix = matrix_identity_float4x4
-        _viewMatrix = matrix_multiply(_viewMatrix, rotationMatrix)
-        _viewMatrix.translate(direction: -self.getPosition())
+        _viewMatrix = modelMatrix.inverse
     }
 }

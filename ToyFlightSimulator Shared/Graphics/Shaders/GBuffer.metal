@@ -124,6 +124,8 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut                   in  
         base_color_sample = half4(in.objectColor);
     } else if (!is_null_texture(baseColorMap)) {
         base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord.xy);
+    } else {
+        base_color_sample = half4(in.color);
     }
     
     if (!in.useObjectColor && !is_null_texture(normalMap)) {

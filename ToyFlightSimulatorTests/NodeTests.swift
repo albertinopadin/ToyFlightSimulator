@@ -199,21 +199,21 @@ final class NodeTests: XCTestCase {
     func testDirectionVectors() {
         let node = Node(name: "TestNode")
         
-        // Test initial direction vectors
-        XCTAssertEqual(node.getFwdVector(), float3(0, 0, -1))
+        // Test initial direction vectors (left-handed: forward = +z)
+        XCTAssertEqual(node.getFwdVector(), float3(0, 0, 1))
         XCTAssertEqual(node.getUpVector(), float3(0, 1, 0))
         XCTAssertEqual(node.getRightVector(), float3(1, 0, 0))
-        
+
         // Rotate the node and test that direction vectors change
         node.setRotation(angle: .pi/2, axis: float3(0, 1, 0))
-        
-        // After 90-degree Y rotation, forward should point to +X, right should point to +Z
+
+        // After 90-degree Y rotation (left-handed), forward should point to +X, right should point to -Z
         let fwd = node.getFwdVector()
         let right = node.getRightVector()
-        
-        XCTAssertEqual(fwd.x, -1, accuracy: 0.001)
+
+        XCTAssertEqual(fwd.x, 1, accuracy: 0.001)
         XCTAssertEqual(fwd.z, 0, accuracy: 0.001)
-        
+
         XCTAssertEqual(right.x, 0, accuracy: 0.001)
         XCTAssertEqual(right.z, -1, accuracy: 0.001)
     }

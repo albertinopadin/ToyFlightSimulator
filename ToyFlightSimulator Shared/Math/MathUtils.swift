@@ -94,13 +94,15 @@ extension float4x4 {
                   SIMD4<Float>(t.x, t.y, t.z, 1))
     }
 
+    /// Left-handed look-at: builds a model matrix placing the camera at `from`, looking toward `at`.
+    /// See also: Transform.look(eye:target:up:) (canonical version, returns a view matrix directly).
     init(lookAt at: SIMD3<Float>, from: SIMD3<Float>, up: SIMD3<Float>) {
-        let zNeg = normalize(at - from)
-        let x = normalize(cross(zNeg, up))
-        let y = normalize(cross(x, zNeg))
+        let z = normalize(at - from)
+        let x = normalize(cross(up, z))
+        let y = cross(z, x)
         self.init(SIMD4<Float>(x, 0),
                   SIMD4<Float>(y, 0),
-                  SIMD4<Float>(-zNeg, 0),
+                  SIMD4<Float>(z, 0),
                   SIMD4<Float>(from, 1))
     }
 
@@ -119,6 +121,8 @@ extension float4x4 {
                   SIMD4<Float>(tx, ty, tz, 1))
     }
 
+    /// Left-handed perspective projection for Metal (z maps to [0, 1], w_clip = +z_eye).
+    /// See also: Transform.perspectiveProjection (canonical version).
     init(perspectiveProjectionFoVY fovYRadians: Float,
          aspectRatio: Float,
          near: Float,
@@ -126,13 +130,12 @@ extension float4x4 {
     {
         let sy = 1 / tan(fovYRadians * 0.5)
         let sx = sy / aspectRatio
-        let zRange = far - near
-        let sz = -(far + near) / zRange
-        let tz = -2 * far * near / zRange
-        self.init(SIMD4<Float>(sx, 0,  0,  0),
-                  SIMD4<Float>(0, sy,  0,  0),
-                  SIMD4<Float>(0,  0, sz, -1),
-                  SIMD4<Float>(0,  0, tz,  0))
+        let sz = far / (far - near)
+        let tz = -(near * far) / (far - near)
+        self.init(SIMD4<Float>(sx, 0,  0, 0),
+                  SIMD4<Float>(0, sy,  0, 0),
+                  SIMD4<Float>(0,  0, sz, 1),
+                  SIMD4<Float>(0,  0, tz, 0))
     }
 
     var upperLeft3x3: float3x3 {

@@ -61,7 +61,7 @@ class DebugCamera: Camera {
             self.moveAlongVector(getUpVector(), distance: Mouse.GetDY() * Float(GameTime.DeltaTime) * _moveSpeed)
         }
         
-        self.moveZ(-Mouse.GetDWheel() * 0.1)
+        self.moveZ(Mouse.GetDWheel() * 0.1)
     }
     
     override func updateModelMatrix() {
