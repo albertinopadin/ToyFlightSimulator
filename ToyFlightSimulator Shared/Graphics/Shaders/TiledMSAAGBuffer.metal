@@ -18,14 +18,14 @@ tiled_msaa_gbuffer_fragment(VertexOut                   in                  [[ s
                             texture2d<half>             baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
                             texture2d<half>             normalTexture       [[ texture(TFSTextureIndexNormal) ]],
                             depth2d_ms<float>           shadowTexture       [[ texture(TFSTextureIndexShadow) ]]) {
-    float4 color;
-    
+    float4 color = material.color;
+
     if (in.useObjectColor) {
         color = in.objectColor;
     } else if (!is_null_texture(baseColorTexture)) {
         color = float4(baseColorTexture.sample(sampler2d, in.uv));
     }
-    
+
     color.a = Lighting::CalculateShadowMSAA(in.shadowPosition, shadowTexture);
     
     float4 normal = float4(normalize(in.worldNormal), 1.0);

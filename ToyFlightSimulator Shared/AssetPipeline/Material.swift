@@ -34,65 +34,63 @@ struct Material: sizeable {
             for property in material.properties(with: semantic) {
                 switch property.type {
                     case .string:
-                        print("Material property is string!")
                         if let stringValue = property.stringValue {
-                            print("Material property string value: \(stringValue)")
-                            // TODO: This smells nasty
-                            // Check if string is empty (WTF?)
                             let texture = TextureLoader.Texture(name: stringValue)
                             populateTexture(texture, for: semantic)
                         }
+
                     case .URL:
-                        print("Material property is url!")
-                    
                         if let textureURL = property.urlValue {
                             let texture = TextureLoader.Texture(url: textureURL)
                             populateTexture(texture, for: semantic)
                         }
+
                     case .texture:
-                        print("Material property is texture!")
                         let sourceTexture = property.textureSamplerValue!.texture!
                         let texture = TextureLoader.Texture(mdlTexture: sourceTexture)
                         populateTexture(texture, for: semantic)
-                    
-                    case .color:
-                        print("Material property is color!")
-                        
-                        let color = float4(Float(property.color!.components![0]),
-                                           Float(property.color!.components![1]),
-                                           Float(property.color!.components![2]),
-                                           Float(property.color!.components![3]))
-                        
-                        properties.color = color
-                        
-                    case .buffer:
-                        print("Material \(material.name) property is a buffer for semantic: \(semantic.toString())")
-                    case .matrix44:
-                        print("Material \(material.name) property is 4x4 matrix for semantic: \(semantic.toString())")
-                    case .float:
-                        print("Material \(material.name) property is float for semantic: \(semantic.toString())")
-                        switch semantic {
-                            case .opacity:
-                                properties.opacity = property.floatValue
-                                // ambient occlusion, ao scale, anisotropic rotation, clearcoat, clearcoat gloss,
-                                // interface index of refraction, material index of refraction, none (WTF???),
-                                // roughness, sheen, sheen tint, specular, specular tint, subsurface, 
-                            default:
-                                print("Property was not opacity")
+
+                    case .color, .float3, .float4:
+                        if semantic == .baseColor {
+                            setBaseColor(from: property)
                         }
-                    case .float2:
-                        print("Material \(material.name) property is float2 for semantic: \(semantic.toString())")
-                    case .float3:
-                        print("Material \(material.name) property is float3 for semantic: \(semantic.toString())")
-                        // base color, emission
-                    case .float4:
-                        print("Material \(material.name) property is float4 for semantic: \(semantic.toString())")
-                    case .none:
-                        print("Material \(material.name) property is none for semantic: \(semantic.toString())")
+
+                    case .float:
+                        if semantic == .opacity {
+                            properties.opacity = property.floatValue
+                        }
+                        // ambient occlusion, ao scale, anisotropic rotation, clearcoat, clearcoat gloss,
+                        // interface index of refraction, material index of refraction, none (WTF???),
+                        // roughness, sheen, sheen tint, specular, specular tint, subsurface,
+
+                    case .buffer, .matrix44, .float2, .none:
+                        break
+
                     default:
-                        fatalError("Data for material property not found - name: \(material.name), debug desc: \(material.debugDescription), for semantic: \(semantic.toString())")
+                        break
                 }
             }
+        }
+    }
+
+    private mutating func setBaseColor(from property: MDLMaterialProperty) {
+        switch property.type {
+            case .color:
+                guard let components = property.color?.components, components.count >= 3 else { return }
+                let alpha: Float = components.count > 3 ? Float(components[3]) : 1.0
+                properties.color = float4(Float(components[0]),
+                                          Float(components[1]),
+                                          Float(components[2]),
+                                          alpha)
+            case .float3:
+                let rgb = property.float3Value
+                properties.color = float4(rgb.x, rgb.y, rgb.z, 1.0)
+
+            case .float4:
+                properties.color = property.float4Value
+
+            default:
+                break
         }
     }
     

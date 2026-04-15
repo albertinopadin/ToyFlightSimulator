@@ -41,8 +41,8 @@ single_pass_deferred_transparency_fragment(   VertexOut          in             
                                      constant MaterialProperties &material           [[ buffer(TFSBufferIndexMaterial) ]],
                                      sampler                     sampler2d           [[ sampler(0) ]],
                                      texture2d<half>             baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]]) {
-    float4 color;
-    
+    float4 color = material.color;
+
     if (in.useObjectColor) {
         color = in.objectColor;
     } else if (!is_null_texture(baseColorTexture)) {

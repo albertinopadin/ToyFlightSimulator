@@ -64,8 +64,8 @@ material_fragment(          RasterizerData      rd              [[ stage_in ]],
                             texture2d<float>    baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
                             texture2d<float>    normalMap       [[ texture(TFSTextureIndexNormal) ]]) {
     float2 texCoord = rd.textureCoordinate;
-    float4 color;
-    
+    float4 color = material.color;
+
     if (rd.useObjectColor) {
         color = rd.objectColor;
     } else if (!is_null_texture(baseColorMap)) {
