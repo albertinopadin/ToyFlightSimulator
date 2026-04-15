@@ -30,15 +30,15 @@ final class FlightboxWithTerrain: GameScene {
         
 //        let jet = F35(scale: 0.8)
 //        let jet = F35(scale: 0.15)
-        let jet = F22(scale: 0.25)
-//        let jet = F22_CGTrader(scale: 3.0)
+//        let jet = F22(scale: 0.25)
+        let jet = F22_CGTrader(scale: 3.0)
 //        let jet = CollidableF22(scale: 0.25)
 //        let jet = F18(scale: 1.4)
 //        let jet = F18(scale: 1.0)
         
         addCamera(attachedCamera)
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)
-        jet.setPosition(0, 100, 4)
+        jet.setPosition(0, 100, 0)
         addChild(jet)
         let jetPos = jet.getPosition()
         

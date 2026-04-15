@@ -77,19 +77,11 @@ final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
         
 //        _library.updateValue(UsdModel("FA-18F"), forKey: .RC_F18)
         
-//        _library.updateValue(UsdModel("cgtrader_F22",
-//                                      fileExtension: .USDZ,
-//                                      basisTransform: Transform.rotationMatrix(radians: Float(90).toRadians,
-//                                                                               axis: X_AXIS)), forKey: .CGTrader_F22)
-        
         _library.updateValue(UsdModel("cgtrader_F22",
                                       fileExtension: .USDZ,
                                       basisTransform: Transform.transformXMinusZYToXYZ), forKey: .CGTrader_F22)
         
         _library.updateValue(UsdModel("F-35A_Lightning_II"), forKey: .Sketchfab_F35)
-        
-//        _library.updateValue(UsdModel("F-22_Raptor",
-//                                      basisTransform: Transform.transformYMinusZXToXYZ), forKey: .Sketchfab_F22)
         
         _library.updateValue(UsdModel("F-22_Raptor",
                                       basisTransform: Transform.transformYMinusZXToXYZ), forKey: .Sketchfab_F22)

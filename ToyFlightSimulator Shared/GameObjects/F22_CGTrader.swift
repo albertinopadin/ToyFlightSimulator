@@ -9,7 +9,7 @@ class F22_CGTrader: Aircraft {
     static let NAME: String = "F-22_CGTrader"
     
     override var cameraOffset: float3 {
-        [0, 4, -16]
+        [0, 3, -9]
     }
     
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {

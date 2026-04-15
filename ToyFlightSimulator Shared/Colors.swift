@@ -9,6 +9,7 @@ import simd
 
 let WHITE_COLOR: float4 = [1, 1, 1, 1]
 let BLACK_COLOR: float4 = [0, 0, 0, 1]
+let CLEAR_COLOR: float4 = [0, 0, 0, 0]
 
 let RED_COLOR: float4 = [1, 0, 0, 1]
 let GREEN_COLOR: float4 = [0, 1, 0, 1]
