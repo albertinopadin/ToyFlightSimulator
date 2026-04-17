@@ -1,47 +1,44 @@
 //
-//  FlightboxWithTerrain.swift
+//  FlightboxWithPhysics.swift
 //  ToyFlightSimulator
 //
-//  Created by Albertino Padin on 5/28/25.
+//  Created by Albertino Padin on 4/16/26.
 //
 
-final class FlightboxWithTerrain: GameScene {
+final class FlightboxWithPhysics: GameScene {
     var attachedCamera = AttachedCamera(fieldOfView: 75.0,
                                         near: 0.01,
                                         far: 1000000.0)
     var sun = Sun(modelType: .Sphere)
-    var quad = Quad()
-    var capsule = CapsuleObject()
+    
+    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
+    var entities: [PhysicsEntity] = []
     
     private func addGround() {
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        let ground = TerrainObject(size: [8, 8])
+        let ground = CollidablePlane()
+        ground.collisionNormal = [0, 1, 0]
+        ground.collisionShape = .Plane
+        ground.restitution = 1.0
+        ground.isStatic = true
         ground.setColor(groundColor)
-        ground.rotateX(Float(-20).toRadians)
-        ground.setScale(100)
+        ground.rotateZ(Float(90).toRadians)
+        ground.setScale(1000)
         addChild(ground)
+        
+        entities.append(ground)
     }
     
     override func buildScene() {
         addGround()
         
-//        let jet = F35(scale: 0.8)
-//        let jet = F35(scale: 0.15)
-        let jet = F22(scale: 0.25)
-//        let jet = F22_CGTrader(scale: 3.0)
-//        let jet = CollidableF22(scale: 0.25)
-//        let jet = F18(scale: 1.4)
-//        let jet = F18(scale: 1.0)
+        let jet = CollidableF22(scale: 0.25)
         
         addCamera(attachedCamera)
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)
         jet.setPosition(0, 100, 0)
         addChild(jet)
         let jetPos = jet.getPosition()
-        
-        capsule.setPosition(-8, jetPos.y, -10)
-        capsule.rotateZ(Float(90).toRadians)
-        addChild(capsule)
         
         switch _rendererType {
             case .OrderIndependentTransparency:
@@ -76,17 +73,6 @@ final class FlightboxWithTerrain: GameScene {
         f16.setScale(10.0)
         addChild(f16)
         
-//        quadMaterial.shininess = 10
-        quad.setColor([0, 0.4, 1.0, 1.0])
-        quad.setPositionZ(1)
-        quad.setPositionY(jetPos.y + 14)
-        addChild(quad)
-        
-        let debugLine = Line(startPoint: [0, 0, 0],
-                             endPoint: [0, jetPos.y + 50, 0],
-                             color: [1, 0, 0, 1])
-        addChild(debugLine)
-        
         let sphereBluePos = float3(x: jetPos.x + 1, y: jetPos.y, z: jetPos.z - 2)
         let sphereBlue = Sphere()
         sphereBlue.setPosition(sphereBluePos)
@@ -108,24 +94,18 @@ final class FlightboxWithTerrain: GameScene {
         
         TextureLoader.PrintCacheInfo()
         print("Total Submesh count: \(SceneManager.SubmeshCount)")
+        
+        entities.append(jet)
+        physicsWorld.setEntities(entities)
     }
     
     override func doUpdate() {
         super.doUpdate()
         
-//        InputManager.HasDiscreteCommandDebounced(command: .Pause) {
-//            paused.toggle()
-//        }
-        
         let fdTime = Float(GameTime.DeltaTime)
         
-        quad.rotateZ(fdTime)
-        
-//        InputManager.handleMouseClickDebounced(command: .ClickSelect) {
-//            print("Mouse position in window: \(Mouse.GetMouseWindowPosition())")
-//            print("Mouse position in viewport: \(Mouse.GetMouseViewportPosition())")
-//        }
+        if GameTime.DeltaTime < 1.0 {
+            physicsWorld.update(deltaTime: fdTime)
+        }
     }
 }
-
-

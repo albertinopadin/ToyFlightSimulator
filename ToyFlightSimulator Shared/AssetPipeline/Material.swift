@@ -64,6 +64,7 @@ struct Material: sizeable {
                         // roughness, sheen, sheen tint, specular, specular tint, subsurface,
 
                     case .buffer, .matrix44, .float2, .none:
+                        print("Material \(material.name) property is \(property.type) for semantic: \(semantic.toString())")
                         break
 
                     default:

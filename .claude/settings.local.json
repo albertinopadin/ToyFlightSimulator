@@ -30,7 +30,14 @@
       "WebFetch(domain:medium.com)",
       "Bash(grep -l \"BaseRenderPipelineState\\\\|MaterialRenderPipelineState\\\\|SkySphereRenderPipelineState\" /Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator/**/*.swift)",
       "Bash(grep -r 'func draw\\(in' '/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator' --include=*.swift)",
-      "Bash(xcodebuild test:*)"
+      "Bash(xcodebuild test:*)",
+      "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" log --oneline)",
+      "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" show 7eef4b4 --stat)",
+      "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" diff HEAD -- \"ToyFlightSimulator Shared/Managers/DrawManager.swift\")",
+      "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" show 7eef4b4 -- \"ToyFlightSimulator Shared/AssetPipeline/Libraries/Models/ModelLibrary.swift\")",
+      "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" show 7eef4b4 -- \"ToyFlightSimulator Shared/Math/Transform.swift\")",
+      "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" diff -- \"ToyFlightSimulator Shared/Materials/Material.swift\")",
+      "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" diff -- \"ToyFlightSimulator Shared/Managers/DrawManager.swift\")"
     ],
     "deny": [],
     "ask": []

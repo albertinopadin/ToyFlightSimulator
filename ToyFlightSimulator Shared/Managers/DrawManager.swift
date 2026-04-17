@@ -126,6 +126,9 @@ final class DrawManager {
     
     // Draw opaque objects from pre-written ring buffer snapshots (no allocation, no lock):
     static func DrawOpaque(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
+        renderEncoder.setFrontFacing(.clockwise)
+        renderEncoder.setCullMode(.back)
+        
         let snapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
         for (model, region) in snapshot {
             for meshData in region.meshDatas {
@@ -145,6 +148,9 @@ final class DrawManager {
     }
 
     static func DrawTransparent(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
+        renderEncoder.setFrontFacing(.clockwise)
+        renderEncoder.setCullMode(.back)
+        
         // Opaque models with transparent submeshes:
         let opaqueSnapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
         for (model, region) in opaqueSnapshot {
@@ -202,6 +208,9 @@ final class DrawManager {
     }
     
     static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
+        renderEncoder.setFrontFacing(.clockwise)
+        renderEncoder.setCullMode(.back)
+        
         let snapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
         for (model, region) in snapshot {
             for meshData in region.meshDatas {
@@ -401,7 +410,7 @@ final class DrawManager {
                                                        length: MaterialProperties.stride,
                                                        index: TFSBufferIndexMaterial.index)
                     }
-
+                    
                     renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
                                                         indexCount: submesh.indexCount,
                                                         indexType: submesh.indexType,

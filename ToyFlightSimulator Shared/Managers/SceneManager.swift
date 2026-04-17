@@ -12,8 +12,9 @@ enum SceneType {
     case Sandbox
     case Flightbox
     case FreeCamFlightbox
-    case BallPhysics
     case FlightboxWithTerrain
+    case FlightboxWithPhysics
+    case BallPhysics
     case PhysicsStressTest
 }
 
@@ -139,6 +140,8 @@ final class SceneManager {
                 CurrentScene = FlightboxWithTerrain(name: "Flightbox with Terrain", rendererType: rendererType)
             case .PhysicsStressTest:
                 CurrentScene = PhysicsStressTestScene(name: "PhysicsStressTest", rendererType: rendererType)
+            case .FlightboxWithPhysics:
+                CurrentScene = FlightboxWithPhysics(name: "Flightbox with Physics", rendererType: rendererType)
         }
     }
     
