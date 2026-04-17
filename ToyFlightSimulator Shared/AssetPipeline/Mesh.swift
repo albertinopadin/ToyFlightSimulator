@@ -59,10 +59,13 @@ class Mesh {
             print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
         }
         self.vertexBuffer = mtkMesh.vertexBuffers[0].buffer
-        if let basisTransform {
-            transformMeshBasis(basisTransform)
-        }
-        
+        let basisFlipsOrientation: Bool = {
+            if let basisTransform {
+                return transformMeshBasis(basisTransform)
+            }
+            return false
+        }()
+
         self._vertexCount = mtkMesh.vertexCount
         for i in 0..<mtkMesh.submeshes.count {
             let mtkSubmesh = mtkMesh.submeshes[i]
@@ -71,7 +74,14 @@ class Mesh {
                                   mdlSubmesh: mdlSubmesh)
             addSubmesh(submesh)
         }
-        
+
+        if basisFlipsOrientation {
+            print("[Mesh init] basis transform has det<0 for mesh '\(mdlMesh.name)'; "
+                + "reversing triangle winding in \(mtkMesh.submeshes.count) submeshes "
+                + "to compensate.")
+            reverseTriangleWinding()
+        }
+
         print("[Mesh init] Num submeshes for \(mdlMesh.name): \(submeshes.count)")
     }
     
@@ -122,7 +132,12 @@ class Mesh {
         }
     }
     
-    private func transformMeshBasis(_ basisTransform: float4x4) {
+    /// Apply `basisTransform` to every vertex's position, normal, tangent, bitangent.
+    /// Returns `true` if the basis is orientation-reversing (3x3 determinant < 0), in
+    /// which case callers should also reverse triangle index order via
+    /// `reverseTriangleWinding()` *after* submeshes have been constructed.
+    @discardableResult
+    private func transformMeshBasis(_ basisTransform: float4x4) -> Bool {
         let count = vertexBuffer.length / Vertex.stride
         var pointer = vertexBuffer.contents().bindMemory(to: Vertex.self, capacity: count)
         for _ in 0..<count {
@@ -131,6 +146,80 @@ class Mesh {
             pointer.pointee.tangent = simd_mul(float4(pointer.pointee.tangent, 1), basisTransform).xyz
             pointer.pointee.bitangent = simd_mul(float4(pointer.pointee.bitangent, 1), basisTransform).xyz
             pointer = pointer.advanced(by: 1)
+        }
+
+        let m = basisTransform
+        let det = simd_determinant(simd_float3x3(
+            SIMD3<Float>(m.columns.0.x, m.columns.0.y, m.columns.0.z),
+            SIMD3<Float>(m.columns.1.x, m.columns.1.y, m.columns.1.z),
+            SIMD3<Float>(m.columns.2.x, m.columns.2.y, m.columns.2.z)
+        ))
+        return det < 0
+    }
+
+    /// Reverse the per-triangle index order in every submesh so that screen-space
+    /// winding flips. Called after `transformMeshBasis` when the basis matrix has
+    /// a negative determinant — that mirror flips screen-space winding, and this
+    /// reversal puts it back in agreement with the engine's global
+    /// `setFrontFacing(.clockwise)`.
+    private func reverseTriangleWinding() {
+        for submesh in submeshes {
+            guard submesh.primitiveType == .triangle else {
+                print("[Mesh reverseTriangleWinding] Skipping submesh '\(submesh.name)' "
+                    + "with non-triangle primitiveType=\(submesh.primitiveType.rawValue) "
+                    + "in mesh '\(name)'. Triangle strips/fans not handled here.")
+                continue
+            }
+
+            let buffer = submesh.indexBuffer
+            let offset = submesh.indexBufferOffset
+            let count  = submesh.indexCount
+            let triangleCount = count / 3
+            guard triangleCount > 0 else { continue }
+
+            switch submesh.indexType {
+            case .uint16:
+                let p = (buffer.contents() + offset).bindMemory(to: UInt16.self, capacity: count)
+                for t in 0..<triangleCount {
+                    let base = t * 3
+                    let tmp = p[base + 1]
+                    p[base + 1] = p[base + 2]
+                    p[base + 2] = tmp
+                }
+
+            case .uint32:
+                let p = (buffer.contents() + offset).bindMemory(to: UInt32.self, capacity: count)
+                for t in 0..<triangleCount {
+                    let base = t * 3
+                    let tmp = p[base + 1]
+                    p[base + 1] = p[base + 2]
+                    p[base + 2] = tmp
+                }
+
+            @unknown default:
+                print("[Mesh reverseTriangleWinding] Unknown indexType=\(submesh.indexType.rawValue) "
+                    + "in submesh '\(submesh.name)'; cannot reverse winding.")
+                continue
+            }
+
+            #if os(macOS)
+            // MTKMeshBufferAllocator returns shared-storage buffers on iOS/Apple Silicon Macs,
+            // but managed buffers can show up on Intel discrete GPUs. didModifyRange is a
+            // no-op on shared buffers and required on managed ones.
+            if buffer.storageMode == .managed {
+                let byteCount = count * indexByteStride(for: submesh.indexType)
+                buffer.didModifyRange(offset..<(offset + byteCount))
+            }
+            #endif
+        }
+    }
+
+    /// Bytes per index for didModifyRange computations.
+    private func indexByteStride(for type: MTLIndexType) -> Int {
+        switch type {
+            case .uint16: return 2
+            case .uint32: return 4
+            @unknown default: return 4
         }
     }
     
