@@ -90,7 +90,7 @@ final class OITRenderer: Renderer, @unchecked Sendable {
         }
     }
     
-    func orderIndependentTransparencyRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
+    func orderIndependentTransparencyRenderPass(commandBuffer: MTLCommandBuffer) {
         encodeRenderPass(into: commandBuffer,
                    using: _forwardRenderPassDescriptor,
                    label: "Order Independent Transparency Render Pass") { renderEncoder in
@@ -115,8 +115,8 @@ final class OITRenderer: Renderer, @unchecked Sendable {
     }
     
     @MainActor
-    func finalRenderPass(view: MTKView, commandBuffer: MTLCommandBuffer) {
-        encodeRenderPass(into: commandBuffer, using: view.currentRenderPassDescriptor!, label: "Final Render Pass") { renderEncoder in
+    func finalRenderPass(renderPassDescriptor: MTLRenderPassDescriptor, commandBuffer: MTLCommandBuffer) {
+        encodeRenderPass(into: commandBuffer, using: renderPassDescriptor, label: "Final Render Pass") { renderEncoder in
             encodeRenderStage(using: renderEncoder, label: "Final Render") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Final])
                 renderEncoder.setFragmentTexture(Assets.Textures[.BaseColorRender_0], index: 0)
@@ -130,11 +130,16 @@ final class OITRenderer: Renderer, @unchecked Sendable {
             runDrawableCommands { commandBuffer in
                 commandBuffer.label = "Order Independent Transparency Render Command Buffer"
                 
-                orderIndependentTransparencyRenderPass(view: view, commandBuffer: commandBuffer)
+                orderIndependentTransparencyRenderPass(commandBuffer: commandBuffer)
                 // Intermediate renders go here
-                finalRenderPass(view: view, commandBuffer: commandBuffer)
                 
-                commandBuffer.present(view.currentDrawable!)
+                guard let drawable = view.currentDrawable,
+                      let renderPassDescriptor = view.currentRenderPassDescriptor else {
+                    return
+                }
+                
+                finalRenderPass(renderPassDescriptor: renderPassDescriptor, commandBuffer: commandBuffer)
+                commandBuffer.present(drawable)
             }
         }
     }
