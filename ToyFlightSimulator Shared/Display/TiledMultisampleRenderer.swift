@@ -7,51 +7,51 @@
 
 import MetalKit
 
-final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRendering, @unchecked Sendable {
+final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRendering, LateDrawablePresenting, @unchecked Sendable {
     private static let sampleCount: Int = 4
-    
+
     private static let tileWidth = 16
     private static let tileHeight = 16
     private static let imageBlockSampleLength = 32
-    
+
     private var gBufferTextures = TiledDeferredGBufferTextures()
-    
+
     var shadowMap: MTLTexture
     var shadowResolveTexture: MTLTexture?
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor
-    
+
+    // App-owned color targets for the GBuffer/lighting pass. lightingResolveTexture
+    // is sampled by the composite pass; lightingMSAATexture is the multisample target.
+    var lightingResolveTexture: MTLTexture!
+    private var lightingMSAATexture: MTLTexture!
+
     private let tiledDeferredRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
-        
+
         descriptor.tileWidth = TiledMultisampleRenderer.tileWidth
         descriptor.tileHeight = TiledMultisampleRenderer.tileHeight
         descriptor.imageblockSampleLength = TiledMultisampleRenderer.imageBlockSampleLength
-        
+
         let renderTargets: [TFSRenderTargetIndices] = [
             TFSRenderTargetAlbedo,
             TFSRenderTargetNormal,
             TFSRenderTargetPosition
         ]
-        
+
         for renderTarget in renderTargets {
             descriptor.colorAttachments[renderTarget.index].loadAction = .clear
             descriptor.colorAttachments[renderTarget.index].storeAction = .dontCare
         }
-        
+
         // To make empty space (no nodes/skybox) look black instead of Snow...
         descriptor.colorAttachments[TFSRenderTargetLighting.index].loadAction = .clear
         descriptor.colorAttachments[TFSRenderTargetLighting.index].clearColor = Preferences.ClearColor
         descriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .multisampleResolve
+        // .texture and .resolveTexture are bound in updateDrawableSize.
         return descriptor
     }()
-    
-    private let compositeRenderPassDescriptor: MTLRenderPassDescriptor = {
-        let descriptor = MTLRenderPassDescriptor()
-        descriptor.colorAttachments[TFSRenderTargetLighting.index].loadAction = .clear
-        descriptor.colorAttachments[TFSRenderTargetLighting.index].clearColor = Preferences.ClearColor
-        descriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .store
-        return descriptor
-    }()
+
+    let compositeRenderPassDescriptor: MTLRenderPassDescriptor = TiledMultisampleRenderer.makeCompositeRenderPassDescriptor()
     
     override var metalView: MTKView {
         didSet {
@@ -141,68 +141,63 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
         }
     }
     
-    func encodeCompositeStage(using renderEncoder: MTLRenderCommandEncoder) {
-        let resolveTexture = tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].resolveTexture
-        encodeRenderStage(using: renderEncoder, label: "Composite Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Composite])
-            renderEncoder.setFragmentTexture(resolveTexture, index: 0)
-            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
-        }
-    }
-    
     var firstRun: Bool = true
-    
+
     override func draw(in view: MTKView) {
         // TODO: Why not put this in the metalView didSet...?
         view.sampleCount = Self.sampleCount
-        
+
         if firstRun {
             let screenSize = CGSize(width: CGFloat(Renderer.ScreenSize.x),
                                     height: CGFloat(Renderer.ScreenSize.y))
             updateDrawableSize(size: screenSize)
             firstRun.toggle()
         }
-        
+
         render {
+            // Early CB: shadow only.
             runDrawableCommands { commandBuffer in
                 commandBuffer.label = "Shadow Commands"
                 encodeMSAAShadowPass(into: commandBuffer)
             }
-            
-            if let drawable = view.currentDrawable {
-                runDrawableCommands { commandBuffer in
-                    commandBuffer.label = "GBuffer & Lighting Commands"
-                    let viewColorAttachment = view.currentRenderPassDescriptor!.colorAttachments[TFSRenderTargetLighting.index]
-                    tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index] = viewColorAttachment
-                    
-                    encodeParticleComputePass(into: commandBuffer)
-                    
-                    encodeRenderPass(into: commandBuffer,
-                                     using: tiledDeferredRenderPassDescriptor,
-                                     label: "GBuffer & Lighting Pass") { renderEncoder in
-                        SceneManager.SetSceneConstants(with: renderEncoder)
-                        SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                        SceneManager.SetPointLightData(with: renderEncoder)
-                        
-                        encodeGBufferStage(using: renderEncoder)
-                        encodeLightingStage(using: renderEncoder)
-                        encodeTransparencyStage(using: renderEncoder)
-                        encodeParticleRenderStage(using: renderEncoder, withMSAA: true)
-                        
-                        encodeMSAAResolveStage(using: renderEncoder)
-                    }
-                    
-                    compositeRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .store
-                    compositeRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawable.texture
-                    
-                    encodeRenderPass(into: commandBuffer,
-                                     using: compositeRenderPassDescriptor,
-                                     label: "Composite Pass") { renderEncoder in
-                        encodeCompositeStage(using: renderEncoder)
-                    }
-                
-                    commandBuffer.present(drawable)
+
+            // Early CB: all view-independent work, into app-owned MSAA + resolve textures.
+            runDrawableCommands { commandBuffer in
+                commandBuffer.label = "GBuffer & Lighting Commands"
+
+                encodeParticleComputePass(into: commandBuffer)
+
+                encodeRenderPass(into: commandBuffer,
+                                 using: tiledDeferredRenderPassDescriptor,
+                                 label: "GBuffer & Lighting Pass") { renderEncoder in
+                    SceneManager.SetSceneConstants(with: renderEncoder)
+                    SceneManager.SetDirectionalLightConstants(with: renderEncoder)
+                    SceneManager.SetPointLightData(with: renderEncoder)
+
+                    encodeGBufferStage(using: renderEncoder)
+                    encodeLightingStage(using: renderEncoder)
+                    encodeTransparencyStage(using: renderEncoder)
+                    encodeParticleRenderStage(using: renderEncoder, withMSAA: true)
+
+                    encodeMSAAResolveStage(using: renderEncoder)
                 }
+            }
+
+            // Late CB: acquire drawable, composite, present.
+            guard let drawable = view.currentDrawable else { return }
+
+            runDrawableCommands { commandBuffer in
+                commandBuffer.label = "Composite + Present"
+                compositeRenderPassDescriptor
+                    .colorAttachments[TFSRenderTargetLighting.index].texture = drawable.texture
+
+                encodeRenderPass(into: commandBuffer,
+                                 using: compositeRenderPassDescriptor,
+                                 label: "Composite Pass") { renderEncoder in
+                    encodeCompositeStage(using: renderEncoder)
+                }
+
+                commandBuffer.present(drawable)
             }
         }
     }
@@ -218,7 +213,16 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
                                      size: size,
                                      storageMode: .memoryless,
                                      sampleCount: Self.sampleCount)
-        // Re-set GBuffer textures in the view render pass descriptor after they have been reallocated by a resize
+
+        // App-owned MSAA color + resolve targets bound once per resize; the early CB never touches the view.
+        lightingMSAATexture    = Self.makeMSAALightingTexture(size: size, sampleCount: Self.sampleCount)
+        lightingResolveTexture = Self.makeLightingResolveTexture(size: size, label: "TiledMSAA Lighting Resolve")
+
+        let lighting = tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index]!
+        lighting.texture        = lightingMSAATexture
+        lighting.resolveTexture = lightingResolveTexture
+
+        // Re-set GBuffer textures in the render pass descriptor after they have been reallocated by a resize
         setGBufferTextures(tiledDeferredRenderPassDescriptor)
         updateScreenSize(size: size)
     }

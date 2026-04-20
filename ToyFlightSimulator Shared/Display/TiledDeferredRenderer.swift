@@ -7,33 +7,39 @@
 
 import MetalKit
 
-final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering, @unchecked Sendable {
+final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering, LateDrawablePresenting, @unchecked Sendable {
     private let icosahedron = IcosahedronMesh()
-    
+
     private var gBufferTextures = TiledDeferredGBufferTextures()
-    
+
     var shadowMap: MTLTexture
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor
     // For protocol conformance:
     var shadowResolveTexture: MTLTexture? = nil
-    
+
+    // App-owned color target for the GBuffer/lighting pass; sampled by the composite pass.
+    var lightingResolveTexture: MTLTexture!
+    let compositeRenderPassDescriptor: MTLRenderPassDescriptor = TiledDeferredRenderer.makeCompositeRenderPassDescriptor()
+
     private let tiledDeferredRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
-        
+
         let renderTargets: [TFSRenderTargetIndices] = [
             TFSRenderTargetAlbedo,
             TFSRenderTargetNormal,
             TFSRenderTargetPosition
         ]
-        
+
         for renderTarget in renderTargets {
             descriptor.colorAttachments[renderTarget.index].loadAction = .clear
             descriptor.colorAttachments[renderTarget.index].storeAction = .dontCare
         }
-        
+
         // To make empty space (no nodes/skybox) look black instead of Snow...
         descriptor.colorAttachments[TFSRenderTargetLighting.index].loadAction = .clear
         descriptor.colorAttachments[TFSRenderTargetLighting.index].clearColor = Preferences.ClearColor
+        // Lighting attachment now writes into app-owned lightingResolveTexture, sampled by composite pass.
+        descriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .store
         return descriptor
     }()
     
@@ -133,36 +139,47 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
     
     override func draw(in view: MTKView) {
         render {
+            // Early CB: shadow only.
             runDrawableCommands { commandBuffer in
                 commandBuffer.label = "Shadow Commands"
                 encodeShadowPassTiledDeferred(into: commandBuffer)
             }
-            
+
+            // Early CB: all view-independent work, into app-owned lightingResolveTexture.
             runDrawableCommands { commandBuffer in
                 commandBuffer.label = "GBuffer & Lighting Commands"
-                
-                if let drawableTexture = view.currentDrawable?.texture {
-                    tiledDeferredRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
-                    
-                    encodeParticleComputePass(into: commandBuffer)
-                    
-                    encodeRenderPass(into: commandBuffer,
-                                     using: tiledDeferredRenderPassDescriptor,
-                                     label: "GBuffer & Lighting Pass") { renderEncoder in
-                        SceneManager.SetSceneConstants(with: renderEncoder)
-                        SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                        SceneManager.SetPointLightData(with: renderEncoder)
-                        
-                        encodeGBufferStage(using: renderEncoder)
-                        encodeLightingStage(using: renderEncoder)
-                        encodeTransparencyStage(using: renderEncoder)
-                        encodeParticleRenderStage(using: renderEncoder)
-                    }
+
+                encodeParticleComputePass(into: commandBuffer)
+
+                encodeRenderPass(into: commandBuffer,
+                                 using: tiledDeferredRenderPassDescriptor,
+                                 label: "GBuffer & Lighting Pass") { renderEncoder in
+                    SceneManager.SetSceneConstants(with: renderEncoder)
+                    SceneManager.SetDirectionalLightConstants(with: renderEncoder)
+                    SceneManager.SetPointLightData(with: renderEncoder)
+
+                    encodeGBufferStage(using: renderEncoder)
+                    encodeLightingStage(using: renderEncoder)
+                    encodeTransparencyStage(using: renderEncoder)
+                    encodeParticleRenderStage(using: renderEncoder)
                 }
-                
-                if let drawable = view.currentDrawable {
-                    commandBuffer.present(drawable)
+            }
+
+            // Late CB: acquire drawable, composite, present.
+            guard let drawable = view.currentDrawable else { return }
+
+            runDrawableCommands { commandBuffer in
+                commandBuffer.label = "Composite + Present"
+                compositeRenderPassDescriptor
+                    .colorAttachments[TFSRenderTargetLighting.index].texture = drawable.texture
+
+                encodeRenderPass(into: commandBuffer,
+                                 using: compositeRenderPassDescriptor,
+                                 label: "Composite Pass") { renderEncoder in
+                    encodeCompositeStage(using: renderEncoder)
                 }
+
+                commandBuffer.present(drawable)
             }
         }
     }
@@ -175,7 +192,13 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
     
     func updateDrawableSize(size: CGSize) {
         gBufferTextures.makeTextures(device: Engine.Device, size: size, storageMode: .memoryless)
-        // Re-set GBuffer textures in the view render pass descriptor after they have been reallocated by a resize
+
+        // App-owned color target bound once per resize; the early CB never touches the view.
+        lightingResolveTexture = Self.makeLightingResolveTexture(size: size, label: "TiledDeferred Lighting Resolve")
+        tiledDeferredRenderPassDescriptor
+            .colorAttachments[TFSRenderTargetLighting.index].texture = lightingResolveTexture
+
+        // Re-set GBuffer textures in the render pass descriptor after they have been reallocated by a resize
         setGBufferTextures(tiledDeferredRenderPassDescriptor)
         updateScreenSize(size: size)
     }

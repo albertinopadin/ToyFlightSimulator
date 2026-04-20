@@ -7,37 +7,43 @@
 
 import MetalKit
 
-final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, @unchecked Sendable {
+final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateDrawablePresenting, @unchecked Sendable {
     // Create quad for fullscreen composition drawing
     private let _quadVertices: [TFSSimpleVertex] = [
         .init(position: .init(x: -1, y: -1)),
         .init(position: .init(x: -1, y:  1)),
         .init(position: .init(x:  1, y: -1)),
-        
+
         .init(position: .init(x:  1, y: -1)),
         .init(position: .init(x: -1, y:  1)),
         .init(position: .init(x:  1, y:  1))
     ]
-    
+
     private let _quadVertexBuffer: MTLBuffer!
-    
+
     var shadowMap: MTLTexture
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor
     // For protocol conformance:
     var shadowResolveTexture: MTLTexture? = nil
-    
+
+    // App-owned color target for the GBuffer/lighting pass; sampled by the composite pass.
+    var lightingResolveTexture: MTLTexture!
+    let compositeRenderPassDescriptor: MTLRenderPassDescriptor = SinglePassDeferredLightingRenderer.makeCompositeRenderPassDescriptor()
+
     private let _gBufferAndLightingRenderPassDescriptor: MTLRenderPassDescriptor = {
         let descriptor = MTLRenderPassDescriptor()
         descriptor.colorAttachments[TFSRenderTargetAlbedo.index].storeAction = .dontCare
         descriptor.colorAttachments[TFSRenderTargetNormal.index].storeAction = .dontCare
         descriptor.colorAttachments[TFSRenderTargetDepth.index].storeAction = .dontCare
-        
+
         // To make empty space (no nodes/skybox) look black instead of Snow...
         descriptor.colorAttachments[TFSRenderTargetLighting.index].loadAction = .clear
         descriptor.colorAttachments[TFSRenderTargetLighting.index].clearColor = Preferences.ClearColor
+        // Lighting attachment now writes into app-owned lightingResolveTexture, sampled by composite pass.
+        descriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .store
         return descriptor
     }()
-    
+
     private var gBufferTextures = SinglePassDeferredGBufferTextures()
     
     override var metalView: MTKView {
@@ -170,37 +176,51 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, @unch
     
     override func draw(in view: MTKView) {
         render {
+            // Early CB: shadow only.
             runDrawableCommands { commandBuffer in
                 commandBuffer.label = "Shadow Commands"
                 encodeShadowMapPass(into: commandBuffer)
             }
-            
+
+            // Early CB: GBuffer + lighting + transparency + skybox into lightingResolveTexture.
             runDrawableCommands { commandBuffer in
                 commandBuffer.label = "GBuffer & Lighting Commands"
-                
-                if let drawableTexture = view.currentDrawable?.texture {
-                    _gBufferAndLightingRenderPassDescriptor.colorAttachments[TFSRenderTargetLighting.index].texture = drawableTexture
-                    _gBufferAndLightingRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
-                    _gBufferAndLightingRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
-                    
-                    encodeRenderPass(into: commandBuffer, using: _gBufferAndLightingRenderPassDescriptor, label: "GBuffer & Lighting Pass") {
-                        renderEncoder in
-                        SceneManager.SetSceneConstants(with: renderEncoder)
-                        SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                        
-                        encodeGBufferStage(using: renderEncoder)
-                        encodeDirectionalLightingStage(using: renderEncoder)
-                        encodeTransparencyStage(using: renderEncoder)
-                        encodeLightMaskStage(using: renderEncoder)
-                        encodePointLightStage(using: renderEncoder)
-    //                    encodeIcosahedronStage(using: renderEncoder)
-                        encodeSkyboxStage(using: renderEncoder)
-                    }
+
+                // view.depthStencilTexture is NOT drawable-tied (separate MTKView property).
+                _gBufferAndLightingRenderPassDescriptor.depthAttachment.texture = view.depthStencilTexture
+                _gBufferAndLightingRenderPassDescriptor.stencilAttachment.texture = view.depthStencilTexture
+
+                encodeRenderPass(into: commandBuffer,
+                                 using: _gBufferAndLightingRenderPassDescriptor,
+                                 label: "GBuffer & Lighting Pass") { renderEncoder in
+                    SceneManager.SetSceneConstants(with: renderEncoder)
+                    SceneManager.SetDirectionalLightConstants(with: renderEncoder)
+
+                    encodeGBufferStage(using: renderEncoder)
+                    encodeDirectionalLightingStage(using: renderEncoder)
+                    encodeTransparencyStage(using: renderEncoder)
+                    encodeLightMaskStage(using: renderEncoder)
+                    encodePointLightStage(using: renderEncoder)
+//                    encodeIcosahedronStage(using: renderEncoder)
+                    encodeSkyboxStage(using: renderEncoder)
                 }
-                
-                if let drawable = view.currentDrawable {
-                    commandBuffer.present(drawable)
+            }
+
+            // Late CB: acquire drawable, composite, present.
+            guard let drawable = view.currentDrawable else { return }
+
+            runDrawableCommands { commandBuffer in
+                commandBuffer.label = "Composite + Present"
+                compositeRenderPassDescriptor
+                    .colorAttachments[TFSRenderTargetLighting.index].texture = drawable.texture
+
+                encodeRenderPass(into: commandBuffer,
+                                 using: compositeRenderPassDescriptor,
+                                 label: "Composite Pass") { renderEncoder in
+                    encodeCompositeStage(using: renderEncoder)
                 }
+
+                commandBuffer.present(drawable)
             }
         }
     }
@@ -214,8 +234,13 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, @unch
     
     func updateDrawableSize(size: CGSize) {
         gBufferTextures.makeTextures(device: Engine.Device, size: size, storageMode: .memoryless)
-        
-        // Re-set GBuffer textures in the view render pass descriptor after they have been reallocated by a resize
+
+        // App-owned color target bound once per resize; the early CB never touches the drawable.
+        lightingResolveTexture = Self.makeLightingResolveTexture(size: size, label: "SPDL Lighting Resolve")
+        _gBufferAndLightingRenderPassDescriptor
+            .colorAttachments[TFSRenderTargetLighting.index].texture = lightingResolveTexture
+
+        // Re-set GBuffer textures in the render pass descriptor after they have been reallocated by a resize
         setGBufferTextures(_gBufferAndLightingRenderPassDescriptor)
         updateScreenSize(size: size)
     }

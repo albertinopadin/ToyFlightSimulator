@@ -37,7 +37,13 @@
       "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" show 7eef4b4 -- \"ToyFlightSimulator Shared/AssetPipeline/Libraries/Models/ModelLibrary.swift\")",
       "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" show 7eef4b4 -- \"ToyFlightSimulator Shared/Math/Transform.swift\")",
       "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" diff -- \"ToyFlightSimulator Shared/Materials/Material.swift\")",
-      "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" diff -- \"ToyFlightSimulator Shared/Managers/DrawManager.swift\")"
+      "Bash(git -C \"/Users/albertinopadin/Desktop/Dev/Xcode Projects/ToyFlightSimulator\" diff -- \"ToyFlightSimulator Shared/Managers/DrawManager.swift\")",
+      "WebFetch(domain:forums.developer.apple.com)",
+      "WebFetch(domain:metalbyexample.com)",
+      "WebFetch(domain:asciiwwdc.com)",
+      "WebFetch(domain:zed.dev)",
+      "WebFetch(domain:www.macgaming.com)",
+      "Bash(awk '/error:|FAILED|warning:/ {print NR\": \"$0}' /Users/albertinopadin/.claude/projects/-Users-albertinopadin-Desktop-Dev-Xcode-Projects-ToyFlightSimulator/85b16193-9b03-4078-8880-4433c7a65f9a/tool-results/b12wntm82.txt)"
     ],
     "deny": [],
     "ask": []
