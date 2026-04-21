@@ -43,7 +43,9 @@
       "WebFetch(domain:asciiwwdc.com)",
       "WebFetch(domain:zed.dev)",
       "WebFetch(domain:www.macgaming.com)",
-      "Bash(awk '/error:|FAILED|warning:/ {print NR\": \"$0}' /Users/albertinopadin/.claude/projects/-Users-albertinopadin-Desktop-Dev-Xcode-Projects-ToyFlightSimulator/85b16193-9b03-4078-8880-4433c7a65f9a/tool-results/b12wntm82.txt)"
+      "Bash(awk '/error:|FAILED|warning:/ {print NR\": \"$0}' /Users/albertinopadin/.claude/projects/-Users-albertinopadin-Desktop-Dev-Xcode-Projects-ToyFlightSimulator/85b16193-9b03-4078-8880-4433c7a65f9a/tool-results/b12wntm82.txt)",
+      "Bash(xcodebuild build-for-testing *)",
+      "Bash(xcodebuild test-without-building *)"
     ],
     "deny": [],
     "ask": []
