@@ -35,7 +35,7 @@ class PlaneMesh: Mesh {
         //       causes stencil depth test failures when rendering directional lights.
         mtkMesh.invertNormals(vertexType: Vertex.self)
         
-        super.init(mdlMesh: mdlPlane, mtkMesh: mtkMesh, addTangentBases: false)
+        super.init(mdlMesh: mdlPlane, mtkMesh: mtkMesh)
     }
 }
 
@@ -72,8 +72,7 @@ class SphereMesh: Mesh {
             }
         }
         
-        // Pass addTangentBases: false since we already computed them above
-        super.init(mdlMesh: mdlSphere, mtkMesh: mtkMesh, addTangentBases: false)
+        super.init(mdlMesh: mdlSphere, mtkMesh: mtkMesh)
     }
 }
 
@@ -110,8 +109,7 @@ class CapsuleMesh: Mesh {
             }
         }
         
-        // Pass addTangentBases: false since we already computed them above
-        super.init(mdlMesh: mdlCapsule, mtkMesh: mtkMesh, addTangentBases: false)
+        super.init(mdlMesh: mdlCapsule, mtkMesh: mtkMesh)
     }
 }
 
@@ -134,7 +132,7 @@ class IcosahedronMesh: Mesh {
         mdlIcosahedron.vertexDescriptor = vertDesc
         
         let mtkIcosahedron = try! MTKMesh(mesh: mdlIcosahedron, device: Engine.Device)
-        super.init(mdlMesh: mdlIcosahedron, mtkMesh: mtkIcosahedron, addTangentBases: false)
+        super.init(mdlMesh: mdlIcosahedron, mtkMesh: mtkIcosahedron)
     }
 }
 
@@ -153,6 +151,6 @@ class SkyboxMesh: Mesh {
         
         sphereMDLMesh.vertexDescriptor = sphereDescriptor
         let mtkMesh = try! MTKMesh(mesh: sphereMDLMesh, device: Engine.Device)
-        super.init(mdlMesh: sphereMDLMesh, mtkMesh: mtkMesh, addTangentBases: false)
+        super.init(mdlMesh: sphereMDLMesh, mtkMesh: mtkMesh)
     }
 }

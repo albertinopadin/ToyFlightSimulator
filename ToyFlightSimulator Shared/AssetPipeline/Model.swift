@@ -51,4 +51,20 @@ class Model: Hashable {
     // TODO: might want to refactor this...
     // Override this in UsdModel for now...
     public func update() { }
+    
+    // Invert Z in meshes due to USD being right handed coord system:
+    // NOTE: Ordinarily this should not be needed, originally created
+    //       because some USD files were created in a right hand coord sys
+    //       and Metal uses a left hand coord sys.
+    func invertMeshZ() {
+        for mesh in meshes {
+            let vertexBuffer = mesh.vertexBuffer!
+            let count = vertexBuffer.length / Vertex.stride
+            var pointer = vertexBuffer.contents().bindMemory(to: Vertex.self, capacity: count)
+            for _ in 0..<count {
+                pointer.pointee.position.z = -pointer.pointee.position.z
+                pointer = pointer.advanced(by: 1)
+            }
+        }
+    }
 }

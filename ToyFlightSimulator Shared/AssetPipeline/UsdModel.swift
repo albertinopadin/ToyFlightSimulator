@@ -59,10 +59,7 @@ final class UsdModel: Model {
                                                basisTransform: basisTransform)
 
         super.init(name: modelName, meshes: usdMeshes)
-
-        // Invert Z in meshes due to USD being right handed coord system:
-//        invertMeshZ()   // Not needed for F-22
-
+        
         print("[UsdModel init] loading \(modelName) skeletons...")
         loadSkeletons(asset: asset)
         loadSkins(mdlMeshes: mdlMeshes)
@@ -229,18 +226,6 @@ final class UsdModel: Model {
         for (i, mesh) in meshes.enumerated() {
             if let transform = mesh.transform {
                 print("[UsdModel t.duration] \(i)th mesh \(mesh.name) duration: \(transform.duration)")
-            }
-        }
-    }
-    
-    private func invertMeshZ() {
-        for mesh in meshes {
-            let vertexBuffer = mesh.vertexBuffer!
-            let count = vertexBuffer.length / Vertex.stride
-            var pointer = vertexBuffer.contents().bindMemory(to: Vertex.self, capacity: count)
-            for _ in 0..<count {
-                pointer.pointee.position.z = -pointer.pointee.position.z
-                pointer = pointer.advanced(by: 1)
             }
         }
     }

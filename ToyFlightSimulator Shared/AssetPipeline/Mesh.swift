@@ -31,27 +31,9 @@ class Mesh {
         createBuffer()
     }
     
-    init(mdlMesh: MDLMesh,
-         mtkMesh: MTKMesh,
-         addTangentBases: Bool = true,
-         vertexDescriptor: MDLVertexDescriptor? = nil,
-         basisTransform: float4x4? = nil) {
+    init(mdlMesh: MDLMesh, mtkMesh: MTKMesh, basisTransform: float4x4? = nil) {
         print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
         name = mdlMesh.name
-        
-        if addTangentBases {
-            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                                    normalAttributeNamed: MDLVertexAttributeNormal,
-                                    tangentAttributeNamed: MDLVertexAttributeTangent)
-            
-            mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                                    tangentAttributeNamed: MDLVertexAttributeTangent,
-                                    bitangentAttributeNamed: MDLVertexAttributeBitangent)
-        }
-        
-        if let vertexDescriptor {
-            mdlMesh.vertexDescriptor = vertexDescriptor
-        }
         
         self._metalKitMesh = mtkMesh
         if _metalKitMesh!.vertexBuffers.count > 1 {
@@ -91,10 +73,22 @@ class Mesh {
                      addTangentBases: Bool = true,
                      basisTransform: float4x4? = nil) {
         do {
+            if addTangentBases {
+                mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                        normalAttributeNamed: MDLVertexAttributeNormal,
+                                        tangentAttributeNamed: MDLVertexAttributeTangent)
+                
+                mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                        tangentAttributeNamed: MDLVertexAttributeTangent,
+                                        bitangentAttributeNamed: MDLVertexAttributeBitangent)
+            }
+            
+            mdlMesh.vertexDescriptor = vertexDescriptor
+            
             print("[Mesh init] instantiating MTKMesh...")
             let mtkMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
             print("[Mesh init] MTKMesh: \(String(describing: mtkMesh))")
-            self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, addTangentBases: addTangentBases, basisTransform: basisTransform)
+            self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform)
         } catch {
             fatalError("ERROR::LOADING_MDLMESH::__::\(error.localizedDescription)")
         }
@@ -110,9 +104,8 @@ class Mesh {
     convenience init(asset: MDLAsset,
                      mtkMesh: MTKMesh,
                      mdlMesh: MDLMesh,
-                     addTangentBases: Bool = true,
                      basisTransform: float4x4? = nil) {
-        self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, addTangentBases: addTangentBases, basisTransform: basisTransform)
+        self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform)
         
         if mdlMesh.transform != nil {
             transform = TransformComponent(object: mdlMesh,
