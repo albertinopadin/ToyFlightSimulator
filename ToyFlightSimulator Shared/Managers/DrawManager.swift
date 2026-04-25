@@ -468,23 +468,28 @@ final class DrawManager {
     
     private static func applyMaterialTextures(_ material: Material, with renderEncoder: MTLRenderCommandEncoder) {
         renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
-        
+
         if let baseColorTexture = material.baseColorTexture {
             renderEncoder.setFragmentTexture(baseColorTexture, index: TFSTextureIndexBaseColor.index)
         } else {
             renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexBaseColor.index)
         }
-        
+
         if let normalMapTexture = material.normalMapTexture {
             renderEncoder.setFragmentTexture(normalMapTexture, index: TFSTextureIndexNormal.index)
         } else {
             renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexNormal.index)
         }
-        
+
         if let specularTexture = material.specularTexture {
             renderEncoder.setFragmentTexture(specularTexture, index: TFSTextureIndexSpecular.index)
         } else {
             renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexSpecular.index)
         }
+
+        var textureTransforms = material.textureTransforms
+        renderEncoder.setFragmentBytes(&textureTransforms,
+                                       length: MaterialTextureTransforms.stride,
+                                       index: TFSBufferIndexMaterialTextureTransforms.index)
     }
 }

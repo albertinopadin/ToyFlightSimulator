@@ -14,7 +14,7 @@ final public class Texture {
         self.texture = texture
     }
     
-    init(_ textureName: String, ext: String = "png", origin: MTKTextureLoader.Origin = .topLeft) {
+    init(_ textureName: String, ext: String = "png", origin: MTKTextureLoader.Origin = .bottomLeft) {
         let textureLoader = TextureLoader(textureName: textureName, textureExtension: ext, origin: origin)
         let texture: MTLTexture = textureLoader.loadTextureFromBundle()
         setTexture(texture)

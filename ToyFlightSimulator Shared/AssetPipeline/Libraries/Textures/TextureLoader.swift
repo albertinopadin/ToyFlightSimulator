@@ -18,7 +18,7 @@ struct TextureLoader {
     private var _textureExtension: String!
     private var _origin: MTKTextureLoader.Origin!
     
-    init(textureName: String, textureExtension: String = "png", origin: MTKTextureLoader.Origin = .topLeft) {
+    init(textureName: String, textureExtension: String = "png", origin: MTKTextureLoader.Origin = .bottomLeft) {
         self._textureName = textureName
         self._textureExtension = textureExtension
         self._origin = origin
@@ -52,7 +52,7 @@ struct TextureLoader {
     
     public static func LoadTexture(name: String,
                                    scale: CGFloat = 1.0,
-                                   origin: MTKTextureLoader.Origin = .topLeft) -> MTLTexture? {
+                                   origin: MTKTextureLoader.Origin = .bottomLeft) -> MTLTexture? {
         if let cachedTexture = Self.StringToTextureCache[name] {
             return cachedTexture
         } else {

@@ -44,12 +44,23 @@ typedef struct {
     simd_float3 ambient;
     simd_float3 diffuse;
     simd_float3 specular;
-    
+
     float shininess;
     float opacity;
-    
+
     bool isLit;
 } MaterialProperties;
+
+// 2D affine UV transforms per texture slot. Layout matches glTF KHR_texture_transform's
+// `mat3` form, applied as `(M * float3(uv, 1)).xy`. Default-constructed values are identity.
+// Sourced from MDLTextureSampler.transform during material import.
+typedef struct {
+    matrix_float3x3 baseColorUVTransform;
+    matrix_float3x3 normalUVTransform;
+    matrix_float3x3 specularUVTransform;
+    matrix_float3x3 opacityUVTransform;
+    bool hasTextureTransforms;  // true → at least one slot has a non-identity transform
+} MaterialTextureTransforms;
 
 typedef enum {
     Ambient,
@@ -89,9 +100,10 @@ typedef enum {
     TFSBufferPointLightsPosition    = 6,
     TFSBufferModelConstants         = 7,
     TFSBufferIndexSceneConstants    = 8,
-    TFSBufferIndexMaterial          = 9,
-    TFSBufferIndexTerrain           = 10,
-    TFSBufferIndexJointBuffer       = 11
+    TFSBufferIndexMaterial                  = 9,
+    TFSBufferIndexTerrain                   = 10,
+    TFSBufferIndexJointBuffer               = 11,
+    TFSBufferIndexMaterialTextureTransforms = 12
 } TFSBufferIndices;
 
 // Attribute index values shared between shader and C code to ensure Metal shader vertex

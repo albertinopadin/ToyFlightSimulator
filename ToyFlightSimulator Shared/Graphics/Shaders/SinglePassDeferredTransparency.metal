@@ -37,16 +37,22 @@ single_pass_deferred_transparency_vertex(   VertexIn       in              [[ st
 }
 
 fragment float4
-single_pass_deferred_transparency_fragment(   VertexOut          in                  [[ stage_in ]],
-                                     constant MaterialProperties &material           [[ buffer(TFSBufferIndexMaterial) ]],
-                                     sampler                     sampler2d           [[ sampler(0) ]],
-                                     texture2d<half>             baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]]) {
+single_pass_deferred_transparency_fragment(   VertexOut                          in                  [[ stage_in ]],
+                                     constant MaterialProperties                 &material           [[ buffer(TFSBufferIndexMaterial) ]],
+                                     constant MaterialTextureTransforms          &uvXforms           [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
+                                     sampler                                     sampler2d           [[ sampler(0) ]],
+                                     texture2d<half>                             baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]]) {
+    float2 baseUV = in.uv;
+    if (uvXforms.hasTextureTransforms) {
+        baseUV = ApplyUVTransform(in.uv, uvXforms.baseColorUVTransform);
+    }
+
     float4 color = material.color;
 
     if (in.useObjectColor) {
         color = in.objectColor;
     } else if (!is_null_texture(baseColorTexture)) {
-        color = float4(baseColorTexture.sample(sampler2d, in.uv));
+        color = float4(baseColorTexture.sample(sampler2d, baseUV));
     }
     
     if (color.a < 1.0 && material.opacity < 1.0) {

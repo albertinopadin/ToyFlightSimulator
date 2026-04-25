@@ -108,34 +108,44 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in 
     return gBuffer;
 }
 
-fragment GBufferData gbuffer_fragment_material(ColorInOut                   in           [[ stage_in ]],
-                                               constant MaterialProperties &material     [[ buffer(TFSBufferIndexMaterial) ]],
-                                               sampler                      sampler2d    [[ sampler(0) ]],
-                                               texture2d<half>              baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
-                                               texture2d<half>              normalMap    [[ texture(TFSTextureIndexNormal) ]],
-                                               texture2d<half>              specularMap  [[ texture(TFSTextureIndexSpecular) ]],
-                                               depth2d<float>               shadowMap    [[ texture(TFSTextureIndexShadow) ]])
+fragment GBufferData gbuffer_fragment_material(ColorInOut                          in           [[ stage_in ]],
+                                               constant MaterialProperties        &material     [[ buffer(TFSBufferIndexMaterial) ]],
+                                               constant MaterialTextureTransforms &uvXforms     [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
+                                               sampler                             sampler2d    [[ sampler(0) ]],
+                                               texture2d<half>                     baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
+                                               texture2d<half>                     normalMap    [[ texture(TFSTextureIndexNormal) ]],
+                                               texture2d<half>                     specularMap  [[ texture(TFSTextureIndexSpecular) ]],
+                                               depth2d<float>                      shadowMap    [[ texture(TFSTextureIndexShadow) ]])
 {
+    float2 baseUV     = in.tex_coord.xy;
+    float2 normalUV   = in.tex_coord.xy;
+    float2 specularUV = in.tex_coord.xy;
+    if (uvXforms.hasTextureTransforms) {
+        baseUV     = ApplyUVTransform(in.tex_coord.xy, uvXforms.baseColorUVTransform);
+        normalUV   = ApplyUVTransform(in.tex_coord.xy, uvXforms.normalUVTransform);
+        specularUV = ApplyUVTransform(in.tex_coord.xy, uvXforms.specularUVTransform);
+    }
+
     half4 base_color_sample;
     half4 normal_sample;
     half specular_contrib;
-    
+
     if (in.useObjectColor) {
         base_color_sample = half4(in.objectColor);
     } else if (!is_null_texture(baseColorMap)) {
-        base_color_sample = baseColorMap.sample(sampler2d, in.tex_coord.xy);
+        base_color_sample = baseColorMap.sample(sampler2d, baseUV);
     } else {
         base_color_sample = half4(in.color);
     }
-    
+
     if (!in.useObjectColor && !is_null_texture(normalMap)) {
-        normal_sample = normalMap.sample(sampler2d, in.tex_coord.xy);
+        normal_sample = normalMap.sample(sampler2d, normalUV);
     } else {
         normal_sample = half4(in.normal, 1.0);
     }
-    
+
     if (!in.useObjectColor && !is_null_texture(specularMap)) {
-        specular_contrib = specularMap.sample(sampler2d, in.tex_coord.xy).r;
+        specular_contrib = specularMap.sample(sampler2d, specularUV).r;
     } else {
         specular_contrib = 1.0;
     }

@@ -66,6 +66,12 @@ typedef struct {
     simd_half4 lighting [[color(TFSRenderTargetLighting), raster_order_group(TFSLightingROG)]];
 } AccumLightBuffer;
 
+// Apply a 2D affine UV transform sourced from MDLTextureSampler.transform.
+// Caller should gate via `MaterialTextureTransforms.hasTextureTransforms` to skip on the identity-only common path.
+inline float2 ApplyUVTransform(float2 uv, float3x3 transform) {
+    return (transform * float3(uv, 1.0)).xy;
+}
+
 #endif
 
 // For Tiled Deferred Renderer:

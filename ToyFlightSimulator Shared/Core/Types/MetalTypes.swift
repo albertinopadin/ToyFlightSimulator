@@ -84,7 +84,7 @@ extension MaterialProperties: sizeable {
                   opacity: opacity,
                   isLit: lit)
     }
-    
+
     init() {
         self.init(color: PINK_DEBUG_COLOR,
                   ambient: [0.1, 0.1, 0.1],
@@ -93,6 +93,16 @@ extension MaterialProperties: sizeable {
                   shininess: 2.0,
                   opacity: 1.0,
                   isLit: true)
+    }
+}
+
+extension MaterialTextureTransforms: sizeable {
+    init() {
+        self.init(baseColorUVTransform: matrix_identity_float3x3,
+                  normalUVTransform:    matrix_identity_float3x3,
+                  specularUVTransform:  matrix_identity_float3x3,
+                  opacityUVTransform:   matrix_identity_float3x3,
+                  hasTextureTransforms: false)
     }
 }
 
