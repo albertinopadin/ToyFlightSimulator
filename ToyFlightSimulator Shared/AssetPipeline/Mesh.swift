@@ -85,6 +85,8 @@ class Mesh {
             
             mdlMesh.vertexDescriptor = vertexDescriptor
             
+//            mdlMesh.flipTextureCoordinates(inAttributeNamed: MDLVertexAttributeTextureCoordinate)
+            
             print("[Mesh init] instantiating MTKMesh...")
             let mtkMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
             print("[Mesh init] MTKMesh: \(String(describing: mtkMesh))")

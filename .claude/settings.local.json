@@ -45,7 +45,12 @@
       "WebFetch(domain:www.macgaming.com)",
       "Bash(awk '/error:|FAILED|warning:/ {print NR\": \"$0}' /Users/albertinopadin/.claude/projects/-Users-albertinopadin-Desktop-Dev-Xcode-Projects-ToyFlightSimulator/85b16193-9b03-4078-8880-4433c7a65f9a/tool-results/b12wntm82.txt)",
       "Bash(xcodebuild build-for-testing *)",
-      "Bash(xcodebuild test-without-building *)"
+      "Bash(xcodebuild test-without-building *)",
+      "Bash(curl -s \"https://registry.khronos.org/glTF/specs/2.0/extensions/Khronos/KHR_texture_transform/README.md\")",
+      "Bash(curl -sL \"https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md\")",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:openusd.org)",
+      "WebFetch(domain:docs.rs)"
     ],
     "deny": [],
     "ask": []
