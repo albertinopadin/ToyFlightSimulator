@@ -17,8 +17,7 @@ class Model: Hashable {
     public let id: String
     public let name: String
     public var meshes: [Mesh] = []
-    public weak var parent: GameObject?
-    
+
     static func == (lhs: Model, rhs: Model) -> Bool {
         return lhs.id == rhs.id
     }

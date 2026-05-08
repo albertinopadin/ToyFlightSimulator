@@ -30,28 +30,24 @@ class GameObject: Node, PhysicsEntity, Renderable, Hashable {
         return AABB(center: getPosition(), halfExtents: halfExtents)
     }
     
-    public var model: Model!
+    public let model: Model
     public var modelConstants = ModelConstants()
-    
+
     // Index into persistent instance buffer. -1 if not registered:
     var instanceBufferIndex: Int = -1
-    
+
     static func == (lhs: GameObject, rhs: GameObject) -> Bool {
         return lhs.getID() == rhs.getID()
     }
-    
+
     public var isTransparent: Bool {
         return (modelConstants.useObjectColor && modelConstants.objectColor.w < 1.0)
     }
-    
+
     init(name: String, modelType: ModelType) {
+        // ModelLibrary's subscript fatalErrors on missing keys, so this is non-optional.
+        self.model = Assets.Models[modelType]
         super.init(name: name)
-        model = Assets.Models[modelType]
-        // TODO: This actually doesn't make sense because this parent gets overwritten everytime a new object with the same
-        //       model is created. Either remove this or if you want to keep track of which GO's are assoicated with what
-        //       models use a list you append the GO to.
-        model.parent = self
-        print("GameObject init; named \(self.getName())")
     }
     
     override func update() {

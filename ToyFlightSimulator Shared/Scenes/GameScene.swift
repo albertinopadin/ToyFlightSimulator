@@ -132,10 +132,11 @@ class GameScene: Node {
     // TODO: Refactor to maybe get rid of this doUpdate method...
     override func doUpdate() {
         InputManager.HandleMouseClickDebounced(command: .ClickSelect) {
+            guard let camera = CameraManager.CurrentCamera else { return }
             for node in children {
                 if node.clickedOnNode(mousePosition: Mouse.GetMouseViewportPosition(),
-                                      viewMatrix: CameraManager.CurrentCamera.viewMatrix,
-                                      projectionMatrix: CameraManager.CurrentCamera.projectionMatrix) {
+                                      viewMatrix: camera.viewMatrix,
+                                      projectionMatrix: camera.projectionMatrix) {
                     print("[GameScene doUpdate] Node \(node.getName()) got focus!")
                     node.hasFocus = true
                 } else {
@@ -146,22 +147,23 @@ class GameScene: Node {
                 }
             }
         }
-        
+
         InputManager.HasMultiInputCommand(command: .ResetScene) {
             teardownScene()
             initScene()
         }
     }
-    
+
     override func update() {
         super.update()
-        _sceneConstants.viewMatrix = CameraManager.CurrentCamera.viewMatrix
+        guard let camera = CameraManager.CurrentCamera else { return }
+        _sceneConstants.viewMatrix = camera.viewMatrix
         _sceneConstants.skyViewMatrix = _sceneConstants.viewMatrix
         _sceneConstants.skyViewMatrix[3][0] = 0  // Remove x translation
         _sceneConstants.skyViewMatrix[3][1] = 0  // Remove y translation
         _sceneConstants.skyViewMatrix[3][2] = 0  // Remove z translation
-        _sceneConstants.projectionMatrix = CameraManager.CurrentCamera.projectionMatrix
-        _sceneConstants.projectionMatrixInverse = CameraManager.CurrentCamera.projectionMatrix.inverse
+        _sceneConstants.projectionMatrix = camera.projectionMatrix
+        _sceneConstants.projectionMatrixInverse = camera.projectionMatrix.inverse
         _sceneConstants.totalGameTime = Float(GameTime.TotalGameTime)
         _sceneConstants.cameraPosition = CameraManager.GetCurrentCameraPosition()
     }
@@ -173,7 +175,10 @@ class GameScene: Node {
     }
 
     func setDirectionalLightConstants(with renderEncoder: MTLRenderCommandEncoder) {
-        var directionalLight = LightManager.GetDirectionalLightData(viewMatrix: _sceneConstants.skyViewMatrix).first!
+        guard var directionalLight = LightManager
+            .GetDirectionalLightData(viewMatrix: _sceneConstants.skyViewMatrix)
+            .first
+        else { return }
         renderEncoder.setVertexBytes(&directionalLight,
                                      length: LightData.stride,
                                      index: TFSBufferDirectionalLightData.index)

@@ -309,20 +309,22 @@ final class DrawManager {
     }
     
     static func DrawSky(with renderEncoder: MTLRenderCommandEncoder) {
-        if let skyObj = SceneManager.skyData.gameObjects.first as? SkyEntity {
-            let pso: RenderPipelineStateType = ((skyObj as? SkyBox) != nil) ? .Skybox : .SkySphere
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[pso])
-            renderEncoder.setFragmentTexture(Assets.Textures[skyObj.textureType], index: TFSTextureIndexSkyBox.index)
+        guard let skyObj = SceneManager.skyData.gameObjects.first as? SkyEntity,
+              let mesh = skyObj.model.meshes.first,
+              let skyMeshData = SceneManager.skyData.meshDatas.first,
+              let skyRegion = SceneManager.getSkySnapshot(frameIndex: currentFrameIndex)
+        else { return }
 
-            if let skyRegion = SceneManager.getSkySnapshot(frameIndex: currentFrameIndex) {
-                DrawFromRingBuffer(renderEncoder,
-                                   model: skyObj.model,
-                                   region: skyRegion,
-                                   mesh: skyObj.model.meshes.first!,
-                                   submeshes: SceneManager.skyData.meshDatas.first!.opaqueSubmeshes,
-                                   applyMaterials: false)
-            }
-        }
+        let pso: RenderPipelineStateType = ((skyObj as? SkyBox) != nil) ? .Skybox : .SkySphere
+        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[pso])
+        renderEncoder.setFragmentTexture(Assets.Textures[skyObj.textureType], index: TFSTextureIndexSkyBox.index)
+
+        DrawFromRingBuffer(renderEncoder,
+                           model: skyObj.model,
+                           region: skyRegion,
+                           mesh: mesh,
+                           submeshes: skyMeshData.opaqueSubmeshes,
+                           applyMaterials: false)
     }
     
     static func DrawParticles(with renderEncoder: MTLRenderCommandEncoder) {
@@ -421,25 +423,24 @@ final class DrawManager {
             }
 
             for submesh in submeshes {
-                if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
-                    renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+                guard let parentMesh = submesh.parentMesh,
+                      let vertexBuffer = parentMesh.vertexBuffer else { continue }
+                renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
-                    if applyMaterials {
-                        applyMaterialTextures(submesh.material!, with: renderEncoder)
-
-                        var materialProps = submesh.material!.properties
-                        renderEncoder.setFragmentBytes(&materialProps,
-                                                       length: MaterialProperties.stride,
-                                                       index: TFSBufferIndexMaterial.index)
-                    }
-                    
-                    renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                        indexCount: submesh.indexCount,
-                                                        indexType: submesh.indexType,
-                                                        indexBuffer: submesh.indexBuffer,
-                                                        indexBufferOffset: submesh.indexBufferOffset,
-                                                        instanceCount: mesh.instanceCount * region.count)
+                if applyMaterials, let material = submesh.material {
+                    applyMaterialTextures(material, with: renderEncoder)
+                    var materialProps = material.properties
+                    renderEncoder.setFragmentBytes(&materialProps,
+                                                   length: MaterialProperties.stride,
+                                                   index: TFSBufferIndexMaterial.index)
                 }
+
+                renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                    indexCount: submesh.indexCount,
+                                                    indexType: submesh.indexType,
+                                                    indexBuffer: submesh.indexBuffer,
+                                                    indexBufferOffset: submesh.indexBufferOffset,
+                                                    instanceCount: mesh.instanceCount * region.count)
             }
         }
     }
@@ -452,38 +453,36 @@ final class DrawManager {
                              submeshes: [Submesh],
                              applyMaterials: Bool) {
         EncodeRender(using: renderEncoder, label: "Rendering \(model.name)") {
-            if !uniforms.isEmpty {
-                var uniforms = uniforms
+            guard !uniforms.isEmpty else { return }
+            var uniforms = uniforms
 
-                let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
-                for idx in 0..<uniforms.count {
-                    uniforms[idx].modelMatrix *= currentLocalTransform
+            let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
+            for idx in 0..<uniforms.count {
+                uniforms[idx].modelMatrix *= currentLocalTransform
+            }
+
+            guard let (ringBuffer, offset) = writeUniformsToRingBuffer(&uniforms) else { return }
+            renderEncoder.setVertexBuffer(ringBuffer, offset: offset, index: TFSBufferModelConstants.index)
+
+            for submesh in submeshes {
+                guard let parentMesh = submesh.parentMesh,
+                      let vertexBuffer = parentMesh.vertexBuffer else { continue }
+                renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+
+                if applyMaterials, let material = submesh.material {
+                    applyMaterialTextures(material, with: renderEncoder)
+                    var materialProps = material.properties
+                    renderEncoder.setFragmentBytes(&materialProps,
+                                                   length: MaterialProperties.stride,
+                                                   index: TFSBufferIndexMaterial.index)
                 }
 
-                guard let (ringBuffer, offset) = writeUniformsToRingBuffer(&uniforms) else { return }
-                renderEncoder.setVertexBuffer(ringBuffer, offset: offset, index: TFSBufferModelConstants.index)
-                
-                for submesh in submeshes {
-                    if let vertexBuffer = submesh.parentMesh!.vertexBuffer {
-                        renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-                        
-                        if applyMaterials {
-                            applyMaterialTextures(submesh.material!, with: renderEncoder)
-                            
-                            var materialProps = submesh.material!.properties
-                            renderEncoder.setFragmentBytes(&materialProps,
-                                                           length: MaterialProperties.stride,
-                                                           index: TFSBufferIndexMaterial.index)
-                        }
-                        
-                        renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                            indexCount: submesh.indexCount,
-                                                            indexType: submesh.indexType,
-                                                            indexBuffer: submesh.indexBuffer,
-                                                            indexBufferOffset: submesh.indexBufferOffset,
-                                                            instanceCount: mesh.instanceCount * uniforms.count)
-                    }
-                }
+                renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                    indexCount: submesh.indexCount,
+                                                    indexType: submesh.indexType,
+                                                    indexBuffer: submesh.indexBuffer,
+                                                    indexBufferOffset: submesh.indexBufferOffset,
+                                                    instanceCount: mesh.instanceCount * uniforms.count)
             }
         }
     }
