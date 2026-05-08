@@ -74,18 +74,6 @@ struct DirectionalLightingRenderPipelineState: RenderPipelineState {
 }
 
 struct TransparencyPipelineState: RenderPipelineState {
-    static func enableBlending(colorAttachment: MTLRenderPipelineColorAttachmentDescriptor) {
-        colorAttachment.isBlendingEnabled = true
-        colorAttachment.rgbBlendOperation = .add
-        colorAttachment.alphaBlendOperation = .add
-        colorAttachment.sourceRGBBlendFactor = .one
-        colorAttachment.sourceAlphaBlendFactor = .one
-        colorAttachment.destinationRGBBlendFactor = .one
-        colorAttachment.destinationAlphaBlendFactor = .zero
-        colorAttachment.sourceRGBBlendFactor = .one
-        colorAttachment.sourceAlphaBlendFactor = .one
-    }
-    
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Transparency Stage") { descriptor in
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]

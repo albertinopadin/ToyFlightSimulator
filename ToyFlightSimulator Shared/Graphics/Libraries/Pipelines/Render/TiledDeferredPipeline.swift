@@ -75,18 +75,6 @@ struct TiledDeferredDirectionalLightPipelineState: RenderPipelineState {
 }
 
 struct TiledDeferredTransparencyPipelineState: RenderPipelineState {
-    static func enableBlending(colorAttachment: MTLRenderPipelineColorAttachmentDescriptor) {
-        colorAttachment.isBlendingEnabled = true
-        colorAttachment.rgbBlendOperation = .add
-        colorAttachment.alphaBlendOperation = .add
-        colorAttachment.sourceRGBBlendFactor = .one
-        colorAttachment.sourceAlphaBlendFactor = .one
-        colorAttachment.destinationRGBBlendFactor = .one
-        colorAttachment.destinationAlphaBlendFactor = .zero
-        colorAttachment.sourceRGBBlendFactor = .one
-        colorAttachment.sourceAlphaBlendFactor = .one
-    }
-    
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Transparent Render") { descriptor in
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
@@ -102,18 +90,6 @@ struct TiledDeferredTransparencyPipelineState: RenderPipelineState {
 }
 
 struct TiledDeferredPointLightPipelineState: RenderPipelineState {
-    static func enableBlending(colorAttachment: MTLRenderPipelineColorAttachmentDescriptor) {
-        colorAttachment.isBlendingEnabled = true
-        colorAttachment.rgbBlendOperation = .add
-        colorAttachment.alphaBlendOperation = .add
-        colorAttachment.sourceRGBBlendFactor = .one
-        colorAttachment.sourceAlphaBlendFactor = .one
-        colorAttachment.destinationRGBBlendFactor = .one
-        colorAttachment.destinationAlphaBlendFactor = .zero
-        colorAttachment.sourceRGBBlendFactor = .one
-        colorAttachment.sourceAlphaBlendFactor = .one
-    }
-    
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Deferred Point Light") { descriptor in
             descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredPointLightVertex]
@@ -123,7 +99,7 @@ struct TiledDeferredPointLightPipelineState: RenderPipelineState {
             descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.PositionOnly]
-            Self.enableBlending(colorAttachment: descriptor.colorAttachments[TFSRenderTargetLighting.index])
+            Self.enableAdditiveBlending(colorAttachmentDescriptor: descriptor.colorAttachments[TFSRenderTargetLighting.index])
         }
     }()
 }

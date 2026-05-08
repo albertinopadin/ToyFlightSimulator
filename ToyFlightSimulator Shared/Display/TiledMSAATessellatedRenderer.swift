@@ -11,6 +11,7 @@ final class TiledMSAATessellatedRenderer:   Renderer,
                                             ShadowRendering,
                                             ParticleRendering,
                                             TessellationRendering,
+                                            TiledGBufferRendering,
                                             LateDrawablePresenting,
                                             @unchecked Sendable {
     private static let sampleCount: Int = 4
@@ -19,7 +20,7 @@ final class TiledMSAATessellatedRenderer:   Renderer,
     private static let tileHeight = 16
     private static let imageBlockSampleLength = 32
 
-    private var gBufferTextures = TiledDeferredGBufferTextures()
+    var gBufferTextures = TiledDeferredGBufferTextures()
 
     var shadowMap: MTLTexture
     var shadowResolveTexture: MTLTexture?
@@ -86,20 +87,6 @@ final class TiledMSAATessellatedRenderer:   Renderer,
         shadowRenderPassDescriptor = Self.makeMultiSampledShadowRenderPassDescriptor(shadowTexture: shadowMap,
                                                                                      resolveTexture: shadowResolveTexture!)
         super.init(mtkView, type: .TiledMSAATessellated)
-    }
-    
-    func setGBufferTextures(_ renderPassDescriptor: MTLRenderPassDescriptor) {
-        renderPassDescriptor.colorAttachments[TFSRenderTargetAlbedo.index].texture = gBufferTextures.albedoTexture
-        renderPassDescriptor.colorAttachments[TFSRenderTargetNormal.index].texture = gBufferTextures.normalTexture
-        renderPassDescriptor.colorAttachments[TFSRenderTargetPosition.index].texture = gBufferTextures.positionTexture
-        setDepthAndStencilTextures(renderPassDescriptor)
-    }
-    
-    func setDepthAndStencilTextures(_ renderPassDescriptor: MTLRenderPassDescriptor) {
-        renderPassDescriptor.depthAttachment.texture = gBufferTextures.depthTexture
-        renderPassDescriptor.depthAttachment.storeAction = .dontCare
-        renderPassDescriptor.stencilAttachment.texture = gBufferTextures.depthTexture
-        renderPassDescriptor.stencilAttachment.storeAction = .dontCare
     }
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {

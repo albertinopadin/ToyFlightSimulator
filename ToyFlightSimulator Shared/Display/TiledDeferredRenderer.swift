@@ -7,10 +7,10 @@
 
 import MetalKit
 
-final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering, LateDrawablePresenting, @unchecked Sendable {
+final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering, TiledGBufferRendering, LateDrawablePresenting, @unchecked Sendable {
     private let icosahedron = IcosahedronMesh()
 
-    private var gBufferTextures = TiledDeferredGBufferTextures()
+    var gBufferTextures = TiledDeferredGBufferTextures()
 
     var shadowMap: MTLTexture
     var shadowRenderPassDescriptor: MTLRenderPassDescriptor
@@ -65,20 +65,6 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
         shadowMap = Self.makeShadowMap(label: "Shadow Texture")
         shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
         super.init(mtkView, type: .TiledDeferred)
-    }
-    
-    func setGBufferTextures(_ renderPassDescriptor: MTLRenderPassDescriptor) {
-        renderPassDescriptor.colorAttachments[TFSRenderTargetAlbedo.index].texture = gBufferTextures.albedoTexture
-        renderPassDescriptor.colorAttachments[TFSRenderTargetNormal.index].texture = gBufferTextures.normalTexture
-        renderPassDescriptor.colorAttachments[TFSRenderTargetPosition.index].texture = gBufferTextures.positionTexture
-        setDepthAndStencilTextures(renderPassDescriptor)
-    }
-    
-    func setDepthAndStencilTextures(_ renderPassDescriptor: MTLRenderPassDescriptor) {
-        renderPassDescriptor.depthAttachment.texture = gBufferTextures.depthTexture
-        renderPassDescriptor.depthAttachment.storeAction = .dontCare
-        renderPassDescriptor.stencilAttachment.texture = gBufferTextures.depthTexture
-        renderPassDescriptor.stencilAttachment.storeAction = .dontCare
     }
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {

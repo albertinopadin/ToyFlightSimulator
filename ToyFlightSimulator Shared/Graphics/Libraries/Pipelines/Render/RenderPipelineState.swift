@@ -66,6 +66,17 @@ extension RenderPipelineState {
         colorAttachmentDescriptor.destinationAlphaBlendFactor = .oneMinusSourceAlpha
         colorAttachmentDescriptor.alphaBlendOperation = .add
     }
+
+    /// Additive blending: dst = src + dst (opaque alpha kept). Used by point-light volumes.
+    static func enableAdditiveBlending(colorAttachmentDescriptor ca: MTLRenderPipelineColorAttachmentDescriptor) {
+        ca.isBlendingEnabled = true
+        ca.rgbBlendOperation = .add
+        ca.alphaBlendOperation = .add
+        ca.sourceRGBBlendFactor = .one
+        ca.sourceAlphaBlendFactor = .one
+        ca.destinationRGBBlendFactor = .one
+        ca.destinationAlphaBlendFactor = .zero
+    }
     
     static func getRenderPipelineDescriptor(vertexDescriptorType: VertexDescriptorType,
                                             vertexShaderType: ShaderType,
