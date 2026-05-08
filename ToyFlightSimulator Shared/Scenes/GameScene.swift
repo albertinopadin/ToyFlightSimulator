@@ -86,6 +86,40 @@ class GameScene: Node {
         self.addChild(lightObject)
         LightManager.AddLightObject(lightObject)
     }
+
+    /// Adds a static, color-tinted ground plane and returns it.
+    /// Defaults match the most common configuration across scenes
+    /// (green, restitution 1.0, rotated 270° about Z, scale 1000).
+    @discardableResult
+    func addGround(color: float4 = float4(0.3, 0.7, 0.1, 1.0),
+                   restitution: Float = 1.0,
+                   rotationZ: Float = Float(270).toRadians,
+                   scale: Float = 1000) -> CollidablePlane {
+        let ground = CollidablePlane()
+        ground.collisionNormal = [0, 1, 0]
+        ground.collisionShape = .Plane
+        ground.restitution = restitution
+        ground.isStatic = true
+        ground.setColor(color)
+        ground.rotateZ(rotationZ)
+        ground.setScale(scale)
+        addChild(ground)
+        return ground
+    }
+
+    /// Adds the default sky for the active renderer, if one is supported.
+    /// OIT → SkySphere (clouds), SinglePassDeferred → SkyBox; other
+    /// renderers get no sky (caller can override).
+    func setupDefaultSky() {
+        switch _rendererType {
+            case .OrderIndependentTransparency:
+                addChild(SkySphere(textureType: .Clouds_Skysphere))
+            case .SinglePassDeferredLighting:
+                addChild(SkyBox(textureType: .SkyMap))
+            default:
+                break
+        }
+    }
     
     func updateCameras(deltaTime: Double) {
         CameraManager.Update(deltaTime: deltaTime)

@@ -79,19 +79,6 @@ final class BallPhysicsScene: GameScene {
         return sphrs
     }()
     
-    private func addGround() {
-        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        ground = CollidablePlane()
-        ground.collisionNormal = [0, 1, 0]
-        ground.collisionShape = .Plane
-        ground.restitution = 1.0
-        ground.isStatic = true
-        ground.setColor(groundColor)
-        ground.rotateZ(Float(270).toRadians)
-        ground.setScale(1000)
-        addChild(ground)
-    }
-    
     private func addSun() {
         let sun = Sun()
         sun.isStatic = true
@@ -104,7 +91,7 @@ final class BallPhysicsScene: GameScene {
     }
     
     override func buildScene() {
-        addGround()
+        ground = addGround()
         addSun()
         
         debugCamera.setPosition([0, 5, 15])

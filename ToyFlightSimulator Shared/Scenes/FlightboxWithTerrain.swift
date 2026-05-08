@@ -13,7 +13,7 @@ final class FlightboxWithTerrain: GameScene {
     var quad = Quad()
     var capsule = CapsuleObject()
     
-    private func addGround() {
+    private func addTerrain() {
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
         let ground = TerrainObject(size: [8, 8])
         ground.setColor(groundColor)
@@ -21,9 +21,9 @@ final class FlightboxWithTerrain: GameScene {
         ground.setScale(100)
         addChild(ground)
     }
-    
+
     override func buildScene() {
-        addGround()
+        addTerrain()
         
 //        let jet = F35(scale: 0.8)
 //        let jet = F35(scale: 0.15)
@@ -43,16 +43,7 @@ final class FlightboxWithTerrain: GameScene {
         capsule.rotateZ(Float(90).toRadians)
         addChild(capsule)
         
-        switch _rendererType {
-            case .OrderIndependentTransparency:
-                let sky = SkySphere(textureType: .Clouds_Skysphere)
-                addChild(sky)
-            case .SinglePassDeferredLighting:
-                let sky = SkyBox(textureType: .SkyMap)
-                addChild(sky)
-            default:
-                print("No sky")
-        }
+        setupDefaultSky()
         
         // TODO: Why does position with z = 0 result in much darker lighting ???
         sun.setPosition(0, jetPos.y + 100, 4)

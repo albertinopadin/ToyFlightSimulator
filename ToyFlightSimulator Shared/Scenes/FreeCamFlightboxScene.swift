@@ -18,21 +18,6 @@ final class FreeCamFlightboxScene: GameScene {
     let physicsWorld = PhysicsWorld(updateType: .HeckerVerlet)
     var entities: [PhysicsEntity] = []
     
-    private func addGround() {
-        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        let ground = CollidablePlane()
-        ground.collisionNormal = [0, 1, 0]
-        ground.collisionShape = .Plane
-        ground.restitution = 1.0
-        ground.isStatic = true
-        ground.setColor(groundColor)
-        ground.rotateZ(Float(270).toRadians)
-        ground.setScale(1000)
-        addChild(ground)
-        
-        entities.append(ground)
-    }
-    
     override func buildScene() {
         sun.setPosition(1, 25, 5)
         sun.setLightColor(1, 1, 1)
@@ -40,15 +25,16 @@ final class FreeCamFlightboxScene: GameScene {
         
         print("Sun light type: \(sun.lightType)")
         
+        // NOTE: This scene historically falls back to SkyBox for *any*
+        // non-OIT renderer (including Tiled variants), unlike other scenes
+        // which limit SkyBox to SinglePassDeferredLighting.
         if _rendererType == .OrderIndependentTransparency {
-            let sky = SkySphere(textureType: .Clouds_Skysphere)
-            addChild(sky)
+            addChild(SkySphere(textureType: .Clouds_Skysphere))
         } else {
-            let sky = SkyBox(textureType: .SkyMap)
-            addChild(sky)
+            addChild(SkyBox(textureType: .SkyMap))
         }
-        
-        addGround()
+
+        entities.append(addGround())
         
 //        camera.setPosition(4, 12, 20)
         camera.setPosition(24, 6, 5)

@@ -14,23 +14,9 @@ final class FlightboxWithPhysics: GameScene {
     let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
     var entities: [PhysicsEntity] = []
     
-    private func addGround() {
-        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        let ground = CollidablePlane()
-        ground.collisionNormal = [0, 1, 0]
-        ground.collisionShape = .Plane
-        ground.restitution = 1.0
-        ground.isStatic = true
-        ground.setColor(groundColor)
-        ground.rotateZ(Float(90).toRadians)
-        ground.setScale(1000)
-        addChild(ground)
-        
-        entities.append(ground)
-    }
-    
     override func buildScene() {
-        addGround()
+        // This scene uses rotateZ(90°) instead of the default 270°.
+        entities.append(addGround(rotationZ: Float(90).toRadians))
         
         let jet = CollidableF22(scale: 0.25)
         
@@ -40,16 +26,7 @@ final class FlightboxWithPhysics: GameScene {
         addChild(jet)
         let jetPos = jet.getPosition()
         
-        switch _rendererType {
-            case .OrderIndependentTransparency:
-                let sky = SkySphere(textureType: .Clouds_Skysphere)
-                addChild(sky)
-            case .SinglePassDeferredLighting:
-                let sky = SkyBox(textureType: .SkyMap)
-                addChild(sky)
-            default:
-                print("No sky")
-        }
+        setupDefaultSky()
         
         // TODO: Why does position with z = 0 result in much darker lighting ???
         sun.setPosition(0, jetPos.y + 100, 4)
