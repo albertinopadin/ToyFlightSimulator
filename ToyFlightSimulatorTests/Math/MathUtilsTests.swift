@@ -64,20 +64,6 @@ struct MathUtilsTests {
 
     // MARK: - float4x4 convenience initializers
 
-    @Test("init(scale:) places scale on the diagonal")
-    func initScale() {
-        let m = float4x4(scale: SIMD3<Float>(2, 3, 4))
-        #expect(m.columns.0.x == 2)
-        #expect(m.columns.1.y == 3)
-        #expect(m.columns.2.z == 4)
-    }
-
-    @Test("init(translate:) places translation in column 3")
-    func initTranslate() {
-        let m = float4x4(translate: SIMD3<Float>(5, 6, 7))
-        #expect(m.columns.3 == SIMD4<Float>(5, 6, 7, 1))
-    }
-
     @Test("init(rotateAbout:byAngle:) does NOT normalize its axis (documents current behavior)")
     func rotateAboutDoesNotNormalize() {
         // Passing a non-unit axis produces a non-rotation matrix;

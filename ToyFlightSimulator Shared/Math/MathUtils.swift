@@ -42,36 +42,10 @@ extension SIMD4 {
 }
 
 extension float4x4 {
-    init(scale2D s: SIMD2<Float>) {
-        self.init(SIMD4<Float>(s.x,   0, 0, 0),
-                  SIMD4<Float>(  0, s.y, 0, 0),
-                  SIMD4<Float>(  0,   0, 1, 0),
-                  SIMD4<Float>(  0,   0, 0, 1))
-    }
-
-    init(rotateZ zRadians: Float) {
-        let s = sin(zRadians)
-        let c = cos(zRadians)
-        self.init(SIMD4<Float>( c, s, 0, 0),
-                  SIMD4<Float>(-s, c, 0, 0),
-                  SIMD4<Float>( 0, 0, 1, 0),
-                  SIMD4<Float>( 0, 0, 0, 1))
-    }
-
-    init(translate2D t: SIMD2<Float>) {
-        self.init(SIMD4<Float>(  1,   0, 0, 0),
-                  SIMD4<Float>(  0,   1, 0, 0),
-                  SIMD4<Float>(  0,   0, 1, 0),
-                  SIMD4<Float>(t.x, t.y, 0, 1))
-    }
-
-    init(scale s: SIMD3<Float>) {
-        self.init(SIMD4<Float>(s.x,   0,   0, 0),
-                  SIMD4<Float>(  0, s.y,   0, 0),
-                  SIMD4<Float>(  0,   0, s.z, 0),
-                  SIMD4<Float>(  0,   0,   0, 1))
-    }
-
+    /// Left-handed rotation about an arbitrary (assumed normalized) axis.
+    /// Produces the *transpose* of `Transform.rotationMatrix(radians:axis:)` — the two
+    /// follow opposite handedness conventions and are not interchangeable.
+    /// Caller is responsible for normalizing `axis`.
     init(rotateAbout axis: SIMD3<Float>, byAngle radians: Float) {
         let x = axis.x
         let y = axis.y
@@ -87,15 +61,8 @@ extension float4x4 {
         )
     }
 
-    init(translate t: SIMD3<Float>) {
-        self.init(SIMD4<Float>(  1,   0,   0, 0),
-                  SIMD4<Float>(  0,   1,   0, 0),
-                  SIMD4<Float>(  0,   0,   1, 0),
-                  SIMD4<Float>(t.x, t.y, t.z, 1))
-    }
-
-    /// Left-handed look-at: builds a model matrix placing the camera at `from`, looking toward `at`.
-    /// See also: Transform.look(eye:target:up:) (canonical version, returns a view matrix directly).
+    /// Left-handed look-at: builds a *model* matrix placing the camera at `from`, looking toward `at`.
+    /// See also: `Transform.look(eye:target:up:)` which returns a *view* matrix instead.
     init(lookAt at: SIMD3<Float>, from: SIMD3<Float>, up: SIMD3<Float>) {
         let z = normalize(at - from)
         let x = normalize(cross(up, z))
@@ -104,38 +71,6 @@ extension float4x4 {
                   SIMD4<Float>(y, 0),
                   SIMD4<Float>(z, 0),
                   SIMD4<Float>(from, 1))
-    }
-
-    init(orthographicProjectionWithLeft left: Float, top: Float,
-         right: Float, bottom: Float, near: Float, far: Float)
-    {
-        let sx = 2 / (right - left)
-        let sy = 2 / (top - bottom)
-        let sz = 1 / (near - far)
-        let tx = (left + right) / (left - right)
-        let ty = (top + bottom) / (bottom - top)
-        let tz = near / (near - far)
-        self.init(SIMD4<Float>(sx,  0,  0, 0),
-                  SIMD4<Float>( 0, sy,  0, 0),
-                  SIMD4<Float>( 0,  0, sz, 0),
-                  SIMD4<Float>(tx, ty, tz, 1))
-    }
-
-    /// Left-handed perspective projection for Metal (z maps to [0, 1], w_clip = +z_eye).
-    /// See also: Transform.perspectiveProjection (canonical version).
-    init(perspectiveProjectionFoVY fovYRadians: Float,
-         aspectRatio: Float,
-         near: Float,
-         far: Float)
-    {
-        let sy = 1 / tan(fovYRadians * 0.5)
-        let sx = sy / aspectRatio
-        let sz = far / (far - near)
-        let tz = -(near * far) / (far - near)
-        self.init(SIMD4<Float>(sx, 0,  0, 0),
-                  SIMD4<Float>(0, sy,  0, 0),
-                  SIMD4<Float>(0,  0, sz, 1),
-                  SIMD4<Float>(0,  0, tz, 0))
     }
 
     var upperLeft3x3: float3x3 {
