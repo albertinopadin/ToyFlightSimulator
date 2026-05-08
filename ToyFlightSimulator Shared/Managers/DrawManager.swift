@@ -422,26 +422,11 @@ final class DrawManager {
                 renderEncoder.setVertexBuffer(ringBuffer, offset: region.offset, index: TFSBufferModelConstants.index)
             }
 
-            for submesh in submeshes {
-                guard let parentMesh = submesh.parentMesh,
-                      let vertexBuffer = parentMesh.vertexBuffer else { continue }
-                renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-
-                if applyMaterials, let material = submesh.material {
-                    applyMaterialTextures(material, with: renderEncoder)
-                    var materialProps = material.properties
-                    renderEncoder.setFragmentBytes(&materialProps,
-                                                   length: MaterialProperties.stride,
-                                                   index: TFSBufferIndexMaterial.index)
-                }
-
-                renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                    indexCount: submesh.indexCount,
-                                                    indexType: submesh.indexType,
-                                                    indexBuffer: submesh.indexBuffer,
-                                                    indexBufferOffset: submesh.indexBufferOffset,
-                                                    instanceCount: mesh.instanceCount * region.count)
-            }
+            drawSubmeshes(renderEncoder,
+                          mesh: mesh,
+                          submeshes: submeshes,
+                          instanceCount: mesh.instanceCount * region.count,
+                          applyMaterials: applyMaterials)
         }
     }
 
@@ -456,57 +441,60 @@ final class DrawManager {
             guard !uniforms.isEmpty else { return }
             var uniforms = uniforms
 
-            let currentLocalTransform = mesh.transform?.currentTransform ?? .identity
-            for idx in 0..<uniforms.count {
-                uniforms[idx].modelMatrix *= currentLocalTransform
+            let localTransform = mesh.transform?.currentTransform ?? .identity
+            if localTransform != .identity {
+                for idx in 0..<uniforms.count {
+                    uniforms[idx].modelMatrix *= localTransform
+                }
             }
 
             guard let (ringBuffer, offset) = writeUniformsToRingBuffer(&uniforms) else { return }
             renderEncoder.setVertexBuffer(ringBuffer, offset: offset, index: TFSBufferModelConstants.index)
 
-            for submesh in submeshes {
-                guard let parentMesh = submesh.parentMesh,
-                      let vertexBuffer = parentMesh.vertexBuffer else { continue }
-                renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-
-                if applyMaterials, let material = submesh.material {
-                    applyMaterialTextures(material, with: renderEncoder)
-                    var materialProps = material.properties
-                    renderEncoder.setFragmentBytes(&materialProps,
-                                                   length: MaterialProperties.stride,
-                                                   index: TFSBufferIndexMaterial.index)
-                }
-
-                renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                    indexCount: submesh.indexCount,
-                                                    indexType: submesh.indexType,
-                                                    indexBuffer: submesh.indexBuffer,
-                                                    indexBufferOffset: submesh.indexBufferOffset,
-                                                    instanceCount: mesh.instanceCount * uniforms.count)
-            }
+            drawSubmeshes(renderEncoder,
+                          mesh: mesh,
+                          submeshes: submeshes,
+                          instanceCount: mesh.instanceCount * uniforms.count,
+                          applyMaterials: applyMaterials)
         }
     }
-    
+
+    /// Inner loop shared by `Draw` and `DrawFromRingBuffer`. Assumes the ModelConstants
+    /// buffer at `TFSBufferModelConstants.index` has already been bound by the caller.
+    private static func drawSubmeshes(_ renderEncoder: MTLRenderCommandEncoder,
+                                      mesh: Mesh,
+                                      submeshes: [Submesh],
+                                      instanceCount: Int,
+                                      applyMaterials: Bool) {
+        for submesh in submeshes {
+            guard let parentMesh = submesh.parentMesh,
+                  let vertexBuffer = parentMesh.vertexBuffer else { continue }
+            renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+
+            if applyMaterials, let material = submesh.material {
+                applyMaterialTextures(material, with: renderEncoder)
+                var materialProps = material.properties
+                renderEncoder.setFragmentBytes(&materialProps,
+                                               length: MaterialProperties.stride,
+                                               index: TFSBufferIndexMaterial.index)
+            }
+
+            renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                                indexCount: submesh.indexCount,
+                                                indexType: submesh.indexType,
+                                                indexBuffer: submesh.indexBuffer,
+                                                indexBufferOffset: submesh.indexBufferOffset,
+                                                instanceCount: instanceCount)
+        }
+    }
+
     private static func applyMaterialTextures(_ material: Material, with renderEncoder: MTLRenderCommandEncoder) {
         renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
 
-        if let baseColorTexture = material.baseColorTexture {
-            renderEncoder.setFragmentTexture(baseColorTexture, index: TFSTextureIndexBaseColor.index)
-        } else {
-            renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexBaseColor.index)
-        }
-
-        if let normalMapTexture = material.normalMapTexture {
-            renderEncoder.setFragmentTexture(normalMapTexture, index: TFSTextureIndexNormal.index)
-        } else {
-            renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexNormal.index)
-        }
-
-        if let specularTexture = material.specularTexture {
-            renderEncoder.setFragmentTexture(specularTexture, index: TFSTextureIndexSpecular.index)
-        } else {
-            renderEncoder.setFragmentTexture(nil, index: TFSTextureIndexSpecular.index)
-        }
+        // setFragmentTexture accepts nil — no need for separate else branches.
+        renderEncoder.setFragmentTexture(material.baseColorTexture, index: TFSTextureIndexBaseColor.index)
+        renderEncoder.setFragmentTexture(material.normalMapTexture, index: TFSTextureIndexNormal.index)
+        renderEncoder.setFragmentTexture(material.specularTexture,  index: TFSTextureIndexSpecular.index)
 
         var textureTransforms = material.textureTransforms
         renderEncoder.setFragmentBytes(&textureTransforms,
