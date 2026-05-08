@@ -69,11 +69,12 @@ struct RingBufferRegion {
 struct TransparentObjectData {
     var gameObjects: [GameObject] = []
     var models: [Model] = []
-    
+    var meshDatas: [MeshData] = []
+
     mutating func addGameObject(_ gameObject: GameObject) {
         self.gameObjects.append(gameObject)
     }
-    
+
     mutating func addModel(_ model: Model) {
         self.models.append(model)
     }
@@ -224,11 +225,7 @@ final class SceneManager {
                 transparent[model] = RingBufferRegion(
                     offset: offset,
                     count: gameObjects.count,
-                    meshDatas: model.meshes.map { mesh in
-                        MeshData(mesh: mesh,
-                                 opaqueSubmeshes: [],
-                                 transparentSubmeshes: mesh.submeshes)
-                    }
+                    meshDatas: objData.meshDatas
                 )
             }
         }
@@ -373,6 +370,11 @@ final class SceneManager {
         var transparentObjectData = TransparentObjectData()
         transparentObjectData.addGameObject(gameObject)
         transparentObjectData.addModel(gameObject.model)
+        transparentObjectData.meshDatas = gameObject.model.meshes.map { mesh in
+            MeshData(mesh: mesh,
+                     opaqueSubmeshes: [],
+                     transparentSubmeshes: mesh.submeshes)
+        }
         return transparentObjectData
     }
     
@@ -404,9 +406,13 @@ final class SceneManager {
     }
     
     public static var SubmeshCount: Int {
-        return modelDatas.map {
-            $0.value.meshDatas.reduce(0) { $0 + $1.opaqueSubmeshes.count + $1.transparentSubmeshes.count }
-        }.reduce(0, +)
+        var total = 0
+        for (_, data) in modelDatas {
+            for md in data.meshDatas {
+                total += md.opaqueSubmeshes.count + md.transparentSubmeshes.count
+            }
+        }
+        return total
     }
 
     // ----------------------------------------------------------------------------- //

@@ -226,8 +226,8 @@ final class BroadPhaseCollisionDetector {
     
     /// Update position tracking for movement detection
     private func updateLastFramePositions(_ dynamicEntities: [PhysicsEntity]) {
-        lastFramePositions.removeAll()
-        
+        lastFramePositions.removeAll(keepingCapacity: true)
+
         for entity in dynamicEntities {
             lastFramePositions[entity.id] = entity.getPosition()
         }

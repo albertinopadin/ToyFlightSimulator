@@ -254,36 +254,58 @@ final class DrawManager {
         }
     }
     
+    // Scratch buffers for ad-hoc draws — submesh lists are invariant once the
+    // model is loaded, so cache them lazily; uniforms are refilled in place.
+    nonisolated(unsafe) private static var _pointLightUniformsScratch: [ModelConstants] = []
+    nonisolated(unsafe) private static var _pointLightSubmeshesCache: [Submesh]?
+    nonisolated(unsafe) private static var _icosahedronUniformsScratch: [ModelConstants] = []
+    nonisolated(unsafe) private static var _icosahedronSubmeshesCache: [Submesh]?
+
     static func DrawPointLights(with renderEncoder: MTLRenderCommandEncoder) {
         let pointLights = LightManager.GetLightObjects(lightType: Point)
-        let uniforms = pointLights.map { $0.modelConstants }
+        guard !pointLights.isEmpty else { return }
+
         let pointLightModel = Assets.Models[.Icosahedron]
-        let submeshes = pointLightModel.meshes.flatMap { $0.submeshes }
-        
-        if !pointLights.isEmpty {
-            Draw(renderEncoder,
-                 model: pointLightModel,
-                 uniforms: uniforms,
-                 mesh: pointLightModel.meshes.first!,
-                 submeshes: submeshes,
-                 applyMaterials: true)
+        if _pointLightSubmeshesCache == nil {
+            _pointLightSubmeshesCache = pointLightModel.meshes.flatMap { $0.submeshes }
         }
+        guard let submeshes = _pointLightSubmeshesCache,
+              let mesh = pointLightModel.meshes.first else { return }
+
+        _pointLightUniformsScratch.removeAll(keepingCapacity: true)
+        for light in pointLights {
+            _pointLightUniformsScratch.append(light.modelConstants)
+        }
+
+        Draw(renderEncoder,
+             model: pointLightModel,
+             uniforms: _pointLightUniformsScratch,
+             mesh: mesh,
+             submeshes: submeshes,
+             applyMaterials: true)
     }
-    
+
     static func DrawIcosahedrons(with renderEncoder: MTLRenderCommandEncoder) {
-        if !SceneManager.icosahedrons.isEmpty {
-            // !!!
-            let uniforms = SceneManager.icosahedrons.map { $0.modelConstants }
-            let icosahedronModel = Assets.Models[.Icosahedron]
-            let icosahedronSubmeshes = SceneManager.icosahedrons.first!.model.meshes.flatMap { $0.submeshes }
-            
-            Draw(renderEncoder,
-                 model: icosahedronModel,
-                 uniforms: uniforms,
-                 mesh: icosahedronModel.meshes.first!,
-                 submeshes: icosahedronSubmeshes,
-                 applyMaterials: true)
+        guard !SceneManager.icosahedrons.isEmpty else { return }
+
+        let icosahedronModel = Assets.Models[.Icosahedron]
+        if _icosahedronSubmeshesCache == nil {
+            _icosahedronSubmeshesCache = icosahedronModel.meshes.flatMap { $0.submeshes }
         }
+        guard let submeshes = _icosahedronSubmeshesCache,
+              let mesh = icosahedronModel.meshes.first else { return }
+
+        _icosahedronUniformsScratch.removeAll(keepingCapacity: true)
+        for ico in SceneManager.icosahedrons {
+            _icosahedronUniformsScratch.append(ico.modelConstants)
+        }
+
+        Draw(renderEncoder,
+             model: icosahedronModel,
+             uniforms: _icosahedronUniformsScratch,
+             mesh: mesh,
+             submeshes: submeshes,
+             applyMaterials: true)
     }
     
     static func DrawSky(with renderEncoder: MTLRenderCommandEncoder) {
