@@ -15,6 +15,17 @@ enum GearState {
     case retracting  // Gear in the process of retracting
 }
 
+/// Standard layer identifiers shared across aircraft animation configs.
+/// Layer IDs are the rawValue strings; channel IDs (e.g. `horizontalStab_left`)
+/// are aircraft-specific and remain plain strings.
+enum AnimationLayerID: String, CaseIterable {
+    case landingGear
+    case flaperon
+    case aileron
+    case horizontalStabilizer
+    case rudder
+}
+
 /// Aircraft-specific animation controller that manages landing gear and other aircraft animations.
 /// This class serves as the high-level animation interface for aircraft, using AnimationLayerSystem
 /// internally to manage multiple independent animation layers (groups of channels).
@@ -42,34 +53,27 @@ class AircraftAnimator: AnimationController {
     /// Name of the currently playing animation clip (legacy compatibility)
     private var currentClipName: String?
 
-    // MARK: - Landing Gear Layer Access
-
-    /// The landing gear layer ID (standard across all aircraft)
-    static let landingGearLayerID = "landingGear"
-    static let flaperonLayerID = "flaperon"
-    static let aileronLayerID = "aileron"
-    static let horizontalStabilizerLayerID = "horizontalStabilizer"
-    static let rudderLayerID = "rudder"
+    // MARK: - Standard Layer Access
 
     /// Direct access to the landing gear layer
     var landingGearLayer: AnimationLayer? {
-        layerSystem?.layer(Self.landingGearLayerID)
+        layerSystem?.layer(AnimationLayerID.landingGear.rawValue)
     }
-    
+
     var flaperonLayer: AnimationLayer? {
-        layerSystem?.layer(Self.flaperonLayerID)
+        layerSystem?.layer(AnimationLayerID.flaperon.rawValue)
     }
-    
+
     var aileronLayer: AnimationLayer? {
-        layerSystem?.layer(Self.aileronLayerID)
+        layerSystem?.layer(AnimationLayerID.aileron.rawValue)
     }
-    
+
     var horizontalStabilizerLayer: AnimationLayer? {
-        layerSystem?.layer(Self.horizontalStabilizerLayerID)
+        layerSystem?.layer(AnimationLayerID.horizontalStabilizer.rawValue)
     }
-    
+
     var rudderLayer: AnimationLayer? {
-        layerSystem?.layer(Self.rudderLayerID)
+        layerSystem?.layer(AnimationLayerID.rudder.rawValue)
     }
 
     // MARK: - Gear State (Legacy Compatibility)

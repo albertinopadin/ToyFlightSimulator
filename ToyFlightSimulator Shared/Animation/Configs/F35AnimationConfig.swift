@@ -10,11 +10,7 @@ import Foundation
 /// Animation configuration for F-35 Lightning II aircraft.
 /// Defines all animation layers and channels available on this aircraft model.
 struct F35AnimationConfig {
-    // MARK: - Layer IDs
-
-    /// Standard layer ID for landing gear
-    static let landingGearLayerID = "landingGear"
-
+    // Layer IDs live in `AnimationLayerID` (Animation/Animators/AircraftAnimator.swift).
     // Future layer IDs:
     // static let weaponBayLayerID = "weaponBay"
     // static let canopyLayerID = "canopy"
@@ -56,7 +52,7 @@ struct F35AnimationConfig {
             channels.append(channel)
         }
 
-        return AnimationLayer(id: landingGearLayerID, channels: channels)
+        return AnimationLayer(id: AnimationLayerID.landingGear.rawValue, channels: channels)
     }
 
     /// Creates all animation layers for the F-35

@@ -14,25 +14,19 @@ class Aircraft: GameObject {
     private var _turnSpeed: Float = 4.0
 
     /// Optional animator for controlling aircraft animations (gear, flaps, etc.)
-    /// Subclasses should set this if they use skeletal animation.
+    /// Subclasses with skeletal animation set this via `setupAnimator(_:)`.
     var animator: AircraftAnimator?
 
     /// Returns true if the landing gear is down.
-    /// Uses the animator's state if available, otherwise returns the legacy gearDown flag.
+    /// Aircraft without an animator are treated as having gear permanently down.
     var isGearDown: Bool {
-        if let animator = animator {
-            return animator.isGearDown
-        }
-        return _legacyGearDown
+        animator?.isGearDown ?? true
     }
 
-    /// Legacy gear state for aircraft without animators (e.g., OBJ models)
-    private var _legacyGearDown: Bool = true
-    
     public var cameraOffset: float3 {
         [0, 10, -20]
     }
-    
+
     init(name: String, modelType: ModelType, scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
         self.shouldUpdateOnPlayerInput = shouldUpdateOnPlayerInput
         super.init(name: name, modelType: modelType)
@@ -40,21 +34,38 @@ class Aircraft: GameObject {
         print("[Aircraft init] name: \(name), scale: \(scale)")
         self.hasFocus = true  // TODO: This doesn't look right...
     }
-    
+
+    /// Convenience for subclasses that use skeletal animation.
+    /// Casts the model to `UsdModel`, builds an animator via `make`, and stores it.
+    /// No-op (with a warning) if the model isn't a UsdModel.
+    func setupAnimator<A: AircraftAnimator>(_ make: (UsdModel) -> A) {
+        guard let usdModel = model as? UsdModel else {
+            print("[\(getName())] Warning: Model is not a UsdModel; animations disabled")
+            return
+        }
+        animator = make(usdModel)
+    }
+
     override func doUpdate() {
         super.doUpdate()
-        
+
         if shouldUpdateOnPlayerInput && hasFocus {
             let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
             let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
-            
+
             self.rotateZ(-deltaTurn * InputManager.ContinuousCommand(.Roll))
             self.rotateX(-deltaTurn * InputManager.ContinuousCommand(.Pitch))
             self.rotateY(-deltaTurn * InputManager.ContinuousCommand(.Yaw))
-            
+
             self.moveAlongVector(getFwdVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveFwd))
             self.moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
+
+            InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) { [weak self] in
+                self?.animator?.toggleGear()
+            }
         }
+
+        animator?.update(deltaTime: Float(GameTime.DeltaTime))
     }
 }
 

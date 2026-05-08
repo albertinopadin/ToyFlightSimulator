@@ -6,13 +6,7 @@
 //
 
 struct F22AnimationConfig {
-    /// Standard layer ID for landing gear
-    static let landingGearLayerID = "landingGear"
-    static let flaperonLayerID = "flaperon"  // TODO: Provide this to the aircraft animator so you don't have to redeclare
-    static let aileronLayerID = "aileron"
-    static let horizontalStabilizerLayerID = "horizontalStabilizer"
-    static let rudderLayerID = "rudder"
-
+    // Layer IDs live in `AnimationLayerID` (Animation/Animators/AircraftAnimator.swift).
     // Future layer IDs:
     // static let weaponBayLayerID = "weaponBay"
     // static let canopyLayerID = "canopy"
@@ -74,7 +68,7 @@ struct F22AnimationConfig {
             channels.append(channel)
         }
 
-        return AnimationLayer(id: landingGearLayerID, channels: channels)
+        return AnimationLayer(id: AnimationLayerID.landingGear.rawValue, channels: channels)
     }
 
     /// Creates all animation layers for the F-35
@@ -147,9 +141,9 @@ struct F22AnimationConfig {
             jointConfigs: jointConfigs
         )
 
-        return AnimationLayer(id: aileronLayerID, channels: [channel])
+        return AnimationLayer(id: AnimationLayerID.aileron.rawValue, channels: [channel])
     }
-    
+
     /// Maximum flaperon deflection angle in radians (~25 degrees)
     static let flaperonMaxDeflection: Float = Float(25.0).toRadians
 
@@ -200,7 +194,7 @@ struct F22AnimationConfig {
             jointConfigs: jointConfigs
         )
 
-        return AnimationLayer(id: flaperonLayerID, channels: [channel])
+        return AnimationLayer(id: AnimationLayerID.flaperon.rawValue, channels: [channel])
     }
     
     /// Maximum horizontal stab deflection angle in radians (~25 degrees)
@@ -262,7 +256,7 @@ struct F22AnimationConfig {
             print("[F22AnimationConfig] Warning: RightHorzStablizer joint not found in skeleton")
         }
 
-        return AnimationLayer(id: horizontalStabilizerLayerID, channels: channels)
+        return AnimationLayer(id: AnimationLayerID.horizontalStabilizer.rawValue, channels: channels)
     }
     
     /// Maximum rudder deflection angle in radians (~25 degrees)
@@ -315,7 +309,7 @@ struct F22AnimationConfig {
             jointConfigs: jointConfigs
         )
 
-        return AnimationLayer(id: rudderLayerID, channels: [channel])
+        return AnimationLayer(id: AnimationLayerID.rudder.rawValue, channels: [channel])
     }
 
     // MARK: - Future Channel/Layer Definitions
