@@ -8,7 +8,7 @@
 final class FlightboxWithPhysics: GameScene {
     var attachedCamera = AttachedCamera(fieldOfView: 75.0,
                                         near: 0.01,
-                                        far: 1000000.0)
+                                        far: 1_000_000.0)
     var sun = Sun(modelType: .Sphere)
     
     let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
@@ -16,7 +16,8 @@ final class FlightboxWithPhysics: GameScene {
     
     override func buildScene() {
         // This scene uses rotateZ(90°) instead of the default 270°.
-        entities.append(addGround(rotationZ: Float(90).toRadians))
+//        entities.append(addGround(rotationZ: Float(90).toRadians))
+        entities.append(addGround())
         
         let jet = CollidableF22(scale: 0.25)
         

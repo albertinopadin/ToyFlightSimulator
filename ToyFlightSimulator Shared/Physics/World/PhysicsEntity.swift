@@ -98,9 +98,13 @@ final class CollidableSphere: Sphere, SpherePhysicsEntity {
 
 final class CollidablePlane: Quad, PlanePhysicsEntity {
     var collisionNormal: float3 = [0, 1, 0]
-//    var collisionShape: CollisionShape = .Plane
 }
 
 final class CollidableF22: F22, SpherePhysicsEntity {
     var collisionRadius: Float = 1.0
+    
+    override init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
+        super.init(scale: scale, shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
+        self.restitution = 0.1
+    }
 }

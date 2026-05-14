@@ -17,10 +17,6 @@ class PlaneMesh: Mesh {
                                allocator: Self.mtkMeshBufferAllocator)
         mdlPlane.vertexDescriptor = Graphics.MDLVertexDescriptors[.Base]
         
-//        mdlPlane.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-//                                 tangentAttributeNamed: MDLVertexAttributeTangent,
-//                                 bitangentAttributeNamed: MDLVertexAttributeBitangent)
-        
         // Compute tangent basis BEFORE creating MTKMesh so the data is in the shared buffer
         mdlPlane.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
                                   normalAttributeNamed: MDLVertexAttributeNormal,
@@ -33,7 +29,7 @@ class PlaneMesh: Mesh {
         
         // TODO: Figure out why mesh seems to have normals opposite of front faces, which
         //       causes stencil depth test failures when rendering directional lights.
-        mtkMesh.invertNormals(vertexType: Vertex.self)
+//        mtkMesh.invertNormals(vertexType: Vertex.self)
         
         super.init(mdlMesh: mdlPlane, mtkMesh: mtkMesh)
     }
