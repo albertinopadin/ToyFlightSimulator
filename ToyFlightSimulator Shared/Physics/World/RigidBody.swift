@@ -43,9 +43,9 @@ public class RigidBody: PhysicsEntity {
         self.restitution = restitution
         self.isStatic = isStatic
         self.shouldApplyGravity = shouldApplyGravity
-        
-       // Register with object this is attached to:
-       gameObject.rigidBody = self
+
+        // Register with object this is attached to:
+        gameObject.rigidBody = self
     }
     
     func setPosition(_ position: float3) {

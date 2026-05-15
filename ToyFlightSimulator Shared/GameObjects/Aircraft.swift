@@ -52,20 +52,30 @@ class Aircraft: GameObject {
         if shouldUpdateOnPlayerInput && hasFocus {
             let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
             let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
-            
-            self.rotateZ(-deltaTurn * InputManager.ContinuousCommand(.Roll))
-            self.rotateX(-deltaTurn * InputManager.ContinuousCommand(.Pitch))
-            self.rotateY(-deltaTurn * InputManager.ContinuousCommand(.Yaw))
-            
-            self.moveAlongVector(getFwdVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveFwd))
-            self.moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
-            
-            InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) { [weak self] in
-                self?.animator?.toggleGear()
-            }
+
+            applyPlayerAttitudeInput(deltaTurn: deltaTurn)
+            moveAlongVector(getFwdVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveFwd))
+            applyPlayerSideMove(deltaMove: deltaMove)
+            handleGearToggle()
         }
 
         animator?.update(deltaTime: Float(GameTime.DeltaTime))
+    }
+
+    internal func applyPlayerAttitudeInput(deltaTurn: Float) {
+        rotateZ(-deltaTurn * InputManager.ContinuousCommand(.Roll))
+        rotateX(-deltaTurn * InputManager.ContinuousCommand(.Pitch))
+        rotateY(-deltaTurn * InputManager.ContinuousCommand(.Yaw))
+    }
+
+    internal func applyPlayerSideMove(deltaMove: Float) {
+        moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
+    }
+
+    internal func handleGearToggle() {
+        InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) { [weak self] in
+            self?.animator?.toggleGear()
+        }
     }
 }
 

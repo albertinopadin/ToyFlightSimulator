@@ -42,6 +42,7 @@ let colors: [TFSColor] = [
 final class BallPhysicsScene: GameScene {
     static let ballCount: Int = 500
     var ground: Quad!
+    var groundRigidBody: PlaneRigidBody!
     let debugCamera = DebugCamera()
     var physicsWorld: PhysicsWorld!
     
@@ -91,13 +92,13 @@ final class BallPhysicsScene: GameScene {
     }
     
     override func buildScene() {
-        ground = addGround()
+        (ground, groundRigidBody) = addGround()
         addSun()
-        
+
         debugCamera.setPosition([0, 5, 15])
         addCamera(debugCamera)
-        
-        let entities: [PhysicsEntity] = spheres.map { $0.rigidBody! } + [ground.rigidBody!]
+
+        let entities: [PhysicsEntity] = spheres.map { $0.rigidBody! } + [groundRigidBody]
 //        physicsWorld = PhysicsWorld(entities: entities, updateType: .NaiveEuler)
         physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
         physicsWorld.useBroadPhase = true

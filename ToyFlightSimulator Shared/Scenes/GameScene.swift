@@ -87,25 +87,25 @@ class GameScene: Node {
         LightManager.AddLightObject(lightObject)
     }
 
-    /// Adds a static, color-tinted ground plane and returns it.
+    /// Adds a static, color-tinted ground plane and returns it with its rigid body.
     /// Defaults match the most common configuration across scenes
     /// (green, restitution 1.0, rotated 270° about Z, scale 1000).
     @discardableResult
     func addGround(color: float4 = float4(0.3, 0.7, 0.1, 1.0),
                    restitution: Float = 1.0,
                    rotationZ: Float = Float(270).toRadians,
-                   scale: Float = 1000) -> Quad {
+                   scale: Float = 1000) -> (Quad, PlaneRigidBody) {
         let ground = Quad()
         ground.setColor(color)
         ground.rotateZ(rotationZ)
         ground.setScale(scale)
-        
+
         let rigidBody = PlaneRigidBody(gameObject: ground, collisionNormal: [0, 1, 0])
         rigidBody.restitution = restitution
         rigidBody.isStatic = true
-        
+
         addChild(ground)
-        return ground
+        return (ground, rigidBody)
     }
 
     /// Adds the default sky for the active renderer, if one is supported.

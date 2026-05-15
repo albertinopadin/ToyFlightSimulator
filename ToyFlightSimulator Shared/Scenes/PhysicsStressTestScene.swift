@@ -13,6 +13,7 @@ final class PhysicsStressTestScene: GameScene {
     
     // Scene objects
     var ground: Quad!
+    var groundRigidBody: PlaneRigidBody!
     let debugCamera = DebugCamera()
     var physicsWorld: PhysicsWorld!
     var spheres: [Sphere] = []
@@ -96,7 +97,7 @@ final class PhysicsStressTestScene: GameScene {
     }
     
     override func buildScene() {
-        ground = addGround(restitution: 0.9)
+        (ground, groundRigidBody) = addGround(restitution: 0.9)
         addSun()
         
         debugCamera.setPosition([0, 15, 40])
@@ -124,7 +125,7 @@ final class PhysicsStressTestScene: GameScene {
         }
         
         // Setup physics world
-        let entities: [PhysicsEntity] = spheres.map { $0.rigidBody! } + [ground.rigidBody!]
+        let entities: [PhysicsEntity] = spheres.map { $0.rigidBody! } + [groundRigidBody]
         physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
         physicsWorld.useBroadPhase = useBroadPhase
         

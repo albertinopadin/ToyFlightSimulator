@@ -34,8 +34,8 @@ final class FreeCamFlightboxScene: GameScene {
             addChild(SkyBox(textureType: .SkyMap))
         }
 
-        let ground = addGround()
-        entities.append(ground.rigidBody!)
+        let (_, groundRigidBody) = addGround()
+        entities.append(groundRigidBody)
         
 //        camera.setPosition(4, 12, 20)
         camera.setPosition(24, 6, 5)

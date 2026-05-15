@@ -15,8 +15,8 @@ final class FlightboxWithPhysics: GameScene {
     var entities: [PhysicsEntity] = []
     
     override func buildScene() {
-        let ground = addGround()
-        entities.append(ground.rigidBody!)
+        let (_, groundRigidBody) = addGround()
+        entities.append(groundRigidBody)
         
         let jet = F22(scale: 0.25)
         let jetRigidBody = SphereRigidBody(gameObject: jet)
