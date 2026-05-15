@@ -7,21 +7,14 @@
 
 import MetalKit
 
-class GameObject: Node, PhysicsEntity, Renderable, Hashable {
+class GameObject: Node, Renderable, Hashable {
     var id: String {
         return getID()
     }
     
-    // Physics stuff:
-    var collidedWith: [String : Bool] = [:]
-    var collisionShape: CollisionShape = .Sphere
-    var isStatic: Bool = false
-    var shouldApplyGravity: Bool = true
-    var mass: Float = 1.0
-    var velocity: float3 = [0, 0, 0]
-    var acceleration: float3 = [0, 0, 0]
-    var restitution: Float = 1.0
+    public var rigidBody: RigidBody?
     
+    // TODO: below should be part of a Collider...
     // Default AABB implementation for GameObjects
     func getAABB() -> AABB {
         // Default implementation - can be overridden by subclasses

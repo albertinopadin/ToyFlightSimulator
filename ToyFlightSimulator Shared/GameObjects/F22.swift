@@ -13,8 +13,17 @@ class F22: Aircraft {
     let afterburnerLeft = Afterburner(name: "F-22 Left Afterburner")
     let afterburnerRight = Afterburner(name: "F-22 Right Afterburner")
     
+    let engineThrust: Float = 70  // 70,000 lbs of thrust
+    
     override var cameraOffset: float3 {
         [0, 55, -150]
+    }
+    
+    override var rigidBody: RigidBody? {
+        didSet {
+            rigidBody?.restitution = 0.1
+            rigidBody?.mass = 30
+        }
     }
     
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {

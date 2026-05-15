@@ -15,11 +15,11 @@ final class FlightboxWithPhysics: GameScene {
     var entities: [PhysicsEntity] = []
     
     override func buildScene() {
-        // This scene uses rotateZ(90°) instead of the default 270°.
-//        entities.append(addGround(rotationZ: Float(90).toRadians))
-        entities.append(addGround())
+        let ground = addGround()
+        entities.append(ground.rigidBody!)
         
-        let jet = CollidableF22(scale: 0.25)
+        let jet = F22(scale: 0.25)
+        let jetRigidBody = SphereRigidBody(gameObject: jet)
         
         addCamera(attachedCamera)
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)
@@ -73,7 +73,7 @@ final class FlightboxWithPhysics: GameScene {
         TextureLoader.PrintCacheInfo()
         print("Total Submesh count: \(SceneManager.SubmeshCount)")
         
-        entities.append(jet)
+        entities.append(jetRigidBody)
         physicsWorld.setEntities(entities)
     }
     

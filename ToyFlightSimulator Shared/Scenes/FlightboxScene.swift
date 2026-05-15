@@ -20,14 +20,14 @@ final class FlightboxScene: GameScene {
     var entities: [PhysicsEntity] = []
     
     override func buildScene() {
-        entities.append(addGround())
+        let ground = addGround()
+        entities.append(ground.rigidBody!)
         
 //        let jet = F16(scale: 6.0)
 //        let jet = F18()
 //        let jet = F18Usdz()
 //        let jet = F35(scale: 0.8)
-//        let jet = F22(scale: 0.25)
-        let jet = CollidableF22(scale: 0.25)
+        let jet = F22(scale: 0.25)
 //        let jet = Temple(scale: 0.02)
         
         addCamera(attachedCamera)
@@ -205,7 +205,8 @@ final class FlightboxScene: GameScene {
 //        print("Total Submesh count: \(DrawManager.SubmeshCount)")
         print("Total Submesh count: \(SceneManager.SubmeshCount)")
         
-        entities.append(jet)
+        let jetRigidBody = SphereRigidBody(gameObject: jet)
+        entities.append(jetRigidBody)
 //        physicsWorld.setEntities(entities)
     }
     

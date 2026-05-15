@@ -8,7 +8,7 @@
 final class FreeCamFlightboxScene: GameScene {
     var camera = DebugCamera()
 //    var jet = F22(shouldUpdateOnPlayerInput: false)
-    var jet = CollidableF22(shouldUpdateOnPlayerInput: false)
+    var jet = F22(shouldUpdateOnPlayerInput: false)
     var sun = Sun(modelType: .Sphere)
     var ground = Quad()
     var sidewinderMissile = Sidewinder()
@@ -34,7 +34,8 @@ final class FreeCamFlightboxScene: GameScene {
             addChild(SkyBox(textureType: .SkyMap))
         }
 
-        entities.append(addGround())
+        let ground = addGround()
+        entities.append(ground.rigidBody!)
         
 //        camera.setPosition(4, 12, 20)
         camera.setPosition(24, 6, 5)
@@ -44,12 +45,10 @@ final class FreeCamFlightboxScene: GameScene {
         
 //        f18.setScale(0.25)  // TODO: setScale doesn't work
         jet.setPosition(0, 10, 0)
-        
-        jet.collisionRadius = 2.5
-        
         jet.setScale(0.125)
         
-        jet.restitution = 0.8
+        let jetRigidBody = SphereRigidBody(gameObject: jet, collisionRadius: 2.5)
+        jetRigidBody.restitution = 0.8
         addChild(jet)
         
         sidewinderMissile.setScale(4.0)
@@ -67,7 +66,7 @@ final class FreeCamFlightboxScene: GameScene {
         
         TextureLoader.PrintCacheInfo()
         
-        entities.append(jet)
+        entities.append(jetRigidBody)
         physicsWorld.setEntities(entities)
     }
     

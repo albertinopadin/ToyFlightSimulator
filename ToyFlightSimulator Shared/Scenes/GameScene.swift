@@ -94,15 +94,16 @@ class GameScene: Node {
     func addGround(color: float4 = float4(0.3, 0.7, 0.1, 1.0),
                    restitution: Float = 1.0,
                    rotationZ: Float = Float(270).toRadians,
-                   scale: Float = 1000) -> CollidablePlane {
-        let ground = CollidablePlane()
-        ground.collisionNormal = [0, 1, 0]
-        ground.collisionShape = .Plane
-        ground.restitution = restitution
-        ground.isStatic = true
+                   scale: Float = 1000) -> Quad {
+        let ground = Quad()
         ground.setColor(color)
         ground.rotateZ(rotationZ)
         ground.setScale(scale)
+        
+        let rigidBody = PlaneRigidBody(gameObject: ground, collisionNormal: [0, 1, 0])
+        rigidBody.restitution = restitution
+        rigidBody.isStatic = true
+        
         addChild(ground)
         return ground
     }

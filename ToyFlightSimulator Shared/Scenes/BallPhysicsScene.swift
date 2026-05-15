@@ -41,12 +41,12 @@ let colors: [TFSColor] = [
 
 final class BallPhysicsScene: GameScene {
     static let ballCount: Int = 500
-    var ground: CollidablePlane!
+    var ground: Quad!
     let debugCamera = DebugCamera()
     var physicsWorld: PhysicsWorld!
     
-    let spheres: [CollidableSphere] = {
-        var sphrs = [CollidableSphere]()
+    let spheres: [Sphere] = {
+        var sphrs = [Sphere]()
         for i in 0..<BallPhysicsScene.ballCount {
             let pos = float3(x: .random(in: -7...7),
                              y: .random(in: 1...10),
@@ -65,23 +65,23 @@ final class BallPhysicsScene: GameScene {
             }
             
             let sphereRadiusScale: Float = 0.4
-            let sp = CollidableSphere()
-            sp.collisionRadius = sphereRadiusScale
-            sp.collisionShape = .Sphere
-            sp.isStatic = false
-            sp.setScale(sphereRadiusScale)
-            sp.mass = 1.0
-            sp.restitution = 0.9
-            sp.setPosition(pos)
-            sp.setColor(color)
-            sphrs.append(sp)
+            let sphere = Sphere()
+            sphere.setScale(sphereRadiusScale)
+            sphere.setColor(color)
+            sphere.setPosition(pos)
+            
+            let rigidBody = SphereRigidBody(gameObject: sphere, collisionRadius: sphereRadiusScale)
+            rigidBody.isStatic = false
+            rigidBody.mass = 1.0
+            rigidBody.restitution = 0.9
+            
+            sphrs.append(sphere)
         }
         return sphrs
     }()
     
     private func addSun() {
         let sun = Sun()
-        sun.isStatic = true
         sun.setPosition(0, 100, 4)
         sun.setLightBrightness(1.0)
         sun.setLightColor(1, 1, 1)
@@ -97,7 +97,7 @@ final class BallPhysicsScene: GameScene {
         debugCamera.setPosition([0, 5, 15])
         addCamera(debugCamera)
         
-        let entities: [PhysicsEntity] = spheres + [ground]
+        let entities: [PhysicsEntity] = spheres.map { $0.rigidBody! } + [ground.rigidBody!]
 //        physicsWorld = PhysicsWorld(entities: entities, updateType: .NaiveEuler)
         physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
         physicsWorld.useBroadPhase = true

@@ -7,7 +7,8 @@
 
 final class EulerSolver: PhysicsSolver {
     public static func step(deltaTime: Float, gravity: float3, entities: inout [any PhysicsEntity]) {
-        applyGravity(deltaTime: deltaTime, gravity: gravity, entities: &entities)
+//        applyGravity(deltaTime: deltaTime, gravity: gravity, entities: &entities)
+        applyForces(deltaTime: deltaTime, gravity: gravity, entities: &entities)
         resolveCollisions(deltaTime: deltaTime, entities: &entities)
         moveObjects(deltaTime: deltaTime, entities: &entities)
     }
@@ -20,6 +21,16 @@ final class EulerSolver: PhysicsSolver {
                                           entities[i].velocity.z + gravity.z * deltaTime]
                 
                 entities[i].velocity = entityVelo
+            }
+        }
+    }
+    
+    public static func applyForces(deltaTime: Float, gravity: float3, entities: inout [PhysicsEntity]) {
+        for i in 0..<entities.count {
+            if !entities[i].isStatic {
+                let acceleration: float3 = entities[i].force / entities[i].mass + gravity
+                entities[i].acceleration = acceleration
+                entities[i].velocity = entities[i].velocity + acceleration * deltaTime
             }
         }
     }

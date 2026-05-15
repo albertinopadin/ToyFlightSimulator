@@ -12,10 +12,10 @@ final class PhysicsStressTestScene: GameScene {
     private var currentSphereCount: Int { Self.sphereCounts[currentTestIndex] }
     
     // Scene objects
-    var ground: CollidablePlane!
+    var ground: Quad!
     let debugCamera = DebugCamera()
     var physicsWorld: PhysicsWorld!
-    var spheres: [CollidableSphere] = []
+    var spheres: [Sphere] = []
     
     // Performance tracking
     var frameCounter: UInt64 = 0
@@ -27,8 +27,8 @@ final class PhysicsStressTestScene: GameScene {
     // Test results
     var testResults: [(count: Int, broadPhase: Bool, avgTime: Double, minTime: Double, maxTime: Double)] = []
     
-    private func createSpheres(count: Int) -> [CollidableSphere] {
-        var sphrs = [CollidableSphere]()
+    private func createSpheres(count: Int) -> [Sphere] {
+        var sphrs = [Sphere]()
         
         // Create spheres in a grid pattern for more predictable collisions
         let gridSize = Int(sqrt(Double(count))) + 1
@@ -62,24 +62,24 @@ final class PhysicsStressTestScene: GameScene {
             }
             
             let sphereRadius: Float = 0.3
-            let sp = CollidableSphere()
-            sp.collisionRadius = sphereRadius
-            sp.collisionShape = .Sphere
-            sp.isStatic = false
-            sp.setScale(sphereRadius)
-            sp.mass = 1.0
-            sp.restitution = 0.8
-            sp.setPosition(pos)
-            sp.setColor(color)
+            let sphere = Sphere()
+            sphere.setScale(sphereRadius)
+            sphere.setPosition(pos)
+            sphere.setColor(color)
+            
+            let rigidBody = SphereRigidBody(gameObject: sphere, collisionRadius: sphereRadius)
+            rigidBody.isStatic = false
+            rigidBody.mass = 1.0
+            rigidBody.restitution = 0.8
             
             // Add some initial velocity for more dynamic scene
-            sp.velocity = float3(
+            rigidBody.velocity = float3(
                 x: .random(in: -2...2),
                 y: 0,
                 z: .random(in: -2...2)
             )
             
-            sphrs.append(sp)
+            sphrs.append(sphere)
         }
         
         return sphrs
@@ -87,7 +87,6 @@ final class PhysicsStressTestScene: GameScene {
     
     private func addSun() {
         let sun = Sun()
-        sun.isStatic = true
         sun.setPosition(0, 100, 4)
         sun.setLightBrightness(1.0)
         sun.setLightColor(1, 1, 1)
@@ -125,7 +124,7 @@ final class PhysicsStressTestScene: GameScene {
         }
         
         // Setup physics world
-        let entities: [PhysicsEntity] = spheres + [ground]
+        let entities: [PhysicsEntity] = spheres.map { $0.rigidBody! } + [ground.rigidBody!]
         physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
         physicsWorld.useBroadPhase = useBroadPhase
         
