@@ -16,12 +16,8 @@ final class FlightboxScene: GameScene {
     var pl2 = PointLightObject()
     let afterburner = Afterburner(name: "Afterburner")
     
-//    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
-    var entities: [PhysicsEntity] = []
-    
     override func buildScene() {
-        let ground = addGround()
-        entities.append(ground.rigidBody!)
+        addGround()
         
 //        let jet = F16(scale: 6.0)
 //        let jet = F18()
@@ -204,10 +200,6 @@ final class FlightboxScene: GameScene {
         TextureLoader.PrintCacheInfo()
 //        print("Total Submesh count: \(DrawManager.SubmeshCount)")
         print("Total Submesh count: \(SceneManager.SubmeshCount)")
-        
-        let jetRigidBody = SphereRigidBody(gameObject: jet)
-        entities.append(jetRigidBody)
-//        physicsWorld.setEntities(entities)
     }
     
     override func doUpdate() {
@@ -228,10 +220,6 @@ final class FlightboxScene: GameScene {
 //        InputManager.handleMouseClickDebounced(command: .ClickSelect) {
 //            print("Mouse position in window: \(Mouse.GetMouseWindowPosition())")
 //            print("Mouse position in viewport: \(Mouse.GetMouseViewportPosition())")
-//        }
-        
-//        if GameTime.DeltaTime < 1.0 {
-//            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
 //        }
     }
 }

@@ -48,8 +48,8 @@ class F22: Aircraft {
             let engineForce: float3 = getFwdVector() * self.engineThrust * InputManager.ContinuousCommand(.MoveFwd) * 10.0
             // Extremely simplified lift:
             let lift: Float = max(0, dot(rigidBody.velocity, getFwdVector())) * 100.0
-            let liftVector: float3 = [0, lift, 0]
-            self.rigidBody?.force += engineForce + liftVector
+            let liftVector: float3 = getUpVector() * lift
+            rigidBody.force += engineForce + liftVector
             
             let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
             
@@ -59,6 +59,12 @@ class F22: Aircraft {
             
             let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
             self.moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
+            
+            InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) { [weak self] in
+                self?.animator?.toggleGear()
+            }
+            
+            animator?.update(deltaTime: Float(GameTime.DeltaTime))
         } else {
             super.doUpdate()
         }

@@ -61,10 +61,10 @@ final class EulerSolver: PhysicsSolver {
                         
                         // Hack to prevent infinite bouncing:
                         let relativeVelo = (entities[i].velocity - entities[j].velocity).magnitude
-                        print("Relative velocity: \(relativeVelo)")
-                        print("Unorm collision vector: \(unormCollisionVector)")
+//                        print("Relative velocity: \(relativeVelo)")
+//                        print("Unorm collision vector: \(unormCollisionVector)")
                         if relativeVelo < 0.55 {
-                            print("[EulerSolver resolveCollisions] Relative velocity under threshold: \(relativeVelo)")
+//                            print("[EulerSolver resolveCollisions] Relative velocity under threshold: \(relativeVelo)")
                             entities[i].velocity = .zero
                             entities[j].velocity = .zero
                         } else {
@@ -79,8 +79,8 @@ final class EulerSolver: PhysicsSolver {
                                 let ejVelo = (ej.velocity - collisionVector) * restitution
                                 entities[j].velocity = ejVelo
                                 
-                                print("eiVelo: \(eiVelo)")
-                                print("ejVelo: \(ejVelo)")
+//                                print("eiVelo: \(eiVelo)")
+//                                print("ejVelo: \(ejVelo)")
                                 
                                 continue
                             }
@@ -94,7 +94,7 @@ final class EulerSolver: PhysicsSolver {
                                 let eiVelo: float3 = [vX, vY, vZ]
                                 entities[i].velocity = eiVelo
                                 
-                                print("eiVelo: \(eiVelo)")
+//                                print("eiVelo: \(eiVelo)")
                                 
                                 continue
                             }
@@ -108,7 +108,7 @@ final class EulerSolver: PhysicsSolver {
                                 let ejVelo: float3 = [vX, vY, vZ]
                                 entities[j].velocity = ejVelo
                                 
-                                print("ejVelo: \(ejVelo)")
+//                                print("ejVelo: \(ejVelo)")
                                 
                                 continue
                             }
