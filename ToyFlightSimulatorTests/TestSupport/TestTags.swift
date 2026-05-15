@@ -10,4 +10,5 @@ extension Tag {
     @Tag static var utils: Self
     @Tag static var concurrency: Self
     @Tag static var assetPipeline: Self
+    @Tag static var physics: Self
 }

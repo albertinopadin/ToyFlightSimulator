@@ -42,7 +42,26 @@ class F22: Aircraft {
     }
     
     override func doUpdate() {
-        super.doUpdate()
+        if let rigidBody {
+            // Using forces:
+            // Engine:
+            let engineForce: float3 = getFwdVector() * self.engineThrust * InputManager.ContinuousCommand(.MoveFwd) * 10.0
+            // Extremely simplified lift:
+            let lift: Float = max(0, dot(rigidBody.velocity, getFwdVector())) * 100.0
+            let liftVector: float3 = [0, lift, 0]
+            self.rigidBody?.force += engineForce + liftVector
+            
+            let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
+            
+            self.rotateZ(-deltaTurn * InputManager.ContinuousCommand(.Roll))
+            self.rotateX(-deltaTurn * InputManager.ContinuousCommand(.Pitch))
+            self.rotateY(-deltaTurn * InputManager.ContinuousCommand(.Yaw))
+            
+            let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
+            self.moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
+        } else {
+            super.doUpdate()
+        }
         
         if hasFocus {
             let fwdValue = InputManager.ContinuousCommand(.MoveFwd)

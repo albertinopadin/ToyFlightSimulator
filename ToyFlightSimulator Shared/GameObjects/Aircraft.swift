@@ -10,8 +10,8 @@ import MetalKit
 class Aircraft: GameObject {
     public var shouldUpdateOnPlayerInput: Bool
 
-    private var _moveSpeed: Float = 25.0
-    private var _turnSpeed: Float = 4.0
+    internal var _moveSpeed: Float = 25.0
+    internal var _turnSpeed: Float = 4.0
 
     /// Optional animator for controlling aircraft animations (gear, flaps, etc.)
     /// Subclasses with skeletal animation set this via `setupAnimator(_:)`.
@@ -50,32 +50,15 @@ class Aircraft: GameObject {
         super.doUpdate()
 
         if shouldUpdateOnPlayerInput && hasFocus {
-            if let ac = self as? F22 {
-                // Using forces:
-                // Engine:
-                let engineForce: float3 = getFwdVector() * ac.engineThrust * 10 * InputManager.ContinuousCommand(.MoveFwd)
-                let lift: float3 = getUpVector() * (self.rigidBody?.velocity.z ?? 1.0) * 100.0
-                self.rigidBody?.force = engineForce + lift
-                
-                let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
-                
-                self.rotateZ(-deltaTurn * InputManager.ContinuousCommand(.Roll))
-                self.rotateX(-deltaTurn * InputManager.ContinuousCommand(.Pitch))
-                self.rotateY(-deltaTurn * InputManager.ContinuousCommand(.Yaw))
-                
-                let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
-                self.moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
-            } else {
-                let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
-                let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
-                
-                self.rotateZ(-deltaTurn * InputManager.ContinuousCommand(.Roll))
-                self.rotateX(-deltaTurn * InputManager.ContinuousCommand(.Pitch))
-                self.rotateY(-deltaTurn * InputManager.ContinuousCommand(.Yaw))
-                
-                self.moveAlongVector(getFwdVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveFwd))
-                self.moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
-            }
+            let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
+            let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
+            
+            self.rotateZ(-deltaTurn * InputManager.ContinuousCommand(.Roll))
+            self.rotateX(-deltaTurn * InputManager.ContinuousCommand(.Pitch))
+            self.rotateY(-deltaTurn * InputManager.ContinuousCommand(.Yaw))
+            
+            self.moveAlongVector(getFwdVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveFwd))
+            self.moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
             
             InputManager.HasDiscreteCommandDebounced(command: .ToggleGear) { [weak self] in
                 self?.animator?.toggleGear()

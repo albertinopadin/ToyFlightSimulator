@@ -20,19 +20,18 @@ public class RigidBody: PhysicsEntity {
     var shouldApplyGravity: Bool
     
     // GameObject this is attached to:
-    // TODO: Double check that this does not actually need to be 'weak' (retain cycles)
-    let gameObject: GameObject
+    weak let gameObject: GameObject?
     
-    init (gameObject: GameObject,
-          collisionShape: CollisionShape = .Sphere,
-          collidedWith: [String : Bool] = [:],
-          mass: Float = 1,
-          velocity: float3 = .zero,
-          acceleration: float3 = .zero,
-          force: float3 = .zero,
-          restitution: Float = 1,
-          isStatic: Bool = false,
-          shouldApplyGravity: Bool = true) {
+    internal init(gameObject: GameObject,
+                  collisionShape: CollisionShape = .Sphere,
+                  collidedWith: [String : Bool] = [:],
+                  mass: Float = 1,
+                  velocity: float3 = .zero,
+                  acceleration: float3 = .zero,
+                  force: float3 = .zero,
+                  restitution: Float = 1,
+                  isStatic: Bool = false,
+                  shouldApplyGravity: Bool = true) {
         self.id = UUID().uuidString
         self.gameObject = gameObject
         self.collisionShape = collisionShape
@@ -50,14 +49,14 @@ public class RigidBody: PhysicsEntity {
     }
     
     func setPosition(_ position: float3) {
-        self.gameObject.setPosition(position)
+        self.gameObject?.setPosition(position)
     }
     
     func getPosition() -> float3 {
-        self.gameObject.getPosition()
+        self.gameObject?.getPosition() ?? .zero
     }
     
     func getAABB() -> AABB {
-        self.gameObject.getAABB()
+        self.gameObject?.getAABB() ?? AABB(center: .zero, radius: .zero)
     }
 }

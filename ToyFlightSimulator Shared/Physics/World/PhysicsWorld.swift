@@ -45,7 +45,7 @@ final class PhysicsWorld {
     
     public func update(deltaTime: Float) {
         for var entity in entities {
-            entity.reset()
+            entity.resetCollisions()
         }
         
         if useBroadPhase {

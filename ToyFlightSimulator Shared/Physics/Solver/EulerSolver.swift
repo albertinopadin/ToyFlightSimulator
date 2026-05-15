@@ -11,11 +11,12 @@ final class EulerSolver: PhysicsSolver {
         applyForces(deltaTime: deltaTime, gravity: gravity, entities: &entities)
         resolveCollisions(deltaTime: deltaTime, entities: &entities)
         moveObjects(deltaTime: deltaTime, entities: &entities)
+        zeroForces(entities: &entities)
     }
     
     public static func applyGravity(deltaTime: Float, gravity: float3, entities: inout [PhysicsEntity]) {
         for i in 0..<entities.count {
-            if !entities[i].isStatic {
+            if !entities[i].isStatic && entities[i].shouldApplyGravity {
                 let entityVelo: float3 = [entities[i].velocity.x + gravity.x * deltaTime,
                                           entities[i].velocity.y + gravity.y * deltaTime,
                                           entities[i].velocity.z + gravity.z * deltaTime]
@@ -28,7 +29,8 @@ final class EulerSolver: PhysicsSolver {
     public static func applyForces(deltaTime: Float, gravity: float3, entities: inout [PhysicsEntity]) {
         for i in 0..<entities.count {
             if !entities[i].isStatic {
-                let acceleration: float3 = entities[i].force / entities[i].mass + gravity
+                let appliedGravity: float3 = entities[i].shouldApplyGravity ? gravity : .zero
+                let acceleration: float3 = entities[i].force / entities[i].mass + appliedGravity
                 entities[i].acceleration = acceleration
                 entities[i].velocity = entities[i].velocity + acceleration * deltaTime
             }

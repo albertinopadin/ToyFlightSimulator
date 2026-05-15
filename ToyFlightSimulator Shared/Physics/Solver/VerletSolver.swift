@@ -35,6 +35,8 @@ final class VerletSolver: PhysicsSolver {
                 entities[i].acceleration = newAcc
             }
         }
+        
+        zeroForces(entities: &entities)
     }
     
     static func zeroAcceleration(entities: inout [any PhysicsEntity]) {

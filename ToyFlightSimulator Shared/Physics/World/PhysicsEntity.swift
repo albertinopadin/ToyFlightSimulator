@@ -13,7 +13,6 @@ enum CollisionShape {
     case Plane
 }
 
-// TODO: Maybe split some of this out into a RigidBody protocol or class...?
 protocol PhysicsEntity {
     var id: String { get }
     var collisionShape: CollisionShape { get set }
@@ -39,8 +38,12 @@ extension PhysicsEntity {
         return lhs.id == rhs.id
     }
     
-    mutating func reset() {
+    mutating func resetCollisions() {
         collidedWith.removeAll()
+    }
+    
+    mutating func zeroForce() {
+        force = .zero
     }
     
     // Computed property for dynamic check (inverse of static)
