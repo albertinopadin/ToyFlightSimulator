@@ -2,3 +2,8 @@
 **/xcshareddata
 **/.vscode/**
 **/*-diff.html
+
+# Claude Code harness state (per-developer scheduled-task locks, local
+# settings overrides). The project-level CLAUDE.md at the repo root is
+# the versioned guidance file; everything under .claude/ is local.
+.claude/
