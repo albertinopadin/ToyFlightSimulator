@@ -115,7 +115,7 @@ class F22: Aircraft {
                                          planeNormal: getRightVector(),
                                          liftPower: liftPower)
         let inducedDrag = calculateInducedDrag(liftData: liftData)
-        let drag = getDragCoefficient() * liftData.liftVelocitySquared * -localVelo.normalize()
+        let drag = getDragCoefficient() * liftData.liftVelocitySquared * -worldVelocity.normalize()
         
         print("[applyForces]\n  engine force: \(engineForce)\n  lift vector: \(liftData.liftForceVector)\n  induced drag + drag: \(inducedDrag + drag)")
         rigidBody.force += engineForce + liftData.liftForceVector + inducedDrag + drag
@@ -184,13 +184,13 @@ class F22: Aircraft {
                           liftData.liftVelocitySquared *
                           dragForce *
                           inducedDragPower *
-                          getInducedDragCoefficient(localVelocity: liftData.worldVelocity)
+                          getInducedDragCoefficient(worldVelocity: liftData.worldVelocity)
         return inducedDrag
     }
     
-    private func getInducedDragCoefficient(localVelocity: float3) -> Float {
-        let localVeloZ = localVelocity.z.isFinite ? localVelocity.z : 0
-        return inducedDragCurve.evaluate(at: max(0, localVeloZ))
+    private func getInducedDragCoefficient(worldVelocity: float3) -> Float {
+        let fwdAirspeed = dot(worldVelocity, getFwdVector())
+        return inducedDragCurve.evaluate(at: max(0, fwdAirspeed))
     }
     
     // Just return constant for now; will implement fully later:
