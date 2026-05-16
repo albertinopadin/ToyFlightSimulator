@@ -48,6 +48,7 @@ class Node: ClickSelectable {
         }
         
         set {
+            print("Node \(self._name) got new rotation matrix value: \(newValue)")
             _rotationMatrix = newValue
         }
     }

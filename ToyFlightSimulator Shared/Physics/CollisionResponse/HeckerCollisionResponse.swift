@@ -8,16 +8,6 @@
 // From https://www.chrishecker.com/images/e/e7/Gdmphys3.pdf
 // and: https://www.youtube.com/watch?v=vQO_hPOE-1Y
 
-extension float3 {
-    var magnitude: Float {
-        sqrt(x * x + y * y + z * z)
-    }
-    
-    func normalize() -> float3 {
-        return self / magnitude
-    }
-}
-
 final class HeckerCollisionResponse {
     // New method that accepts collision pairs from broad-phase
     static func resolveCollisions(deltaTime: Float, entities: inout [PhysicsEntity], collisionPairs: [(PhysicsEntity, PhysicsEntity)]) {

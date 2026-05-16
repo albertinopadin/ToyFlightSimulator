@@ -6,6 +6,9 @@
 //
 
 extension float3 {
+    static let up = Y_AXIS
+    static let right = X_AXIS
+    
     var magnitude: Float {
         sqrt(x * x + y * y + z * z)
     }

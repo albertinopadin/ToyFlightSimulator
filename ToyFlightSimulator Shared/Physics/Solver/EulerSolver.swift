@@ -32,7 +32,7 @@ final class EulerSolver: PhysicsSolver {
                 let appliedGravity: float3 = entities[i].shouldApplyGravity ? gravity : .zero
                 let acceleration: float3 = entities[i].force / entities[i].mass + appliedGravity
                 entities[i].acceleration = acceleration
-                entities[i].velocity = entities[i].velocity + acceleration * deltaTime
+                entities[i].velocity += acceleration * deltaTime
             }
         }
     }
@@ -122,10 +122,10 @@ final class EulerSolver: PhysicsSolver {
     static func moveObjects(deltaTime: Float, entities: inout [PhysicsEntity]) {
         for i in 0..<entities.count {
             if !entities[i].isStatic {
-                let entityPos: float3 = [entities[i].getPosition().x + entities[i].velocity.x * deltaTime,
-                                         entities[i].getPosition().y + entities[i].velocity.y * deltaTime,
-                                         entities[i].getPosition().z + entities[i].velocity.z * deltaTime]
-                
+//                let entityPos: float3 = [entities[i].getPosition().x + entities[i].velocity.x * deltaTime,
+//                                         entities[i].getPosition().y + entities[i].velocity.y * deltaTime,
+//                                         entities[i].getPosition().z + entities[i].velocity.z * deltaTime]
+                let entityPos: float3 = entities[i].getPosition() + entities[i].velocity * deltaTime
                 entities[i].setPosition(entityPos)
             }
         }

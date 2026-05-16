@@ -94,7 +94,7 @@ class GameScene: Node {
     func addGround(color: float4 = float4(0.3, 0.7, 0.1, 1.0),
                    restitution: Float = 1.0,
                    rotationZ: Float = Float(270).toRadians,
-                   scale: Float = 1000) -> (Quad, PlaneRigidBody) {
+                   scale: Float = 1_000_000) -> (Quad, PlaneRigidBody) {
         let ground = Quad()
         ground.setColor(color)
         ground.rotateZ(rotationZ)
