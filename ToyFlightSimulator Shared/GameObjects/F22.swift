@@ -75,4 +75,10 @@ class F22: Aircraft {
         let lift = max(0, dot(rigidBody.velocity, fwd)) * 100.0
         rigidBody.force += engineForce + getUpVector() * lift
     }
+
+    private func projectOnPlane(vector: float3, planeNormal: float3) -> float3 {
+        let sqMag = dot(planeNormal, planeNormal)
+        guard sqMag > .ulpOfOne else { return vector }
+        return vector - (dot(vector, planeNormal) / sqMag) * planeNormal
+    }
 }
