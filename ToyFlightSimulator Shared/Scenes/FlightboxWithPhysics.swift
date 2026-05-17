@@ -20,6 +20,8 @@ final class FlightboxWithPhysics: GameScene {
         
         let jet = F22(scale: 0.25)
         let jetRigidBody = SphereRigidBody(gameObject: jet)
+        let flightModel = F22SimpleFlightModel()
+        jet.flightModel = flightModel
         
         addCamera(attachedCamera)
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)

@@ -8,6 +8,16 @@
 import Foundation
 
 public class RigidBody: PhysicsEntity {
+    public struct State {
+        let mass: Float
+        let velocity: float3
+        let acceleration: float3
+        
+        let worldForward: float3
+        let worldRight: float3
+        let rotationMatrix: matrix_float4x4
+    }
+    
     let id: String
     var collisionShape: CollisionShape
     var collidedWith: [String : Bool]
@@ -58,5 +68,14 @@ public class RigidBody: PhysicsEntity {
     
     func getAABB() -> AABB {
         self.gameObject?.getAABB() ?? AABB(center: .zero, radius: .zero)
+    }
+    
+    func getState() -> RigidBody.State {
+        return RigidBody.State(mass: self.mass,
+                               velocity: self.velocity,
+                               acceleration: self.acceleration,
+                               worldForward: self.gameObject!.getFwdVector(),
+                               worldRight: self.gameObject!.getRightVector(),
+                               rotationMatrix: self.gameObject!.getRotationMatrix())
     }
 }
