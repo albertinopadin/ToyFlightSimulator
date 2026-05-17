@@ -111,12 +111,6 @@ class Aircraft: GameObject {
                             roll: InputManager.ContinuousCommand(.Roll),
                             yaw: InputManager.ContinuousCommand(.Yaw))
     }
-
-//    internal func applyPlayerAttitudeInput(deltaTurn: Float) {
-//        rotateZ(-deltaTurn * InputManager.ContinuousCommand(.Roll))
-//        rotateX(-deltaTurn * InputManager.ContinuousCommand(.Pitch))
-//        rotateY(-deltaTurn * InputManager.ContinuousCommand(.Yaw))
-//    }
     
     internal func applyPlayerAttitudeInput(deltaTurn: Float, controlInput: ControlInput) {
         rotateZ(-deltaTurn * controlInput.roll)
