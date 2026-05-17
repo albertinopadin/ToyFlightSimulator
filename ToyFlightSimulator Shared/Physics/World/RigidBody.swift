@@ -9,13 +9,27 @@ import Foundation
 
 public class RigidBody: PhysicsEntity {
     public struct State {
-        let mass: Float
-        let velocity: float3
-        let acceleration: float3
-        
-        let worldForward: float3
-        let worldRight: float3
-        let rotationMatrix: matrix_float4x4
+        public let mass: Float
+        public let velocity: float3
+        public let acceleration: float3
+
+        public let worldForward: float3
+        public let worldRight: float3
+        public let rotationMatrix: matrix_float4x4
+
+        public init(mass: Float,
+                    velocity: float3,
+                    acceleration: float3,
+                    worldForward: float3,
+                    worldRight: float3,
+                    rotationMatrix: matrix_float4x4) {
+            self.mass = mass
+            self.velocity = velocity
+            self.acceleration = acceleration
+            self.worldForward = worldForward
+            self.worldRight = worldRight
+            self.rotationMatrix = rotationMatrix
+        }
     }
     
     let id: String
@@ -70,12 +84,18 @@ public class RigidBody: PhysicsEntity {
         self.gameObject?.getAABB() ?? AABB(center: .zero, radius: .zero)
     }
     
-    func getState() -> RigidBody.State {
-        return RigidBody.State(mass: self.mass,
-                               velocity: self.velocity,
-                               acceleration: self.acceleration,
-                               worldForward: self.gameObject!.getFwdVector(),
-                               worldRight: self.gameObject!.getRightVector(),
-                               rotationMatrix: self.gameObject!.getRotationMatrix())
+    func getState() -> RigidBody.State? {
+        if let fwd = self.gameObject?.getFwdVector(),
+           let right = self.gameObject?.getRightVector(),
+           let rotationMatrix = self.gameObject?.getRotationMatrix() {
+            return RigidBody.State(mass: self.mass,
+                                   velocity: self.velocity,
+                                   acceleration: self.acceleration,
+                                   worldForward: fwd,
+                                   worldRight: right,
+                                   rotationMatrix: rotationMatrix)
+        } else {
+            return nil
+        }
     }
 }

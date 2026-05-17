@@ -51,6 +51,17 @@ class Aircraft: GameObject {
             }
         }
     }
+    
+    override var rigidBody: RigidBody? {
+        didSet {
+            // Mass-sync mirror of `Aircraft.flightModel.didSet` — see there for
+            // the Fix 3 future-work note. Together these two didSets make mass
+            // converge regardless of assignment order.
+            if let flightModel {
+                rigidBody?.mass = flightModel.mass
+            }
+        }
+    }
 
     /// Returns true if the landing gear is down.
     /// Aircraft without an animator are treated as having gear permanently down.
@@ -83,14 +94,15 @@ class Aircraft: GameObject {
 
     override func doUpdate() {
         super.doUpdate()
-
-        let controlInput = getControlInput()
-        let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
-        let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
         
         if shouldUpdateOnPlayerInput && hasFocus {
-            if let rigidBody, let flightModel {
-                let rigidBodyState = rigidBody.getState()
+            let controlInput = getControlInput()
+            let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
+            let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
+            
+            if let rigidBody,
+               let flightModel,
+               let rigidBodyState = rigidBody.getState() {
                 let force = flightModel.computeForce(state: rigidBodyState, input: controlInput)
                 rigidBody.force += force
             } else {

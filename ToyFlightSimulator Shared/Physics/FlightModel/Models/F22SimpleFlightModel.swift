@@ -6,7 +6,7 @@
 //
 
 public final class F22SimpleFlightModel: FlightModel {
-    let mass: Float = 30_000  // 30,000 kg, ~66,000 lbs
+    public let mass: Float = 30_000  // 30,000 kg, ~66,000 lbs
     let engineMaxThrust: Float = 31_751  // 31,751 kgf, 70,000 lbf, real F-22 afterburning thrust
     let throttlePower: Float = 10.0
     let liftPower: Float = 50.0
@@ -37,7 +37,9 @@ public final class F22SimpleFlightModel: FlightModel {
     // to disable the fudge entirely and rely on v²·Cl² alone.
     let inducedDragCurve = SymmetricSigmoidCurve(min: (-1, 0), zero: (0, 0), max: (5, 1))
     
-    func computeForce(state: RigidBody.State, input: ControlInput) -> float3 {
+    public init() {}
+
+    public func computeForce(state: RigidBody.State, input: ControlInput) -> float3 {
         let engineForce = state.worldForward * engineMaxThrust * input.throttle * throttlePower
         let worldVelocity = state.velocity
         let localVelo = getLocalVelocity(worldVelocity: worldVelocity, rotationMatrix: state.rotationMatrix)
@@ -45,7 +47,9 @@ public final class F22SimpleFlightModel: FlightModel {
         let liftData = calculateLiftData(angleOfAttack: pitchAOA,
                                          worldVelocity: worldVelocity,
                                          planeNormal: state.worldRight)
-        let inducedDrag = calculateInducedDrag(liftData: liftData, worldForward: state.worldForward)
+        let inducedDrag = calculateInducedDrag(liftData: liftData,
+                                               worldVelocity: worldVelocity,
+                                               worldForward: state.worldForward)
         let drag = getDragCoefficient() * liftData.liftVelocitySquared * -worldVelocity.normalize()
 
         DebugLog("[computeForce]\n  engine force: \(engineForce)\n  lift vector: \(liftData.liftForceVector)\n  induced drag + drag: \(inducedDrag + drag)", DEBUG_FORCES)
@@ -99,8 +103,7 @@ public final class F22SimpleFlightModel: FlightModel {
 
         DebugLog("[calculateLiftData] \n  world velocity: \(worldVelocity)\n  lv2: \(v2)\n  lift coeff: \(liftCoefficient)", DEBUG_LIFT)
 
-        return LiftData(worldVelocity: worldVelocity,
-                        liftForceVector: liftForceVector,
+        return LiftData(liftForceVector: liftForceVector,
                         liftVelocityVector: liftVelo,
                         liftVelocitySquared: v2,
                         liftCoefficient: liftCoefficient)
@@ -110,14 +113,14 @@ public final class F22SimpleFlightModel: FlightModel {
         return liftCoefficientCurve.evaluate(at: aoa)
     }
     
-    private func calculateInducedDrag(liftData: LiftData, worldForward: float3) -> float3 {
+    private func calculateInducedDrag(liftData: LiftData, worldVelocity: float3, worldForward: float3) -> float3 {
         let dragForce = pow(liftData.liftCoefficient, 2)
         let dragDirection = -liftData.liftVelocityVector.normalize()
         let inducedDrag = dragDirection *
                           liftData.liftVelocitySquared *
                           dragForce *
                           inducedDragPower *
-                          getInducedDragCoefficient(worldVelocity: liftData.worldVelocity,
+                          getInducedDragCoefficient(worldVelocity: worldVelocity,
                                                     worldForward: worldForward)
         return inducedDrag
     }

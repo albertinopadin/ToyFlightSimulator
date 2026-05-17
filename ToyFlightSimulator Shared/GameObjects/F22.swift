@@ -20,12 +20,6 @@ class F22: Aircraft {
     override var rigidBody: RigidBody? {
         didSet {
             rigidBody?.restitution = 0.1
-            // Mass-sync mirror of `Aircraft.flightModel.didSet` — see there for
-            // the Fix 3 future-work note. Together these two didSets make mass
-            // converge regardless of assignment order.
-            if let flightModel {
-                rigidBody?.mass = flightModel.mass
-            }
         }
     }
     
