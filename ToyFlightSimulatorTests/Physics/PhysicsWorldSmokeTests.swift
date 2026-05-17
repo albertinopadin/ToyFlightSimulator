@@ -43,13 +43,16 @@ struct PhysicsWorldSmokeTests {
 
     @Test("Sphere falls toward a static plane under Verlet integration")
     func sphereFallsTowardPlane_Verlet() {
+        // 3-second drop from 20m: under g = -9.81 m/s² (corrected in b094014;
+        // was -96.04 previously), free-fall covers ~44m, so the sphere
+        // unambiguously crosses the plane during the run.
         let (finalY, hitPlane) = runFallingSphere(updateType: .HeckerVerlet,
                                                   startHeight: 20.0,
-                                                  steps: 60,
+                                                  steps: 180,
                                                   deltaTime: 1.0 / 60.0)
 
         #expect(finalY < 20.0, "Sphere should have lost altitude under gravity (final Y = \(finalY))")
-        #expect(hitPlane, "Sphere should have reached the plane during a 1-second drop from 20m")
+        #expect(hitPlane, "Sphere should have reached the plane during a 3-second drop from 20m")
     }
 
     @Test("Static plane never moves while a dynamic sphere falls onto it")

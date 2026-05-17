@@ -7,23 +7,10 @@
 
 final class EulerSolver: PhysicsSolver {
     public static func step(deltaTime: Float, gravity: float3, entities: inout [any PhysicsEntity]) {
-//        applyGravity(deltaTime: deltaTime, gravity: gravity, entities: &entities)
         applyForces(deltaTime: deltaTime, gravity: gravity, entities: &entities)
         resolveCollisions(deltaTime: deltaTime, entities: &entities)
         moveObjects(deltaTime: deltaTime, entities: &entities)
         zeroForces(entities: &entities)
-    }
-    
-    public static func applyGravity(deltaTime: Float, gravity: float3, entities: inout [PhysicsEntity]) {
-        for i in 0..<entities.count {
-            if !entities[i].isStatic && entities[i].shouldApplyGravity {
-                let entityVelo: float3 = [entities[i].velocity.x + gravity.x * deltaTime,
-                                          entities[i].velocity.y + gravity.y * deltaTime,
-                                          entities[i].velocity.z + gravity.z * deltaTime]
-                
-                entities[i].velocity = entityVelo
-            }
-        }
     }
     
     public static func applyForces(deltaTime: Float, gravity: float3, entities: inout [PhysicsEntity]) {
@@ -122,9 +109,6 @@ final class EulerSolver: PhysicsSolver {
     static func moveObjects(deltaTime: Float, entities: inout [PhysicsEntity]) {
         for i in 0..<entities.count {
             if !entities[i].isStatic {
-//                let entityPos: float3 = [entities[i].getPosition().x + entities[i].velocity.x * deltaTime,
-//                                         entities[i].getPosition().y + entities[i].velocity.y * deltaTime,
-//                                         entities[i].getPosition().z + entities[i].velocity.z * deltaTime]
                 let entityPos: float3 = entities[i].getPosition() + entities[i].velocity * deltaTime
                 entities[i].setPosition(entityPos)
             }
