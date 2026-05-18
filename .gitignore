@@ -7,3 +7,5 @@
 # settings overrides). The project-level CLAUDE.md at the repo root is
 # the versioned guidance file; everything under .claude/ is local.
 .claude/
+
+**/TestResults

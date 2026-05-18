@@ -10,7 +10,7 @@ jobs:
     runs-on: macos-26
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Verify Xcode version
         run: xcodebuild -version
@@ -42,7 +42,7 @@ jobs:
 
       - name: Upload xcresult on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: TestResults.xcresult
           path: TestResults.xcresult

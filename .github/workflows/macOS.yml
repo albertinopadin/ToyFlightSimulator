@@ -10,7 +10,7 @@ jobs:
     runs-on: macos-26
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Verify Xcode version
         run: xcodebuild -version
