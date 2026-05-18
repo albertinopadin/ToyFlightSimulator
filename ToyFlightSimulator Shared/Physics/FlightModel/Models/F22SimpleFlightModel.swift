@@ -50,7 +50,8 @@ public final class F22SimpleFlightModel: FlightModel {
         let inducedDrag = calculateInducedDrag(liftData: liftData,
                                                worldVelocity: worldVelocity,
                                                worldForward: state.worldForward)
-        let drag = getDragCoefficient() * liftData.liftVelocitySquared * -worldVelocity.normalize()
+        let dragScale = getDragCoefficient() * liftData.liftVelocitySquared
+        let drag = dragScale * -worldVelocity.normalize()
 
         DebugLog("[computeForce]\n  engine force: \(engineForce)\n  lift vector: \(liftData.liftForceVector)\n  induced drag + drag: \(inducedDrag + drag)", DEBUG_FORCES)
         let force = engineForce + liftData.liftForceVector + inducedDrag + drag
