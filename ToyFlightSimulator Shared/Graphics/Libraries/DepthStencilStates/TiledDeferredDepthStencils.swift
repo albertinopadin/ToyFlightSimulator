@@ -7,10 +7,15 @@
 
 import MetalKit
 
+// NOTE: Shadow generation runs in the LIGHT's projection (orthographic, see
+// `LightObject.projectionMatrix`), which is *not* reverse-Z — only the main
+// camera's `Transform.perspectiveProjection` is. So `TiledDeferredShadow` keeps
+// `.less`; main-camera states use `.greater(Equal)`.
+
 struct TiledDeferredShadowDepthStencilState: DepthStencilState {
     var depthStencilState: MTLDepthStencilState = {
         makeDepthStencilState(label: "Tiled Deferred Shadow") { depthStencilDescriptor in
-            depthStencilDescriptor.depthCompareFunction = .less
+            depthStencilDescriptor.depthCompareFunction = .less  // light-space, NOT reverse-Z
             depthStencilDescriptor.isDepthWriteEnabled = true
         }
     }()
@@ -19,15 +24,15 @@ struct TiledDeferredShadowDepthStencilState: DepthStencilState {
 struct TiledDeferredGBufferDepthStencilState: DepthStencilState {
     var depthStencilState: MTLDepthStencilState = {
         makeDepthStencilState(label: "Tiled Deferred GBuffer") { depthStencilDescriptor in
-            depthStencilDescriptor.depthCompareFunction = .less
+            depthStencilDescriptor.depthCompareFunction = .greater  // reverse-Z
             depthStencilDescriptor.isDepthWriteEnabled = true
-            
+
             let frontFaceStencil = MTLStencilDescriptor()
             frontFaceStencil.stencilCompareFunction = .always
             frontFaceStencil.stencilFailureOperation = .keep
             frontFaceStencil.depthFailureOperation = .keep
             frontFaceStencil.depthStencilPassOperation = .incrementClamp
-            
+
             depthStencilDescriptor.frontFaceStencil = frontFaceStencil
             depthStencilDescriptor.backFaceStencil = frontFaceStencil
         }
@@ -37,15 +42,15 @@ struct TiledDeferredGBufferDepthStencilState: DepthStencilState {
 struct TiledDeferredGBufferTransparencyDepthStencilState: DepthStencilState {
     var depthStencilState: MTLDepthStencilState = {
         makeDepthStencilState(label: "Tiled Deferred GBuffer Transparency") { depthStencilDescriptor in
-            depthStencilDescriptor.depthCompareFunction = .less
+            depthStencilDescriptor.depthCompareFunction = .greater  // reverse-Z
             depthStencilDescriptor.isDepthWriteEnabled = false
-            
+
             let frontFaceStencil = MTLStencilDescriptor()
             frontFaceStencil.stencilCompareFunction = .always
             frontFaceStencil.stencilFailureOperation = .keep
             frontFaceStencil.depthFailureOperation = .keep
             frontFaceStencil.depthStencilPassOperation = .incrementClamp
-            
+
             depthStencilDescriptor.frontFaceStencil = frontFaceStencil
             depthStencilDescriptor.backFaceStencil = frontFaceStencil
         }

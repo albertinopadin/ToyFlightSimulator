@@ -48,8 +48,9 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
             let mv = metalView
             MainActor.assumeIsolated {
                 mv.depthStencilPixelFormat = .depth32Float
+                mv.clearDepth = Preferences.MainClearDepth
             }
-            
+
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
             updateDrawableSize(size: drawableSize)
         }

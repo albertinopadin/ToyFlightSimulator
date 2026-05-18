@@ -34,7 +34,8 @@ extension BaseRendering {
         descriptor.depthAttachment.texture = Assets.Textures[.BaseDepthRender]
         descriptor.depthAttachment.storeAction = .store
         descriptor.depthAttachment.loadAction = .clear
-        
+        descriptor.depthAttachment.clearDepth = Preferences.MainClearDepth
+
         return descriptor
     }
     

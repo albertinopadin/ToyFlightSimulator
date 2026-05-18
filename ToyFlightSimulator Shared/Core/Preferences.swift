@@ -25,8 +25,14 @@ struct Preferences {
 //    public static var MainPixelFormat: MTLPixelFormat = .bgra8Unorm
     
     public static let MainDepthPixelFormat: MTLPixelFormat = .depth32Float
-    
+
     public static let MainDepthStencilPixelFormat: MTLPixelFormat = .depth32Float_stencil8
+
+    /// Depth value to clear the main-camera depth buffer to. We use reverse-Z
+    /// projection (see `Transform.perspectiveProjection`), where `near` maps to 1.0
+    /// and `far` maps to 0.0. Clearing to 0.0 means "nothing is in front yet";
+    /// any rasterized fragment will be closer than the cleared value.
+    public static let MainClearDepth: Double = 0.0
     
 //    public static let StartingSceneType: SceneType = .Sandbox
 //    public static let StartingSceneType: SceneType = .FreeCamFlightbox

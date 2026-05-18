@@ -66,11 +66,25 @@ struct TransformTests {
         #expect(approxEqual(farCenter.z,  1))
     }
 
-    @Test("perspectiveProjection places near plane at z=0 in NDC")
-    func perspNearPlane() {
-        let m = Transform.perspectiveProjection(Float(60).toRadians, 1.0, 0.1, 100)
-        let pt = m * SIMD4<Float>(0, 0, 0.1, 1)
-        #expect(approxEqual(pt.z / pt.w, 0, tolerance: 1e-3))
+    @Test("perspectiveProjection (reverse-Z) places near at NDC depth 1 and far at NDC depth 0")
+    func perspReverseZNearAndFar() {
+        let near: Float = 0.1
+        let far:  Float = 100
+        let m = Transform.perspectiveProjection(Float(60).toRadians, 1.0, near, far)
+
+        // A point sitting on the near plane should map to NDC depth 1.0 in reverse-Z.
+        let nearPt = m * SIMD4<Float>(0, 0, near, 1)
+        #expect(approxEqual(nearPt.z / nearPt.w, 1, tolerance: 1e-3))
+
+        // A point sitting on the far plane should map to NDC depth 0.0.
+        let farPt = m * SIMD4<Float>(0, 0, far, 1)
+        #expect(approxEqual(farPt.z / farPt.w, 0, tolerance: 1e-3))
+
+        // A point midway through the frustum in 1/z space (z = 2*near*far/(near+far))
+        // sits at depth 0.5 in reverse-Z (since perspective depth is linear in 1/z).
+        let midZ: Float = 2 * near * far / (near + far)
+        let midPt = m * SIMD4<Float>(0, 0, midZ, 1)
+        #expect(approxEqual(midPt.z / midPt.w, 0.5, tolerance: 1e-3))
     }
 
     // MARK: - look

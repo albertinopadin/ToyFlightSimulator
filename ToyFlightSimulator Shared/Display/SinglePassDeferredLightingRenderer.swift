@@ -41,6 +41,15 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
         descriptor.colorAttachments[TFSRenderTargetLighting.index].clearColor = Preferences.ClearColor
         // Lighting attachment now writes into app-owned lightingResolveTexture, sampled by composite pass.
         descriptor.colorAttachments[TFSRenderTargetLighting.index].storeAction = .store
+
+        // Reverse-Z: depth must be cleared to 0.0 (the far value) every frame.
+        // Stencil load action is intentionally left at its default — the prior
+        // implementation didn't set it, and re-enabling lighting's stencil mask
+        // requires it to start at 0 anyway (the MTKView's behavior with
+        // `.dontCare` is to give a tile-memory initial that the GBuffer's
+        // `.replace`/`.incrementClamp` overrides on first touch).
+        descriptor.depthAttachment.loadAction = .clear
+        descriptor.depthAttachment.clearDepth = Preferences.MainClearDepth
         return descriptor
     }()
 
@@ -51,6 +60,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
             let mv = metalView
             MainActor.assumeIsolated {
                 mv.depthStencilPixelFormat = .depth32Float_stencil8
+                mv.clearDepth = Preferences.MainClearDepth
             }
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
             updateDrawableSize(size: drawableSize)

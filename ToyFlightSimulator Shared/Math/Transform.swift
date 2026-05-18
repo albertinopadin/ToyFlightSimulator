@@ -70,20 +70,33 @@ enum Transform {
         return .init(col0, col1, col2, col3)
     }
     
-    /// A left-handed perspective projection
+    /// A left-handed perspective projection using **reverse-Z**: maps view-space
+    /// `nearZ` to NDC depth `1.0` and `farZ` to `0.0`. Float32 depth buffers have
+    /// dramatically more representable values near 0 than near 1, so reversing
+    /// puts the dense precision at the far plane where it's actually needed for
+    /// large open scenes. Callers must clear depth to 0.0 and use `.greater(Equal)`
+    /// depth compares.
     static func perspectiveProjection(_ fovyRadians: Float,
                                       _ aspectRatio: Float,
                                       _ nearZ: Float,
                                       _ farZ: Float) -> simd_float4x4 {
         let ys = 1 / tanf(fovyRadians * 0.5)
         let xs = ys / aspectRatio
-        let zs = farZ / (farZ - nearZ)
-        
+        // Standard left-handed projection maps z in [near, far] to d in [0, 1] via
+        // d = 1 - near/z. Reverse-Z swaps to d = near/(z*(far-near)) * (far-z) + 0,
+        // i.e. d(near)=1, d(far)=0. The matrix coefficients below produce
+        //   clip.z = -near/(far-near) * z + near*far/(far-near)
+        //   clip.w = z
+        // and the perspective divide gives the desired d.
+        let invDelta = 1 / (farZ - nearZ)
+        let zs       = -nearZ * invDelta            // col2.z
+        let zt       = nearZ * farZ * invDelta      // col3.z
+
         let col0 = SIMD4<Float>(xs, 0, 0, 0)
         let col1 = SIMD4<Float>(0, ys, 0, 0)
         let col2 = SIMD4<Float>(0, 0, zs, 1)
-        let col3 = SIMD4<Float>(0, 0, -nearZ * zs, 0)
-        
+        let col3 = SIMD4<Float>(0, 0, zt, 0)
+
         return .init(col0, col1, col2, col3)
     }
     

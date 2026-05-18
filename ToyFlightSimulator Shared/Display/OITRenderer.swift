@@ -62,6 +62,7 @@ final class OITRenderer: Renderer, @unchecked Sendable {
         _forwardRenderPassDescriptor.depthAttachment.texture = Assets.Textures[.BaseDepthRender]
         _forwardRenderPassDescriptor.depthAttachment.storeAction = .store
         _forwardRenderPassDescriptor.depthAttachment.loadAction = .clear
+        _forwardRenderPassDescriptor.depthAttachment.clearDepth = Preferences.MainClearDepth
         
         // For Order-Independent Blending:
         _forwardRenderPassDescriptor.tileWidth = _optimalTileSize.width
