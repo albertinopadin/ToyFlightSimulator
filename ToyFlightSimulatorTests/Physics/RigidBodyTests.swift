@@ -112,11 +112,12 @@ struct RigidBodyTests {
     func f22RigidBodyDidSetAppliesAircraftDefaults() {
         let jet = F22(scale: 0.25, shouldUpdateOnPlayerInput: false)
         let rb = SphereRigidBody(gameObject: jet)
+        jet.flightModel = F22SimpleFlightModel()
         // The RigidBody initializer registers itself with the F22, which
         // triggers F22.rigidBody.didSet — we expect the F22-specific
         // defaults to win over the RigidBody init defaults. F22.mass is
         // 30_000 kg (real F-22 loaded weight ~30 tonnes) since b094014.
-        #expect(rb.mass == jet.mass)
+        #expect(rb.mass == jet.flightModel!.mass)
         #expect(rb.mass == 30_000)
         #expect(approxEqual(rb.restitution, 0.1))
     }
