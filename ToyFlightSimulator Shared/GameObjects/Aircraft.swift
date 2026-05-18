@@ -7,11 +7,39 @@
 
 import MetalKit
 
+/// Per-axis kinematic response parameters for first-order attitude lag.
+/// `maxRate` is the steady-state rotation rate at full stick deflection (rad/s).
+/// `timeConstant` (τ) is how long it takes the current rate to reach ~63% of
+/// commanded; ~95% takes `3·τ`. See `plans/claude/damped_attitude_response.md`.
+struct AttitudeDynamics {
+    var maxPitchRate: Float   = 1.0   // rad/s (~57°/s)
+    var maxRollRate: Float    = 4.7   // rad/s (~270°/s)
+    var maxYawRate: Float     = 0.5   // rad/s (~29°/s)
+
+    var pitchTimeConstant: Float = 0.25  // seconds
+    var rollTimeConstant: Float  = 0.15
+    var yawTimeConstant: Float   = 0.40
+}
+
 class Aircraft: GameObject {
     public var shouldUpdateOnPlayerInput: Bool
 
     internal var _moveSpeed: Float = 25.0
+    /// Retained for `applyPlayerAttitudeInputImmediate`, the pre-damping
+    /// snap-to-target rotation path kept for debugging. Not consumed by the
+    /// default update path, which uses `attitudeDynamics` instead.
     internal var _turnSpeed: Float = 4.0
+
+    /// Per-axis response parameters for the damped attitude filter.
+    /// Subclasses override in init if they want type-specific feel.
+    var attitudeDynamics = AttitudeDynamics()
+
+    /// Current angular rates carried across frames by the lag filter.
+    /// Decays toward zero on the `!hasFocus` path so resuming control doesn't
+    /// snap into a stale tumble.
+    private var currentPitchRate: Float = 0
+    private var currentRollRate: Float = 0
+    private var currentYawRate: Float = 0
 
     /// Optional animator for controlling aircraft animations (gear, flaps, etc.)
     /// Subclasses with skeletal animation set this via `setupAnimator(_:)`.
@@ -94,12 +122,13 @@ class Aircraft: GameObject {
 
     override func doUpdate() {
         super.doUpdate()
-        
+
+        let dt = Float(GameTime.DeltaTime)
+
         if shouldUpdateOnPlayerInput && hasFocus {
             let controlInput = getControlInput()
-            let deltaTurn = Float(GameTime.DeltaTime) * _turnSpeed
-            let deltaMove = Float(GameTime.DeltaTime) * _moveSpeed
-            
+            let deltaMove = dt * _moveSpeed
+
             if let rigidBody,
                let flightModel,
                let rigidBodyState = rigidBody.getState() {
@@ -108,13 +137,19 @@ class Aircraft: GameObject {
             } else {
                 moveAlongVector(getFwdVector(), distance: deltaMove * controlInput.throttle)
             }
-            
-            applyPlayerAttitudeInput(deltaTurn: deltaTurn, controlInput: controlInput)
+
+            applyPlayerAttitudeInput(deltaTime: dt, controlInput: controlInput)
             applyPlayerSideMove(deltaMove: deltaMove)
             handleGearToggle()
+        } else {
+            // Lost control — bleed off accumulated rotation rate so resuming
+            // control doesn't snap-resume a tumble. Continues to apply the
+            // rotation, so a released stick damps out physically instead of
+            // freezing in place.
+            decayAttitudeRates(deltaTime: dt)
         }
 
-        animator?.update(deltaTime: Float(GameTime.DeltaTime))
+        animator?.update(deltaTime: dt)
     }
     
     internal func getControlInput() -> ControlInput {
@@ -124,10 +159,60 @@ class Aircraft: GameObject {
                             yaw: InputManager.ContinuousCommand(.Yaw))
     }
     
-    internal func applyPlayerAttitudeInput(deltaTurn: Float, controlInput: ControlInput) {
+    /// Snap-to-target rotation: full stick → full rate in one frame.
+    /// Retained for debugging; not on the default update path. To use,
+    /// swap the `applyPlayerAttitudeInput(deltaTime:...)` call in `doUpdate`
+    /// for `applyPlayerAttitudeInputImmediate(deltaTurn: dt * _turnSpeed, ...)`.
+    internal func applyPlayerAttitudeInputImmediate(deltaTurn: Float, controlInput: ControlInput) {
         rotateZ(-deltaTurn * controlInput.roll)
         rotateX(-deltaTurn * controlInput.pitch)
         rotateY(-deltaTurn * controlInput.yaw)
+    }
+
+    /// First-order lag filter on rotation rate. Pilot stick commands a rate
+    /// (`stick * maxRate`); the current rate ramps toward it with time
+    /// constant τ. The applied rotation is `ω · dt`. Sign convention matches
+    /// the legacy immediate path — see "Coordinate Conventions" in CLAUDE.md.
+    internal func applyPlayerAttitudeInput(deltaTime: Float, controlInput: ControlInput) {
+        let dyn = attitudeDynamics
+
+        let cmdPitchRate = controlInput.pitch * dyn.maxPitchRate
+        let cmdRollRate  = controlInput.roll  * dyn.maxRollRate
+        let cmdYawRate   = controlInput.yaw   * dyn.maxYawRate
+
+        // Frame-rate-independent exponential smoothing: α = 1 - e^(-dt/τ).
+        // The exact form (vs. α = dt/τ) keeps 30/60/120 Hz steps converging
+        // to the same trajectory.
+        let pitchAlpha = 1 - exp(-deltaTime / dyn.pitchTimeConstant)
+        let rollAlpha  = 1 - exp(-deltaTime / dyn.rollTimeConstant)
+        let yawAlpha   = 1 - exp(-deltaTime / dyn.yawTimeConstant)
+
+        currentPitchRate += (cmdPitchRate - currentPitchRate) * pitchAlpha
+        currentRollRate  += (cmdRollRate  - currentRollRate)  * rollAlpha
+        currentYawRate   += (cmdYawRate   - currentYawRate)   * yawAlpha
+
+        rotateX(-currentPitchRate * deltaTime)
+        rotateZ(-currentRollRate  * deltaTime)
+        rotateY(-currentYawRate   * deltaTime)
+    }
+
+    /// Decay accumulated rates toward zero when not under player control.
+    /// Uses the same τ as the active path so bleed-off feels symmetric with
+    /// spool-up. Continues applying rotation so a released stick damps out
+    /// physically rather than freezing attitude.
+    private func decayAttitudeRates(deltaTime: Float) {
+        let dyn = attitudeDynamics
+        let pitchAlpha = 1 - exp(-deltaTime / dyn.pitchTimeConstant)
+        let rollAlpha  = 1 - exp(-deltaTime / dyn.rollTimeConstant)
+        let yawAlpha   = 1 - exp(-deltaTime / dyn.yawTimeConstant)
+
+        currentPitchRate += (0 - currentPitchRate) * pitchAlpha
+        currentRollRate  += (0 - currentRollRate)  * rollAlpha
+        currentYawRate   += (0 - currentYawRate)   * yawAlpha
+
+        rotateX(-currentPitchRate * deltaTime)
+        rotateZ(-currentRollRate  * deltaTime)
+        rotateY(-currentYawRate   * deltaTime)
     }
 
     internal func applyPlayerSideMove(deltaMove: Float) {
