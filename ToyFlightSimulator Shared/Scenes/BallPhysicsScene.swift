@@ -5,40 +5,6 @@
 //  Created by Albertino Padin on 10/26/24.
 //
 
-#if os(macOS)
-import AppKit
-typealias TFSColor = NSColor
-#else
-import UIKit
-typealias TFSColor = UIColor
-#endif
-
-let colors: [TFSColor] = [
-    .blue,
-    .black,
-    .brown,
-    .cyan,
-    .darkGray,
-    .gray,
-    .green,
-    .lightGray,
-    .magenta,
-    .orange,
-    .purple,
-    .red,
-    .systemRed,
-    .systemBlue,
-    .systemPink,
-    .systemTeal,
-    .systemGreen,
-    .systemCyan,
-    .systemMint,
-    .systemIndigo,
-    .systemYellow,
-    .white,
-    .yellow
-]
-
 final class BallPhysicsScene: GameScene {
     static let ballCount: Int = 500
     var ground: Quad!
@@ -53,18 +19,8 @@ final class BallPhysicsScene: GameScene {
                              y: .random(in: 1...10),
                              z: .random(in: -7...0))
             
-            let color: float4
-            let randColor = colors.randomElement()!.cgColor
-            if randColor.colorSpace?.model != .monochrome,
-               let colorComponents = randColor.components {
-                color = float4(x: Float(colorComponents[0]),
-                               y: Float(colorComponents[1]),
-                               z: Float(colorComponents[2]),
-                               w: Float(colorComponents[3]))
-            } else {
-                color = GRABBER_BLUE_COLOR
-            }
-            
+            let color = randomPaletteColor(fallback: GRABBER_BLUE_COLOR)
+
             let sphereRadiusScale: Float = 0.4
             let sphere = Sphere()
             sphere.setScale(sphereRadiusScale)

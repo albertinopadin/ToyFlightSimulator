@@ -48,20 +48,8 @@ final class PhysicsStressTestScene: GameScene {
                 z: startZ + Float(gridZ) * spacing + .random(in: -0.5...0.5)
             )
             
-            var color: float4
-            let randColor = colors.randomElement()!.cgColor
-            let defaultColor: float4 = [0.5, 0.5, 0.5, 1.0]
-            
-            if randColor.colorSpace?.model != .monochrome,
-               let colorComponents = randColor.components {
-                color = float4(x: Float(colorComponents[0]),
-                               y: Float(colorComponents[1]),
-                               z: Float(colorComponents[2]),
-                               w: Float(colorComponents[3]))
-            } else {
-                color = defaultColor
-            }
-            
+            let color = randomPaletteColor()
+
             let sphereRadius: Float = 0.3
             let sphere = Sphere()
             sphere.setScale(sphereRadius)
