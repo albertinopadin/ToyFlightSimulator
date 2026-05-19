@@ -126,7 +126,7 @@ final class TiledMSAATessellatedRenderer:   Renderer,
 //            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAATransparency])
             setRenderPipelineState(renderEncoder, state: .TiledMSAATransparency)
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessNoWrite])
+//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserNoWrite])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredTransparency])
             DrawManager.DrawTransparent(with: renderEncoder)
         }

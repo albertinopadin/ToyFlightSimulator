@@ -152,7 +152,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
         encodeRenderStage(using: renderEncoder, label: "Point Light Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredPointLight])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])  // <--- This is causing issues
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
+//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserWrite])
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setCullMode(.back)
 //            SceneManager.SetPointLightConstants(renderCommandEncoder: renderEncoder)
@@ -175,7 +175,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
     func encodeIcosahedronStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Icosahedron Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Icosahedron])
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Less])
+//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserWrite])
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DepthWriteDisabled])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])
             renderEncoder.setStencilReferenceValue(128)

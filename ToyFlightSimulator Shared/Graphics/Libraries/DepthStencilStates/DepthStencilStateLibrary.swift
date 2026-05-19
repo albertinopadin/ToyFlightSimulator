@@ -9,10 +9,10 @@ import MetalKit
 
 enum DepthStencilStateType {
     case AlwaysNoWrite
-    case Less
-    case LessEqualWrite
-    case LessNoWrite
-    case LessEqualNoWrite
+    case CloserWrite
+    case CloserOrEqualWrite
+    case CloserNoWrite
+    case CloserOrEqualNoWrite
     
     case ShadowGeneration
     case GBufferGeneration
@@ -34,10 +34,10 @@ final class DepthStencilStateLibrary: Library<DepthStencilStateType, MTLDepthSte
     
     override func makeLibrary() {
         _library.updateValue(AlwaysNoWrite_DepthStencilState(), forKey: .AlwaysNoWrite)
-        _library.updateValue(Less_DepthStencilState(), forKey: .Less)
-        _library.updateValue(LessEqualWrite_DepthStencilState(), forKey: .LessEqualWrite)
-        _library.updateValue(LessNoWrite_DepthStencilState(), forKey: .LessNoWrite)
-        _library.updateValue(LessEqualNoWrite_DepthStencilState(), forKey: .LessEqualNoWrite)
+        _library.updateValue(CloserWrite_DepthStencilState(), forKey: .CloserWrite)
+        _library.updateValue(CloserOrEqualWrite_DepthStencilState(), forKey: .CloserOrEqualWrite)
+        _library.updateValue(CloserNoWrite_DepthStencilState(), forKey: .CloserNoWrite)
+        _library.updateValue(CloserOrEqualNoWrite_DepthStencilState(), forKey: .CloserOrEqualNoWrite)
         
         _library.updateValue(ShadowGenerationDepthStencilState(), forKey: .ShadowGeneration)
         _library.updateValue(GBufferGenerationDepthStencilState(), forKey: .GBufferGeneration)

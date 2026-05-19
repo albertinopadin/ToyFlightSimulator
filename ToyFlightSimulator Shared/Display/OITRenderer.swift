@@ -74,7 +74,7 @@ final class OITRenderer: Renderer, @unchecked Sendable {
         encodeRenderStage(using: renderEncoder, label: "Opaque Object Rendering") {
             renderEncoder.setCullMode(.none)
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OpaqueMaterial])
-            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualWrite])
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserOrEqualWrite])
             DrawManager.DrawOpaque(with: renderEncoder)
             DrawManager.DrawSky(with: renderEncoder)
         }
@@ -85,8 +85,8 @@ final class OITRenderer: Renderer, @unchecked Sendable {
             renderEncoder.setCullMode(.none)
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OrderIndependentTransparent])
 //            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Blend])
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessEqualNoWrite])
-            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LessNoWrite])
+//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserOrEqualNoWrite])
+            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserNoWrite])
             DrawManager.DrawTransparent(with: renderEncoder)
         }
     }
