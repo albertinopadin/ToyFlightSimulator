@@ -5,15 +5,17 @@
 //  Created by Albertino Padin on 3/5/24.
 //
 
-class TriangleMesh: Mesh {
+class ProgrammaticTriangleMesh: Mesh {
     override func createMesh() {
         addVertex(position: float3( 0, 1,0), color: float4(1,0,0,1), textureCoordinate: float2(0.5,0.0), normal: float3(0,0,1))
         addVertex(position: float3(-1,-1,0), color: float4(0,1,0,1), textureCoordinate: float2(0.0,1.0), normal: float3(0,0,1))
         addVertex(position: float3( 1,-1,0), color: float4(0,0,1,1), textureCoordinate: float2(1.0,1.0), normal: float3(0,0,1))
+        
+        addSubmesh(Submesh(indices: [0, 1, 2]))
     }
 }
 
-class QuadMesh: Mesh {
+class ProgrammaticQuadMesh: Mesh {
     override func createMesh() {
         addVertex(position: float3( 1, 1,0),
                   color: float4(1,0,0,1),
@@ -39,7 +41,7 @@ class QuadMesh: Mesh {
     }
 }
 
-class CubeMesh: Mesh {
+class ProgrammaticCubeMesh: Mesh {
     override func createMesh() {
         //Left
         addVertex(position: float3(-1.0,-1.0,-1.0),
@@ -119,11 +121,6 @@ class CubeMesh: Mesh {
                   textureCoordinate: float2(1,0),
                   normal: float3( 0, 1, 0))
         
-//        addSubmesh(Submesh(indices: [
-//            0,1,2,
-//            0,2,3
-//        ]))
-        
         //BOTTOM
         addVertex(position: float3( 1.0,-1.0, 1.0),
                   color: float4(1.0, 0.5, 0.0, 1.0),
@@ -201,6 +198,8 @@ class CubeMesh: Mesh {
                   color: float4(1.0, 0.0, 1.0, 1.0),
                   textureCoordinate: float2(1,0),
                   normal: float3( 0, 0, 1))
+        
+        addSubmesh(Submesh(indices: Array(UInt32(0)..<UInt32(36))))
     }
 }
 

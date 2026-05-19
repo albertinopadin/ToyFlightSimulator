@@ -61,7 +61,7 @@ final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
     
     override func makeLibrary() {
         _library.updateValue(Model(name: "No Mesh", mesh: NoMesh()), forKey: .None)
-        _library.updateValue(Model(name: "Triangle", mesh: TriangleMesh()), forKey: .Triangle)
+        _library.updateValue(Model(name: "Triangle", mesh: ProgrammaticTriangleMesh()), forKey: .Triangle)
         _library.updateValue(Model(name: "Cube", mesh: CubeMesh()), forKey: .Cube)
         _library.updateValue(Model(name: "Capsule", mesh: CapsuleMesh()), forKey: .Capsule)
         _library.updateValue(Model(name: "Skybox", mesh: SkyboxMesh()), forKey: .Skybox)

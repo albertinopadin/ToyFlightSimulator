@@ -30,9 +30,9 @@ final class MeshLibrary: Library<MeshType, Mesh>, @unchecked Sendable {
     
     override func makeLibrary() {
         _library.updateValue(NoMesh(), forKey: .None)
-        _library.updateValue(TriangleMesh(), forKey: .Triangle_Custom)
-        _library.updateValue(QuadMesh(), forKey: .Quad_Custom)
-        _library.updateValue(CubeMesh(), forKey: .Cube_Custom)
+        _library.updateValue(ProgrammaticTriangleMesh(), forKey: .Triangle_Custom)
+        _library.updateValue(ProgrammaticQuadMesh(), forKey: .Quad_Custom)
+        _library.updateValue(ProgrammaticCubeMesh(), forKey: .Cube_Custom)
         _library.updateValue(SphereMesh(), forKey: .Sphere_Custom)
         _library.updateValue(CapsuleMesh(), forKey: .Capsule_Custom)
         _library.updateValue(SkyboxMesh(), forKey: .Skybox)

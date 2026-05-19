@@ -35,6 +35,42 @@ class PlaneMesh: Mesh {
     }
 }
 
+class CubeMesh: Mesh {
+    private var _color: float4
+    
+    init(size: Float = 1.0, color: float4 = GRABBER_BLUE_COLOR) {
+        _color = color
+        
+        let mdlCube = MDLMesh(boxWithExtent: [size, size, size],
+                              segments: [1, 1, 1],
+                              inwardNormals: false,
+                              geometryType: .triangles,
+                              allocator: Self.mtkMeshBufferAllocator)
+        
+        mdlCube.vertexDescriptor = Graphics.MDLVertexDescriptors[.Base]
+        
+        // Compute tangent basis BEFORE creating MTKMesh so the data is in the shared buffer
+        mdlCube.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                normalAttributeNamed: MDLVertexAttributeNormal,
+                                tangentAttributeNamed: MDLVertexAttributeTangent)
+        mdlCube.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+                                tangentAttributeNamed: MDLVertexAttributeTangent,
+                                bitangentAttributeNamed: MDLVertexAttributeBitangent)
+        
+        let mtkMesh = try! MTKMesh(mesh: mdlCube, device: Engine.Device)
+        
+        let vertexLayoutStride = (mtkMesh.vertexDescriptor.layouts[0] as! MDLVertexBufferLayout).stride
+        for meshBuffer in mtkMesh.vertexBuffers {
+            for i in 0..<mtkMesh.vertexCount {
+                let colorPosition = (i * vertexLayoutStride) + float3.stride
+                meshBuffer.buffer.contents().advanced(by: colorPosition).copyMemory(from: &_color, byteCount: float4.stride)
+            }
+        }
+        
+        super.init(mdlMesh: mdlCube, mtkMesh: mtkMesh)
+    }
+}
+
 class SphereMesh: Mesh {
     private var _color: float4
     
