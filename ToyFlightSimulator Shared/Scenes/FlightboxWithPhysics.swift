@@ -70,6 +70,7 @@ final class FlightboxWithPhysics: GameScene {
         entities.append(groundRigidBody)
 
         let jet = F22(scale: 0.25)
+//        let jet = F22_CGTrader(scale: 3.0)
         let jetRigidBody = SphereRigidBody(gameObject: jet)
         let flightModel = F22SimpleFlightModel()
         jet.flightModel = flightModel
