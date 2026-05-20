@@ -54,8 +54,10 @@ final class LightManager {
     public static func GetDirectionalLightData(viewMatrix: float4x4) -> [LightData] {
         withLock(lightLock) {
             for light in Self._directionalLights {
-                light.lightData.lightEyeDirection =
-                    normalize(viewMatrix * float4(light.getPosition(), 1)).xyz
+                // Transform the world-space light direction into eye space.
+                // `direction` is already populated by LightObject.update().
+                let worldDir = float4(light.lightData.direction, 0)
+                light.lightData.lightEyeDirection = normalize((viewMatrix * worldDir).xyz)
             }
             return Self._directionalLights.map { $0.lightData }
         }
@@ -74,8 +76,8 @@ final class LightManager {
         let count: Int = withLock(lightLock) {
             Self._directionalDataScratch.removeAll(keepingCapacity: true)
             for light in Self._directionalLights {
-                light.lightData.lightEyeDirection =
-                    normalize(viewMatrix * float4(light.getPosition(), 1)).xyz
+                let worldDir = float4(light.lightData.direction, 0)
+                light.lightData.lightEyeDirection = normalize((viewMatrix * worldDir).xyz)
                 Self._directionalDataScratch.append(light.lightData)
             }
             return Self._directionalDataScratch.count

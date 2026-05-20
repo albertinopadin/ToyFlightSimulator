@@ -113,6 +113,7 @@ extension LightData: sizeable {
                   viewProjectionMatrix: matrix_identity_float4x4,
                   shadowViewProjectionMatrix: matrix_identity_float4x4,
                   shadowTransformMatrix: matrix_identity_float4x4,
+                  direction: [0, 1, 0],
                   lightEyeDirection: [0, 0, 0],
                   position: [0, 0, 0],
                   color: [1, 1, 1],
@@ -121,7 +122,9 @@ extension LightData: sizeable {
                   attenuation: [1, 1, 1],
                   ambientIntensity: 1.0,
                   diffuseIntensity: 1.0,
-                  specularIntensity: 1.0)
+                  specularIntensity: 1.0,
+                  shadowDepthRange: 1.0,
+                  shadowWorldSlack: 0.25)
     }
 }
 

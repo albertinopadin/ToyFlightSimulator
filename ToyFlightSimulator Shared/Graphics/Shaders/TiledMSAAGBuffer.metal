@@ -15,6 +15,7 @@ fragment GBufferOut
 tiled_msaa_gbuffer_fragment(VertexOut                          in                  [[ stage_in ]],
                             constant MaterialProperties        &material           [[ buffer(TFSBufferIndexMaterial) ]],
                             constant MaterialTextureTransforms &uvXforms           [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
+                            constant LightData                 &lightData          [[ buffer(TFSBufferDirectionalLightData) ]],
                             sampler                            sampler2d           [[ sampler(0) ]],
                             texture2d<half>                    baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
                             texture2d<half>                    normalTexture       [[ texture(TFSTextureIndexNormal) ]],
@@ -34,7 +35,10 @@ tiled_msaa_gbuffer_fragment(VertexOut                          in               
         color = float4(baseColorTexture.sample(sampler2d, baseUV));
     }
 
-    color.a = Lighting::CalculateShadowMSAA(in.shadowPosition, shadowTexture);
+    color.a = Lighting::CalculateShadowMSAA(in.shadowPosition,
+                                            shadowTexture,
+                                            lightData.shadowWorldSlack,
+                                            lightData.shadowDepthRange);
 
     float4 normal = float4(normalize(in.worldNormal), 1.0);
 

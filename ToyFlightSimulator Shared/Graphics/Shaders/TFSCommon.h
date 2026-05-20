@@ -75,17 +75,39 @@ typedef struct {
     matrix_float4x4 viewProjectionMatrix;
     matrix_float4x4 shadowViewProjectionMatrix;
     matrix_float4x4 shadowTransformMatrix;
+
+    // World-space unit vector pointing FROM lit surfaces TO the light source.
+    // For Directional lights this is the canonical light direction used by the
+    // lighting shader (`dot(normal, direction)`). Populated by LightObject.update().
+    // For Point lights this is unused; the shader recomputes per-fragment from
+    // `light.position - worldPosition`.
+    simd_float3 direction;
+
+    // Eye-space transform of `direction`, recomputed each frame from the active
+    // view matrix. Still populated for any specular paths that want it in eye
+    // space, but no longer the primary input for diffuse lighting.
     simd_float3 lightEyeDirection;
-    
+
     simd_float3 position;
     simd_float3 color;
     float brightness;
     float radius;  // TODO: This only applies to point lights; perhaps should have Directional/PointLightData
     simd_float3 attenuation;
-    
+
     float ambientIntensity;
     float diffuseIntensity;
     float specularIntensity;
+
+    // Shadow-camera depth extent in world units (`far − near`). Used by the
+    // shader's depth-compare epsilon: NDC epsilon = shadowWorldSlack / shadowDepthRange.
+    // Lets one constant world-space slack (~tenths of a world unit) work across
+    // any frustum depth without retuning. Populated by LightObject.update().
+    float shadowDepthRange;
+
+    // World-space depth slack allowed before a fragment registers as shadowed.
+    // Smaller → fine self-shadow detail (e.g. F-22 rudders); larger → safer
+    // against shadow acne on flat receivers. Default ~0.25 world units.
+    float shadowWorldSlack;
 } LightData;
 
 // Buffer index values shared between shader and C code to ensure Metal shader buffer inputs match

@@ -235,6 +235,16 @@ class Node: ClickSelectable {
     func getPosition() -> float3 { return self._position }
     func getPositionX() -> Float { return self._position.x }
     func getPositionY() -> Float { return self._position.y }
+
+    /// World-space translation, accounting for parent-chain transforms.
+    /// Use this (not `getPosition()`) whenever the consumer needs an absolute
+    /// world location — `getPosition()` returns the *local* `_position` value
+    /// set by `setPosition`, which for a parented node (e.g. an `AttachedCamera`
+    /// child of an aircraft) is just the parent-relative offset.
+    func getWorldPosition() -> float3 {
+        let world = modelMatrix.columns.3
+        return float3(world.x, world.y, world.z)
+    }
     func getPositionZ() -> Float { return self._position.z }
     
     //Rotating

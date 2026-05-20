@@ -24,7 +24,7 @@ final class FlightboxWithPhysics: GameScene {
 
     private let groundSize: Int = 1_000_000
 
-    private func makeRandomDispersedObjects(count: Int, clusterRadius: Int) {
+    private func makeRandomDispersedObjects(count: Int, clusterRadius: Int, withRigidBodies: Bool = false) {
         let halfClusterRadius: Int = clusterRadius / 2
         for _ in 0..<count {
             let randomSize = Float.random(in: 2.0..<10.0)
@@ -42,12 +42,28 @@ final class FlightboxWithPhysics: GameScene {
                     sphere.setScale(randomSize)
                     sphere.setPosition(randomPosition)
                     sphere.setColor(color)
+                    if withRigidBodies {
+                        let rb = SphereRigidBody(gameObject: sphere)
+                        rb.mass = 100
+                        rb.isStatic = false
+                        rb.collisionRadius = randomSize
+                        sphere.rigidBody = rb
+                        entities.append(rb)
+                    }
                     self.addChild(sphere)
                 case .cube:
                     let cube = Cube()
-                    cube.setScale(randomSize)
+                    cube.setScale(randomSize * 2)
                     cube.setPosition(randomPosition)
                     cube.setColor(color)
+                    if withRigidBodies {
+                        let rb = SphereRigidBody(gameObject: cube)
+                        rb.mass = 100
+                        rb.isStatic = false
+                        rb.collisionRadius = randomSize
+                        cube.rigidBody = rb
+                        entities.append(rb)
+                    }
                     self.addChild(cube)
                 case .capsule:
                     let capsule = CapsuleObject()
@@ -60,6 +76,14 @@ final class FlightboxWithPhysics: GameScene {
                     capsule.setScale(randomSize)
                     capsule.setPosition(randomPosition)
                     capsule.setColor(color)
+                    if withRigidBodies {
+                        let rb = SphereRigidBody(gameObject: capsule)
+                        rb.mass = 100
+                        rb.isStatic = false
+                        rb.collisionRadius = randomSize
+                        capsule.rigidBody = rb
+                        entities.append(rb)
+                    }
                     self.addChild(capsule)
             }
         }
@@ -69,9 +93,11 @@ final class FlightboxWithPhysics: GameScene {
         let (_, groundRigidBody) = addGround(scale: Float(groundSize))
         entities.append(groundRigidBody)
 
-        let jet = F22(scale: 0.25)
-//        let jet = F22_CGTrader(scale: 3.0)
+//        let jet = F22(scale: 0.25)
+        let jet = F22_CGTrader(scale: 3.0)
         let jetRigidBody = SphereRigidBody(gameObject: jet)
+        jetRigidBody.collisionRadius = 2.0
+        jetRigidBody.restitution = 0.2
         let flightModel = F22SimpleFlightModel()
         jet.flightModel = flightModel
 
@@ -83,7 +109,6 @@ final class FlightboxWithPhysics: GameScene {
 
         setupDefaultSky()
 
-        // TODO: Why does position with z = 0 result in much darker lighting ???
         sun.setPosition(0, jetPos.y + 100, 4)
         sun.setLightBrightness(1.0)
 //        sun.setLightBrightness(0.2)
@@ -119,7 +144,8 @@ final class FlightboxWithPhysics: GameScene {
         sphereRed.setColor([1.0, 0.0, 0.0, 0.4])
         addChild(sphereRed)
 
-        makeRandomDispersedObjects(count: 1_000, clusterRadius: groundSize / 100)
+//        makeRandomDispersedObjects(count: 1_000, clusterRadius: groundSize / 100)
+        makeRandomDispersedObjects(count: 100, clusterRadius: groundSize / 1000, withRigidBodies: true)
 
         print("Flightbox scene children:")
         for child in children {
