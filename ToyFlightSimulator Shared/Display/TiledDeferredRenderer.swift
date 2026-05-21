@@ -12,10 +12,10 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
 
     var gBufferTextures = TiledDeferredGBufferTextures()
 
-    var shadowMap: MTLTexture
-    var shadowRenderPassDescriptor: MTLRenderPassDescriptor
-    // For protocol conformance:
-    var shadowResolveTexture: MTLTexture? = nil
+    var shadowMaps: MTLTexture
+    var shadowRenderPassDescriptors: [MTLRenderPassDescriptor]
+    // For protocol conformance (non-MSAA renderer has no MSAA shadow target):
+    var shadowMSAATexture: MTLTexture? = nil
 
     // App-owned color target for the GBuffer/lighting pass; sampled by the composite pass.
     var lightingResolveTexture: MTLTexture!
@@ -57,14 +57,14 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
     }
     
     init() {
-        shadowMap = Self.makeShadowMap(label: "Shadow Texture")
-        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
+        shadowMaps = Self.makeShadowMapArray(label: "Shadow Cascade Array")
+        shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowMapArray: shadowMaps)
         super.init(type: .TiledDeferred)
     }
-    
+
     init(_ mtkView: MTKView) {
-        shadowMap = Self.makeShadowMap(label: "Shadow Texture")
-        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
+        shadowMaps = Self.makeShadowMapArray(label: "Shadow Cascade Array")
+        shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowMapArray: shadowMaps)
         super.init(mtkView, type: .TiledDeferred)
     }
     
@@ -72,7 +72,7 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
         encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredGBuffer])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            renderEncoder.setFragmentTexture(shadowMap, index: TFSTextureIndexShadow.index)
+            renderEncoder.setFragmentTexture(shadowMaps, index: TFSTextureIndexShadow.index)
             DrawManager.DrawOpaque(with: renderEncoder)
         }
     }

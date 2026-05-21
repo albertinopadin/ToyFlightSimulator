@@ -18,70 +18,69 @@ tiled_deferred_gbuffer_vertex(
            VertexIn       in              [[ stage_in ]],
   constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
   constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
-  constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
            uint           instanceId      [[ instance_id ]]) {
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 worldPosition = modelInstance.modelMatrix * float4(in.position, 1);
-    float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
-    
+    float4 eyePosition   = sceneConstants.viewMatrix * worldPosition;
+
     VertexOut out {
-        .position = position,
-        .normal = in.normal,
-        .uv = in.textureCoordinate,
-        .worldPosition = worldPosition.xyz / worldPosition.w,
-        .worldNormal = modelInstance.normalMatrix * in.normal,
-        .worldTangent = modelInstance.normalMatrix * in.tangent,
+        .position       = sceneConstants.projectionMatrix * eyePosition,
+        .normal         = in.normal,
+        .uv             = in.textureCoordinate,
+        .worldPosition  = worldPosition.xyz / worldPosition.w,
+        .worldNormal    = modelInstance.normalMatrix * in.normal,
+        .worldTangent   = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
-        .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition,
-        .instanceId = instanceId,
-        .objectColor = modelInstance.objectColor,
+        // Fragment-shader cascade selection reads this; |eye.z| is the
+        // distance from the camera along the view forward axis.
+        .viewSpaceDepth = fabs(eyePosition.z),
+        .instanceId     = instanceId,
+        .objectColor    = modelInstance.objectColor,
         .useObjectColor = modelInstance.useObjectColor
     };
     return out;
 }
 
-vertex VertexOut 
+vertex VertexOut
 tiled_deferred_gbuffer_animated_vertex(
            VertexIn       in              [[ stage_in ]],
   constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
   constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
-  constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
   constant float4x4       *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
            uint           instanceId      [[ instance_id ]]) {
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 position = float4(in.position, 1);
     float4 normal = float4(in.normal, 0);
-    
-    // Hope this works, ugh...
+
     if (jointMatrices != nullptr) {
         float4 weights = in.jointWeights;
         ushort4 joints = in.joints;
-        
+
         position = weights.x * (jointMatrices[joints.x] * position) +
                 weights.y * (jointMatrices[joints.y] * position) +
                 weights.z * (jointMatrices[joints.z] * position) +
                 weights.w * (jointMatrices[joints.w] * position);
-        
+
         normal = weights.x * (jointMatrices[joints.x] * normal) +
                 weights.y * (jointMatrices[joints.y] * normal) +
                 weights.z * (jointMatrices[joints.z] * normal) +
                 weights.w * (jointMatrices[joints.w] * normal);
     }
-    
-    
+
     float4 worldPosition = modelInstance.modelMatrix * position;
-    
+    float4 eyePosition   = sceneConstants.viewMatrix * worldPosition;
+
     VertexOut out {
-        .position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition,
-        .normal = normal.xyz,
-        .uv = in.textureCoordinate,
-        .worldPosition = worldPosition.xyz / worldPosition.w,
-        .worldNormal = modelInstance.normalMatrix * in.normal,
-        .worldTangent = modelInstance.normalMatrix * in.tangent,
+        .position       = sceneConstants.projectionMatrix * eyePosition,
+        .normal         = normal.xyz,
+        .uv             = in.textureCoordinate,
+        .worldPosition  = worldPosition.xyz / worldPosition.w,
+        .worldNormal    = modelInstance.normalMatrix * in.normal,
+        .worldTangent   = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
-        .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition,
-        .instanceId = instanceId,
-        .objectColor = modelInstance.objectColor,
+        .viewSpaceDepth = fabs(eyePosition.z),
+        .instanceId     = instanceId,
+        .objectColor    = modelInstance.objectColor,
         .useObjectColor = modelInstance.useObjectColor
     };
     return out;
@@ -95,7 +94,7 @@ tiled_deferred_gbuffer_fragment(VertexOut                          in           
                                 sampler                            sampler2d           [[ sampler(0) ]],
                                 texture2d<half>                    baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
                                 texture2d<half>                    normalTexture       [[ texture(TFSTextureIndexNormal) ]],
-                                depth2d<float>                     shadowTexture       [[ texture(TFSTextureIndexShadow) ]]) {
+                                depth2d_array<float>               shadowArray         [[ texture(TFSTextureIndexShadow) ]]) {
     float2 baseUV   = in.uv;
     float2 normalUV = in.uv;
     if (uvXforms.hasTextureTransforms) {
@@ -111,10 +110,11 @@ tiled_deferred_gbuffer_fragment(VertexOut                          in           
         color = float4(baseColorTexture.sample(sampler2d, baseUV));
     }
 
-    color.a = Lighting::CalculateShadow(in.shadowPosition,
-                                        shadowTexture,
-                                        lightData.shadowWorldSlack,
-                                        lightData.shadowDepthRange);
+    color.a = Lighting::CalculateShadow(in.worldPosition,
+                                        in.viewSpaceDepth,
+                                        in.worldNormal,
+                                        lightData,
+                                        shadowArray);
 
     float4 normal = float4(normalize(in.worldNormal), 1.0);
 

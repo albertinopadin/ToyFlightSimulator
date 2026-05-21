@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "Lighting.metal"
 
 // Per-vertex inputs fed by vertex buffer laid out with MTLVertexDescriptor in Metal API
 typedef struct {
@@ -26,7 +27,11 @@ typedef struct {
     float4 color;
     float4 objectColor;
     float2 tex_coord;
-    float3 shadow_coord;
+    // CSM: per-cascade shadow position is computed in the fragment shader
+    // from worldPosition + lightData.cascadeViewProjectionMatrices[idx].
+    // The legacy `shadow_coord` precomputation is gone.
+    float3 worldPosition;
+    float  viewSpaceDepth;
     float3 eye_position;
     half3 tangent;
     half3 bitangent;
@@ -35,87 +40,83 @@ typedef struct {
     bool useObjectColor;
 } ColorInOut;
 
-constexpr sampler baseShadowSampler(coord::normalized,
-                                    filter::linear,
-                                    address::clamp_to_edge,
-                                    compare_func::less);
-
-constexpr sampler shadowSampler(coord::normalized,
-                                filter::linear,
-                                mip_filter::none,
-                                address::clamp_to_edge,
-                                compare_func::less);
-
 vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ stage_in ]],
                                  constant SceneConstants    &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                  constant ModelConstants    *modelConstants [[ buffer(TFSBufferModelConstants) ]],
-                                 constant LightData         &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
                                  uint                       instanceId      [[ instance_id ]]) {
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 modelPosition = float4(in.position, 1.0);
     float4 worldPosition = modelInstance.modelMatrix * modelPosition;
-    float4 eyePosition = sceneConstants.viewMatrix * worldPosition;
-    
+    float4 eyePosition   = sceneConstants.viewMatrix * worldPosition;
+
     ColorInOut out = {
-        .color = in.color,
-        .objectColor = modelInstance.objectColor,
-        .tex_coord = in.textureCoordinate,
-        .position = sceneConstants.projectionMatrix * eyePosition,
-        .eye_position = eyePosition.xyz,
-        .shadow_coord = (lightData.shadowTransformMatrix *
-                         lightData.shadowViewProjectionMatrix *
-                         worldPosition).xyz,
-        .tangent = half3(normalize(modelInstance.normalMatrix * in.tangent)),
-        .bitangent = half3(-normalize(modelInstance.normalMatrix * in.bitangent)),
-        .normal = half3(normalize(modelInstance.normalMatrix * in.normal)),
-        .instanceId = instanceId,
+        .color          = in.color,
+        .objectColor    = modelInstance.objectColor,
+        .tex_coord      = in.textureCoordinate,
+        .position       = sceneConstants.projectionMatrix * eyePosition,
+        .worldPosition  = worldPosition.xyz / worldPosition.w,
+        .viewSpaceDepth = fabs(eyePosition.z),
+        .eye_position   = eyePosition.xyz,
+        .tangent        = half3(normalize(modelInstance.normalMatrix * in.tangent)),
+        .bitangent      = half3(-normalize(modelInstance.normalMatrix * in.bitangent)),
+        .normal         = half3(normalize(modelInstance.normalMatrix * in.normal)),
+        .instanceId     = instanceId,
         .useObjectColor = modelInstance.useObjectColor
     };
-    
+
     return out;
 }
 
-fragment GBufferData gbuffer_fragment_base(ColorInOut     in        [[ stage_in ]],
-                                           depth2d<float> shadowMap [[ texture(TFSTextureIndexShadow) ]])
+fragment GBufferData gbuffer_fragment_base(ColorInOut          in           [[ stage_in ]],
+                                           constant LightData  &lightData   [[ buffer(TFSBufferDirectionalLightData) ]],
+                                           depth2d_array<float> shadowArray [[ texture(TFSTextureIndexShadow) ]])
 {
     half4 base_color = half4(in.color);
     half4 normal = half4(in.normal, 1.0);
     half specularContribution = 1.0;  // Hardcoded for base
-    
+
     // Calculate normal in eye space
     half3 tangent_normal = normalize((normal.xyz * 2.0) - 1.0);
 
     half3 eye_normal = (tangent_normal.x * in.tangent +
                         tangent_normal.y * in.bitangent +
                         tangent_normal.z * in.normal);
-    
+
     eye_normal = normalize(eye_normal);
-    
-    // Compare the depth value in the shadow map to the depth value of the fragment in the sun's.
-    // frame of reference.  If the sample is occluded, it will be zero.
-    float shadow_sample = shadowMap.sample_compare(baseShadowSampler, in.shadow_coord.xy, in.shadow_coord.z);
-    
+
+    // CSM: select the right cascade per fragment based on view-space depth,
+    // sample the corresponding slice of the texture array, apply per-cascade
+    // slope-scaled world-slack epsilon. Returns 1.0 (lit) or 0.5 (shadowed).
+    // `in.normal` here is already the WORLD-space normal (normalMatrix applied
+    // in the vertex shader), so we pass it through for slope-scaled bias.
+    float shadow_sample = Lighting::CalculateShadow(in.worldPosition,
+                                                    in.viewSpaceDepth,
+                                                    float3(in.normal),
+                                                    lightData,
+                                                    shadowArray);
+
     // Store shadow with albedo in unused fourth channel;
     // Store the specular contribution with the normal in unused fourth channel.
-    
+
     // Fill in on-chip geometry buffer data
     GBufferData gBuffer = {
         .albedo_specular = half4(base_color.xyz, specularContribution),
-        .normal_shadow = half4(eye_normal.xyz, shadow_sample),
+        .normal_shadow = half4(eye_normal.xyz, half(shadow_sample)),
         .depth = in.eye_position.z
     };
-    
+
     return gBuffer;
 }
 
 fragment GBufferData gbuffer_fragment_material(ColorInOut                          in           [[ stage_in ]],
                                                constant MaterialProperties        &material     [[ buffer(TFSBufferIndexMaterial) ]],
                                                constant MaterialTextureTransforms &uvXforms     [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
+                                               constant LightData                  &lightData   [[ buffer(TFSBufferDirectionalLightData) ]],
                                                sampler                             sampler2d    [[ sampler(0) ]],
                                                texture2d<half>                     baseColorMap [[ texture(TFSTextureIndexBaseColor) ]],
                                                texture2d<half>                     normalMap    [[ texture(TFSTextureIndexNormal) ]],
                                                texture2d<half>                     specularMap  [[ texture(TFSTextureIndexSpecular) ]],
-                                               depth2d<float>                      shadowMap    [[ texture(TFSTextureIndexShadow) ]])
+                                               depth2d_array<float>                shadowArray  [[ texture(TFSTextureIndexShadow) ]])
 {
     float2 baseUV     = in.tex_coord.xy;
     float2 normalUV   = in.tex_coord.xy;
@@ -156,19 +157,25 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut                       
                                  tangent_normal.y * in.bitangent +
                                  tangent_normal.z * in.normal);
     
-    // Compare the depth value in the shadow map to the depth value of the fragment in the sun's.
-    // frame of reference.  If the sample is occluded, it will be zero.
-    float shadow_sample = shadowMap.sample_compare(shadowSampler, in.shadow_coord.xy, in.shadow_coord.z);
-    
+    // CSM-aware shadow sample: pick a cascade by view-space depth, transform
+    // worldPosition by that cascade's VP, sample the texture array slice.
+    // `in.normal` is the WORLD-space normal (normalMatrix applied in vertex
+    // shader); passing it enables slope-scaled bias in CalculateShadow.
+    float shadow_sample = Lighting::CalculateShadow(in.worldPosition,
+                                                    in.viewSpaceDepth,
+                                                    float3(in.normal),
+                                                    lightData,
+                                                    shadowArray);
+
     // Store shadow with albedo in unused fourth channel;
     // Store the specular contribution with the normal in unused fourth channel.
-    
+
     // Fill in on-chip geometry buffer data
     GBufferData gBuffer = {
         .albedo_specular = half4(base_color_sample.xyz, specular_contrib),
-        .normal_shadow = half4(eye_normal.xyz, shadow_sample),
+        .normal_shadow = half4(eye_normal.xyz, half(shadow_sample)),
         .depth = in.eye_position.z
     };
-    
+
     return gBuffer;
 }

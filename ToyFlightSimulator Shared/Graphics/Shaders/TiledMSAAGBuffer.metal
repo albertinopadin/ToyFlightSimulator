@@ -19,7 +19,9 @@ tiled_msaa_gbuffer_fragment(VertexOut                          in               
                             sampler                            sampler2d           [[ sampler(0) ]],
                             texture2d<half>                    baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
                             texture2d<half>                    normalTexture       [[ texture(TFSTextureIndexNormal) ]],
-                            depth2d_ms<float>                  shadowTexture       [[ texture(TFSTextureIndexShadow) ]]) {
+                            // The MSAA shadow generation pass resolves into a non-MSAA texture2DArray;
+                            // the fragment shader samples the (already-resolved) cascade array.
+                            depth2d_array<float>               shadowArray         [[ texture(TFSTextureIndexShadow) ]]) {
     float2 baseUV   = in.uv;
     float2 normalUV = in.uv;
     if (uvXforms.hasTextureTransforms) {
@@ -35,10 +37,11 @@ tiled_msaa_gbuffer_fragment(VertexOut                          in               
         color = float4(baseColorTexture.sample(sampler2d, baseUV));
     }
 
-    color.a = Lighting::CalculateShadowMSAA(in.shadowPosition,
-                                            shadowTexture,
-                                            lightData.shadowWorldSlack,
-                                            lightData.shadowDepthRange);
+    color.a = Lighting::CalculateShadowMSAA(in.worldPosition,
+                                            in.viewSpaceDepth,
+                                            in.worldNormal,
+                                            lightData,
+                                            shadowArray);
 
     float4 normal = float4(normalize(in.worldNormal), 1.0);
 

@@ -108,6 +108,15 @@ extension MaterialTextureTransforms: sizeable {
 
 extension LightData: sizeable {
     init() {
+        // Zero-init the per-cascade homogeneous tuples (TFS_MAX_SHADOW_CASCADES
+        // = 4 elements each). Matrices are identity, floats are zero. The
+        // runtime cascadeCount=0 marks the light as "not yet populated" —
+        // CalculateShadow in Lighting.metal short-circuits to fully-lit.
+        let identityTuple = (matrix_identity_float4x4,
+                             matrix_identity_float4x4,
+                             matrix_identity_float4x4,
+                             matrix_identity_float4x4)
+        let zeroFloats: (Float, Float, Float, Float) = (0, 0, 0, 0)
         self.init(type: Directional,
                   modelMatrix: matrix_identity_float4x4,
                   viewProjectionMatrix: matrix_identity_float4x4,
@@ -123,6 +132,11 @@ extension LightData: sizeable {
                   ambientIntensity: 1.0,
                   diffuseIntensity: 1.0,
                   specularIntensity: 1.0,
+                  cascadeViewProjectionMatrices: identityTuple,
+                  cascadeSplitDepths: zeroFloats,
+                  cascadeDepthRange: zeroFloats,
+                  cascadeWorldSlack: zeroFloats,
+                  cascadeCount: 0,
                   shadowDepthRange: 1.0,
                   shadowWorldSlack: 0.25)
     }

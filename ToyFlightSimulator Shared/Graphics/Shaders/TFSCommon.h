@@ -14,6 +14,16 @@
 
 #import <simd/simd.h>
 
+// Maximum number of shadow cascades a single directional light can use.
+// LightData has fixed-size arrays sized to this constant so the shader
+// doesn't need a dynamic-array binding. Runtime `cascadeCount` (1..4) on
+// LightData selects how many of the slots are populated.
+//
+// 4 is the sweet spot for FlightboxWithPhysics-scale scenes: 4 × 2048² ×
+// depth32Float = 64 MB total, vs the old 1 × 8192² = 256 MB. Bumping to 5
+// or 6 yields diminishing returns and a larger LightData per-fragment cost.
+#define TFS_MAX_SHADOW_CASCADES 4
+
 #ifndef __METAL_VERSION__
 /// 96-bit 3 component float vector type
 typedef struct __attribute__ ((packed)) packed_float3 {
@@ -65,7 +75,7 @@ typedef struct {
 typedef enum {
     Ambient,
     Directional,
-    Omni,
+    Spot,
     Point
 } LightType;
 
@@ -98,15 +108,38 @@ typedef struct {
     float diffuseIntensity;
     float specularIntensity;
 
-    // Shadow-camera depth extent in world units (`far − near`). Used by the
-    // shader's depth-compare epsilon: NDC epsilon = shadowWorldSlack / shadowDepthRange.
-    // Lets one constant world-space slack (~tenths of a world unit) work across
-    // any frustum depth without retuning. Populated by LightObject.update().
-    float shadowDepthRange;
+    // === Cascaded Shadow Maps (CSM) ===
+    // World→cascade-NDC matrix per cascade. Cascade 0 is the closest to the
+    // camera (sharpest, smallest world coverage); cascade N-1 is the farthest
+    // (loosest, largest coverage). Only the first `cascadeCount` entries are
+    // populated; remaining entries are identity. Populated by LightObject.update().
+    matrix_float4x4 cascadeViewProjectionMatrices[TFS_MAX_SHADOW_CASCADES];
 
-    // World-space depth slack allowed before a fragment registers as shadowed.
-    // Smaller → fine self-shadow detail (e.g. F-22 rudders); larger → safer
-    // against shadow acne on flat receivers. Default ~0.25 world units.
+    // View-space depth boundaries between cascades. cascadeSplitDepths[i] is
+    // the FAR distance of cascade i (and the near of cascade i+1). The last
+    // populated entry equals the main camera's far plane. Compared against
+    // `abs(view-space z)` per fragment to pick a cascade.
+    float cascadeSplitDepths[TFS_MAX_SHADOW_CASCADES];
+
+    // Per-cascade depth range in world units (cascade_far - cascade_near in
+    // the cascade's own ortho frustum). Used to convert worldSlack into an
+    // NDC-space depth-compare epsilon for that cascade.
+    float cascadeDepthRange[TFS_MAX_SHADOW_CASCADES];
+
+    // Per-cascade world-space slack. Scaled with cascade extent so larger
+    // (distant) cascades get a proportionally larger slack to avoid acne on
+    // their lower-resolution texels.
+    float cascadeWorldSlack[TFS_MAX_SHADOW_CASCADES];
+
+    // Number of populated cascades (1..TFS_MAX_SHADOW_CASCADES). The shader's
+    // cascade-selection loop only iterates this many entries.
+    uint32_t cascadeCount;
+
+    // === Legacy single-cascade fields ===
+    // shadowDepthRange / shadowWorldSlack still consumed by GBuffer.metal's
+    // sample_compare path until it gets refactored. They mirror cascade 0
+    // (cascadeDepthRange[0] / cascadeWorldSlack[0]).
+    float shadowDepthRange;
     float shadowWorldSlack;
 } LightData;
 
@@ -125,7 +158,8 @@ typedef enum {
     TFSBufferIndexMaterial                  = 9,
     TFSBufferIndexTerrain                   = 10,
     TFSBufferIndexJointBuffer               = 11,
-    TFSBufferIndexMaterialTextureTransforms = 12
+    TFSBufferIndexMaterialTextureTransforms = 12,
+    TFSBufferIndexShadowCascadeVP           = 13
 } TFSBufferIndices;
 
 // Attribute index values shared between shader and C code to ensure Metal shader vertex

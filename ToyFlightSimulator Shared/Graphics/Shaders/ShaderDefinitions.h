@@ -89,7 +89,12 @@ struct VertexOut {
     float3 worldNormal;
     float3 worldTangent;
     float3 worldBitangent;
-    float4 shadowPosition;
+    // View-space depth = |(viewMatrix * worldPosition).z|. Used by the
+    // cascade-selection loop in Lighting::CalculateShadow. Replaces the
+    // pre-CSM `shadowPosition` field (4 floats) with a single float; the
+    // per-cascade shadow position is now computed in the fragment shader
+    // from worldPosition + lightData.cascadeViewProjectionMatrices[idx].
+    float viewSpaceDepth;
     uint instanceId;
     float4 objectColor;
     bool useObjectColor;

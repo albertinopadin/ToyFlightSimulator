@@ -21,10 +21,10 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
 
     private let _quadVertexBuffer: MTLBuffer!
 
-    var shadowMap: MTLTexture
-    var shadowRenderPassDescriptor: MTLRenderPassDescriptor
-    // For protocol conformance:
-    var shadowResolveTexture: MTLTexture? = nil
+    var shadowMaps: MTLTexture
+    var shadowRenderPassDescriptors: [MTLRenderPassDescriptor]
+    // For protocol conformance (non-MSAA renderer has no MSAA shadow target):
+    var shadowMSAATexture: MTLTexture? = nil
 
     // App-owned color target for the GBuffer/lighting pass; sampled by the composite pass.
     var lightingResolveTexture: MTLTexture!
@@ -72,16 +72,16 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
     init() {
         _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
                                                      length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
-        shadowMap = Self.makeShadowMap(label: "Shadow Map")
-        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
+        shadowMaps = Self.makeShadowMapArray(label: "Shadow Cascade Array")
+        shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowMapArray: shadowMaps)
         super.init(type: .SinglePassDeferredLighting)
     }
-    
+
     init(_ mtkView: MTKView) {
         _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
                                                      length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
-        shadowMap = Self.makeShadowMap(label: "Shadow Map")
-        shadowRenderPassDescriptor = Self.makeShadowRenderPassDescriptor(shadowMapTexture: shadowMap)
+        shadowMaps = Self.makeShadowMapArray(label: "Shadow Cascade Array")
+        shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowMapArray: shadowMaps)
         super.init(mtkView, type: .SinglePassDeferredLighting)
         let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
         print("[SPDL Renderer init] drawable size: \(drawableSize)")
@@ -107,7 +107,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
             // NOTE: For some reason, setting cull mode to back makes meshes appear 'extruded' or turned inside out.
 //            renderEncoder.setCullMode(.back)
             renderEncoder.setStencilReferenceValue(128)
-            renderEncoder.setFragmentTexture(shadowMap, index: TFSTextureIndexShadow.index)
+            renderEncoder.setFragmentTexture(shadowMaps, index: TFSTextureIndexShadow.index)
             DrawManager.DrawOpaque(with: renderEncoder)
         }
     }

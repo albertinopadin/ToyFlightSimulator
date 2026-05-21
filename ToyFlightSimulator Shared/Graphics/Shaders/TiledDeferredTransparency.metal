@@ -14,23 +14,24 @@ vertex VertexOut
 tiled_deferred_transparency_vertex(VertexIn                in              [[ stage_in ]],
                                    constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                    constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
-                                   constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
                                    uint                    instanceId      [[ instance_id ]]) {
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 worldPosition = modelInstance.modelMatrix * float4(in.position, 1);
-    float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
-    
+    float4 eyePosition   = sceneConstants.viewMatrix * worldPosition;
+
     VertexOut out {
-        .position = position,
-        .normal = in.normal,
-        .uv = in.textureCoordinate,
-        .worldPosition = worldPosition.xyz / worldPosition.w,
-        .worldNormal = modelInstance.normalMatrix * in.normal,
-        .worldTangent = modelInstance.normalMatrix * in.tangent,
+        .position       = sceneConstants.projectionMatrix * eyePosition,
+        .normal         = in.normal,
+        .uv             = in.textureCoordinate,
+        .worldPosition  = worldPosition.xyz / worldPosition.w,
+        .worldNormal    = modelInstance.normalMatrix * in.normal,
+        .worldTangent   = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
-        .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition,
-        .instanceId = instanceId,
-        .objectColor = modelInstance.objectColor,
+        // Transparency path doesn't sample shadows today, but the VertexOut
+        // struct is shared with the GBuffer fragments; populate for consistency.
+        .viewSpaceDepth = fabs(eyePosition.z),
+        .instanceId     = instanceId,
+        .objectColor    = modelInstance.objectColor,
         .useObjectColor = modelInstance.useObjectColor
     };
     return out;

@@ -124,7 +124,10 @@ tessellation_gbuffer_fragment(TessellationVertexOut in              [[ stage_in 
                       texture2d<float>      cliffTexture    [[ texture(TFSTextureIndexCliff) ]],
                       texture2d<float>      snowTexture     [[ texture(TFSTextureIndexSnow) ]],
                       texture2d<half>       normalTexture   [[ texture(TFSTextureIndexNormal) ]],
-                      depth2d_ms<float>     shadowTexture   [[ texture(TFSTextureIndexShadow) ]]) {
+                      // CSM: bound texture is a texture2DArray (resolved
+                      // from MSAA for MSAA renderers). Currently unused —
+                      // tessellation's terrain doesn't sample shadows yet.
+                      depth2d_array<float>  shadowArray     [[ texture(TFSTextureIndexShadow) ]]) {
     constexpr sampler sample;
     float tiling = 1.0;  // Get this passed in ???
     float4 color;
