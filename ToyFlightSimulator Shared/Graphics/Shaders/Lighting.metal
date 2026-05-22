@@ -114,7 +114,9 @@ public:
                 return i;
             }
         }
+
         return light.cascadeCount > 0 ? light.cascadeCount - 1 : 0;
+//        return 0;
     }
 
     // Cascade-aware shadow sample. Returns 1.0 (fully lit) or 0.5 (shadowed).

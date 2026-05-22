@@ -173,6 +173,16 @@ class GameScene: Node {
         renderEncoder.setVertexBytes(&_sceneConstants,
                                      length: SceneConstants.stride,
                                      index: TFSBufferIndexSceneConstants.index)
+        // GBuffer fragment shaders read cameraPosition to compute per-fragment
+        // world-space distance (used by cascade selection). Interpolating that
+        // distance as a per-vertex attribute breaks at huge meshes that span
+        // the near plane (e.g. the ground quad), because `distance` is non-
+        // linear in eye space, so we recompute it in the fragment shader using
+        // the rasterizer-interpolated worldPosition. See
+        // debugging/claude/csm_select_cascade_drift.md.
+        renderEncoder.setFragmentBytes(&_sceneConstants,
+                                       length: SceneConstants.stride,
+                                       index: TFSBufferIndexSceneConstants.index)
     }
 
     func setDirectionalLightConstants(with renderEncoder: MTLRenderCommandEncoder) {

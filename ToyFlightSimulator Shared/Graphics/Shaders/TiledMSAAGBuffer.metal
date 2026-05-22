@@ -13,6 +13,7 @@ using namespace metal;
 
 fragment GBufferOut
 tiled_msaa_gbuffer_fragment(VertexOut                          in                  [[ stage_in ]],
+                            constant SceneConstants            &sceneConstants     [[ buffer(TFSBufferIndexSceneConstants) ]],
                             constant MaterialProperties        &material           [[ buffer(TFSBufferIndexMaterial) ]],
                             constant MaterialTextureTransforms &uvXforms           [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
                             constant LightData                 &lightData          [[ buffer(TFSBufferDirectionalLightData) ]],
@@ -37,8 +38,12 @@ tiled_msaa_gbuffer_fragment(VertexOut                          in               
         color = float4(baseColorTexture.sample(sampler2d, baseUV));
     }
 
+    // Per-fragment world-space distance — see TiledDeferredGBuffer.metal
+    // (sibling fragment shader) and debugging/claude/csm_select_cascade_drift.md.
+    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
+
     color.a = Lighting::CalculateShadowMSAA(in.worldPosition,
-                                            in.viewSpaceDepth,
+                                            fragViewSpaceDepth,
                                             in.worldNormal,
                                             lightData,
                                             shadowArray);

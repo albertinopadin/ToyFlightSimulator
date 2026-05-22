@@ -22,18 +22,26 @@ tiled_deferred_gbuffer_vertex(
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 worldPosition = modelInstance.modelMatrix * float4(in.position, 1);
     float4 eyePosition   = sceneConstants.viewMatrix * worldPosition;
+    float3 worldXYZ      = worldPosition.xyz / worldPosition.w;
 
     VertexOut out {
         .position       = sceneConstants.projectionMatrix * eyePosition,
         .normal         = in.normal,
         .uv             = in.textureCoordinate,
-        .worldPosition  = worldPosition.xyz / worldPosition.w,
+        .worldPosition  = worldXYZ,
         .worldNormal    = modelInstance.normalMatrix * in.normal,
         .worldTangent   = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
-        // Fragment-shader cascade selection reads this; |eye.z| is the
-        // distance from the camera along the view forward axis.
-        .viewSpaceDepth = fabs(eyePosition.z),
+        // Camera-relative WORLD-SPACE distance. Used by
+        // Lighting::CalculateShadow's cascade selection. Computing
+        // `distance(worldXYZ, cameraPosition)` instead of `|eye.z|` avoids
+        // float32 cancellation in `view * worldPos` at large world coords
+        // (Sterbenz's lemma keeps the subtraction exact) AND avoids the
+        // mixed-sign-clip.w rasterizer issue on huge meshes like the ground
+        // quad (whose corners straddle the camera). See
+        // debugging/claude/csm_select_cascade_drift.md.
+        // Matched on CPU: cascade splits multiplied by cameraScale.
+        .viewSpaceDepth = distance(worldXYZ, sceneConstants.cameraPosition),
         .instanceId     = instanceId,
         .objectColor    = modelInstance.objectColor,
         .useObjectColor = modelInstance.useObjectColor
@@ -69,16 +77,18 @@ tiled_deferred_gbuffer_animated_vertex(
 
     float4 worldPosition = modelInstance.modelMatrix * position;
     float4 eyePosition   = sceneConstants.viewMatrix * worldPosition;
+    float3 worldXYZ      = worldPosition.xyz / worldPosition.w;
 
     VertexOut out {
         .position       = sceneConstants.projectionMatrix * eyePosition,
         .normal         = normal.xyz,
         .uv             = in.textureCoordinate,
-        .worldPosition  = worldPosition.xyz / worldPosition.w,
+        .worldPosition  = worldXYZ,
         .worldNormal    = modelInstance.normalMatrix * in.normal,
         .worldTangent   = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
-        .viewSpaceDepth = fabs(eyePosition.z),
+        // See _vertex above for the rationale on `distance` vs `|eye.z|`.
+        .viewSpaceDepth = distance(worldXYZ, sceneConstants.cameraPosition),
         .instanceId     = instanceId,
         .objectColor    = modelInstance.objectColor,
         .useObjectColor = modelInstance.useObjectColor
@@ -88,6 +98,7 @@ tiled_deferred_gbuffer_animated_vertex(
 
 fragment GBufferOut
 tiled_deferred_gbuffer_fragment(VertexOut                          in                  [[ stage_in ]],
+                                constant SceneConstants            &sceneConstants     [[ buffer(TFSBufferIndexSceneConstants) ]],
                                 constant MaterialProperties        &material           [[ buffer(TFSBufferIndexMaterial) ]],
                                 constant MaterialTextureTransforms &uvXforms           [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
                                 constant LightData                 &lightData          [[ buffer(TFSBufferDirectionalLightData) ]],
@@ -110,8 +121,19 @@ tiled_deferred_gbuffer_fragment(VertexOut                          in           
         color = float4(baseColorTexture.sample(sampler2d, baseUV));
     }
 
+    // Per-fragment world-space distance from camera. Computed here rather
+    // than as a per-vertex attribute because `distance` is non-linear in
+    // eye space, and the rasterizer interpolating the per-vertex value
+    // breaks for huge meshes that span the near plane (e.g. the ground
+    // quad — the previous fragment-shader read of `in.viewSpaceDepth`
+    // produced a static dim patch instead of tracking the camera). The
+    // rasterizer interpolates `worldPosition` linearly in eye space, so
+    // recomputing the distance here gives a correct per-fragment value.
+    // See debugging/claude/csm_select_cascade_drift.md.
+    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
+
     color.a = Lighting::CalculateShadow(in.worldPosition,
-                                        in.viewSpaceDepth,
+                                        fragViewSpaceDepth,
                                         in.worldNormal,
                                         lightData,
                                         shadowArray);

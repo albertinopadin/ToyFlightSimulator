@@ -116,6 +116,7 @@ final class FlightboxWithPhysics: GameScene {
         sun.setLightAmbientIntensity(0.4)
         sun.setLightDiffuseIntensity(0.5)
 //        sun.setLightDiffuseIntensity(0)
+//        sun.setCascadeCount(2)
         addLight(sun)
 
         let sunBall = Sphere()

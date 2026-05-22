@@ -93,6 +93,8 @@ enum ShadowCascadeFitting {
                 shadowMapResolution: shadowMapResolution,
                 zPaddingWorldUnits: zPaddingWorldUnits
             )
+            
+            print("[boundingSphereForSlice] center world for \n\(i)th cascade: \(sphereCenterWorld)")
 
             result.append(FittedCascade(camera: cascade, splitFar: sliceFar))
         }

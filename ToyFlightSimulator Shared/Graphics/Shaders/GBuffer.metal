@@ -48,14 +48,16 @@ vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ s
     float4 modelPosition = float4(in.position, 1.0);
     float4 worldPosition = modelInstance.modelMatrix * modelPosition;
     float4 eyePosition   = sceneConstants.viewMatrix * worldPosition;
+    float3 worldXYZ      = worldPosition.xyz / worldPosition.w;
 
     ColorInOut out = {
         .color          = in.color,
         .objectColor    = modelInstance.objectColor,
         .tex_coord      = in.textureCoordinate,
         .position       = sceneConstants.projectionMatrix * eyePosition,
-        .worldPosition  = worldPosition.xyz / worldPosition.w,
-        .viewSpaceDepth = fabs(eyePosition.z),
+        .worldPosition  = worldXYZ,
+        // Camera-relative world-space distance — see TiledDeferredGBuffer.metal.
+        .viewSpaceDepth = distance(worldXYZ, sceneConstants.cameraPosition),
         .eye_position   = eyePosition.xyz,
         .tangent        = half3(normalize(modelInstance.normalMatrix * in.tangent)),
         .bitangent      = half3(-normalize(modelInstance.normalMatrix * in.bitangent)),
@@ -68,6 +70,7 @@ vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ s
 }
 
 fragment GBufferData gbuffer_fragment_base(ColorInOut          in           [[ stage_in ]],
+                                           constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                            constant LightData  &lightData   [[ buffer(TFSBufferDirectionalLightData) ]],
                                            depth2d_array<float> shadowArray [[ texture(TFSTextureIndexShadow) ]])
 {
@@ -89,8 +92,12 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut          in           [[ s
     // slope-scaled world-slack epsilon. Returns 1.0 (lit) or 0.5 (shadowed).
     // `in.normal` here is already the WORLD-space normal (normalMatrix applied
     // in the vertex shader), so we pass it through for slope-scaled bias.
+    // viewSpaceDepth is recomputed per-fragment from worldPosition to avoid
+    // the interpolation-of-non-linear-attribute issue described in
+    // debugging/claude/csm_select_cascade_drift.md.
+    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
     float shadow_sample = Lighting::CalculateShadow(in.worldPosition,
-                                                    in.viewSpaceDepth,
+                                                    fragViewSpaceDepth,
                                                     float3(in.normal),
                                                     lightData,
                                                     shadowArray);
@@ -109,6 +116,7 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut          in           [[ s
 }
 
 fragment GBufferData gbuffer_fragment_material(ColorInOut                          in           [[ stage_in ]],
+                                               constant SceneConstants             &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                                constant MaterialProperties        &material     [[ buffer(TFSBufferIndexMaterial) ]],
                                                constant MaterialTextureTransforms &uvXforms     [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
                                                constant LightData                  &lightData   [[ buffer(TFSBufferDirectionalLightData) ]],
@@ -161,8 +169,10 @@ fragment GBufferData gbuffer_fragment_material(ColorInOut                       
     // worldPosition by that cascade's VP, sample the texture array slice.
     // `in.normal` is the WORLD-space normal (normalMatrix applied in vertex
     // shader); passing it enables slope-scaled bias in CalculateShadow.
+    // viewSpaceDepth recomputed per-fragment — see gbuffer_fragment_base above.
+    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
     float shadow_sample = Lighting::CalculateShadow(in.worldPosition,
-                                                    in.viewSpaceDepth,
+                                                    fragViewSpaceDepth,
                                                     float3(in.normal),
                                                     lightData,
                                                     shadowArray);

@@ -146,6 +146,19 @@ class LightObject: GameObject {
     /// pre-CSM implementation.
     private func updateShadowCascades() {
         guard let cam = CameraManager.CurrentCamera else { return }
+        print("[updateShadowCascades] camera world position: \(cam.getWorldPosition())")
+
+        // Camera scale = length of the camera's modelMatrix col0 (= scale 3
+        // for the AttachedCamera-parented-to-F-22 case). Cascade splits are
+        // computed in the camera's view-space units (which include the
+        // 1/cameraScale factor), but the shader's `viewSpaceDepth` is now
+        // world-space distance (`distance(worldPos, cameraPos)`), so we
+        // multiply splits by `cameraScale` to match. See
+        // debugging/claude/csm_select_cascade_drift.md.
+        let cameraInverseForScale = cam.viewMatrix.inverse
+        let cameraScale = simd_length(simd_float3(cameraInverseForScale.columns.0.x,
+                                                  cameraInverseForScale.columns.0.y,
+                                                  cameraInverseForScale.columns.0.z))
 
         if _cascadeCount == 1 {
             // Legacy single-cascade fast path: bit-identical to pre-CSM behavior.
@@ -160,7 +173,7 @@ class LightObject: GameObject {
             writeCascadeMatrices(into: &lightData.cascadeViewProjectionMatrices,
                                  from: oneMatrix)
             writeCascadeFloats(into: &lightData.cascadeSplitDepths,
-                               from: [cam.far])
+                               from: [cam.far * cameraScale])  // world units
             writeCascadeFloats(into: &lightData.cascadeDepthRange,
                                from: [shadowCamera.depthRange])
             writeCascadeFloats(into: &lightData.cascadeWorldSlack,
@@ -209,7 +222,10 @@ class LightObject: GameObject {
         let referenceRadius = max(cascades[0].camera.orthoHalfExtentX, 1e-4)
 
         let vpMatrices: [matrix_float4x4] = cascades.map { $0.camera.viewProjectionMatrix }
-        let splitDepths: [Float]          = cascades.map { $0.splitFar }
+        // splitFar is in the camera's view-space units; multiply by cameraScale
+        // so the per-cascade split stored in LightData is in WORLD units,
+        // matching the new vertex-shader `viewSpaceDepth = distance(worldPos, cameraPos)`.
+        let splitDepths: [Float]          = cascades.map { $0.splitFar * cameraScale }
         let depthRanges: [Float]          = cascades.map { $0.camera.depthRange }
         let worldSlacks: [Float]          = cascades.map { cascade in
             _baseWorldSlack * (cascade.camera.orthoHalfExtentX / referenceRadius)
@@ -263,10 +279,18 @@ class LightObject: GameObject {
         let groundClip = vp * float4(camPosWorld.x, 0, camPosWorld.z, 1)
         let groundNDC  = groundClip.xyz / groundClip.w
 
+        // For the debug log, also derive cameraScale so the world-unit splits
+        // (what the shader now compares against) are visible alongside the
+        // raw view-space splits.
+        let cameraScale = simd_length(simd_float3(cameraInverse.columns.0.x,
+                                                  cameraInverse.columns.0.y,
+                                                  cameraInverse.columns.0.z))
+
         print(String(format: """
         [CSM Debug] cam=(%.1f, %.1f, %.1f) fwd=(%.3f, %.3f, %.3f) lightDir=(%.3f, %.3f, %.3f)
           Sphere0 center world: (%.1f, %.1f, %.1f)
           Cascade splits (view-z): %@
+          Cascade splits (world):  %@
           Cascade depth ranges:     %@
           Cascade halfExtentX:      %@
           C0 NDC of camera:    uv=(%.3f, %.3f) z=%.4f
@@ -277,6 +301,7 @@ class LightObject: GameObject {
                      direction.x, direction.y, direction.z,
                      sphereCenter.x, sphereCenter.y, sphereCenter.z,
                      cascades.map { String(format: "%.1f", $0.splitFar) }.joined(separator: ", "),
+                     cascades.map { String(format: "%.1f", $0.splitFar * cameraScale) }.joined(separator: ", "),
                      cascades.map { String(format: "%.1f", $0.camera.depthRange) }.joined(separator: ", "),
                      cascades.map { String(format: "%.1f", $0.camera.orthoHalfExtentX) }.joined(separator: ", "),
                      camNDC.x, camNDC.y, camNDC.z,
