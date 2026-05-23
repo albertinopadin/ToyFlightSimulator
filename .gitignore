@@ -9,3 +9,7 @@
 .claude/
 
 **/TestResults
+
+# LLVM coverage profile output (emitted by -profile-generate builds, e.g.
+# code-coverage-enabled test runs).
+*.profraw
