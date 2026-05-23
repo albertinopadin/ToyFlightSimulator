@@ -152,10 +152,24 @@ enum ShadowCascadeFitting {
                       + (snappedProjY - projY) * yWorld
             let snappedCenter = sphereCenter + shift
 
-            // Light view: eye at center + direction (looking down toward
-            // surfaces), target the snapped center.
+            // Light view: eye at center + lightDirection (looking back down
+            // toward surfaces), target the snapped center. Build it directly
+            // from the degenerate-safe (xWorld, yWorld, zWorld) basis computed
+            // above instead of re-deriving it via Transform.look(up: Y_AXIS):
+            // for a straight-overhead light the look-forward is parallel to
+            // Y_AXIS, so cross(up, forward) collapses and normalize() emits
+            // NaNs. In the non-degenerate case zWorld == -lightDirection, so
+            // this is the exact matrix Transform.look would return — and it
+            // keeps the shadow-view basis identical to the basis the texel snap
+            // was computed in.
             let eye = snappedCenter + lightDirection * radius
-            let lightView = Transform.look(eye: eye, target: snappedCenter, up: Y_AXIS)
+            let lightView = float4x4(
+                float4(xWorld.x, yWorld.x, zWorld.x, 0),
+                float4(xWorld.y, yWorld.y, zWorld.y, 0),
+                float4(xWorld.z, yWorld.z, zWorld.z, 0),
+                float4(-simd_dot(xWorld, eye),
+                       -simd_dot(yWorld, eye),
+                       -simd_dot(zWorld, eye), 1))
 
             // Ortho extents: [-radius, +radius] on X/Y. Additive z-padding so
             // casters slightly outside the sphere still fit. Additive (not the

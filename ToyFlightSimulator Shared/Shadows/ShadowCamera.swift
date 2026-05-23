@@ -21,12 +21,17 @@ struct ShadowCamera {
 
     /// Legacy single-cascade sun-follow constructor. The shadow eye is lifted
     /// `lift` units along `direction` from `focus`, looking back at `focus`.
-    /// `up = Y_AXIS` matches all other camera/light conventions; degenerate when
-    /// `direction` is exactly parallel to Y_AXIS (callers avoid pointing the sun
-    /// straight up). Forward-Z ortho (see TiledDeferredDepthStencils.swift:10-13).
+    /// `up` is normally Y_AXIS to match all other camera/light conventions, but
+    /// falls back to X_AXIS when `direction` is (anti)parallel to Y_AXIS — a
+    /// straight-overhead sun — so Transform.look's `cross(up, forward)` basis
+    /// doesn't collapse and emit NaNs (mirrors the ShadowCascadeFitting
+    /// degenerate-basis fallback). Forward-Z ortho (see
+    /// TiledDeferredDepthStencils.swift:10-13).
     init(direction: float3, focus: float3, radius: Float, lift: Float) {
         let eye = focus + direction * lift
-        self.viewMatrix = Transform.look(eye: eye, target: focus, up: Y_AXIS)
+        let forward = simd_normalize(focus - eye)   // == -normalize(direction)
+        let up = abs(simd_dot(forward, Y_AXIS)) > 0.999 ? X_AXIS : Y_AXIS
+        self.viewMatrix = Transform.look(eye: eye, target: focus, up: up)
         let near: Float = 1
         let far:  Float = 2 * lift
         self.projectionMatrix = Transform.orthographicProjection(-radius, radius,
