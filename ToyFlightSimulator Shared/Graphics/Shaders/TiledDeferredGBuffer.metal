@@ -18,12 +18,11 @@ tiled_deferred_gbuffer_vertex(
            VertexIn       in              [[ stage_in ]],
   constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
   constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
-  constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
            uint           instanceId      [[ instance_id ]]) {
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 worldPosition = modelInstance.modelMatrix * float4(in.position, 1);
     float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
-    
+
     VertexOut out {
         .position = position,
         .normal = in.normal,
@@ -32,7 +31,6 @@ tiled_deferred_gbuffer_vertex(
         .worldNormal = modelInstance.normalMatrix * in.normal,
         .worldTangent = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
-        .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition,
         .instanceId = instanceId,
         .objectColor = modelInstance.objectColor,
         .useObjectColor = modelInstance.useObjectColor
@@ -40,12 +38,11 @@ tiled_deferred_gbuffer_vertex(
     return out;
 }
 
-vertex VertexOut 
+vertex VertexOut
 tiled_deferred_gbuffer_animated_vertex(
            VertexIn       in              [[ stage_in ]],
   constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
   constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
-  constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
   constant float4x4       *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
            uint           instanceId      [[ instance_id ]]) {
     ModelConstants modelInstance = modelConstants[instanceId];
@@ -70,7 +67,7 @@ tiled_deferred_gbuffer_animated_vertex(
     
     
     float4 worldPosition = modelInstance.modelMatrix * position;
-    
+
     VertexOut out {
         .position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition,
         .normal = normal.xyz,
@@ -79,7 +76,6 @@ tiled_deferred_gbuffer_animated_vertex(
         .worldNormal = modelInstance.normalMatrix * in.normal,
         .worldTangent = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,
-        .shadowPosition = lightData.shadowViewProjectionMatrix * worldPosition,
         .instanceId = instanceId,
         .objectColor = modelInstance.objectColor,
         .useObjectColor = modelInstance.useObjectColor
@@ -89,13 +85,14 @@ tiled_deferred_gbuffer_animated_vertex(
 
 fragment GBufferOut
 tiled_deferred_gbuffer_fragment(VertexOut                          in                  [[ stage_in ]],
+                                constant SceneConstants            &sceneConstants     [[ buffer(TFSBufferIndexSceneConstants) ]],
                                 constant MaterialProperties        &material           [[ buffer(TFSBufferIndexMaterial) ]],
                                 constant MaterialTextureTransforms &uvXforms           [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
                                 constant LightData                 &lightData          [[ buffer(TFSBufferDirectionalLightData) ]],
                                 sampler                            sampler2d           [[ sampler(0) ]],
                                 texture2d<half>                    baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
                                 texture2d<half>                    normalTexture       [[ texture(TFSTextureIndexNormal) ]],
-                                depth2d<float>                     shadowTexture       [[ texture(TFSTextureIndexShadow) ]]) {
+                                depth2d_array<float>               shadowArray         [[ texture(TFSTextureIndexShadow) ]]) {
     float2 baseUV   = in.uv;
     float2 normalUV = in.uv;
     if (uvXforms.hasTextureTransforms) {
@@ -111,10 +108,15 @@ tiled_deferred_gbuffer_fragment(VertexOut                          in           
         color = float4(baseColorTexture.sample(sampler2d, baseUV));
     }
 
-    color.a = Lighting::CalculateShadow(in.shadowPosition,
-                                        shadowTexture,
-                                        lightData.shadowWorldSlack,
-                                        lightData.shadowDepthRange);
+    // Per-fragment view-space depth from the perspective-correctly interpolated
+    // worldPosition. worldPos - cameraPos is Sterbenz-exact in float32 for
+    // visible fragments, avoiding the precision collapse of writing it per-vertex.
+    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
+    color.a = Lighting::CalculateShadow(in.worldPosition,
+                                        fragViewSpaceDepth,
+                                        in.worldNormal,
+                                        lightData,
+                                        shadowArray);
 
     float4 normal = float4(normalize(in.worldNormal), 1.0);
 

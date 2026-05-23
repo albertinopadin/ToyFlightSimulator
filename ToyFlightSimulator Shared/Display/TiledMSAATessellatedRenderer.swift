@@ -22,9 +22,8 @@ final class TiledMSAATessellatedRenderer:   Renderer,
 
     var gBufferTextures = TiledDeferredGBufferTextures()
 
-    var shadowMap: MTLTexture
-    var shadowResolveTexture: MTLTexture?
-    var shadowRenderPassDescriptor: MTLRenderPassDescriptor
+    var shadowMapArray: MTLTexture
+    var shadowRenderPassDescriptors: [MTLRenderPassDescriptor]
 
     // App-owned color targets for the GBuffer/lighting pass. lightingResolveTexture
     // is sampled by the composite pass; lightingMSAATexture is the multisample target.
@@ -73,20 +72,14 @@ final class TiledMSAATessellatedRenderer:   Renderer,
     }
     
     init() {
-        shadowMap = Self.makeShadowMap(label: Self.sampleCount > 1 ? "Shadow Multisample Texture" : "Shadow Texture",
-                                       sampleCount: Self.sampleCount)
-        shadowResolveTexture = Self.makeShadowMap(label: "Shadow Resolve Texture", sampleCount: 1)
-        shadowRenderPassDescriptor = Self.makeMultiSampledShadowRenderPassDescriptor(shadowTexture: shadowMap,
-                                                                                     resolveTexture: shadowResolveTexture!)
+        shadowMapArray = Self.makeShadowMapArray(label: "Shadow Texture Array")
+        shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowArray: shadowMapArray)
         super.init(type: .TiledMSAATessellated)
     }
-    
+
     init(_ mtkView: MTKView) {
-        shadowMap = Self.makeShadowMap(label: Self.sampleCount > 1 ? "Shadow Multisample Texture" : "Shadow Texture",
-                                       sampleCount: Self.sampleCount)
-        shadowResolveTexture = Self.makeShadowMap(label: "Shadow Resolve Texture", sampleCount: 1)
-        shadowRenderPassDescriptor = Self.makeMultiSampledShadowRenderPassDescriptor(shadowTexture: shadowMap,
-                                                                                     resolveTexture: shadowResolveTexture!)
+        shadowMapArray = Self.makeShadowMapArray(label: "Shadow Texture Array")
+        shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowArray: shadowMapArray)
         super.init(mtkView, type: .TiledMSAATessellated)
     }
     
@@ -95,7 +88,7 @@ final class TiledMSAATessellatedRenderer:   Renderer,
 //            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBuffer])
             setRenderPipelineState(renderEncoder, state: .TiledMSAAGBuffer)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            renderEncoder.setFragmentTexture(shadowResolveTexture, index: TFSTextureIndexShadow.index)
+            renderEncoder.setFragmentTexture(shadowMapArray, index: TFSTextureIndexShadow.index)
             DrawManager.DrawOpaque(with: renderEncoder)
         }
     }

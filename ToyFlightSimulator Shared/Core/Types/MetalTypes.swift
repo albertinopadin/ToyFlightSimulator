@@ -108,11 +108,10 @@ extension MaterialTextureTransforms: sizeable {
 
 extension LightData: sizeable {
     init() {
+        let identity = matrix_identity_float4x4
         self.init(type: Directional,
-                  modelMatrix: matrix_identity_float4x4,
-                  viewProjectionMatrix: matrix_identity_float4x4,
-                  shadowViewProjectionMatrix: matrix_identity_float4x4,
-                  shadowTransformMatrix: matrix_identity_float4x4,
+                  modelMatrix: identity,
+                  viewProjectionMatrix: identity,
                   direction: [0, 1, 0],
                   lightEyeDirection: [0, 0, 0],
                   position: [0, 0, 0],
@@ -123,8 +122,11 @@ extension LightData: sizeable {
                   ambientIntensity: 1.0,
                   diffuseIntensity: 1.0,
                   specularIntensity: 1.0,
-                  shadowDepthRange: 1.0,
-                  shadowWorldSlack: 0.25)
+                  shadowWorldSlack: 0.25,
+                  cascadeCount: 0,
+                  cascadeViewProjectionMatrices: (identity, identity, identity, identity),
+                  cascadeSplitDepths: (0, 0, 0, 0),
+                  cascadeDepthRanges: (1, 1, 1, 1))
     }
 }
 

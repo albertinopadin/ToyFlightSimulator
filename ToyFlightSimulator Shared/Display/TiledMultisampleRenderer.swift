@@ -16,9 +16,8 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
 
     var gBufferTextures = TiledDeferredGBufferTextures()
 
-    var shadowMap: MTLTexture
-    var shadowResolveTexture: MTLTexture?
-    var shadowRenderPassDescriptor: MTLRenderPassDescriptor
+    var shadowMapArray: MTLTexture
+    var shadowRenderPassDescriptors: [MTLRenderPassDescriptor]
 
     // App-owned color targets for the GBuffer/lighting pass. lightingResolveTexture
     // is sampled by the composite pass; lightingMSAATexture is the multisample target.
@@ -67,20 +66,14 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     }
     
     init() {
-        shadowMap = Self.makeShadowMap(label: Self.sampleCount > 1 ? "Shadow Multisample Texture" : "Shadow Texture",
-                                       sampleCount: Self.sampleCount)
-        shadowResolveTexture = Self.makeShadowMap(label: "Shadow Resolve Texture", sampleCount: 1)
-        shadowRenderPassDescriptor = Self.makeMultiSampledShadowRenderPassDescriptor(shadowTexture: shadowMap,
-                                                                                     resolveTexture: shadowResolveTexture!)
+        shadowMapArray = Self.makeShadowMapArray(label: "Shadow Texture Array")
+        shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowArray: shadowMapArray)
         super.init(type: .TiledDeferredMSAA)
     }
-    
+
     init(_ mtkView: MTKView) {
-        shadowMap = Self.makeShadowMap(label: Self.sampleCount > 1 ? "Shadow Multisample Texture" : "Shadow Texture",
-                                       sampleCount: Self.sampleCount)
-        shadowResolveTexture = Self.makeShadowMap(label: "Shadow Resolve Texture", sampleCount: 1)
-        shadowRenderPassDescriptor = Self.makeMultiSampledShadowRenderPassDescriptor(shadowTexture: shadowMap,
-                                                                                     resolveTexture: shadowResolveTexture!)
+        shadowMapArray = Self.makeShadowMapArray(label: "Shadow Texture Array")
+        shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowArray: shadowMapArray)
         super.init(mtkView, type: .TiledDeferredMSAA)
     }
     
@@ -88,7 +81,7 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
         encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBuffer])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            renderEncoder.setFragmentTexture(shadowResolveTexture, index: TFSTextureIndexShadow.index)
+            renderEncoder.setFragmentTexture(shadowMapArray, index: TFSTextureIndexShadow.index)
             DrawManager.DrawOpaque(with: renderEncoder)
         }
     }

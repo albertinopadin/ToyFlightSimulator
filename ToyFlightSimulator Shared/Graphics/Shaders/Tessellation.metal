@@ -124,7 +124,7 @@ tessellation_gbuffer_fragment(TessellationVertexOut in              [[ stage_in 
                       texture2d<float>      cliffTexture    [[ texture(TFSTextureIndexCliff) ]],
                       texture2d<float>      snowTexture     [[ texture(TFSTextureIndexSnow) ]],
                       texture2d<half>       normalTexture   [[ texture(TFSTextureIndexNormal) ]],
-                      depth2d_ms<float>     shadowTexture   [[ texture(TFSTextureIndexShadow) ]]) {
+                      depth2d_array<float>  shadowArray     [[ texture(TFSTextureIndexShadow) ]]) {
     constexpr sampler sample;
     float tiling = 1.0;  // Get this passed in ???
     float4 color;

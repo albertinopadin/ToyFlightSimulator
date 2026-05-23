@@ -69,12 +69,15 @@ typedef enum {
     Point
 } LightType;
 
+// Maximum number of cascaded shadow map slices per directional light. The
+// shadow map texture array is allocated with this many slices; LightData
+// carries one view-projection matrix and split depth per active cascade.
+#define TFS_MAX_SHADOW_CASCADES 4
+
 typedef struct {
     LightType type;
     matrix_float4x4 modelMatrix;
     matrix_float4x4 viewProjectionMatrix;
-    matrix_float4x4 shadowViewProjectionMatrix;
-    matrix_float4x4 shadowTransformMatrix;
 
     // World-space unit vector pointing FROM lit surfaces TO the light source.
     // For Directional lights this is the canonical light direction used by the
@@ -98,16 +101,30 @@ typedef struct {
     float diffuseIntensity;
     float specularIntensity;
 
-    // Shadow-camera depth extent in world units (`far − near`). Used by the
-    // shader's depth-compare epsilon: NDC epsilon = shadowWorldSlack / shadowDepthRange.
-    // Lets one constant world-space slack (~tenths of a world unit) work across
-    // any frustum depth without retuning. Populated by LightObject.update().
-    float shadowDepthRange;
-
     // World-space depth slack allowed before a fragment registers as shadowed.
     // Smaller → fine self-shadow detail (e.g. F-22 rudders); larger → safer
-    // against shadow acne on flat receivers. Default ~0.25 world units.
+    // against shadow acne on flat receivers. Default ~0.25 world units. Scaled
+    // per-cascade in the shader via NDC epsilon = shadowWorldSlack / cascadeDepthRanges[i].
     float shadowWorldSlack;
+
+    // --- Cascaded Shadow Maps ---
+    // Number of active cascades (1...TFS_MAX_SHADOW_CASCADES). 0 means "no
+    // shadows": the shader returns fully lit. (uint32_t bridges cleanly to
+    // Swift UInt32 and reads as `uint` in MSL.)
+    uint32_t cascadeCount;
+
+    // Per-cascade light view-projection matrix. The shader transforms
+    // worldPosition by cascadeViewProjectionMatrices[i] after SelectCascade
+    // picks i.
+    matrix_float4x4 cascadeViewProjectionMatrices[TFS_MAX_SHADOW_CASCADES];
+
+    // Per-cascade *far* depth threshold (world units). SelectCascade picks the
+    // first i where fragViewSpaceDepth < cascadeSplitDepths[i].
+    float cascadeSplitDepths[TFS_MAX_SHADOW_CASCADES];
+
+    // Per-cascade ortho `far - near` (world units). Used by the per-cascade
+    // depth-compare epsilon: NDC epsilon = shadowWorldSlack / cascadeDepthRanges[i].
+    float cascadeDepthRanges[TFS_MAX_SHADOW_CASCADES];
 } LightData;
 
 // Buffer index values shared between shader and C code to ensure Metal shader buffer inputs match
@@ -125,7 +142,12 @@ typedef enum {
     TFSBufferIndexMaterial                  = 9,
     TFSBufferIndexTerrain                   = 10,
     TFSBufferIndexJointBuffer               = 11,
-    TFSBufferIndexMaterialTextureTransforms = 12
+    TFSBufferIndexMaterialTextureTransforms = 12,
+
+    // Per-shadow-gen-pass push constant: a single 4×4 matrix (the current
+    // cascade's view-projection matrix). Separate from LightData because the
+    // shadow gen pass runs once per cascade, each needing a different matrix.
+    TFSBufferIndexShadowCascadeVP           = 13
 } TFSBufferIndices;
 
 // Attribute index values shared between shader and C code to ensure Metal shader vertex
