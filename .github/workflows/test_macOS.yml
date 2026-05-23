@@ -3,6 +3,8 @@ name: ToyFlightSimulator macOS Tests > main
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   test:

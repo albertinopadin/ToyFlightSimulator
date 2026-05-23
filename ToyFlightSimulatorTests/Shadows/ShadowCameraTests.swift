@@ -33,6 +33,17 @@ struct ShadowCameraTests {
         #expect(allFinite(cam.viewProjectionMatrix))
     }
 
+    /// A straight-overhead sun makes Transform.look's cross(up, forward) basis
+    /// collapse under up = Y_AXIS; the init must fall back to a non-parallel up
+    /// rather than emit NaNs.
+    @Test("legacy init: straight-overhead sun produces a finite matrix")
+    func legacyOverheadSunNoNaN() {
+        let cam = ShadowCamera(direction: SIMD3<Float>(0, 1, 0),   // sun straight up
+                               focus: SIMD3<Float>(10, 5, -8),
+                               radius: 50, lift: 200)
+        #expect(allFinite(cam.viewProjectionMatrix))
+    }
+
     // MARK: - Cascade-fit initializer
 
     @Test("cascade-fit init: depthRange is farZ - nearZ")
