@@ -45,7 +45,8 @@ class AttachedCamera: Camera {
 
     /// Inverse of a rigid (scale-free) world transform derived from `world`:
     /// translation kept, basis re-orthonormalized to remove (uniform) scale.
-    private static func scaleStrippedInverse(of world: float4x4) -> float4x4 {
+    /// Internal (not private) so it can be unit-tested directly.
+    static func scaleStrippedInverse(of world: float4x4) -> float4x4 {
         let x = simd_normalize(world.columns.0.xyz)
         let y = simd_normalize(world.columns.1.xyz)
         let z = simd_normalize(world.columns.2.xyz)

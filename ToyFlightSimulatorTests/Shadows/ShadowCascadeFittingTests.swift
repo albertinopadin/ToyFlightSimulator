@@ -168,4 +168,74 @@ struct ShadowCascadeFittingTests {
         let mTiny = fitAt(1e-5)
         #expect(approxEqual(m0, mTiny, tolerance: 1e-2))
     }
+
+    // MARK: - Edge cases / robustness
+
+    @Test("computeSplits with a single cascade returns just the far plane")
+    func singleCascadeSplit() {
+        let splits = ShadowCascadeFitting.computeSplits(near: 0.1, far: 400,
+                                                        cascadeCount: 1, lambda: 0.5)
+        #expect(splits.count == 1)
+        #expect(approxEqual(splits[0], 400, tolerance: 1e-2))
+    }
+
+    @Test("computeSplits stays strictly within (near, far]")
+    func splitsWithinRange() {
+        let near: Float = 0.05, far: Float = 750
+        for lambda: Float in [0, 0.25, 0.5, 0.75, 1] {
+            let splits = ShadowCascadeFitting.computeSplits(near: near, far: far,
+                                                            cascadeCount: 4, lambda: lambda)
+            for s in splits {
+                #expect(s > near)
+                #expect(s <= far + 1e-2)
+            }
+        }
+    }
+
+    @Test("fitCascades supports a single cascade")
+    func fitSingleCascade() {
+        let snap = ShadowCascadeFitting.CameraSnapshot(
+            viewMatrix: matrix_identity_float4x4,
+            near: 0.1, far: 1000, fovY: 1.2, aspect: 1.5)
+        let fit = ShadowCascadeFitting.fitCascades(
+            camera: snap,
+            lightDirection: simd_normalize(SIMD3<Float>(0.3, 1, 0.2)),
+            shadowMapResolution: 2048, cascadeCount: 1, lambda: 0.5,
+            shadowMaxDistance: 400, zPaddingWorldUnits: 50)
+        #expect(fit.cascades.count == 1)
+        #expect(fit.splitFars.count == 1)
+    }
+
+    /// A sun pointing straight down makes cross(Y_AXIS, lightDir) collapse; the
+    /// fitter must fall back to a world +X basis rather than emit NaNs.
+    @Test("fitCascades handles a straight-overhead light without NaNs")
+    func overheadLightNoNaN() {
+        let snap = ShadowCascadeFitting.CameraSnapshot(
+            viewMatrix: matrix_identity_float4x4,
+            near: 0.1, far: 1_000_000, fovY: 1.309, aspect: 1.78)
+        let fit = ShadowCascadeFitting.fitCascades(
+            camera: snap,
+            lightDirection: SIMD3<Float>(0, 1, 0),   // straight up — degenerate basis
+            shadowMapResolution: 4096, cascadeCount: 4, lambda: 0.5,
+            shadowMaxDistance: 500, zPaddingWorldUnits: 100)
+        for cascade in fit.cascades {
+            #expect(allFinite(cascade.viewProjectionMatrix))
+        }
+    }
+
+    @Test("fitCascades produces finite matrices and positive depth ranges")
+    func fitFiniteAndPositiveRanges() {
+        let snap = ShadowCascadeFitting.CameraSnapshot(
+            viewMatrix: Transform.translationMatrix(SIMD3<Float>(8000, 200, -12000)).inverse,
+            near: 0.1, far: 1_000_000, fovY: 1.309, aspect: 1.78)
+        let fit = ShadowCascadeFitting.fitCascades(
+            camera: snap,
+            lightDirection: simd_normalize(SIMD3<Float>(0.2, 1, 0.3)),
+            shadowMapResolution: 4096, cascadeCount: 4, lambda: 0.5,
+            shadowMaxDistance: 500, zPaddingWorldUnits: 100)
+        for cascade in fit.cascades {
+            #expect(allFinite(cascade.viewProjectionMatrix))
+            #expect(cascade.depthRange > 0)
+        }
+    }
 }
