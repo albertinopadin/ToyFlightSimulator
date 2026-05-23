@@ -9,96 +9,121 @@ import MetalKit
 
 protocol ShadowRendering: RenderPassEncoding {
     static var ShadowMapSize: Int { get }
-    var shadowMap: MTLTexture { get set }
-    var shadowResolveTexture: MTLTexture? { get set }
-    var shadowRenderPassDescriptor: MTLRenderPassDescriptor { get set }
+    static var CascadeCount:  Int { get }
+
+    // Single-sample depth32Float texture2DArray; one slice per cascade. PCF in
+    // the shader handles edge softening, so the shadow map itself is never MSAA.
+    var shadowMapArray: MTLTexture { get set }
+    var shadowRenderPassDescriptors: [MTLRenderPassDescriptor] { get set }
 }
 
 extension ShadowRendering {
-    static var ShadowMapSize: Int { 8_192 }
-    
-    public static func makeShadowMap(label: String, sampleCount: Int = 1) -> MTLTexture {
-        let shadowTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float,
-                                                                               width: Self.ShadowMapSize,
-                                                                               height: Self.ShadowMapSize,
-                                                                               mipmapped: false)
-        shadowTextureDescriptor.resourceOptions = .storageModePrivate
-        shadowTextureDescriptor.usage = [.renderTarget, .shaderRead]
-        
-        if sampleCount > 1 {
-            shadowTextureDescriptor.textureType = .type2DMultisample
-            shadowTextureDescriptor.sampleCount = sampleCount
-        }
-        
-        guard let sm = Engine.Device.makeTexture(descriptor: shadowTextureDescriptor) else {
-            fatalError("[ShadowRenderer makeShadowMap] Could not create shadow map texture.")
+    static var ShadowMapSize: Int { 4_096 }
+    static var CascadeCount:  Int { 4 }
+
+    public static func makeShadowMapArray(label: String) -> MTLTexture {
+        let descriptor = MTLTextureDescriptor()
+        descriptor.pixelFormat      = .depth32Float
+        descriptor.width            = Self.ShadowMapSize
+        descriptor.height           = Self.ShadowMapSize
+        descriptor.arrayLength      = Self.CascadeCount
+        descriptor.mipmapLevelCount = 1
+        descriptor.textureType      = .type2DArray
+        descriptor.resourceOptions  = .storageModePrivate
+        descriptor.usage            = [.renderTarget, .shaderRead]
+
+        guard let sm = Engine.Device.makeTexture(descriptor: descriptor) else {
+            fatalError("[ShadowRendering makeShadowMapArray] Could not create shadow map array.")
         }
         sm.label = label
         return sm
     }
-    
-    public static func makeShadowRenderPassDescriptor(shadowMapTexture: MTLTexture) -> MTLRenderPassDescriptor {
-        let mShadowRenderPassDescriptor = MTLRenderPassDescriptor()
-        mShadowRenderPassDescriptor.depthAttachment.texture = shadowMapTexture
-        mShadowRenderPassDescriptor.depthAttachment.loadAction = .clear
-        mShadowRenderPassDescriptor.depthAttachment.storeAction = .store
-        return mShadowRenderPassDescriptor
+
+    public static func makeShadowRenderPassDescriptors(shadowArray: MTLTexture)
+                                                       -> [MTLRenderPassDescriptor] {
+        precondition(shadowArray.arrayLength == Self.CascadeCount,
+                     "Shadow array length (\(shadowArray.arrayLength)) must equal CascadeCount (\(Self.CascadeCount))")
+        var descriptors: [MTLRenderPassDescriptor] = []
+        descriptors.reserveCapacity(Self.CascadeCount)
+        for i in 0..<Self.CascadeCount {
+            let d = MTLRenderPassDescriptor()
+            d.depthAttachment.texture     = shadowArray
+            d.depthAttachment.slice       = i
+            d.depthAttachment.loadAction  = .clear
+            d.depthAttachment.clearDepth  = 1.0   // forward-Z ortho: far = 1
+            d.depthAttachment.storeAction = .store
+            descriptors.append(d)
+        }
+        return descriptors
     }
-    
-    static func makeMultiSampledShadowRenderPassDescriptor(shadowTexture: MTLTexture,
-                                                           resolveTexture: MTLTexture) -> MTLRenderPassDescriptor {
-        let mShadowRenderPassDescriptor = MTLRenderPassDescriptor()
-        mShadowRenderPassDescriptor.depthAttachment.texture = shadowTexture
-        mShadowRenderPassDescriptor.depthAttachment.resolveTexture = resolveTexture
-        mShadowRenderPassDescriptor.depthAttachment.loadAction = .clear
-        mShadowRenderPassDescriptor.depthAttachment.storeAction = .multisampleResolve
-        return mShadowRenderPassDescriptor
-    }
-    
-    // TODO: Must be doing something wrong because there are strange artifacts, like:
-    //       - Seeing shadow of bombs and landing gear through aircraft
-    //       - Shadows on 'back side' of jet look odd
-    //       - If I pitch or roll jet, shadows look very different on adjacent panels in mesh.
-    // ADDENDUM: Might fix issues if I implement soft shadows...
-    func encodeShadowMapPass(into commandBuffer: MTLCommandBuffer) {
-        encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Map Pass") { renderEncoder in
-            SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-            encodeRenderStage(using: renderEncoder, label: "Shadow Generation Stage") {
-//                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.ShadowGeneration])
-                setRenderPipelineState(renderEncoder, state: .ShadowGeneration)
-                renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.ShadowGeneration])
-//                renderEncoder.setCullMode(.back)
-//                renderEncoder.setCullMode(.front)
-//                renderEncoder.setDepthBias(0.015, slopeScale: 7, clamp: 0.02)
-                renderEncoder.setDepthBias(0.1, slopeScale: 1, clamp: 0.0)
-                DrawManager.DrawShadows(with: renderEncoder)
+
+    /// Reify the active directional light's per-cascade view-projection matrices.
+    /// The cascade VPs are camera-independent (built from world-space data), so
+    /// the identity view matrix passed here only affects `lightEyeDirection`,
+    /// which the shadow pass doesn't read.
+    private func cascadeViewProjections() -> [float4x4] {
+        guard var light = LightManager.GetDirectionalLightData(viewMatrix: matrix_identity_float4x4).first else {
+            return []
+        }
+        let count = Int(light.cascadeCount)
+        guard count > 0 else { return [] }
+        return withUnsafePointer(to: &light.cascadeViewProjectionMatrices) { tuplePtr in
+            tuplePtr.withMemoryRebound(to: float4x4.self,
+                                       capacity: Int(TFS_MAX_SHADOW_CASCADES)) { ptr in
+                (0..<count).map { ptr[$0] }
             }
         }
     }
 
-    // TODO: Merge / Refactor into single func
-    func encodeShadowPassTiledDeferred(into commandBuffer: MTLCommandBuffer) {
-        encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "Shadow Pass") { renderEncoder in
-            encodeRenderStage(using: renderEncoder, label: "Shadow Texture Stage") {
-//                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredShadow])
-                setRenderPipelineState(renderEncoder, state: .TiledDeferredShadow)
-                renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredShadow])
-                SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-                DrawManager.DrawOpaque(with: renderEncoder)  // TODO: Why not DrawShadows ???
+    /// Shared cascade loop: one render pass per cascade slice, binding that
+    /// cascade's view-projection matrix as a push constant at
+    /// TFSBufferIndexShadowCascadeVP before drawing all shadow casters.
+    /// NOTE: no `setDepthBias` — the shader's per-cascade slope-scaled epsilon
+    /// handles bias without Peter-panning thin aircraft shadows.
+    private func encodeCascadePasses(into commandBuffer: MTLCommandBuffer,
+                                     pipeline: RenderPipelineStateType,
+                                     depthStencil: DepthStencilStateType,
+                                     draw: @escaping (MTLRenderCommandEncoder) -> Void) {
+        var vps = cascadeViewProjections()
+        guard !vps.isEmpty else { return }
+
+        for i in 0..<min(vps.count, shadowRenderPassDescriptors.count) {
+            encodeRenderPass(into: commandBuffer,
+                             using: shadowRenderPassDescriptors[i],
+                             label: "Shadow Map Pass [\(i)]") { renderEncoder in
+                encodeRenderStage(using: renderEncoder, label: "Shadow Generation Stage") {
+                    setRenderPipelineState(renderEncoder, state: pipeline)
+                    renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[depthStencil])
+                    renderEncoder.setVertexBytes(&vps[i],
+                                                 length: float4x4.stride,
+                                                 index: TFSBufferIndexShadowCascadeVP.index)
+                    draw(renderEncoder)
+                }
             }
+        }
+    }
+
+    func encodeShadowMapPass(into commandBuffer: MTLCommandBuffer) {
+        encodeCascadePasses(into: commandBuffer,
+                            pipeline: .ShadowGeneration,
+                            depthStencil: .ShadowGeneration) { renderEncoder in
+            DrawManager.DrawShadows(with: renderEncoder)
+        }
+    }
+
+    func encodeShadowPassTiledDeferred(into commandBuffer: MTLCommandBuffer) {
+        encodeCascadePasses(into: commandBuffer,
+                            pipeline: .TiledDeferredShadow,
+                            depthStencil: .TiledDeferredShadow) { renderEncoder in
+            DrawManager.DrawShadows(with: renderEncoder)
         }
     }
 
     func encodeMSAAShadowPass(into commandBuffer: MTLCommandBuffer) {
-        encodeRenderPass(into: commandBuffer, using: shadowRenderPassDescriptor, label: "MSAA Shadow Pass") { renderEncoder in
-            encodeRenderStage(using: renderEncoder, label: "Shadow Texture Stage") {
-//                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAShadow])
-                setRenderPipelineState(renderEncoder, state: .TiledMSAAShadow)
-                renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredShadow])
-                SceneManager.SetDirectionalLightConstants(with: renderEncoder)
-//                DrawManager.DrawOpaque(with: renderEncoder)
-                DrawManager.DrawShadows(with: renderEncoder)
-            }
+        encodeCascadePasses(into: commandBuffer,
+                            pipeline: .TiledMSAAShadow,
+                            depthStencil: .TiledDeferredShadow) { renderEncoder in
+            DrawManager.DrawShadows(with: renderEncoder)
         }
     }
 }

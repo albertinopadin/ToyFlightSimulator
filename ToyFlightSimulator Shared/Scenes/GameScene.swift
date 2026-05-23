@@ -173,6 +173,11 @@ class GameScene: Node {
         renderEncoder.setVertexBytes(&_sceneConstants,
                                      length: SceneConstants.stride,
                                      index: TFSBufferIndexSceneConstants.index)
+        // Fragments need cameraPosition for per-fragment view-space depth
+        // recomputation in the CSM cascade-selection path.
+        renderEncoder.setFragmentBytes(&_sceneConstants,
+                                       length: SceneConstants.stride,
+                                       index: TFSBufferIndexSceneConstants.index)
     }
 
     func setDirectionalLightConstants(with renderEncoder: MTLRenderCommandEncoder) {

@@ -23,7 +23,9 @@ struct TiledMSAAShadowPipelineState: RenderPipelineState {
             descriptor.vertexFunction = Graphics.Shaders[.ShadowVertex]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = .invalid
             descriptor.depthAttachmentPixelFormat = .depth32Float
-            descriptor.rasterSampleCount = 4  // TODO: Refactor to set this dynamically
+            // CSM shadow maps are single-sample (PCF handles softening); the
+            // shadow gen pass renders into a single-sample depth array.
+            descriptor.rasterSampleCount = 1
         })
     }()
 }
@@ -35,7 +37,8 @@ struct TiledMSAAShadowAnimatedPipelineState: RenderPipelineState {
             descriptor.vertexFunction = Graphics.Shaders[.ShadowAnimatedVertex]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = .invalid
             descriptor.depthAttachmentPixelFormat = .depth32Float
-            descriptor.rasterSampleCount = 4  // TODO: Refactor to set this dynamically
+            // Single-sample to match the CSM shadow array (see above).
+            descriptor.rasterSampleCount = 1
         })
     }()
 }

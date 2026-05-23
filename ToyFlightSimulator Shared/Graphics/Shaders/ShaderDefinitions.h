@@ -85,11 +85,10 @@ struct VertexOut {
     float4 position [[ position ]];
     float3 normal;
     float2 uv;
-    float3 worldPosition;
+    float3 worldPosition;   // perspective-correct; fragment derives viewSpaceDepth + cascade shadow pos
     float3 worldNormal;
     float3 worldTangent;
     float3 worldBitangent;
-    float4 shadowPosition;
     uint instanceId;
     float4 objectColor;
     bool useObjectColor;

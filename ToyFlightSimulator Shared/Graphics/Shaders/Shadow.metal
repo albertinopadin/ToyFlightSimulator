@@ -16,15 +16,15 @@ struct ShadowOutput
 };
 
 vertex ShadowOutput shadow_vertex(const     VertexIn        in              [[ stage_in ]],
-                                  constant  LightData       &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+                                  constant  float4x4        &cascadeVP      [[ buffer(TFSBufferIndexShadowCascadeVP) ]],
                                   constant  ModelConstants  *modelConstants [[ buffer(TFSBufferModelConstants) ]],
                                             uint            instanceId      [[ instance_id ]])
 {
     ModelConstants modelInstance = modelConstants[instanceId];
     ShadowOutput out = {
-        .position = lightData.shadowViewProjectionMatrix * modelInstance.modelMatrix * float4(in.position, 1.0)
+        .position = cascadeVP * modelInstance.modelMatrix * float4(in.position, 1.0)
     };
-    
+
     return out;
 }
 
@@ -32,7 +32,7 @@ vertex ShadowOutput shadow_vertex(const     VertexIn        in              [[ s
 
 vertex ShadowOutput shadow_animated_vertex(
   const     VertexIn        in              [[ stage_in ]],
-  constant  LightData       &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+  constant  float4x4        &cascadeVP      [[ buffer(TFSBufferIndexShadowCascadeVP) ]],
   constant  ModelConstants  *modelConstants [[ buffer(TFSBufferModelConstants) ]],
   constant  float4x4        *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
             uint            instanceId      [[ instance_id ]])
@@ -52,8 +52,8 @@ vertex ShadowOutput shadow_animated_vertex(
     }
     
     ShadowOutput out = {
-        .position = lightData.shadowViewProjectionMatrix * modelInstance.modelMatrix * position
+        .position = cascadeVP * modelInstance.modelMatrix * position
     };
-    
+
     return out;
 }
