@@ -31,10 +31,30 @@ class AttachedCamera: Camera {
         node.addChild(self)
     }
     
-    // To make a camera follow a node, invert the camera's model matrix:
+    // To make a camera follow a node, invert the camera's model matrix.
+    // A camera has no mesh, so a scaled parent (e.g. a setScale(3) jet) should
+    // not warp its view. Strip the inherited scale: keep world position +
+    // orientation, drop scale, then invert. Perspective is scale-invariant so
+    // the rendered scene is unchanged, but view-space distances now equal world
+    // distances — which lets the CSM fitter work in true world units regardless
+    // of the parent's scale (no hidden 1/scale factor on near/far).
     override func updateModelMatrix() {
         super.updateModelMatrix()
-        viewMatrix = modelMatrix.inverse
+        viewMatrix = AttachedCamera.scaleStrippedInverse(of: modelMatrix)
+    }
+
+    /// Inverse of a rigid (scale-free) world transform derived from `world`:
+    /// translation kept, basis re-orthonormalized to remove (uniform) scale.
+    private static func scaleStrippedInverse(of world: float4x4) -> float4x4 {
+        let x = simd_normalize(world.columns.0.xyz)
+        let y = simd_normalize(world.columns.1.xyz)
+        let z = simd_normalize(world.columns.2.xyz)
+        let t = world.columns.3.xyz
+        let rigid = float4x4(SIMD4<Float>(x, 0),
+                             SIMD4<Float>(y, 0),
+                             SIMD4<Float>(z, 0),
+                             SIMD4<Float>(t, 1))
+        return rigid.inverse
     }
 
     override func update() {
