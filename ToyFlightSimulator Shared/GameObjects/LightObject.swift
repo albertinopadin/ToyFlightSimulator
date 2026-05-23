@@ -14,7 +14,12 @@ class LightObject: GameObject {
     // CSM configuration. Defaults tuned for FlightboxWithPhysics-scale scenes
     // (1M ground, F-22 at flight speeds). Override per-scene via the setters.
     private var _cascadeCount:      Int   = 4         // 1...TFS_MAX_SHADOW_CASCADES
-    private var _cascadeLambda:     Float = 0.5       // PSSM hybrid blend
+    // PSSM hybrid blend: 0 = uniform, 1 = logarithmic. Biased toward log (0.8)
+    // so cascade 0 hugs the camera tightly — that concentrates shadow-map
+    // resolution on the player/jet for sharp self- and cast-shadows, while the
+    // outer cascades still reach `shadowMaxDistance`. Lower it toward 0.5 if the
+    // near→mid cascade transition becomes too abrupt.
+    private var _cascadeLambda:     Float = 0.8
     private var _shadowMapRes:      Int   = 4096      // MUST match ShadowRendering.ShadowMapSize
     private var _shadowMaxDistance: Float = 500       // decouple shadow reach from cam.far
     private var _cascadeZPad:       Float = 100       // additive ortho z-padding (world units)
