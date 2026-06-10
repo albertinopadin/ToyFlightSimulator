@@ -36,13 +36,15 @@ struct Material: sizeable {
                 switch property.type {
                     case .string:
                         if let stringValue = property.stringValue {
-                            let texture = TextureLoader.Texture(name: stringValue)
+                            let texture = TextureLoader.Texture(name: stringValue,
+                                                                srgb: Self.isSRGBSemantic(semantic))
                             populateTexture(texture, for: semantic)
                         }
 
                     case .URL:
                         if let textureURL = property.urlValue {
-                            let texture = TextureLoader.Texture(url: textureURL)
+                            let texture = TextureLoader.Texture(url: textureURL,
+                                                                srgb: Self.isSRGBSemantic(semantic))
                             populateTexture(texture, for: semantic)
                         }
 
@@ -50,7 +52,8 @@ struct Material: sizeable {
                         guard let sampler = property.textureSamplerValue,
                               let sourceTexture = sampler.texture else { break }
 
-                        let texture = TextureLoader.Texture(mdlTexture: sourceTexture)
+                        let texture = TextureLoader.Texture(mdlTexture: sourceTexture,
+                                                            srgb: Self.isSRGBSemantic(semantic))
                         populateTexture(texture, for: semantic)
 
                         let uvAffine = Self.uvAffine(from: sampler.transform, materialName: name)
@@ -101,6 +104,19 @@ struct Material: sizeable {
         }
     }
     
+    /// Only color-like maps are sRGB-encoded and should be created with an sRGB pixel format.
+    /// Data maps (normal, roughness, metallic, AO, opacity) must load linear — an sRGB pixel
+    /// format would gamma-decode them on sample and skew the values. Explicit false (rather than
+    /// nil = "trust file metadata") so a mis-tagged PNG can't sneak a data map in as sRGB.
+    static func isSRGBSemantic(_ semantic: MDLMaterialSemantic) -> Bool {
+        switch semantic {
+            case .baseColor, .emission:
+                return true
+            default:
+                return false
+        }
+    }
+
     private mutating func populateTexture(_ texture: MTLTexture?, for semantic: MDLMaterialSemantic) {
         switch semantic {
             case .baseColor:

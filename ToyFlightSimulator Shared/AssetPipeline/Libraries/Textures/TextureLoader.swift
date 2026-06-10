@@ -10,6 +10,10 @@
 struct TextureLoader {
     public static let textureLoader = MTKTextureLoader(device: Engine.Device)
     
+    // Cache keys ignore the requested sRGB setting: if the same name/URL/MDLTexture is ever
+    // requested as both linear and sRGB, whichever loads first wins. Acceptable while every
+    // source is loaded with one consistent setting (per material semantic); revisit if a
+    // texture ever needs both variants (e.g. via makeTextureView on the cached texture).
     private static let StringToTextureCache = TFSCache<String, MTLTexture>()
     private static let UrlToTextureCache = TFSCache<URL, MTLTexture>()
     private static let MdlToTextureCache = TFSCache<MDLTexture, MTLTexture>()
@@ -77,12 +81,15 @@ struct TextureLoader {
         }
     }
     
-    public static func Texture(name: String, textureOrigin: MTKTextureLoader.Origin = .bottomLeft) -> MTLTexture? {
+    public static func Texture(name: String,
+                               textureOrigin: MTKTextureLoader.Origin = .bottomLeft,
+                               srgb: Bool? = nil) -> MTLTexture? {
         if let cachedTexture = Self.StringToTextureCache[name] {
             return cachedTexture
         } else {
             let options = Self.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
-                                                        generateMipmaps: true)
+                                                        generateMipmaps: true,
+                                                        srgb: srgb)
             if let newTexture = try? Self.textureLoader.newTexture(name: name,
                                                                    scaleFactor: 1.0,
                                                                    bundle: nil,
@@ -95,12 +102,15 @@ struct TextureLoader {
         return nil
     }
     
-    public static func Texture(url: URL, textureOrigin: MTKTextureLoader.Origin = .bottomLeft) -> MTLTexture? {
+    public static func Texture(url: URL,
+                               textureOrigin: MTKTextureLoader.Origin = .bottomLeft,
+                               srgb: Bool? = nil) -> MTLTexture? {
         if let cachedTexture = Self.UrlToTextureCache[url] {
             return cachedTexture
         } else {
             let options = Self.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
-                                                        generateMipmaps: true)
+                                                        generateMipmaps: true,
+                                                        srgb: srgb)
             if let newTexture = try? Self.textureLoader.newTexture(URL: url, options: options) {
                 Self.UrlToTextureCache[url] = newTexture
                 return newTexture
@@ -110,12 +120,15 @@ struct TextureLoader {
         return nil
     }
     
-    public static func Texture(mdlTexture: MDLTexture, textureOrigin: MTKTextureLoader.Origin = .bottomLeft) -> MTLTexture? {
+    public static func Texture(mdlTexture: MDLTexture,
+                               textureOrigin: MTKTextureLoader.Origin = .bottomLeft,
+                               srgb: Bool? = nil) -> MTLTexture? {
         if let cachedTexture = Self.MdlToTextureCache[mdlTexture] {
             return cachedTexture
         } else {
             let options = Self.MakeTextureLoaderOptions(textureOrigin: textureOrigin,
-                                                        generateMipmaps: mdlTexture.mipLevelCount > 1)
+                                                        generateMipmaps: mdlTexture.mipLevelCount > 1,
+                                                        srgb: srgb)
             if let newTexture = try? Self.textureLoader.newTexture(texture: mdlTexture, options: options) {
                 Self.MdlToTextureCache[mdlTexture] = newTexture
                 return newTexture
@@ -126,18 +139,28 @@ struct TextureLoader {
     }
     
     public static func MakeTextureLoaderOptions(textureOrigin: MTKTextureLoader.Origin,
-                                                generateMipmaps: Bool) -> [MTKTextureLoader.Option: Any] {
-        return [
+                                                generateMipmaps: Bool,
+                                                srgb: Bool? = nil) -> [MTKTextureLoader.Option: Any] {
+        var options: [MTKTextureLoader.Option: Any] = [
             .origin: textureOrigin as Any,
             .generateMipmaps: generateMipmaps,
             .textureUsage: MTLTextureUsage.shaderRead.rawValue,
             .textureStorageMode: MTLStorageMode.private.rawValue
         ]
+        // nil omits the key so MTKTextureLoader falls back to the file's gamma metadata;
+        // true/false force an sRGB/linear pixel format regardless of what the file claims.
+        if let srgb {
+            options[.SRGB] = srgb
+        }
+        return options
     }
     
+    // `color` is treated as already sRGB-encoded (a "picker" color, like the texel values of an
+    // authored image file), so the sRGB pixel format makes solid-color stand-ins shade
+    // consistently with file-loaded color textures: both get the same decode-to-linear on sample.
     public static func MakeSolid2DTexture(device: MTLDevice,
                                           color: simd_float4,
-                                          pixelFormat: MTLPixelFormat = .bgra8Unorm) -> MTLTexture? {
+                                          pixelFormat: MTLPixelFormat = .bgra8Unorm_srgb) -> MTLTexture? {
         print("[makeSolid2DTexture] Color: \(color)")
         let descriptor = MTLTextureDescriptor()
         descriptor.width = 8
