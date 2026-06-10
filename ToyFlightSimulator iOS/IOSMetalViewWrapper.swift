@@ -26,7 +26,7 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
         gameView.device = Engine.Device
         gameView.clearColor = Preferences.ClearColor
         gameView.colorPixelFormat = Preferences.MainPixelFormat
-        gameView.framebufferOnly = false
+        gameView.framebufferOnly = true
         gameView.preferredFramesPerSecond = refreshRate.rawValue
         gameView.drawableSize = viewSize
         
