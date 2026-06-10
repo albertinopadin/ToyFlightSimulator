@@ -21,13 +21,18 @@ struct TextureLoader {
     private var _textureName: String!
     private var _textureExtension: String!
     private var _origin: MTKTextureLoader.Origin!
-    
-    init(textureName: String, textureExtension: String = "png", origin: MTKTextureLoader.Origin = .bottomLeft) {
+    private var _srgb: Bool?
+
+    init(textureName: String,
+         textureExtension: String = "png",
+         origin: MTKTextureLoader.Origin = .bottomLeft,
+         srgb: Bool? = nil) {
         self._textureName = textureName
         self._textureExtension = textureExtension
         self._origin = origin
+        self._srgb = srgb
     }
-    
+
     public func loadTextureFromBundle() -> MTLTexture {
         if let cachedTexture = Self.StringToTextureCache[_textureName] {
             return cachedTexture
@@ -35,14 +40,11 @@ struct TextureLoader {
             guard let url = Bundle.main.url(forResource: _textureName, withExtension: _textureExtension) else {
                 fatalError("ERROR::CREATING::TEXTURE::\(_textureName!) does not exist")
             }
-            
-            let options: [MTKTextureLoader.Option: Any] = [
-                .origin: _origin as Any,
-                .generateMipmaps: true,
-                .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-                .textureStorageMode: MTLStorageMode.private.rawValue
-            ]
-            
+
+            let options = Self.MakeTextureLoaderOptions(textureOrigin: _origin,
+                                                        generateMipmaps: true,
+                                                        srgb: _srgb)
+
             do {
                 let texture = try Self.textureLoader.newTexture(URL: url, options: options)
                 texture.label = _textureName
@@ -56,17 +58,15 @@ struct TextureLoader {
     
     public static func LoadTexture(name: String,
                                    scale: CGFloat = 1.0,
-                                   origin: MTKTextureLoader.Origin = .bottomLeft) -> MTLTexture? {
+                                   origin: MTKTextureLoader.Origin = .bottomLeft,
+                                   srgb: Bool? = nil) -> MTLTexture? {
         if let cachedTexture = Self.StringToTextureCache[name] {
             return cachedTexture
         } else {
-            let options: [MTKTextureLoader.Option: Any] = [
-                .origin: origin as Any,
-                .generateMipmaps: true,
-                .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-                .textureStorageMode: MTLStorageMode.private.rawValue
-            ]
-            
+            let options = Self.MakeTextureLoaderOptions(textureOrigin: origin,
+                                                        generateMipmaps: true,
+                                                        srgb: srgb)
+
             do {
                 let texture = try Self.textureLoader.newTexture(name: name,
                                                                 scaleFactor: scale,
