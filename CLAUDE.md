@@ -21,7 +21,7 @@ xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulat
 ## Project Layout
 
 ```
-ToyFlightSimulator Shared/     # Cross-platform engine (~175 Swift files, 22 Metal shaders)
+ToyFlightSimulator Shared/     # Cross-platform engine (~190 Swift files, 22 Metal shaders)
   Animation/                   # Skeletal animation, channels, layer system
     Animators/                 # AnimationController, AircraftAnimator base, F22Animator, F35Animator
     Configs/                   # F22AnimationConfig, F35AnimationConfig
@@ -46,16 +46,25 @@ ToyFlightSimulator Shared/     # Cross-platform engine (~175 Swift files, 22 Met
     Libraries/Pipelines/       # Render/Compute pipeline states (~37 render pipeline cases + compute)
   Managers/                    # SceneManager, CameraManager, LightManager, DrawManager, AudioManager
   Math/                        # Math utilities (Transform.* is canonical, Math/MathUtils have niche helpers)
-  Physics/                     # PhysicsWorld, solvers, collision detection
+  Physics/
+    World/                     # PhysicsWorld, PhysicsEntity protocol, RigidBody + Sphere/Plane subclasses
+    Solver/                    # PhysicsSolver protocol, EulerSolver, VerletSolver
+    BroadPhase/                # AABB, BroadPhaseCollisionDetector (sweep-and-prune)
+    CollisionResponse/         # HeckerCollisionResponse
+    FlightModel/               # FlightModel protocol, ControlInput, LiftData, Models/F22SimpleFlightModel
   Scenes/                      # GameScene subclasses (Flightbox, FlightboxWithPhysics, Sandbox, etc.)
-  Utils/                       # TFSCache, TFSLock, ModelIO extensions
+  Shadows/                     # ShadowCamera, ShadowCascadeFitting (CSM frustum fitting + texel snapping)
+  Utils/                       # TFSCache, TFSLock, ModelIO extensions, ValueCurve, SymmetricSigmoidCurve,
+                               # Float3+Extensions (zero-safe normalize), DebugLog, RandomColor
 ToyFlightSimulator macOS/
   Views/                       # MacMetalViewWrapper, MacGameUIView, GameStats, TFSMenu (SwiftUI)
   AppDelegate.swift, GameViewController.swift
 ToyFlightSimulator iOS/        # SwiftUI app entry, touch controls (virtual joystick/throttle)
 ToyFlightSimulator tvOS/       # tvOS target
-ToyFlightSimulatorTests/       # XCTest: NodeTests, RendererTests
-                               # Swift Testing: Math/, Utils/, AssetPipeline/, TestSupport/
+ToyFlightSimulatorTests/       # XCTest: NodeTests, RendererTests (legacy)
+                               # Swift Testing: Math/, Utils/, AssetPipeline/, Cameras/, Physics/, Shadows/, TestSupport/
+code_reviews/ debugging/ investigations/ plans/   # Claude-authored review, debugging, research, and plan docs
+                               # (claude/ subdirs; debugging/screenshots/ holds visual artifacts)
 ```
 
 ## Architecture
@@ -72,16 +81,16 @@ Static lazy initialization of `MTLDevice`, `MTLCommandQueue`, `MTLLibrary`. Owns
 
 ### Scene Graph
 - **Node**: Base class with transform hierarchy (position, rotation, scale). `modelMatrix = parentModelMatrix * localMatrix`. Children updated recursively via `update()` → `doUpdate()`.
-- **GameObject**: Extends Node. Has `Model` (meshes + materials), `ModelConstants` (shader uniforms), implements `PhysicsEntity` protocol. `Hashable` for collection use.
+- **GameObject**: Extends Node. Has `Model` (meshes + materials), `ModelConstants` (shader uniforms), and an optional `rigidBody: RigidBody?` for physics (composition — GameObject no longer implements `PhysicsEntity` itself). `Hashable` for collection use.
 - **GameScene**: Root node. `buildScene()` overridden by subclasses. `addChild()` auto-registers with SceneManager. Has `addCamera()`, `addLight()` helpers.
 
 ### Scenes (Scenes/)
-`GameScene` subclasses: `FlightboxScene`, `FlightboxWithTerrain`, `FlightboxWithPhysics`, `FreeCamFlightboxScene`, `SandboxScene`, `BallPhysicsScene`, `PhysicsStressTestScene`. Default starting scene set in `Preferences.StartingSceneType`.
+`GameScene` subclasses: `FlightboxScene`, `FlightboxWithTerrain`, `FlightboxWithPhysics`, `FreeCamFlightboxScene`, `SandboxScene`, `BallPhysicsScene`, `PhysicsStressTestScene`. Default starting scene set in `Preferences.StartingSceneType` (currently `.FlightboxWithPhysics`: player F-22 with `SphereRigidBody` + `F22SimpleFlightModel`, animatable gear, plus optional random rigid-body objects).
 
-`GameScene` base class provides `addGround(color:restitution:rotationZ:scale:)` and `setupDefaultSky()` helpers (OIT → SkySphere, SinglePassDeferred → SkyBox) so subclasses don't reimplement common boilerplate.
+`GameScene` base class provides `addGround(color:restitution:rotationZ:scale:) -> (Quad, PlaneRigidBody)` and `setupDefaultSky()` helpers (OIT → SkySphere, SinglePassDeferred → SkyBox) so subclasses don't reimplement common boilerplate.
 
 ### Coordinate Conventions
-**Left-handed Metal-native** throughout. Camera looks down +Z (forward); projection maps clip-space depth to [0,1] (`Transform.perspectiveProjection` is the single source of truth). `Node.getFwdVector()` returns +column2 directly. Aircraft pitch/roll/yaw inputs are negated to keep pilot-perspective rotation directions stable. Model basis transforms with det<0 (e.g., Sketchfab F-22's `transformYMinusZXToXYZ`) are reindexed at import (`Mesh.reverseTriangleWinding()`) so the global `setFrontFacing(.clockwise) + setCullMode(.back)` works uniformly.
+**Left-handed Metal-native** throughout. Camera looks down +Z (forward); the main camera projection is **reverse-Z** — near maps to depth 1, far to 0 (`Transform.perspectiveProjection` is the single source of truth; clear depth is `Preferences.MainClearDepth = 0.0`). Depth-stencil states are named semantically: `CloserWrite`/`CloserNoWrite`/`CloserOrEqual*` map to `.greater`/`.greaterEqual` under reverse-Z. Shadow (light-space) passes remain forward-Z orthographic (clear 1.0, `.less`/`.lessEqual`). `Node.getFwdVector()` returns +column2 directly. Aircraft pitch/roll/yaw inputs are negated to keep pilot-perspective rotation directions stable. Model basis transforms with det<0 (e.g., Sketchfab F-22's `transformYMinusZXToXYZ`) are reindexed at import (`Mesh.reverseTriangleWinding()`) so the global `setFrontFacing(.clockwise) + setCullMode(.back)` works uniformly.
 
 ### SceneManager (Managers/SceneManager.swift)
 Batches `ContiguousArray<GameObject>` per Model for instanced rendering. Separates opaque/transparent submeshes. Triple-buffered `RingBufferRegion` snapshots (offset, count, meshDatas) per frame. The update thread calls `writeFrameSnapshot(frameIndex:)` which writes ModelConstants directly into the per-frame ring buffer slot via `DrawManager.writeModelConstants` — no intermediate dict/array allocations on the render hot path. Render thread reads regions via `getOpaqueSnapshot/getTransparentSnapshot/getSkySnapshot`. Transparent objects cache their MeshData arrays at registration time. Thread-safe via `OSAllocatedUnfairLock`.
@@ -92,32 +101,34 @@ Batches `ContiguousArray<GameObject>` per Model for instanced rendering. Separat
 
 | Renderer | Shadow | GBuffer | MSAA | Tessellation | Particles |
 |----------|--------|---------|------|--------------|-----------|
-| SinglePassDeferredLighting | 8K depth32F | 3 (albedo+spec, normal+shadow, depth) memoryless | No | No | No |
-| TiledDeferred | 8K depth32F | 4 (albedo, normal 16F, position 16F, lighting) memoryless | No | No | Yes |
-| TiledDeferredMSAA | 8K depth32F 4x | 4 targets, 4x MSAA | 4x | No | Yes |
-| TiledMSAATessellated | 8K depth32F 4x | 4 targets, 4x MSAA | 4x | Yes | Yes |
+| SinglePassDeferredLighting | CSM 4×4096 depth32F array | 3 (albedo+spec, normal+shadow, depth) memoryless | No | No | No |
+| TiledDeferred | CSM 4×4096 depth32F array | 4 (albedo, normal 16F, position 16F, lighting) memoryless | No | No | Yes |
+| TiledDeferredMSAA | CSM 4×4096 depth32F array | 4 targets, 4x MSAA | 4x | No | Yes |
+| TiledMSAATessellated | CSM 4×4096 depth32F array | 4 targets, 4x MSAA | 4x | Yes | Yes |
 | OrderIndependentTransparency | None | None (image blocks) | No | No | No |
 | ForwardPlusTileShading | — | — | — | — | — (stub) |
 
-**Render pass flow** (typical deferred): Shadow map pass → GBuffer generation → Directional lighting → Transparency → Point light volumes (stencil-masked icosahedrons) → Skybox → (Particles if supported) → Late composite into drawable
+**Render pass flow** (typical deferred): Shadow cascade passes (one per cascade) → GBuffer generation → Directional lighting → Transparency → Point light volumes (stencil-masked icosahedrons) → Skybox → (Particles if supported) → Late composite into drawable
 
-**Key rendering protocols** (Display/Protocols/): `RenderPassEncoding`, `ComputePassEncoding`, `ShadowRendering`, `ParticleRendering`, `TessellationRendering`, `TiledGBufferRendering` (default `setGBufferTextures`/`setDepthAndStencilTextures` for the three tiled deferred renderers), `LateDrawablePresenting` (drawable acquisition + composite). Renderers compose these via protocol conformance.
+**Key rendering protocols** (Display/Protocols/): `RenderPassEncoding`, `ComputePassEncoding`, `BaseRendering`, `ShadowRendering` (shadow-map array creation + per-cascade pass encoding; `ShadowMapSize = 4096`, `CascadeCount = 4`), `ParticleRendering`, `TessellationRendering`, `TiledGBufferRendering` (default `setGBufferTextures`/`setDepthAndStencilTextures` for the three tiled deferred renderers), `LateDrawablePresenting` (drawable acquisition + composite). Renderers compose these via protocol conformance.
 
 **Pipeline states**: ~37 render pipeline cases (+ compute) in `RenderPipelineStateLibrary`, created via factory pattern. Each renderer type has its own set of pipelines defined in dedicated files (SinglePassDeferredPipeline, TiledDeferredPipeline, etc.). `RenderPipelineState` protocol extension provides `enableBlending(...)` (alpha) and `enableAdditiveBlending(...)` (point-light volume path).
 
 **Late drawable acquisition** (SinglePassDeferred, TiledDeferred, TiledMultisample, TiledMSAATessellated): per Apple's "acquire late, release early" guidance, each frame uses three command buffers — (1) Shadow CB, (2) Offscreen CB writing GBuffer/lighting/transparency/MSAA-resolve into an app-owned `lightingResolveTexture`, (3) Late CB that finally calls `view.currentDrawable`, runs a full-screen composite, and presents. Shrinks drawable hold window from milliseconds to tens of µs and reduces nextDrawable() stalls.
+
+**framebufferOnly**: both platform view wrappers set `framebufferOnly = true` (Apple's default; lets Core Animation optimize drawable textures). This is safe because every renderer uses the drawable solely as a render-target attachment. Anything that needs to read the final frame (post-processing, screenshots) should sample `lightingResolveTexture`, not the drawable — don't flip this back to `false`.
 
 **Frame pacing**: `inFlightSemaphore` with max 3 frames in flight. Render and update threads synchronize via `updateSemaphore` (render→update wakeup) and `updateDoneSemaphore` (update→render handshake): render signals the update thread at the START of the frame with the next ring-buffer slot index, waits for the update to finish, then encodes — this keeps ring-buffer ModelConstants and `_sceneConstants` (viewMatrix, cameraPosition, light data) consistent within the same frame, eliminating the camera/aircraft desync that occurred when reading data from different update generations.
 
 ### Shader System (Graphics/Shaders/)
 22 Metal files. Shared definitions in `TFSCommon.h` (buffer indices, vertex attributes, texture indices, render target indices, struct definitions for ModelConstants, SceneConstants, MaterialProperties, LightData, Particle, Terrain). `ShaderDefinitions.h` has GBuffer output struct with raster order groups.
 
-**Pixel formats** (Preferences.swift): `bgra8Unorm_srgb` (main), `depth32Float` (depth), `depth32Float_stencil8` (depth+stencil).
+**Pixel formats** (Preferences.swift): `bgra8Unorm_srgb` (main), `depth32Float` (depth), `depth32Float_stencil8` (depth+stencil). `MainClearDepth = 0.0` (reverse-Z far plane).
 
 ### Asset System (AssetPipeline/)
 **Assets** singleton: `Assets.Meshes` (MeshLibrary), `Assets.Textures` (TextureLibrary), `Assets.Models` (ModelLibrary), `Assets.SingleSMMeshes` (SingleSubmeshMeshLibrary). All use generic `Library<Key, Value>` base with lazy init.
 
-**TextureLoader**: Singleton MTKTextureLoader with 3-level TFSCache (by String, URL, MDLTexture). Auto-generates mipmaps, uses `.private` storage mode. Thread-safe. Default texture origin is `.bottomLeft` consistently across entry points.
+**TextureLoader**: Singleton MTKTextureLoader with 3-level TFSCache (by String, URL, MDLTexture). Auto-generates mipmaps, uses `.private` storage mode. Thread-safe. Default texture origin is `.bottomLeft` consistently across entry points. All entry points take `srgb: Bool?` (default `nil` = honor file metadata; `true`/`false` force sRGB/linear). `Material` wires it per semantic via `isSRGBSemantic`: `.baseColor`/`.emission` load sRGB, data maps (normal, specular, roughness, metallic, AO, opacity) load linear. Caveat: cache keys do NOT include srgb — first load of a given name/URL wins, fine while per-semantic settings stay consistent.
 
 **Model loading**: `ObjModel` (OBJ+MTL via ModelIO; accepts a basis transform), `UsdModel` (USDZ with skeleton/animation/skin support). Both use custom vertex descriptor (position, color, texcoord, normal, tangent, bitangent, joints, jointWeights). Tangent bases generated on the MDL mesh before the MTK mesh is created.
 
@@ -127,7 +138,7 @@ Batches `ContiguousArray<GameObject>` per Model for instanced rendering. Separat
 
 **SingleSubmeshMeshLibrary**: Extracts individual submeshes from parent models (F18 weapons, control surfaces, fuel tanks) without duplicating vertex data.
 
-**Procedural meshes**: Triangle, Quad, Cube, Sphere, Capsule, Plane, Skybox, SkySphere, Icosahedron.
+**Procedural meshes**: Triangle, Quad, Cube, Sphere, Capsule, Plane, Skybox, SkySphere, Icosahedron. Built on MDLMesh factory constructors with `addTangentBasis` applied before MTKMesh creation — hand-rolled vertex buffers didn't land where MTKMesh expects (the old cubes/triangles-not-rendering bug).
 
 ### Animation System (Animation/)
 **AnimationController** protocol with playback state management. **AnimationLayerSystem** manages layers and channels with dirty-flag optimization.
@@ -143,16 +154,30 @@ Batches `ContiguousArray<GameObject>` per Model for instanced rendering. Separat
 **Aircraft animators**: `AircraftAnimator` base → `F35Animator`, `F22Animator`. `Aircraft` base provides `setupAnimator<A: AircraftAnimator>(_ make: (UsdModel) -> A)` (handles UsdModel cast + warning) and a default `doUpdate()` that runs gear-toggle input and `animator?.update(deltaTime:)`. Subclasses only override `doUpdate` if they need procedural per-frame logic beyond the animator (e.g., `F22_CGTrader` for ailerons/flaperons/horizontal stabs/rudders). `Aircraft.isGearDown` returns `animator?.isGearDown ?? true`.
 
 ### Physics (Physics/)
-**PhysicsWorld**: Manages entities, runs in UpdateThread. **Solvers**: `EulerSolver` (explicit), `VerletSolver` (implicit). **Collision**: `BroadPhaseCollisionDetector` (sweep-and-prune on X-axis with frame coherence), `HeckerCollisionResponse` (sphere-sphere, sphere-plane). **PhysicsEntity** protocol on GameObject (mass, velocity, acceleration, restitution, AABB).
+**Composition model**: `GameObject` *has* a `rigidBody: RigidBody?` (it no longer *is* a `PhysicsEntity`). `RigidBody` (class, `World/RigidBody.swift`) implements the `PhysicsEntity` protocol (id, collisionShape, mass, velocity, acceleration, force, restitution, isStatic, shouldApplyGravity, AABB accessors) and holds a weak back-reference to its GameObject; its initializer self-registers via `gameObject.rigidBody = self`. `BasicRigidBodies.swift`: `SphereRigidBody` (collisionRadius) and `PlaneRigidBody` (collisionNormal). `RigidBody.State` is an immutable snapshot (mass, velocity, world axes, rotation matrix) consumed by flight models.
+
+**PhysicsWorld**: entity registry (`addEntity/addEntities/setEntities`), runs in UpdateThread. Per `updateType`: `.NaiveEuler` (EulerSolver + collision resolve) or `.HeckerVerlet` (HeckerCollisionResponse + VerletSolver). **Force lifecycle** per step: apply forces → resolve collisions → integrate/move → `zeroForces()`. **Solvers**: `PhysicsSolver` protocol (`static func step(deltaTime:gravity:entities:)`); `EulerSolver` (explicit), `VerletSolver` (implicit). **Collision**: `BroadPhaseCollisionDetector` (sweep-and-prune on X-axis with frame coherence, toggleable), `HeckerCollisionResponse` (sphere-sphere, sphere-plane).
+
+### Flight Model (Physics/FlightModel/)
+**FlightModel** protocol: `computeForce(state: RigidBody.State, input: ControlInput) -> float3` — pure function from rigid-body snapshot + controls to a world-frame force. `ControlInput` (throttle 0–1; pitch/roll/yaw −1…1) flows InputManager → `Aircraft`. Attachment: `Aircraft.flightModel` (optional); `flightModel.didSet` and `F22.rigidBody.didSet` both sync `rigidBody.mass` so either assignment order converges (duplicate mass field — documented future cleanup in Aircraft.swift).
+
+**F22SimpleFlightModel** sums: engine thrust (`worldForward * maxThrust * throttle`), world-frame lift (AOA from local-frame velocity → Cl via a Catmull-Rom `ValueCurve` spanning −30°…+120°; force perpendicular to wing-plane velocity), induced drag (∝ Cl², ramped in via `SymmetricSigmoidCurve` to suppress it below ~5 m/s), and simple parasitic drag. `LiftData` captures intermediate aero values. Zero-safe `normalize()` from `Float3+Extensions` keeps NaNs out at rest.
+
+**Attitude**: rotation is kinematic, not torque-driven — `Aircraft` runs a per-axis damped first-order lag filter (`AttitudeDynamics`: maxRate + timeConstant τ per axis; rates carried across frames, decay when unfocused). See `plans/claude/damped_attitude_response.md`.
 
 ### Input (Core/Input/)
 Platform-abstracted via `InputManager` singleton. **macOS**: Keyboard (256-key state array), Mouse (buttons + delta + scroll), GameController (GCController), Joystick/Throttle (Thrustmaster Warthog HOTAS via IOKit HID). **iOS**: CoreMotion (attitude at 60Hz), TFSTouchJoystick/TFSTouchThrottle. Commands: `DiscreteCommands` (fire, toggle gear/flaps), `ContinuousCommands` (pitch, roll, yaw, move). Debouncing for discrete commands.
 
 ### Camera System (GameObjects/Cameras/)
-`Camera` base (FOV, near/far, projection matrix from `Transform.perspectiveProjection`; view = `modelMatrix.inverse`). `DebugCamera` (WASD + mouselook). `AttachedCamera` (parents to node, follows aircraft; default offset `[0, 2, -4]` since +Z is forward; overrides `update()` to recompute view matrix when parent moves via `worldMatrixDirty`). `CameraManager.CurrentCamera` is now optional (`Camera?`) — guarded everywhere instead of force-unwrapped, so scene transitions and pre-scene-set states no longer crash. `CameraManager.Update()` skips parented cameras (they're updated through scene-graph traversal — prevents double `doUpdate`). Toggle with 'C' key.
+`Camera` base (FOV, near/far, projection matrix from `Transform.perspectiveProjection`; view = `modelMatrix.inverse`). `DebugCamera` (WASD + mouselook). `AttachedCamera` (parents to node, follows aircraft; default offset `[0, 2, -4]` since +Z is forward; overrides `update()` to recompute view matrix when parent moves via `worldMatrixDirty`; strips parent scale via `scaleStrippedInverse()` — normalizes basis columns, keeps translation — so a camera on a scaled aircraft gets a rigid view matrix and view-space distances stay in true world units, which CSM cascade fitting depends on). `CameraManager.CurrentCamera` is now optional (`Camera?`) — guarded everywhere instead of force-unwrapped, so scene transitions and pre-scene-set states no longer crash. `CameraManager.Update()` skips parented cameras (they're updated through scene-graph traversal — prevents double `doUpdate`). Toggle with 'C' key.
 
 ### Lighting (GameObjects/LightObject.swift, Managers/LightManager.swift)
-`LightObject` extends GameObject. Types: Directional, Point. Shadow matrices computed per frame. `Sun` subclass for main directional light. `LightManager` singleton (thread-safe) provides light data arrays to shaders. Point lights rendered as icosahedron instances with stencil masking.
+`LightObject` extends GameObject. Types: Directional, Point. `Sun` subclass for main directional light. `LightObject.updateShadowCascades()` refits the CSM cascades every frame from the live camera; `LightData` (TFSCommon.h) carries `cascadeCount`, `cascadeViewProjectionMatrices[4]`, `cascadeSplitDepths[4]`, `cascadeDepthRanges[4]`, and `shadowWorldSlack` (base world-space depth epsilon). `LightManager` singleton (thread-safe) provides light data arrays to shaders. Point lights rendered as icosahedron instances with stencil masking.
+
+### Shadows (Shadows/, Display/Protocols/ShadowRendering.swift, Shadow.metal, Lighting.metal)
+4-cascade cascaded shadow maps. `ShadowCascadeFitting` splits the view frustum with the uniform/logarithmic hybrid (λ = 0.5), fits each slice with a rotation-invariant bounding sphere (radius depends only on FOV/aspect/slice depth, not camera rotation) and snaps the light-space origin to world-space texel multiples — together these kill shimmer as the camera moves. Straight-overhead sun is handled by building the light basis directly with an X-axis up-vector fallback instead of `Transform.look` (the old NaN-matrix bug). `ShadowCamera` wraps per-cascade view-projection + depth range; ortho Z padding is additive to bound casters when the depth range straddles 0.
+
+Shadow map storage: one `depth32Float` `texture2DArray`, 4096² × 4 slices. `ShadowRendering` encodes one render pass per cascade, binding that cascade's VP at buffer index 13 (`TFSBufferIndexShadowCascadeVP`); no `setDepthBias` — bias is slope-scaled in-shader from `shadowWorldSlack`. Light space is forward-Z ortho (clear 1.0, `.less*`) even though the main camera is reverse-Z. Sampling (Lighting.metal): `SelectCascade` by view-space depth → 5×5 hardware `sample_compare` PCF → cross-fade to the next cascade over the last 10% of each cascade's range (`CASCADE_BLEND_FRACTION = 0.1`); out-of-bounds projection falls through to the next cascade (texel-snap edge case).
 
 ### Particles (GameObjects/Particles/)
 `ParticleEmitter` descriptor-based (birth rate, life, speed, scale, color). Predefined: Fire (1200 particles, upward), Afterburner (1200, forward). Compute shader updates positions, render stage draws with appropriate pipeline.
@@ -174,6 +199,7 @@ Platform-abstracted via `InputManager` singleton. **macOS**: Keyboard (256-key s
 2. Override `doUpdate()` for per-frame logic
 3. Add to scene via `addChild()` in a `GameScene.buildScene()` override
 4. SceneManager auto-registers for batched rendering
+5. For physics: construct a `SphereRigidBody`/`PlaneRigidBody` (self-attaches to the GameObject) and register it with the scene's `PhysicsWorld` via `addEntity()`
 
 ### Adding New Shaders
 1. Add Metal functions to appropriate .metal file (or new file)
@@ -204,9 +230,9 @@ Platform-abstracted via `InputManager` singleton. **macOS**: Keyboard (256-key s
 
 Two frameworks coexist:
 - **XCTest**: `NodeTests`, `RendererTests` (unchanged legacy suites)
-- **Swift Testing** (Apple's `@Test` framework, requires Xcode 26.2+): `Math/` (MathTests, MathUtilsTests, TransformTests), `Utils/` (TFSCacheTests, TFSLockTests, MDLMaterialSemanticTests, TimeItTests), `AssetPipeline/` (MaterialTextureTransformTests). Shared helpers in `TestSupport/` (`ApproxEqual.swift` for Float/SIMD/matrix tolerance comparisons; `TestTags.swift` for `.math`, `.utils`, `.concurrency` filtering). Concurrency tests use `.timeLimit(.minutes(1))` to fail fast on lock leakage.
+- **Swift Testing** (Apple's `@Test` framework, requires Xcode 26.2+): `Math/` (MathTests, MathUtilsTests, TransformTests), `Utils/` (TFSCacheTests, TFSLockTests, MDLMaterialSemanticTests, TimeItTests, ValueCurveTests, SymmetricSigmoidCurveTests), `AssetPipeline/` (MaterialTextureTransformTests, TextureLoaderOptionsTests), `Cameras/` (AttachedCameraTests), `Physics/` (RigidBodyTests, PhysicsSolverTests, PhysicsWorldSmokeTests), `Shadows/` (ShadowCameraTests, ShadowCascadeFittingTests). Shared helpers in `TestSupport/` (`ApproxEqual.swift` for Float/SIMD/matrix tolerance comparisons; `Finite.swift` for NaN/Inf checks on SIMD vectors/matrices; `TestTags.swift` for `.math`, `.utils`, `.concurrency`, `.assetPipeline`, `.physics` filtering). Concurrency tests use `.timeLimit(.minutes(1))` to fail fast on lock leakage.
 
-CI: `.github/workflows/test_macOS.yml` runs `xcodebuild test` on every push to `main` (macos-26 runner, Xcode 26.2). Output via `xcbeautify --renderer github-actions`; `TestResults.xcresult` uploaded as artifact only on failure.
+CI: `.github/workflows/test_macOS.yml` runs `xcodebuild test` on pushes to `main` and on PRs targeting `main` (macos-26 runner, Xcode 26.2), with `-parallel-testing-enabled NO` — serial execution avoids MTKView/CAMetalLayer drawable deadlocks in the app-hosted suite. Output via `xcbeautify --renderer github-actions`; `TestResults.xcresult` uploaded as artifact only on failure. `macOS.yml` is a separate build-only workflow on pushes to `main`.
 
 ## Debugging
 
