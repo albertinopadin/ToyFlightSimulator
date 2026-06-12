@@ -46,6 +46,13 @@ class Skeleton {
     let jointPaths: [String]
     let bindTransforms: [float4x4]
     let restTransforms: [float4x4]
+    /// A1: bind matrices never change — inverted once at load instead of per
+    /// joint per evaluateWorldPoses() call.
+    let inverseBindTransforms: [float4x4]
+    /// A2: O(1) jointPath → index lookups at channel-registration time
+    /// (replaces firstIndex(of:) linear String scans). First index wins on
+    /// duplicate paths, matching firstIndex semantics.
+    let jointIndexByPath: [String: Int]
     var currentPose: [float4x4] = []
 
     /// Persistent local poses, updated incrementally by clip and procedural channels.
@@ -56,15 +63,21 @@ class Skeleton {
 
     /// Optional basis transform for coordinate system conversion (e.g., USDZ to game coords)
     let basisTransform: float4x4?
+    /// A1: constant per skeleton — computed once instead of per evaluate call.
+    private let inverseBasisTransform: float4x4?
 
     init?(mdlSkeleton: MDLSkeleton?, basisTransform: float4x4? = nil) {
         guard let mdlSkeleton, !mdlSkeleton.jointPaths.isEmpty else { return nil }
         self.basisTransform = basisTransform
+        self.inverseBasisTransform = basisTransform?.inverse
         jointPaths = mdlSkeleton.jointPaths
         parentIndices = Skeleton.getParentIndices(jointPaths: jointPaths)
         bindTransforms = mdlSkeleton.jointBindTransforms.float4x4Array
+        inverseBindTransforms = bindTransforms.map { $0.inverse }
         restTransforms = mdlSkeleton.jointRestTransforms.float4x4Array
         localPoses = restTransforms
+        jointIndexByPath = Dictionary(jointPaths.enumerated().map { ($1, $0) },
+                                      uniquingKeysWith: { first, _ in first })
     }
 
     static func getParentIndices(jointPaths: [String]) -> [Int?] {
@@ -81,7 +94,7 @@ class Skeleton {
 
     func mapJoints(from jointPaths: [String]) -> [Int] {
         jointPaths.compactMap { jointPath in
-            self.jointPaths.firstIndex(of: jointPath)
+            self.jointIndexByPath[jointPath]
         }
     }
 
@@ -103,72 +116,80 @@ class Skeleton {
 
     // MARK: - Incremental Pose API
 
-    /// Applies an animation clip to localPoses, filtered by a mask.
-    /// Only joints whose paths are in the mask are updated; others are left unchanged.
+    /// A3: applies an animation clip to localPoses over registration-resolved
+    /// (jointIndex, animation) pairs — no mask Set lookups and no per-joint
+    /// dictionary lookups on the per-frame path.
+    /// `animation == nil` means the clip has no track for that joint → rest
+    /// pose, matching the old `getPose(...) ?? restTransforms[index]` fallback.
     /// Call evaluateWorldPoses() after all channels have applied their data.
     ///
     /// - Parameters:
     ///   - currentTime: The time to sample the clip at
-    ///   - animationClip: The clip to sample
-    ///   - mask: Only joints in this mask are written to localPoses
-    func applyClip(at currentTime: Float, animationClip: AnimationClip, mask: AnimationMask) {
-        let time = min(currentTime, animationClip.duration)
+    ///   - animationClip: The clip being sampled (supplies duration/speed)
+    ///   - resolvedJoints: Masked joints resolved at channel registration
+    func applyClip(at currentTime: Float,
+                   animationClip: AnimationClip,
+                   resolvedJoints: [(jointIndex: Int, animation: Animation?)]) {
+        let time = min(currentTime, animationClip.duration) * animationClip.speed
 
-        for index in 0..<jointPaths.count {
-            let jointPath = jointPaths[index]
-            guard mask.jointPaths.isEmpty || mask.contains(jointPath: jointPath) else { continue }
-
-            let pose = animationClip.getPose(at: time * animationClip.speed,
-                                             jointPath: jointPath) ?? restTransforms[index]
-            localPoses[index] = pose
+        for (jointIndex, animation) in resolvedJoints {
+            if let animation {
+                localPoses[jointIndex] = animation.getPose(at: time)
+            } else {
+                localPoses[jointIndex] = restTransforms[jointIndex]
+            }
         }
     }
 
-    /// Applies procedural rotation overrides to specific joints in localPoses.
-    /// Each override is a rotation matrix that is multiplied with the joint's rest transform:
-    ///   localPoses[joint] = restTransform * rotationOverride
-    /// Only the specified joints are modified; all others are left unchanged.
+    /// A2: applies procedural rotation overrides by pre-resolved joint index.
+    /// `jointIndices[i]` pairs with `rotations[i]`; -1 marks a config whose
+    /// joint path wasn't found in this skeleton (resolved and warned about at
+    /// registration time). Each rotation is applied on top of the joint's rest
+    /// transform: localPoses[joint] = restTransform * rotation.
     /// Call evaluateWorldPoses() after all channels have applied their data.
-    ///
-    /// - Parameter overrides: Dictionary of joint path -> local rotation matrix to apply
-    func applyProceduralOverrides(_ overrides: [String: float4x4]) {
-        for (jointPath, rotationOverride) in overrides {
-            guard let index = jointPaths.firstIndex(of: jointPath) else { continue }
-            localPoses[index] = restTransforms[index] * rotationOverride
+    func applyProceduralOverrides(jointIndices: [Int], rotations: [float4x4]) {
+        for i in 0..<jointIndices.count {
+            let index = jointIndices[i]
+            guard index >= 0 else { continue }
+            localPoses[index] = restTransforms[index] * rotations[i]
         }
     }
 
     /// Computes world-space currentPose from the accumulated localPoses.
     /// Call this once per frame after all clip and procedural channels have written to localPoses.
+    /// A1: allocation-free — currentPose is written in place (parents precede
+    /// children in joint order, so pass 1 can safely read freshly written
+    /// parent poses from the same array), bind inverses are precomputed, and
+    /// the basis conjugation is fused into the second pass.
     func evaluateWorldPoses() {
-        var worldPose = [float4x4]()
-        worldPose.reserveCapacity(parentIndices.count)
+        let count = parentIndices.count
+        if currentPose.count != count {
+            currentPose = [float4x4](repeating: .identity, count: count)
+        }
 
-        for index in 0..<parentIndices.count {
-            let parentIndex = parentIndices[index]
+        // Pass 1: pure world poses.
+        for index in 0..<count {
             let localMatrix = localPoses[index]
-            if let parentIndex {
-                worldPose.append(worldPose[parentIndex] * localMatrix)
+            if let parentIndex = parentIndices[index] {
+                currentPose[index] = currentPose[parentIndex] * localMatrix
             } else {
-                worldPose.append(localMatrix)
+                currentPose[index] = localMatrix
             }
         }
 
-        for index in 0..<worldPose.count {
-            worldPose[index] *= bindTransforms[index].inverse
-        }
-
+        // Pass 2: bind-inverse, with the basis conjugation fused in when present.
         // Apply basis transform to convert joint matrices to the game's coordinate system.
         // Mesh vertices are transformed as v_engine = v_model * B (row-vector convention),
         // while the shader skins as v_skinned = J * v (column-vector convention).
         // The correct conjugation is: J_engine = B^-1 * J_model * B
-        if let basisTransform {
-            let basisInverse = basisTransform.inverse
-            for index in 0..<worldPose.count {
-                worldPose[index] = basisInverse * worldPose[index] * basisTransform
+        if let basisTransform, let inverseBasisTransform {
+            for index in 0..<count {
+                currentPose[index] = inverseBasisTransform * (currentPose[index] * inverseBindTransforms[index]) * basisTransform
+            }
+        } else {
+            for index in 0..<count {
+                currentPose[index] *= inverseBindTransforms[index]
             }
         }
-
-        currentPose = worldPose
     }
 }

@@ -10,9 +10,20 @@ import Foundation
 /// Pre-computed mapping from a channel to the skeletons and meshes it affects.
 /// Built once at registration time so the per-frame update path does zero discovery work.
 struct ChannelMapping {
-    /// Skeleton paths affected by this channel, paired with the clip to use.
-    /// Clip is nil for procedural channels that don't sample from clips.
-    let skeletonEntries: [(path: String, clip: AnimationClip?)]
+    struct SkeletonEntry {
+        let path: String
+        /// Resolved once — avoids the model.skeletons dictionary lookup per frame.
+        let skeleton: Skeleton
+        /// Clip to sample. Nil for procedural channels that don't use clips.
+        let clip: AnimationClip?
+        /// A3 (clip channels): masked joints pre-resolved to (index, animation).
+        /// `animation == nil` → the clip has no track for that joint (rest pose).
+        let resolvedClipJoints: [(jointIndex: Int, animation: Animation?)]
+        /// A2 (procedural channels): jointConfigs[i] → joint index in this
+        /// skeleton; -1 marks a path that wasn't found (warned at registration).
+        let proceduralJointIndices: [Int]
+    }
+    let skeletonEntries: [SkeletonEntry]
 
     /// Mesh indices that need transform and/or skin updates
     let affectedMeshIndices: [Int]
@@ -258,14 +269,17 @@ final class AnimationLayerSystem {
         }
 
         if let proceduralChannel = channel as? ProceduralAnimationChannel {
-            // Procedural path: apply direct joint overrides to localPoses
-            let overrides = proceduralChannel.getJointOverrides()
+            // Procedural path: rotations computed once into channel scratch,
+            // applied by registration-resolved joint index (A2).
+            let rotations = proceduralChannel.computeJointRotations()
             for entry in mapping.skeletonEntries {
-                model.skeletons[entry.path]?.applyProceduralOverrides(overrides)
+                entry.skeleton.applyProceduralOverrides(jointIndices: entry.proceduralJointIndices,
+                                                        rotations: rotations)
                 dirtySkeletonPaths.insert(entry.path)
             }
         } else {
             // Clip-based path: sample animation clip and write to localPoses
+            // over registration-resolved (jointIndex, animation) pairs (A3).
             let animTime = channel.getAnimationTime()
 
             if debugLogging {
@@ -274,7 +288,9 @@ final class AnimationLayerSystem {
 
             for entry in mapping.skeletonEntries {
                 guard let clip = entry.clip else { continue }
-                model.skeletons[entry.path]?.applyClip(at: animTime, animationClip: clip, mask: channel.mask)
+                entry.skeleton.applyClip(at: animTime,
+                                         animationClip: clip,
+                                         resolvedJoints: entry.resolvedClipJoints)
                 dirtySkeletonPaths.insert(entry.path)
             }
 
@@ -339,7 +355,7 @@ final class AnimationLayerSystem {
         let isProcedural = channel is ProceduralAnimationChannel
 
         // Determine affected skeletons and their clips
-        var skeletonEntries: [(path: String, clip: AnimationClip?)] = []
+        var skeletonEntries: [ChannelMapping.SkeletonEntry] = []
         var affectedSkeletonPaths: Set<String> = []
 
         for (skeletonPath, skeleton) in model.skeletons {
@@ -349,14 +365,43 @@ final class AnimationLayerSystem {
                 affectedSkeletonPaths.insert(skeletonPath)
 
                 if isProcedural {
-                    // Procedural channels don't need a clip
-                    skeletonEntries.append((path: skeletonPath, clip: nil))
+                    // Procedural channels don't need a clip. Resolve each
+                    // jointConfig's path to its index in THIS skeleton (A2);
+                    // -1 = not found, skipped at apply time.
+                    let configs = (channel as? ProceduralAnimationChannel)?.jointConfigs ?? []
+                    let jointIndices: [Int] = configs.map { config in
+                        if let index = skeleton.jointIndexByPath[config.jointPath] {
+                            return index
+                        }
+                        print("[AnimationLayerSystem] Warning: channel '\(channel.id)' targets joint "
+                            + "'\(config.jointPath)' not present in skeleton '\(skeletonPath)'")
+                        return -1
+                    }
+                    skeletonEntries.append(.init(path: skeletonPath,
+                                                 skeleton: skeleton,
+                                                 clip: nil,
+                                                 resolvedClipJoints: [],
+                                                 proceduralJointIndices: jointIndices))
                 } else {
                     let clip = channel.animationClip
                         ?? model.animationClips[model.skeletonAnimationMap[skeletonPath] ?? ""]
                         ?? model.animationClips.values.first
 
-                    skeletonEntries.append((path: skeletonPath, clip: clip))
+                    // A3: resolve masked joints to (index, animation) once.
+                    // Semantics match the old per-frame loop: empty mask = all
+                    // joints; missing clip track (nil animation) = rest pose.
+                    var resolvedClipJoints: [(jointIndex: Int, animation: Animation?)] = []
+                    if let clip {
+                        for (index, path) in skeleton.jointPaths.enumerated() {
+                            guard mask.jointPaths.isEmpty || mask.contains(jointPath: path) else { continue }
+                            resolvedClipJoints.append((jointIndex: index, animation: clip.jointAnimation[path] ?? nil))
+                        }
+                    }
+                    skeletonEntries.append(.init(path: skeletonPath,
+                                                 skeleton: skeleton,
+                                                 clip: clip,
+                                                 resolvedClipJoints: resolvedClipJoints,
+                                                 proceduralJointIndices: []))
                 }
             }
         }

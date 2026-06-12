@@ -23,7 +23,8 @@ struct ProceduralJointConfig {
 
     init(jointPath: String, axis: float3, maxDeflection: Float, inverted: Bool = false) {
         self.jointPath = jointPath
-        self.axis = axis
+        // Normalized once here so per-frame rotation construction skips it.
+        self.axis = normalize(axis)
         self.maxDeflection = maxDeflection
         self.inverted = inverted
     }
@@ -148,20 +149,24 @@ final class ProceduralAnimationChannel: AnimationChannel, ValuedAnimationChannel
 
     // MARK: - Procedural Pose Computation
 
-    /// Computes joint rotation overrides based on the current channel value.
-    /// Returns a dictionary of jointPath -> local rotation matrix.
-    /// These rotations are applied on top of (multiplied with) the joint's rest transform.
-    func getJointOverrides() -> [String: float4x4] {
-        var overrides: [String: float4x4] = [:]
+    /// Reused output buffer for computeJointRotations — one slot per jointConfig.
+    private var rotationScratch: [float4x4] = []
 
-        for config in jointConfigs {
+    /// Computes per-config local rotations into a reused buffer (A2: joint
+    /// indices are resolved at registration time; element i pairs with
+    /// jointConfigs[i]). These rotations are applied on top of (multiplied
+    /// with) the joint's rest transform.
+    /// The returned array is internal scratch — consume immediately, do not store.
+    func computeJointRotations() -> [float4x4] {
+        if rotationScratch.count != jointConfigs.count {
+            rotationScratch = [float4x4](repeating: matrix_identity_float4x4, count: jointConfigs.count)
+        }
+        for (i, config) in jointConfigs.enumerated() {
             let deflection = config.inverted ? -value : value
             let angle = deflection * config.maxDeflection
-            let rotation = float4x4(rotateAbout: normalize(config.axis), byAngle: angle)
-            overrides[config.jointPath] = rotation
+            rotationScratch[i] = float4x4(rotateAbout: config.axis, byAngle: angle)
         }
-
-        return overrides
+        return rotationScratch
     }
 }
 

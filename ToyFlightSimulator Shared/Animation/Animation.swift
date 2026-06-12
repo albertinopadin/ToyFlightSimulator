@@ -52,6 +52,16 @@ struct Animation {
 
     var repeatAnimation = true
 
+    /// T·R·S pose at `time`, with per-track identity fallbacks.
+    /// (Extracted from AnimationClip.getPose so index-resolved callers can
+    /// sample without the per-joint jointPath dictionary lookup.)
+    func getPose(at time: Float) -> float4x4 {
+        let rotation = getRotation(at: time) ?? simd_quatf(matrix_identity_float4x4)
+        let translation = getTranslation(at: time) ?? float3.zero
+        let scale = getScale(at: time) ?? float3.one
+        return Transform.translationMatrix(translation) * float4x4(rotation) * Transform.scaleMatrix(scale)
+    }
+
     func getTranslation(at time: Float) -> float3? {
         guard let lastKeyframe = translations.last else {
             return nil
@@ -68,22 +78,16 @@ struct Animation {
             return lastKeyframe.value
         }
         currentTime = fmod(currentTime, lastKeyframe.time)
-        let keyFramePairs = translations.indices.dropFirst().map {
-            (previous: translations[$0 - 1], next: translations[$0])
+        // A3+: scan for the bracketing pair directly — the old code
+        // materialized an array of ALL (prev, next) pairs per sample just to
+        // call first(where:). Same first-match semantics, zero allocation.
+        for i in 1..<translations.count where currentTime < translations[i].time {
+            let previousKey = translations[i - 1]
+            let nextKey = translations[i]
+            let interpolant = (currentTime - previousKey.time) / (nextKey.time - previousKey.time)
+            return simd_mix(previousKey.value, nextKey.value, float3(repeating: interpolant))
         }
-        guard
-            let (previousKey, nextKey) =
-                (keyFramePairs.first {
-                    currentTime < $0.next.time
-                })
-        else { return nil }
-        let interpolant =
-            (currentTime - previousKey.time) / (nextKey.time - previousKey.time)
-        return simd_mix(
-            previousKey.value,
-            nextKey.value,
-            float3(repeating: interpolant)
-        )
+        return nil
     }
 
     func getRotation(at time: Float) -> simd_quatf? {
@@ -102,18 +106,14 @@ struct Animation {
             return lastKeyframe.value
         }
         currentTime = fmod(currentTime, lastKeyframe.time)
-        let keyFramePairs = rotations.indices.dropFirst().map {
-            (previous: rotations[$0 - 1], next: rotations[$0])
+        // A3+: direct scan, no per-sample pairs array (see getTranslation).
+        for i in 1..<rotations.count where currentTime < rotations[i].time {
+            let previousKey = rotations[i - 1]
+            let nextKey = rotations[i]
+            let interpolant = (currentTime - previousKey.time) / (nextKey.time - previousKey.time)
+            return simd_slerp(previousKey.value, nextKey.value, interpolant)
         }
-        
-        guard let (previousKey, nextKey) = (keyFramePairs.first { currentTime < $0.next.time }) else { return nil }
-        
-        let interpolant = (currentTime - previousKey.time) / (nextKey.time - previousKey.time)
-        return simd_slerp(
-            previousKey.value,
-            nextKey.value,
-            interpolant
-        )
+        return nil
     }
 
     func getScale(at time: Float) -> float3? {
@@ -131,21 +131,13 @@ struct Animation {
         }
 
         currentTime = fmod(currentTime, lastKeyframe.time)
-        let keyFramePairs = scales.indices.dropFirst().map {
-            (previous: scales[$0 - 1], next: scales[$0])
+        // A3+: direct scan, no per-sample pairs array (see getTranslation).
+        for i in 1..<scales.count where currentTime < scales[i].time {
+            let previousKey = scales[i - 1]
+            let nextKey = scales[i]
+            let interpolant = (currentTime - previousKey.time) / (nextKey.time - previousKey.time)
+            return simd_mix(previousKey.value, nextKey.value, float3(repeating: interpolant))
         }
-        guard
-            let (previousKey, nextKey) =
-                (keyFramePairs.first {
-                    currentTime < $0.next.time
-                })
-        else { return nil }
-        let interpolant =
-            (currentTime - previousKey.time) / (nextKey.time - previousKey.time)
-        return simd_mix(
-            previousKey.value,
-            nextKey.value,
-            float3(repeating: interpolant)
-        )
+        return nil
     }
 }

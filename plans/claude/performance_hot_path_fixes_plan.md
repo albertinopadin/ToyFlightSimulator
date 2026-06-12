@@ -1,6 +1,6 @@
 # Plan: Hot-Path Performance Fixes (from 2026-06-12 audit)
 
-**Status:** AWAITING REVIEW — no code has been changed yet.
+**Status:** IMPLEMENTED — all 4 phases landed (physics `86fce9e`, render managers `d6a74b2`, scene graph `355e4b5`, animation in the commit that updates this line). Open questions resolved during review: (1) ULP-level reordering accepted, (2) legacy O(n²) baselines keep the unordered-pair upgrade, (3) N3 implemented, (4) plane normals normalized at init.
 **Source:** `debugging/claude/performance_audit_unnecessary_copies.md`
 **Baseline commit:** `b4a1d6e`
 

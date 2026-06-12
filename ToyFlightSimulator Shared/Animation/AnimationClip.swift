@@ -122,11 +122,6 @@ class AnimationClip {
     func getPose(at time: Float, jointPath: String) -> float4x4? {
         guard let jointAnimation = jointAnimation[jointPath],
               let jointAnimation = jointAnimation else { return nil }
-        
-        let rotation = jointAnimation.getRotation(at: time) ?? simd_quatf(matrix_identity_float4x4)
-        let translation = jointAnimation.getTranslation(at: time) ?? float3.zero
-        let scale = jointAnimation.getScale(at: time) ?? float3.one
-        let pose = Transform.translationMatrix(translation) * float4x4(rotation) * Transform.scaleMatrix(scale)
-        return pose
+        return jointAnimation.getPose(at: time)
     }
 }
