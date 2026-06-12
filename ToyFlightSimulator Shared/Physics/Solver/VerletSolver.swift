@@ -5,37 +5,38 @@
 //  Created by Albertino Padin on 10/26/24.
 //
 
+/// Velocity Verlet integrator:
+///   x(t+dt) = x(t) + v(t)·dt + ½·a(t)·dt²
+///   v(t+dt) = v(t) + ½·(a(t) + a(t+dt))·dt
+/// `entity.acceleration` carries a(t) across steps (it is NOT zeroed at the
+/// top of the step — an earlier implementation did, which dropped the
+/// ½·a·dt² curvature term and applied only half of each step's gravity to
+/// velocity, i.e. effective g/2 free-fall). Bodies start with acceleration
+/// .zero, so the first step self-bootstraps with a half-kick.
 final class VerletSolver: PhysicsSolver {
     static func step(deltaTime: Float, gravity: float3, entities: [RigidBody]) {
         for entity in entities {
-            // P8: zeroAcceleration() was a separate full pass over all entities;
-            // merged here. Static entities still get their acceleration cleared,
-            // exactly as the old pre-pass did.
-            entity.acceleration = .zero
-            guard !entity.isStatic else { continue }
+            guard !entity.isStatic else {
+                // Static bodies never integrate; keep their stored
+                // acceleration at zero (parity with the old per-step zeroing).
+                entity.acceleration = .zero
+                continue
+            }
 
             let pos = entity.getPosition()
             let velo = entity.velocity
-            // NOTE: acceleration was just zeroed above, so the 0.5·a·dt² and
-            // 0.5·a·dt history terms below are always zero. That matches the
-            // pre-existing behavior (the old code zeroed all accelerations
-            // before reading them); true velocity-Verlet would carry last
-            // frame's acceleration into these terms. Kept bit-identical on
-            // purpose — integration fidelity is a separate physics follow-up.
-            let acc: float3 = .zero
+            // a(t): last step's acceleration, carried in entity.acceleration.
+            let acc = entity.acceleration
 
-            let nPosEuler: float3 = pos + velo * deltaTime
-            let nPos: float3 = nPosEuler + 0.5 * acc * (deltaTime * deltaTime)
+            let nPos: float3 = pos + velo * deltaTime + 0.5 * acc * (deltaTime * deltaTime)
 
             let veloDtHalf = velo + 0.5 * acc * deltaTime
 
-            var newAcc = acc
-
-            if entity.shouldApplyGravity {
-                newAcc += Self.applyForces(gravity: gravity, force: entity.force)
-            } else {
-                newAcc += Self.applyForces(gravity: .zero, force: entity.force)
-            }
+            // a(t+dt) from forces at the new state. Mass divides the applied
+            // force (a = F/m + g), matching EulerSolver — the previous
+            // `gravity + force` form silently treated force as an acceleration.
+            let appliedGravity: float3 = entity.shouldApplyGravity ? gravity : .zero
+            let newAcc: float3 = entity.force / entity.mass + appliedGravity
 
             let nVelo = veloDtHalf + 0.5 * newAcc * deltaTime
 
@@ -45,9 +46,5 @@ final class VerletSolver: PhysicsSolver {
         }
 
         zeroForces(entities: entities)
-    }
-
-    static func applyForces(gravity: float3, force: float3 = .zero) -> float3 {
-        return gravity + force
     }
 }

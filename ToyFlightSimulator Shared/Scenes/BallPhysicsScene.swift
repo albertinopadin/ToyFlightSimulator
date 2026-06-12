@@ -51,7 +51,7 @@ final class BallPhysicsScene: GameScene {
         (ground, groundRigidBody) = addGround()
         addSun()
 
-        debugCamera.setPosition([0, 5, 15])
+        debugCamera.setPosition([0, 5, -20])
         addCamera(debugCamera)
 
         let entities: [RigidBody] = spheres.map { $0.rigidBody! } + [groundRigidBody]

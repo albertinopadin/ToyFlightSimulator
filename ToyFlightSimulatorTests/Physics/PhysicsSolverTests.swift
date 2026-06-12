@@ -158,4 +158,49 @@ struct VerletSolverTests {
 
         #expect(approxEqual(entities[0].getPosition(), [0, 5, 0]))
     }
+
+    // MARK: - Velocity Verlet fidelity
+
+    @Test("Acceleration carries across steps: half-kicks sum to a full gravity kick")
+    func accelerationCarriesAcrossSteps() {
+        let body = TestRigidBody(mass: 1.0)
+        let entities: [RigidBody] = [body]
+        let dt: Float = 0.1
+
+        // Step 1 bootstraps from a(t)=0: only the new-acceleration half-kick.
+        VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
+        #expect(approxEqual(body.acceleration, Self.gravity),
+                "acceleration must persist as a(t) for the next step, not be zeroed")
+        #expect(approxEqual(body.velocity, 0.5 * Self.gravity * dt))
+
+        // Step 2: carried a(t)=g plus new a(t+dt)=g → full g·dt this step.
+        // (The old zero-before-read implementation gave only 0.5·g·dt here.)
+        VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
+        #expect(approxEqual(body.velocity, 1.5 * Self.gravity * dt))
+    }
+
+    @Test("With warmed acceleration, one step matches constant-acceleration kinematics")
+    func warmedStepMatchesConstantAccelerationKinematics() {
+        let body = TestRigidBody(mass: 1.0)
+        body.acceleration = Self.gravity   // as if carried from a prior step
+        let entities: [RigidBody] = [body]
+        let dt: Float = 0.1
+
+        VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
+
+        // x = ½·g·dt² (curvature term present), v = g·dt (both half-kicks).
+        #expect(approxEqual(body.getPosition(), 0.5 * Self.gravity * (dt * dt)))
+        #expect(approxEqual(body.velocity, Self.gravity * dt))
+    }
+
+    @Test("Applied force is divided by mass (a = F/m + g), matching EulerSolver")
+    func forceIsDividedByMass() {
+        let body = TestRigidBody(mass: 2.0, force: [10, 0, 0], shouldApplyGravity: false)
+        let entities: [RigidBody] = [body]
+
+        VerletSolver.step(deltaTime: 0.1, gravity: .zero, entities: entities)
+
+        // a(t+dt) = F/m = [10/2, 0, 0]; the old form would have stored [10, 0, 0].
+        #expect(approxEqual(body.acceleration, [5, 0, 0]))
+    }
 }

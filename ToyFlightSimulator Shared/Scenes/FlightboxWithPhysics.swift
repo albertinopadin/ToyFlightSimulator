@@ -19,7 +19,8 @@ final class FlightboxWithPhysics: GameScene {
                                         far: 1_000_000.0)
     var sun = Sun(modelType: .Sphere)
 
-    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
+//    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
+    let physicsWorld = PhysicsWorld(updateType: .HeckerVerlet)
     var entities: [RigidBody] = []
 
     private let groundSize: Int = 1_000_000
