@@ -16,7 +16,7 @@ final class FreeCamFlightboxScene: GameScene {
     
 //    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
     let physicsWorld = PhysicsWorld(updateType: .HeckerVerlet)
-    var entities: [PhysicsEntity] = []
+    var entities: [RigidBody] = []
     
     override func buildScene() {
         sun.setPosition(1, 25, 5)

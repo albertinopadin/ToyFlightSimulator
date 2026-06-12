@@ -20,7 +20,7 @@ final class FlightboxWithPhysics: GameScene {
     var sun = Sun(modelType: .Sphere)
 
     let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
-    var entities: [PhysicsEntity] = []
+    var entities: [RigidBody] = []
 
     private let groundSize: Int = 1_000_000
 

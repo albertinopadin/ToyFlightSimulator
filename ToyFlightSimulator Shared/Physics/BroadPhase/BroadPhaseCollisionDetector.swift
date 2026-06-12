@@ -8,229 +8,152 @@
 import Foundation
 import simd
 
-/// Broad-phase collision detector using Single-Axis Sweep and Prune algorithm
+/// Broad-phase collision detector using single-axis sweep and prune.
+///
+/// Per-frame flow (all scratch storage reused across frames — zero steady-state
+/// allocation):
+///   1. Partition entities into static/dynamic and compute every AABB exactly
+///      once (one weak-ref dereference per entity per frame).
+///   2. Sort an index array by cached `aabb.min.x`. For the entity counts this
+///      engine targets (~10²–10³), a full sort over cached Float keys is
+///      cheaper than the old "decide whether to re-sort" machinery, which
+///      itself cost O(n) getPosition() + String-keyed dictionary work per
+///      frame before any sorting happened.
+///   3. Sweep the sorted order, emitting candidate pairs.
 final class BroadPhaseCollisionDetector {
-    // MARK: - Properties
-    
-    /// Sorted list of dynamic entities (sorted by X-axis minimum)
-    private var sortedDynamicEntities: [PhysicsEntity] = []
-    
-    /// List of static entities (no need to sort these)
-    private var staticEntities: [PhysicsEntity] = []
-    
-    /// Track last frame positions to detect significant movement
-    private var lastFramePositions: [String: float3] = [:]
-    
-    /// Threshold for triggering a full re-sort (in world units)
-    private let resortThreshold: Float = 5.0
-    
-    /// Track if this is the first frame (needs full sort)
-    private var isFirstFrame: Bool = true
-    
-    /// Statistics for debugging/optimization
+    // MARK: - Reused per-frame scratch (P3: no per-frame allocations)
+
+    private var staticEntities: [RigidBody] = []
+    private var staticAABBs: [AABB] = []
+    private var dynamicEntities: [RigidBody] = []
+    private var dynamicAABBs: [AABB] = []
+    /// Indices into dynamicEntities/dynamicAABBs, sorted by aabb.min.x.
+    private var sortedDynamicIndices: [Int] = []
+    private var pairsScratch: [(RigidBody, RigidBody)] = []
+
+    /// When false (default), CFAbsoluteTimeGetCurrent() calls and stat
+    /// bookkeeping are skipped. PhysicsStressTestScene turns this on.
+    var collectStatistics: Bool = false
+
+    /// Statistics for debugging/optimization (only updated when
+    /// `collectStatistics` is true)
     private(set) var lastFrameStats = BroadPhaseStats()
-    
+
     // MARK: - Public Methods
-    
+
     /// Update the broad phase with current entities
-    func update(entities: [PhysicsEntity]) {
-        let startTime = CFAbsoluteTimeGetCurrent()
-        
-        // Separate static and dynamic entities
-        staticEntities = entities.filter { $0.isStatic }
-        let dynamicEntities = entities.filter { $0.isDynamic }
-        
-        if dynamicEntities.isEmpty {
-            return
+    func update(entities: [RigidBody]) {
+        let startTime = collectStatistics ? CFAbsoluteTimeGetCurrent() : 0
+
+        staticEntities.removeAll(keepingCapacity: true)
+        staticAABBs.removeAll(keepingCapacity: true)
+        dynamicEntities.removeAll(keepingCapacity: true)
+        dynamicAABBs.removeAll(keepingCapacity: true)
+
+        // Single partition pass; getAABB() called exactly once per entity.
+        for entity in entities {
+            if entity.isStatic {
+                staticEntities.append(entity)
+                staticAABBs.append(entity.getAABB())
+            } else {
+                dynamicEntities.append(entity)
+                dynamicAABBs.append(entity.getAABB())
+            }
         }
-        
-        // Check if we need a full sort or can use insertion sort
-        let needsFullSort = shouldPerformFullSort(dynamicEntities)
-        
-        if needsFullSort {
-            performFullSort(dynamicEntities)
+
+        // Sort indices by cached min.x — no getAABB() calls in the comparator.
+        sortedDynamicIndices.removeAll(keepingCapacity: true)
+        sortedDynamicIndices.append(contentsOf: 0..<dynamicEntities.count)
+        sortedDynamicIndices.sort { dynamicAABBs[$0].min.x < dynamicAABBs[$1].min.x }
+
+        if collectStatistics {
+            lastFrameStats.updateTime = CFAbsoluteTimeGetCurrent() - startTime
+            lastFrameStats.dynamicEntityCount = dynamicEntities.count
+            lastFrameStats.staticEntityCount = staticEntities.count
             lastFrameStats.didFullSort = true
-        } else {
-            performInsertionSort(dynamicEntities)
-            lastFrameStats.didFullSort = false
         }
-        
-        // Update position tracking for next frame
-        updateLastFramePositions(dynamicEntities)
-        
-        // Update statistics
-        let endTime = CFAbsoluteTimeGetCurrent()
-        lastFrameStats.updateTime = endTime - startTime
-        lastFrameStats.dynamicEntityCount = dynamicEntities.count
-        lastFrameStats.staticEntityCount = staticEntities.count
-        
-        isFirstFrame = false
     }
-    
-    /// Get potential collision pairs after broad-phase filtering
-    func getPotentialCollisionPairs() -> [(PhysicsEntity, PhysicsEntity)] {
-        let startTime = CFAbsoluteTimeGetCurrent()
-        var pairs: [(PhysicsEntity, PhysicsEntity)] = []
+
+    /// Get potential collision pairs after broad-phase filtering.
+    ///
+    /// IMPORTANT: the returned array is internal scratch, reused next frame.
+    /// Consume it within the current physics step; do not store it. (A stale
+    /// strong reference would silently trigger a CoW copy on the next
+    /// removeAll — a perf bug, not a correctness one.)
+    func getPotentialCollisionPairs() -> [(RigidBody, RigidBody)] {
+        let startTime = collectStatistics ? CFAbsoluteTimeGetCurrent() : 0
         var checksPerformed = 0
         var checksSaved = 0
-        
-        // Dynamic vs Dynamic collision pairs (using sweep and prune)
-        for i in 0..<sortedDynamicEntities.count {
-            let entityA = sortedDynamicEntities[i]
-            let aabbA = entityA.getAABB()
-            
-            // Only check entities whose X ranges might overlap
-            for j in (i + 1)..<sortedDynamicEntities.count {
-                let entityB = sortedDynamicEntities[j]
-                let aabbB = entityB.getAABB()
-                
+
+        pairsScratch.removeAll(keepingCapacity: true)
+
+        // Dynamic vs Dynamic collision pairs (sweep and prune along sorted X):
+        let sortedCount = sortedDynamicIndices.count
+        for si in 0..<sortedCount {
+            let i = sortedDynamicIndices[si]
+            let aabbA = dynamicAABBs[i]
+
+            for sj in (si + 1)..<sortedCount {
+                let j = sortedDynamicIndices[sj]
+                let aabbB = dynamicAABBs[j]
+
                 checksPerformed += 1
-                
-                // Early exit when X ranges no longer overlap (key optimization)
+
+                // Early exit when X ranges no longer overlap (key optimization):
+                // all remaining entities in the sorted order also fail this test.
                 if aabbB.min.x > aabbA.max.x {
-                    // All remaining entities in the sorted list will also fail this test
-                    checksSaved += (sortedDynamicEntities.count - j - 1)
+                    checksSaved += (sortedCount - sj - 1)
                     break
                 }
-                
+
                 // Check full AABB overlap (Y and Z axes)
                 if aabbA.overlaps(aabbB) {
-                    pairs.append((entityA, entityB))
+                    pairsScratch.append((dynamicEntities[i], dynamicEntities[j]))
                 }
             }
         }
-        
-        // Dynamic vs Static collision pairs
-        for dynamicEntity in sortedDynamicEntities {
-            let dynamicAABB = dynamicEntity.getAABB()
-            
-            for staticEntity in staticEntities {
+
+        // Dynamic vs Static collision pairs:
+        for di in 0..<dynamicEntities.count {
+            let dynamicAABB = dynamicAABBs[di]
+
+            for si in 0..<staticEntities.count {
                 checksPerformed += 1
-                
-                // Simple AABB overlap check
-                if dynamicAABB.overlaps(staticEntity.getAABB()) {
-                    pairs.append((dynamicEntity, staticEntity))
+
+                if dynamicAABB.overlaps(staticAABBs[si]) {
+                    pairsScratch.append((dynamicEntities[di], staticEntities[si]))
                 }
             }
         }
-        
-        // Calculate total possible checks for statistics
-        let dynamicCount = sortedDynamicEntities.count
-        let staticCount = staticEntities.count
-        let totalPossibleChecks = (dynamicCount * (dynamicCount - 1)) / 2 + (dynamicCount * staticCount)
-        
-        // Update statistics
-        let endTime = CFAbsoluteTimeGetCurrent()
-        lastFrameStats.pairGenerationTime = endTime - startTime
-        lastFrameStats.checksPerformed = checksPerformed
-        lastFrameStats.checksSaved = checksSaved + (totalPossibleChecks - checksPerformed)
-        lastFrameStats.potentialPairs = pairs.count
-        
-        return pairs
+
+        if collectStatistics {
+            let dynamicCount = dynamicEntities.count
+            let staticCount = staticEntities.count
+            let totalPossibleChecks = (dynamicCount * (dynamicCount - 1)) / 2 + (dynamicCount * staticCount)
+
+            lastFrameStats.pairGenerationTime = CFAbsoluteTimeGetCurrent() - startTime
+            lastFrameStats.checksPerformed = checksPerformed
+            lastFrameStats.checksSaved = checksSaved + (totalPossibleChecks - checksPerformed)
+            lastFrameStats.potentialPairs = pairsScratch.count
+        }
+
+        return pairsScratch
     }
-    
+
     /// Reset the detector (useful for scene changes)
     func reset() {
-        sortedDynamicEntities.removeAll()
         staticEntities.removeAll()
-        lastFramePositions.removeAll()
-        isFirstFrame = true
+        staticAABBs.removeAll()
+        dynamicEntities.removeAll()
+        dynamicAABBs.removeAll()
+        sortedDynamicIndices.removeAll()
+        pairsScratch.removeAll()
         lastFrameStats = BroadPhaseStats()
     }
-    
+
     /// Get statistics for performance analysis
     func getStatistics() -> (totalChecks: Int, checksSaved: Int) {
         return (lastFrameStats.checksPerformed, lastFrameStats.checksSaved)
-    }
-    
-    // MARK: - Private Methods
-    
-    /// Check if we need to perform a full sort
-    private func shouldPerformFullSort(_ dynamicEntities: [PhysicsEntity]) -> Bool {
-        // Always sort on first frame
-        if isFirstFrame {
-            return true
-        }
-        
-        // Check if entity count changed significantly
-        if abs(dynamicEntities.count - sortedDynamicEntities.count) > 5 {
-            return true
-        }
-        
-        // Check if any entity moved significantly
-        for entity in dynamicEntities {
-            if let lastPos = lastFramePositions[entity.id] {
-                let currentPos = entity.getPosition()
-                let movement = simd_distance(currentPos, lastPos)
-                
-                if movement > resortThreshold {
-                    return true
-                }
-            } else {
-                // New entity added
-                return true
-            }
-        }
-        
-        return false
-    }
-    
-    /// Perform a full sort of dynamic entities by X-axis minimum
-    private func performFullSort(_ dynamicEntities: [PhysicsEntity]) {
-        sortedDynamicEntities = dynamicEntities.sorted { entityA, entityB in
-            entityA.getAABB().min.x < entityB.getAABB().min.x
-        }
-    }
-    
-    /// Perform insertion sort for nearly-sorted list (frame-to-frame updates)
-    private func performInsertionSort(_ dynamicEntities: [PhysicsEntity]) {
-        // Start with existing sorted list
-        var sorted = sortedDynamicEntities
-        
-        // Update with current entities (handle additions/removals)
-        let currentIds = Set(dynamicEntities.map { $0.id })
-        let sortedIds = Set(sorted.map { $0.id })
-        
-        // Remove entities that no longer exist
-        sorted.removeAll { !currentIds.contains($0.id) }
-        
-        // Add new entities
-        let newEntities = dynamicEntities.filter { !sortedIds.contains($0.id) }
-        for newEntity in newEntities {
-            // Insert in sorted position
-            let aabb = newEntity.getAABB()
-            let insertIndex = sorted.firstIndex { $0.getAABB().min.x > aabb.min.x } ?? sorted.count
-            sorted.insert(newEntity, at: insertIndex)
-        }
-        
-        // Update existing entities and maintain sort
-        // Use insertion sort since list is nearly sorted
-        for i in 1..<sorted.count {
-            let entity = sorted[i]
-            let aabb = entity.getAABB()
-            var j = i - 1
-            
-            // Move entity left if needed
-            while j >= 0 && sorted[j].getAABB().min.x > aabb.min.x {
-                sorted[j + 1] = sorted[j]
-                j -= 1
-            }
-            
-            if j + 1 != i {
-                sorted[j + 1] = entity
-            }
-        }
-        
-        sortedDynamicEntities = sorted
-    }
-    
-    /// Update position tracking for movement detection
-    private func updateLastFramePositions(_ dynamicEntities: [PhysicsEntity]) {
-        lastFramePositions.removeAll(keepingCapacity: true)
-
-        for entity in dynamicEntities {
-            lastFramePositions[entity.id] = entity.getPosition()
-        }
     }
 }
 
@@ -246,11 +169,11 @@ struct BroadPhaseStats {
     var checksSaved: Int = 0
     var potentialPairs: Int = 0
     var didFullSort: Bool = false
-    
+
     var totalTime: Double {
         return updateTime + pairGenerationTime
     }
-    
+
     var compressionRatio: Double {
         let totalEntities = dynamicEntityCount + staticEntityCount
         let totalPossiblePairs = (totalEntities * (totalEntities - 1)) / 2
@@ -265,8 +188,9 @@ extension BroadPhaseCollisionDetector: CustomDebugStringConvertible {
     var debugDescription: String {
         return """
         BroadPhaseCollisionDetector:
-          Dynamic Entities: \(sortedDynamicEntities.count)
+          Dynamic Entities: \(dynamicEntities.count)
           Static Entities: \(staticEntities.count)
+          Collect Statistics: \(collectStatistics)
           Last Frame Stats:
             - Update Time: \(String(format: "%.3f ms", lastFrameStats.updateTime * 1000))
             - Pair Gen Time: \(String(format: "%.3f ms", lastFrameStats.pairGenerationTime * 1000))
@@ -274,7 +198,6 @@ extension BroadPhaseCollisionDetector: CustomDebugStringConvertible {
             - Checks Saved: \(lastFrameStats.checksSaved)
             - Compression Ratio: \(String(format: "%.1f%%", lastFrameStats.compressionRatio * 100))
             - Potential Pairs: \(lastFrameStats.potentialPairs)
-            - Did Full Sort: \(lastFrameStats.didFullSort)
         """
     }
 }

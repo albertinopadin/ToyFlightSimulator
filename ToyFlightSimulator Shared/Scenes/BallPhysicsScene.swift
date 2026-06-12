@@ -54,7 +54,7 @@ final class BallPhysicsScene: GameScene {
         debugCamera.setPosition([0, 5, 15])
         addCamera(debugCamera)
 
-        let entities: [PhysicsEntity] = spheres.map { $0.rigidBody! } + [groundRigidBody]
+        let entities: [RigidBody] = spheres.map { $0.rigidBody! } + [groundRigidBody]
 //        physicsWorld = PhysicsWorld(entities: entities, updateType: .NaiveEuler)
         physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
         physicsWorld.useBroadPhase = true

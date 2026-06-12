@@ -32,9 +32,8 @@ public class RigidBody: PhysicsEntity {
         }
     }
     
-    let id: String
     var collisionShape: CollisionShape
-    var collidedWith: [String : Bool]
+    var collidedWith: Set<ObjectIdentifier>
     var mass: Float
     var velocity: float3
     var acceleration: float3
@@ -46,9 +45,12 @@ public class RigidBody: PhysicsEntity {
     // GameObject this is attached to:
     weak let gameObject: GameObject?
     
-    internal init(gameObject: GameObject,
+    /// `gameObject` is optional so test doubles can exist without a GameObject
+    /// (and therefore without Metal/asset loading); all production rigid bodies
+    /// pass a non-nil GameObject.
+    internal init(gameObject: GameObject?,
                   collisionShape: CollisionShape = .Sphere,
-                  collidedWith: [String : Bool] = [:],
+                  collidedWith: Set<ObjectIdentifier> = [],
                   mass: Float = 1,
                   velocity: float3 = .zero,
                   acceleration: float3 = .zero,
@@ -56,7 +58,6 @@ public class RigidBody: PhysicsEntity {
                   restitution: Float = 1,
                   isStatic: Bool = false,
                   shouldApplyGravity: Bool = true) {
-        self.id = UUID().uuidString
         self.gameObject = gameObject
         self.collisionShape = collisionShape
         self.collidedWith = collidedWith
@@ -69,7 +70,7 @@ public class RigidBody: PhysicsEntity {
         self.shouldApplyGravity = shouldApplyGravity
 
         // Register with object this is attached to:
-        gameObject.rigidBody = self
+        gameObject?.rigidBody = self
     }
     
     func setPosition(_ position: float3) {

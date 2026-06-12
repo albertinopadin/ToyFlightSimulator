@@ -8,19 +8,10 @@ import Testing
 import simd
 @testable import ToyFlightSimulator
 
-/// Minimal PhysicsEntity stub used by solver tests. Position lives in a
-/// `var` so the solver can mutate it through `setPosition`.
-final class PhysicsEntityStub: PhysicsEntity {
-    let id: String
-    var collisionShape: CollisionShape
-    var collidedWith: [String : Bool] = [:]
-    var mass: Float
-    var velocity: float3
-    var acceleration: float3
-    var force: float3
-    var restitution: Float
-    var isStatic: Bool
-    var shouldApplyGravity: Bool
+/// Minimal RigidBody test double. Position lives in a local `var` so solver
+/// position writes don't require an attached GameObject (and the test stays
+/// free of Metal/asset loading — `gameObject` is nil).
+final class TestRigidBody: RigidBody {
     private var position: float3
 
     init(position: float3 = .zero,
@@ -30,21 +21,19 @@ final class PhysicsEntityStub: PhysicsEntity {
          isStatic: Bool = false,
          shouldApplyGravity: Bool = true,
          collisionShape: CollisionShape = .Sphere) {
-        self.id = UUID().uuidString
-        self.collisionShape = collisionShape
-        self.mass = mass
-        self.velocity = velocity
-        self.acceleration = .zero
-        self.force = force
-        self.restitution = 1.0
-        self.isStatic = isStatic
-        self.shouldApplyGravity = shouldApplyGravity
         self.position = position
+        super.init(gameObject: nil,
+                   collisionShape: collisionShape,
+                   mass: mass,
+                   velocity: velocity,
+                   force: force,
+                   isStatic: isStatic,
+                   shouldApplyGravity: shouldApplyGravity)
     }
 
-    func setPosition(_ position: float3) { self.position = position }
-    func getPosition() -> float3 { position }
-    func getAABB() -> AABB { AABB(center: position, radius: 0.5) }
+    override func setPosition(_ position: float3) { self.position = position }
+    override func getPosition() -> float3 { position }
+    override func getAABB() -> AABB { AABB(center: position, radius: 0.5) }
 }
 
 @Suite("EulerSolver", .tags(.physics))
@@ -56,10 +45,10 @@ struct EulerSolverTests {
 
     @Test("applyForces integrates F=ma + gravity into acceleration and velocity")
     func applyForcesIntegratesForceAndGravity() {
-        let body = PhysicsEntityStub(mass: 2.0, force: [10, 0, 0])
-        var entities: [PhysicsEntity] = [body]
+        let body = TestRigidBody(mass: 2.0, force: [10, 0, 0])
+        let entities: [RigidBody] = [body]
 
-        EulerSolver.applyForces(deltaTime: 0.1, gravity: Self.gravity, entities: &entities)
+        EulerSolver.applyForces(deltaTime: 0.1, gravity: Self.gravity, entities: entities)
 
         // a = F/m + g = [10/2, -9.8, 0] = [5, -9.8, 0]
         #expect(approxEqual(entities[0].acceleration, [5, -9.8, 0]))
@@ -69,10 +58,10 @@ struct EulerSolverTests {
 
     @Test("applyForces skips static bodies entirely")
     func applyForcesSkipsStaticBodies() {
-        let body = PhysicsEntityStub(mass: 1.0, force: [100, 100, 100], isStatic: true)
-        var entities: [PhysicsEntity] = [body]
+        let body = TestRigidBody(mass: 1.0, force: [100, 100, 100], isStatic: true)
+        let entities: [RigidBody] = [body]
 
-        EulerSolver.applyForces(deltaTime: 1.0, gravity: Self.gravity, entities: &entities)
+        EulerSolver.applyForces(deltaTime: 1.0, gravity: Self.gravity, entities: entities)
 
         #expect(approxEqual(entities[0].velocity, .zero))
         #expect(approxEqual(entities[0].acceleration, .zero))
@@ -80,10 +69,10 @@ struct EulerSolverTests {
 
     @Test("applyForces honours shouldApplyGravity = false")
     func applyForcesRespectsShouldApplyGravity() {
-        let body = PhysicsEntityStub(mass: 1.0, force: [0, 0, 0], shouldApplyGravity: false)
-        var entities: [PhysicsEntity] = [body]
+        let body = TestRigidBody(mass: 1.0, force: [0, 0, 0], shouldApplyGravity: false)
+        let entities: [RigidBody] = [body]
 
-        EulerSolver.applyForces(deltaTime: 0.1, gravity: Self.gravity, entities: &entities)
+        EulerSolver.applyForces(deltaTime: 0.1, gravity: Self.gravity, entities: entities)
 
         // No gravity, no force → acceleration and velocity remain zero.
         #expect(approxEqual(entities[0].acceleration, .zero))
@@ -94,11 +83,11 @@ struct EulerSolverTests {
 
     @Test("zeroForces clears force on every entity (static or dynamic)")
     func zeroForcesClearsAllForces() {
-        let dynamic = PhysicsEntityStub(force: [1, 2, 3])
-        let staticBody = PhysicsEntityStub(force: [4, 5, 6], isStatic: true)
-        var entities: [PhysicsEntity] = [dynamic, staticBody]
+        let dynamic = TestRigidBody(force: [1, 2, 3])
+        let staticBody = TestRigidBody(force: [4, 5, 6], isStatic: true)
+        let entities: [RigidBody] = [dynamic, staticBody]
 
-        EulerSolver.zeroForces(entities: &entities)
+        EulerSolver.zeroForces(entities: entities)
 
         #expect(approxEqual(entities[0].force, .zero))
         #expect(approxEqual(entities[1].force, .zero))
@@ -108,10 +97,10 @@ struct EulerSolverTests {
 
     @Test("step zeroes force after integration so forces do not accumulate across frames")
     func stepClearsForceAfterIntegration() {
-        let body = PhysicsEntityStub(mass: 1.0, force: [10, 0, 0], shouldApplyGravity: false)
-        var entities: [PhysicsEntity] = [body]
+        let body = TestRigidBody(mass: 1.0, force: [10, 0, 0], shouldApplyGravity: false)
+        let entities: [RigidBody] = [body]
 
-        EulerSolver.step(deltaTime: 0.1, gravity: .zero, entities: &entities)
+        EulerSolver.step(deltaTime: 0.1, gravity: .zero, entities: entities)
 
         // After the step, velocity reflects the force, but force itself is zero.
         #expect(approxEqual(entities[0].velocity, [1, 0, 0]))
@@ -120,17 +109,28 @@ struct EulerSolverTests {
 
     @Test("Two consecutive steps without re-applying force do not double-integrate")
     func consecutiveStepsDoNotDoubleIntegrate() {
-        let body = PhysicsEntityStub(mass: 1.0, force: [10, 0, 0], shouldApplyGravity: false)
-        var entities: [PhysicsEntity] = [body]
+        let body = TestRigidBody(mass: 1.0, force: [10, 0, 0], shouldApplyGravity: false)
+        let entities: [RigidBody] = [body]
 
-        EulerSolver.step(deltaTime: 0.1, gravity: .zero, entities: &entities)
+        EulerSolver.step(deltaTime: 0.1, gravity: .zero, entities: entities)
         let velAfterFirst = entities[0].velocity
 
-        EulerSolver.step(deltaTime: 0.1, gravity: .zero, entities: &entities)
+        EulerSolver.step(deltaTime: 0.1, gravity: .zero, entities: entities)
         let velAfterSecond = entities[0].velocity
 
         // Force was cleared at end of step 1; step 2 sees force=0, so velocity is unchanged.
         #expect(approxEqual(velAfterFirst, velAfterSecond))
+    }
+
+    @Test("Pair-consuming step integrates forces and clears them, same as the legacy step")
+    func pairConsumingStepMatchesLegacyForceSemantics() {
+        let body = TestRigidBody(mass: 1.0, force: [10, 0, 0], shouldApplyGravity: false)
+        let entities: [RigidBody] = [body]
+
+        EulerSolver.step(deltaTime: 0.1, gravity: .zero, entities: entities, collisionPairs: [])
+
+        #expect(approxEqual(entities[0].velocity, [1, 0, 0]))
+        #expect(approxEqual(entities[0].force, .zero))
     }
 }
 
@@ -141,20 +141,20 @@ struct VerletSolverTests {
 
     @Test("step zeroes force on dynamic entities after integration")
     func stepClearsForceAfterIntegration() {
-        let body = PhysicsEntityStub(mass: 1.0, force: [5, 0, 0], shouldApplyGravity: false)
-        var entities: [PhysicsEntity] = [body]
+        let body = TestRigidBody(mass: 1.0, force: [5, 0, 0], shouldApplyGravity: false)
+        let entities: [RigidBody] = [body]
 
-        VerletSolver.step(deltaTime: 0.1, gravity: .zero, entities: &entities)
+        VerletSolver.step(deltaTime: 0.1, gravity: .zero, entities: entities)
 
         #expect(approxEqual(entities[0].force, .zero))
     }
 
     @Test("Static body does not move under gravity")
     func staticBodiesDoNotFall() {
-        let body = PhysicsEntityStub(position: [0, 5, 0], isStatic: true)
-        var entities: [PhysicsEntity] = [body]
+        let body = TestRigidBody(position: [0, 5, 0], isStatic: true)
+        let entities: [RigidBody] = [body]
 
-        VerletSolver.step(deltaTime: 0.1, gravity: Self.gravity, entities: &entities)
+        VerletSolver.step(deltaTime: 0.1, gravity: Self.gravity, entities: entities)
 
         #expect(approxEqual(entities[0].getPosition(), [0, 5, 0]))
     }

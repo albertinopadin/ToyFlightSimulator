@@ -113,9 +113,11 @@ final class PhysicsStressTestScene: GameScene {
         }
         
         // Setup physics world
-        let entities: [PhysicsEntity] = spheres.map { $0.rigidBody! } + [groundRigidBody]
+        let entities: [RigidBody] = spheres.map { $0.rigidBody! } + [groundRigidBody]
         physicsWorld = PhysicsWorld(entities: entities, updateType: .HeckerVerlet)
         physicsWorld.useBroadPhase = useBroadPhase
+        // This scene prints broad-phase stats; collection is off by default now.
+        physicsWorld.collectBroadPhaseStatistics = true
         
         // Reset performance tracking
         frameCounter = 0

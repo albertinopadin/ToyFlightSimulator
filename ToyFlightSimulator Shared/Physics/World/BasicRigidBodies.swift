@@ -25,7 +25,9 @@ public final class PlaneRigidBody: RigidBody {
     
     init(gameObject: GameObject, collisionNormal: float3 = [0, 1, 0]) {
         super.init(gameObject: gameObject)
-        self.collisionNormal = collisionNormal
+        // Normalize once at init so collision response can use the normal
+        // directly without re-normalizing per contact.
+        self.collisionNormal = collisionNormal.normalize()
         self.collisionShape = .Plane
     }
     
