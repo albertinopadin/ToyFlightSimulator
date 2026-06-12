@@ -13,7 +13,32 @@ final class DrawManager {
     nonisolated(unsafe) private static var currentFrameIndex: Int = 0
     public static var currentRenderFrameIndex: Int { currentFrameIndex }
     nonisolated(unsafe) private static var currentBufferOffset: Int = 0
+    /// Absolute (non-wrapped) frame number, set in BeginFrame. Used by the
+    /// animated-uniforms cache: ring SLOT indices recycle every 3 frames, so a
+    /// slot index alone can't tell "this frame" from "3 frames ago".
+    nonisolated(unsafe) private static var currentAbsoluteFrame: Int = -1
     private static let initialBufferSize = 32 * 1024 * 1024  // 32 MB initial capacity
+
+    /// Per-frame cache of mesh-local-transform-multiplied ModelConstants.
+    /// A mesh with a non-identity animation transform is drawn by up to 6
+    /// passes per frame (4 shadow cascades + GBuffer + transparency); the
+    /// transform multiply is identical in each, so compute once on the first
+    /// pass and re-bind the same ring-buffer region in the rest.
+    /// `srcOffset` guards against a Mesh instance ever being shared across
+    /// models (different source regions → distinct cache entries lose).
+    /// Render-thread only.
+    private struct AnimatedUniformsEntry {
+        let frame: Int
+        let srcOffset: Int
+        let dstOffset: Int
+    }
+    nonisolated(unsafe) private static var _animatedUniformsCache: [ObjectIdentifier: AnimatedUniformsEntry] = [:]
+
+    /// Called from SceneManager.TeardownScene so cache entries keyed by Mesh
+    /// identity don't linger across scene loads.
+    public static func ClearFrameCaches() {
+        _animatedUniformsCache.removeAll()
+    }
 
     // Per-frame end offset after update thread writes, so render thread continues from there:
     nonisolated(unsafe) private static var updateEndOffsets: [Int] = [0, 0, 0]
@@ -45,6 +70,7 @@ final class DrawManager {
     // Called by the RENDER thread at the start of each frame.
     // Continues from where the update thread stopped writing.
     static func BeginFrame(frameIndex: Int) {
+        currentAbsoluteFrame = frameIndex
         currentFrameIndex = frameIndex % Renderer.maxFramesInFlight
         currentBufferOffset = updateEndOffsets[currentFrameIndex]
     }
@@ -404,19 +430,27 @@ final class DrawManager {
             let localTransform = mesh.transform?.currentTransform ?? .identity
 
             if localTransform != .identity {
-                // Mesh has an animation transform — copy and multiply, write to new ring buffer region:
-                var tempUniforms = [ModelConstants](
-                    UnsafeBufferPointer(
-                        start: ringBuffer.contents().advanced(by: region.offset)
-                            .assumingMemoryBound(to: ModelConstants.self),
-                        count: region.count
-                    )
-                )
-                for i in 0..<tempUniforms.count {
-                    tempUniforms[i].modelMatrix *= localTransform
+                // Mesh has an animation transform. Compute the transformed
+                // constants ONCE per frame (first pass that draws this mesh),
+                // then re-bind the same region from subsequent passes.
+                let key = ObjectIdentifier(mesh)
+                if let hit = _animatedUniformsCache[key],
+                   hit.frame == currentAbsoluteFrame,
+                   hit.srcOffset == region.offset {
+                    renderEncoder.setVertexBuffer(uniformsRingBuffers[currentFrameIndex],
+                                                  offset: hit.dstOffset,
+                                                  index: TFSBufferModelConstants.index)
+                } else {
+                    guard let dstOffset = writeTransformedUniforms(region: region,
+                                                                   localTransform: localTransform) else { return }
+                    _animatedUniformsCache[key] = AnimatedUniformsEntry(frame: currentAbsoluteFrame,
+                                                                        srcOffset: region.offset,
+                                                                        dstOffset: dstOffset)
+                    // Re-fetch the buffer: writeTransformedUniforms may have grown it.
+                    renderEncoder.setVertexBuffer(uniformsRingBuffers[currentFrameIndex],
+                                                  offset: dstOffset,
+                                                  index: TFSBufferModelConstants.index)
                 }
-                guard let (animBuffer, animOffset) = writeUniformsToRingBuffer(&tempUniforms) else { return }
-                renderEncoder.setVertexBuffer(animBuffer, offset: animOffset, index: TFSBufferModelConstants.index)
             } else {
                 // No animation — bind ring buffer region directly (ZERO COPY):
                 renderEncoder.setVertexBuffer(ringBuffer, offset: region.offset, index: TFSBufferModelConstants.index)
@@ -428,6 +462,49 @@ final class DrawManager {
                           instanceCount: mesh.instanceCount * region.count,
                           applyMaterials: applyMaterials)
         }
+    }
+
+    /// Reserve a new ring-buffer region and fill it with the source region's
+    /// ModelConstants, each modelMatrix post-multiplied by `localTransform` —
+    /// a single ring-to-ring pass with no intermediate Swift array.
+    /// Returns the destination byte offset, or nil if the buffer can't grow.
+    /// Source and destination never overlap: dst starts at/after the current
+    /// end-of-writes offset, which is past every update-thread region.
+    private static func writeTransformedUniforms(region: RingBufferRegion,
+                                                 localTransform: float4x4) -> Int? {
+        let count = region.count
+        guard count > 0 else { return nil }
+
+        let size = ModelConstants.stride(count)
+        let alignment = 256
+        let alignedOffset = (currentBufferOffset + alignment - 1) & ~(alignment - 1)
+
+        var ringBuffer = uniformsRingBuffers[currentFrameIndex]
+
+        // Grow buffer if needed (grow-then-read: the memcpy preserves every
+        // byte below alignedOffset, which includes the source region):
+        if alignedOffset + size > ringBuffer.length {
+            let newSize = max(ringBuffer.length * 2, alignedOffset + size)
+            guard let grown = Engine.Device.makeBuffer(length: newSize, options: .storageModeShared) else {
+                return nil
+            }
+            grown.label = "Uniforms Ring Buffer \(currentFrameIndex)"
+            memcpy(grown.contents(), ringBuffer.contents(), alignedOffset)
+            uniformsRingBuffers[currentFrameIndex] = grown
+            ringBuffer = grown
+        }
+
+        let base = ringBuffer.contents()
+        let src = base.advanced(by: region.offset).assumingMemoryBound(to: ModelConstants.self)
+        let dst = base.advanced(by: alignedOffset).assumingMemoryBound(to: ModelConstants.self)
+        for i in 0..<count {
+            var constants = src[i]
+            constants.modelMatrix *= localTransform
+            dst[i] = constants
+        }
+
+        currentBufferOffset = alignedOffset + size
+        return alignedOffset
     }
 
     /// Legacy Draw for ad-hoc objects not in the ring buffer (point lights, icosahedrons, etc.)

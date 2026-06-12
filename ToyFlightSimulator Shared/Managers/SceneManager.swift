@@ -67,7 +67,9 @@ struct RingBufferRegion {
 }
 
 struct TransparentObjectData {
-    var gameObjects: [GameObject] = []
+    // ContiguousArray to match ModelData — lets writeFrameSnapshot hand this
+    // straight to DrawManager.writeModelConstants without a per-frame copy.
+    var gameObjects = ContiguousArray<GameObject>()
     var models: [Model] = []
     var meshDatas: [MeshData] = []
 
@@ -168,7 +170,11 @@ final class SceneManager {
         opaqueSnapshots = [[:], [:], [:]]
         transparentSnapshots = [[:], [:], [:]]
         skySnapshots = [nil, nil, nil]
-        
+
+        // Drop render-thread caches keyed by Mesh identity (animated-uniforms
+        // cache) so stale keys don't linger across scene loads:
+        DrawManager.ClearFrameCaches()
+
         _sceneType = nil
         _rendererType = nil
     }
@@ -216,15 +222,13 @@ final class SceneManager {
         transparent.reserveCapacity(transparentObjectDatas.count)
         for (model, objData) in transparentObjectDatas {
             guard !objData.gameObjects.isEmpty else { continue }
-            // Transparent objects use ContiguousArray via a temporary:
-            let gameObjects = ContiguousArray(objData.gameObjects)
             if let offset = DrawManager.writeModelConstants(
-                gameObjects: gameObjects,
+                gameObjects: objData.gameObjects,
                 frameIndex: frameIndex
             ) {
                 transparent[model] = RingBufferRegion(
                     offset: offset,
-                    count: gameObjects.count,
+                    count: objData.gameObjects.count,
                     meshDatas: objData.meshDatas
                 )
             }

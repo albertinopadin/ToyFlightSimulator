@@ -92,8 +92,8 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
     }
     
     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
-        let pointLights = LightManager.GetPointLightData()
-        if !pointLights.isEmpty {
+        let pointLightCount = LightManager.PointLightCount
+        if pointLightCount > 0 {
             encodeRenderStage(using: renderEncoder, label: "Point Light Stage") {
                 renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredPointLight])
                 guard let mesh = self.icosahedron._metalKitMesh,
@@ -109,7 +109,7 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
                                                     indexType: submesh.indexType,
                                                     indexBuffer: submesh.indexBuffer,
                                                     indexBufferOffset: submesh.indexBufferOffset,
-                                                    instanceCount: pointLights.count)
+                                                    instanceCount: pointLightCount)
             }
         }
     }

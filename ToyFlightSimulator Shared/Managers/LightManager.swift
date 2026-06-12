@@ -63,6 +63,12 @@ final class LightManager {
         }
     }
 
+    /// Cheap count accessor — lets render code branch on "any point lights?"
+    /// without materializing a [LightData] array (each LightData is ~0.5 KB).
+    public static var PointLightCount: Int {
+        withLock(lightLock) { Self._pointLights.count }
+    }
+
     public static func GetPointLightData() -> [LightData] {
         withLock(lightLock) {
             return Self._pointLights.map { $0.lightData }
