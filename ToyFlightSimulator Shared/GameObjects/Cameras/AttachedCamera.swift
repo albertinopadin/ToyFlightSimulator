@@ -38,9 +38,8 @@ class AttachedCamera: Camera {
     // the rendered scene is unchanged, but view-space distances now equal world
     // distances — which lets the CSM fitter work in true world units regardless
     // of the parent's scale (no hidden 1/scale factor on near/far).
-    override func updateModelMatrix() {
-        super.updateModelMatrix()
-        viewMatrix = AttachedCamera.scaleStrippedInverse(of: modelMatrix)
+    override func computeViewMatrix(from world: float4x4) -> float4x4 {
+        AttachedCamera.scaleStrippedInverse(of: world)
     }
 
     /// Inverse of a rigid (scale-free) world transform derived from `world`:
@@ -58,17 +57,10 @@ class AttachedCamera: Camera {
         return rigid.inverse
     }
 
-    override func update() {
-        super.update()
-        // Recompute viewMatrix when world matrix changed (e.g. parent aircraft moved).
-        // updateModelMatrix() only fires when the camera's OWN transform changes;
-        // this catches the parent-propagation case.
-        if worldMatrixDirty {
-//            viewMatrix = modelMatrix.inverse
-            self.updateModelMatrix()
-        }
-    }
-    
+    // update() override removed: the generation-checked viewMatrix getter in
+    // Camera covers both own-transform changes and parent propagation, so no
+    // per-frame worldMatrixDirty hook is needed anymore.
+
     override func doUpdate() {
         if Mouse.IsMouseButtonPressed(button: .RIGHT) {
             self.rotate3Axis(deltaX: Mouse.GetDY() * Float(GameTime.DeltaTime) * _turnSpeed,

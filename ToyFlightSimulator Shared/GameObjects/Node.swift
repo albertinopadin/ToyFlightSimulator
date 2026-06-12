@@ -16,11 +16,29 @@ class Node: ClickSelectable {
     private var _position: float3 = [0, 0, 0]
     private var _scale: float3 = [1, 1, 1]
     
-    var parentModelMatrix = matrix_identity_float4x4
-    
+    var parentModelMatrix = matrix_identity_float4x4 {
+        didSet { _worldMatrixValid = false }
+    }
+
     private var _modelMatrix = matrix_identity_float4x4
     private var _rotationMatrix = matrix_identity_float4x4
-    
+
+    /// N2: local T·R·S needs rebuilding. Setters only flag this; the rebuild
+    /// happens lazily on the first modelMatrix read (multiple setter calls per
+    /// frame — e.g. physics move + collision corrections — cost flag writes,
+    /// not matrix multiplies).
+    private var _localMatrixDirty: Bool = true
+
+    /// N1: cached parent×local composition, so repeated modelMatrix reads
+    /// (per-child propagation, modelConstants, direction vectors) don't redo
+    /// the 4×4 multiply.
+    private var _worldMatrix = matrix_identity_float4x4
+    private var _worldMatrixValid: Bool = false
+    /// Bumped whenever the cached world matrix is recomputed. Consumers that
+    /// derive from the world matrix (Camera.viewMatrix) compare generations
+    /// instead of recomputing per read.
+    private(set) var worldMatrixGeneration: UInt64 = 0
+
     /// True when position, rotation, or scale has changed since last update.
     /// Starts true so the first frame computes the initial matrix.
     private var _transformDirty: Bool = true
@@ -34,11 +52,27 @@ class Node: ClickSelectable {
     
     var modelMatrix: matrix_float4x4 {
         set {
+            // Caller supplies the LOCAL matrix directly (existing semantics);
+            // the getter composes it with parentModelMatrix.
             _modelMatrix = newValue
+            _localMatrixDirty = false
+            _worldMatrixValid = false
         }
-        
+
         get {
-            return matrix_multiply(parentModelMatrix, _modelMatrix)
+            if _localMatrixDirty {
+                // Clear the flag BEFORE rebuilding so derived getters invoked
+                // during the rebuild don't recurse.
+                _localMatrixDirty = false
+                updateModelMatrix()
+                _worldMatrixValid = false
+            }
+            if !_worldMatrixValid {
+                _worldMatrix = matrix_multiply(parentModelMatrix, _modelMatrix)
+                _worldMatrixValid = true
+                worldMatrixGeneration &+= 1
+            }
+            return _worldMatrix
         }
     }
     
@@ -72,6 +106,9 @@ class Node: ClickSelectable {
         children.removeAll()
     }
     
+    /// Rebuilds the LOCAL T·R·S matrix. Invoked lazily from the modelMatrix
+    /// getter when a setter has flagged `_localMatrixDirty` (N2) — not called
+    /// eagerly by the setters anymore.
     func updateModelMatrix() {
         _modelMatrix = Transform.translationMatrix(_position) * _rotationMatrix * Transform.scaleMatrix(_scale)
     }
@@ -99,24 +136,30 @@ class Node: ClickSelectable {
         doUpdate()
         
         let needsUpdate = _transformDirty
-        
+
         if needsUpdate {
-            // Note: updateModelMatrix() is already called eagerly by setPosition/rotate/setScale,
-            // so _modelMatrix is up-to-date. We only need to clear the flag here.
-            // When _transformDirty was set by a parent propagation, the local matrix hasn't
-            // changed — only parentModelMatrix was updated, which is handled in the child loop.
+            // The local matrix rebuild is lazy (first modelMatrix read); here we
+            // only clear the traversal flag. When _transformDirty was set by a
+            // parent propagation, the local matrix hasn't changed — only
+            // parentModelMatrix was updated, which is handled in the child loop.
             _transformDirty = false
         }
 
         worldMatrixDirty = needsUpdate
 
-        for child in children {
-            if needsUpdate {
-                child.parentModelMatrix = self.modelMatrix
+        if needsUpdate && !children.isEmpty {
+            // Hoisted: one cached world-matrix read for all children instead of
+            // a recompute per child.
+            let world = self.modelMatrix
+            for child in children {
+                child.parentModelMatrix = world
                 child._transformDirty = true
+                child.update()
             }
-            
-            child.update()
+        } else {
+            for child in children {
+                child.update()
+            }
         }
         
         // TODO: A more efficient approach might be to get the click location in the scene and
@@ -212,7 +255,10 @@ class Node: ClickSelectable {
     @inline(__always)
     func updateModelMatrixAndMarkTransformDirty(_ body: () -> Void) {
         body()
-        updateModelMatrix()
+        // N2: defer the T·R·S rebuild to the first modelMatrix read instead of
+        // rebuilding eagerly on every setter call.
+        _localMatrixDirty = true
+        _worldMatrixValid = false
         markTransformDirty()
     }
     
@@ -280,9 +326,12 @@ class Node: ClickSelectable {
         rotateZ(deltaZ)
     }
     
-    func getRotationX() -> Float { return Transform.decomposeToEulers(_rotationMatrix).x }
-    func getRotationY() -> Float { return Transform.decomposeToEulers(_rotationMatrix).y }
-    func getRotationZ() -> Float { return Transform.decomposeToEulers(_rotationMatrix).z }
+    /// All three Euler angles from a single decomposition. Prefer this over
+    /// consecutive getRotationX/Y/Z calls (each runs the full decompose).
+    func getRotationEulers() -> float3 { return Transform.decomposeToEulers(_rotationMatrix) }
+    func getRotationX() -> Float { return getRotationEulers().x }
+    func getRotationY() -> Float { return getRotationEulers().y }
+    func getRotationZ() -> Float { return getRotationEulers().z }
     func getRotationMatrix() -> float4x4 { return _rotationMatrix }
     
     // Scaling

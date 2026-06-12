@@ -47,8 +47,9 @@ class GameObject: Node, Renderable, Hashable {
         super.update()
         
         if worldMatrixDirty {
-            modelConstants.modelMatrix = self.modelMatrix
-            modelConstants.normalMatrix = Transform.normalMatrix(from: self.modelMatrix)
+            let world = self.modelMatrix   // one cached read for both fields
+            modelConstants.modelMatrix = world
+            modelConstants.normalMatrix = Transform.normalMatrix(from: world)
         }
         
         // TODO: hmm... might want to refactor this later...

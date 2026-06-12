@@ -21,14 +21,36 @@ class Camera: GameObject {
     var projectionMatrix: matrix_float4x4 = matrix_identity_float4x4
     
     private var _viewMatrix = matrix_identity_float4x4
+    /// worldMatrixGeneration value `_viewMatrix` was derived from
+    /// (.max == never computed).
+    private var _viewMatrixGeneration: UInt64 = .max
     var viewMatrix: matrix_float4x4 {
         get {
+            // Reading modelMatrix first brings the world cache (and its
+            // generation) current; the inverse is recomputed only when the
+            // world matrix actually changed. This covers both own-transform
+            // changes and parent propagation — the old updateModelMatrix
+            // override only caught the former and needed an extra hook in
+            // AttachedCamera.update() for the latter.
+            let world = modelMatrix
+            if _viewMatrixGeneration != worldMatrixGeneration {
+                _viewMatrix = computeViewMatrix(from: world)
+                _viewMatrixGeneration = worldMatrixGeneration
+            }
             return _viewMatrix
         }
-        
+
         set {
             _viewMatrix = newValue
+            _viewMatrixGeneration = worldMatrixGeneration
         }
+    }
+
+    /// How this camera derives its view matrix from its world matrix.
+    /// Base: plain inverse. AttachedCamera overrides with a scale-stripped
+    /// inverse so a scaled parent doesn't warp the view.
+    func computeViewMatrix(from world: float4x4) -> float4x4 {
+        world.inverse
     }
     
     init(name: String,
@@ -56,8 +78,6 @@ class Camera: GameObject {
                                                            far)
     }
     
-    override func updateModelMatrix() {
-        super.updateModelMatrix()
-        _viewMatrix = modelMatrix.inverse
-    }
+    // updateModelMatrix() override removed: viewMatrix is derived lazily by
+    // the generation-checked getter above.
 }

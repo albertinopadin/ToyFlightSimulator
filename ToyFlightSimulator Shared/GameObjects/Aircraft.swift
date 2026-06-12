@@ -22,6 +22,12 @@ struct AttitudeDynamics {
 }
 
 class Aircraft: GameObject {
+    /// N3: below these, stick input / residual rotation rates are treated as
+    /// zero, skipping per-frame transform writes that would otherwise dirty
+    /// the aircraft's whole subtree (camera included) every frame while idle.
+    private static let inputEpsilon: Float = 1e-5
+    private static let rateEpsilon: Float = 1e-4   // rad/s; ~0.006°/s
+
     public var shouldUpdateOnPlayerInput: Bool
 
     internal var _moveSpeed: Float = 25.0
@@ -191,9 +197,7 @@ class Aircraft: GameObject {
         currentRollRate  += (cmdRollRate  - currentRollRate)  * rollAlpha
         currentYawRate   += (cmdYawRate   - currentYawRate)   * yawAlpha
 
-        rotateX(-currentPitchRate * deltaTime)
-        rotateZ(-currentRollRate  * deltaTime)
-        rotateY(-currentYawRate   * deltaTime)
+        applyAttitudeRates(deltaTime: deltaTime)
     }
 
     /// Decay accumulated rates toward zero when not under player control.
@@ -210,13 +214,24 @@ class Aircraft: GameObject {
         currentRollRate  += (0 - currentRollRate)  * rollAlpha
         currentYawRate   += (0 - currentYawRate)   * yawAlpha
 
-        rotateX(-currentPitchRate * deltaTime)
-        rotateZ(-currentRollRate  * deltaTime)
-        rotateY(-currentYawRate   * deltaTime)
+        applyAttitudeRates(deltaTime: deltaTime)
+    }
+
+    /// Applies the accumulated rates, snapping sub-epsilon residuals to
+    /// exactly 0 so a settled aircraft performs zero rotate() calls (and never
+    /// dirties its subtree) until the next real input. The exponential decay
+    /// alone never reaches zero, which previously kept the transform dirty
+    /// forever after the stick was released.
+    private func applyAttitudeRates(deltaTime: Float) {
+        if abs(currentPitchRate) < Self.rateEpsilon { currentPitchRate = 0 } else { rotateX(-currentPitchRate * deltaTime) }
+        if abs(currentRollRate)  < Self.rateEpsilon { currentRollRate  = 0 } else { rotateZ(-currentRollRate  * deltaTime) }
+        if abs(currentYawRate)   < Self.rateEpsilon { currentYawRate   = 0 } else { rotateY(-currentYawRate   * deltaTime) }
     }
 
     internal func applyPlayerSideMove(deltaMove: Float) {
-        moveAlongVector(getRightVector(), distance: deltaMove * InputManager.ContinuousCommand(.MoveSide))
+        let side = InputManager.ContinuousCommand(.MoveSide)
+        guard abs(side) > Self.inputEpsilon else { return }
+        moveAlongVector(getRightVector(), distance: deltaMove * side)
     }
 
     internal func handleGearToggle() {

@@ -64,8 +64,6 @@ class DebugCamera: Camera {
         self.moveZ(Mouse.GetDWheel() * 0.1)
     }
     
-    override func updateModelMatrix() {
-        super.updateModelMatrix()
-        viewMatrix = modelMatrix.inverse
-    }
+    // updateModelMatrix() override removed — base Camera.computeViewMatrix
+    // already returns the plain world-matrix inverse, derived lazily.
 }
