@@ -244,8 +244,6 @@ class F18: Aircraft {
         "CanopyGlassFront_Glass": true
     ]
     
-    let nOriginZ: Float = 0.25
-    
     let leftAileron = SubMeshGameObject(name: "Left_Aileron",
                                         modelType: .F18_Aileron_Left,
                                         meshType: .F18_Aileron_Left)
@@ -305,22 +303,22 @@ class F18: Aircraft {
     
     func setupControlSurfaces() {
         // Ailerons:
-        let newAileronOrigin = float3(0, 0, nOriginZ)
+        let newAileronOrigin = float3(0, 0, 5.6)
         leftAileron.setSubmeshOrigin(newAileronOrigin)
         rightAileron.setSubmeshOrigin(newAileronOrigin)
         
         // Elevons:
-        let newElevonOrigin = float3(0, 0, 1.0)
+        let newElevonOrigin = float3(0, 0, 14)
         leftElevon.setSubmeshOrigin(newElevonOrigin)
         rightElevon.setSubmeshOrigin(newElevonOrigin)
         
         // Flaps:
-        let newFlapsOrigin = float3(0, 0, 0.50)
+        let newFlapsOrigin = float3(0, 0, 5.8)
         leftFlap.setSubmeshOrigin(newFlapsOrigin)
         rightFlap.setSubmeshOrigin(newFlapsOrigin)
         
         // Rudders:
-        let newRuddersOrigin = float3(0, 0, 0.25)
+        let newRuddersOrigin = float3(0, 0, 14)
         leftRudder.setSubmeshOrigin(newRuddersOrigin)
         rightRudder.setSubmeshOrigin(newRuddersOrigin)
         
@@ -409,8 +407,8 @@ class F18: Aircraft {
         if flapsBeganExtending {
             if flapsDegrees < 30.0 {
                 flapsDegrees += 1.0
-                leftFlap.setRotation(angle: -Float(flapsDegrees).toRadians, axis: leftWingRearControlSurfaceRotationAxis)
-                rightFlap.setRotation(angle: Float(flapsDegrees).toRadians, axis: rightWingRearControlSurfaceRotationAxis)
+                leftFlap.setRotation(angle: Float(flapsDegrees).toRadians, axis: leftWingRearControlSurfaceRotationAxis)
+                rightFlap.setRotation(angle: -Float(flapsDegrees).toRadians, axis: rightWingRearControlSurfaceRotationAxis)
             } else {
                 flapsFinishedExtending = true
             }
@@ -419,8 +417,8 @@ class F18: Aircraft {
         if flapsBeganRetracting {
             if flapsDegrees > 0.0 {
                 flapsDegrees -= 1.0
-                leftFlap.setRotation(angle: -Float(flapsDegrees).toRadians, axis: leftWingRearControlSurfaceRotationAxis)
-                rightFlap.setRotation(angle: Float(flapsDegrees).toRadians, axis: rightWingRearControlSurfaceRotationAxis)
+                leftFlap.setRotation(angle: Float(flapsDegrees).toRadians, axis: leftWingRearControlSurfaceRotationAxis)
+                rightFlap.setRotation(angle: -Float(flapsDegrees).toRadians, axis: rightWingRearControlSurfaceRotationAxis)
             } else {
                 flapsFinishedRetracting = true
             }
@@ -531,8 +529,8 @@ class F18: Aircraft {
         rightAileron.setRotation(angle: -roll, axis: rightWingRearControlSurfaceRotationAxis)
         
         let pitch = InputManager.ContinuousCommand(.Pitch)
-        leftElevon.setRotation(angle: -pitch, axis: X_AXIS)
-        rightElevon.setRotation(angle: -pitch, axis: X_AXIS)
+        leftElevon.setRotation(angle: pitch, axis: X_AXIS)
+        rightElevon.setRotation(angle: pitch, axis: X_AXIS)
         
         // TODO: This results in really wonky visuals:
 //        leftElevon.setRotationX(-pitch)

@@ -24,14 +24,14 @@ class SingleSubmeshMesh: Mesh {
     internal var _submesh: Submesh!
     public let vertexMetadata: SingleMeshVertexMetadata
 
-    init(mtkMesh: MTKMesh, submesh: Submesh) {
+    init(asset: MDLAsset, mtkMesh: MTKMesh, mdlMesh: MDLMesh, submesh: Submesh, basisTransform: float4x4 = .identity) {
         // Centralize vertices:
         let vertBuf = mtkMesh.vertexBuffers[0].buffer
         vertexMetadata = SingleSubmeshMesh.getVertexMetadata(submesh: submesh,
                                                              vertexBuffer: vertBuf,
                                                              vertexCount: mtkMesh.vertexCount)
         
-        super.init()
+        super.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform)
         
         name = submesh.name
 
@@ -171,8 +171,10 @@ class SingleSubmeshMesh: Mesh {
     }
 
     private static func makeSingleSMMeshWithSubmeshNamed(_ submeshName: String,
+                                                         asset: MDLAsset,
                                                          object: MDLObject,
-                                                         vertexDescriptor: MDLVertexDescriptor) -> SingleSubmeshMesh? {
+                                                         vertexDescriptor: MDLVertexDescriptor,
+                                                         basisTransform: float4x4) -> SingleSubmeshMesh? {
         if let mdlMesh = object as? MDLMesh {
             if let mdlSubmesh = getMdlSubmeshNamed(submeshName, mdlMesh: mdlMesh) {
                 mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
@@ -186,17 +188,22 @@ class SingleSubmeshMesh: Mesh {
                 let metalKitMesh = try! MTKMesh(mesh: mdlMesh, device: Engine.Device)
                 let mtkSubmesh = metalKitMesh.submeshes.filter({ $0.name == submeshName })[0]
                 print("[SingleSubmeshMesh makeSingleSMMeshWithSubmeshNamed] Creating Submesh...")
-                let submesh = Submesh(mtkSubmesh: mtkSubmesh,
-                                      mdlSubmesh: mdlSubmesh)
-                return SingleSubmeshMesh(mtkMesh: metalKitMesh, submesh: submesh)
+                let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh)
+                return SingleSubmeshMesh(asset: asset,
+                                         mtkMesh: metalKitMesh,
+                                         mdlMesh: mdlMesh,
+                                         submesh: submesh,
+                                         basisTransform: basisTransform)
             }
         }
 
         if object.conforms(to: MDLObjectContainerComponent.self) {
             for child in object.children.objects {
                 if let mesh = makeSingleSMMeshWithSubmeshNamed(submeshName,
+                                                               asset: asset,
                                                                object: child,
-                                                               vertexDescriptor: vertexDescriptor) {
+                                                               vertexDescriptor: vertexDescriptor,
+                                                               basisTransform: basisTransform) {
                     return mesh
                 }
             }
@@ -205,7 +212,10 @@ class SingleSubmeshMesh: Mesh {
         return nil
     }
 
-    public static func createSingleSMMeshFromModel(modelName: String, submeshName: String, ext: String = "obj") -> SingleSubmeshMesh {
+    public static func createSingleSMMeshFromModel(modelName: String,
+                                                   submeshName: String,
+                                                   basisTransform: float4x4,
+                                                   ext: String = "obj") -> SingleSubmeshMesh {
         print("[createSingleSMMeshFromModel] model name: \(modelName)")
 
         guard let assetURL = Bundle.main.url(forResource: modelName, withExtension: ext) else {
@@ -231,8 +241,10 @@ class SingleSubmeshMesh: Mesh {
         print("[createSingleSMMeshFromModel] \(modelName) child name: \(child.name)")
         
         guard let cMesh = SingleSubmeshMesh.makeSingleSMMeshWithSubmeshNamed(submeshName,
-                                                                        object: child,
-                                                                        vertexDescriptor: descriptor) else {
+                                                                             asset: asset,
+                                                                             object: child,
+                                                                             vertexDescriptor: descriptor,
+                                                                             basisTransform: basisTransform) else {
             fatalError("[SingleSubmeshMesh makeMeshWithSubmeshNamed] Could not find any submesh named \(submeshName)")
         }
         

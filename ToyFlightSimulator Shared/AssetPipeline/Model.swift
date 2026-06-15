@@ -17,6 +17,9 @@ class Model: Hashable {
     public let id: String
     public let name: String
     public var meshes: [Mesh] = []
+    
+    /// Stored basis transform for coordinate system conversion (passed to Skeleton for animation)
+    public let basisTransform: float4x4
 
     static func == (lhs: Model, rhs: Model) -> Bool {
         return lhs.id == rhs.id
@@ -32,15 +35,16 @@ class Model: Hashable {
                                     basisTransform: basisTransform) }
     }
     
-    init(name: String, meshes: [Mesh]) {
+    init(name: String, meshes: [Mesh], basisTransform: float4x4 = .identity) {
         self.id = UUID().uuidString
         self.name = name
         self.meshes = meshes
+        self.basisTransform = basisTransform
         meshes.forEach { $0.parentModel = self }
     }
     
-    convenience init(name: String, mesh: Mesh) {
-        self.init(name: name, meshes: [mesh])
+    convenience init(name: String, mesh: Mesh, basisTransform: float4x4 = .identity) {
+        self.init(name: name, meshes: [mesh], basisTransform: basisTransform)
     }
     
     func hash(into hasher: inout Hasher) {

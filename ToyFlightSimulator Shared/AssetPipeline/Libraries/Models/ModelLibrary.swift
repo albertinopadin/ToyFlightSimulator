@@ -60,6 +60,8 @@ final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
     private var _library: [ModelType: Model] = [:]
     
     override func makeLibrary() {
+        let rotate180AroundY = Transform.rotationMatrix(radians: Float(180).toRadians, axis: Y_AXIS)
+        
         _library.updateValue(Model(name: "No Mesh", mesh: NoMesh()), forKey: .None)
         _library.updateValue(Model(name: "Triangle", mesh: ProgrammaticTriangleMesh()), forKey: .Triangle)
         _library.updateValue(Model(name: "Cube", mesh: CubeMesh()), forKey: .Cube)
@@ -71,9 +73,7 @@ final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
         _library.updateValue(ObjModel("skysphere"), forKey: .SkySphere)
         
         _library.updateValue(ObjModel("f16r"), forKey: .F16)
-        _library.updateValue(ObjModel("FA-18F",
-                                      basisTransform: Transform.rotationMatrix(radians: Float(180).toRadians,
-                                                                               axis: Y_AXIS)), forKey: .F18)
+        _library.updateValue(ObjModel("FA-18F", basisTransform: rotate180AroundY), forKey: .F18)
         
 //        _library.updateValue(UsdModel("FA-18F"), forKey: .RC_F18)
         

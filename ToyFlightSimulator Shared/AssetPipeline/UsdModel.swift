@@ -21,9 +21,6 @@ final class UsdModel: Model {
     /// Maps skeleton paths to their associated animation clip names
     var skeletonAnimationMap: [String: String] = [:]
 
-    /// Stored basis transform for coordinate system conversion (passed to Skeleton for animation)
-    private let basisTransform: float4x4?
-
     /// Flag indicating whether this model has an external animator controlling its animations.
     /// When true, the model's update() method will not drive animations automatically.
     var hasExternalAnimator: Bool = false
@@ -37,8 +34,6 @@ final class UsdModel: Model {
     }
     
     init(_ modelName: String, assetUrl: URL, basisTransform: float4x4? = nil) {
-        self.basisTransform = basisTransform
-        
         let descriptor = Mesh.createMdlVertexDescriptor()
         let asset = MDLAsset(url: assetUrl,
                              vertexDescriptor: descriptor,
@@ -58,7 +53,7 @@ final class UsdModel: Model {
                                                descriptor: descriptor,
                                                basisTransform: basisTransform)
 
-        super.init(name: modelName, meshes: usdMeshes)
+        super.init(name: modelName, meshes: usdMeshes, basisTransform: basisTransform ?? .identity)
         
         print("[UsdModel init] loading \(modelName) skeletons...")
         loadSkeletons(asset: asset)

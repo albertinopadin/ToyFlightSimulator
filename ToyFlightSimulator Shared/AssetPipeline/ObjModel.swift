@@ -33,6 +33,6 @@ final class ObjModel: Model {
                                        descriptor: descriptor,
                                        basisTransform: basisTransform)
         
-        super.init(name: modelName, meshes: objMeshes)
+        super.init(name: modelName, meshes: objMeshes, basisTransform: basisTransform ?? .identity)
     }
 }

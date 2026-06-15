@@ -34,29 +34,75 @@ final class SingleSubmeshMeshLibrary: Library<SingleSMMeshType, SingleSubmeshMes
     private var _library: [SingleSMMeshType: SingleSubmeshMesh] = [:]
     
     override func makeLibrary() {
-        let f18SidewinderLeft = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "AIM-9XL_Paint")
-        let f18AIM120Left = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "AIM-120DL_Paint")
-        let f18GBU16Left = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "GBU-16L_Paint")
+        let rotate180AroundY = Transform.rotationMatrix(radians: Float(180).toRadians, axis: Y_AXIS)
         
-        let f18SidewinderRight = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "AIM-9XR_Paint")
-        let f18AIM120Right = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "AIM-120DR_Paint")
-        let f18GBU16Right = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "GBU-16R_Paint")
+        let f18SidewinderLeft = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                              submeshName: "AIM-9XL_Paint",
+                                                                              basisTransform: rotate180AroundY)
         
-        let f18FuelTankLeft = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "TankWingL_Paint")
-        let f18FuelTankCenter = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "TankCenter_Paint")
-        let f18FuelTankRight = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "TankWingR_Paint")
+        let f18AIM120Left = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                          submeshName: "AIM-120DL_Paint",
+                                                                          basisTransform: rotate180AroundY)
         
-        let f18LeftAileron = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "EleronsL_Paint")
-        let f18RightAileron = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "EleronsR_Paint")
+        let f18GBU16Left = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                         submeshName: "GBU-16L_Paint",
+                                                                         basisTransform: rotate180AroundY)
         
-        let f18LeftElevon = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "ElevatorL_Paint")
-        let f18RightElevon = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "ElevatorR_Paint")
+        let f18SidewinderRight = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                               submeshName: "AIM-9XR_Paint",
+                                                                               basisTransform: rotate180AroundY)
         
-        let f18LeftFlap = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "FlapsL_Paint")
-        let f18RightFlap = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "FlapsR_Paint")
+        let f18AIM120Right = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                           submeshName: "AIM-120DR_Paint",
+                                                                           basisTransform: rotate180AroundY)
         
-        let f18LeftRudder = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "RudderL_Paint")
-        let f18RightRudder = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F", submeshName: "RudderR_Paint")
+        let f18GBU16Right = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                          submeshName: "GBU-16R_Paint",
+                                                                          basisTransform: rotate180AroundY)
+        
+        let f18FuelTankLeft = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                            submeshName: "TankWingL_Paint",
+                                                                            basisTransform: rotate180AroundY)
+        
+        let f18FuelTankCenter = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                              submeshName: "TankCenter_Paint",
+                                                                              basisTransform: rotate180AroundY)
+        
+        let f18FuelTankRight = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                             submeshName: "TankWingR_Paint",
+                                                                             basisTransform: rotate180AroundY)
+        
+        let f18LeftAileron = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                           submeshName: "EleronsL_Paint",
+                                                                           basisTransform: rotate180AroundY)
+        
+        let f18RightAileron = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                            submeshName: "EleronsR_Paint",
+                                                                            basisTransform: rotate180AroundY)
+        
+        let f18LeftElevon = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                          submeshName: "ElevatorL_Paint",
+                                                                          basisTransform: rotate180AroundY)
+        
+        let f18RightElevon = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                           submeshName: "ElevatorR_Paint",
+                                                                           basisTransform: rotate180AroundY)
+        
+        let f18LeftFlap = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                        submeshName: "FlapsL_Paint",
+                                                                        basisTransform: rotate180AroundY)
+        
+        let f18RightFlap = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                         submeshName: "FlapsR_Paint",
+                                                                         basisTransform: rotate180AroundY)
+        
+        let f18LeftRudder = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                          submeshName: "RudderL_Paint",
+                                                                          basisTransform: rotate180AroundY)
+        
+        let f18RightRudder = SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
+                                                                           submeshName: "RudderR_Paint",
+                                                                           basisTransform: rotate180AroundY)
         
         _library.updateValue(f18SidewinderLeft, forKey: .F18_Sidewinder_Left)
         _library.updateValue(f18AIM120Left, forKey: .F18_AIM120_Left)
