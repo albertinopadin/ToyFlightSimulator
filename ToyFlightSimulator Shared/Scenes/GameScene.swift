@@ -16,6 +16,8 @@ class GameScene: Node {
     
     internal var _rendererType: RendererType!
     
+    internal var playerAircraft: Aircraft? = nil
+    
     override init(name: String) {
         print("[Scene init] Initilizing scene named: \(name)")
         super.init(name: name)
@@ -229,4 +231,8 @@ class GameScene: Node {
 //            pointLight.render(with: renderEncoder, renderPipelineStateType: .SinglePassDeferredPointLight)
 //        }
 //    }
+    
+    public func setPlayerAircraft(_ aircraft: AircraftType) {
+        // Override in subclassed scenes
+    }
 }

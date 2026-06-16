@@ -48,6 +48,10 @@ struct ModelData {
         self.gameObjects.append(gameObject)
     }
     
+    mutating func removeGameObject(_ gameObject: GameObject) {
+        self.gameObjects.removeAll(where: { $0.id == gameObject.id })
+    }
+    
     mutating func addMeshData(_ meshData: MeshData) {
         self.meshDatas.append(meshData)
     }
@@ -75,6 +79,10 @@ struct TransparentObjectData {
 
     mutating func addGameObject(_ gameObject: GameObject) {
         self.gameObjects.append(gameObject)
+    }
+
+    mutating func removeGameObject(_ gameObject: GameObject) {
+        self.gameObjects.removeAll(where: { $0.id == gameObject.id })
     }
 
     mutating func addModel(_ model: Model) {
@@ -443,5 +451,92 @@ final class SceneManager {
     
     public static func SetAspectRatio(_ aspectRatio: Float) {
         CurrentScene?.setAspectRatio(aspectRatio)
+    }
+    
+    /*
+     * TODO: placing this here for now:
+     */
+    public static func SetPlayerAircraft(_ aircraft: AircraftType) {
+        CurrentScene?.setPlayerAircraft(aircraft)
+    }
+    
+    public static func RemoveObject(_ gameObject: GameObject) {
+        CurrentScene?.removeChild(gameObject)
+        Unregister(gameObject)
+    }
+
+    /// Inverse of `Register` / `GameScene.registerChildObject`: removes `node`
+    /// and its entire subtree from whatever batched collections each node was
+    /// registered into.
+    ///
+    /// This must recurse: composite objects register their descendants *flat*
+    /// in these collections, not under the parent (an F-18's control surfaces
+    /// land in `modelDatas`, an F-22's afterburners in `particleObjects`).
+    /// Removing only the top node would orphan them — `writeFrameSnapshot`
+    /// would keep writing their now-frozen ModelConstants every frame and they
+    /// would never deallocate.
+    static func Unregister(_ node: Node) {
+        for subtreeNode in subtreeNodes(of: node) {
+            unregisterSingle(subtreeNode)
+        }
+    }
+
+    /// `node` plus its full descendant subtree (pre-order). Pure scene-graph
+    /// traversal — no Metal — so it's unit-testable directly. Mirrors how
+    /// `registerChildObject` recurses grandchildren, so removal covers exactly
+    /// the set registration added.
+    static func subtreeNodes(of node: Node) -> [Node] {
+        var nodes: [Node] = [node]
+        for child in node.children {
+            nodes.append(contentsOf: subtreeNodes(of: child))
+        }
+        return nodes
+    }
+
+    /// Removes a single node from the one collection it was registered into.
+    /// The type dispatch mirrors `Register`, plus the `Camera` skip from
+    /// `registerChildObject` (cameras are never registered, but they live in
+    /// the aircraft subtree). Non-GameObjects and never-registered nodes are
+    /// no-ops.
+    private static func unregisterSingle(_ node: Node) {
+        guard let gameObject = node as? GameObject else { return }
+
+        switch gameObject {
+            case is Camera, is SkyBox, is SkySphere, is LightObject:
+                // Cameras aren't registered; sky is singleton-managed; lights
+                // live in LightManager, not in these collections.
+                break
+            case let icosahedron as Icosahedron:
+                icosahedrons.removeAll { $0.id == icosahedron.id }
+            case let line as Line:
+                lines.removeAll { $0.id == line.id }
+            case let particleObject as ParticleEmitterObject:
+                particleObjects.removeAll { $0.id == particleObject.id }
+            // NOTE: `tessellatables` is intentionally not handled — nothing
+            // removable registers as `Tessellatable` today (terrain is built
+            // once and never swapped). Add a case here if that changes.
+            default:
+                removeRenderable(gameObject)
+        }
+    }
+
+    /// Removes a renderable from `modelDatas` / `transparentObjectDatas`,
+    /// mirroring `RegisterObject`. Drops the per-Model entry once its last
+    /// object is gone so the dictionaries (and the per-frame snapshot loop)
+    /// stay tight; the `isEmpty` guard leaves shared/instanced models intact
+    /// until their final instance is removed.
+    private static func removeRenderable(_ gameObject: GameObject) {
+        let model = gameObject.model
+        if gameObject.isTransparent {
+            transparentObjectDatas[model]?.removeGameObject(gameObject)
+            if transparentObjectDatas[model]?.gameObjects.isEmpty == true {
+                transparentObjectDatas[model] = nil
+            }
+        } else {
+            modelDatas[model]?.removeGameObject(gameObject)
+            if modelDatas[model]?.gameObjects.isEmpty == true {
+                modelDatas[model] = nil
+            }
+        }
     }
 }

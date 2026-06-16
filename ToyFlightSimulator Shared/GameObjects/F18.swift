@@ -17,17 +17,18 @@ import MetalKit
 //    }
 //}
 
-final class Store {
-    var remaining: Int
-    var modelTypes: [ModelType]
+final class F18: Aircraft {
     
-    init(remaining: Int, modelTypes: [ModelType]) {
-        self.remaining = remaining
-        self.modelTypes = modelTypes
+    final class Store {
+        var remaining: Int
+        var modelTypes: [ModelType]
+        
+        init(remaining: Int, modelTypes: [ModelType]) {
+            self.remaining = remaining
+            self.modelTypes = modelTypes
+        }
     }
-}
-
-class F18: Aircraft {
+    
     private var _spacePressed: Bool = false
     private var _mKeyPressed: Bool = false
     private var _nKeyPressed: Bool = false
@@ -47,13 +48,6 @@ class F18: Aircraft {
         GBU16Name,
         FuelTankName
     ]
-    
-//    let stores: [String: Store] = [
-//        AIM9Name: Store(remaining: 2, submeshNames: ["AIM-9XL_Paint", "AIM-9XR_Paint"]),
-//        AIM120Name: Store(remaining: 2, submeshNames: ["AIM-120DL_Paint", "AIM-120DR_Paint"]),
-//        GBU16Name: Store(remaining: 2, submeshNames: ["GBU-16L_Paint", "GBU-16R_Paint"]),
-//        FuelTankName: Store(remaining: 3, submeshNames: ["TankWingL_Paint", "TankWingR_Paint", "TankCenter_Paint"])
-//    ]
         
     let stores: [String: Store] = [
         AIM9Name: Store(remaining: 2, modelTypes: [.F18_Sidewinder_Left, .F18_Sidewinder_Right]),
@@ -286,8 +280,8 @@ class F18: Aircraft {
     let leftWingRearControlSurfaceRotationAxis = float3(-1, 0, 0.15)
     let rightWingRearControlSurfaceRotationAxis = float3(1, 0, 0.15)
     
-    let leftRudderControlSurfaceRotationAxis = normalize(float3(-0.25, 0.8, 0.30))
-    let rightRudderControlSurfaceRotationAxis = normalize(float3(0.25, 0.8, 0.30))
+    let leftRudderControlSurfaceRotationAxis = normalize(float3(-0.25, 0.8, -0.30))
+    let rightRudderControlSurfaceRotationAxis = normalize(float3(0.25, 0.8, -0.30))
     
     var landingGearDeployed: Bool = false
     var landingGearDegrees: Float = 0.0
@@ -295,6 +289,10 @@ class F18: Aircraft {
     var landingGearFinishedExtending: Bool = false
     var landingGearBeganRetracting: Bool = false
     var landingGearFinishedRetracting: Bool = false
+    
+    override var cameraOffset: float3 {
+        [0, 9, -20]
+    }
     
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
         super.init(name: "F-18", modelType: .F18, scale: scale, shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
@@ -318,7 +316,7 @@ class F18: Aircraft {
         rightFlap.setSubmeshOrigin(newFlapsOrigin)
         
         // Rudders:
-        let newRuddersOrigin = float3(0, 0, 14)
+        let newRuddersOrigin = float3(0, 0, 15)
         leftRudder.setSubmeshOrigin(newRuddersOrigin)
         rightRudder.setSubmeshOrigin(newRuddersOrigin)
         

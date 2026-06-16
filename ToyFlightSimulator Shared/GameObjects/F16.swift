@@ -11,13 +11,4 @@ class F16: Aircraft {
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
         super.init(name: "F-16", modelType: .F16, scale: scale, shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
     }
-    
-    // TODO: Whats with the setFrontFacing call?
-//    override func doRender(_ renderEncoder: MTLRenderCommandEncoder,
-//                           applyMaterials: Bool = true,
-//                           submeshesToRender: [String : Bool]? = nil) {
-//        renderEncoder.setFrontFacing(.counterClockwise)
-//        super.doRender(renderEncoder, applyMaterials: applyMaterials, submeshesToRender: submeshesToRender)
-//        renderEncoder.setFrontFacing(.clockwise)
-//    }
 }

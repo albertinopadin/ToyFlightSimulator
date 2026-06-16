@@ -17,6 +17,7 @@ struct MacGameUIView: View {
 //    @State private var rendererType: RendererType = .OrderIndependentTransparency
     @State private var rendererType: RendererType = .TiledMSAATessellated
     @State private var volume: Float = 15.0
+    @State private var aircraftType: AircraftType = .f22_cgtrader
     
     var body: some View {
         GeometryReader { geometry in
@@ -29,6 +30,7 @@ struct MacGameUIView: View {
                     TFSMenu(framesPerSecond: $framesPerSecond,
                             rendererType: $rendererType,
                             volume: $volume,
+                            aircraftType: $aircraftType,
                             viewSize: viewSize)
                 }
                 

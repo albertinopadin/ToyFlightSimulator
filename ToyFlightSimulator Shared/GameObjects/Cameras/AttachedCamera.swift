@@ -26,6 +26,11 @@ class AttachedCamera: Camera {
     }
     
     public func attach(to node: Node, offset: float3 = [0, 2, -4], rotation: float3 = [Float(-5).toRadians, 0, 0]) {
+        // Zero camera rotation first:
+        self.setRotationX(0)
+        self.setRotationY(0)
+        self.setRotationZ(0)
+        
         self.rotate3Axis(deltaX: rotation.x, deltaY: rotation.y, deltaZ: rotation.z)
         self.setPosition(offset)
         node.addChild(self)

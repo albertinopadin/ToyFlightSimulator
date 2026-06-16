@@ -11,6 +11,7 @@ struct TFSMenu: View {
     @Binding var framesPerSecond: FPS
     @Binding var rendererType: RendererType
     @Binding var volume: Float
+    @Binding var aircraftType: AircraftType
     
     var viewSize: CGSize
     
@@ -62,6 +63,18 @@ struct TFSMenu: View {
                                alignment: .center)
                         
                         Text("\(String(format: "%.0f", volume))")
+                        
+                        Picker("Aircraft: ", selection: $aircraftType) {
+                            ForEach(AircraftType.allCases) { aircraftType in
+                                Text("\(aircraftType.rawValue)").tag(aircraftType).padding()
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: geometry.size.width * 0.35)
+                        .onChange(of: aircraftType) {
+                            print("[Setting Player Aircraft] to \(aircraftType.rawValue)")
+                            SceneManager.SetPlayerAircraft(aircraftType)
+                        }
                     }
                     .frame(width: geometry.size.width - 10,
                            height: geometry.size.height - 10,
@@ -87,5 +100,6 @@ struct TFSMenu: View {
     TFSMenu(framesPerSecond: Binding<FPS>.constant(.FPS_120),
             rendererType: Binding<RendererType>.constant(.TiledDeferred),
             volume: Binding<Float>.constant(15.0),
+            aircraftType: Binding<AircraftType>.constant(.f22),
             viewSize: CGSize(width: 1920, height: 1080))
 }

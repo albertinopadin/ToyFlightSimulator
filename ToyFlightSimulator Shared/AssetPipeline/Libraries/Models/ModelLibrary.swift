@@ -72,7 +72,7 @@ final class ModelLibrary: Library<ModelType, Model>, @unchecked Sendable {
         _library.updateValue(ObjModel("quad"), forKey: .Quad)
         _library.updateValue(ObjModel("skysphere"), forKey: .SkySphere)
         
-        _library.updateValue(ObjModel("f16r"), forKey: .F16)
+        _library.updateValue(ObjModel("f16r", basisTransform: rotate180AroundY), forKey: .F16)
         _library.updateValue(ObjModel("FA-18F", basisTransform: rotate180AroundY), forKey: .F18)
         
 //        _library.updateValue(UsdModel("FA-18F"), forKey: .RC_F18)

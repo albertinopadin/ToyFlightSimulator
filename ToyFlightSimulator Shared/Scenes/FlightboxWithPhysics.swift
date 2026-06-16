@@ -25,6 +25,13 @@ final class FlightboxWithPhysics: GameScene {
 
     private let groundSize: Int = 1_000_000
 
+    private let aircraftStartPosition: float3 = [0, 100, 0]
+
+    /// Aircraft swap requested from the UI thread, applied on the update thread
+    /// at the top of `doUpdate`. Keeps the scene-graph / physics mutation off
+    /// the main thread — see `PendingAircraftSwap`.
+    private let pendingSwap = PendingAircraftSwap()
+
     private func makeRandomDispersedObjects(count: Int, clusterRadius: Int, withRigidBodies: Bool = false) {
         let halfClusterRadius: Int = clusterRadius / 2
         for _ in 0..<count {
@@ -93,21 +100,12 @@ final class FlightboxWithPhysics: GameScene {
     override func buildScene() {
         let (_, groundRigidBody) = addGround(scale: Float(groundSize))
         entities.append(groundRigidBody)
-
-//        let jet = F22(scale: 0.25)
-//        let jet = F22_CGTrader(scale: 3.0)
-        let jet = F18(scale: 1.4)
-        let jetRigidBody = SphereRigidBody(gameObject: jet)
-        jetRigidBody.collisionRadius = 2.0
-        jetRigidBody.restitution = 0.2
-        let flightModel = F22SimpleFlightModel()
-        jet.flightModel = flightModel
-
-        addCamera(attachedCamera)
-        attachedCamera.attach(to: jet, offset: jet.cameraOffset)
-        jet.setPosition(0, 100, 0)
-        addChild(jet)
-        let jetPos = jet.getPosition()
+        
+        // Default. Applied immediately (not deferred): buildScene runs before
+        // the update loop spins, and there's no aircraft to render until it does.
+        applyAircraftSwap(.f22_cgtrader)
+        
+        let jetPos = aircraftStartPosition
 
         setupDefaultSky()
 
@@ -156,13 +154,93 @@ final class FlightboxWithPhysics: GameScene {
 
         TextureLoader.PrintCacheInfo()
         print("Total Submesh count: \(SceneManager.SubmeshCount)")
-
-        entities.append(jetRigidBody)
+        
         physicsWorld.setEntities(entities)
     }
 
+    /// Called from the SwiftUI menu on the main thread. Does NOT mutate the
+    /// scene graph or physics world here — those are owned by the UpdateThread.
+    /// The request is recorded and applied on the update thread in `doUpdate`.
+    override func setPlayerAircraft(_ aircraft: AircraftType) {
+        pendingSwap.request(aircraft)
+    }
+
+    /// Performs the actual aircraft swap. Runs on the update thread (via
+    /// `doUpdate`) or during scene construction (via `buildScene`) — never
+    /// directly from the UI callback.
+    private func applyAircraftSwap(_ aircraft: AircraftType) {
+        let prevAc: Aircraft? = playerAircraft
+        let prevAcRigidBody: RigidBody? = playerAircraft?.rigidBody
+
+        switch aircraft {
+            case .f16:
+                playerAircraft = F16(scale: 6.0)
+            case .f18:
+                playerAircraft = F18(scale: 1.4)
+            case .f22:
+                playerAircraft = getPlayerAcF22()
+            case .f22_cgtrader:
+                playerAircraft = getPlayerAcCGTraderF22()
+            case .f35:
+                playerAircraft = F35(scale: 0.8)
+        }
+
+        if let playerAircraft {
+            let acRigidBody = SphereRigidBody(gameObject: playerAircraft)
+            acRigidBody.collisionRadius = 2.0
+            acRigidBody.restitution = 0.2
+
+            entities = Self.swappedEntities(entities, removing: prevAcRigidBody, adding: acRigidBody)
+            physicsWorld.setEntities(entities)
+
+            addCamera(attachedCamera)
+            attachedCamera.attach(to: playerAircraft, offset: playerAircraft.cameraOffset)
+            playerAircraft.setPosition(aircraftStartPosition)
+
+            if let prevAc {
+                SceneManager.RemoveObject(prevAc)
+            }
+
+            addChild(playerAircraft)
+        }
+    }
+
+    /// Entity-list bookkeeping for an aircraft swap: drops the previous
+    /// aircraft's rigid body (if present) and appends the new one. Removing
+    /// before appending guarantees the physics world is never left with two
+    /// aircraft bodies, even across repeated swaps. Pure and `static` so it's
+    /// unit-testable without constructing a (Metal-backed) scene.
+    static func swappedEntities(_ entities: [RigidBody],
+                                removing prev: RigidBody?,
+                                adding new: RigidBody) -> [RigidBody] {
+        var updated = entities
+        if let prev {
+            updated.removeAll { $0 === prev }
+        }
+        updated.append(new)
+        return updated
+    }
+
+    private func getPlayerAcF22() -> F22 {
+        let ac = F22(scale: 0.25)
+        ac.flightModel = F22SimpleFlightModel()
+        return ac
+    }
+    
+    private func getPlayerAcCGTraderF22() -> F22_CGTrader {
+        let ac = F22_CGTrader(scale: 3.0)
+        ac.flightModel = F22SimpleFlightModel()
+        return ac
+    }
+    
     override func doUpdate() {
         super.doUpdate()
+
+        // Apply any UI-requested aircraft swap here, on the update thread,
+        // before stepping physics so the new rigid body is part of this step.
+        if let pending = pendingSwap.take() {
+            applyAircraftSwap(pending)
+        }
 
         let fdTime = Float(GameTime.DeltaTime)
 

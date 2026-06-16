@@ -11,4 +11,6 @@ extension Tag {
     @Tag static var concurrency: Self
     @Tag static var assetPipeline: Self
     @Tag static var physics: Self
+    @Tag static var gameObjects: Self
+    @Tag static var scenes: Self
 }
