@@ -174,7 +174,7 @@ final class FlightboxWithPhysics: GameScene {
 
         switch aircraft {
             case .f16:
-                playerAircraft = F16(scale: 6.0)
+                playerAircraft = F16(scale: 12.0)
             case .f18:
                 playerAircraft = F18(scale: 1.4)
             case .f22:

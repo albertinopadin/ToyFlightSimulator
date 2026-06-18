@@ -72,7 +72,6 @@ struct TFSMenu: View {
                         .pickerStyle(.menu)
                         .frame(maxWidth: geometry.size.width * 0.35)
                         .onChange(of: aircraftType) {
-                            print("[Setting Player Aircraft] to \(aircraftType.rawValue)")
                             SceneManager.SetPlayerAircraft(aircraftType)
                         }
                     }
