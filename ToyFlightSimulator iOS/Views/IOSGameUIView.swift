@@ -11,6 +11,8 @@ struct IOSGameUIView: View {
     @State private var shouldDisplayMenu: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
     @State private var useMotionControl: Bool = false
+    @State private var volume: Float = 15.0
+    @State private var aircraftType: AircraftType = .f22_cgtrader
     
     var body: some View {
         GeometryReader { geometry in
@@ -35,7 +37,10 @@ struct IOSGameUIView: View {
                 if shouldDisplayMenu {
                     TFSMenuMobile(framesPerSecond: $framesPerSecond,
                                   useMotionControl: $useMotionControl,
-                                  viewSize: geometry.size)
+                                  volume: $volume,
+                                  aircraftType: $aircraftType,
+                                  viewSize: geometry.size,
+                                  onClose: { showMenu(false) })
                 }
             }
             .onAppear(perform: {
