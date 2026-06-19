@@ -13,6 +13,7 @@ struct IOSGameUIView: View {
     @State private var useMotionControl: Bool = false
     @State private var volume: Float = 15.0
     @State private var aircraftType: AircraftType = .f22_cgtrader
+    @State private var hudEnabled: Bool = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -29,7 +30,17 @@ struct IOSGameUIView: View {
                 .background(.white)
                 .clipShape(Capsule())
                 .position(x: 120, y: 70)
-                
+
+                Button(hudEnabled ? "Hide Metal HUD" : "Show Metal HUD") {
+                    hudEnabled.toggle()
+                    MetalPerformanceHUD.setEnabled(hudEnabled)
+                }
+                .padding()
+                .foregroundColor(.green)
+                .background(.white)
+                .clipShape(Capsule())
+                .position(x: 120, y: 130)
+
                 TFSTouchThrottle(viewSize: geometry.size)
                 
                 TFSTouchJoystick(viewSize: geometry.size)
