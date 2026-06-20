@@ -65,6 +65,13 @@ struct MacGameUIView: View {
                         }
                     }
                 }
+
+                // Toggle Apple's Metal Performance HUD
+                InputManager.HandleKeyPressedDebounced(keyCode: .h) {
+                    MainActor.assumeIsolated {
+                        MetalPerformanceHUD.toggle()
+                    }
+                }
             }
         }
      }
