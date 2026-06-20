@@ -37,7 +37,11 @@ struct MacMetalViewWrapper: NSViewRepresentable {
         Engine.MetalView = gameView
         SceneManager.SetScene(Preferences.StartingSceneType,
                               rendererType: rendererType)
-        
+
+        // The Metal Performance HUD subsystem is armed by the MTL_HUD_ENABLED=1
+        // scheme env var (Debug). Start it hidden so the 'H' key toggles it from off.
+        MetalPerformanceHUD.setEnabled(false)
+
         return gameView
     }
     

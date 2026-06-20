@@ -31,16 +31,6 @@ struct IOSGameUIView: View {
                 .clipShape(Capsule())
                 .position(x: 120, y: 70)
 
-                Button(hudEnabled ? "Hide Metal HUD" : "Show Metal HUD") {
-                    hudEnabled.toggle()
-                    MetalPerformanceHUD.setEnabled(hudEnabled)
-                }
-                .padding()
-                .foregroundColor(.green)
-                .background(.white)
-                .clipShape(Capsule())
-                .position(x: 120, y: 130)
-
                 TFSTouchThrottle(viewSize: geometry.size)
                 
                 TFSTouchJoystick(viewSize: geometry.size)
@@ -50,6 +40,7 @@ struct IOSGameUIView: View {
                                   useMotionControl: $useMotionControl,
                                   volume: $volume,
                                   aircraftType: $aircraftType,
+                                  hudEnabled: $hudEnabled,
                                   viewSize: geometry.size,
                                   onClose: { showMenu(false) })
                 }
