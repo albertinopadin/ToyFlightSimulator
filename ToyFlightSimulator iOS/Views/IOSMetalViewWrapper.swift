@@ -33,7 +33,11 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
         Engine.MetalView = gameView
         SceneManager.SetScene(Preferences.StartingSceneType,
                               rendererType: Engine.renderer!.rendererType)
-        
+
+        // The Metal Performance HUD subsystem is armed by the MTL_HUD_ENABLED=1
+        // scheme env var (Debug). Start it hidden so the toggle button reveals it.
+        MetalPerformanceHUD.setEnabled(false)
+
         return gameView
     }
     

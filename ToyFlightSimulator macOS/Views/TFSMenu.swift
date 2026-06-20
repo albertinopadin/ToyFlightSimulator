@@ -12,6 +12,7 @@ struct TFSMenu: View {
     @Binding var rendererType: RendererType
     @Binding var volume: Float
     @Binding var aircraftType: AircraftType
+    @Binding var hudEnabled: Bool
     
     var viewSize: CGSize
     
@@ -46,6 +47,13 @@ struct TFSMenu: View {
                         .pickerStyle(.menu)
                         .frame(maxWidth: geometry.size.width * 0.35)
                         
+                        Toggle("Enable Metal HUD", isOn: $hudEnabled)
+                            .toggleStyle(.switch)
+                            .frame(maxWidth: geometry.size.width * 0.35)
+                            .onChange(of: hudEnabled) { _, newValue in
+                                MetalPerformanceHUD.setEnabled(newValue)
+                            }
+
                         Button("Reset Scene") {
                             print("Pressed SwiftUI Reset Scene button")
                             SceneManager.ResetScene()
@@ -100,5 +108,6 @@ struct TFSMenu: View {
             rendererType: Binding<RendererType>.constant(.TiledDeferred),
             volume: Binding<Float>.constant(15.0),
             aircraftType: Binding<AircraftType>.constant(.f22),
+            hudEnabled: Binding<Bool>.constant(false),
             viewSize: CGSize(width: 1920, height: 1080))
 }

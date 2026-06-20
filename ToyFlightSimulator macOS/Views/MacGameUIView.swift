@@ -18,7 +18,8 @@ struct MacGameUIView: View {
     @State private var rendererType: RendererType = .TiledMSAATessellated
     @State private var volume: Float = 15.0
     @State private var aircraftType: AircraftType = .f22_cgtrader
-    
+    @State private var hudEnabled: Bool = false
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -31,6 +32,7 @@ struct MacGameUIView: View {
                             rendererType: $rendererType,
                             volume: $volume,
                             aircraftType: $aircraftType,
+                            hudEnabled: $hudEnabled,
                             viewSize: viewSize)
                 }
                 
@@ -66,10 +68,11 @@ struct MacGameUIView: View {
                     }
                 }
 
-                // Toggle Apple's Metal Performance HUD
+                // Toggle Apple's Metal Performance HUD (kept in sync with the menu toggle)
                 InputManager.HandleKeyPressedDebounced(keyCode: .h) {
                     MainActor.assumeIsolated {
-                        MetalPerformanceHUD.toggle()
+                        hudEnabled.toggle()
+                        MetalPerformanceHUD.setEnabled(hudEnabled)
                     }
                 }
             }

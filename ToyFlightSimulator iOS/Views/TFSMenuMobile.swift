@@ -12,6 +12,7 @@ struct TFSMenuMobile: View {
     @Binding var useMotionControl: Bool
     @Binding var volume: Float
     @Binding var aircraftType: AircraftType
+    @Binding var hudEnabled: Bool
     
     var viewSize: CGSize
     var onClose: () -> Void
@@ -51,6 +52,13 @@ struct TFSMenuMobile: View {
                                 .padding()
                                 .onChange(of: useMotionControl) { oldValue, newValue in
                                     InputManager.useMotion = newValue
+                                }
+
+                            Toggle("Metal HUD", isOn: $hudEnabled)
+                                .frame(maxWidth: geometry.size.width * 0.35)
+                                .padding()
+                                .onChange(of: hudEnabled) { oldValue, newValue in
+                                    MetalPerformanceHUD.setEnabled(newValue)
                                 }
                             
                             Button("Reset Scene", role: .destructive) {
@@ -117,6 +125,7 @@ struct TFSMenuMobile: View {
                   useMotionControl: Binding<Bool>.constant(false),
                   volume: Binding<Float>.constant(15.0),
                   aircraftType: Binding<AircraftType>.constant(.f22),
+                  hudEnabled: Binding<Bool>.constant(false),
                   viewSize: CGSize(width: 1920, height: 1080),
                   onClose: {})
 }
