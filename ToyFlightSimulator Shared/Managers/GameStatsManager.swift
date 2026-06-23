@@ -12,13 +12,13 @@ final class GameStatsManager: ObservableObject, @unchecked Sendable {
     static let sharedInstance = GameStatsManager()
     
     @Published public var rollingAverageFPS: Double = 0.0
+    @Published public var frameCounter: Int = 0
+    @Published public var sceneUpdates: Int = 0
+    @Published public var currentRenderer: RendererType = .OrderIndependentTransparency
     
     private let maxFrames = 60
     private var frame = 0
     private var lastXFrameDeltaTime = [Double]()
-    
-    @Published public var frameCounter: Int = 0
-    @Published public var sceneUpdates: Int = 0
     
     private init() {}
     
@@ -50,6 +50,12 @@ final class GameStatsManager: ObservableObject, @unchecked Sendable {
     public func sceneUpdated() {
         DispatchQueue.main.async {
             self.sceneUpdates += 1
+        }
+    }
+    
+    public func setCurrentRenderer(_ renderer: RendererType) {
+        DispatchQueue.main.async {
+            self.currentRenderer = renderer
         }
     }
     

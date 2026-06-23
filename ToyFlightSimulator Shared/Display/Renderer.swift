@@ -54,6 +54,7 @@ class Renderer: NSObject, MTKViewDelegate, BaseRendering, @unchecked Sendable {
         baseRenderPassDescriptor = Self.createBaseRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
                                                                        screenHeight: Int(Renderer.ScreenSize.y))
         super.init()
+        GameStatsManager.sharedInstance.setCurrentRenderer(self.rendererType)
     }
     
     init(_ mtkView: MTKView, type: RendererType) {
@@ -63,6 +64,7 @@ class Renderer: NSObject, MTKViewDelegate, BaseRendering, @unchecked Sendable {
                                                                        screenHeight: Int(Renderer.ScreenSize.y))
         super.init()
         metalView = mtkView
+        GameStatsManager.sharedInstance.setCurrentRenderer(self.rendererType)
     }
     
     // Heavily inspired by:
