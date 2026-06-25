@@ -12,15 +12,16 @@ using namespace metal;
 #import "Lighting.metal"
 
 fragment GBufferOut
-tiled_msaa_gbuffer_fragment(VertexOut                          in                  [[ stage_in ]],
-                            constant SceneConstants            &sceneConstants     [[ buffer(TFSBufferIndexSceneConstants) ]],
-                            constant MaterialProperties        &material           [[ buffer(TFSBufferIndexMaterial) ]],
-                            constant MaterialTextureTransforms &uvXforms           [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
-                            constant LightData                 &lightData          [[ buffer(TFSBufferDirectionalLightData) ]],
-                            sampler                            sampler2d           [[ sampler(0) ]],
-                            texture2d<half>                    baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
-                            texture2d<half>                    normalTexture       [[ texture(TFSTextureIndexNormal) ]],
-                            depth2d_array<float>               shadowArray         [[ texture(TFSTextureIndexShadow) ]]) {
+tiled_msaa_gbuffer_fragment(
+VertexOut                          in                  [[ stage_in ]],
+constant SceneConstants            &sceneConstants     [[ buffer(TFSBufferIndexSceneConstants) ]],
+constant MaterialProperties        &material           [[ buffer(TFSBufferIndexMaterial) ]],
+constant MaterialTextureTransforms &uvXforms           [[buffer(TFSBufferIndexMaterialTextureTransforms) ]],
+constant LightData                 &lightData          [[ buffer(TFSBufferDirectionalLightData) ]],
+sampler                            sampler2d           [[ sampler(0) ]],
+texture2d<half>                    baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
+texture2d<half>                    normalTexture       [[ texture(TFSTextureIndexNormal) ]],
+depth2d_array<float>               shadowArray         [[ texture(TFSTextureIndexShadow) ]]) {
     float2 baseUV   = in.uv;
     float2 normalUV = in.uv;
     if (uvXforms.hasTextureTransforms) {
