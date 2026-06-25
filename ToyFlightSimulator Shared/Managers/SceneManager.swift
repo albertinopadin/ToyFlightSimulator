@@ -183,6 +183,12 @@ final class SceneManager {
         // cache) so stale keys don't linger across scene loads:
         DrawManager.ClearFrameCaches()
 
+        // Release parent MDLAssets retained only for single-submesh extraction
+        // (e.g. the FA-18F). Already-extracted submeshes live in the library's
+        // own cache, so this reclaims the source geometry/textures without forcing
+        // re-extraction of parts still in use.
+        SingleSubmeshMesh.clearCachedSourceModels()
+
         _sceneType = nil
         _rendererType = nil
     }

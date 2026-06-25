@@ -6,6 +6,7 @@
 //
 
 import MetalKit
+import os
 
 enum TextureType {
     case None
@@ -28,23 +29,37 @@ enum TextureType {
 }
 
 final class TextureLibrary: Library<TextureType, MTLTexture>, @unchecked Sendable {
-    private var _library: [TextureType: Texture] = [:]
-    
+    // Factories describe *how* to build each file-backed texture; they are not
+    // invoked until that texture is first requested (lazy load).
+    private var _factories: [TextureType: () -> Texture] = [:]
+    // Resolved textures: lazily-built file-backed textures plus render-target
+    // textures injected at runtime via setTexture(...).
+    private var _cache: [TextureType: Texture] = [:]
+    private let _lock = OSAllocatedUnfairLock()
+
     override func makeLibrary() {
-        _library.updateValue(Texture("clouds", origin: .bottomLeft), forKey: .Clouds_Skysphere)
-        _library.updateValue(Texture(name: "SkyMap", label: "Sky Map"), forKey: .SkyMap)
-        _library.updateValue(Texture(name: "mountain"), forKey: .MountainHeightMap)
-        _library.updateValue(Texture(name: "grass-color"), forKey: .Grass)
-        _library.updateValue(Texture(name: "cliff-color"), forKey: .Cliff)
-        _library.updateValue(Texture(name: "snow-color"), forKey: .Snow)
+        _factories[.Clouds_Skysphere]  = { Texture("clouds", origin: .bottomLeft) }
+        _factories[.SkyMap]            = { Texture(name: "SkyMap", label: "Sky Map") }
+        _factories[.MountainHeightMap] = { Texture(name: "mountain") }
+        _factories[.Grass]             = { Texture(name: "grass-color") }
+        _factories[.Cliff]             = { Texture(name: "cliff-color") }
+        _factories[.Snow]              = { Texture(name: "snow-color") }
     }
-    
-    // TODO: Potentially need a lock here as this Library class allows mutation
+
+    // Render-target textures created at runtime are injected straight into the cache.
     func setTexture(textureType: TextureType, texture: MTLTexture) {
-        _library.updateValue(Texture(texture: texture), forKey: textureType)
+        withLock(_lock) {
+            _cache[textureType] = Texture(texture: texture)
+        }
     }
-    
+
     override subscript(type: TextureType) -> MTLTexture? {
-        return _library[type]?.texture
+        withLock(_lock) {
+            if let cached = _cache[type] { return cached.texture }
+            guard let factory = _factories[type] else { return nil }
+            let texture = factory()
+            _cache[type] = texture
+            return texture.texture
+        }
     }
 }
