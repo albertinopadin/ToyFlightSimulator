@@ -36,6 +36,7 @@ struct Linear_SamplerState: SamplerState {
         samplerDescriptor.minFilter = .linear
         samplerDescriptor.magFilter = .linear
         samplerDescriptor.mipFilter = .linear
+        samplerDescriptor.maxAnisotropy = 8  // TODO: Make this configurable from the UI / Menu
         samplerDescriptor.lodMinClamp = 0
         samplerDescriptor.label = name
         return Engine.Device.makeSamplerState(descriptor: samplerDescriptor)!
