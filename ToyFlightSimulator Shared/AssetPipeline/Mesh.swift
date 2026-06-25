@@ -31,16 +31,24 @@ class Mesh {
         createBuffer()
     }
     
-    init(mdlMesh: MDLMesh, mtkMesh: MTKMesh, basisTransform: float4x4? = nil) {
+    init(mdlMesh: MDLMesh, mtkMesh: MTKMesh, basisTransform: float4x4? = nil, copyVertexBuffer: Bool = false) {
         print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
         name = mdlMesh.name
-        
+
         self._metalKitMesh = mtkMesh
         if _metalKitMesh!.vertexBuffers.count > 1 {
             // TODO: Figure out how to handle multiple vertex layouts with potentially multiple buffers
             print("[Mesh init] WARNING! Metal Kit Mesh has more than one vertex buffer.")
         }
-        self.vertexBuffer = mtkMesh.vertexBuffers[0].buffer
+        // When the source MTKMesh's buffer is shared (e.g. several submeshes extracted
+        // from one cached parent asset), take a private copy so the in-place basis
+        // transform below — and any later in-place vertex edits — don't corrupt the
+        // geometry seen by siblings. Single-owner meshes keep the zero-copy buffer.
+        if copyVertexBuffer {
+            self.vertexBuffer = Mesh.makePrivateVertexBufferCopy(of: mtkMesh.vertexBuffers[0].buffer)
+        } else {
+            self.vertexBuffer = mtkMesh.vertexBuffers[0].buffer
+        }
         let basisFlipsOrientation: Bool = {
             if let basisTransform {
                 return transformMeshBasis(basisTransform)
@@ -125,6 +133,19 @@ class Mesh {
                                                     length: Vertex.stride(_vertices.count),
                                                     options: [])
         }
+    }
+
+    /// Returns a private `MTLBuffer` holding a byte-for-byte copy of `source`. Used
+    /// when a vertex buffer is shared between mesh instances but one instance needs
+    /// to edit it in place (e.g. `SingleSubmeshMesh` recentering its submesh).
+    private static func makePrivateVertexBufferCopy(of source: MTLBuffer) -> MTLBuffer {
+        guard let copy = Engine.Device.makeBuffer(bytes: source.contents(),
+                                                  length: source.length,
+                                                  options: []) else {
+            fatalError("[Mesh makePrivateVertexBufferCopy] Failed to allocate \(source.length)-byte copy")
+        }
+        copy.label = source.label.map { "\($0) (private copy)" } ?? "Vertex Buffer (private copy)"
+        return copy
     }
     
     /// Apply `basisTransform` to every vertex's position, normal, tangent, bitangent.
