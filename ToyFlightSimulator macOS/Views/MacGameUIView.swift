@@ -19,6 +19,7 @@ struct MacGameUIView: View {
     @State private var volume: Float = 15.0
     @State private var aircraftType: AircraftType = .f22_cgtrader
     @State private var hudEnabled: Bool = false
+    @State private var maxAnisotropy: MaxAnisotropy = Preferences.SelectedMaxAnisotropy
 
     var body: some View {
         GeometryReader { geometry in
@@ -33,6 +34,7 @@ struct MacGameUIView: View {
                             volume: $volume,
                             aircraftType: $aircraftType,
                             hudEnabled: $hudEnabled,
+                            maxAnisotropy: $maxAnisotropy,
                             viewSize: viewSize)
                 }
                 

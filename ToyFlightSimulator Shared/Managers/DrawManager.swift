@@ -400,7 +400,7 @@ final class DrawManager {
     static func DrawLines(with renderEncoder: MTLRenderCommandEncoder) {
         if !SceneManager.lines.isEmpty {
             EncodeRender(using: renderEncoder, label: "Rendering Lines") {
-                renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
+                renderEncoder.setFragmentSamplerState(Graphics.SamplerStates.currentLinearSamplerState, index: 0)
                 
                 for line in SceneManager.lines {
                     renderEncoder.setVertexBytes(&line.modelConstants,  // !!!!!!!
@@ -566,7 +566,7 @@ final class DrawManager {
     }
 
     private static func applyMaterialTextures(_ material: Material, with renderEncoder: MTLRenderCommandEncoder) {
-        renderEncoder.setFragmentSamplerState(Graphics.SamplerStates[.Linear], index: 0)
+        renderEncoder.setFragmentSamplerState(Graphics.SamplerStates.currentLinearSamplerState, index: 0)
 
         // setFragmentTexture accepts nil — no need for separate else branches.
         renderEncoder.setFragmentTexture(material.baseColorTexture, index: TFSTextureIndexBaseColor.index)
