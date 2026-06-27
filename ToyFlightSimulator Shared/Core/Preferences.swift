@@ -6,6 +6,7 @@
 //
 
 import MetalKit
+import Foundation
 
 public enum ClearColors {
     static let White     = MTLClearColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
@@ -43,6 +44,27 @@ struct Preferences {
     public static let StartingSceneType: SceneType = .FlightboxWithPhysics
     
     public static let PlayMusicOnStartup: Bool = false
+
+    // MARK: - Persisted graphics settings
+
+    private static let maxAnisotropyKey = "graphics.maxAnisotropy"
+
+    /// Factory default used when the player hasn't chosen an anisotropy level yet.
+    public static let DefaultMaxAnisotropy: MaxAnisotropy = .x8
+
+    /// Player-selected max anisotropy for the linear texture sampler, persisted
+    /// across launches via UserDefaults. Reads fall back to `DefaultMaxAnisotropy`
+    /// when unset or if a stored value is no longer a valid level. Both the engine
+    /// (SamplerStateLibrary.makeLibrary) and the menu seed from this at launch.
+    public static var SelectedMaxAnisotropy: MaxAnisotropy {
+        get {
+            MaxAnisotropy(rawValue: UserDefaults.standard.integer(forKey: maxAnisotropyKey))
+                ?? DefaultMaxAnisotropy
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: maxAnisotropyKey)
+        }
+    }
 }
 
 // MARK: - Debug logging flags

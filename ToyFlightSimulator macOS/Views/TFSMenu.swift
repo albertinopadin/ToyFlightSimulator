@@ -13,7 +13,8 @@ struct TFSMenu: View {
     @Binding var volume: Float
     @Binding var aircraftType: AircraftType
     @Binding var hudEnabled: Bool
-    
+    @Binding var maxAnisotropy: MaxAnisotropy
+
     var viewSize: CGSize
     
     var body: some View {
@@ -46,7 +47,19 @@ struct TFSMenu: View {
                         }
                         .pickerStyle(.menu)
                         .frame(maxWidth: geometry.size.width * 0.35)
-                        
+
+                        Picker("Anisotropic Filtering: ", selection: $maxAnisotropy) {
+                            ForEach(MaxAnisotropy.allCases) { level in
+                                Text(level.label).tag(level)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(maxWidth: geometry.size.width * 0.35)
+                        .onChange(of: maxAnisotropy) { _, newValue in
+                            Preferences.SelectedMaxAnisotropy = newValue
+                            Graphics.SamplerStates.setLinearMaxAnisotropy(newValue)
+                        }
+
                         Toggle("Enable Metal HUD", isOn: $hudEnabled)
                             .toggleStyle(.switch)
                             .frame(maxWidth: geometry.size.width * 0.35)
@@ -109,5 +122,6 @@ struct TFSMenu: View {
             volume: Binding<Float>.constant(15.0),
             aircraftType: Binding<AircraftType>.constant(.f22),
             hudEnabled: Binding<Bool>.constant(false),
+            maxAnisotropy: Binding<MaxAnisotropy>.constant(.x8),
             viewSize: CGSize(width: 1920, height: 1080))
 }
