@@ -40,6 +40,22 @@ struct TFSMenu: View {
                         .pickerStyle(.segmented)
                         .frame(maxWidth: geometry.size.width * 0.35)
                         
+                        HStack {
+                            Slider(value: $volume, in: 0...100) {
+                                Text("Game Volume:")
+                            }
+                            .onChange(of: volume) {
+                                AudioManager.SetVolume(volume / 100.0)
+                            }
+                            .frame(width: 500.0,
+                                   height: 40.0,
+                                   alignment: .center)
+                            
+                            Text("\(String(format: "%.0f", volume))")
+                                .frame(minWidth: 25)
+                                .monospacedDigit()
+                        }
+                        
                         Picker("Renderer: ", selection: $rendererType) {
                             ForEach(RendererType.allCases) { rendererType in
                                 Text("\(rendererType.rawValue)").tag(rendererType).padding()
@@ -47,7 +63,7 @@ struct TFSMenu: View {
                         }
                         .pickerStyle(.menu)
                         .frame(maxWidth: geometry.size.width * 0.35)
-
+                        
                         Picker("Anisotropic Filtering: ", selection: $maxAnisotropy) {
                             ForEach(MaxAnisotropy.allCases) { level in
                                 Text(level.label).tag(level)
@@ -59,31 +75,19 @@ struct TFSMenu: View {
                             Preferences.SelectedMaxAnisotropy = newValue
                             Graphics.SamplerStates.setLinearMaxAnisotropy(newValue)
                         }
-
+                        
                         Toggle("Enable Metal HUD", isOn: $hudEnabled)
                             .toggleStyle(.switch)
                             .frame(maxWidth: geometry.size.width * 0.35)
                             .onChange(of: hudEnabled) { _, newValue in
                                 MetalPerformanceHUD.setEnabled(newValue)
                             }
-
+                        
                         Button("Reset Scene") {
                             print("Pressed SwiftUI Reset Scene button")
                             SceneManager.ResetScene()
                         }
-                        .background(.blue)
-                        
-                        Slider(value: $volume, in: 0...100) {
-                            Text("Game Volume:")
-                        }
-                        .onChange(of: volume) {
-                            AudioManager.SetVolume(volume / 100.0)
-                        }
-                        .frame(width: 500.0,
-                               height: 40.0,
-                               alignment: .center)
-                        
-                        Text("\(String(format: "%.0f", volume))")
+                        .buttonStyle(.borderedProminent)
                         
                         Picker("Aircraft: ", selection: $aircraftType) {
                             ForEach(AircraftType.allCases) { aircraftType in

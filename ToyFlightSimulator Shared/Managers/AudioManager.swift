@@ -24,4 +24,10 @@ final class AudioManager {
     public static func SetVolume(_ volume: Float) {
         audioSystem.setVolume(volume)
     }
+
+    public static func Prepare() {
+        // Force the lazy AVAudioEngine graph to build here (off the main thread)
+        // so the first volume change from the UI doesn't stall the main thread.
+        _ = audioSystem
+    }
 }

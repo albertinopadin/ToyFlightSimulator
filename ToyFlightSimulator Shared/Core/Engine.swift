@@ -47,10 +47,9 @@ final class Engine {
     
     // Not clear this belongs in the Engine class...
     public static func SceneBuildFinished() {
-        if Preferences.PlayMusicOnStartup {
-            // Starting audio only after scene has initialized to prevent crackling:
-            audioThread.startAudio()
-        }
+        // Kick the audio thread after the scene has initialized (prevents crackling).
+        // The thread itself decides whether to play music or just warm up the engine.
+        audioThread.startAudio()
     }
     
     public static func InitRenderer(type: RendererType) -> Renderer {

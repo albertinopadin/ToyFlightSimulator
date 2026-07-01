@@ -13,8 +13,13 @@ final class AudioThread: TFSThread {
         while !shouldStartAudio {
             Thread.sleep(forTimeInterval: 0.25)
         }
-        
-        AudioManager.StartGameMusic()
+
+        if Preferences.PlayMusicOnStartup {
+            AudioManager.StartGameMusic()
+        } else {
+            // Still build the audio engine here so the first UI volume change is instant.
+            AudioManager.Prepare()
+        }
     }
     
     public func startAudio() {
