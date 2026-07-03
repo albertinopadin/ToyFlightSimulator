@@ -8,13 +8,20 @@
 import MetalKit
 
 class SkyBox: GameObject, SkyEntity {
-    public var textureType: TextureType
-    
+    public var textureType: TextureType {
+        didSet { texture = Assets.Textures[textureType] }
+    }
+
+    // Resolved at construction (scene build, off the render thread) so the first
+    // DrawSky doesn't load the texture mid-encode inside the library lock.
+    public private(set) var texture: MTLTexture?
+
     init(textureType: TextureType) {
         self.textureType = textureType
         super.init(name: "SkyBox", modelType: .Skybox)
         setPosition(0, 0, -10)
         setScale(1000)
+        texture = Assets.Textures[textureType]
     }
     
     // TODO - Decide on consistent index for sky texture:

@@ -136,7 +136,16 @@ final class SceneManager {
     public static func SetScene(_ sceneType: SceneType, rendererType: RendererType) {
         _sceneType = sceneType
         _rendererType = rendererType
-        
+
+        // Warm the models that only the render thread touches (the OIT composite
+        // quad, the point-light/icosahedron volume). The library builds entries
+        // lazily under its lock, so without this the first frame would build them
+        // mid-encode on the render thread. Re-runs on scene switches are cheap
+        // cache hits. (Sky textures resolve in SkyBox/SkySphere.init; everything
+        // else is first touched during scene build.)
+        _ = Assets.Models[.Quad]
+        _ = Assets.Models[.Icosahedron]
+
         // TODO: Is there a more elegant way to do this ???
         switch sceneType {
             case .Sandbox:

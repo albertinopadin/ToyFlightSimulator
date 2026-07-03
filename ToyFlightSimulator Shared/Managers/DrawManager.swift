@@ -271,8 +271,30 @@ final class DrawManager {
 //
 //    }
     
+    // Resolved draw-time asset references. The model library subscript takes a
+    // lock (and builds the model on first access), so resolve once and reuse
+    // instead of subscripting every frame. Models stay cached in the library for
+    // the process lifetime, so these references never go stale. Render-thread only.
+    nonisolated(unsafe) private static var _fullScreenQuadMeshes: [Mesh]?
+    nonisolated(unsafe) private static var _icosahedronDrawData: (model: Model, mesh: Mesh, submeshes: [Submesh])?
+
+    /// Icosahedron model/mesh/submeshes shared by DrawPointLights and DrawIcosahedrons.
+    private static func getIcosahedronDrawData() -> (model: Model, mesh: Mesh, submeshes: [Submesh])? {
+        if let cached = _icosahedronDrawData { return cached }
+        let model = Assets.Models[.Icosahedron]
+        guard let mesh = model.meshes.first else { return nil }
+        let data = (model: model, mesh: mesh, submeshes: model.meshes.flatMap { $0.submeshes })
+        _icosahedronDrawData = data
+        return data
+    }
+
     static func DrawFullScreenQuad(with renderEncoder: MTLRenderCommandEncoder) {
-        for mesh in Assets.Models[.Quad].meshes {
+        if _fullScreenQuadMeshes == nil {
+            _fullScreenQuadMeshes = Assets.Models[.Quad].meshes
+        }
+        guard let meshes = _fullScreenQuadMeshes else { return }
+
+        for mesh in meshes {
             if let vertexBuffer = mesh.vertexBuffer {
                 renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
                 
@@ -288,23 +310,14 @@ final class DrawManager {
         }
     }
     
-    // Scratch buffers for ad-hoc draws — submesh lists are invariant once the
-    // model is loaded, so cache them lazily; uniforms are refilled in place.
+    // Scratch buffers for ad-hoc draws — uniforms are refilled in place each frame.
     nonisolated(unsafe) private static var _pointLightUniformsScratch: [ModelConstants] = []
-    nonisolated(unsafe) private static var _pointLightSubmeshesCache: [Submesh]?
     nonisolated(unsafe) private static var _icosahedronUniformsScratch: [ModelConstants] = []
-    nonisolated(unsafe) private static var _icosahedronSubmeshesCache: [Submesh]?
 
     static func DrawPointLights(with renderEncoder: MTLRenderCommandEncoder) {
         let pointLights = LightManager.GetLightObjects(lightType: Point)
         guard !pointLights.isEmpty else { return }
-
-        let pointLightModel = Assets.Models[.Icosahedron]
-        if _pointLightSubmeshesCache == nil {
-            _pointLightSubmeshesCache = pointLightModel.meshes.flatMap { $0.submeshes }
-        }
-        guard let submeshes = _pointLightSubmeshesCache,
-              let mesh = pointLightModel.meshes.first else { return }
+        guard let (model, mesh, submeshes) = getIcosahedronDrawData() else { return }
 
         _pointLightUniformsScratch.removeAll(keepingCapacity: true)
         for light in pointLights {
@@ -313,7 +326,7 @@ final class DrawManager {
 
         bindLinearSampler(renderEncoder)
         Draw(renderEncoder,
-             model: pointLightModel,
+             model: model,
              uniforms: _pointLightUniformsScratch,
              mesh: mesh,
              submeshes: submeshes,
@@ -322,13 +335,7 @@ final class DrawManager {
 
     static func DrawIcosahedrons(with renderEncoder: MTLRenderCommandEncoder) {
         guard !SceneManager.icosahedrons.isEmpty else { return }
-
-        let icosahedronModel = Assets.Models[.Icosahedron]
-        if _icosahedronSubmeshesCache == nil {
-            _icosahedronSubmeshesCache = icosahedronModel.meshes.flatMap { $0.submeshes }
-        }
-        guard let submeshes = _icosahedronSubmeshesCache,
-              let mesh = icosahedronModel.meshes.first else { return }
+        guard let (model, mesh, submeshes) = getIcosahedronDrawData() else { return }
 
         _icosahedronUniformsScratch.removeAll(keepingCapacity: true)
         for ico in SceneManager.icosahedrons {
@@ -337,7 +344,7 @@ final class DrawManager {
 
         bindLinearSampler(renderEncoder)
         Draw(renderEncoder,
-             model: icosahedronModel,
+             model: model,
              uniforms: _icosahedronUniformsScratch,
              mesh: mesh,
              submeshes: submeshes,
@@ -353,7 +360,9 @@ final class DrawManager {
 
         let pso: RenderPipelineStateType = ((skyObj as? SkyBox) != nil) ? .Skybox : .SkySphere
         renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[pso])
-        renderEncoder.setFragmentTexture(Assets.Textures[skyObj.textureType], index: TFSTextureIndexSkyBox.index)
+        // skyObj.texture was resolved off the render thread at construction — no
+        // per-frame trip through the texture library's locked subscript.
+        renderEncoder.setFragmentTexture(skyObj.texture, index: TFSTextureIndexSkyBox.index)
 
         DrawFromRingBuffer(renderEncoder,
                            model: skyObj.model,
