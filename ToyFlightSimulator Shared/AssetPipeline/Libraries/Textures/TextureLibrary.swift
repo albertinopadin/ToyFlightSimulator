@@ -6,7 +6,6 @@
 //
 
 import MetalKit
-import os
 
 enum TextureType {
     case None
@@ -28,38 +27,21 @@ enum TextureType {
     case Snow
 }
 
-final class TextureLibrary: Library<TextureType, MTLTexture>, @unchecked Sendable {
-    // Factories describe *how* to build each file-backed texture; they are not
-    // invoked until that texture is first requested (lazy load).
-    private var _factories: [TextureType: () -> Texture] = [:]
-    // Resolved textures: lazily-built file-backed textures plus render-target
-    // textures injected at runtime via setTexture(...).
-    private var _cache: [TextureType: Texture] = [:]
-    private let _lock = OSAllocatedUnfairLock()
-
+// File-backed textures are loaded on first request (lazy load); render-target
+// textures created at runtime are injected via setTexture(...). The inherited
+// LazyLibrary subscript serves both from the same cache.
+final class TextureLibrary: LazyLibrary<TextureType, MTLTexture>, @unchecked Sendable {
     override func makeLibrary() {
-        _factories[.Clouds_Skysphere]  = { Texture("clouds", origin: .bottomLeft) }
-        _factories[.SkyMap]            = { Texture(name: "SkyMap", label: "Sky Map") }
-        _factories[.MountainHeightMap] = { Texture(name: "mountain") }
-        _factories[.Grass]             = { Texture(name: "grass-color") }
-        _factories[.Cliff]             = { Texture(name: "cliff-color") }
-        _factories[.Snow]              = { Texture(name: "snow-color") }
+        register(.Clouds_Skysphere)  { Texture("clouds", origin: .bottomLeft).texture }
+        register(.SkyMap)            { Texture(name: "SkyMap", label: "Sky Map").texture }
+        register(.MountainHeightMap) { Texture(name: "mountain").texture }
+        register(.Grass)             { Texture(name: "grass-color").texture }
+        register(.Cliff)             { Texture(name: "cliff-color").texture }
+        register(.Snow)              { Texture(name: "snow-color").texture }
     }
 
     // Render-target textures created at runtime are injected straight into the cache.
     func setTexture(textureType: TextureType, texture: MTLTexture) {
-        withLock(_lock) {
-            _cache[textureType] = Texture(texture: texture)
-        }
-    }
-
-    override subscript(type: TextureType) -> MTLTexture? {
-        withLock(_lock) {
-            if let cached = _cache[type] { return cached.texture }
-            guard let factory = _factories[type] else { return nil }
-            let texture = factory()
-            _cache[type] = texture
-            return texture.texture
-        }
+        setResolved(textureType, texture)
     }
 }
