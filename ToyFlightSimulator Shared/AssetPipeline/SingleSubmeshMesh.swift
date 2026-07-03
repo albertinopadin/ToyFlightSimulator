@@ -32,6 +32,11 @@ class SingleSubmeshMesh: Mesh {
     internal var _submesh: Submesh!
     public let vertexMetadata: SingleMeshVertexMetadata
 
+    // Origin currently baked into the (shared, library-cached) vertex buffer. Tracked so
+    // setSubmeshOrigin is idempotent: an F-18 rebuilt across aircraft swaps shares this
+    // one cached mesh, and re-applying the same origin must not accumulate.
+    private var _appliedOrigin: float3 = .zero
+
     init(asset: MDLAsset, mtkMesh: MTKMesh, mdlMesh: MDLMesh, submesh: Submesh, basisTransform: float4x4 = .identity) {
         // Centralize vertices:
         let vertBuf = mtkMesh.vertexBuffers[0].buffer
@@ -158,7 +163,9 @@ class SingleSubmeshMesh: Mesh {
     }
     
     public func setSubmeshOrigin(_ origin: float3) {
-        translateSubmeshVertices(delta: origin)
+        // Absolute, not cumulative: translate from the currently-applied origin.
+        translateSubmeshVertices(delta: origin - _appliedOrigin)
+        _appliedOrigin = origin
     }
     
     private func createBuffer() {
