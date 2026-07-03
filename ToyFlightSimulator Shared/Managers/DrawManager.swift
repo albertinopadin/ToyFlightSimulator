@@ -154,7 +154,11 @@ final class DrawManager {
     static func DrawOpaque(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
         renderEncoder.setFrontFacing(.clockwise)
         renderEncoder.setCullMode(.back)
-        
+
+        if applyMaterials {
+            bindLinearSampler(renderEncoder)
+        }
+
         let snapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
         for (model, region) in snapshot {
             for meshData in region.meshDatas {
@@ -176,7 +180,11 @@ final class DrawManager {
     static func DrawTransparent(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
         renderEncoder.setFrontFacing(.clockwise)
         renderEncoder.setCullMode(.back)
-        
+
+        if applyMaterials {
+            bindLinearSampler(renderEncoder)
+        }
+
         // Opaque models with transparent submeshes:
         let opaqueSnapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
         for (model, region) in opaqueSnapshot {
@@ -303,6 +311,7 @@ final class DrawManager {
             _pointLightUniformsScratch.append(light.modelConstants)
         }
 
+        bindLinearSampler(renderEncoder)
         Draw(renderEncoder,
              model: pointLightModel,
              uniforms: _pointLightUniformsScratch,
@@ -326,6 +335,7 @@ final class DrawManager {
             _icosahedronUniformsScratch.append(ico.modelConstants)
         }
 
+        bindLinearSampler(renderEncoder)
         Draw(renderEncoder,
              model: icosahedronModel,
              uniforms: _icosahedronUniformsScratch,
@@ -400,8 +410,8 @@ final class DrawManager {
     static func DrawLines(with renderEncoder: MTLRenderCommandEncoder) {
         if !SceneManager.lines.isEmpty {
             EncodeRender(using: renderEncoder, label: "Rendering Lines") {
-                renderEncoder.setFragmentSamplerState(Graphics.SamplerStates.currentLinearSamplerState, index: 0)
-                
+                bindLinearSampler(renderEncoder)
+
                 for line in SceneManager.lines {
                     renderEncoder.setVertexBytes(&line.modelConstants,  // !!!!!!!
                                                  length: ModelConstants.stride,
@@ -415,14 +425,12 @@ final class DrawManager {
     
     /// Draw objects whose ModelConstants are already in the ring buffer (written by update thread).
     /// Applies mesh animation transform if needed, writing a modified copy to the ring buffer.
-    static private func DrawFromRingBuffer(
-        _ renderEncoder: MTLRenderCommandEncoder,
-        model: Model,
-        region: RingBufferRegion,
-        mesh: Mesh,
-        submeshes: [Submesh],
-        applyMaterials: Bool
-    ) {
+    static private func DrawFromRingBuffer(_ renderEncoder: MTLRenderCommandEncoder,
+                                           model: Model,
+                                           region: RingBufferRegion,
+                                           mesh: Mesh,
+                                           submeshes: [Submesh],
+                                           applyMaterials: Bool) {
         EncodeRender(using: renderEncoder, label: "Rendering \(model.name)") {
             guard region.count > 0 else { return }
 
@@ -565,9 +573,16 @@ final class DrawManager {
         }
     }
 
-    private static func applyMaterialTextures(_ material: Material, with renderEncoder: MTLRenderCommandEncoder) {
+    /// Bind the active linear sampler at fragment index 0. The sampler is identical for
+    /// every submesh in a pass and reading `currentLinearSamplerState` takes a lock, so
+    /// the Draw* entry points bind it once per pass instead of per submesh.
+    private static func bindLinearSampler(_ renderEncoder: MTLRenderCommandEncoder) {
         renderEncoder.setFragmentSamplerState(Graphics.SamplerStates.currentLinearSamplerState, index: 0)
+    }
 
+    /// Per-submesh material state. The linear sampler is NOT bound here — it's pass-wide
+    /// state, bound once per pass via `bindLinearSampler` in the Draw* entry points.
+    private static func applyMaterialTextures(_ material: Material, with renderEncoder: MTLRenderCommandEncoder) {
         // setFragmentTexture accepts nil — no need for separate else branches.
         renderEncoder.setFragmentTexture(material.baseColorTexture, index: TFSTextureIndexBaseColor.index)
         renderEncoder.setFragmentTexture(material.normalMapTexture, index: TFSTextureIndexNormal.index)
