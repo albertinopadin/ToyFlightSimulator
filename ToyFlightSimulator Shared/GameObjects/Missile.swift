@@ -23,9 +23,9 @@ class Missile: SubMeshGameObject {
 //        print("[Missile doUpdate] currentPos: \(currentPos)")
         // TODO: This is hardcoded from scene origin
         if abs(currentPos.x) > 1000 || abs(currentPos.y) > 1000 || abs(currentPos.z) > 1000 {
-            // Reap from scene
+            // Reap from scene (graph + SceneManager collections)
             print("Removing self {\(self.getName()), \(self.getID())} from scene.")
-            self.parent?.removeChild(self)
+            self.removeFromScene()
         } else {
             super.doUpdate()
             let delta = direction * speed

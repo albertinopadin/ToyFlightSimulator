@@ -8,6 +8,8 @@
 import MetalKit
 
 class SkyBox: GameObject, SkyEntity {
+    override var objectType: GameObjectType { .sky }
+
     public var textureType: TextureType {
         didSet { texture = Assets.Textures[textureType] }
     }

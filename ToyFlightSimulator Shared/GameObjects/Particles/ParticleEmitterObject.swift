@@ -7,6 +7,8 @@
 import MetalKit
 
 class ParticleEmitterObject: GameObject, ParticleEmitterEntity {
+    override var objectType: GameObjectType { .particles }
+
     let emitter: ParticleEmitter
     
     public var shouldEmit: Bool = true

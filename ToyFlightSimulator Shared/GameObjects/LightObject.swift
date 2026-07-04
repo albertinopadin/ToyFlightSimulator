@@ -8,6 +8,9 @@
 import MetalKit
 
 class LightObject: GameObject {
+    // Lights live in LightManager, not in SceneManager's batched collections.
+    override var objectType: GameObjectType { .none }
+
     var lightType: LightType
     var lightData = LightData()
 

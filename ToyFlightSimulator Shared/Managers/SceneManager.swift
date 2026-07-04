@@ -297,28 +297,74 @@ final class SceneManager {
     // ----------------------------------------------------------------------------- //
     
     static func Register(_ gameObject: GameObject) {
-        switch gameObject {
-            case is SkyBox, is SkySphere:
+        guard gameObject.registeredObjectType == nil else {
+            assertionFailure("[SceneMgr Register] Double-registering \(gameObject.getName()) — already in \(gameObject.registeredObjectType!)")
+            return
+        }
+
+        // Registration-flow side effect, not batch membership: a SubMeshGameObject
+        // hides its submesh in the parent model's draw lists. Intentionally never
+        // undone on unregister (the parent's ModelData is rebuilt from scratch once
+        // its last instance is removed).
+        if let subMeshObject = gameObject as? SubMeshGameObject {
+            hideSubmeshInParentModel(subMeshObject)
+        }
+
+        let objectType = gameObject.objectType   // resolved exactly once
+        add(gameObject, to: objectType)
+        gameObject.registeredObjectType = objectType
+    }
+
+    /// `add(_:to:)` and `remove(_:from:)` are deliberately adjacent, and both
+    /// switch over GameObjectType with no `default` — the compiler keeps them
+    /// in lockstep. Do not add a `default` case to either switch;
+    /// exhaustiveness IS the drift protection.
+    private static func add(_ gameObject: GameObject, to objectType: GameObjectType) {
+        switch objectType {
+            case .none:
+                break
+            case .sky:
                 RegisterSky(gameObject)
-            case is LightObject:
-                print("[DrawMgr RegisterObject] got LightObject")
-            case let icosahedron as Icosahedron:
-                icosahedrons.append(icosahedron)
-            case let line as Line:
-                lines.append(line)
-            case let particleObject as ParticleEmitterObject:
-                particleObjects.append(particleObject)
-            case let tessellatable as Tessellatable:
-                tessellatables.append(tessellatable)
-            case let subMeshGameObject as SubMeshGameObject:
-                RegisterSubMeshObject(subMeshGameObject)
-            default:
-                RegisterObject(gameObject)
+            case .icosahedrons:
+                // Force-casts encode the invariant "only Icosahedron declares
+                // .icosahedrons" (and so on) — a mismatched override is a
+                // programmer error and should crash in development rather than
+                // mis-batch silently.
+                icosahedrons.append(gameObject as! Icosahedron)
+            case .lines:
+                lines.append(gameObject as! Line)
+            case .particles:
+                particleObjects.append(gameObject as! ParticleEmitterObject)
+            case .tessellatables:
+                tessellatables.append(gameObject as! Tessellatable)
+            case .renderables(let transparent):
+                addRenderable(gameObject, transparent: transparent)
         }
     }
-    
-    static private func RegisterObject(_ gameObject: GameObject) {
-        if gameObject.isTransparent {
+
+    private static func remove(_ gameObject: GameObject, from objectType: GameObjectType) {
+        switch objectType {
+            case .none:
+                break
+            case .sky:
+                // Sky is singleton-managed and reset wholesale in
+                // TeardownScene; nothing is removed per-object.
+                break
+            case .icosahedrons:
+                icosahedrons.removeAll { $0.id == gameObject.id }
+            case .lines:
+                lines.removeAll { $0.id == gameObject.id }
+            case .particles:
+                particleObjects.removeAll { $0.id == gameObject.id }
+            case .tessellatables:
+                tessellatables.removeAll { $0.id == gameObject.id }
+            case .renderables(let transparent):
+                removeRenderable(gameObject, transparent: transparent)
+        }
+    }
+
+    static private func addRenderable(_ gameObject: GameObject, transparent: Bool) {
+        if transparent {
             registerTransparentObject(gameObject)
         } else {
             if let _ = modelDatas[gameObject.model] {
@@ -352,9 +398,9 @@ final class SceneManager {
     }
     
     // TODO: Eventually we can remove this method (?):
-    static private func RegisterSubMeshObject(_ subMeshObject: SubMeshGameObject) {
-        print("[SceneMgr RegisterSubMeshObject] registering \(subMeshObject.getName()) with model \(subMeshObject.model.name)")
-        
+    static private func hideSubmeshInParentModel(_ subMeshObject: SubMeshGameObject) {
+        print("[SceneMgr hideSubmeshInParentModel] registering \(subMeshObject.getName()) with model \(subMeshObject.model.name)")
+
         if let parentObj = subMeshObject.parentMeshGameObject,
            let modelData = modelDatas[parentObj.model],
            let gameObj = modelData.gameObjects.first(where: { $0.getID() == parentObj.id }) {
@@ -370,17 +416,15 @@ final class SceneManager {
                         }
                     }
                 }
-                
+
                 if meshToRemoveIdx >= 0 {
-                    print("[RegisterSubMeshObject] removing submesh \(subMeshObject.submeshName) from model \(parentObj.model.name) [idx: \(meshToRemoveIdx)]")
+                    print("[hideSubmeshInParentModel] removing submesh \(subMeshObject.submeshName) from model \(parentObj.model.name) [idx: \(meshToRemoveIdx)]")
                     modelDatas[parentObj.model]!.meshDatas[meshDataIdx].opaqueSubmeshes.remove(at: meshToRemoveIdx)
                 }
             }
         }
-        
-        RegisterObject(subMeshObject)
     }
-    
+
     static private func registerTransparentObject(_ gameObject: GameObject) {
         if let _ = transparentObjectDatas[gameObject.model] {
             transparentObjectDatas[gameObject.model]!.addGameObject(gameObject)
@@ -388,11 +432,7 @@ final class SceneManager {
             transparentObjectDatas[gameObject.model] = CreateTransparentObjectData(gameObject: gameObject)
         }
     }
-    
-    static private func registerTransparentSubMeshObject(_ subMeshObject: SubMeshGameObject) {
-        
-    }
-    
+
     static private func CreateTransparentObjectData(gameObject: GameObject) -> TransparentObjectData {
         var transparentObjectData = TransparentObjectData()
         transparentObjectData.addGameObject(gameObject)
@@ -508,41 +548,27 @@ final class SceneManager {
         return nodes
     }
 
-    /// Removes a single node from the one collection it was registered into.
-    /// The type dispatch mirrors `Register`, plus the `Camera` skip from
-    /// `registerChildObject` (cameras are never registered, but they live in
-    /// the aircraft subtree). Non-GameObjects and never-registered nodes are
-    /// no-ops.
+    /// Removes a single node from the collection it was registered into, using
+    /// the objectType captured at registration time (never re-derived — see
+    /// `GameObject.registeredObjectType`). Non-GameObjects and unregistered
+    /// nodes (plain Nodes carry no marker; a `.none` marker never entered a
+    /// collection) are no-ops.
     private static func unregisterSingle(_ node: Node) {
-        guard let gameObject = node as? GameObject else { return }
-
-        switch gameObject {
-            case is Camera, is SkyBox, is SkySphere, is LightObject:
-                // Cameras aren't registered; sky is singleton-managed; lights
-                // live in LightManager, not in these collections.
-                break
-            case let icosahedron as Icosahedron:
-                icosahedrons.removeAll { $0.id == icosahedron.id }
-            case let line as Line:
-                lines.removeAll { $0.id == line.id }
-            case let particleObject as ParticleEmitterObject:
-                particleObjects.removeAll { $0.id == particleObject.id }
-            // NOTE: `tessellatables` is intentionally not handled — nothing
-            // removable registers as `Tessellatable` today (terrain is built
-            // once and never swapped). Add a case here if that changes.
-            default:
-                removeRenderable(gameObject)
-        }
+        guard let gameObject = node as? GameObject,
+              let objectType = gameObject.registeredObjectType else { return }
+        remove(gameObject, from: objectType)
+        gameObject.registeredObjectType = nil
     }
 
     /// Removes a renderable from `modelDatas` / `transparentObjectDatas`,
-    /// mirroring `RegisterObject`. Drops the per-Model entry once its last
-    /// object is gone so the dictionaries (and the per-frame snapshot loop)
-    /// stay tight; the `isEmpty` guard leaves shared/instanced models intact
-    /// until their final instance is removed.
-    private static func removeRenderable(_ gameObject: GameObject) {
+    /// mirroring `addRenderable`. `transparent` is the value captured at
+    /// registration, NOT re-read from the object. Drops the per-Model entry
+    /// once its last object is gone so the dictionaries (and the per-frame
+    /// snapshot loop) stay tight; the `isEmpty` guard leaves shared/instanced
+    /// models intact until their final instance is removed.
+    private static func removeRenderable(_ gameObject: GameObject, transparent: Bool) {
         let model = gameObject.model
-        if gameObject.isTransparent {
+        if transparent {
             transparentObjectDatas[model]?.removeGameObject(gameObject)
             if transparentObjectDatas[model]?.gameObjects.isEmpty == true {
                 transparentObjectDatas[model] = nil

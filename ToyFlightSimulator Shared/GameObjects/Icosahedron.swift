@@ -6,6 +6,8 @@
 //
 
 class Icosahedron: GameObject {
+    override var objectType: GameObjectType { .icosahedrons }
+
     init() {
         super.init(name: "Icosahedron", modelType: .Icosahedron)
     }

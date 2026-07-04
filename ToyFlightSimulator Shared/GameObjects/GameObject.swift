@@ -37,6 +37,33 @@ class GameObject: Node, Renderable, Hashable {
         return (modelConstants.useObjectColor && modelConstants.objectColor.w < 1.0)
     }
 
+    /// The registration category of this object — SceneManager batches it into
+    /// a collection based on this value. Subclasses that live in a side
+    /// collection override this; the base handles Tessellatable conformers and
+    /// the opaque/transparent split automatically.
+    var objectType: GameObjectType {
+        if self is Tessellatable { return .tessellatables }
+        return .renderables(transparent: isTransparent)
+    }
+
+    /// Set by SceneManager.Register with the objectType actually registered
+    /// under; consumed and cleared by Unregister. nil ⇒ not currently
+    /// registered. Capturing this at registration means unregistration never
+    /// re-derives state that may have changed since (e.g. isTransparent via
+    /// setColor).
+    var registeredObjectType: GameObjectType?
+
+    /// Removes this object (and its subtree) from both the scene graph and
+    /// SceneManager's batched collections. Runtime despawns (fired weapons
+    /// reaping themselves) must use this — a bare `parent?.removeChild(self)`
+    /// leaves the object registered, so it keeps being drawn at its last
+    /// position and never deallocates. Call from the update thread only
+    /// (doUpdate), like all scene-graph mutation.
+    func removeFromScene() {
+        parent?.removeChild(self)
+        SceneManager.Unregister(self)
+    }
+
     init(name: String, modelType: ModelType) {
         // ModelLibrary's subscript fatalErrors on missing keys, so this is non-optional.
         self.model = Assets.Models[modelType]

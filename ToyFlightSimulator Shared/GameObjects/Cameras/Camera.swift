@@ -13,6 +13,9 @@ enum CameraType {
 }
 
 class Camera: GameObject {
+    // Cameras live in CameraManager, not in SceneManager's batched collections.
+    override var objectType: GameObjectType { .none }
+
     var fieldOfView: Float!
     var near: Float!
     var far: Float!

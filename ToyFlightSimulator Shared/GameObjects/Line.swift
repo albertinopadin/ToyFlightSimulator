@@ -8,6 +8,8 @@
 import MetalKit
 
 class Line: GameObject {
+    override var objectType: GameObjectType { .lines }
+
     var startVertex: Vertex
     var endVertex: Vertex
     public var vertices: [Vertex]

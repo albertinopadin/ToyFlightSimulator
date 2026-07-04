@@ -21,9 +21,9 @@ class Droppable: SubMeshGameObject {
     override func doUpdate() {
         let currentPos = self.getPosition()
         if abs(currentPos.x) > 1000 || abs(currentPos.y) > 1000 || abs(currentPos.z) > 1000 {
-            // Reap from scene
+            // Reap from scene (graph + SceneManager collections)
             print("Removing self {\(self.getName()), \(self.getID())} from scene.")
-            self.parent?.removeChild(self)
+            self.removeFromScene()
         } else {
             super.doUpdate()
             if velocityVector.y < 1000 {

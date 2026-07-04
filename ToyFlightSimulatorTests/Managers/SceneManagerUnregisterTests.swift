@@ -74,6 +74,24 @@ struct SceneManagerUnregisterTests {
         #expect(result.first?.getID() == root.getID())
     }
 
+    @Test("Unregister on a plain-Node tree is a no-op (Nodes carry no registration marker)")
+    func unregisterPlainNodeTree() {
+        let root = Node(name: "Root")
+        let child = Node(name: "Child")
+        root.addChild(child)
+
+        // Plain Nodes aren't GameObjects, so they carry no registeredObjectType
+        // and unregisterSingle must skip them without touching any collection.
+        // (GameObject round-trips need Metal, so they're covered by the
+        // app-hosted suite; this guards the early-return path.)
+        SceneManager.Unregister(root)
+
+        // Unregister only affects SceneManager collections — the parent/child
+        // links of the subtree itself are untouched.
+        #expect(SceneManager.subtreeNodes(of: root).count == 2)
+        #expect(child.parent?.getID() == root.getID())
+    }
+
     @Test("A node registered flat under several composite parents is counted once per instance")
     func eachInstanceCountedOnce() {
         // Two sibling subtrees, each with its own children — the traversal must
