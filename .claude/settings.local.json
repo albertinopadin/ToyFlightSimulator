@@ -50,7 +50,9 @@
       "Bash(curl -sL \"https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md\")",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:openusd.org)",
-      "WebFetch(domain:docs.rs)"
+      "WebFetch(domain:docs.rs)",
+      "Bash(find \"ToyFlightSimulator tvOS\" -type f)",
+      "Bash(grep -rn \"SamplerStates\\\\|\\\\.Linear\\\\|TFSMenu\\\\|AircraftType\\\\|setPlayerAircraft\\\\|MetalPerformanceHUD\\\\|basisTransform\" \"ToyFlightSimulator tvOS\")"
     ],
     "deny": [],
     "ask": []

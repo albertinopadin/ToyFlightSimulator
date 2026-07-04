@@ -78,10 +78,7 @@ final class DrawManager {
     /// Write ModelConstants from a ContiguousArray of GameObjects into the ring buffer.
     /// Returns the byte offset where the data was written, or nil on failure.
     /// Called by the update thread during SceneManager.writeFrameSnapshot().
-    static func writeModelConstants(
-        gameObjects: ContiguousArray<GameObject>,
-        frameIndex: Int
-    ) -> Int? {
+    static func writeModelConstants(gameObjects: ContiguousArray<GameObject>, frameIndex: Int) -> Int? {
         guard !gameObjects.isEmpty else { return nil }
 
         let count = gameObjects.count
