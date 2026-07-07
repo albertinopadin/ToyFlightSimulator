@@ -300,23 +300,29 @@ final class F18: Aircraft {
     }
     
     func setupControlSurfaces() {
+        // Each origin is the hinge's offset from the surface centroid, both in
+        // post-basis (180°-Y) space; the node pivot sits at centroid - origin.
+        // When vertexMetadata moved into post-basis space, the previously tuned
+        // values were re-derived as o_new = o_old - 2*centroid_z so the tuned
+        // pivot lines are preserved (old values were absorbing the basis flip:
+        // 5.6/14/5.8/15 ≈ 2*centroid_z + these offsets).
         // Ailerons:
-        let newAileronOrigin = float3(0, 0, 5.6)
+        let newAileronOrigin = float3(0, 0, -1.6)
         leftAileron.setSubmeshOrigin(newAileronOrigin)
         rightAileron.setSubmeshOrigin(newAileronOrigin)
-        
+
         // Elevons:
-        let newElevonOrigin = float3(0, 0, 14)
+        let newElevonOrigin = float3(0, 0, -1.13)
         leftElevon.setSubmeshOrigin(newElevonOrigin)
         rightElevon.setSubmeshOrigin(newElevonOrigin)
-        
+
         // Flaps:
-        let newFlapsOrigin = float3(0, 0, 5.8)
+        let newFlapsOrigin = float3(0, 0, -1.2)
         leftFlap.setSubmeshOrigin(newFlapsOrigin)
         rightFlap.setSubmeshOrigin(newFlapsOrigin)
-        
+
         // Rudders:
-        let newRuddersOrigin = float3(0, 0, 15)
+        let newRuddersOrigin = float3(0, 0, 2.69)
         leftRudder.setSubmeshOrigin(newRuddersOrigin)
         rightRudder.setSubmeshOrigin(newRuddersOrigin)
         

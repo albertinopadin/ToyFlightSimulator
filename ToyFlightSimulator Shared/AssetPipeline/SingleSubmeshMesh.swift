@@ -19,6 +19,26 @@ struct SingleMeshVertexMetadata {
     let maxZ: Float
 }
 
+extension SingleMeshVertexMetadata {
+    /// Returns a copy with `initialPositionInParentMesh` mapped through `basis`, using
+    /// the same row-vector convention (`v * B`) as `Mesh.transformMeshBasis` applies to
+    /// the vertices, so the centroid stays in the same space as the geometry.
+    /// Min/max bounds are left in pre-basis space: an axis-aligned box isn't preserved
+    /// under rotation — recompute from the transformed buffer if a true post-basis AABB
+    /// is ever needed (e.g. the FreeCam `maxZ` pivot).
+    func transformingCentroid(by basis: float4x4) -> SingleMeshVertexMetadata {
+        SingleMeshVertexMetadata(initialPositionInParentMesh: simd_mul(float4(initialPositionInParentMesh, 1),
+                                                                       basis).xyz,
+                                 uniqueVertices: uniqueVertices,
+                                 minX: minX,
+                                 maxX: maxX,
+                                 minY: minY,
+                                 maxY: maxY,
+                                 minZ: minZ,
+                                 maxZ: maxZ)
+    }
+}
+
 class SingleSubmeshMesh: Mesh {
     private static let initialScale: Float = 1.0
 
@@ -40,10 +60,16 @@ class SingleSubmeshMesh: Mesh {
     init(asset: MDLAsset, mtkMesh: MTKMesh, mdlMesh: MDLMesh, submesh: Submesh, basisTransform: float4x4 = .identity) {
         // Centralize vertices:
         let vertBuf = mtkMesh.vertexBuffers[0].buffer
-        vertexMetadata = SingleSubmeshMesh.getVertexMetadata(submesh: submesh,
-                                                             vertexBuffer: vertBuf,
-                                                             vertexCount: mtkMesh.vertexCount)
-        
+        // Metadata must be captured before super.init (vertexMetadata is a `let`), but
+        // super.init basis-transforms the copied geometry in place. Map the centroid
+        // into post-basis space so the recenter below — and every consumer doing
+        // origin/pivot math against it (F18.setupControlSurfaces, weapon release,
+        // parent-scale matching) — works in the same space as the vertices.
+        let preBasisMetadata = SingleSubmeshMesh.getVertexMetadata(submesh: submesh,
+                                                                   vertexBuffer: vertBuf,
+                                                                   vertexCount: mtkMesh.vertexCount)
+        vertexMetadata = preBasisMetadata.transformingCentroid(by: basisTransform)
+
         // copyVertexBuffer: true — this MTKMesh's vertex buffer may be shared with
         // sibling submeshes from the same cached parent asset, so let super.init hand
         // us a private copy that translateSubmeshVertices(...) can recenter in place.
