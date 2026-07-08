@@ -26,6 +26,9 @@ class AttachedCamera: Camera {
     }
     
     public func attach(to node: Node, offset: float3 = [0, 2, -4], rotation: float3 = [Float(-5).toRadians, 0, 0]) {
+        // Detach if currently attached to another node:
+        self.parent?.removeChild(self)
+        
         // Zero camera rotation first:
         self.setRotationX(0)
         self.setRotationY(0)

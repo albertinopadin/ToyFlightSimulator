@@ -227,15 +227,11 @@ final class SceneManager {
         opaque.reserveCapacity(modelDatas.count)
         for (model, modelData) in modelDatas {
             guard !modelData.gameObjects.isEmpty else { continue }
-            if let offset = DrawManager.writeModelConstants(
-                gameObjects: modelData.gameObjects,
-                frameIndex: frameIndex
-            ) {
-                opaque[model] = RingBufferRegion(
-                    offset: offset,
-                    count: modelData.gameObjects.count,
-                    meshDatas: modelData.meshDatas
-                )
+            if let offset = DrawManager.writeModelConstants(gameObjects: modelData.gameObjects,
+                                                            frameIndex: frameIndex) {
+                opaque[model] = RingBufferRegion(offset: offset,
+                                                 count: modelData.gameObjects.count,
+                                                 meshDatas: modelData.meshDatas)
             }
         }
         opaqueSnapshots[frameIndex] = opaque
@@ -245,15 +241,11 @@ final class SceneManager {
         transparent.reserveCapacity(transparentObjectDatas.count)
         for (model, objData) in transparentObjectDatas {
             guard !objData.gameObjects.isEmpty else { continue }
-            if let offset = DrawManager.writeModelConstants(
-                gameObjects: objData.gameObjects,
-                frameIndex: frameIndex
-            ) {
-                transparent[model] = RingBufferRegion(
-                    offset: offset,
-                    count: objData.gameObjects.count,
-                    meshDatas: objData.meshDatas
-                )
+            if let offset = DrawManager.writeModelConstants(gameObjects: objData.gameObjects,
+                                                            frameIndex: frameIndex) {
+                transparent[model] = RingBufferRegion(offset: offset,
+                                                      count: objData.gameObjects.count,
+                                                      meshDatas: objData.meshDatas)
             }
         }
         transparentSnapshots[frameIndex] = transparent
@@ -261,15 +253,11 @@ final class SceneManager {
         // Sky:
         if !skyData.gameObjects.isEmpty {
             let gameObjects = skyData.gameObjects
-            if let offset = DrawManager.writeModelConstants(
-                gameObjects: gameObjects,
-                frameIndex: frameIndex
-            ) {
-                skySnapshots[frameIndex] = RingBufferRegion(
-                    offset: offset,
-                    count: gameObjects.count,
-                    meshDatas: skyData.meshDatas
-                )
+            if let offset = DrawManager.writeModelConstants(gameObjects: gameObjects,
+                                                            frameIndex: frameIndex) {
+                skySnapshots[frameIndex] = RingBufferRegion(offset: offset,
+                                                            count: gameObjects.count,
+                                                            meshDatas: skyData.meshDatas)
             }
         } else {
             skySnapshots[frameIndex] = nil
@@ -297,6 +285,15 @@ final class SceneManager {
     // ----------------------------------------------------------------------------- //
     
     static func Register(_ gameObject: GameObject) {
+        let objectType = gameObject.objectType   // resolved exactly once
+
+        // Unmanaged objects (`.none`) enter no collection, so they get no
+        // marker and Register is a pure no-op for them. This lets a persistent
+        // object like the AttachedCamera be reparented onto each new player
+        // aircraft and re-enter subtree registration freely, while the
+        // double-register assert below stays armed for the types that DO batch.
+        guard objectType.isManagedBySceneManager else { return }
+
         guard gameObject.registeredObjectType == nil else {
             assertionFailure("[SceneMgr Register] Double-registering \(gameObject.getName()) — already in \(gameObject.registeredObjectType!)")
             return
@@ -310,7 +307,6 @@ final class SceneManager {
             hideSubmeshInParentModel(subMeshObject)
         }
 
-        let objectType = gameObject.objectType   // resolved exactly once
         add(gameObject, to: objectType)
         gameObject.registeredObjectType = objectType
     }

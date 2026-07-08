@@ -39,8 +39,9 @@ class GameScene: Node {
     
     func registerChildObject(_ child: Node) {
         if let childObj = child as? GameObject {
-            // No Camera filter needed: Camera declares `.none`, so Register
-            // marks it registered without entering any batched collection.
+            // No Camera filter needed: Camera declares `.none`, which Register
+            // ignores entirely (no collection, no marker) — so a persistent
+            // camera re-entering this recursion on an aircraft swap is fine.
             SceneManager.Register(childObj)
         }
 
