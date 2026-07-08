@@ -103,7 +103,9 @@ final class FlightboxWithPhysics: GameScene {
         
         // Default. Applied immediately (not deferred): buildScene runs before
         // the update loop spins, and there's no aircraft to render until it does.
-        applyAircraftSwap(.f22_cgtrader)
+        // Entity install is skipped: buildScene keeps appending rigid bodies
+        // below and installs the full list once via setEntities at the end.
+        applyAircraftSwap(.f22_cgtrader, installEntities: false)
         
         let jetPos = aircraftStartPosition
 
@@ -168,7 +170,13 @@ final class FlightboxWithPhysics: GameScene {
     /// Performs the actual aircraft swap. Runs on the update thread (via
     /// `doUpdate`) or during scene construction (via `buildScene`) — never
     /// directly from the UI callback.
-    private func applyAircraftSwap(_ aircraft: AircraftType) {
+    ///
+    /// `installEntities` controls whether the updated entity list is pushed to
+    /// the physics world here. Runtime swaps need that (the default) so the new
+    /// rigid body joins the next physics step; `buildScene` passes `false`
+    /// because it keeps appending entities afterward and installs the complete
+    /// list once at the end.
+    private func applyAircraftSwap(_ aircraft: AircraftType, installEntities: Bool = true) {
         let prevAc: Aircraft? = playerAircraft
         let prevAcRigidBody: RigidBody? = playerAircraft?.rigidBody
 
@@ -191,7 +199,9 @@ final class FlightboxWithPhysics: GameScene {
             acRigidBody.restitution = 0.2
 
             entities = Self.swappedEntities(entities, removing: prevAcRigidBody, adding: acRigidBody)
-            physicsWorld.setEntities(entities)
+            if installEntities {
+                physicsWorld.setEntities(entities)
+            }
 
             addCamera(attachedCamera)
             attachedCamera.attach(to: playerAircraft, offset: playerAircraft.cameraOffset)
