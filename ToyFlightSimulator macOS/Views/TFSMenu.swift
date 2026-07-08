@@ -85,7 +85,7 @@ struct TFSMenu: View {
                         
                         Button("Reset Scene") {
                             print("Pressed SwiftUI Reset Scene button")
-                            SceneManager.ResetScene()
+                            SceneManager.RequestResetScene()
                         }
                         .buttonStyle(.borderedProminent)
                         

@@ -153,8 +153,11 @@ class GameScene: Node {
         }
 
         InputManager.HasMultiInputCommand(command: .ResetScene) {
-            teardownScene()
-            initScene()
+            // Deferred to SceneManager's update-tick drain (same hand-off as
+            // the menu button). The old in-place teardownScene()+initScene()
+            // left the previous objects registered in SceneManager's batched
+            // collections and mutated `children` mid-traversal.
+            SceneManager.RequestResetScene()
         }
     }
 

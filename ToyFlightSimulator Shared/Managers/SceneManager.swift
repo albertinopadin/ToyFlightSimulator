@@ -165,10 +165,29 @@ final class SceneManager {
         }
     }
     
-    public static func ResetScene() {
-        if let _sceneType, let _rendererType {
-            SetScene(_sceneType, rendererType: _rendererType)
-        }
+    /// UI → update-thread hand-off for scene resets (see PendingSceneReset).
+    private static let _pendingReset = PendingSceneReset()
+
+    /// Records a scene-reset request from the UI (menu button, Cmd+R). The
+    /// reset itself runs on the update thread at the top of the next unpaused
+    /// tick — never here.
+    public static func RequestResetScene() {
+        _pendingReset.request()
+    }
+
+    /// Tears down the current scene and rebuilds it from scratch. Runs on the
+    /// update thread via the `Update` drain — `private` so UI code can't call
+    /// it directly and must go through `RequestResetScene()`.
+    ///
+    /// TeardownScene must precede SetScene (same sequence as the
+    /// renderer-switch flow in the platform view wrappers): without it, every
+    /// prior object stays registered in the batched collections and each reset
+    /// leaks the whole previous scene as frozen ghost renderables. The scene
+    /// type and renderer are captured first because TeardownScene nils them.
+    private static func ResetScene() {
+        guard let sceneType = _sceneType, let rendererType = _rendererType else { return }
+        TeardownScene()
+        SetScene(sceneType, rendererType: rendererType)
     }
     
     public static func TeardownScene() {
@@ -205,6 +224,15 @@ final class SceneManager {
     public static func Update(deltaTime: Double) {
         if !Paused {
             GameTime.UpdateTime(deltaTime)
+
+            // Consume a UI-requested scene reset here, on the update thread,
+            // before any scene-graph traversal or physics is in flight (the
+            // same deferral as PendingAircraftSwap). Must stay inside the
+            // !Paused guard: the menu pauses the game while open, and resetting
+            // then would unpause it behind the still-open menu.
+            if _pendingReset.take() {
+                ResetScene()
+            }
 
             CurrentScene?.updateCameras(deltaTime: deltaTime)
             CurrentScene?.update()

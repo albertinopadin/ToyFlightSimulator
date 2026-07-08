@@ -63,7 +63,7 @@ struct TFSMenuMobile: View {
                             
                             Button("Reset Scene", role: .destructive) {
                                 print("Pressed SwiftUI Reset Scene button")
-                                SceneManager.ResetScene()
+                                SceneManager.RequestResetScene()
                             }
                             .padding()
                             .foregroundColor(.red)
