@@ -20,6 +20,9 @@ struct MacGameUIView: View {
     @State private var aircraftType: AircraftType = .f22_cgtrader
     @State private var hudEnabled: Bool = false
     @State private var maxAnisotropy: MaxAnisotropy = Preferences.SelectedMaxAnisotropy
+    // Owned here (not in TFSMenu) so thumbnails survive menu close/reopen.
+    // @State (not @StateObject) because the store is @Observable.
+    @State private var thumbnailStore = AircraftThumbnailStore()
 
     var body: some View {
         GeometryReader { geometry in
@@ -35,6 +38,7 @@ struct MacGameUIView: View {
                             aircraftType: $aircraftType,
                             hudEnabled: $hudEnabled,
                             maxAnisotropy: $maxAnisotropy,
+                            thumbnailStore: thumbnailStore,
                             viewSize: viewSize)
                 }
                 

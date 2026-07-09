@@ -15,6 +15,8 @@ struct TFSMenu: View {
     @Binding var hudEnabled: Bool
     @Binding var maxAnisotropy: MaxAnisotropy
 
+    let thumbnailStore: AircraftThumbnailStore
+
     var viewSize: CGSize
     
     var body: some View {
@@ -89,16 +91,13 @@ struct TFSMenu: View {
                         }
                         .buttonStyle(.borderedProminent)
                         
-                        Picker("Aircraft: ", selection: $aircraftType) {
-                            ForEach(AircraftType.allCases) { aircraftType in
-                                Text("\(aircraftType.rawValue)").tag(aircraftType).padding()
+                        AircraftGridPicker(selection: $aircraftType,
+                                           thumbnailStore: thumbnailStore)
+                            .frame(maxWidth: geometry.size.width * 0.6)
+                            .frame(maxHeight: .infinity, alignment: .top)
+                            .onChange(of: aircraftType) {
+                                SceneManager.SetPlayerAircraft(aircraftType)
                             }
-                        }
-                        .pickerStyle(.menu)
-                        .frame(maxWidth: geometry.size.width * 0.35)
-                        .onChange(of: aircraftType) {
-                            SceneManager.SetPlayerAircraft(aircraftType)
-                        }
                     }
                     .frame(width: geometry.size.width - 10,
                            height: geometry.size.height - 10,
@@ -127,5 +126,6 @@ struct TFSMenu: View {
             aircraftType: Binding<AircraftType>.constant(.f22),
             hudEnabled: Binding<Bool>.constant(false),
             maxAnisotropy: Binding<MaxAnisotropy>.constant(.x8),
+            thumbnailStore: AircraftThumbnailStore(),
             viewSize: CGSize(width: 1920, height: 1080))
 }
