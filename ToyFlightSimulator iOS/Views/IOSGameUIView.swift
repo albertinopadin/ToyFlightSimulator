@@ -16,6 +16,9 @@ struct IOSGameUIView: View {
     @State private var hudEnabled: Bool = false
     @State private var rendererType: RendererType = .TiledMSAATessellated
     @State private var maxAnisotropy: MaxAnisotropy = Preferences.SelectedMaxAnisotropy
+    // Owned here (not in TFSMenuMobile) so thumbnails survive menu close/reopen.
+    // @State (not @StateObject) because the store is @Observable.
+    @State private var thumbnailStore = AircraftThumbnailStore()
     
     var body: some View {
         GeometryReader { geometry in
@@ -46,6 +49,7 @@ struct IOSGameUIView: View {
                                   hudEnabled: $hudEnabled,
                                   rendererType: $rendererType,
                                   maxAnisotropy: $maxAnisotropy,
+                                  thumbnailStore: thumbnailStore,
                                   viewSize: geometry.size,
                                   onClose: { showMenu(false) })
                 }

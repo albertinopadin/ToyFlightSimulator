@@ -16,6 +16,8 @@ struct TFSMenuMobile: View {
     @Binding var rendererType: RendererType
     @Binding var maxAnisotropy: MaxAnisotropy
 
+    let thumbnailStore: AircraftThumbnailStore
+
     var viewSize: CGSize
     var onClose: () -> Void
     
@@ -67,16 +69,15 @@ struct TFSMenuMobile: View {
                             AnisotropyPicker(maxAnisotropy: $maxAnisotropy)
                                 .frame(maxWidth: geometry.size.width * 0.80)
 
-                            Picker("Aircraft: ", selection: $aircraftType) {
-                                ForEach(AircraftType.allCases) { aircraftType in
-                                    Text("\(aircraftType.rawValue)").tag(aircraftType).padding()
+                            // Explicit height: the grid's internal ScrollView needs a
+                            // bounded viewport inside this outer ScrollView.
+                            AircraftGridPicker(selection: $aircraftType,
+                                               thumbnailStore: thumbnailStore)
+                                .frame(maxWidth: geometry.size.width * 0.80)
+                                .frame(height: geometry.size.height * 0.55)
+                                .onChange(of: aircraftType) {
+                                    SceneManager.SetPlayerAircraft(aircraftType)
                                 }
-                            }
-                            .pickerStyle(.automatic)
-                            .frame(maxWidth: geometry.size.width * 0.35)
-                            .onChange(of: aircraftType) {
-                                SceneManager.SetPlayerAircraft(aircraftType)
-                            }
                         }
                         .frame(width: geometry.size.width, alignment: .top)
                         .foregroundColor(.white)
@@ -115,6 +116,7 @@ struct TFSMenuMobile: View {
                   hudEnabled: Binding<Bool>.constant(false),
                   rendererType: Binding<RendererType>.constant(.TiledMSAATessellated),
                   maxAnisotropy: Binding<MaxAnisotropy>.constant(.x8),
+                  thumbnailStore: AircraftThumbnailStore(),
                   viewSize: CGSize(width: 1920, height: 1080),
                   onClose: {})
 }

@@ -1,12 +1,15 @@
 //
 //  AircraftGridPicker.swift
-//  ToyFlightSimulator macOS
+//  ToyFlightSimulator
 //
 //  Created by Albertino Padin on 7/9/26.
 //
 //  X-Plane style aircraft picker: scrollable vertical grid, max 4 per row,
 //  cards with a generated 3/4-view "photo", name top-left, blue selection.
 //
+
+// SwiftUI controlSize (used on the placeholder ProgressView) is unavailable on tvOS.
+#if !os(tvOS)
 
 import SwiftUI
 
@@ -93,3 +96,5 @@ private struct AircraftCard: View {
         .frame(width: 900, height: 420)
         .background(.black)
 }
+
+#endif
