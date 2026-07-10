@@ -34,36 +34,17 @@ struct TFSMenu: View {
                         Text("Toy Flight Simulator")
                             .font(.largeTitle)
                         
-                        Picker("Refresh Rate: ", selection: $framesPerSecond) {
-                            ForEach(FPS.allCases) { fps in
-                                Text("\(fps.rawValue)").tag(fps).padding()
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .frame(maxWidth: geometry.size.width * 0.35)
+                        RefreshRatePicker(framesPerSecond: $framesPerSecond)
+                            .frame(maxWidth: geometry.size.width * 0.35)
                         
                         VolumeSlider(volume: $volume)
                             .frame(maxWidth: geometry.size.width * 0.35)
                         
-                        Picker("Renderer: ", selection: $rendererType) {
-                            ForEach(RendererType.allCases) { rendererType in
-                                Text("\(rendererType.rawValue)").tag(rendererType).padding()
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .frame(maxWidth: geometry.size.width * 0.35)
+                        RendererPicker(rendererType: $rendererType)
+                            .frame(maxWidth: geometry.size.width * 0.35)
                         
-                        Picker("Anisotropic Filtering: ", selection: $maxAnisotropy) {
-                            ForEach(MaxAnisotropy.allCases) { level in
-                                Text(level.label).tag(level)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .frame(maxWidth: geometry.size.width * 0.35)
-                        .onChange(of: maxAnisotropy) { _, newValue in
-                            Preferences.SelectedMaxAnisotropy = newValue
-                            Graphics.SamplerStates.setLinearMaxAnisotropy(newValue)
-                        }
+                        AnisotropyPicker(maxAnisotropy: $maxAnisotropy)
+                            .frame(maxWidth: geometry.size.width * 0.35)
                         
                         Toggle("Enable Metal HUD", isOn: $hudEnabled)
                             .toggleStyle(.switch)

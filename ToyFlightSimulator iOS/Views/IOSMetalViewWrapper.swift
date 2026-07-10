@@ -12,12 +12,10 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
     
     var viewSize: CGSize
     var refreshRate: FPS
+    // TODO: SinglePassDeferredLighting doesn't work on iOS due to a memory issue.
+    var rendererType: RendererType
     
     func makeCoordinator() -> Void {
-//        let rendererType: RendererType = .OrderIndependentTransparency
-        let rendererType: RendererType = .TiledMSAATessellated
-        // TODO: Single Pass renderer doesn't work due to a memory issue:
-//        let rendererType: RendererType = .SinglePassDeferredLighting
         Engine.Start(rendererType: rendererType)
     }
     
@@ -42,6 +40,17 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
     }
     
     func updateUIView(_ nsView: UIViewType, context: Context) {
+        // Runtime renderer switching, mirroring MacMetalViewWrapper.updateNSView.
+        if rendererType != Engine.renderer!.rendererType {
+            SceneManager.TeardownScene()
+            let newRenderer = Engine.InitRenderer(type: rendererType)
+            newRenderer.metalView = nsView
+            Engine.renderer = newRenderer
+            SceneManager.SetScene(Preferences.StartingSceneType,
+                                  rendererType: rendererType)
+            SceneManager.Paused = true
+        }
+
         Engine.MetalView!.preferredFramesPerSecond = refreshRate.rawValue
         
         // Query renderer to see if screen size has already been set: (is there a better way to do this...?)
@@ -58,7 +67,7 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
 struct IOSMetalViewWrapper_Previews: PreviewProvider {
     static var previewSize = CGSize(width: 1920, height: 1080)
     static var previews: some View {
-        IOSMetalViewWrapper(viewSize: previewSize, refreshRate: .FPS_120)
+        IOSMetalViewWrapper(viewSize: previewSize, refreshRate: .FPS_120, rendererType: .TiledMSAATessellated)
     }
 }
 

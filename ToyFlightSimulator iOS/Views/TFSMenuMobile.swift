@@ -13,11 +13,11 @@ struct TFSMenuMobile: View {
     @Binding var volume: Float
     @Binding var aircraftType: AircraftType
     @Binding var hudEnabled: Bool
-    
+    @Binding var rendererType: RendererType
+    @Binding var maxAnisotropy: MaxAnisotropy
+
     var viewSize: CGSize
     var onClose: () -> Void
-
-    @State private var rendererType: RendererType = .TiledDeferred
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -34,18 +34,8 @@ struct TFSMenuMobile: View {
                             Text("Toy Flight Simulator")
                                 .font(.largeTitle)
                             
-                            HStack {
-                                Text("Refresh Rate: ")
-                                    .padding()
-                                
-                                Picker("Refresh Rate: ", selection: $framesPerSecond) {
-                                    ForEach(FPS.allCases) { fps in
-                                        Text("\(fps.rawValue)").tag(fps).padding()
-                                    }
-                                }
-                                .pickerStyle(.segmented)
-                                .frame(maxWidth: geometry.size.width * 0.35)
-                            }
+                            RefreshRatePicker(framesPerSecond: $framesPerSecond)
+                                .frame(maxWidth: geometry.size.width * 0.80)
                             
                             Toggle("Use Motion Control", isOn: $useMotionControl)
                                 .frame(maxWidth: geometry.size.width * 0.35)
@@ -69,7 +59,13 @@ struct TFSMenuMobile: View {
                             .foregroundColor(.red)
                             
                             VolumeSlider(volume: $volume)
-                                .frame(maxWidth: geometry.size.width * 0.95)
+                                .frame(maxWidth: geometry.size.width * 0.80)
+
+                            RendererPicker(rendererType: $rendererType)
+                                .frame(maxWidth: geometry.size.width * 0.80)
+
+                            AnisotropyPicker(maxAnisotropy: $maxAnisotropy)
+                                .frame(maxWidth: geometry.size.width * 0.80)
 
                             Picker("Aircraft: ", selection: $aircraftType) {
                                 ForEach(AircraftType.allCases) { aircraftType in
@@ -117,6 +113,8 @@ struct TFSMenuMobile: View {
                   volume: Binding<Float>.constant(15.0),
                   aircraftType: Binding<AircraftType>.constant(.f22),
                   hudEnabled: Binding<Bool>.constant(false),
+                  rendererType: Binding<RendererType>.constant(.TiledMSAATessellated),
+                  maxAnisotropy: Binding<MaxAnisotropy>.constant(.x8),
                   viewSize: CGSize(width: 1920, height: 1080),
                   onClose: {})
 }

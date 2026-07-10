@@ -14,12 +14,15 @@ struct IOSGameUIView: View {
     @State private var volume: Float = 15.0
     @State private var aircraftType: AircraftType = .f22_cgtrader
     @State private var hudEnabled: Bool = false
+    @State private var rendererType: RendererType = .TiledMSAATessellated
+    @State private var maxAnisotropy: MaxAnisotropy = Preferences.SelectedMaxAnisotropy
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 IOSMetalViewWrapper(viewSize: geometry.size,
-                                    refreshRate: framesPerSecond)
+                                    refreshRate: framesPerSecond,
+                                    rendererType: rendererType)
                 
                 Button("Zero Motion Device") {
                     print("Pressed Zero")
@@ -41,6 +44,8 @@ struct IOSGameUIView: View {
                                   volume: $volume,
                                   aircraftType: $aircraftType,
                                   hudEnabled: $hudEnabled,
+                                  rendererType: $rendererType,
+                                  maxAnisotropy: $maxAnisotropy,
                                   viewSize: geometry.size,
                                   onClose: { showMenu(false) })
                 }
