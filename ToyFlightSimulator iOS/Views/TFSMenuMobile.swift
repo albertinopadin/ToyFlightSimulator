@@ -46,19 +46,8 @@ struct TFSMenuMobile: View {
                                     InputManager.useMotion = newValue
                                 }
 
-                            Toggle("Metal HUD", isOn: $hudEnabled)
+                            MetalHUDToggle(hudEnabled: $hudEnabled)
                                 .frame(maxWidth: geometry.size.width * 0.35)
-                                .padding()
-                                .onChange(of: hudEnabled) { oldValue, newValue in
-                                    MetalPerformanceHUD.setEnabled(newValue)
-                                }
-                            
-                            Button("Reset Scene", role: .destructive) {
-                                print("Pressed SwiftUI Reset Scene button")
-                                SceneManager.RequestResetScene()
-                            }
-                            .padding()
-                            .foregroundColor(.red)
                             
                             VolumeSlider(volume: $volume)
                                 .frame(maxWidth: geometry.size.width * 0.80)
@@ -78,6 +67,10 @@ struct TFSMenuMobile: View {
                                 .onChange(of: aircraftType) {
                                     SceneManager.SetPlayerAircraft(aircraftType)
                                 }
+                            
+                            ResetSceneButton()
+                            
+                            Spacer()
                         }
                         .frame(width: geometry.size.width, alignment: .top)
                         .foregroundColor(.white)

@@ -46,18 +46,8 @@ struct TFSMenu: View {
                         AnisotropyPicker(maxAnisotropy: $maxAnisotropy)
                             .frame(maxWidth: geometry.size.width * 0.35)
                         
-                        Toggle("Enable Metal HUD", isOn: $hudEnabled)
-                            .toggleStyle(.switch)
+                        MetalHUDToggle(hudEnabled: $hudEnabled)
                             .frame(maxWidth: geometry.size.width * 0.35)
-                            .onChange(of: hudEnabled) { _, newValue in
-                                MetalPerformanceHUD.setEnabled(newValue)
-                            }
-                        
-                        Button("Reset Scene") {
-                            print("Pressed SwiftUI Reset Scene button")
-                            SceneManager.RequestResetScene()
-                        }
-                        .buttonStyle(.borderedProminent)
                         
                         AircraftGridPicker(selection: $aircraftType,
                                            thumbnailStore: thumbnailStore)
@@ -66,6 +56,10 @@ struct TFSMenu: View {
                             .onChange(of: aircraftType) {
                                 SceneManager.SetPlayerAircraft(aircraftType)
                             }
+                        
+                        ResetSceneButton()
+                        
+                        Spacer()
                     }
                     .frame(width: geometry.size.width - 10,
                            height: geometry.size.height - 10,
