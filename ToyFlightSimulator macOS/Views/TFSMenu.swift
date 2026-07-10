@@ -42,21 +42,8 @@ struct TFSMenu: View {
                         .pickerStyle(.segmented)
                         .frame(maxWidth: geometry.size.width * 0.35)
                         
-                        HStack {
-                            Slider(value: $volume, in: 0...100) {
-                                Text("Game Volume:")
-                            }
-                            .onChange(of: volume) {
-                                AudioManager.SetVolume(volume / 100.0)
-                            }
-                            .frame(width: 500.0,
-                                   height: 40.0,
-                                   alignment: .center)
-                            
-                            Text("\(String(format: "%.0f", volume))")
-                                .frame(minWidth: 25)
-                                .monospacedDigit()
-                        }
+                        VolumeSlider(volume: $volume)
+                            .frame(maxWidth: geometry.size.width * 0.35)
                         
                         Picker("Renderer: ", selection: $rendererType) {
                             ForEach(RendererType.allCases) { rendererType in

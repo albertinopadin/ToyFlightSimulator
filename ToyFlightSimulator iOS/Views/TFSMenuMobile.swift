@@ -68,18 +68,9 @@ struct TFSMenuMobile: View {
                             .padding()
                             .foregroundColor(.red)
                             
-                            Slider(value: $volume, in: 0...100) {
-                                Text("Game Volume:")
-                            }
-                            .onChange(of: volume) {
-                                AudioManager.SetVolume(volume / 100.0)
-                            }
-                            .frame(width: 500.0,
-                                   height: 40.0,
-                                   alignment: .center)
-                            
-                            Text("\(String(format: "%.0f", volume))")
-                            
+                            VolumeSlider(volume: $volume)
+                                .frame(maxWidth: geometry.size.width * 0.95)
+
                             Picker("Aircraft: ", selection: $aircraftType) {
                                 ForEach(AircraftType.allCases) { aircraftType in
                                     Text("\(aircraftType.rawValue)").tag(aircraftType).padding()
