@@ -32,7 +32,7 @@
 ## Runtime and Thread Flow (Critical)
 
 1. A platform view wrapper's `makeCoordinator()` calls `Engine.Start(rendererType:)`.
-2. `Engine.Start` starts the long-lived `UpdateThread` and `AudioThread`, creates three ModelConstants ring buffers, creates the renderer, and connects `updateSemaphore`/`updateDoneSemaphore`.
+2. `Engine.Start` starts the long-lived `UpdateThread` and `AudioThread`, creates three ModelConstants ring buffers, and creates the renderer via `Engine.InitRenderer`, which wires `updateSemaphore`/`updateDoneSemaphore` into every renderer it constructs (initial and runtime-switched).
 3. `makeNSView`/`makeUIView` creates `GameView`, sets Metal formats and `framebufferOnly = true`, assigns `Engine.MetalView`, then calls `SceneManager.SetScene(...)`.
 4. `SetScene` warms the lazily loaded Quad/Icosahedron models, creates the scene, and `GameScene.initScene()` pauses around `buildScene()`. After build, the audio thread is kicked to play music or warm the AVAudioEngine graph off-main.
 5. Once per rendered frame, `Renderer.render` selects the next ring-buffer slot, signals `UpdateThread` exactly once, then waits on `updateDoneSemaphore`.
@@ -147,7 +147,7 @@ Do not restore the old “signal before and after render” behavior; it caused 
 - `InputManager` merges keyboard, mouse, GameController, macOS HOTAS joystick/throttle, iOS motion, and iOS touch state into discrete/continuous commands. Use debounced helpers for toggles/actions.
 - Shared menu views are `RefreshRatePicker`, `VolumeSlider`, `RendererPicker`, `AnisotropyPicker`, `MetalHUDToggle`, `AircraftGridPicker`, and `ResetSceneButton`. Put cross-platform menu controls in `ToyFlightSimulator Shared/Views/`, not duplicated platform folders.
 - Platform root views own `AircraftThumbnailStore` so generated images survive closing/reopening the menu.
-- Both active wrappers contain a runtime renderer-switch path using teardown → new renderer → `SetScene`, but see the semaphore wiring hazard below before relying on it.
+- Both active wrappers contain a runtime renderer-switch path using teardown → new renderer → `SetScene`; the new renderer comes back from `Engine.InitRenderer` already wired to the update-thread semaphores.
 - `MetalPerformanceHUD` writes `developerHUDProperties` on the drawable `CAMetalLayer`. The scheme must arm it with `MTL_HUD_ENABLED=1`; wrappers start it hidden.
 - The audio thread starts with the engine but waits for scene build. With startup music disabled, it still constructs the lazy AVAudioEngine graph off-main so the first volume change does not stall UI.
 - macOS shortcuts: `Y` stats overlay (including active renderer), `H` Metal HUD, `Esc` menu/pause, and `Cmd+R` deferred reset. Aircraft controls include `G` gear and `F` for the legacy F-18 flaps. `CameraManager` supports multiple camera types, but no current input path toggles them.
@@ -186,7 +186,7 @@ Do not restore the old “signal before and after render” behavior; it caused 
 - Many globals remain `nonisolated(unsafe)`; locking is selective. Do not infer thread safety from Swift 6 annotations.
 - Manager registries rely heavily on ownership/handshake ordering. Keep UI mutations deferred and do not read/write ring slots outside the render↔update protocol.
 - `SceneManager` model/side registries and teardown order are coupled to flat subtree registration.
-- The wrapper renderer-switch path calls `Engine.InitRenderer` directly but does not reconnect the new renderer's `updateSemaphore`/`updateDoneSemaphore`; `Engine.Start` only wires the initial renderer. Treat live switching as incomplete until that ownership is centralized or the new renderer is wired safely.
+- Renderer construction must go through `Engine.InitRenderer` — it wires `updateSemaphore`/`updateDoneSemaphore` into every instance it returns. A hand-constructed `XxxRenderer()` installed as `Engine.renderer` bypasses wiring and freezes the simulation (direct `Renderer(type:)` construction is for tests only).
 - Lazy asset factories run while their library lock is held; self-reentry deadlocks. First-touching heavy assets during render causes stalls even when correct.
 - Reverse-Z main depth and forward-Z shadow depth deliberately coexist.
 - `framebufferOnly = true` is intentional; changing it hides architectural misuse of the drawable and costs performance.

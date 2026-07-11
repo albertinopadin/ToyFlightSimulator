@@ -94,4 +94,30 @@ final class RendererTests: XCTestCase {
         renderer.updateSemaphore = nil
         XCTAssertNil(renderer.updateSemaphore)
     }
+
+    func testInitRendererReturnsWiredRenderer() {
+        // Regression: the runtime renderer-switch paths (MacMetalViewWrapper.
+        // updateNSView / IOSMetalViewWrapper.updateUIView) install
+        // Engine.InitRenderer's result directly as Engine.renderer. If the
+        // factory returned an unwired renderer, render() would silently skip
+        // the update handshake (nil-chained semaphores) and the simulation
+        // would freeze after a live renderer switch.
+        // .ForwardPlusTileShading: its init is a bare super.init(type:) —
+        // no offscreen allocations (TiledDeferred's init allocates a
+        // ~268 MB 4096²×4 shadow texture array).
+        let renderer = Engine.InitRenderer(type: .ForwardPlusTileShading)
+        XCTAssertNotNil(renderer.updateSemaphore)
+        XCTAssertNotNil(renderer.updateDoneSemaphore)
+
+        // Every factory result must share the ONE UpdateThread's channels —
+        // that's what keeps a runtime-switched renderer driving the same
+        // update loop as the renderer it replaced. Cross-instance identity
+        // proves it without depending on host-app launch timing
+        // (Engine.renderer may not be installed yet when this suite runs).
+        // The NotNil asserts above keep nil === nil from passing vacuously.
+        // Never signal these here: they are the live update thread's channels.
+        let second = Engine.InitRenderer(type: .OrderIndependentTransparency)
+        XCTAssertTrue(renderer.updateSemaphore === second.updateSemaphore)
+        XCTAssertTrue(renderer.updateDoneSemaphore === second.updateDoneSemaphore)
+    }
 }

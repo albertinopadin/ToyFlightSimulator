@@ -41,8 +41,6 @@ final class Engine {
         DrawManager.InitializeRingBuffers()
         
         Engine.renderer = Engine.InitRenderer(type: rendererType)
-        Engine.renderer!.updateSemaphore = Engine.updateThread.updateSemaphore
-        Engine.renderer!.updateDoneSemaphore = Engine.updateThread.updateDoneSemaphore
     }
     
     // Not clear this belongs in the Engine class...
@@ -52,22 +50,33 @@ final class Engine {
         audioThread.startAudio()
     }
     
+    /// Every renderer constructed here comes back wired to the shared
+    /// UpdateThread's semaphores. The runtime renderer-switch paths in the
+    /// platform view wrappers (updateNSView / updateUIView) install this
+    /// result directly as `Engine.renderer` — an unwired renderer silently
+    /// skips the render↔update handshake (`updateSemaphore?.signal()` /
+    /// `updateDoneSemaphore?.wait()` are nil no-ops) and freezes the
+    /// simulation after a live switch.
     public static func InitRenderer(type: RendererType) -> Renderer {
+        let renderer: Renderer
         switch type {
             case .OrderIndependentTransparency:
                 // Does not work if gameView.depthStencilPixelFormat = .depth32Float_stencil8
-                return OITRenderer()
+                renderer = OITRenderer()
             case .SinglePassDeferredLighting:
-                return SinglePassDeferredLightingRenderer()
+                renderer = SinglePassDeferredLightingRenderer()
             case .TiledDeferred:
-                return TiledDeferredRenderer()
+                renderer = TiledDeferredRenderer()
             case .TiledDeferredMSAA:
-                return TiledMultisampleRenderer()
+                renderer = TiledMultisampleRenderer()
             case .TiledMSAATessellated:
-                return TiledMSAATessellatedRenderer()
+                renderer = TiledMSAATessellatedRenderer()
             case .ForwardPlusTileShading:
-                return ForwardPlusTileShadingRenderer()
+                renderer = ForwardPlusTileShadingRenderer()
         }
+        renderer.updateSemaphore = updateThread.updateSemaphore
+        renderer.updateDoneSemaphore = updateThread.updateDoneSemaphore
+        return renderer
     }
     
     public static var MetalView: MTKView? {
