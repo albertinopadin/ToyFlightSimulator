@@ -25,6 +25,19 @@ struct RenderPipelineStateTypeAnimatedVariantTests {
         #expect(RenderPipelineStateType.TiledDeferredTransparency.animatedVariant == .TiledDeferredGBufferAnimated)
     }
 
+    @Test("OIT and SinglePassDeferred mesh passes map to their own animated PSOs")
+    func oitAndSinglePassMapping() {
+        // Both OIT mesh passes swap base_vertex for base_animated_vertex but
+        // keep distinct fragment/blend state, so each has its own variant.
+        #expect(RenderPipelineStateType.OpaqueMaterial.animatedVariant == .OpaqueMaterialAnimated)
+        #expect(RenderPipelineStateType.OrderIndependentTransparent.animatedVariant
+                == .OrderIndependentTransparentAnimated)
+        #expect(RenderPipelineStateType.SinglePassDeferredGBufferMaterial.animatedVariant
+                == .SinglePassDeferredGBufferMaterialAnimated)
+        #expect(RenderPipelineStateType.SinglePassDeferredTransparency.animatedVariant
+                == .SinglePassDeferredTransparencyAnimated)
+    }
+
     @Test("All shadow passes share the single animated shadow PSO")
     func shadowMapping() {
         // Every cascade pass has the same attachment layout (no color,
@@ -41,25 +54,34 @@ struct RenderPipelineStateTypeAnimatedVariantTests {
         #expect(RenderPipelineStateType.TiledMSAAGBufferAnimated.animatedVariant == nil)
         #expect(RenderPipelineStateType.TiledDeferredGBufferAnimated.animatedVariant == nil)
         #expect(RenderPipelineStateType.TiledMSAAShadowAnimated.animatedVariant == nil)
+        #expect(RenderPipelineStateType.OpaqueMaterialAnimated.animatedVariant == nil)
+        #expect(RenderPipelineStateType.OrderIndependentTransparentAnimated.animatedVariant == nil)
+        #expect(RenderPipelineStateType.SinglePassDeferredGBufferMaterialAnimated.animatedVariant == nil)
+        #expect(RenderPipelineStateType.SinglePassDeferredTransparencyAnimated.animatedVariant == nil)
     }
 
-    @Test("Families without animated pipelines map to nil, not a cross-family PSO")
-    func familiesWithoutAnimatedPipelinesMapToNil() {
-        #expect(RenderPipelineStateType.OpaqueMaterial.animatedVariant == nil)
-        #expect(RenderPipelineStateType.OrderIndependentTransparent.animatedVariant == nil)
-        #expect(RenderPipelineStateType.SinglePassDeferredGBufferMaterial.animatedVariant == nil)
-        #expect(RenderPipelineStateType.SinglePassDeferredTransparency.animatedVariant == nil)
+    @Test("Non-mesh passes map to nil, not a cross-family PSO")
+    func passesWithoutAnimatedPipelinesMapToNil() {
         #expect(RenderPipelineStateType.Composite.animatedVariant == nil)
         #expect(RenderPipelineStateType.TiledMSAAAverageResolve.animatedVariant == nil)
+        #expect(RenderPipelineStateType.Final.animatedVariant == nil)
+        #expect(RenderPipelineStateType.Blend.animatedVariant == nil)
+        #expect(RenderPipelineStateType.TileRender.animatedVariant == nil)
     }
 
-    @Test("isAnimatedVariant is true for exactly the three animated PSOs")
+    @Test("isAnimatedVariant is true for exactly the animated PSOs")
     func isAnimatedVariantMembership() {
         #expect(RenderPipelineStateType.TiledMSAAGBufferAnimated.isAnimatedVariant)
         #expect(RenderPipelineStateType.TiledDeferredGBufferAnimated.isAnimatedVariant)
         #expect(RenderPipelineStateType.TiledMSAAShadowAnimated.isAnimatedVariant)
+        #expect(RenderPipelineStateType.OpaqueMaterialAnimated.isAnimatedVariant)
+        #expect(RenderPipelineStateType.OrderIndependentTransparentAnimated.isAnimatedVariant)
+        #expect(RenderPipelineStateType.SinglePassDeferredGBufferMaterialAnimated.isAnimatedVariant)
+        #expect(RenderPipelineStateType.SinglePassDeferredTransparencyAnimated.isAnimatedVariant)
         #expect(!RenderPipelineStateType.TiledMSAAGBuffer.isAnimatedVariant)
         #expect(!RenderPipelineStateType.TiledMSAAShadow.isAnimatedVariant)
+        #expect(!RenderPipelineStateType.OpaqueMaterial.isAnimatedVariant)
+        #expect(!RenderPipelineStateType.SinglePassDeferredTransparency.isAnimatedVariant)
         #expect(!RenderPipelineStateType.Final.isAnimatedVariant)
     }
 }

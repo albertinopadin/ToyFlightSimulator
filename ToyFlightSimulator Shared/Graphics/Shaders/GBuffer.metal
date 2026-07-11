@@ -64,6 +64,51 @@ vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ s
     return out;
 }
 
+vertex ColorInOut gbuffer_animated_vertex(VertexIn                   in              [[ stage_in ]],
+                                          constant SceneConstants    &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                          constant ModelConstants    *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                                          constant float4x4          *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
+                                          uint                       instanceId      [[ instance_id ]]) {
+    ModelConstants modelInstance = modelConstants[instanceId];
+    float4 modelPosition = float4(in.position, 1.0);
+    float4 normal = float4(in.normal, 0);
+
+    if (jointMatrices != nullptr) {
+        float4 weights = in.jointWeights;
+        ushort4 joints = in.joints;
+
+        modelPosition = weights.x * (jointMatrices[joints.x] * modelPosition) +
+                weights.y * (jointMatrices[joints.y] * modelPosition) +
+                weights.z * (jointMatrices[joints.z] * modelPosition) +
+                weights.w * (jointMatrices[joints.w] * modelPosition);
+
+        normal = weights.x * (jointMatrices[joints.x] * normal) +
+                weights.y * (jointMatrices[joints.y] * normal) +
+                weights.z * (jointMatrices[joints.z] * normal) +
+                weights.w * (jointMatrices[joints.w] * normal);
+    }
+
+    float4 worldPosition = modelInstance.modelMatrix * modelPosition;
+    float4 eyePosition = sceneConstants.viewMatrix * worldPosition;
+
+    ColorInOut out = {
+        .color = in.color,
+        .objectColor = modelInstance.objectColor,
+        .tex_coord = in.textureCoordinate,
+        .position = sceneConstants.projectionMatrix * eyePosition,
+        .worldPosition = worldPosition.xyz / worldPosition.w,
+        .worldNormal = modelInstance.normalMatrix * normal.xyz,
+        .eye_position = eyePosition.xyz,
+        .tangent = half3(normalize(modelInstance.normalMatrix * in.tangent)),
+        .bitangent = half3(-normalize(modelInstance.normalMatrix * in.bitangent)),
+        .normal = half3(normalize(modelInstance.normalMatrix * normal.xyz)),
+        .instanceId = instanceId,
+        .useObjectColor = modelInstance.useObjectColor
+    };
+
+    return out;
+}
+
 fragment GBufferData gbuffer_fragment_base(ColorInOut           in             [[ stage_in ]],
                                            constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                            constant LightData      &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],

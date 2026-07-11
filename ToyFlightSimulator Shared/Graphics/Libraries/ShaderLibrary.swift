@@ -70,6 +70,9 @@ enum ShaderType {
     // Animated:
     case ShadowAnimatedVertex
     case TiledDeferredGBufferAnimatedVertex
+    case BaseAnimatedVertex
+    case SinglePassDeferredGBufferAnimatedVertex
+    case SinglePassDeferredTransparencyAnimatedVertex
     
     // Compute Shaders:
     case ComputeParticles
@@ -160,6 +163,11 @@ final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable
         
         _library.updateValue(Shader(functionName: "tiled_deferred_gbuffer_animated_vertex"),
                              forKey: .TiledDeferredGBufferAnimatedVertex)
+        _library.updateValue(Shader(functionName: "base_animated_vertex"), forKey: .BaseAnimatedVertex)
+        _library.updateValue(Shader(functionName: "gbuffer_animated_vertex"),
+                             forKey: .SinglePassDeferredGBufferAnimatedVertex)
+        _library.updateValue(Shader(functionName: "single_pass_deferred_transparency_animated_vertex"),
+                             forKey: .SinglePassDeferredTransparencyAnimatedVertex)
         
         // Compute Functions:
         _library.updateValue(Shader(functionName: "compute_particle"), forKey: .ComputeParticles)

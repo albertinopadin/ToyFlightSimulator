@@ -17,15 +17,19 @@ enum RenderPipelineStateType {
     case TileRender
     case Opaque
     case OpaqueMaterial
+    case OpaqueMaterialAnimated
     case OrderIndependentTransparent
+    case OrderIndependentTransparentAnimated
     case Blend
-    
+
     // For Deferred Single-Pass Lighting:
     case ShadowGeneration
     case SinglePassDeferredGBufferBase
     case SinglePassDeferredGBufferMaterial
+    case SinglePassDeferredGBufferMaterialAnimated
     case SinglePassDeferredDirectionalLighting
     case SinglePassDeferredTransparency
+    case SinglePassDeferredTransparencyAnimated
     case LightMask
     case SinglePassDeferredPointLight
     case Skybox
@@ -79,6 +83,14 @@ extension RenderPipelineStateType {
                 return .TiledDeferredGBufferAnimated
             case .TiledMSAAShadow, .TiledDeferredShadow, .ShadowGeneration:
                 return .TiledMSAAShadowAnimated
+            case .OpaqueMaterial:
+                return .OpaqueMaterialAnimated
+            case .OrderIndependentTransparent:
+                return .OrderIndependentTransparentAnimated
+            case .SinglePassDeferredGBufferMaterial:
+                return .SinglePassDeferredGBufferMaterialAnimated
+            case .SinglePassDeferredTransparency:
+                return .SinglePassDeferredTransparencyAnimated
             default:
                 return nil
         }
@@ -86,9 +98,14 @@ extension RenderPipelineStateType {
 
     /// True for exactly the animated PSOs SetupAnimation can have bound.
     var isAnimatedVariant: Bool {
-        self == .TiledMSAAGBufferAnimated
-            || self == .TiledDeferredGBufferAnimated
-            || self == .TiledMSAAShadowAnimated
+        switch self {
+            case .TiledMSAAGBufferAnimated, .TiledDeferredGBufferAnimated, .TiledMSAAShadowAnimated,
+                 .OpaqueMaterialAnimated, .OrderIndependentTransparentAnimated,
+                 .SinglePassDeferredGBufferMaterialAnimated, .SinglePassDeferredTransparencyAnimated:
+                return true
+            default:
+                return false
+        }
     }
 }
 
@@ -104,14 +121,20 @@ final class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRend
         _library.updateValue(TileRenderPipelineState(), forKey: .TileRender)
         _library.updateValue(OpaqueRenderPipelineState(), forKey: .Opaque)
         _library.updateValue(OpaqueMaterialRenderPipelineState(), forKey: .OpaqueMaterial)
+        _library.updateValue(OpaqueMaterialAnimatedRenderPipelineState(), forKey: .OpaqueMaterialAnimated)
         _library.updateValue(OrderIndependentTransparencyRenderPipelineState(), forKey: .OrderIndependentTransparent)
+        _library.updateValue(OrderIndependentTransparencyAnimatedRenderPipelineState(),
+                             forKey: .OrderIndependentTransparentAnimated)
         _library.updateValue(BlendRenderPipelineState(), forKey: .Blend)
         
         _library.updateValue(ShadowGenerationRenderPipelineState(), forKey: .ShadowGeneration)
         _library.updateValue(GBufferGenerationBaseRenderPipelineState(), forKey: .SinglePassDeferredGBufferBase)
         _library.updateValue(GBufferGenerationMaterialRenderPipelineState(), forKey: .SinglePassDeferredGBufferMaterial)
+        _library.updateValue(GBufferGenerationMaterialAnimatedRenderPipelineState(),
+                             forKey: .SinglePassDeferredGBufferMaterialAnimated)
         _library.updateValue(DirectionalLightingRenderPipelineState(), forKey: .SinglePassDeferredDirectionalLighting)
         _library.updateValue(TransparencyPipelineState(), forKey: .SinglePassDeferredTransparency)
+        _library.updateValue(TransparencyAnimatedPipelineState(), forKey: .SinglePassDeferredTransparencyAnimated)
         _library.updateValue(LightMaskRenderPipelineState(), forKey: .LightMask)
         _library.updateValue(PointLightingRenderPipelineState(), forKey: .SinglePassDeferredPointLight)
         _library.updateValue(SkyboxRenderPipelineState(), forKey: .Skybox)

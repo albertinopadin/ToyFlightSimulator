@@ -42,6 +42,51 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
     return rd;
 }
 
+vertex RasterizerData base_animated_vertex(const VertexIn vIn [[ stage_in ]],
+                                           constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                           constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                                           constant float4x4 *jointMatrices [[ buffer(TFSBufferIndexJointBuffer) ]],
+                                           uint instanceId [[ instance_id ]]) {
+    ModelConstants modelInstance = modelConstants[instanceId];
+    float4 position = float4(vIn.position, 1);
+    float4 normal = float4(vIn.normal, 0);
+
+    if (jointMatrices != nullptr) {
+        float4 weights = vIn.jointWeights;
+        ushort4 joints = vIn.joints;
+
+        position = weights.x * (jointMatrices[joints.x] * position) +
+                weights.y * (jointMatrices[joints.y] * position) +
+                weights.z * (jointMatrices[joints.z] * position) +
+                weights.w * (jointMatrices[joints.w] * position);
+
+        normal = weights.x * (jointMatrices[joints.x] * normal) +
+                weights.y * (jointMatrices[joints.y] * normal) +
+                weights.z * (jointMatrices[joints.z] * normal) +
+                weights.w * (jointMatrices[joints.w] * normal);
+    }
+
+    float4 worldPosition = modelInstance.modelMatrix * position;
+
+    RasterizerData rd = {
+        // Order of matrix multiplication is important here:
+        .position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition,
+        .color = vIn.color,
+        .objectColor = modelInstance.objectColor,
+        .textureCoordinate = vIn.textureCoordinate,
+        .totalGameTime = sceneConstants.totalGameTime,
+        .worldPosition = worldPosition.xyz,
+        .toCameraVector = sceneConstants.cameraPosition - worldPosition.xyz,
+        .surfaceNormal = normalize(modelInstance.modelMatrix * float4(normal.xyz, 1.0)).xyz,
+        .surfaceTangent = normalize(modelInstance.modelMatrix * float4(vIn.tangent, 1.0)).xyz,
+        .surfaceBitangent = normalize(modelInstance.modelMatrix * float4(vIn.bitangent, 1.0)).xyz,
+        .instanceId = instanceId,
+        .useObjectColor = modelInstance.useObjectColor
+    };
+
+    return rd;
+}
+
 fragment FragmentOutput base_fragment(RasterizerData rd [[ stage_in ]]) {
     float4 color = rd.color;
     float3 unitNormal = normalize(rd.surfaceNormal);

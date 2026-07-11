@@ -60,6 +60,20 @@ struct GBufferGenerationMaterialRenderPipelineState: RenderPipelineState {
     }()
 }
 
+struct GBufferGenerationMaterialAnimatedRenderPipelineState: RenderPipelineState {
+    var renderPipelineState: MTLRenderPipelineState = {
+        createRenderPipelineState(label: "GBuffer Generation Animated Stage") { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
+            descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredGBufferAnimatedVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredGBufferFragmentMaterial]
+            descriptor.depthAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
+            descriptor.stencilAttachmentPixelFormat = Preferences.MainDepthStencilPixelFormat
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
+            Self.setRenderTargetPixelFormatsForSinglePassDeferredPipeline(descriptor: descriptor)
+        }
+    }()
+}
+
 struct DirectionalLightingRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Directional Lighting Stage") { descriptor in
@@ -78,6 +92,21 @@ struct TransparencyPipelineState: RenderPipelineState {
         createRenderPipelineState(label: "Transparency Stage") { descriptor in
             descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
             descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredTransparencyVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredTransparencyFragment]
+            descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
+            Self.setRenderTargetPixelFormatsForSinglePassDeferredPipeline(descriptor: descriptor)
+            descriptor.depthAttachmentPixelFormat = .depth32Float_stencil8
+            descriptor.stencilAttachmentPixelFormat = .depth32Float_stencil8
+            Self.enableBlending(colorAttachmentDescriptor: descriptor.colorAttachments[TFSRenderTargetLighting.index])
+        }
+    }()
+}
+
+struct TransparencyAnimatedPipelineState: RenderPipelineState {
+    var renderPipelineState: MTLRenderPipelineState = {
+        createRenderPipelineState(label: "Transparency Animated Stage") { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
+            descriptor.vertexFunction = Graphics.Shaders[.SinglePassDeferredTransparencyAnimatedVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.SinglePassDeferredTransparencyFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             Self.setRenderTargetPixelFormatsForSinglePassDeferredPipeline(descriptor: descriptor)

@@ -34,6 +34,48 @@ single_pass_deferred_transparency_vertex(   VertexIn       in              [[ st
     return out;
 }
 
+vertex VertexOut
+single_pass_deferred_transparency_animated_vertex(   VertexIn       in              [[ stage_in ]],
+                                            constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                            constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                                            constant float4x4       *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
+                                            uint                    instanceId      [[ instance_id ]]) {
+    ModelConstants modelInstance = modelConstants[instanceId];
+    float4 modelPosition = float4(in.position, 1);
+    float4 normal = float4(in.normal, 0);
+
+    if (jointMatrices != nullptr) {
+        float4 weights = in.jointWeights;
+        ushort4 joints = in.joints;
+
+        modelPosition = weights.x * (jointMatrices[joints.x] * modelPosition) +
+                weights.y * (jointMatrices[joints.y] * modelPosition) +
+                weights.z * (jointMatrices[joints.z] * modelPosition) +
+                weights.w * (jointMatrices[joints.w] * modelPosition);
+
+        normal = weights.x * (jointMatrices[joints.x] * normal) +
+                weights.y * (jointMatrices[joints.y] * normal) +
+                weights.z * (jointMatrices[joints.z] * normal) +
+                weights.w * (jointMatrices[joints.w] * normal);
+    }
+
+    float4 worldPosition = modelInstance.modelMatrix * modelPosition;
+
+    VertexOut out {
+        .position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition,
+        .normal = normal.xyz,
+        .uv = in.textureCoordinate,
+        .worldPosition = worldPosition.xyz / worldPosition.w,
+        .worldNormal = modelInstance.normalMatrix * normal.xyz,
+        .worldTangent = modelInstance.normalMatrix * in.tangent,
+        .worldBitangent = modelInstance.normalMatrix * in.bitangent,
+        .instanceId = instanceId,
+        .objectColor = modelInstance.objectColor,
+        .useObjectColor = modelInstance.useObjectColor
+    };
+    return out;
+}
+
 fragment float4
 single_pass_deferred_transparency_fragment(   VertexOut                          in                  [[ stage_in ]],
                                      constant MaterialProperties                 &material           [[ buffer(TFSBufferIndexMaterial) ]],

@@ -66,6 +66,17 @@ struct OpaqueMaterialRenderPipelineState: RenderPipelineState {
     }()
 }
 
+struct OpaqueMaterialAnimatedRenderPipelineState: RenderPipelineState {
+    var renderPipelineState: MTLRenderPipelineState = {
+        let renderPipelineDescriptor = Self.GetOpaqueRenderPipelineDescriptor(vertexDescriptorType: .Simple,
+                                                                              vertexShaderType: .BaseAnimatedVertex,
+                                                                              fragmentShaderType: .MaterialFragment)
+
+        renderPipelineDescriptor.label = "Opaque Material Animated Render"
+        return createRenderPipelineState(descriptor: renderPipelineDescriptor)
+    }()
+}
+
 struct OrderIndependentTransparencyRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Transparent Render") { descriptor in
@@ -77,6 +88,23 @@ struct OrderIndependentTransparencyRenderPipelineState: RenderPipelineState {
             descriptor.colorAttachments[0].writeMask = MTLColorWriteMask(rawValue: 0)
             descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
             
+            descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
+            descriptor.stencilAttachmentPixelFormat = .invalid
+        }
+    }()
+}
+
+struct OrderIndependentTransparencyAnimatedRenderPipelineState: RenderPipelineState {
+    var renderPipelineState: MTLRenderPipelineState = {
+        createRenderPipelineState(label: "Transparent Animated Render") { descriptor in
+            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
+            descriptor.vertexFunction = Graphics.Shaders[.BaseAnimatedVertex]
+            descriptor.fragmentFunction = Graphics.Shaders[.TransparentMaterialFragment]
+
+            descriptor.colorAttachments[0].isBlendingEnabled = false
+            descriptor.colorAttachments[0].writeMask = MTLColorWriteMask(rawValue: 0)
+            descriptor.colorAttachments[0].pixelFormat = Preferences.MainPixelFormat
+
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
             descriptor.stencilAttachmentPixelFormat = .invalid
         }
