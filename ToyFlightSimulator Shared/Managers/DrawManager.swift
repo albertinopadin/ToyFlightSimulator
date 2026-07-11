@@ -212,23 +212,24 @@ final class DrawManager {
         }
     }
     
-    static func SetupAnimation(_ renderEncoder: MTLRenderCommandEncoder,
-                               mesh: Mesh,
-                               animationPipelineStateType: RenderPipelineStateType = .TiledMSAAGBufferAnimated) {
+    static func SetupAnimation(_ renderEncoder: MTLRenderCommandEncoder, mesh: Mesh) {
         if let paletteBuffer = mesh.skin?.jointMatrixPaletteBuffer {
             renderEncoder.setVertexBuffer(paletteBuffer,
                                           offset: 0,
                                           index: TFSBufferIndexJointBuffer.index)
-            
-            // Hack for now to set the proper PSO:
-            if RenderState.CurrentPipelineStateType != animationPipelineStateType {
-                RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
-                RenderState.CurrentPipelineStateType = animationPipelineStateType
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[animationPipelineStateType])
-            }
+
+            // Hack for now to set the proper PSO: derive the animated variant
+            // from the pass PSO the renderer bound via the tracked
+            // setRenderPipelineState(_:state:) helper. nil variant means the
+            // pass PSO is already an animated one (keep it) or the renderer
+            // family has no animated pipelines (OIT, SinglePassDeferred) —
+            // then the mesh draws in bind pose with the pass PSO.
+            guard let animated = RenderState.CurrentPipelineStateType.animatedVariant else { return }
+            RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
+            RenderState.CurrentPipelineStateType = animated
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[animated])
         } else {
-            // TODO: Will only work with Tiled renderer for now:
-            if RenderState.CurrentPipelineStateType == animationPipelineStateType {
+            if RenderState.CurrentPipelineStateType.isAnimatedVariant {
                 renderEncoder.setVertexBuffer(nil,
                                               offset: 0,
                                               index: TFSBufferIndexJointBuffer.index)
@@ -245,7 +246,7 @@ final class DrawManager {
         let snapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
         for (model, region) in snapshot {
             for meshData in region.meshDatas {
-                SetupAnimation(renderEncoder, mesh: meshData.mesh, animationPipelineStateType: .TiledMSAAShadowAnimated)
+                SetupAnimation(renderEncoder, mesh: meshData.mesh)
                 DrawFromRingBuffer(renderEncoder,
                                    model: model,
                                    region: region,

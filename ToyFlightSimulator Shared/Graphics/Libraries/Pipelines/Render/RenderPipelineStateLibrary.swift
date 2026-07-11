@@ -61,6 +61,37 @@ enum RenderPipelineStateType {
     case TessellationGBuffer
 }
 
+extension RenderPipelineStateType {
+    /// Skinned-mesh variant of a pass PSO, nil when the pass has none.
+    /// DrawManager.SetupAnimation derives its PSO swap from this so every
+    /// renderer family binds an attachment-compatible animated pipeline
+    /// (a hardcoded MSAA-family type bound 4x/shadow PSOs into mismatched
+    /// passes — the renderer-switch validation assert).
+    /// Transparency stages map to the GBuffer-animated PSO because they run
+    /// in the same tile encoder with the same attachments. All shadow passes
+    /// share one animated PSO: every cascade pass has the same attachment
+    /// layout (no color, depth32Float, sample count 1).
+    var animatedVariant: RenderPipelineStateType? {
+        switch self {
+            case .TiledMSAAGBuffer, .TiledMSAATransparency:
+                return .TiledMSAAGBufferAnimated
+            case .TiledDeferredGBuffer, .TiledDeferredTransparency:
+                return .TiledDeferredGBufferAnimated
+            case .TiledMSAAShadow, .TiledDeferredShadow, .ShadowGeneration:
+                return .TiledMSAAShadowAnimated
+            default:
+                return nil
+        }
+    }
+
+    /// True for exactly the animated PSOs SetupAnimation can have bound.
+    var isAnimatedVariant: Bool {
+        self == .TiledMSAAGBufferAnimated
+            || self == .TiledDeferredGBufferAnimated
+            || self == .TiledMSAAShadowAnimated
+    }
+}
+
 final class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState>, @unchecked Sendable {
     private var _library: [RenderPipelineStateType: RenderPipelineState] = [:]
     

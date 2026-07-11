@@ -58,13 +58,16 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
             MainActor.assumeIsolated {
                 mv.depthStencilPixelFormat = .depth32Float
                 mv.clearDepth = Preferences.MainClearDepth
+                // The MTKView is reused across runtime renderer switches; a
+                // non-MSAA renderer may have left sampleCount = 1 on it.
+                mv.sampleCount = Self.sampleCount
             }
 
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
             updateDrawableSize(size: drawableSize)
         }
     }
-    
+
     init() {
         shadowMapArray = Self.makeShadowMapArray(label: "Shadow Texture Array")
         shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowArray: shadowMapArray)
@@ -79,7 +82,10 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBuffer])
+            // Tracked bind: keeps RenderState truthful for SetupAnimation's
+            // PSO swap/restore during DrawOpaque (raw binds here restored the
+            // shadow PSO into this 4x pass — the renderer-switch assert).
+            setRenderPipelineState(renderEncoder, state: .TiledMSAAGBuffer)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             renderEncoder.setFragmentTexture(shadowMapArray, index: TFSTextureIndexShadow.index)
             DrawManager.DrawOpaque(with: renderEncoder)
@@ -96,7 +102,7 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     
     func encodeDirectionalLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Directional Light Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAADirectionalLight])
+            setRenderPipelineState(renderEncoder, state: .TiledMSAADirectionalLight)
             // Draw full screen quad
             renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
         }
@@ -108,7 +114,7 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     
     func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAATransparency])
+            setRenderPipelineState(renderEncoder, state: .TiledMSAATransparency)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             DrawManager.DrawTransparent(with: renderEncoder)
         }
@@ -116,7 +122,7 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     
     func encodeMSAAResolveStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "MSAA Resolve Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAAverageResolve])
+            setRenderPipelineState(renderEncoder, state: .TiledMSAAAverageResolve)
             renderEncoder.dispatchThreadsPerTile(MTLSize(width: 16, height: 16, depth: 1))
         }
     }
@@ -124,9 +130,6 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     var firstRun: Bool = true
 
     override func draw(in view: MTKView) {
-        // TODO: Why not put this in the metalView didSet...?
-        view.sampleCount = Self.sampleCount
-
         if firstRun {
             let screenSize = CGSize(width: CGFloat(Renderer.ScreenSize.x),
                                     height: CGFloat(Renderer.ScreenSize.y))

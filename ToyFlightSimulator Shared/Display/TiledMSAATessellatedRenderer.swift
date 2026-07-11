@@ -64,6 +64,9 @@ final class TiledMSAATessellatedRenderer:   Renderer,
             MainActor.assumeIsolated {
                 mv.depthStencilPixelFormat = .depth32Float
                 mv.clearDepth = Preferences.MainClearDepth
+                // The MTKView is reused across runtime renderer switches; a
+                // non-MSAA renderer may have left sampleCount = 1 on it.
+                mv.sampleCount = Self.sampleCount
             }
 
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
@@ -136,8 +139,6 @@ final class TiledMSAATessellatedRenderer:   Renderer,
     var firstRun: Bool = true
 
     override func draw(in view: MTKView) {
-        view.sampleCount = Self.sampleCount
-
         if firstRun {
             let screenSize = CGSize(width: CGFloat(Renderer.ScreenSize.x),
                                     height: CGFloat(Renderer.ScreenSize.y))

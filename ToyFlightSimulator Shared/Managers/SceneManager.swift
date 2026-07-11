@@ -211,6 +211,11 @@ final class SceneManager {
         // cache) so stale keys don't linger across scene loads:
         DrawManager.ClearFrameCaches()
 
+        // The animation PSO-switching workaround tracks bound pipelines in
+        // global RenderState; reset it so the next renderer's first frame
+        // can't restore a pipeline the old renderer left behind.
+        RenderState.Reset()
+
         // Release parent MDLAssets retained only for single-submesh extraction
         // (e.g. the FA-18F). Already-extracted submeshes live in the library's
         // own cache, so this reclaims the source geometry/textures without forcing

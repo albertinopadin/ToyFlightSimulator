@@ -16,6 +16,17 @@ final class OITRenderer: Renderer, @unchecked Sendable {
     
     override var metalView: MTKView {
         didSet {
+            let mv = metalView
+            MainActor.assumeIsolated {
+                // The final pass renders through view.currentRenderPassDescriptor,
+                // and the .Final PSO bakes single-sample color with NO depth
+                // attachment — undo whatever sampleCount/depth format a previous
+                // (tiled/MSAA) renderer left on the reused MTKView. Matches the
+                // fresh-launch view state OIT has always required (see the
+                // depth32Float_stencil8 note in Engine.InitRenderer).
+                mv.sampleCount = 1
+                mv.depthStencilPixelFormat = .invalid
+            }
             createForwardRenderPassDescriptor(screenWidth: Int(Renderer.ScreenSize.x),
                                               screenHeight: Int(Renderer.ScreenSize.y))
         }
@@ -73,7 +84,10 @@ final class OITRenderer: Renderer, @unchecked Sendable {
     func drawOpaqueObjects(with renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Opaque Object Rendering") {
             renderEncoder.setCullMode(.none)
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OpaqueMaterial])
+            // Tracked bind: keeps RenderState truthful for SetupAnimation
+            // during DrawOpaque (no OIT animated variant exists, so skinned
+            // meshes keep this PSO and draw in bind pose).
+            setRenderPipelineState(renderEncoder, state: .OpaqueMaterial)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserOrEqualWrite])
             DrawManager.DrawOpaque(with: renderEncoder)
             DrawManager.DrawSky(with: renderEncoder)
@@ -83,7 +97,7 @@ final class OITRenderer: Renderer, @unchecked Sendable {
     func drawTransparentObjects(with renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
             renderEncoder.setCullMode(.none)
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.OrderIndependentTransparent])
+            setRenderPipelineState(renderEncoder, state: .OrderIndependentTransparent)
 //            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Blend])
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserOrEqualNoWrite])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserNoWrite])
@@ -96,7 +110,7 @@ final class OITRenderer: Renderer, @unchecked Sendable {
                    using: _forwardRenderPassDescriptor,
                    label: "Order Independent Transparency Render Pass") { renderEncoder in
             encodeRenderStage(using: renderEncoder, label: "[Tile Render] Init Image Block") {
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TileRender])
+                setRenderPipelineState(renderEncoder, state: .TileRender)
                 renderEncoder.dispatchThreadsPerTile(_optimalTileSize)
             }
             
@@ -106,7 +120,7 @@ final class OITRenderer: Renderer, @unchecked Sendable {
             drawTransparentObjects(with: renderEncoder)
             
             encodeRenderStage(using: renderEncoder, label: "Blend Fragments") {
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Blend])
+                setRenderPipelineState(renderEncoder, state: .Blend)
                 renderEncoder.setCullMode(.none)
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.AlwaysNoWrite])
                 // Draw full screen quad:
@@ -119,7 +133,7 @@ final class OITRenderer: Renderer, @unchecked Sendable {
     func finalRenderPass(renderPassDescriptor: MTLRenderPassDescriptor, commandBuffer: MTLCommandBuffer) {
         encodeRenderPass(into: commandBuffer, using: renderPassDescriptor, label: "Final Render Pass") { renderEncoder in
             encodeRenderStage(using: renderEncoder, label: "Final Render") {
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Final])
+                setRenderPipelineState(renderEncoder, state: .Final)
                 renderEncoder.setFragmentTexture(Assets.Textures[.BaseColorRender_0], index: 0)
                 DrawManager.DrawFullScreenQuad(with: renderEncoder)
             }

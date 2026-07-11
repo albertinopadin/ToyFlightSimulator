@@ -47,6 +47,9 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
             MainActor.assumeIsolated {
                 mv.depthStencilPixelFormat = .depth32Float
                 mv.clearDepth = Preferences.MainClearDepth
+                // The MTKView is reused across runtime renderer switches; an
+                // MSAA renderer may have left sampleCount = 4 on it.
+                mv.sampleCount = 1
             }
 
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
@@ -68,7 +71,10 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredGBuffer])
+            // Tracked bind: keeps RenderState truthful for SetupAnimation's
+            // PSO swap/restore during DrawOpaque (raw binds here restored the
+            // shadow PSO into this pass — the renderer-switch assert).
+            setRenderPipelineState(renderEncoder, state: .TiledDeferredGBuffer)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             renderEncoder.setFragmentTexture(shadowMapArray, index: TFSTextureIndexShadow.index)
             DrawManager.DrawOpaque(with: renderEncoder)
@@ -85,7 +91,7 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
     
     func encodeDirectionalLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Directional Light Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredDirectionalLight])
+            setRenderPipelineState(renderEncoder, state: .TiledDeferredDirectionalLight)
             // Draw full screen quad
             renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
         }
@@ -95,7 +101,7 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
         let pointLightCount = LightManager.PointLightCount
         if pointLightCount > 0 {
             encodeRenderStage(using: renderEncoder, label: "Point Light Stage") {
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredPointLight])
+                setRenderPipelineState(renderEncoder, state: .TiledDeferredPointLight)
                 guard let mesh = self.icosahedron._metalKitMesh,
                       let submesh = self.icosahedron.submeshes.first else {
                     print("No icosahedron mesh or submesh found.")
@@ -116,7 +122,7 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
     
     func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledDeferredTransparency])
+            setRenderPipelineState(renderEncoder, state: .TiledDeferredTransparency)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             DrawManager.DrawTransparent(with: renderEncoder)
         }

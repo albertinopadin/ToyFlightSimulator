@@ -86,8 +86,9 @@ Do not restore the old “signal before and after render” behavior; it caused 
 - Shared mixins live in `Display/Protocols/`: `RenderPassEncoding`, `ComputePassEncoding`, `BaseRendering`, `ShadowRendering`, `ParticleRendering`, `TessellationRendering`, `TiledGBufferRendering`, and `LateDrawablePresenting`.
 - Deferred renderers encode three command buffers per frame: shadow cascades, offscreen GBuffer/lighting/transparency work, then a late drawable composite/present. They render into an app-owned `lightingResolveTexture` and acquire `currentDrawable` only for the final pass.
 - Both active platform wrappers keep `framebufferOnly = true`. Any post-process/readback must sample an app-owned intermediate (`lightingResolveTexture` for deferred renderers, the OIT base-color target for OIT), not the drawable.
+- The MTKView is reused across runtime renderer switches, so each renderer's `metalView.didSet` (re)applies its full view configuration: depth format, clear depth, and `sampleCount` (4 for the two MSAA renderers, 1 otherwise; OIT also resets `depthStencilPixelFormat` to `.invalid` because its final-pass PSO has no depth attachment). Do not set these per frame in `draw(in:)`.
 - `ShadowRendering` owns one `depth32Float` 2D-array texture: four 4096×4096 slices, one render pass per cascade. `ShadowCascadeFitting` uses PSSM splits (λ 0.5), rotation-invariant bounding spheres, world-space texel snapping, and an overhead-sun-safe basis. Sampling uses 5×5 PCF, slope-scaled world-space bias, and a 10% cascade cross-fade.
-- `RenderState` globally tracks current/previous pipeline state for the current animation PSO-switching workaround. Treat it as a hack when changing pass ordering or adding animated pipelines.
+- `RenderState` globally tracks current/previous pipeline state for the animation PSO-switching workaround. Invariant: every per-pass PSO bind goes through the tracked `setRenderPipelineState(_:state:)` helper — a raw `renderEncoder.setRenderPipelineState` desyncs `DrawManager.SetupAnimation`, which derives each pass's skinned-mesh pipeline from `RenderState.CurrentPipelineStateType.animatedVariant` and restores the previous PSO afterward. `SceneManager.TeardownScene` resets the tracker. OIT/SinglePass have no animated variants, so skinned meshes render in bind pose there.
 
 ## Draw Path and Hot-Path Constraints
 
@@ -191,7 +192,7 @@ Do not restore the old “signal before and after render” behavior; it caused 
 - Reverse-Z main depth and forward-Z shadow depth deliberately coexist.
 - `framebufferOnly = true` is intentional; changing it hides architectural misuse of the drawable and costs performance.
 - OIT has separate render-target behavior and does not conform to `LateDrawablePresenting`; do not assume every renderer shares the same pass flow.
-- The current animation pipeline switching uses global mutable `RenderState`; runtime verification is required after PSO changes.
+- The animation pipeline switching uses global mutable `RenderState`; bind pass PSOs only via the tracked `setRenderPipelineState(_:state:)` helper — a raw encoder bind desyncs `SetupAnimation`'s swap/restore (the old renderer-switch shadow-PSO assert). Runtime verification is still required after PSO changes.
 - F-18 extracted meshes are cached and mutated for pivots. Preserve private-buffer and idempotent-origin invariants.
 - Several TODO/hack comments document live limitations. Avoid broad “cleanup” passes without targeted tests and runtime/GPU validation.
 

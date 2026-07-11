@@ -1,6 +1,6 @@
 # Renderer-Switch Crash: Stale `RenderState` Binds a Shadow PSO into the GBuffer Pass
 
-Status: **investigation complete, fix proposed — awaiting review** (2026-07-11). No code changed.
+Status: **implemented** (2026-07-11), including the sticky `view.sampleCount` latent issue. Implementation notes: all three fix parts landed as proposed; the "optional consistency" raw binds (`ParticleRendering.swift:26`, `DrawSky`'s bind in `DrawManager`) were left raw — no `SetupAnimation`-bearing loop follows them within a pass, and `DrawManager` has no access to the instance-side tracked helper. The view-config fix moved `view.sampleCount` into every renderer's `metalView.didSet` (4 for MSAA, 1 otherwise) and removed the per-frame sets from `draw(in:)`; OIT's new `didSet` also resets `depthStencilPixelFormat` to `.invalid`, confirmed against `FinalRenderPipelineState`, which bakes single-sample color and no depth attachment. Manual switch-matrix verification below still pending (user-driven).
 
 ## Summary
 

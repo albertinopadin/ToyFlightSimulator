@@ -231,7 +231,7 @@ Shadow map storage: one `depth32Float` `texture2DArray`, 4096² × 4 slices. `Sh
 2. Add enum case to `RenderPipelineStateType`
 3. Create pipeline state struct in relevant pipeline library file
 4. Register in `RenderPipelineStateLibrary.makeLibrary()`
-5. Use in renderer via `setRenderPipelineState(encoder, state: .NewType)`
+5. Use in renderer via `setRenderPipelineState(encoder, state: .NewType)` — the tracked helper is mandatory for pass PSOs; a raw `renderEncoder.setRenderPipelineState` desyncs the `RenderState` tracker that `DrawManager.SetupAnimation` uses to swap/restore animated pipelines
 
 ### Adding New Models
 1. Place model files in `Core/Resources/Models/`

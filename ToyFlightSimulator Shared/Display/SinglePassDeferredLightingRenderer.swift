@@ -59,6 +59,9 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
             MainActor.assumeIsolated {
                 mv.depthStencilPixelFormat = .depth32Float_stencil8
                 mv.clearDepth = Preferences.MainClearDepth
+                // The MTKView is reused across runtime renderer switches; an
+                // MSAA renderer may have left sampleCount = 4 on it.
+                mv.sampleCount = 1
             }
             let drawableSize = CGSize(width: Double(Renderer.ScreenSize.x), height: Double(Renderer.ScreenSize.y))
             updateDrawableSize(size: drawableSize)
@@ -100,7 +103,9 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "GBuffer Generation Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredGBufferMaterial])
+            // Tracked bind: keeps RenderState truthful for SetupAnimation
+            // during DrawOpaque (see RenderPassEncoding.setRenderPipelineState).
+            setRenderPipelineState(renderEncoder, state: .SinglePassDeferredGBufferMaterial)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.GBufferGeneration])
             // NOTE: For some reason, setting cull mode to back makes meshes appear 'extruded' or turned inside out.
 //            renderEncoder.setCullMode(.back)
@@ -112,7 +117,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
 
     func encodeDirectionalLightingStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Directional Lighting Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredDirectionalLighting])
+            setRenderPipelineState(renderEncoder, state: .SinglePassDeferredDirectionalLighting)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DirectionalLighting])
             renderEncoder.setCullMode(.back)
             renderEncoder.setStencilReferenceValue(128)
@@ -128,7 +133,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
     // TODO: Need to create proper RPS and DSS:
     func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredTransparency])
+            setRenderPipelineState(renderEncoder, state: .SinglePassDeferredTransparency)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             DrawManager.DrawTransparent(with: renderEncoder)
         }
@@ -136,7 +141,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
 
     func encodeLightMaskStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Point Light Mask Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.LightMask])
+            setRenderPipelineState(renderEncoder, state: .LightMask)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.LightMask])
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setCullMode(.front)
@@ -148,7 +153,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
     
     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Point Light Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.SinglePassDeferredPointLight])
+            setRenderPipelineState(renderEncoder, state: .SinglePassDeferredPointLight)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])  // <--- This is causing issues
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserWrite])
             renderEncoder.setStencilReferenceValue(128)
@@ -161,7 +166,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
     
     func encodeSkyboxStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Skybox Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Skybox])
+            setRenderPipelineState(renderEncoder, state: .Skybox)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.Skybox])
 //            renderEncoder.setCullMode(.front)
             renderEncoder.setCullMode(.back)  //<-- This or not setting the cull mode works. WTF?
@@ -172,7 +177,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
     // For testing:
     func encodeIcosahedronStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Icosahedron Stage") {
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Icosahedron])
+            setRenderPipelineState(renderEncoder, state: .Icosahedron)
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserWrite])
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DepthWriteDisabled])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.PointLight])
