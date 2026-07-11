@@ -82,13 +82,11 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
-            // Tracked bind: keeps RenderState truthful for SetupAnimation's
-            // PSO swap/restore during DrawOpaque (raw binds here restored the
-            // shadow PSO into this 4x pass — the renderer-switch assert).
-            setRenderPipelineState(renderEncoder, state: .TiledMSAAGBuffer)
+            let psoType: RenderPipelineStateType = .TiledMSAAGBuffer
+            setRenderPipelineState(renderEncoder, state: psoType)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             renderEncoder.setFragmentTexture(shadowMapArray, index: TFSTextureIndexShadow.index)
-            DrawManager.DrawOpaque(with: renderEncoder)
+            DrawManager.DrawOpaque(with: renderEncoder, psoType: psoType)
         }
     }
     
@@ -114,9 +112,10 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     
     func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
-            setRenderPipelineState(renderEncoder, state: .TiledMSAATransparency)
+            let psoType: RenderPipelineStateType = .TiledMSAATransparency
+            setRenderPipelineState(renderEncoder, state: psoType)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            DrawManager.DrawTransparent(with: renderEncoder)
+            DrawManager.DrawTransparent(with: renderEncoder, psoType: psoType)
         }
     }
     

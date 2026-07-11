@@ -84,12 +84,10 @@ final class OITRenderer: Renderer, @unchecked Sendable {
     func drawOpaqueObjects(with renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Opaque Object Rendering") {
             renderEncoder.setCullMode(.none)
-            // Tracked bind: keeps RenderState truthful for SetupAnimation
-            // during DrawOpaque (no OIT animated variant exists, so skinned
-            // meshes keep this PSO and draw in bind pose).
-            setRenderPipelineState(renderEncoder, state: .OpaqueMaterial)
+            let psoType: RenderPipelineStateType = .OpaqueMaterial
+            setRenderPipelineState(renderEncoder, state: psoType)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserOrEqualWrite])
-            DrawManager.DrawOpaque(with: renderEncoder)
+            DrawManager.DrawOpaque(with: renderEncoder, psoType: psoType)
             DrawManager.DrawSky(with: renderEncoder)
         }
     }
@@ -97,11 +95,12 @@ final class OITRenderer: Renderer, @unchecked Sendable {
     func drawTransparentObjects(with renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
             renderEncoder.setCullMode(.none)
-            setRenderPipelineState(renderEncoder, state: .OrderIndependentTransparent)
+            let psoType: RenderPipelineStateType = .OrderIndependentTransparent
+            setRenderPipelineState(renderEncoder, state: psoType)
 //            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.Blend])
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserOrEqualNoWrite])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserNoWrite])
-            DrawManager.DrawTransparent(with: renderEncoder)
+            DrawManager.DrawTransparent(with: renderEncoder, psoType: psoType)
         }
     }
     

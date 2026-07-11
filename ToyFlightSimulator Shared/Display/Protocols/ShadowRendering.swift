@@ -82,8 +82,7 @@ extension ShadowRendering {
     /// handles bias without Peter-panning thin aircraft shadows.
     private func encodeCascadePasses(into commandBuffer: MTLCommandBuffer,
                                      pipeline: RenderPipelineStateType,
-                                     depthStencil: DepthStencilStateType,
-                                     draw: @escaping (MTLRenderCommandEncoder) -> Void) {
+                                     depthStencil: DepthStencilStateType) {
         var vps = cascadeViewProjections()
         guard !vps.isEmpty else { return }
 
@@ -97,33 +96,21 @@ extension ShadowRendering {
                     renderEncoder.setVertexBytes(&vps[i],
                                                  length: float4x4.stride,
                                                  index: TFSBufferIndexShadowCascadeVP.index)
-                    draw(renderEncoder)
+                    DrawManager.DrawShadows(with: renderEncoder, psoType: pipeline)
                 }
             }
         }
     }
 
     func encodeShadowMapPass(into commandBuffer: MTLCommandBuffer) {
-        encodeCascadePasses(into: commandBuffer,
-                            pipeline: .ShadowGeneration,
-                            depthStencil: .ShadowGeneration) { renderEncoder in
-            DrawManager.DrawShadows(with: renderEncoder)
-        }
+        encodeCascadePasses(into: commandBuffer, pipeline: .ShadowGeneration, depthStencil: .ShadowGeneration)
     }
 
     func encodeShadowPassTiledDeferred(into commandBuffer: MTLCommandBuffer) {
-        encodeCascadePasses(into: commandBuffer,
-                            pipeline: .TiledDeferredShadow,
-                            depthStencil: .TiledDeferredShadow) { renderEncoder in
-            DrawManager.DrawShadows(with: renderEncoder)
-        }
+        encodeCascadePasses(into: commandBuffer, pipeline: .TiledDeferredShadow, depthStencil: .TiledDeferredShadow)
     }
 
     func encodeMSAAShadowPass(into commandBuffer: MTLCommandBuffer) {
-        encodeCascadePasses(into: commandBuffer,
-                            pipeline: .TiledMSAAShadow,
-                            depthStencil: .TiledDeferredShadow) { renderEncoder in
-            DrawManager.DrawShadows(with: renderEncoder)
-        }
+        encodeCascadePasses(into: commandBuffer, pipeline: .TiledMSAAShadow, depthStencil: .TiledDeferredShadow)
     }
 }

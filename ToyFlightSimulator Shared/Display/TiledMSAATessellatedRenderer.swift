@@ -88,11 +88,11 @@ final class TiledMSAATessellatedRenderer:   Renderer,
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Tiled GBuffer Stage") {
-//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAGBuffer])
-            setRenderPipelineState(renderEncoder, state: .TiledMSAAGBuffer)
+            let psoType: RenderPipelineStateType = .TiledMSAAGBuffer
+            setRenderPipelineState(renderEncoder, state: psoType)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
             renderEncoder.setFragmentTexture(shadowMapArray, index: TFSTextureIndexShadow.index)
-            DrawManager.DrawOpaque(with: renderEncoder)
+            DrawManager.DrawOpaque(with: renderEncoder, psoType: psoType)
         }
     }
     
@@ -119,12 +119,12 @@ final class TiledMSAATessellatedRenderer:   Renderer,
     
     func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
-//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAATransparency])
-            setRenderPipelineState(renderEncoder, state: .TiledMSAATransparency)
+            let psoType: RenderPipelineStateType = .TiledMSAATransparency
+            setRenderPipelineState(renderEncoder, state: psoType)
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
 //            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserNoWrite])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredTransparency])
-            DrawManager.DrawTransparent(with: renderEncoder)
+            DrawManager.DrawTransparent(with: renderEncoder, psoType: psoType)
         }
     }
     

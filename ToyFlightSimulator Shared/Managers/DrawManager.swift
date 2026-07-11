@@ -148,7 +148,9 @@ final class DrawManager {
     }
     
     // Draw opaque objects from pre-written ring buffer snapshots (no allocation, no lock):
-    static func DrawOpaque(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
+    static func DrawOpaque(with renderEncoder: MTLRenderCommandEncoder,
+                           psoType: RenderPipelineStateType,
+                           applyMaterials: Bool = true) {
         renderEncoder.setFrontFacing(.clockwise)
         renderEncoder.setCullMode(.back)
 
@@ -156,11 +158,15 @@ final class DrawManager {
             bindLinearSampler(renderEncoder)
         }
 
+        var animatedPSOBound = false
         let snapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
         for (model, region) in snapshot {
             for meshData in region.meshDatas {
                 if !meshData.opaqueSubmeshes.isEmpty {
-                    SetupAnimation(renderEncoder, mesh: meshData.mesh)
+                    SetupAnimation(renderEncoder,
+                                   mesh: meshData.mesh,
+                                   psoType: psoType,
+                                   animatedPSOBound: &animatedPSOBound)
                     DrawFromRingBuffer(renderEncoder,
                                        model: model,
                                        region: region,
@@ -171,10 +177,15 @@ final class DrawManager {
             }
         }
 
+        // Lines must draw with the pass PSO, not a leftover animated pipeline
+        // from a trailing skinned mesh:
+        RestorePassPSOIfAnimated(renderEncoder, psoType: psoType, animatedPSOBound: &animatedPSOBound)
         DrawLines(with: renderEncoder)
     }
 
-    static func DrawTransparent(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
+    static func DrawTransparent(with renderEncoder: MTLRenderCommandEncoder,
+                                psoType: RenderPipelineStateType,
+                                applyMaterials: Bool = true) {
         renderEncoder.setFrontFacing(.clockwise)
         renderEncoder.setCullMode(.back)
 
@@ -182,12 +193,16 @@ final class DrawManager {
             bindLinearSampler(renderEncoder)
         }
 
+        var animatedPSOBound = false
         // Opaque models with transparent submeshes:
         let opaqueSnapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
         for (model, region) in opaqueSnapshot {
             for meshData in region.meshDatas {
                 if !meshData.transparentSubmeshes.isEmpty {
-                    SetupAnimation(renderEncoder, mesh: meshData.mesh)
+                    SetupAnimation(renderEncoder,
+                                   mesh: meshData.mesh,
+                                   psoType: psoType,
+                                   animatedPSOBound: &animatedPSOBound)
                     DrawFromRingBuffer(renderEncoder,
                                        model: model,
                                        region: region,
@@ -197,6 +212,10 @@ final class DrawManager {
                 }
             }
         }
+
+        // Fully-transparent objects are never skinned — they must draw with
+        // the pass PSO, not a leftover animated pipeline from the loop above:
+        RestorePassPSOIfAnimated(renderEncoder, psoType: psoType, animatedPSOBound: &animatedPSOBound)
 
         // Fully transparent objects:
         let transparentSnapshot = SceneManager.getTransparentSnapshot(frameIndex: currentFrameIndex)
@@ -212,41 +231,57 @@ final class DrawManager {
         }
     }
     
-    static func SetupAnimation(_ renderEncoder: MTLRenderCommandEncoder, mesh: Mesh) {
+    /// Skinned meshes swap to the pass's animated PSO (joint palette bound);
+    /// the next non-skinned mesh restores the pass PSO. `animatedPSOBound` is
+    /// a local owned by the calling draw loop — no global pipeline tracking.
+    private static func SetupAnimation(_ renderEncoder: MTLRenderCommandEncoder,
+                                       mesh: Mesh,
+                                       psoType: RenderPipelineStateType,
+                                       animatedPSOBound: inout Bool) {
         if let paletteBuffer = mesh.skin?.jointMatrixPaletteBuffer {
             renderEncoder.setVertexBuffer(paletteBuffer,
                                           offset: 0,
                                           index: TFSBufferIndexJointBuffer.index)
 
-            // Hack for now to set the proper PSO: derive the animated variant
-            // from the pass PSO the renderer bound via the tracked
-            // setRenderPipelineState(_:state:) helper. nil variant means the
-            // pass PSO is already an animated one (keep it) or the renderer
-            // family has no animated pipelines (OIT, SinglePassDeferred) —
-            // then the mesh draws in bind pose with the pass PSO.
-            guard let animated = RenderState.CurrentPipelineStateType.animatedVariant else { return }
-            RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
-            RenderState.CurrentPipelineStateType = animated
+            // nil variant: the pass has no animated pipeline — the mesh draws
+            // in bind pose with the pass PSO.
+            guard !animatedPSOBound, let animated = psoType.animatedVariant else { return }
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[animated])
-        } else {
-            if RenderState.CurrentPipelineStateType.isAnimatedVariant {
-                renderEncoder.setVertexBuffer(nil,
-                                              offset: 0,
-                                              index: TFSBufferIndexJointBuffer.index)
-                renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[RenderState.PreviousPipelineStateType])
-                RenderState.CurrentPipelineStateType = RenderState.PreviousPipelineStateType
-            }
+            animatedPSOBound = true
+        } else if animatedPSOBound {
+            renderEncoder.setVertexBuffer(nil,
+                                          offset: 0,
+                                          index: TFSBufferIndexJointBuffer.index)
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[psoType])
+            animatedPSOBound = false
         }
     }
+
+    /// Loop-boundary restore: whatever follows (lines, fully-transparent
+    /// objects, the next stage) must see the pass PSO, not a leftover
+    /// animated pipeline from a trailing skinned mesh.
+    private static func RestorePassPSOIfAnimated(_ renderEncoder: MTLRenderCommandEncoder,
+                                                 psoType: RenderPipelineStateType,
+                                                 animatedPSOBound: inout Bool) {
+        guard animatedPSOBound else { return }
+        renderEncoder.setVertexBuffer(nil, offset: 0, index: TFSBufferIndexJointBuffer.index)
+        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[psoType])
+        animatedPSOBound = false
+    }
     
-    static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
+    static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder,
+                            psoType: RenderPipelineStateType) {
         renderEncoder.setFrontFacing(.clockwise)
         renderEncoder.setCullMode(.back)
-        
+
+        var animatedPSOBound = false
         let snapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
         for (model, region) in snapshot {
             for meshData in region.meshDatas {
-                SetupAnimation(renderEncoder, mesh: meshData.mesh)
+                SetupAnimation(renderEncoder,
+                               mesh: meshData.mesh,
+                               psoType: psoType,
+                               animatedPSOBound: &animatedPSOBound)
                 DrawFromRingBuffer(renderEncoder,
                                    model: model,
                                    region: region,
@@ -255,6 +290,7 @@ final class DrawManager {
                                    applyMaterials: false)
             }
         }
+        RestorePassPSOIfAnimated(renderEncoder, psoType: psoType, animatedPSOBound: &animatedPSOBound)
     }
     
     // TODO: Maybe it would be a good idea to refactor this class;

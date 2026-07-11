@@ -95,18 +95,6 @@ extension RenderPipelineStateType {
                 return nil
         }
     }
-
-    /// True for exactly the animated PSOs SetupAnimation can have bound.
-    var isAnimatedVariant: Bool {
-        switch self {
-            case .TiledMSAAGBufferAnimated, .TiledDeferredGBufferAnimated, .TiledMSAAShadowAnimated,
-                 .OpaqueMaterialAnimated, .OrderIndependentTransparentAnimated,
-                 .SinglePassDeferredGBufferMaterialAnimated, .SinglePassDeferredTransparencyAnimated:
-                return true
-            default:
-                return false
-        }
-    }
 }
 
 final class RenderPipelineStateLibrary: Library<RenderPipelineStateType, MTLRenderPipelineState>, @unchecked Sendable {

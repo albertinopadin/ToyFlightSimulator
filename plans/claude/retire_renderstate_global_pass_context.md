@@ -1,6 +1,6 @@
 # Retire the `RenderState` global: pass per-pass pipeline context into DrawManager
 
-Status: **proposed — awaiting review** (2026-07-11). No code changed yet.
+Status: **implemented — 2026-07-11**. Landed as planned, with two reviewer renames applied throughout this doc and the code: `passPipeline` → `psoType` and `animatedBound` → `animatedPSOBound` (the loop-boundary helper follows suit as `RestorePassPSOIfAnimated`). See Verification below for what was run; the manual renderer-switch matrix is pending user verification.
 
 ## Context
 
@@ -8,9 +8,9 @@ Status: **proposed — awaiting review** (2026-07-11). No code changed yet.
 
 ## Why retire it (the reasoning)
 
-1. **Convention → compiler.** The current invariant — *"every per-pass PSO bind must go through the tracked helper"* — is enforced only by review and documentation. History shows conventions rot: the tracker landed in January with only the default renderer converted, and the resulting crash class survived undetected for six months until runtime renderer switching started working. With a `passPipeline` parameter, a renderer *cannot* call `DrawOpaque`/`DrawTransparent`/`DrawShadows` without stating which pass it is in; forgetting is a compile error, not a latent GPU assert.
+1. **Convention → compiler.** The current invariant — *"every per-pass PSO bind must go through the tracked helper"* — is enforced only by review and documentation. History shows conventions rot: the tracker landed in January with only the default renderer converted, and the resulting crash class survived undetected for six months until runtime renderer switching started working. With a `psoType` parameter, a renderer *cannot* call `DrawOpaque`/`DrawTransparent`/`DrawShadows` without stating which pass it is in; forgetting is a compile error, not a latent GPU assert.
 
-2. **Global mutable state off the hot path.** Both statics are `nonisolated(unsafe)`. They are safe today only because all encoding happens on one thread. Any future parallelism — `MTLParallelRenderCommandEncoder`, encoding shadow and GBuffer command buffers on different threads, async command buffer preparation — would race the tracker invisibly (wrong PSO restored, no crash, subtly corrupt frames). A `var animatedBound` local to each draw loop cannot race anything.
+2. **Global mutable state off the hot path.** Both statics are `nonisolated(unsafe)`. They are safe today only because all encoding happens on one thread. Any future parallelism — `MTLParallelRenderCommandEncoder`, encoding shadow and GBuffer command buffers on different threads, async command buffer preparation — would race the tracker invisibly (wrong PSO restored, no crash, subtly corrupt frames). A `var animatedPSOBound` local to each draw loop cannot race anything.
 
 3. **Hidden cross-pass and cross-lifecycle coupling.** Today the shadow pass writes state the GBuffer pass's draw loop consumes; a renderer switch leaks state unless `TeardownScene` remembers to reset it; the "restore" is a two-deep implicit stack (`Previous`) that only works because `SetupAnimation` is the single nester and passes are strictly sequential. All three couplings disappear when the state lives inside the loop that uses it.
 
@@ -29,9 +29,9 @@ Status: **proposed — awaiting review** (2026-07-11). No code changed yet.
 
 ## Design
 
-- `DrawOpaque` / `DrawTransparent` / `DrawShadows` gain `passPipeline: RenderPipelineStateType`.
-- `SetupAnimation` becomes `private`, takes `passPipeline` plus `animatedBound: inout Bool` (a local owned by the calling loop), and derives the animated PSO from `passPipeline.animatedVariant` — the mapping introduced in `645e307` stays the single source of pass→animated pairing (and picks up the OIT/SinglePass entries if `oit_singlepass_animated_pipeline_variants` lands first).
-- A private `RestorePassPipelineIfAnimated` re-binds the pass PSO (and clears the joint buffer slot) at loop boundaries.
+- `DrawOpaque` / `DrawTransparent` / `DrawShadows` gain `psoType: RenderPipelineStateType`.
+- `SetupAnimation` becomes `private`, takes `psoType` plus `animatedPSOBound: inout Bool` (a local owned by the calling loop), and derives the animated PSO from `psoType.animatedVariant` — the mapping introduced in `645e307` stays the single source of pass→animated pairing (and picks up the OIT/SinglePass entries if `oit_singlepass_animated_pipeline_variants` lands first).
+- A private `RestorePassPSOIfAnimated` re-binds the pass PSO (and clears the joint buffer slot) at loop boundaries.
 - `RenderState.swift` is deleted; the `RenderPassEncoding` helper drops its global writes (kept as one-line sugar — 30+ call sites read well as-is); `TeardownScene` loses the `RenderState.Reset()` block; `isAnimatedVariant` is deleted (its only consumer was the global restore check).
 - `ShadowRendering.encodeCascadePasses` currently takes a `draw` closure — all three callers pass the identical `{ DrawManager.DrawShadows(with: $0) }` body. Fold the call into `encodeCascadePasses` itself (it already has the `pipeline` parameter to forward), deleting the closure parameter and three duplicate bodies.
 
@@ -45,12 +45,12 @@ Behavior parity: for every existing skinned/non-skinned interleaving the bound-P
 
 ```swift
     /// Skinned meshes swap to the pass's animated PSO (joint palette bound);
-    /// the next non-skinned mesh restores the pass PSO. `animatedBound` is a
+    /// the next non-skinned mesh restores the pass PSO. `animatedPSOBound` is a
     /// local owned by the calling draw loop — no global pipeline tracking.
     private static func SetupAnimation(_ renderEncoder: MTLRenderCommandEncoder,
                                        mesh: Mesh,
-                                       passPipeline: RenderPipelineStateType,
-                                       animatedBound: inout Bool) {
+                                       psoType: RenderPipelineStateType,
+                                       animatedPSOBound: inout Bool) {
         if let paletteBuffer = mesh.skin?.jointMatrixPaletteBuffer {
             renderEncoder.setVertexBuffer(paletteBuffer,
                                           offset: 0,
@@ -58,28 +58,28 @@ Behavior parity: for every existing skinned/non-skinned interleaving the bound-P
 
             // nil variant: the renderer family has no animated pipelines —
             // the mesh draws in bind pose with the pass PSO.
-            guard !animatedBound, let animated = passPipeline.animatedVariant else { return }
+            guard !animatedPSOBound, let animated = psoType.animatedVariant else { return }
             renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[animated])
-            animatedBound = true
-        } else if animatedBound {
+            animatedPSOBound = true
+        } else if animatedPSOBound {
             renderEncoder.setVertexBuffer(nil,
                                           offset: 0,
                                           index: TFSBufferIndexJointBuffer.index)
-            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[passPipeline])
-            animatedBound = false
+            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[psoType])
+            animatedPSOBound = false
         }
     }
 
     /// Loop-boundary restore: whatever follows (lines, fully-transparent
     /// objects, the next stage) must see the pass pipeline, not a leftover
     /// animated PSO from a trailing skinned mesh.
-    private static func RestorePassPipelineIfAnimated(_ renderEncoder: MTLRenderCommandEncoder,
-                                                      passPipeline: RenderPipelineStateType,
-                                                      animatedBound: inout Bool) {
-        guard animatedBound else { return }
+    private static func RestorePassPSOIfAnimated(_ renderEncoder: MTLRenderCommandEncoder,
+                                                      psoType: RenderPipelineStateType,
+                                                      animatedPSOBound: inout Bool) {
+        guard animatedPSOBound else { return }
         renderEncoder.setVertexBuffer(nil, offset: 0, index: TFSBufferIndexJointBuffer.index)
-        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[passPipeline])
-        animatedBound = false
+        renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[psoType])
+        animatedPSOBound = false
     }
 ```
 
@@ -88,7 +88,7 @@ Behavior parity: for every existing skinned/non-skinned interleaving the bound-P
 ```diff
 -    static func DrawOpaque(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
 +    static func DrawOpaque(with renderEncoder: MTLRenderCommandEncoder,
-+                           passPipeline: RenderPipelineStateType,
++                           psoType: RenderPipelineStateType,
 +                           applyMaterials: Bool = true) {
          renderEncoder.setFrontFacing(.clockwise)
          renderEncoder.setCullMode(.back)
@@ -97,7 +97,7 @@ Behavior parity: for every existing skinned/non-skinned interleaving the bound-P
              bindLinearSampler(renderEncoder)
          }
  
-+        var animatedBound = false
++        var animatedPSOBound = false
          let snapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
          for (model, region) in snapshot {
              for meshData in region.meshDatas {
@@ -105,8 +105,8 @@ Behavior parity: for every existing skinned/non-skinned interleaving the bound-P
 -                    SetupAnimation(renderEncoder, mesh: meshData.mesh)
 +                    SetupAnimation(renderEncoder,
 +                                   mesh: meshData.mesh,
-+                                   passPipeline: passPipeline,
-+                                   animatedBound: &animatedBound)
++                                   psoType: psoType,
++                                   animatedPSOBound: &animatedPSOBound)
                      DrawFromRingBuffer(renderEncoder,
                                         model: model,
                                         region: region,
@@ -117,20 +117,20 @@ Behavior parity: for every existing skinned/non-skinned interleaving the bound-P
              }
          }
  
-+        RestorePassPipelineIfAnimated(renderEncoder, passPipeline: passPipeline, animatedBound: &animatedBound)
++        RestorePassPSOIfAnimated(renderEncoder, psoType: psoType, animatedPSOBound: &animatedPSOBound)
          DrawLines(with: renderEncoder)
      }
 ```
 
-`DrawTransparent` (lines 177-213) — same signature change; loop 1 threads `&animatedBound`; restore **between** the two loops:
+`DrawTransparent` (lines 177-213) — same signature change; loop 1 threads `&animatedPSOBound`; restore **between** the two loops:
 
 ```diff
 -    static func DrawTransparent(with renderEncoder: MTLRenderCommandEncoder, applyMaterials: Bool = true) {
 +    static func DrawTransparent(with renderEncoder: MTLRenderCommandEncoder,
-+                                passPipeline: RenderPipelineStateType,
++                                psoType: RenderPipelineStateType,
 +                                applyMaterials: Bool = true) {
          ...
-+        var animatedBound = false
++        var animatedPSOBound = false
          // Opaque models with transparent submeshes:
          let opaqueSnapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
          for (model, region) in opaqueSnapshot {
@@ -139,8 +139,8 @@ Behavior parity: for every existing skinned/non-skinned interleaving the bound-P
 -                    SetupAnimation(renderEncoder, mesh: meshData.mesh)
 +                    SetupAnimation(renderEncoder,
 +                                   mesh: meshData.mesh,
-+                                   passPipeline: passPipeline,
-+                                   animatedBound: &animatedBound)
++                                   psoType: psoType,
++                                   animatedPSOBound: &animatedPSOBound)
                      DrawFromRingBuffer(...)
                  }
              }
@@ -148,7 +148,7 @@ Behavior parity: for every existing skinned/non-skinned interleaving the bound-P
  
 +        // Fully-transparent objects are never skinned — draw them with the
 +        // pass PSO, not a leftover animated pipeline from the loop above:
-+        RestorePassPipelineIfAnimated(renderEncoder, passPipeline: passPipeline, animatedBound: &animatedBound)
++        RestorePassPSOIfAnimated(renderEncoder, psoType: psoType, animatedPSOBound: &animatedPSOBound)
 +
          // Fully transparent objects:
          let transparentSnapshot = SceneManager.getTransparentSnapshot(frameIndex: currentFrameIndex)
@@ -160,23 +160,23 @@ Behavior parity: for every existing skinned/non-skinned interleaving the bound-P
 ```diff
 -    static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder) {
 +    static func DrawShadows(with renderEncoder: MTLRenderCommandEncoder,
-+                            passPipeline: RenderPipelineStateType) {
++                            psoType: RenderPipelineStateType) {
          renderEncoder.setFrontFacing(.clockwise)
          renderEncoder.setCullMode(.back)
          
-+        var animatedBound = false
++        var animatedPSOBound = false
          let snapshot = SceneManager.getOpaqueSnapshot(frameIndex: currentFrameIndex)
          for (model, region) in snapshot {
              for meshData in region.meshDatas {
 -                SetupAnimation(renderEncoder, mesh: meshData.mesh)
 +                SetupAnimation(renderEncoder,
 +                               mesh: meshData.mesh,
-+                               passPipeline: passPipeline,
-+                               animatedBound: &animatedBound)
++                               psoType: psoType,
++                               animatedPSOBound: &animatedPSOBound)
                  DrawFromRingBuffer(...)
              }
          }
-+        RestorePassPipelineIfAnimated(renderEncoder, passPipeline: passPipeline, animatedBound: &animatedBound)
++        RestorePassPSOIfAnimated(renderEncoder, psoType: psoType, animatedPSOBound: &animatedPSOBound)
      }
 ```
 
@@ -191,19 +191,19 @@ Pattern (same shape in all five renderers; shown for `TiledMultisampleRenderer.e
 -            // PSO swap/restore during DrawOpaque (raw binds here restored the
 -            // shadow PSO into this 4x pass — the renderer-switch assert).
 -            setRenderPipelineState(renderEncoder, state: .TiledMSAAGBuffer)
-+            let passPipeline: RenderPipelineStateType = .TiledMSAAGBuffer
-+            setRenderPipelineState(renderEncoder, state: passPipeline)
++            let psoType: RenderPipelineStateType = .TiledMSAAGBuffer
++            setRenderPipelineState(renderEncoder, state: psoType)
              renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
              renderEncoder.setFragmentTexture(shadowMapArray, index: TFSTextureIndexShadow.index)
 -            DrawManager.DrawOpaque(with: renderEncoder)
-+            DrawManager.DrawOpaque(with: renderEncoder, passPipeline: passPipeline)
++            DrawManager.DrawOpaque(with: renderEncoder, psoType: psoType)
          }
      }
 ```
 
 All sites (pass type per stage):
 
-| File | Stage | passPipeline |
+| File | Stage | psoType |
 |---|---|---|
 | `TiledMSAATessellatedRenderer.swift` | GBuffer / Transparency | `.TiledMSAAGBuffer` / `.TiledMSAATransparency` |
 | `TiledMultisampleRenderer.swift` | GBuffer / Transparency | `.TiledMSAAGBuffer` / `.TiledMSAATransparency` |
@@ -235,7 +235,7 @@ All sites (pass type per stage):
                                                   length: float4x4.stride,
                                                   index: TFSBufferIndexShadowCascadeVP.index)
 -                    draw(renderEncoder)
-+                    DrawManager.DrawShadows(with: renderEncoder, passPipeline: pipeline)
++                    DrawManager.DrawShadows(with: renderEncoder, psoType: pipeline)
                  }
              }
          }
@@ -274,7 +274,7 @@ All sites (pass type per stage):
 ```diff
 +    /// Convenience for binding a library pipeline by type. Pure sugar — the
 +    /// skinned-mesh PSO swap gets its pass pipeline explicitly via the
-+    /// DrawManager entry points' passPipeline parameter, so there is no
++    /// DrawManager entry points' psoType parameter, so there is no
 +    /// global tracking and no "wrong" way to bind a pipeline.
      func setRenderPipelineState(_ renderEncoder: MTLRenderCommandEncoder, state: RenderPipelineStateType) {
 -        RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
@@ -295,23 +295,23 @@ Remove `isAnimatedVariantMembership` (the property is gone). The `animatedVarian
 
 ### 7. Documentation
 
-- **AGENTS.md** — rewrite the two `RenderState` bullets (Rendering Architecture + High-Risk Areas): the global tracker is gone; skinned-mesh pipeline swapping is driven by the `passPipeline` parameter on `DrawManager.DrawOpaque/DrawTransparent/DrawShadows` and the `animatedVariant` mapping; `setRenderPipelineState(_:state:)` is convenience only. Drop "runtime verification required after PSO changes" down to a normal note.
+- **AGENTS.md** — rewrite the two `RenderState` bullets (Rendering Architecture + High-Risk Areas): the global tracker is gone; skinned-mesh pipeline swapping is driven by the `psoType` parameter on `DrawManager.DrawOpaque/DrawTransparent/DrawShadows` and the `animatedVariant` mapping; `setRenderPipelineState(_:state:)` is convenience only. Drop "runtime verification required after PSO changes" down to a normal note.
 - **CLAUDE.md** — shader recipe step 5: replace the "tracked helper is mandatory" parenthetical with: pass the stage's pipeline type to the `DrawManager` entry points; the helper is optional sugar.
 - The debugging doc is historical — no edit.
 
 ## Ordering vs. the OIT/SinglePass variants plan
 
-Independent, but both touch `SetupAnimation`-adjacent code. Recommended order: land `oit_singlepass_animated_pipeline_variants` first (pure additions to the mapping/library), then this refactor (consumes the mapping unchanged; its test edit then removes the *extended* `isAnimatedVariant` test). Reverse order also works with trivial diff adjustments.
+Independent, but both touch `SetupAnimation`-adjacent code. Recommended order: land `oit_singlepass_animated_pipeline_variants` first (pure additions to the mapping/library), then this refactor (consumes the mapping unchanged; its test edit then removes the *extended* `isAnimatedVariant` test). That order was followed: the variants plan landed as `0130aa1`, and this refactor consumed the extended `animatedVariant` mapping unchanged.
 
 ## Verification
 
-1. Builds: macOS Debug + iOS Simulator.
-2. Scoped tests: `-only-testing:"ToyFlightSimulatorTests/RenderPipelineStateTypeAnimatedVariantTests"` `-only-testing:"ToyFlightSimulatorTests/RendererTests"`.
-3. `grep -rn "RenderState" "ToyFlightSimulator Shared" ToyFlightSimulatorTests` returns nothing (proves full retirement; catches stragglers in comments too).
-4. Manual, macOS app, Metal validation ON, default scene: full renderer switch matrix (default ↔ TiledDeferredMSAA / TiledDeferred / SinglePass / OIT) — no asserts; gear (`G`) animates under every renderer with animated variants; shadows animate with the gear; canopy transparency intact; Cmd+R reset and an aircraft swap after a switch still work.
+1. Builds: macOS Debug + iOS Simulator — **both succeeded** (2026-07-11). The synchronized root group dropped `RenderState.o` from both targets automatically; no pbxproj edit was needed.
+2. Scoped tests: `-only-testing:"ToyFlightSimulatorTests/RenderPipelineStateTypeAnimatedVariantTests"` `-only-testing:"ToyFlightSimulatorTests/RendererTests"` — **all passed** (6/6 XCTest RendererTests, 5/5 Swift Testing mapping tests after the `isAnimatedVariant` test removal).
+3. `grep -rn "RenderState" "ToyFlightSimulator Shared" ToyFlightSimulatorTests` — **clean**; the only remaining matches are the unrelated `Tessellatable.setRenderState(_:)` protocol method (terrain tessellation encoder setup).
+4. Manual, macOS app, Metal validation ON, default scene: full renderer switch matrix (default ↔ TiledDeferredMSAA / TiledDeferred / SinglePass / OIT) — no asserts; gear (`G`) animates under every renderer with animated variants; shadows animate with the gear; canopy transparency intact; Cmd+R reset and an aircraft swap after a switch still work. **Pending user verification.**
 
 ## Risks
 
-- Mechanical but wide: ~10 call sites across 6 files plus the shadow protocol. The compiler drives the migration (every missing `passPipeline` is an error), which is exactly the property this refactor buys.
+- Mechanical but wide: ~10 call sites across 6 files plus the shadow protocol. The compiler drives the migration (every missing `psoType` is an error), which is exactly the property this refactor buys.
 - The end-of-loop restores change encoder state at two points where today a stale animated PSO leaks (lines / fully-transparent objects). This is intended and strictly more correct, but it is a *behavior* change if any scene accidentally relied on the leak — none does (lines and fully-transparent objects are non-skinned primitives).
 - `SetupAnimation` becomes `private`; nothing outside `DrawManager` references it today (verified — call sites are only DrawOpaque/DrawTransparent/DrawShadows).

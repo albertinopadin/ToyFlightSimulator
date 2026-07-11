@@ -231,7 +231,7 @@ Shadow map storage: one `depth32Float` `texture2DArray`, 4096² × 4 slices. `Sh
 2. Add enum case to `RenderPipelineStateType`
 3. Create pipeline state struct in relevant pipeline library file
 4. Register in `RenderPipelineStateLibrary.makeLibrary()`
-5. Use in renderer via `setRenderPipelineState(encoder, state: .NewType)` — the tracked helper is mandatory for pass PSOs; a raw `renderEncoder.setRenderPipelineState` desyncs the `RenderState` tracker that `DrawManager.SetupAnimation` uses to swap/restore animated pipelines
+5. Use in renderer via `setRenderPipelineState(encoder, state: .NewType)` (convenience sugar over the raw encoder bind) and pass the stage's pipeline type to the mesh-draw entry points — `DrawManager.DrawOpaque/DrawTransparent/DrawShadows` take `psoType:`, from which `SetupAnimation` derives the skinned-mesh animated PSO via `animatedVariant` and restores the pass PSO at non-skinned meshes and loop boundaries (no global pipeline tracking; keep the bind and the draw call reading one local constant)
 
 ### Adding New Models
 1. Place model files in `Core/Resources/Models/`

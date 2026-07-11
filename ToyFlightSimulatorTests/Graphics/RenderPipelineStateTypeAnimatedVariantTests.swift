@@ -49,8 +49,9 @@ struct RenderPipelineStateTypeAnimatedVariantTests {
 
     @Test("Animated variants themselves have no further variant")
     func animatedVariantsAreTerminal() {
-        // SetupAnimation relies on this for consecutive skinned meshes:
-        // an already-animated Current short-circuits the swap.
+        // No draw loop ever passes an animated PSO as its pass psoType;
+        // pinning nil keeps the mapping one-way (a swap can't chain into
+        // a second swap).
         #expect(RenderPipelineStateType.TiledMSAAGBufferAnimated.animatedVariant == nil)
         #expect(RenderPipelineStateType.TiledDeferredGBufferAnimated.animatedVariant == nil)
         #expect(RenderPipelineStateType.TiledMSAAShadowAnimated.animatedVariant == nil)
@@ -67,21 +68,5 @@ struct RenderPipelineStateTypeAnimatedVariantTests {
         #expect(RenderPipelineStateType.Final.animatedVariant == nil)
         #expect(RenderPipelineStateType.Blend.animatedVariant == nil)
         #expect(RenderPipelineStateType.TileRender.animatedVariant == nil)
-    }
-
-    @Test("isAnimatedVariant is true for exactly the animated PSOs")
-    func isAnimatedVariantMembership() {
-        #expect(RenderPipelineStateType.TiledMSAAGBufferAnimated.isAnimatedVariant)
-        #expect(RenderPipelineStateType.TiledDeferredGBufferAnimated.isAnimatedVariant)
-        #expect(RenderPipelineStateType.TiledMSAAShadowAnimated.isAnimatedVariant)
-        #expect(RenderPipelineStateType.OpaqueMaterialAnimated.isAnimatedVariant)
-        #expect(RenderPipelineStateType.OrderIndependentTransparentAnimated.isAnimatedVariant)
-        #expect(RenderPipelineStateType.SinglePassDeferredGBufferMaterialAnimated.isAnimatedVariant)
-        #expect(RenderPipelineStateType.SinglePassDeferredTransparencyAnimated.isAnimatedVariant)
-        #expect(!RenderPipelineStateType.TiledMSAAGBuffer.isAnimatedVariant)
-        #expect(!RenderPipelineStateType.TiledMSAAShadow.isAnimatedVariant)
-        #expect(!RenderPipelineStateType.OpaqueMaterial.isAnimatedVariant)
-        #expect(!RenderPipelineStateType.SinglePassDeferredTransparency.isAnimatedVariant)
-        #expect(!RenderPipelineStateType.Final.isAnimatedVariant)
     }
 }

@@ -10,9 +10,11 @@ import MetalKit
 protocol RenderPassEncoding {}
 
 extension RenderPassEncoding {
+    /// Convenience for binding a library pipeline by type. Pure sugar — the
+    /// skinned-mesh PSO swap gets its pass PSO explicitly via the DrawManager
+    /// entry points' psoType parameter, so there is no global pipeline
+    /// tracking and no "wrong" way to bind a pipeline.
     func setRenderPipelineState(_ renderEncoder: MTLRenderCommandEncoder, state: RenderPipelineStateType) {
-        RenderState.PreviousPipelineStateType = RenderState.CurrentPipelineStateType
-        RenderState.CurrentPipelineStateType = state
         renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[state])
     }
     

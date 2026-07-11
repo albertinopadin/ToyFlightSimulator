@@ -103,15 +103,14 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
     
     func encodeGBufferStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "GBuffer Generation Stage") {
-            // Tracked bind: keeps RenderState truthful for SetupAnimation
-            // during DrawOpaque (see RenderPassEncoding.setRenderPipelineState).
-            setRenderPipelineState(renderEncoder, state: .SinglePassDeferredGBufferMaterial)
+            let psoType: RenderPipelineStateType = .SinglePassDeferredGBufferMaterial
+            setRenderPipelineState(renderEncoder, state: psoType)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.GBufferGeneration])
             // NOTE: For some reason, setting cull mode to back makes meshes appear 'extruded' or turned inside out.
 //            renderEncoder.setCullMode(.back)
             renderEncoder.setStencilReferenceValue(128)
             renderEncoder.setFragmentTexture(shadowMapArray, index: TFSTextureIndexShadow.index)
-            DrawManager.DrawOpaque(with: renderEncoder)
+            DrawManager.DrawOpaque(with: renderEncoder, psoType: psoType)
         }
     }
 
@@ -133,9 +132,10 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
     // TODO: Need to create proper RPS and DSS:
     func encodeTransparencyStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
-            setRenderPipelineState(renderEncoder, state: .SinglePassDeferredTransparency)
+            let psoType: RenderPipelineStateType = .SinglePassDeferredTransparency
+            setRenderPipelineState(renderEncoder, state: psoType)
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-            DrawManager.DrawTransparent(with: renderEncoder)
+            DrawManager.DrawTransparent(with: renderEncoder, psoType: psoType)
         }
     }
 
