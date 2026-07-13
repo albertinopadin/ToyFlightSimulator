@@ -151,7 +151,7 @@ Do not restore the old “signal before and after render” behavior; it caused 
 - Both active wrappers contain a runtime renderer-switch path using teardown → new renderer → `SetScene`; the new renderer comes back from `Engine.InitRenderer` already wired to the update-thread semaphores.
 - `MetalPerformanceHUD` writes `developerHUDProperties` on the drawable `CAMetalLayer`. The scheme must arm it with `MTL_HUD_ENABLED=1`; wrappers start it hidden.
 - The audio thread starts with the engine but waits for scene build. With startup music disabled, it still constructs the lazy AVAudioEngine graph off-main so the first volume change does not stall UI.
-- macOS shortcuts: `Y` stats overlay (including active renderer), `H` Metal HUD, `Esc` menu/pause, and `Cmd+R` deferred reset. Aircraft controls include `G` gear and `F` for the legacy F-18 flaps. `CameraManager` supports multiple camera types, but no current input path toggles them.
+- macOS shortcuts: `Y` stats overlay (including active renderer), `H` Metal HUD, `Esc` menu/pause, `C` camera cycle, and `Cmd+R` deferred reset. Aircraft controls include `G` gear and `F` for the legacy F-18 flaps. The `C` key is `DiscreteCommand.CycleCamera`, polled debounced on the update thread in `GameScene.doUpdate`; it walks registered cameras in registration order (slot order — `CameraManager.SetCamera(at:)` is the direct-selection hook for future number-row/F-key bindings) and no-ops in single-camera scenes. Inactive cameras skip their input `doUpdate` via `Camera.isActiveCamera` — `Mouse.GetD*` reads are consume-and-zero, so an unguarded inactive camera would steal deltas from the active one.
 
 ## Safe Extension Recipes
 

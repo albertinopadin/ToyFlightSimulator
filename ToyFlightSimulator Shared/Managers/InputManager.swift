@@ -17,7 +17,8 @@ enum DiscreteCommand {
     
     case ToggleFlaps
     case ToggleGear
-    
+    case CycleCamera
+
     case Pause
     case ClickSelect
 }
@@ -113,7 +114,8 @@ final class InputManager {
         .DropBomb: .m,
         .JettisonFuelTank: .j,
         .ToggleFlaps: .f,
-        .ToggleGear: .g
+        .ToggleGear: .g,
+        .CycleCamera: .c
     ]
     
     nonisolated(unsafe) private static var multiKeyInputMappings: [SpecialUserCommand: [Keycodes]] = [

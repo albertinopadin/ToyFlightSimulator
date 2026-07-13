@@ -17,6 +17,9 @@ final class FlightboxWithPhysics: GameScene {
     var attachedCamera = AttachedCamera(fieldOfView: 75.0,
                                         near: 0.01,
                                         far: 1_000_000.0)
+    /// Free-fly camera, slot 1 in the 'C' cycle (chase camera is slot 0).
+    /// Unparented, so CameraManager.Update drives it.
+    let debugCamera = DebugCamera()
     var sun = Sun(modelType: .Sphere)
 
 //    let physicsWorld = PhysicsWorld(updateType: .NaiveEuler)
@@ -108,6 +111,13 @@ final class FlightboxWithPhysics: GameScene {
         applyAircraftSwap(.f22_cgtrader, installEntities: false)
         
         let jetPos = aircraftStartPosition
+
+        // Cycle target; the chase camera stays the default view. Registered
+        // AFTER the chase camera (which buildScene registers via
+        // applyAircraftSwap → addCamera) so cycle order is chase → free. +Z is
+        // forward, so the -Z offset spawns it behind the jet looking at it.
+        debugCamera.setPosition(jetPos + float3(0, 5, -40))
+        addCamera(debugCamera, false)
 
         setupDefaultSky()
 

@@ -81,7 +81,7 @@ class GameScene: Node {
     func addCamera(_ camera: Camera, _ isCurrentCamera: Bool = true) {
         CameraManager.RegisterCamera(camera: camera)
         if (isCurrentCamera) {
-            CameraManager.SetCamera(camera.cameraType)
+            CameraManager.SetCamera(camera)
         }
     }
     
@@ -150,6 +150,12 @@ class GameScene: Node {
                     }
                 }
             }
+        }
+
+        InputManager.HasDiscreteCommandDebounced(command: .CycleCamera) {
+            // Update-thread mutation: keeps cascade fitting, viewMatrix, and
+            // cameraPosition on the same camera for the whole tick.
+            CameraManager.CycleCamera()
         }
 
         InputManager.HasMultiInputCommand(command: .ResetScene) {

@@ -16,6 +16,9 @@ class DebugCamera: Camera {
     }
     
     override func doUpdate() {
+        // Registered but not rendering (e.g. a chase view is active): consume no input.
+        guard isActiveCamera else { return }
+
         if Keyboard.IsKeyPressed(.leftArrow) || Keyboard.IsKeyPressed(.a) {
             self.moveAlongVector(getRightVector(), distance: Float(GameTime.DeltaTime) * _moveSpeed)
         }

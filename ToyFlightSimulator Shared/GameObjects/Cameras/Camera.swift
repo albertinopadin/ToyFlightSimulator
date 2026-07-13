@@ -16,6 +16,14 @@ class Camera: GameObject {
     // Cameras live in CameraManager, not in SceneManager's batched collections.
     override var objectType: GameObjectType { .none }
 
+    /// Whether this camera is the one the scene currently renders through.
+    /// Input-driven cameras guard doUpdate on this so inactive registered
+    /// cameras neither drift with the shared flight-control axes nor
+    /// destructively consume Mouse.GetDX/GetDY/GetDWheel (consume-and-zero
+    /// reads). With N registered cameras, EVERY inactive chase/free camera
+    /// would otherwise fight the active one for the same deltas each tick.
+    var isActiveCamera: Bool { CameraManager.CurrentCamera === self }
+
     var fieldOfView: Float!
     var near: Float!
     var far: Float!

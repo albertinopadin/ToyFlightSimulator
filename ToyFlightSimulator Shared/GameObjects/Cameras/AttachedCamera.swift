@@ -70,6 +70,11 @@ class AttachedCamera: Camera {
     // per-frame worldMatrixDirty hook is needed anymore.
 
     override func doUpdate() {
+        // Parented cameras update via scene-graph traversal even when not
+        // current — without this guard every chase camera in the scene would
+        // keep consuming right-drag/wheel/i-j-k-l while another camera is active.
+        guard isActiveCamera else { return }
+
         if Mouse.IsMouseButtonPressed(button: .RIGHT) {
             self.rotate3Axis(deltaX: Mouse.GetDY() * Float(GameTime.DeltaTime) * _turnSpeed,
                              deltaY: Mouse.GetDX() * Float(GameTime.DeltaTime) * _turnSpeed,
