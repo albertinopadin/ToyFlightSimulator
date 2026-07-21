@@ -65,7 +65,7 @@ The thrust constant is used **as if it were newtons** (`worldForward * engineMax
 
 ### 2.2 Measured model dimensions (ModelIO `MDLAsset.boundingBox`, native units, pre-basis-transform)
 
-Script: `measure_models.swift` (scratchpad; trivially re-runnable). Declared units read with macOS's `/usr/bin/usdcat`.
+Script: `scripts/measure_models.swift` (checked in 2026-07-21; run `swift scripts/measure_models.swift` from the repo root — reprints this table plus the §3.2 meterization factors). Declared units read with macOS's `/usr/bin/usdcat`.
 
 | Model file | Native extent (X, Y, Z) | Declared units | Length axis → engine Z | Scene scale | In-world length today | Real length | Today vs real |
 |---|---|---|---|---|---|---|---|
@@ -225,9 +225,11 @@ Asset provenance (embedded in the USDZ files' own metadata, not fetched):
 - https://sketchfab.com/3d-models/f-22-raptor-updated-fighter-jet-free-7bfc05d3916b454da4960fc17c093874 — Sketchfab F-22 (CC-BY-NC-SA-4.0)
 - https://sketchfab.com/3d-models/f-35a-lightning-ii-a06d6113cfb44a0aa7b8f17106aca9c4 — Sketchfab F-35A (CC-BY-4.0)
 
-Local measurements: the script below (run with `swift measure_models.swift`) — ModelIO `MDLAsset.boundingBox` over every model in `Core/Resources/Models/`; `usdcat` (macOS, `/usr/bin/usdcat`) for USD stage metadata (`usdcat file.usdz | head -18`).
+Local measurements: `scripts/measure_models.swift` — ModelIO `MDLAsset.boundingBox` over every model in `Core/Resources/Models/`; `usdcat` (macOS, `/usr/bin/usdcat`) for USD stage metadata (`usdcat file.usdz | head -18`).
 
 ## Appendix — measurement script
+
+*(Original scratchpad version, kept for provenance. Checked in 2026-07-21 as `scripts/measure_models.swift`, extended with the declared-units read and the derived calibration columns of the §2.2 table.)*
 
 ```swift
 // measure_models.swift — native (pre-basis-transform) bounding boxes via ModelIO.
