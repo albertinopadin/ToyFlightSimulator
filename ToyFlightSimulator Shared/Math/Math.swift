@@ -20,6 +20,9 @@ public var Z_AXIS: float3 {
 }
 
 extension Float {
+    /// 90° in radians — the quarter-turn constant used by collider/basis rotations.
+    static let halfPi: Float = .pi / 2
+    
     var toRadians: Float {
         return (self / 180.0) * Float.pi
     }

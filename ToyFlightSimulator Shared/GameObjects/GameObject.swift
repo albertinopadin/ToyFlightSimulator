@@ -70,6 +70,14 @@ class GameObject: Node, Renderable, Hashable {
         super.init(name: name)
     }
     
+    /// For runtime-built one-off models (debug collider volumes with bespoke
+    /// capsule dimensions). Mirrors init(name:modelType:) exactly, minus the
+    /// library lookup.
+    init(name: String, model: Model) {
+        self.model = model
+        super.init(name: name)
+    }
+    
     override func update() {
         super.update()
         

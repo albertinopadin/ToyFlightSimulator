@@ -206,5 +206,13 @@ enum Transform {
 }
 
 extension float4x4 {
-    public static let identity: float4x4 = matrix_identity_float4x4
+    public static let identity = matrix_identity_float4x4
+}
+
+extension simd_quatf {
+    /// The identity rotation (1 + 0i + 0j + 0k). simd ships no such constant,
+    /// and the auto-imported `simd_quatf()` default init is the invalid ZERO
+    /// quaternion (norm 0 — it collapses vectors under `simd_act`), so spell
+    /// "no rotation" through this instead.
+    public static let identity = simd_quatf(real: 1, imag: .zero)
 }

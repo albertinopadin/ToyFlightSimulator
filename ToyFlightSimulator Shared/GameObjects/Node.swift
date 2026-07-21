@@ -82,7 +82,12 @@ class Node: ClickSelectable {
         }
         
         set {
-            _rotationMatrix = newValue
+            // Public mutation must dirty-flag like every other transform
+            // setter — a bare storage write leaves the cached local/world
+            // matrices stale until some unrelated setter happens to run.
+            updateModelMatrixAndMarkTransformDirty {
+                _rotationMatrix = newValue
+            }
         }
     }
     
@@ -302,6 +307,11 @@ class Node: ClickSelectable {
         afterRotation()
     }
     
+    func setRotation(_ q: simd_quatf) {
+        rotationMatrix = simd_float4x4(q)
+        afterRotation()
+    }
+    
     func setRotationX(_ xRotation: Float) { setRotation(angle: xRotation, axis: getRightVector())}
     func setRotationY(_ yRotation: Float) { setRotation(angle: yRotation, axis: getUpVector())}
     func setRotationZ(_ zRotation: Float) { setRotation(angle: zRotation, axis: getFwdVector())}
@@ -354,4 +364,15 @@ class Node: ClickSelectable {
     func getScaleX() -> Float { return self._scale.x }
     func getScaleY() -> Float { return self._scale.y }
     func getScaleZ() -> Float { return self._scale.z }
+    
+    /// Uniform-scale contract for physics colliders: spec dimensions are model
+    /// units, world meters = model units × this. Debug-asserts the scale is
+    /// actually uniform so a stray setScale(x,y,z) can't silently skew colliders.
+    var uniformScale: Float {
+        let s = getScale()
+        assert(abs(s.x - s.y) <= 1e-4 * max(1, abs(s.x)) &&
+               abs(s.x - s.z) <= 1e-4 * max(1, abs(s.x)),
+               "Non-uniform scale \(s) on '\(getName())' breaks the collider units contract")
+        return s.x
+    }
 }
