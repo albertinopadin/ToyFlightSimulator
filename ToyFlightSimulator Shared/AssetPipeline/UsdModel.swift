@@ -25,39 +25,16 @@ final class UsdModel: Model {
     /// When true, the model's update() method will not drive animations automatically.
     var hasExternalAnimator: Bool = false
     
-    convenience init(_ modelName: String, fileExtension: ModelExtension = .USDZ, basisTransform: float4x4? = nil) {
-        guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: fileExtension.rawValue) else {
-            fatalError("Asset \(modelName) does not exist.")
+    override init(_ modelName: String, fileExtension: ModelExtension = .USDZ, basisTransform: float4x4? = nil) {
+        super.init(modelName, fileExtension: fileExtension, basisTransform: basisTransform)
+
+        guard let asset else {
+            fatalError("[UsdModel init] \(modelName) has no source MDLAsset — cannot load skeletons/skins/animations.")
         }
 
-        self.init(modelName, assetUrl: assetUrl, basisTransform: basisTransform)
-    }
-    
-    init(_ modelName: String, assetUrl: URL, basisTransform: float4x4? = nil) {
-        let descriptor = Mesh.createMdlVertexDescriptor()
-        let asset = MDLAsset(url: assetUrl,
-                             vertexDescriptor: descriptor,
-                             bufferAllocator: Mesh.mtkMeshBufferAllocator)
-
-        asset.loadTextures()
-
-        print("[UsdModel init] \(modelName) asset has \(asset.count) top level objects.")
-
-        let mdlMeshes = asset.childObjects(of: MDLMesh.self) as? [MDLMesh] ?? []
-
-        // Debugging:
-        Self.InspectMeshes(mdlMeshes: mdlMeshes)
-
-        let usdMeshes: [Mesh] = Self.GetMeshes(asset: asset,
-                                               mdlMeshes: mdlMeshes,
-                                               descriptor: descriptor,
-                                               basisTransform: basisTransform)
-
-        super.init(name: modelName, meshes: usdMeshes, basisTransform: basisTransform ?? .identity)
-        
         print("[UsdModel init] loading \(modelName) skeletons...")
         loadSkeletons(asset: asset)
-        loadSkins(mdlMeshes: mdlMeshes)
+        loadSkins(mdlMeshes: self.mdlMeshes)
         loadAnimations(asset: asset)
 
         print("[UsdModel init] Num meshes: \(meshes.count), Num skeletons: \(skeletons.count), Num animations: \(animationClips.count)")
@@ -67,18 +44,6 @@ final class UsdModel: Model {
         // Initialize to the end of the animation (gear down position)
         // This ensures models start in a sensible default pose
         initializeAnimationPose(at: animationDuration)
-    }
-    
-    private static func InspectMeshes(mdlMeshes: [MDLMesh]) {
-        // Debugging:
-        for mesh in mdlMeshes {
-            print("[UsdModel GetMeshes] > Mesh: name:\(mesh.name), path: \(mesh.path), transform: \(mesh.transform, default: "No Transform")")
-            if let submeshes = mesh.submeshes as? [MDLSubmesh] {
-                for sm in submeshes {
-                    print("[UsdModel GetMeshes] --> Submesh: \(sm.name)")
-                }
-            }
-        }
     }
     
     /// Loads ALL skeletons from the asset into the skeletons dictionary, keyed by path

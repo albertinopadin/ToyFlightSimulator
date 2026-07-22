@@ -74,6 +74,7 @@ struct Preferences {
 // Each flag is scoped to a single subsystem so multiple can be enabled
 // independently while debugging an interaction.
 
-public let DEBUG_FORCES:        Bool = false  // F22SimpleFlightModel.computeForce summary per frame
-public let DEBUG_LIFT:          Bool = false  // F22SimpleFlightModel.calculateLiftData per frame
-public let DEBUG_NODE_ROTATION: Bool = false  // Node.rotationMatrix setter writes
+public let DEBUG_FORCES:          Bool = false  // F22SimpleFlightModel.computeForce summary per frame
+public let DEBUG_LIFT:            Bool = false  // F22SimpleFlightModel.calculateLiftData per frame
+public let DEBUG_NODE_ROTATION:   Bool = false  // Node.rotationMatrix setter writes
+public let DEBUG_MESH_INSPECTION: Bool = false  // Model.InspectMeshes per-mesh/submesh dump at asset load

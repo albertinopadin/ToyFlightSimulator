@@ -14,6 +14,7 @@ class Mesh {
     
     public var name: String = "Mesh"
     public var parentModel: Model?
+    public let mdlMesh: MDLMesh?
     
     public var vertexBuffer: MTLBuffer! = nil
     public var instanceCount: Int = 1
@@ -27,6 +28,7 @@ class Mesh {
     public var transform: TransformComponent?
     
     init() {
+        self.mdlMesh = nil
         createMesh()
         createBuffer()
     }
@@ -34,6 +36,7 @@ class Mesh {
     init(mdlMesh: MDLMesh, mtkMesh: MTKMesh, basisTransform: float4x4? = nil, copyVertexBuffer: Bool = false) {
         print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
         name = mdlMesh.name
+        self.mdlMesh = mdlMesh
 
         self._metalKitMesh = mtkMesh
         if _metalKitMesh!.vertexBuffers.count > 1 {
