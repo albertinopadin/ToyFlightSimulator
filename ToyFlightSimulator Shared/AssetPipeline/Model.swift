@@ -123,8 +123,7 @@ class Model: Hashable {
     
     static func InspectMeshes(mdlMeshes: [MDLMesh]) {
         for mesh in mdlMeshes {
-            DebugLog("[Model InspectMeshes] > Mesh: name:\(mesh.name), path: \(mesh.path), transform: \(mesh.transform, default: "No Transform")",
-                     DEBUG_MESH_INSPECTION)
+            DebugLog("[Model InspectMeshes] > Mesh: name:\(mesh.name), path: \(mesh.path), transform: \(mesh.transform, default: "No Transform")", DEBUG_MESH_INSPECTION)
             if let submeshes = mesh.submeshes as? [MDLSubmesh] {
                 for sm in submeshes {
                     DebugLog("[Model InspectMeshes] --> Submesh: \(sm.name)", DEBUG_MESH_INSPECTION)
