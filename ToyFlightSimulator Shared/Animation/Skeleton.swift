@@ -61,15 +61,23 @@ class Skeleton {
     /// computes the final world-space currentPose from these local poses.
     private(set) var localPoses: [float4x4]
 
-    /// Optional basis transform for coordinate system conversion (e.g., USDZ to game coords)
+    /// Optional basis transform for coordinate system conversion (e.g., USDZ to game
+    /// coords). May carry a uniform meterization scale folded in by `Model.init`.
     let basisTransform: float4x4?
     /// A1: constant per skeleton — computed once instead of per evaluate call.
-    private let inverseBasisTransform: float4x4?
+    /// Conjugation pair (Bᵀ, (Bᵀ)⁻¹) — see `Transform.basisConjugationMatrices`.
+    private let conjugationLeft: float4x4?
+    private let conjugationRight: float4x4?
 
     init?(mdlSkeleton: MDLSkeleton?, basisTransform: float4x4? = nil) {
         guard let mdlSkeleton, !mdlSkeleton.jointPaths.isEmpty else { return nil }
         self.basisTransform = basisTransform
-        self.inverseBasisTransform = basisTransform?.inverse
+        if let basisTransform {
+            (conjugationLeft, conjugationRight) = Transform.basisConjugationMatrices(for: basisTransform)
+        } else {
+            conjugationLeft = nil
+            conjugationRight = nil
+        }
         jointPaths = mdlSkeleton.jointPaths
         parentIndices = Skeleton.getParentIndices(jointPaths: jointPaths)
         bindTransforms = mdlSkeleton.jointBindTransforms.float4x4Array
@@ -178,13 +186,15 @@ class Skeleton {
         }
 
         // Pass 2: bind-inverse, with the basis conjugation fused in when present.
-        // Apply basis transform to convert joint matrices to the game's coordinate system.
-        // Mesh vertices are transformed as v_engine = v_model * B (row-vector convention),
-        // while the shader skins as v_skinned = J * v (column-vector convention).
-        // The correct conjugation is: J_engine = B^-1 * J_model * B
-        if let basisTransform, let inverseBasisTransform {
+        // Mesh vertices were baked as v_engine = v_model * B (row-vector convention),
+        // while the shader skins as v_skinned = J * v (column-vector convention), so a
+        // native-space delta maps to engine space as J_engine = Bᵀ * J_model * (Bᵀ)⁻¹
+        // (see Transform.basisConjugationMatrices — equals the old B⁻¹ * J * B for
+        // orthonormal bases, and correctly scales joint translations by s when B
+        // carries the meterization scale).
+        if let conjugationLeft, let conjugationRight {
             for index in 0..<count {
-                currentPose[index] = inverseBasisTransform * (currentPose[index] * inverseBindTransforms[index]) * basisTransform
+                currentPose[index] = conjugationLeft * (currentPose[index] * inverseBindTransforms[index]) * conjugationRight
             }
         } else {
             for index in 0..<count {

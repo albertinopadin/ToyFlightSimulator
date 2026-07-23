@@ -25,8 +25,11 @@ final class UsdModel: Model {
     /// When true, the model's update() method will not drive animations automatically.
     var hasExternalAnimator: Bool = false
     
-    override init(_ modelName: String, fileExtension: ModelExtension = .USDZ, basisTransform: float4x4? = nil) {
-        super.init(modelName, fileExtension: fileExtension, basisTransform: basisTransform)
+    override init(_ modelName: String,
+                  fileExtension: ModelExtension = .USDZ,
+                  basisTransform: float4x4? = nil,
+                  realWorldLength: Float? = nil) {
+        super.init(modelName, fileExtension: fileExtension, basisTransform: basisTransform, realWorldLength: realWorldLength)
 
         guard let asset else {
             fatalError("[UsdModel init] \(modelName) has no source MDLAsset — cannot load skeletons/skins/animations.")

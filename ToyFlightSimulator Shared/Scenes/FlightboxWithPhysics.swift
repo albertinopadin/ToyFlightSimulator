@@ -138,8 +138,6 @@ final class FlightboxWithPhysics: GameScene {
         let f16 = F16(shouldUpdateOnPlayerInput: false)
         f16.setPosition(0, jetPos.y + 10, jetPos.z + 15)
         f16.rotateY(Float(90).toRadians)
-//        f16.setScale(4.0)
-        f16.setScale(10.0)
         addChild(f16)
 
         let sphereBluePos = float3(x: jetPos.x + 1, y: jetPos.y, z: jetPos.z - 2)
@@ -190,17 +188,18 @@ final class FlightboxWithPhysics: GameScene {
         let prevAc: Aircraft? = playerAircraft
         let prevAcRigidBody: RigidBody? = playerAircraft?.rigidBody
 
+        // Models are meterized at import (1 unit = 1 m), so aircraft use scale 1.0.
         switch aircraft {
             case .f16:
-                playerAircraft = F16(scale: 12.0)
+                playerAircraft = F16()
             case .f18:
-                playerAircraft = F18(scale: 1.4)
+                playerAircraft = F18()
             case .f22:
                 playerAircraft = getPlayerAcF22()
             case .f22_cgtrader:
                 playerAircraft = getPlayerAcCGTraderF22()
             case .f35:
-                playerAircraft = F35(scale: 0.8)
+                playerAircraft = F35()
         }
 
         if let playerAircraft {
@@ -242,13 +241,13 @@ final class FlightboxWithPhysics: GameScene {
     }
 
     private func getPlayerAcF22() -> F22 {
-        let ac = F22(scale: 0.25)
+        let ac = F22()
         ac.flightModel = F22SimpleFlightModel()
         return ac
     }
-    
+
     private func getPlayerAcCGTraderF22() -> F22_CGTrader {
-        let ac = F22_CGTrader(scale: 3.0)
+        let ac = F22_CGTrader()
         ac.flightModel = F22SimpleFlightModel()
         return ac
     }

@@ -53,14 +53,17 @@ struct TransformComponent {
             to: endTime,
             by: 1 / TimeInterval(FPS.FPS_120.rawValue)
         )
-        
+
+        let conjugation = basisTransform.map { Transform.basisConjugationMatrices(for: $0) }
+
         keyTransforms = Array(timeStride).map { time in
             let globalTransform = MDLTransform.globalTransform(with: object, atTime: time)
 
             // Decompose the USDZ transform into T, R, S components.
             // The globalTransform's translation is in WORLD coordinates (after USDZ scale applied),
             // so we must normalize it by dividing by the scale to get model-local translation.
-            // This allows GameObject.setScale() to be the sole source of scale.
+            // This keeps GameObject.setScale() the sole source of gameplay scale (the basis
+            // conjugation below may still carry the import-time meterization scale).
             let (worldTranslation, rotation, scale) = Transform.decomposeTRS(globalTransform)
 
             // Normalize translation: convert from world coords back to model-local coords
@@ -73,12 +76,10 @@ struct TransformComponent {
 
             let transformWithoutScale = Transform.matrixFromTR(translation: normalizedTranslation, rotation: rotation)
 
-            if let basisTransform {
-                // Apply conjugation to convert transform to game coordinate system.
-                // Mesh uses v_engine = v_model * B, shader uses J * v,
-                // so: J_engine = B^-1 * J_model * B
-                let basisInverse = basisTransform.inverse
-                return basisInverse * transformWithoutScale * basisTransform
+            if let conjugation {
+                // Map the native-space delta into engine space — Bᵀ * M * (Bᵀ)⁻¹, see
+                // Transform.basisConjugationMatrices.
+                return conjugation.left * transformWithoutScale * conjugation.right
             }
             return transformWithoutScale
         }

@@ -14,7 +14,7 @@ class F22: Aircraft {
     let afterburnerRight = Afterburner(name: "F-22 Right Afterburner")
     
     override var cameraOffset: float3 {
-        [0, 55, -150]
+        [0, 7, -20]
     }
     
     override var rigidBody: RigidBody? {
@@ -29,12 +29,15 @@ class F22: Aircraft {
                    scale: scale,
                    shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
         
+        // Mechanical ×s rescale (s = 0.01723, the meterization factor) of the old
+        // native-unit offsets — same model-relative placement as before.
+        // TODO(meterization): eyeball against the actual nozzles in meters.
         afterburnerLeft.off()
-        afterburnerLeft.setPosition(-7, 1, -30)
+        afterburnerLeft.setPosition(-0.121, 0.017, -0.517)
         addChild(afterburnerLeft)
 
         afterburnerRight.off()
-        afterburnerRight.setPosition(7, 1, -30)
+        afterburnerRight.setPosition(0.121, 0.017, -0.517)
         addChild(afterburnerRight)
     }
     

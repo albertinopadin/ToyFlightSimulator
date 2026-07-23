@@ -70,21 +70,32 @@ final class ModelLibrary: LazyLibrary<ModelType, Model>, @unchecked Sendable {
         register(.Quad)      { ObjModel("quad") }
         register(.SkySphere) { ObjModel("skysphere") }
 
-        register(.F16) { ObjModel("f16r", basisTransform: rotate180AroundY) }
+        // realWorldLength (meters, nose-to-tail) drives import-time meterization — see
+        // Model.init and plans/claude/meter_scale_implementation_plan_2026-07-23.md.
+        // OBJ has no unit metadata; F-16C native length 2.253.
+        register(.F16) { ObjModel("f16r", basisTransform: rotate180AroundY, realWorldLength: 15.06) }
+        // F18: native units are already meters (measured 18.267 vs 18.31 real, −0.2%), so it is
+        // deliberately NOT meterized: SingleSubmeshMeshLibrary extracts its weapons and control
+        // surfaces through a path that bypasses Model.init, and skipping both keeps the fuselage
+        // and the extracted parts exactly congruent.
         register(.F18) { ObjModel("FA-18F", basisTransform: rotate180AroundY) }
 
 //        register(.RC_F18) { UsdModel("FA-18F") }
 
+        // Declared MPU=1 (m) would give 8.6 m — 46% of real; native length 8.615 on Y.
         register(.CGTrader_F22) {
             UsdModel("cgtrader_F22",
                      fileExtension: .USDZ,
-                     basisTransform: Transform.transformXMinusZYToXYZ)
+                     basisTransform: Transform.transformXMinusZYToXYZ,
+                     realWorldLength: 18.92)
         }
 
-        register(.Sketchfab_F35) { UsdModel("F-35A_Lightning_II") }
+        // Declared MPU=0.01 (cm) would give 4.34 m — 28% of real; native length 433.6 on Z (no basis needed).
+        register(.Sketchfab_F35) { UsdModel("F-35A_Lightning_II", realWorldLength: 15.67) }
 
+        // Declared MPU=0.01 (cm) would give 10.98 m — 58% of real; native length 1098.2 on X.
         register(.Sketchfab_F22) {
-            UsdModel("F-22_Raptor", basisTransform: Transform.transformYMinusZXToXYZ)
+            UsdModel("F-22_Raptor", basisTransform: Transform.transformYMinusZXToXYZ, realWorldLength: 18.92)
         }
 
         register(.Plane)       { Model(name: "Plane", mesh: PlaneMesh()) }

@@ -9,7 +9,7 @@ import MetalKit
 
 class F16: Aircraft {
     override var cameraOffset: float3 {
-        [0, 2, -5]
+        [0, 13, -33]
     }
     
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {

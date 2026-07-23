@@ -47,6 +47,20 @@ enum Transform {
         return .init(col0, col1, col2, col3)
     }
     
+    /// Conjugation pair mapping a native/model-space animation delta `M` into engine
+    /// space: `P = left * M * right` with `left = Bᵀ`, `right = (Bᵀ)⁻¹`.
+    ///
+    /// Mesh vertices are baked row-vector (`v_engine = v_model * B`, see
+    /// `Mesh.transformMeshBasis`) while shaders apply palettes column-vector (`P * v`),
+    /// hence the transpose. For orthonormal bases `Bᵀ = B⁻¹`, so this equals the legacy
+    /// `B⁻¹ * M * B`; with a uniform meterization scale folded in (`B = S·B₀`, see
+    /// `Model.init`) it scales joint translations by `s`, where the legacy form divided
+    /// them by `s` — an s² error.
+    static func basisConjugationMatrices(for basisTransform: float4x4) -> (left: float4x4, right: float4x4) {
+        let transposed = basisTransform.transpose
+        return (transposed, transposed.inverse)
+    }
+
     /// Returns a 3x3 normal matrix from a 4x4 model matrix
     static func normalMatrix(from modelMatrix: simd_float4x4) -> simd_float3x3 {
         let col0 = modelMatrix.columns.0.xyz

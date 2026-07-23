@@ -48,38 +48,71 @@ class Model: Hashable {
                                     basisTransform: basisTransform) }
     }
     
-    /// `basisTransform` stays optional end-to-end: `nil` means "no basis conversion",
-    /// which lets `Mesh.init` skip the per-vertex transform pass entirely instead of
-    /// multiplying every vertex by identity.
-    init(_ modelName: String, fileExtension: ModelExtension, basisTransform: float4x4? = nil) {
+    static func LoadAsset(_ modelName: String,
+                          fileExtension: ModelExtension,
+                          descriptor: MDLVertexDescriptor) -> MDLAsset {
         guard let assetUrl = Bundle.main.url(forResource: modelName, withExtension: fileExtension.rawValue) else {
             fatalError("Asset \(modelName) does not exist.")
         }
-
-        let descriptor = Mesh.createMdlVertexDescriptor()
-
+        
         let asset = MDLAsset(url: assetUrl,
                              vertexDescriptor: descriptor,
                              bufferAllocator: Mesh.mtkMeshBufferAllocator)
 
         asset.loadTextures()
+        return asset
+    }
+    
+    /// Extent of the model along the engine's forward axis (+Z) after `basisTransform`.
+    /// Aircraft bases map the model's nose-to-tail axis onto ±Z (aircraft face +Z in
+    /// this engine), so this is the aircraft's length. Row-vector `v * B`, matching
+    /// `Mesh.transformMeshBasis`; w = 0 because an extent is a size, not a point — a
+    /// translation-bearing basis must not offset it.
+    static func GetLengthAxisExtent(nativeExtent: simd_float3, basisTransform: float4x4? = nil) -> Float {
+        let transformedExtent: float3 = (simd_float4(nativeExtent, 0) * (basisTransform ?? .identity)).xyz
+        return abs(transformedExtent.z)
+    }
+    
+    /// `basisTransform` stays optional end-to-end: `nil` means "no basis conversion",
+    /// which lets `Mesh.init` skip the per-vertex transform pass entirely instead of
+    /// multiplying every vertex by identity.
+    init(_ modelName: String, fileExtension: ModelExtension, basisTransform: float4x4? = nil, realWorldLength: Float? = nil) {
+        let descriptor = Mesh.createMdlVertexDescriptor()
 
-        print("[Model init] \(modelName) asset has \(asset.count) top level objects.")
+        let loadedAsset = Self.LoadAsset(modelName, fileExtension: fileExtension, descriptor: descriptor)
 
-        let mdlMeshes = asset.childObjects(of: MDLMesh.self) as? [MDLMesh] ?? []
+        print("[Model init] \(modelName) asset has \(loadedAsset.count) top level objects.")
+        
+        let meterizedBasisTransform: float4x4?
+        
+        if let realWorldLength {
+            let nativeExtent = loadedAsset.boundingBox.maxBounds - loadedAsset.boundingBox.minBounds
+            let nativeLength = Self.GetLengthAxisExtent(nativeExtent: nativeExtent, basisTransform: basisTransform)
+            precondition(nativeLength > 0.001,
+                         "[Model init] \(modelName): degenerate native length \(nativeLength) — cannot meterize")
+            let scaleCorrection = realWorldLength / nativeLength
+            // Uniform scale: det(s·B) = s³·det(B) keeps the sign, so the winding decision in
+            // Mesh.transformMeshBasis is unchanged; shaders renormalize the scaled normals.
+            meterizedBasisTransform = Transform.scaleMatrix(float3(repeating: scaleCorrection)) * (basisTransform ?? .identity)
+            DebugLog("[Model init] Model \(modelName) is \(realWorldLength)m long (native: \(nativeLength)m, scale correction: \(scaleCorrection))", true)
+        } else {
+            meterizedBasisTransform = basisTransform
+        }
+
+        let mdlMeshes = loadedAsset.childObjects(of: MDLMesh.self) as? [MDLMesh] ?? []
 
         Self.InspectMeshes(mdlMeshes: mdlMeshes)
 
-        self.asset = asset
+        self.asset = loadedAsset
         self.mdlMeshes = mdlMeshes
-        self.meshes = Self.GetMeshes(asset: asset,
+        self.meshes = Self.GetMeshes(asset: loadedAsset,
                                      mdlMeshes: mdlMeshes,
                                      descriptor: descriptor,
-                                     basisTransform: basisTransform)
+                                     basisTransform: meterizedBasisTransform)
 
         self.id = UUID().uuidString
         self.name = modelName
-        self.basisTransform = basisTransform ?? .identity
+        self.basisTransform = meterizedBasisTransform ?? .identity
         meshes.forEach { $0.parentModel = self }
     }
     
