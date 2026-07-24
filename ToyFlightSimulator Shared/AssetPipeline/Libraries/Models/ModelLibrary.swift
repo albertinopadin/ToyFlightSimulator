@@ -90,10 +90,13 @@ final class ModelLibrary: LazyLibrary<ModelType, Model>, @unchecked Sendable {
                      realWorldLength: 18.92)
         }
 
-        // Declared MPU=0.01 (cm) would give 4.34 m — 28% of real; native length 433.6 on Z (no basis needed).
+        // Declared MPU=0.01 (cm) would give 4.34 m — 28% of real. Draw-space native length
+        // 28.85 on Z (stage 433.6 ÷ the ×15.03 'Meshes' node scale, which the renderer strips).
         register(.Sketchfab_F35) { UsdModel("F-35A_Lightning_II", realWorldLength: 15.67) }
 
-        // Declared MPU=0.01 (cm) would give 10.98 m — 58% of real; native length 1098.2 on X.
+        // Declared MPU=0.01 (cm) would give 10.98 m — 58% of real. Draw-space native length
+        // 189.95 on X (stage 1098.2 ÷ the ×5.78 root node scale; this asset's time range is
+        // empty, so its node transforms never apply at draw and vertices render mesh-local).
         register(.Sketchfab_F22) {
             UsdModel("F-22_Raptor", basisTransform: Transform.transformYMinusZXToXYZ, realWorldLength: 18.92)
         }

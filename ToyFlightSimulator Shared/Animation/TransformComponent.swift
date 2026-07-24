@@ -59,22 +59,12 @@ struct TransformComponent {
         keyTransforms = Array(timeStride).map { time in
             let globalTransform = MDLTransform.globalTransform(with: object, atTime: time)
 
-            // Decompose the USDZ transform into T, R, S components.
-            // The globalTransform's translation is in WORLD coordinates (after USDZ scale applied),
-            // so we must normalize it by dividing by the scale to get model-local translation.
-            // This keeps GameObject.setScale() the sole source of gameplay scale (the basis
-            // conjugation below may still carry the import-time meterization scale).
-            let (worldTranslation, rotation, scale) = Transform.decomposeTRS(globalTransform)
-
-            // Normalize translation: convert from world coords back to model-local coords
-            // by dividing by the USDZ scale. Avoid division by zero.
-            let normalizedTranslation = float3(
-                scale.x > 0.0001 ? worldTranslation.x / scale.x : worldTranslation.x,
-                scale.y > 0.0001 ? worldTranslation.y / scale.y : worldTranslation.y,
-                scale.z > 0.0001 ? worldTranslation.z / scale.z : worldTranslation.z
-            )
-
-            let transformWithoutScale = Transform.matrixFromTR(translation: normalizedTranslation, rotation: rotation)
+            // Strip the USDZ node scale — rotation + scale-normalized translation only.
+            // GameObject.setScale() stays the sole source of gameplay scale (the basis
+            // conjugation below may still carry the import-time meterization scale), and
+            // Model.DrawSpaceNativeExtent measures calibration extents through this same
+            // helper so imports are calibrated in the space that is actually drawn.
+            let transformWithoutScale = Transform.scaleStrippedTransform(globalTransform)
 
             if let conjugation {
                 // Map the native-space delta into engine space — Bᵀ * M * (Bᵀ)⁻¹, see

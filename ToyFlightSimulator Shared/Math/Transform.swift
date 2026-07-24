@@ -217,6 +217,28 @@ enum Transform {
         result.columns.3 = float4(translation, 1)
         return result
     }
+
+    /// The node-transform shape the renderer actually applies: rotation plus
+    /// scale-normalized translation, with the scale itself dropped.
+    ///
+    /// `TransformComponent` strips USD node scale so `GameObject.setScale()` stays the
+    /// sole source of gameplay scale (the import-time meterization scale rides in the
+    /// mesh bake / basis conjugation instead), and `Model.DrawSpaceNativeExtent` must
+    /// measure in exactly that space — both call this one helper so the draw path and
+    /// the calibration measurement cannot drift apart.
+    ///
+    /// The composed matrix's translation is in scaled (stage) units; dividing by the
+    /// decomposed scale returns it to the node's unscaled space. Zero-ish scale
+    /// components pass the translation through unchanged.
+    static func scaleStrippedTransform(_ matrix: float4x4) -> float4x4 {
+        let (worldTranslation, rotation, scale) = decomposeTRS(matrix)
+        let normalizedTranslation = float3(
+            scale.x > 0.0001 ? worldTranslation.x / scale.x : worldTranslation.x,
+            scale.y > 0.0001 ? worldTranslation.y / scale.y : worldTranslation.y,
+            scale.z > 0.0001 ? worldTranslation.z / scale.z : worldTranslation.z
+        )
+        return matrixFromTR(translation: normalizedTranslation, rotation: rotation)
+    }
 }
 
 extension float4x4 {

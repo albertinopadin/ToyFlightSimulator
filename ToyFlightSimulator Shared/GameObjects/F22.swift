@@ -29,15 +29,15 @@ class F22: Aircraft {
                    scale: scale,
                    shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
         
-        // Mechanical ×s rescale (s = 0.01723, the meterization factor) of the old
-        // native-unit offsets — same model-relative placement as before.
+        // Mechanical ×s rescale (s = 0.09960, the draw-space meterization factor) of the
+        // old native-unit offsets — same model-relative placement as before.
         // TODO(meterization): eyeball against the actual nozzles in meters.
         afterburnerLeft.off()
-        afterburnerLeft.setPosition(-0.121, 0.017, -0.517)
+        afterburnerLeft.setPosition(-0.700, 0.098, -2.989)
         addChild(afterburnerLeft)
 
         afterburnerRight.off()
-        afterburnerRight.setPosition(0.121, 0.017, -0.517)
+        afterburnerRight.setPosition(0.700, 0.098, -2.989)
         addChild(afterburnerRight)
     }
     

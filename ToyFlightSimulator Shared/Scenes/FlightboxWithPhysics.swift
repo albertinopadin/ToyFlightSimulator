@@ -153,6 +153,19 @@ final class FlightboxWithPhysics: GameScene {
         sphereRed.setScale(1.5)
         sphereRed.setColor([1.0, 0.0, 0.0, 0.4])
         addChild(sphereRed)
+        
+        // One meter cube for visual calibration / verification:
+        let cubePos = float3(x: jetPos.x, y: jetPos.y - 2, z: jetPos.z - 5)
+        let cube1 = Cube()
+        cube1.setPosition(cubePos)
+        cube1.setColor(BLUE_COLOR)
+        addChild(cube1)
+        
+        // Ground level cube:
+        let cube2 = Cube()
+        cube2.setPosition(float3(x: jetPos.x, y: 1, z: jetPos.z + 10))
+        cube2.setColor(RED_COLOR)
+        addChild(cube2)
 
 //        makeRandomDispersedObjects(count: 1_000, clusterRadius: groundSize / 100)
         makeRandomDispersedObjects(count: 100, clusterRadius: groundSize / 1000, withRigidBodies: true)

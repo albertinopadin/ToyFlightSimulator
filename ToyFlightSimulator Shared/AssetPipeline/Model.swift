@@ -72,6 +72,56 @@ class Model: Hashable {
         let transformedExtent: float3 = (simd_float4(nativeExtent, 0) * (basisTransform ?? .identity)).xyz
         return abs(transformedExtent.z)
     }
+
+    /// The native-space extent the renderer will actually draw (before `basisTransform`):
+    /// the union, over the asset's meshes, of each MESH-LOCAL bounding box carried through
+    /// that mesh's scale-stripped composed node transform.
+    ///
+    /// `MDLAsset.boundingBox` is the wrong measurement space for meterization: it composes
+    /// the full node-hierarchy transforms INCLUDING scale, but the engine bakes mesh-local
+    /// vertex data (`Mesh.transformMeshBasis`) and applies node transforms at draw time
+    /// with the scale stripped (`TransformComponent` — `GameObject.setScale()` is the sole
+    /// source of gameplay scale). Sketchfab exports carry root node scales (F-22 Raptor
+    /// ×5.78, F-35A ×15.03) that made the stage-space measurement over-report the native
+    /// length — and the meterized aircraft rendered smaller by exactly that factor. See
+    /// debugging/claude/sketchfab_f22_f35_meterization_node_scale.md.
+    ///
+    /// A mesh's node transform participates exactly when the renderer would apply it: the
+    /// mesh has a transform component AND the asset is animated —
+    /// `TransformComponent.setCurrentTransform` leaves `currentTransform` at identity when
+    /// the asset time range is empty (the Sketchfab F-22 is such an asset: its node
+    /// transforms exist but never apply at draw).
+    static func DrawSpaceNativeExtent(asset: MDLAsset, mdlMeshes: [MDLMesh]) -> simd_float3 {
+        let nodeTransformsApplyAtDraw = asset.endTime > asset.startTime
+        let meshBounds: [(minBounds: float3, maxBounds: float3, nodeTransform: float4x4)] = mdlMeshes.map { mesh in
+            let bounds = mesh.boundingBox
+            let nodeTransform: float4x4 = (nodeTransformsApplyAtDraw && mesh.transform != nil)
+                ? Transform.scaleStrippedTransform(MDLTransform.globalTransform(with: mesh, atTime: asset.startTime))
+                : .identity
+            return (bounds.minBounds, bounds.maxBounds, nodeTransform)
+        }
+        return UnionTransformedExtent(meshBounds: meshBounds)
+    }
+
+    /// Union AABB extent of local bounds each carried through its own node transform
+    /// (column-vector ModelIO convention, `p' = M · p`). Pure simd — Metal-free and
+    /// unit-testable (ModelMeterizationTests).
+    static func UnionTransformedExtent(meshBounds: [(minBounds: float3, maxBounds: float3, nodeTransform: float4x4)]) -> simd_float3 {
+        guard !meshBounds.isEmpty else { return .zero }
+        var unionMin = float3(repeating: .greatestFiniteMagnitude)
+        var unionMax = float3(repeating: -.greatestFiniteMagnitude)
+        for (minBounds, maxBounds, nodeTransform) in meshBounds {
+            for cornerIndex in 0..<8 {
+                let corner = float3(cornerIndex & 1 == 0 ? minBounds.x : maxBounds.x,
+                                    cornerIndex & 2 == 0 ? minBounds.y : maxBounds.y,
+                                    cornerIndex & 4 == 0 ? minBounds.z : maxBounds.z)
+                let transformed = simd_mul(nodeTransform, float4(corner, 1)).xyz
+                unionMin = simd_min(unionMin, transformed)
+                unionMax = simd_max(unionMax, transformed)
+            }
+        }
+        return unionMax - unionMin
+    }
     
     /// `basisTransform` stays optional end-to-end: `nil` means "no basis conversion",
     /// which lets `Mesh.init` skip the per-vertex transform pass entirely instead of
@@ -81,25 +131,28 @@ class Model: Hashable {
 
         let loadedAsset = Self.LoadAsset(modelName, fileExtension: fileExtension, descriptor: descriptor)
 
-        print("[Model init] \(modelName) asset has \(loadedAsset.count) top level objects.")
+        DebugLog("[Model init] \(modelName) asset has \(loadedAsset.count) top level objects.", true)
         
+        let mdlMeshes = loadedAsset.childObjects(of: MDLMesh.self) as? [MDLMesh] ?? []
+
         let meterizedBasisTransform: float4x4?
-        
+
         if let realWorldLength {
-            let nativeExtent = loadedAsset.boundingBox.maxBounds - loadedAsset.boundingBox.minBounds
+            // Draw-space, NOT loadedAsset.boundingBox (stage space): the renderer strips
+            // node-hierarchy scale, so calibration must measure what is actually drawn.
+            let nativeExtent = Self.DrawSpaceNativeExtent(asset: loadedAsset, mdlMeshes: mdlMeshes)
             let nativeLength = Self.GetLengthAxisExtent(nativeExtent: nativeExtent, basisTransform: basisTransform)
             precondition(nativeLength > 0.001,
                          "[Model init] \(modelName): degenerate native length \(nativeLength) — cannot meterize")
             let scaleCorrection = realWorldLength / nativeLength
             // Uniform scale: det(s·B) = s³·det(B) keeps the sign, so the winding decision in
             // Mesh.transformMeshBasis is unchanged; shaders renormalize the scaled normals.
-            meterizedBasisTransform = Transform.scaleMatrix(float3(repeating: scaleCorrection)) * (basisTransform ?? .identity)
-            DebugLog("[Model init] Model \(modelName) is \(realWorldLength)m long (native: \(nativeLength)m, scale correction: \(scaleCorrection))", true)
+            let scaleCorrectionTransform = Transform.scaleMatrix(float3(repeating: scaleCorrection))
+            meterizedBasisTransform = scaleCorrectionTransform * (basisTransform ?? .identity)
+            DebugLog("[Model init] Model \(modelName) is \(realWorldLength)m long (native: \(nativeLength)m, scale correction: \(scaleCorrection)), result: \(nativeLength * scaleCorrection)", true)
         } else {
             meterizedBasisTransform = basisTransform
         }
-
-        let mdlMeshes = loadedAsset.childObjects(of: MDLMesh.self) as? [MDLMesh] ?? []
 
         Self.InspectMeshes(mdlMeshes: mdlMeshes)
 
