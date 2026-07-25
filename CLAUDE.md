@@ -20,62 +20,13 @@ xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulat
 
 ## Project Layout
 
-```
-ToyFlightSimulator Shared/     # Cross-platform engine (~205 Swift files, 22 Metal shaders)
-  Animation/                   # Skeletal animation, channels, layer system
-    Animators/                 # AnimationController, AircraftAnimator base, F22Animator, F35Animator
-    Configs/                   # F22AnimationConfig, F35AnimationConfig
-    Layers/                    # AnimationChannel protocol, Binary/Continuous channels, AnimationLayer, masks
-  AssetPipeline/               # Asset import + management (renamed from Assets/)
-    Assets.xcassets            # Image/texture assets
-    Libraries/Meshes/          # MeshLibrary, procedural meshes
-    Libraries/Textures/        # TextureLoader (singleton cache), TextureLibrary
-    Libraries/Models/          # ModelLibrary (OBJ/USDZ loading)
-    Thumbnails/                # AircraftThumbnail Spec/Generator/Cache/Store (SceneKit picker thumbnails)
-    Mesh.swift, Material.swift, ObjModel.swift, UsdModel.swift, etc.
-  Audio/                       # TFSAudioSystem (AVAudioEngine wrapper)
-  Core/
-    Input/                     # Keyboard, Mouse, Joystick (HOTAS), Controller, MotionDevice
-    Threads/                   # UpdateThread (game logic), AudioThread
-    Types/                     # LazyLibrary (build-on-first-request Library base)
-    Resources/Models/          # 3D model files (F16, F18, F22, F35, Temple, etc.)
-  Display/                     # Renderers and protocols
-    Protocols/                 # BaseRendering, ShadowRendering, ParticleRendering,
-                               # TessellationRendering, TiledGBufferRendering, LateDrawablePresenting
-  GameObjects/                 # Node → GameObject hierarchy, Aircraft, Weapons, Cameras, Particles
-                               # AircraftType (player-selectable aircraft), GameObjectType (registration category)
-  Graphics/
-    Shaders/                   # All .metal files + TFSCommon.h shared definitions
-    Libraries/Pipelines/       # Render/Compute pipeline states (~37 render pipeline cases + compute)
-  Managers/                    # SceneManager, CameraManager, LightManager, DrawManager, AudioManager
-  Math/                        # Math utilities (Transform.* is canonical, Math/MathUtils have niche helpers)
-  Physics/
-    World/                     # PhysicsWorld, PhysicsEntity protocol, RigidBody + Sphere/Plane subclasses
-    Solver/                    # PhysicsSolver protocol, EulerSolver, VerletSolver
-    BroadPhase/                # AABB, BroadPhaseCollisionDetector (sweep-and-prune)
-    CollisionResponse/         # HeckerCollisionResponse
-    FlightModel/               # FlightModel protocol, ControlInput, LiftData, Models/F22SimpleFlightModel
-  Scenes/                      # GameScene subclasses (Flightbox, FlightboxWithPhysics, Sandbox, etc.)
-                               # PendingAircraftSwap / PendingSceneReset (UI→update-thread mailboxes)
-  Shadows/                     # ShadowCamera, ShadowCascadeFitting (CSM frustum fitting + texel snapping)
-  Utils/                       # TFSCache, LockUtils (withLock), ModelIO extensions, ValueCurve, SymmetricSigmoidCurve,
-                               # Float3+Extensions (zero-safe normalize), DebugLog, RandomColor,
-                               # MetalPerformanceHUD (Apple HUD toggle via CAMetalLayer)
-  Views/                       # SwiftUI views shared by macOS + iOS menus: AircraftGridPicker, RendererPicker,
-                               # RefreshRatePicker, AnisotropyPicker, VolumeSlider, MetalHUDToggle, ResetSceneButton
-ToyFlightSimulator macOS/
-  Views/                       # MacMetalViewWrapper, MacGameUIView, GameStats, TFSMenu (SwiftUI)
-  AppDelegate.swift, GameViewController.swift
-ToyFlightSimulator iOS/
-  Views/                       # IOSMetalViewWrapper, IOSGameUIView, TFSMenuMobile, touch controls
-                               # (virtual joystick/throttle)
-ToyFlightSimulator tvOS/       # tvOS target
-ToyFlightSimulatorTests/       # XCTest: NodeTests, RendererTests (legacy)
-                               # Swift Testing: Math/, Utils/, AssetPipeline/, Cameras/, GameObjects/,
-                               # Managers/, Physics/, Scenes/, Shadows/, TestSupport/
-code_reviews/ debugging/ investigations/ plans/   # Claude-authored review, debugging, research, and plan docs
-                               # (claude/ subdirs; debugging/screenshots/ holds visual artifacts)
-```
+Three platform targets (`ToyFlightSimulator macOS/`, `ToyFlightSimulator iOS/`, `ToyFlightSimulator tvOS/`)
+over a shared engine in `ToyFlightSimulator Shared/`, with tests in `ToyFlightSimulatorTests/`. Browse the
+tree for specifics; two conventions aren't visible from it:
+
+- `Math/`: `Transform.*` is canonical — `Math`/`MathUtils` hold niche helpers only.
+- `code_reviews/ debugging/ investigations/ plans/`: Claude-authored review, debugging, research, and plan
+  docs. Each has a `claude/` subdir; `debugging/screenshots/` holds visual artifacts.
 
 ## Architecture
 
@@ -218,52 +169,17 @@ Shadow map storage: one `depth32Float` `texture2DArray`, 4096² × 4 slices. `Sh
 
 ## Key Development Patterns
 
-### Adding New Game Objects
-1. Extend `GameObject` (or `Aircraft` for vehicles)
-2. Override `doUpdate()` for per-frame logic
-3. Add to scene via `addChild()` in a `GameScene.buildScene()` override
-4. SceneManager auto-registers for batched rendering (base `objectType` handles opaque/transparent/tessellatable; override it — and extend `GameObjectType` + both `add`/`remove` switches — only for a new side collection)
-5. For physics: construct a `SphereRigidBody`/`PlaneRigidBody` (self-attaches to the GameObject) and register it with the scene's `PhysicsWorld` via `addEntity()`
-6. Runtime despawns must use `removeFromScene()`, not bare `parent?.removeChild(self)` (see Scene Graph)
-
-### Adding New Shaders
-1. Add Metal functions to appropriate .metal file (or new file)
-2. Add enum case to `RenderPipelineStateType`
-3. Create pipeline state struct in relevant pipeline library file
-4. Register in `RenderPipelineStateLibrary.makeLibrary()`
-5. Use in renderer via `setRenderPipelineState(encoder, state: .NewType)` (convenience sugar over the raw encoder bind) and pass the stage's pipeline type to the mesh-draw entry points — `DrawManager.DrawOpaque/DrawTransparent/DrawShadows` take `psoType:`, from which `SetupAnimation` derives the skinned-mesh animated PSO via `animatedVariant` and restores the pass PSO at non-skinned meshes and loop boundaries (no global pipeline tracking; keep the bind and the draw call reading one local constant)
-
-### Adding New Models
-1. Place model files in `Core/Resources/Models/`
-2. Add `ModelType` enum case in `ModelLibrary`
-3. Register a factory in `ModelLibrary.makeLibrary()`: `register(.NewModel) { ObjModel("name") }` or `{ UsdModel("name", fileExtension: .USDZ) }` (built lazily on first access)
-4. Access via `Assets.Models[.NewModel]`
-
-### Adding New Player-Selectable Aircraft
-1. Add the `AircraftType` case (rawValue is the display name in the picker)
-2. Handle it in `FlightboxWithPhysics.applyAircraftSwap`'s switch (construct the Aircraft subclass)
-3. Add its `AircraftThumbnailSpec.spec(for:)` entry — model name/extension must mirror `ModelLibrary.makeLibrary()`; tune the uprighting rotations visually and bump `ThumbnailCameraConfig.specVersion` when changing pose constants
-4. Override `cameraOffset` on the Aircraft subclass if the default `[0, 10, -20]` doesn't frame it well
-
-### Adding New Scenes
-1. Create `GameScene` subclass
-2. Override `buildScene()` to add objects, cameras, lights
-3. Add `SceneType` enum case
-4. Register in `SceneManager.SetScene()` switch
-
-### Adding New Renderers
-1. Create renderer class extending `Renderer`
-2. Conform to needed protocols (`ShadowRendering`, `ParticleRendering`, `TiledGBufferRendering`, `LateDrawablePresenting`, etc.)
-3. Add `RendererType` enum case
-4. Register in `Engine.InitRenderer()` switch
+Step-by-step registration recipes for adding game objects, shaders, models, player-selectable aircraft,
+scenes, and renderers live in the **`extending-the-engine`** skill
+(`.claude/skills/extending-the-engine/SKILL.md`) — invoke it when doing any of those.
 
 ## Testing
 
 Two frameworks coexist:
 - **XCTest**: `NodeTests`, `RendererTests` (unchanged legacy suites)
-- **Swift Testing** (Apple's `@Test` framework, requires Xcode 26.2+): `Math/` (MathTests, MathUtilsTests, TransformTests), `Utils/` (TFSCacheTests, LockUtilsTests, MDLMaterialSemanticTests, TimeItTests, ValueCurveTests, SymmetricSigmoidCurveTests), `AssetPipeline/` (MaterialTextureTransformTests, TextureLoaderOptionsTests, SingleMeshVertexMetadataTests, AircraftThumbnailSpecTests, AircraftThumbnailRenderTests), `Cameras/` (AttachedCameraTests), `GameObjects/` (AircraftTypeTests, GameObjectTypeTests), `Managers/` (SceneManagerRegisterTests, SceneManagerUnregisterTests), `Physics/` (RigidBodyTests, PhysicsSolverTests, PhysicsWorldSmokeTests), `Scenes/` (AircraftSwapTests, PendingSceneResetTests), `Shadows/` (ShadowCameraTests, ShadowCascadeFittingTests). Shared helpers in `TestSupport/` (`ApproxEqual.swift` for Float/SIMD/matrix tolerance comparisons; `Finite.swift` for NaN/Inf checks on SIMD vectors/matrices; `TestTags.swift` for `.math`, `.utils`, `.concurrency`, `.assetPipeline`, `.physics`, `.gameObjects`, `.scenes` filtering). Concurrency tests use `.timeLimit(.minutes(1))` to fail fast on lock leakage.
+- **Swift Testing** (Apple's `@Test` framework, requires Xcode 26.2+): suites under `Math/`, `Utils/`, `AssetPipeline/`, `Cameras/`, `GameObjects/`, `Managers/`, `Physics/`, `Scenes/`, `Shadows/`. Shared helpers in `TestSupport/` (`ApproxEqual.swift` for Float/SIMD/matrix tolerance comparisons; `Finite.swift` for NaN/Inf checks on SIMD vectors/matrices; `TestTags.swift` for `.math`, `.utils`, `.concurrency`, `.assetPipeline`, `.physics`, `.gameObjects`, `.scenes` filtering). Concurrency tests use `.timeLimit(.minutes(1))` to fail fast on lock leakage.
 
-CI: `.github/workflows/test_macOS.yml` runs `xcodebuild test` on pushes to `main` and on PRs targeting `main` (macos-26 runner, Xcode 26.2), with `-parallel-testing-enabled NO` — serial execution avoids MTKView/CAMetalLayer drawable deadlocks in the app-hosted suite. Output via `xcbeautify --renderer github-actions`; `TestResults.xcresult` uploaded as artifact only on failure. `macOS.yml` is a separate build-only workflow on pushes to `main`.
+CI (`.github/workflows/`): test runs must pass `-parallel-testing-enabled NO` — serial execution avoids MTKView/CAMetalLayer drawable deadlocks in the app-hosted suite. Keep that flag.
 
 ## Debugging
 
