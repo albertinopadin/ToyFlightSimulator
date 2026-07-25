@@ -99,10 +99,9 @@ final class ParticleEmitter: @unchecked Sendable {
     
     static func afterburner(descriptor: ParticleDescriptor) -> ParticleEmitter {
         return ParticleEmitter(descriptor,
-                               //texture: "afterburner",
                                texture: "fire",
-                               particleCount: 1200,
-                               birthRate: 5,
+                               particleCount: 2500,
+                               birthRate: 10,
                                birthDelay: 0,
                                blending: true)
     }
@@ -110,17 +109,17 @@ final class ParticleEmitter: @unchecked Sendable {
     static func afterburner(size: CGSize, position: float3 = [0, 0, 0]) -> ParticleEmitter {
         var descriptor = ParticleDescriptor()
         descriptor.position = position
-        descriptor.positionXRange = -1...1
-        descriptor.positionYRange = -1...1
-        descriptor.positionZRange = -1...1
+        descriptor.positionXRange = -0.4...0.4
+        descriptor.positionYRange = -0.4...0.4
+        descriptor.positionZRange = -0.4...0.4
         descriptor.direction = [0, 0, -1]
-        descriptor.directionRange = -0.1...0.1
+        descriptor.directionRange = -0.05...0.05
         descriptor.speed = 1.0
         descriptor.pointSize = Float(size.width)
         descriptor.startScale = 0
-        descriptor.startScaleRange = 0.2...1.0
+        descriptor.startScaleRange = 0.1...0.4
         descriptor.endScaleRange = 0...0
-        descriptor.life = 100
+        descriptor.life = 50
         descriptor.lifeRange = -50...70
         descriptor.color = Self.FIRE_COLOR
         return Self.afterburner(descriptor: descriptor)
