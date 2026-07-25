@@ -605,12 +605,16 @@ New tests, appended before the private `det3x3` helper:
 
 ## 7. Follow-ups and related observations (not part of this fix)
 
-- **`scripts/measure_models.swift` still reports stage space.** Its §2.2 table (and the
-  research doc) will no longer match the registration comments for the two Sketchfab models.
-  Follow-up: port `DrawSpaceNativeExtent` (mesh-local union through
-  `scaleStrippedTransform`, honoring the empty-time-range rule) into the script and refresh
-  the table. Until then the script's own caveat comment under-states the problem (it only
-  mentions axis permutation, not scale).
+- ~~**`scripts/measure_models.swift` still reports stage space.**~~ **DONE (2026-07-25):** the
+  script now ports `scaleStrippedTransform` + `DrawSpaceNativeExtent` (mesh-local union,
+  honoring the empty-time-range rule) and reports draw space as the primary size, with the
+  stage-space bbox kept as a labeled diagnostic plus a `stage/draw` column that names the
+  stripped node scale (5.78× / 15.03×). It also reports each aircraft's engine-space size in
+  meters (`draw extent × s × scene scale`), mirrors the current registrations
+  (`realWorldLength`, scene scale 1.0), and takes `--verbose` for per-mesh local bounds and
+  composed node scales. Its output reproduces the numbers in §2.3/§2.5 of this doc. The
+  research doc's §2.2 table stays as the dated stage-space record — the script no longer
+  reprints it.
 - **Player collider is still `collisionRadius = 2.0`** (`FlightboxWithPhysics.swift:220`) —
   the "collider specs authored in meters" follow-up from the meterization plan gets more
   visible now that the F-22/F-35 are full-size.

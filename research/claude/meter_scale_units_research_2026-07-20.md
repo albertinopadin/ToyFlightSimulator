@@ -65,7 +65,9 @@ The thrust constant is used **as if it were newtons** (`worldForward * engineMax
 
 ### 2.2 Measured model dimensions (ModelIO `MDLAsset.boundingBox`, native units, pre-basis-transform)
 
-Script: `scripts/measure_models.swift` (checked in 2026-07-21; run `swift scripts/measure_models.swift` from the repo root — reprints this table plus the §3.2 meterization factors). Declared units read with macOS's `/usr/bin/usdcat`.
+Script: `scripts/measure_models.swift` (checked in 2026-07-21). Declared units read with macOS's `/usr/bin/usdcat`.
+
+> **Superseded (2026-07-25):** this table is stage space (`MDLAsset.boundingBox`), which composes USD node scale that the engine strips at draw time. For the two Sketchfab models it over-reports the native length by 5.78× (F-22) and 15.03× (F-35), and calibrating meterization against it made them render that many times too small — see `debugging/claude/sketchfab_f22_f35_meterization_node_scale.md`. The script now measures and prints **draw space** instead (still showing these stage numbers as a labeled diagnostic), so its output no longer matches the "Native extent"/"Length axis" columns below for those two models. The table is kept as the dated record of what was measured on 2026-07-21.
 
 | Model file | Native extent (X, Y, Z) | Declared units | Length axis → engine Z | Scene scale | In-world length today | Real length | Today vs real |
 |---|---|---|---|---|---|---|---|

@@ -10,9 +10,10 @@ import simd
 /// Pure meterization math in `Model` — no Metal, no Model construction. Fixtures are
 /// DRAW-SPACE native extents (mesh-local bounds through scale-stripped node transforms —
 /// the space `Model.DrawSpaceNativeExtent` measures and the renderer draws), measured in
-/// debugging/claude/sketchfab_f22_f35_meterization_node_scale.md §2. Stage-space numbers
-/// (`MDLAsset.boundingBox`, scripts/measure_models.swift §2.2) over-count USD node scale
-/// and must NOT be used as fixtures here.
+/// debugging/claude/sketchfab_f22_f35_meterization_node_scale.md §2 and reprinted by
+/// `swift scripts/measure_models.swift` ("draw extent" / "length axis" rows). Stage-space
+/// numbers (`MDLAsset.boundingBox`, the research doc's §2.2 table) over-count USD node
+/// scale and must NOT be used as fixtures here.
 @Suite("Model meterization", .tags(.assetPipeline))
 struct ModelMeterizationTests {
 
