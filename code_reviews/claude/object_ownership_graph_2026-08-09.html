@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToyFlightSimulator — Object Ownership Graph</title>
+</head>
+<body>
+<style>
+/* ---------- Theme tokens: bare :root = light, dark under media+stamp ---------- */
+:root {
+  color-scheme: light;
+  --ground:   #eef1f4;
+  --surface:  #fbfcfd;
+  --panel:    #f5f7f9;
+  --node:     #ffffff;
+  --ink:      #161b21;
+  --ink-2:    #55606c;
+  --ink-3:    #8b95a1;
+  --hairline: #d9dee4;
+  --edge:     #9aa4b0;
+  --focus:    #2a78d6;
+  --shadow:   0 1px 2px rgba(22,27,33,.06), 0 4px 16px rgba(22,27,33,.05);
+  /* cluster hues — validated categorical palette, light steps */
+  --c-render:   #2a78d6;
+  --c-scene:    #eb6834;
+  --c-physics:  #1baf7a;
+  --c-anim:     #eda100;
+  --c-platform: #e87ba4;
+  --c-managers: #008300;
+  --c-assets:   #4a3aa7;
+  --c-core:     #e34948;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground:   #10141a;
+    --surface:  #171b21;
+    --panel:    #1b2027;
+    --node:     #212831;
+    --ink:      #edf1f5;
+    --ink-2:    #9aa4b0;
+    --ink-3:    #6b7682;
+    --hairline: #2b323b;
+    --edge:     #55606c;
+    --focus:    #3987e5;
+    --shadow:   0 1px 2px rgba(0,0,0,.35), 0 6px 20px rgba(0,0,0,.30);
+    --c-render:   #3987e5;
+    --c-scene:    #d95926;
+    --c-physics:  #199e70;
+    --c-anim:     #c98500;
+    --c-platform: #d55181;
+    --c-managers: #008300;
+    --c-assets:   #9085e9;
+    --c-core:     #e66767;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground:   #10141a;
+  --surface:  #171b21;
+  --panel:    #1b2027;
+  --node:     #212831;
+  --ink:      #edf1f5;
+  --ink-2:    #9aa4b0;
+  --ink-3:    #6b7682;
+  --hairline: #2b323b;
+  --edge:     #55606c;
+  --focus:    #3987e5;
+  --shadow:   0 1px 2px rgba(0,0,0,.35), 0 6px 20px rgba(0,0,0,.30);
+  --c-render:   #3987e5;
+  --c-scene:    #d95926;
+  --c-physics:  #199e70;
+  --c-anim:     #c98500;
+  --c-platform: #d55181;
+  --c-managers: #008300;
+  --c-assets:   #9085e9;
+  --c-core:     #e66767;
+}
+
+/* ---------- Base ---------- */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "Avenir Next", "Avenir", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  overflow: hidden;
+}
+code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ---------- App frame ---------- */
+#app { display: flex; flex-direction: column; height: 100vh; }
+header {
+  display: flex; align-items: center; gap: 20px;
+  padding: 10px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--hairline);
+  flex-wrap: wrap;
+}
+.title-block { display: flex; flex-direction: column; min-width: 200px; }
+.eyebrow {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; text-wrap: balance; }
+
+.controls { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-wrap: wrap; }
+#search {
+  width: 200px; padding: 6px 10px;
+  border: 1px solid var(--hairline); border-radius: 7px;
+  background: var(--panel); color: var(--ink);
+  font: inherit; font-size: 13px;
+}
+#search::placeholder { color: var(--ink-3); }
+
+.chiprow { display: flex; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 10px; border-radius: 7px;
+  border: 1px solid var(--hairline);
+  background: var(--panel); color: var(--ink-2);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; user-select: none;
+}
+.chip[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-3); }
+.chip svg { display: block; }
+.chip .swatch-line { stroke: currentColor; }
+.zoombtns { display: flex; gap: 4px; }
+.zoombtns button {
+  width: 30px; height: 30px; border-radius: 7px;
+  border: 1px solid var(--hairline);
+  background: var(--panel); color: var(--ink-2);
+  font: inherit; font-size: 14px; cursor: pointer;
+}
+.zoombtns button:hover, .chip:hover { color: var(--ink); }
+.zoombtns .fit { width: auto; padding: 0 10px; font-size: 12px; font-weight: 500; }
+
+main { display: flex; flex: 1; min-height: 0; }
+#canvas-wrap { flex: 1; min-width: 0; position: relative; background: var(--surface); }
+#graph { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+#graph.panning { cursor: grabbing; }
+#hint {
+  position: absolute; left: 14px; bottom: 12px;
+  font-size: 11.5px; color: var(--ink-3);
+  pointer-events: none;
+}
+
+/* ---------- Right rail ---------- */
+#rail {
+  width: 340px; flex: none;
+  background: var(--panel);
+  border-left: 1px solid var(--hairline);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.rail-section h2 {
+  margin: 0 0 8px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.statgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat {
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 8px; padding: 8px 10px;
+}
+.stat b { display: block; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11px; color: var(--ink-2); }
+
+.legend { display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; color: var(--ink-2); }
+.legend-row { display: flex; align-items: center; gap: 10px; }
+.legend-row svg { flex: none; color: var(--ink-2); }
+.legend-row .lbl b { color: var(--ink); font-weight: 600; }
+
+.index { display: flex; flex-direction: column; gap: 10px; }
+.index-cluster .cl-name {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 600; letter-spacing: .04em;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.index-cluster .members { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0 15px; }
+.member {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px; padding: 2.5px 7px;
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 6px; color: var(--ink-2); cursor: pointer;
+}
+.member:hover { color: var(--ink); border-color: var(--ink-3); }
+
+/* Selected-node card */
+#detail { display: none; flex-direction: column; gap: 14px; }
+#rail.has-selection #detail { display: flex; }
+#rail.has-selection #overview { display: none; }
+#detail .type-head { display: flex; align-items: flex-start; gap: 9px; }
+#detail .type-head .dot { margin-top: 6px; }
+#detail .type-name { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+#detail .type-meta { font-size: 12px; color: var(--ink-2); }
+#detail .type-file { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; color: var(--ink-3); overflow-wrap: anywhere; }
+#detail .type-note { font-size: 12.5px; color: var(--ink-2); }
+.refs { display: flex; flex-direction: column; gap: 5px; }
+.ref {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 8px; padding: 7px 10px; font-size: 12px;
+}
+.ref .prop { font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink-2); overflow-wrap: anywhere; }
+.ref .target {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-weight: 600;
+  color: var(--ink); cursor: pointer; text-decoration: none;
+  border-bottom: 1px dotted var(--ink-3);
+}
+.ref .target:hover { border-bottom-color: var(--ink); }
+.kind {
+  font-size: 9.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  padding: 1.5px 6px; border-radius: 5px; margin-left: auto; flex: none;
+  border: 1px solid var(--hairline); color: var(--ink-3);
+}
+.kind.weak { border-style: dashed; }
+.kind.shared { color: var(--ink-2); }
+.kind.wires { border-style: dotted; color: var(--ink-3); }
+.back {
+  align-self: flex-start;
+  border: 1px solid var(--hairline); background: var(--surface);
+  color: var(--ink-2); border-radius: 7px; padding: 5px 11px;
+  font: inherit; font-size: 12px; cursor: pointer;
+}
+.back:hover { color: var(--ink); }
+.empty-note { font-size: 12px; color: var(--ink-3); font-style: italic; }
+
+/* ---------- SVG graph ---------- */
+.cluster-box { fill: none; stroke-width: 1; rx: 14px; }
+.cluster-label {
+  font-family: "Avenir Next", "Avenir", system-ui, sans-serif;
+  font-size: 12.5px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase;
+}
+.cluster-hint { font-size: 10.5px; fill: var(--ink-3); letter-spacing: .02em; text-transform: none; font-weight: 500; }
+
+.edge-path { fill: none; stroke-width: 1.4; }
+.edge.weak .edge-path { stroke-dasharray: 5 4; }
+.edge.wires .edge-path { stroke-dasharray: 1.5 3.6; stroke-linecap: round; }
+.edge { color: var(--edge); }
+.edge .edge-path { stroke: currentColor; }
+#scene:not(.focused):not(.searching) .edge { opacity: .55; }
+.edge-label { opacity: 0; pointer-events: none; }
+.edge-label rect { fill: var(--surface); stroke: var(--hairline); rx: 4px; }
+.edge-label text {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px; fill: var(--ink-2);
+}
+
+.node { cursor: pointer; }
+.node-box { stroke-width: 1.1; rx: 8px; }
+.node-name {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11.5px; font-weight: 600; fill: var(--ink);
+}
+.node-role { font-family: "Avenir Next", "Avenir", system-ui, sans-serif; font-size: 9px; fill: var(--ink-3); letter-spacing: .05em; }
+.node-badge-box { fill: var(--surface); stroke: var(--hairline); rx: 4px; }
+.node-badge-text {
+  font-family: "Avenir Next", "Avenir", system-ui, sans-serif;
+  font-size: 8px; font-weight: 600; letter-spacing: .08em; fill: var(--ink-2);
+}
+.node.selected .node-box { stroke: var(--ink); stroke-width: 1.8; }
+
+/* Focus/dim states, driven by classes on #scene */
+#scene.focused .edge, #scene.focused .node, #scene.searching .node, #scene.searching .edge { opacity: .13; }
+#scene.focused .edge.lit, #scene.focused .node.lit, #scene.searching .node.hit { opacity: 1; }
+#scene.focused .edge.lit { color: var(--ink-2); }
+#scene.focused .edge.lit .edge-label { opacity: 1; }
+#scene.searching .node.hit .node-box { stroke: var(--focus); stroke-width: 1.6; }
+#scene .edge.hidden-kind, #scene .edge.hidden-kind .edge-label { display: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .edge, .node, .edge-label { transition: opacity .14s ease; }
+  #rail, .chip, .member, .zoombtns button { transition: color .12s ease, border-color .12s ease; }
+}
+
+/* ---------- Narrow screens ---------- */
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  #app { height: auto; }
+  main { flex-direction: column; }
+  #canvas-wrap { height: 68vh; }
+  #rail { width: 100%; border-left: none; border-top: 1px solid var(--hairline); }
+}
+</style>
+
+<div id="app">
+  <header>
+    <div class="title-block">
+      <span class="eyebrow">ToyFlightSimulator</span>
+      <h1>Object Ownership Graph</h1>
+    </div>
+    <div class="controls">
+      <input id="search" type="search" placeholder="Find a type…" aria-label="Find a type" autocomplete="off" spellcheck="false">
+      <div class="chiprow" role="group" aria-label="Edge kinds shown">
+        <button class="chip" data-kind="strong" aria-pressed="true">
+          <svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><line class="swatch-line" x1="1" y1="4" x2="21" y2="4" stroke-width="1.6"/></svg>
+          strong
+        </button>
+        <button class="chip" data-kind="weak" aria-pressed="true">
+          <svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><line class="swatch-line" x1="1" y1="4" x2="21" y2="4" stroke-width="1.6" stroke-dasharray="4 3"/></svg>
+          weak
+        </button>
+        <button class="chip" data-kind="shared" aria-pressed="true">
+          <svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><line class="swatch-line" x1="1" y1="4" x2="16" y2="4" stroke-width="1.6"/><path d="M 21 4 L 15.5 1.4 L 15.5 6.6 Z" fill="none" stroke="currentColor"/></svg>
+          shared
+        </button>
+        <button class="chip" data-kind="wires" aria-pressed="true">
+          <svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><line class="swatch-line" x1="1" y1="4" x2="21" y2="4" stroke-width="1.6" stroke-dasharray="1.5 3" stroke-linecap="round"/></svg>
+          wires
+        </button>
+      </div>
+      <div class="zoombtns">
+        <button id="zoom-out" aria-label="Zoom out">−</button>
+        <button id="zoom-in" aria-label="Zoom in">+</button>
+        <button id="zoom-fit" class="fit">Fit</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div id="canvas-wrap">
+      <svg id="graph" role="img" aria-label="Ownership graph of ToyFlightSimulator engine objects: nodes are types grouped into subsystem clusters; arrows point from owner to owned object. Solid arrows are strong references, dashed are weak back-references, dotted are shared references to library-cached objects. Full edge details are listed in the side panel."></svg>
+      <div id="hint">drag to pan · scroll to zoom · hover a type to trace its references · click to inspect</div>
+    </div>
+    <aside id="rail" aria-label="Details panel">
+      <div id="overview">
+        <div class="rail-section">
+          <div class="statgrid" id="stats"></div>
+        </div>
+        <div class="rail-section" style="margin-top:16px">
+          <h2>How to read</h2>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="rail-section" style="margin-top:16px">
+          <h2>Index</h2>
+          <div class="index" id="index"></div>
+        </div>
+      </div>
+      <div id="detail"></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+"use strict";
+/* ===================== GRAPH DATA (generated from source analysis) ===================== */
+const CLUSTERS = [
+  { id:"platform", name:"Platform Shell", hint:"SwiftUI / AppKit bridge",            hue:"--c-platform", x:40,   y:40,  cols:2 },
+  { id:"core",     name:"Engine Core",    hint:"process roots & threads",            hue:"--c-core",     x:40,   y:330, cols:2 },
+  { id:"managers", name:"Static Managers",hint:"process-lifetime registries",        hue:"--c-managers", x:40,   y:566, cols:2 },
+  { id:"scene",    name:"Scene Graph",    hint:"per-scene, torn down on reset",      hue:"--c-scene",    x:600,  y:40,  cols:3 },
+  { id:"physics",  name:"Physics & Flight", hint:"owned by the scene",               hue:"--c-physics",  x:600,  y:492, cols:2 },
+  { id:"render",   name:"Rendering & GPU", hint:"renderer-owned resources",          hue:"--c-render",   x:600,  y:782, cols:3 },
+  { id:"assets",   name:"Asset Pipeline", hint:"lazy caches, shared for process life", hue:"--c-assets", x:1390, y:40,  cols:2 },
+  { id:"anim",     name:"Animation",      hint:"per-aircraft, over shared skeletons", hue:"--c-anim",    x:1390, y:566, cols:2 },
+];
+
+const NODES = [
+  // ---- Platform Shell ----
+  { id:"GameViewController", cluster:"platform", role:"NSHostingController", file:"ToyFlightSimulator macOS/GameViewController.swift",
+    note:"Owns the SwiftUI root view. Installs NSEvent local monitors that feed the static Keyboard state. Does not own the MTKView or the renderer." },
+  { id:"MacGameUIView", cluster:"platform", role:"SwiftUI root view", file:"ToyFlightSimulator macOS/Views/MacGameUIView.swift",
+    note:"Composes menu + game view. Its body re-creates the MetalViewWrapper value struct on evaluation; holds the thumbnail store as @State so thumbnails survive menu close/reopen. iOS mirror: IOSGameUIView." },
+  { id:"MetalViewWrapper", cluster:"platform", role:"NSView/UIViewRepresentable", file:"…/Views/MacMetalViewWrapper.swift · IOSMetalViewWrapper.swift",
+    note:"A value struct that stores nothing. makeCoordinator() calls Engine.Start(rendererType:); makeNSView creates the GameView and assigns Engine.MetalView — a computed passthrough into Renderer.metalView. Runtime renderer switching re-runs this wiring with a fresh Renderer." },
+  { id:"GameView", cluster:"platform", role:"MTKView subclass", file:"Display/GameView.swift",
+    note:"No stored properties. Platform extensions push key/mouse events into the static Keyboard and Mouse state. Retained by the AppKit/SwiftUI view hierarchy and strongly by Renderer; its delegate pointer back to Renderer is weak (MTKView.delegate)." },
+  { id:"AircraftThumbnailStore", cluster:"platform", role:"@Observable @MainActor", file:"AssetPipeline/Thumbnails/AircraftThumbnailStore.swift",
+    note:"In-memory [AircraftType: CGImage] cache plus a private Worker actor that renders via a transient SceneKit SCNRenderer and persists PNGs to a disk cache. The generator/cache are stateless enums — no engine objects retained." },
+
+  // ---- Engine Core ----
+  { id:"Engine", cluster:"core", badge:"static", role:"never instantiated", file:"Core/Engine.swift",
+    note:"Static namespace owning the lazy Metal roots (Device / CommandQueue / DefaultLibrary), the current Renderer, and both engine threads. InitRenderer(type:) is the only renderer factory; it also hands the update semaphores to the new renderer." },
+  { id:"UpdateThread", cluster:"core", role:"Thread · game logic", file:"Core/Threads/UpdateThread.swift",
+    note:"Owns the two handshake semaphores. Each frame: wait updateSemaphore → SceneManager.writeFrameSnapshot(frameIndex:) → signal updateDoneSemaphore. The scene graph and physics are mutated only here." },
+  { id:"AudioThread", cluster:"core", role:"Thread · audio", file:"Core/Threads/AudioThread.swift",
+    note:"Holds no object references. Kicked after the scene is built; calls AudioManager.StartGameMusic() or Prepare() statically." },
+  { id:"updateSemaphores", cluster:"core", role:"2× DispatchSemaphore", file:"Core/Threads/UpdateThread.swift",
+    note:"updateSemaphore + updateDoneSemaphore — the render↔update frame handshake. Created by UpdateThread, handed to every Renderer that Engine.InitRenderer builds: co-owned by both sides of the handshake." },
+
+  // ---- Static Managers ----
+  { id:"SceneManager", cluster:"managers", badge:"static", role:"scene registry & batching", file:"Managers/SceneManager.swift",
+    note:"Batches every registered GameObject per shared Model for instanced rendering (opaque, transparent, particles, sky, lines, icosahedrons, tessellatables) and triple-buffers RingBufferRegion snapshots (byte offsets into DrawManager's ring buffers). Every scene object is doubly retained: parent Node.children + a batch collection. TeardownScene clears everything." },
+  { id:"CameraManager", cluster:"managers", badge:"static", role:"ordered camera registry", file:"Managers/CameraManager.swift",
+    note:"Identity-deduped array in registration order (the 'C'-key cycle order) plus CurrentCamera (optional). Cameras are co-owned with scene stored properties and — for AttachedCamera — the aircraft's children." },
+  { id:"LightManager", cluster:"managers", badge:"static", role:"light registry", file:"Managers/LightManager.swift",
+    note:"Master _lightObjects array plus directional/point bucket arrays that alias it — each light sits in two manager arrays and in the scene's Node tree. Serves shaders from reused LightData scratch buffers." },
+  { id:"InputManager", cluster:"managers", badge:"static", role:"input hub", file:"Core/Input/InputManager.swift",
+    note:"Owns Controller (GameController), and per platform the Thrustmaster HOTAS Joystick/Throttle (IOKit HID, macOS) or MotionDevice (CoreMotion, iOS). Reads the separate all-static Keyboard/Mouse state — it does not own them." },
+  { id:"HID devices", cluster:"managers", role:"Controller · Joystick · Throttle · Motion", file:"Core/Input/…",
+    note:"Platform input-device wrappers held as InputManager statics. The HOTAS pair exists only on macOS, MotionDevice only on iOS." },
+  { id:"Keyboard · Mouse", cluster:"managers", role:"all-static input state", file:"Core/Input/Keyboard.swift · Mouse.swift",
+    note:"256-key state array and mouse buttons/deltas/scroll. Written by GameView's event handlers and GameViewController's NSEvent monitors; read by InputManager. Static types — nothing owns them." },
+  { id:"AudioManager", cluster:"managers", badge:"static", role:"audio facade", file:"Managers/AudioManager.swift",
+    note:"Static facade over TFSAudioSystem; Prepare() builds the AVAudioEngine graph off-main." },
+  { id:"TFSAudioSystem", cluster:"managers", role:"AVAudioEngine wrapper", file:"Audio/TFSAudioSystem.swift",
+    note:"Owns the AVAudioEngine + AVAudioPlayerNode graph used for MP3 playback." },
+  { id:"GameStatsManager", cluster:"managers", badge:"singleton", role:"ObservableObject", file:"Managers/GameStatsManager.swift",
+    note:"sharedInstance singleton publishing FPS / frame counters / active renderer to SwiftUI. Pure value payloads — no outbound object references." },
+  { id:"PendingSceneReset", cluster:"managers", role:"coalescing reset latch", file:"Managers/SceneManager.swift",
+    note:"Lock-guarded single-shot Bool latched by Cmd+R / the menu Reset button, consumed by SceneManager.Update at the top of the next unpaused update tick (TeardownScene + SetScene)." },
+
+  // ---- Scene Graph ----
+  { id:"GameScene", cluster:"scene", role:"Node subclass · scene root", file:"Scenes/GameScene.swift",
+    note:"buildScene() populates the graph; addChild auto-registers with SceneManager; addCamera/addLight register into the static managers and store nothing locally. Subclasses: FlightboxScene, FlightboxWithTerrain, FreeCamFlightboxScene, SandboxScene, BallPhysicsScene, PhysicsStressTestScene." },
+  { id:"FlightboxWithPhysics", cluster:"scene", role:"default scene", file:"Scenes/FlightboxWithPhysics.swift",
+    note:"Owns the PhysicsWorld, a mirror entities array, the persistent AttachedCamera + DebugCamera, the Sun, and the PendingAircraftSwap mailbox. applyAircraftSwap rebuilds aircraft + SphereRigidBody on the update thread and re-attaches the camera." },
+  { id:"Node", cluster:"scene", role:"transform hierarchy", file:"GameObjects/Node.swift",
+    note:"children AND parent are both strong — the parent⇄child cycle is deliberate and broken manually by removeChild / removeAllChildren. World matrices are lazily cached with generation counters." },
+  { id:"PendingAircraftSwap", cluster:"scene", role:"swap mailbox", file:"Scenes/FlightboxWithPhysics.swift",
+    note:"Thread-safe single-slot, latest-wins AircraftType request written by the UI picker, consumed at the top of doUpdate on the update thread." },
+  { id:"LightObject / Sun", cluster:"scene", role:"GameObject · .none batch", file:"GameObjects/LightObject.swift",
+    note:"objectType .none keeps lights out of SceneManager batches; they live in the scene tree AND LightManager's arrays. Sun (main directional) refits the 4 CSM cascades from the live camera every frame." },
+  { id:"SkyBox · SkySphere", cluster:"scene", role:"sky objects", file:"GameObjects/…",
+    note:"Resolve their sky MTLTexture at construction so DrawSky never enters the texture library's locked subscript mid-encode. Registered into SceneManager.skyData (holds at most one)." },
+  { id:"Camera", cluster:"scene", role:"GameObject · .none batch", file:"GameObjects/Cameras/Camera.swift",
+    note:"Reverse-Z projection via Transform.perspectiveProjection; generation-checked lazy viewMatrix (at most one inverse per frame). Excluded from SceneManager batches — but still holds the shared .None model like every GameObject." },
+  { id:"AttachedCamera", cluster:"scene", role:"follows aircraft", file:"GameObjects/Cameras/AttachedCamera.swift",
+    note:"No stored target property — attachment is pure Node parenting: attach(to:) detaches from any current parent, zeroes rotation, then aircraft.addChild(camera). computeViewMatrix strips parent scale so CSM cascade fitting sees true world units." },
+  { id:"DebugCamera", cluster:"scene", role:"WASD + mouselook", file:"GameObjects/Cameras/DebugCamera.swift",
+    note:"Unparented, so CameraManager.Update drives it; ignores input unless it is the active camera." },
+  { id:"GameObject", cluster:"scene", role:"Node + Renderable", file:"GameObjects/GameObject.swift",
+    note:"model is a `let` into the shared ModelLibrary cache; rigidBody is optional composition (the body self-registers). Registered into a SceneManager batch by objectType — runtime despawns must call removeFromScene() or the object stays registered and never deallocates." },
+  { id:"Aircraft", cluster:"scene", role:"GameObject subclass", file:"GameObjects/Aircraft.swift",
+    note:"Base for F16 · F18 · F22 · F22_CGTrader · F35. Owns the animator and flight model; attitude is a kinematic per-axis damped-lag filter (AttitudeDynamics struct, held by value). flightModel.didSet and rigidBody.didSet both sync mass so either assignment order converges." },
+  { id:"F22", cluster:"scene", role:"afterburner aircraft", file:"GameObjects/F22.swift",
+    note:"Two Afterburner particle objects held strongly AND addChild'ed — so they also register into SceneManager.particleObjects (flat, like all composite descendants)." },
+  { id:"SubMeshGameObject", cluster:"scene", role:"extracted-submesh object", file:"GameObjects/SubMeshGameObject.swift",
+    note:"parentMeshGameObject is a STRONG back-reference to the F-18 that also childs it — a deliberate cycle, released at scene teardown. Registration also hides the submesh in the parent model's draw lists." },
+  { id:"F18", cluster:"scene", role:"composite aircraft", file:"GameObjects/F18.swift",
+    note:"Eight SubMeshGameObject control surfaces plus a stores dictionary of weapons/fuel tanks (spawned weapons get parentMeshGameObject = self). Drives surfaces by direct Node transforms — no animator. Deliberately not meterized (native units are already meters)." },
+  { id:"ParticleEmitterObject", cluster:"scene", role:"GameObject wrapper", file:"GameObjects/Particles/…",
+    note:"Fire / Afterburner subclasses. Wraps a ParticleEmitter and registers into SceneManager.particleObjects." },
+  { id:"ParticleEmitter", cluster:"scene", role:"GPU particle system", file:"GameObjects/Particles/ParticleEmitter.swift",
+    note:"Owns its own MTLBuffer of particles (updated by a compute pass) plus a shared 'fire' texture from the TextureLoader cache. Descriptor is a value struct." },
+
+  // ---- Physics & Flight ----
+  { id:"PhysicsWorld", cluster:"physics", role:"per-scene world", file:"Physics/World/PhysicsWorld.swift",
+    note:"Instance-owned by physics scenes (never static). Stores concrete [RigidBody] — not any PhysicsEntity — for direct class dispatch. Per step: apply forces → resolve collisions → integrate → zeroForces. Solvers are stateless static calls." },
+  { id:"RigidBody", cluster:"physics", role:"PhysicsEntity", file:"Physics/World/RigidBody.swift",
+    note:"Weak back-ref to its GameObject; self-registers via gameObject?.rigidBody = self in init. Subclasses: SphereRigidBody (collisionRadius), PlaneRigidBody (collisionNormal). Identity is ObjectIdentifier. One of only three weak declarations in the whole engine." },
+  { id:"BroadPhaseCollisionDetector", cluster:"physics", role:"sweep-and-prune", file:"Physics/Collision/…",
+    note:"X-axis sweep with AABBs computed once per entity into reused scratch arrays. The returned pairs array is reused scratch — consumed within the step." },
+  { id:"Euler · Verlet · Hecker", cluster:"physics", role:"stateless solvers", file:"Physics/Solvers/… · HeckerCollisionResponse",
+    note:"EulerSolver, VerletSolver, HeckerCollisionResponse — pure static step()/resolve() functions. PhysicsWorld stores no solver instances." },
+  { id:"F22SimpleFlightModel", cluster:"physics", role:"FlightModel (final class)", file:"Physics/FlightModel/Models/F22SimpleFlightModel.swift",
+    note:"Pure force function: thrust + Catmull-Rom lift curve + induced/parasitic drag, computed from a RigidBody.State snapshot and ControlInput. Held strongly by Aircraft.flightModel." },
+
+  // ---- Rendering & GPU ----
+  { id:"Renderer", cluster:"render", role:"MTKViewDelegate base", file:"Display/Renderer.swift",
+    note:"Owns the MTKView strongly (the delegate pointer back is weak — no cycle), the in-flight semaphore (3 frames max) and the base pass descriptor. A renderer switch builds a fresh subclass, re-points the view, and drops the old renderer whole." },
+  { id:"Deferred renderers", cluster:"render", role:"5 concrete + 1 stub", file:"Display/…Renderer.swift",
+    note:"SinglePassDeferredLighting, TiledDeferred, TiledMultisample, TiledMSAATessellated, OIT (+ ForwardPlus stub). Each owns its shadow-map array (4 × 4096² depth32F slices), GBuffer texture set (a value struct of 3–4 MTLTextures), lightingResolveTexture and pass descriptors. OIT instead parks its targets in the TextureLibrary." },
+  { id:"DrawManager", cluster:"render", badge:"static", role:"draw-time encoder", file:"Managers/DrawManager.swift",
+    note:"Sole owner of the three 32 MB ModelConstants ring buffers — SceneManager's RingBufferRegions carry only byte offsets into them. Caches the shared Quad meshes and Icosahedron draw data after first resolve; the animated-uniforms cache keys meshes by non-owning ObjectIdentifier." },
+  { id:"Graphics", cluster:"render", badge:"static", role:"GPU state container", file:"Graphics/Graphics.swift",
+    note:"Seven strong static libraries: shaders, vertex descriptors, render + compute PSOs, depth-stencil states, samplers, MDL descriptors." },
+  { id:"State libraries", cluster:"render", role:"7 eager libraries", file:"Graphics/Libraries/…",
+    note:"RenderPipelineStateLibrary (~40 PSOs), ComputePipelineStateLibrary, DepthStencilStateLibrary (16), SamplerStateLibrary (5 anisotropy variants + a lock-guarded, re-pointable currentLinearSamplerState), ShaderLibrary, two vertex-descriptor libraries." },
+  { id:"MTL*State objects", cluster:"render", role:"PSOs · depth-stencil · samplers", file:"—",
+    note:"Immutable pipeline / depth-stencil / sampler state objects, cached for process life." },
+  { id:"MTLDevice · Queue · Library", cluster:"render", role:"Metal roots", file:"Core/Engine.swift",
+    note:"Engine's lazy statics; CommandQueue and DefaultLibrary derive from Device. Every GPU allocation in the process hangs off these three." },
+  { id:"MTLBuffer", cluster:"render", role:"GPU memory", file:"—",
+    note:"Convergence point: DrawManager's ring buffers, Mesh vertex buffers, Submesh index buffers (offset-shared per MTKMesh), particle buffers, Skin joint palettes, Line/Terrain buffers." },
+  { id:"MTLTexture", cluster:"render", role:"GPU textures", file:"—",
+    note:"Owned by the TextureLibrary / TextureLoader caches (NSCache-backed — evictable under memory pressure) and by renderers for render targets. Materials hold shared per-semantic references; all labeled for the GPU debugger." },
+
+  // ---- Asset Pipeline ----
+  { id:"Assets", cluster:"assets", badge:"static", role:"asset container", file:"AssetPipeline/Assets.swift",
+    note:"Four strong static libraries. LazyLibrary caches build once under lock and live for the process — the root cause of the deliberate sharing everywhere else in this graph." },
+  { id:"TextureLoader", cluster:"assets", badge:"static", role:"MTKTextureLoader + caches", file:"AssetPipeline/Libraries/Textures/TextureLoader.swift",
+    note:"Three TFSCache levels (String / URL / MDLTexture → MTLTexture), NSCache-backed and therefore evictable. Cache keys ignore the srgb flag — first load of a given name wins." },
+  { id:"ModelLibrary", cluster:"assets", role:"LazyLibrary<ModelType, Model>", file:"AssetPipeline/Libraries/Models/ModelLibrary.swift",
+    note:"Factory per key, resolved once under the library lock. The F18_* factories reach into SingleSubmeshMeshLibrary, so both caches end up pointing at the same extracted meshes. Meterization (realWorldLength) folds into the basis transform at Model init." },
+  { id:"MeshLibrary", cluster:"assets", role:"eager Library<MeshType, Mesh>", file:"AssetPipeline/Libraries/Meshes/MeshLibrary.swift",
+    note:"Procedural meshes (Quad, Cube, Sphere, Capsule, Skybox, Icosahedron…) built on MDLMesh factories with tangent bases applied before MTKMesh creation." },
+  { id:"TextureLibrary", cluster:"assets", role:"LazyLibrary<TextureType, MTLTexture>", file:"AssetPipeline/Libraries/Textures/TextureLibrary.swift",
+    note:"Lazy factories plus setResolved injection for runtime-created render targets (e.g. OIT's BaseColorRender / BaseDepthRender)." },
+  { id:"SingleSubmeshMeshLibrary", cluster:"assets", role:"LazyLibrary — F-18 parts", file:"AssetPipeline/Libraries/SingleSubmeshMeshLibrary.swift",
+    note:"17 lazily-extracted submeshes (weapons, control surfaces, tanks) sharing one cached parent 'FA-18F' MDLAsset." },
+  { id:"Model", cluster:"assets", role:"meshes + basis transform", file:"AssetPipeline/Model.swift",
+    note:"Hashable class — it is the SceneManager batching key. Retains its source MDLAsset + MDLMeshes for the cached lifetime. Mesh.parentModel points straight back: a deliberate strong Model⇄Mesh cycle (harmless — library-cached models live forever anyway). ObjModel adds no storage." },
+  { id:"UsdModel", cluster:"assets", role:"Model subclass · USDZ", file:"AssetPipeline/UsdModel.swift",
+    note:"Owns the skeletons and animation clips that animators, channels and mappings all share. hasExternalAnimator is flipped when an AircraftAnimator takes over playback." },
+  { id:"Mesh", cluster:"assets", role:"vertex buffer + submeshes", file:"AssetPipeline/Mesh.swift",
+    note:"Strong parentModel back-ref (cycle) and strong submeshes whose parentMesh cycles back too. vertexBuffer is either the MTKMesh zero-copy buffer or a private copy (copyVertexBuffer: true). Also holds the optional Skin and TransformComponent." },
+  { id:"SingleSubmeshMesh", cluster:"assets", role:"Mesh subclass", file:"AssetPipeline/SingleSubmeshMesh.swift",
+    note:"Takes a private vertex-buffer COPY so in-place recentering can't corrupt siblings (the index buffer stays shared). A static _loadedModels dict caches parent MDLAssets until SceneManager.TeardownScene calls clearCachedSourceModels(). setSubmeshOrigin is absolute/idempotent." },
+  { id:"Submesh", cluster:"assets", role:"index buffer + material", file:"AssetPipeline/Submesh.swift",
+    note:"Material is a struct stored by value. The index buffer is usually the MTKSubmesh buffer, offset-shared with sibling submeshes." },
+  { id:"Material", cluster:"assets", role:"struct · texture slots", file:"AssetPipeline/Material.swift",
+    note:"Up to 7 MTLTexture references by semantic (baseColor, normal, specular, roughness, metallic, AO, opacity) — all shared through the TextureLoader caches. sRGB decided per semantic; color + UV-transform payloads are plain values." },
+  { id:"MDLAsset", cluster:"assets", role:"ModelIO source", file:"—",
+    note:"Retained by Model.asset for the cached model's lifetime, and by SingleSubmeshMesh's static parent cache (released at scene teardown)." },
+
+  // ---- Animation ----
+  { id:"AircraftAnimator", cluster:"anim", role:"F22Animator · F35Animator", file:"Animation/Animators/AircraftAnimator.swift",
+    note:"Weak reference to the shared UsdModel (the library cache outlives every animator); owns the layer system. Layer accessors are computed lookups — no stored layer references. Subclasses add no storage." },
+  { id:"AnimationLayerSystem", cluster:"anim", role:"layers + channels", file:"Animation/Layers/AnimationLayerSystem.swift",
+    note:"Channel→skeleton affinity and per-joint resolution happen once at registration. Weak model ref; strong: ordered layers (structs), the channels dictionary (a second ref beside each layer's own), channel mappings, and a cached singleSkeleton." },
+  { id:"AnimationLayer", cluster:"anim", role:"struct", file:"Animation/Layers/AnimationLayer.swift",
+    note:"Groups the channels of one discrete animation (e.g. every channel of the landing gear). Retains its channels by value-embed." },
+  { id:"AnimationChannel", cluster:"anim", role:"Binary · Continuous · Procedural", file:"Animation/Channels/…",
+    note:"Class-bound protocol. Binary/Continuous channels hold the shared AnimationClip; ProceduralAnimationChannel holds value joint configs and a reused rotation scratch buffer." },
+  { id:"ChannelMapping", cluster:"anim", role:"struct · resolved affinity", file:"Animation/Layers/AnimationLayerSystem.swift",
+    note:"SkeletonEntry carries the resolved Skeleton reference, clip, and per-joint indices so the per-frame path does zero string/dictionary lookups." },
+  { id:"Skeleton", cluster:"anim", role:"joint hierarchy", file:"Animation/Skeleton.swift",
+    note:"Owned by UsdModel.skeletons and shared into channel mappings, the layer system's cache, and Skins. Caches inverse binds + the basis conjugation pair at init; evaluateWorldPoses writes currentPose allocation-free." },
+  { id:"AnimationClip", cluster:"anim", role:"keyframe clips", file:"Animation/…",
+    note:"Owned by UsdModel.animationClips; shared into channels and channel mappings. Keyframe sampling scans for the bracketing pair without allocating." },
+  { id:"Skin", cluster:"anim", role:"struct on Mesh", file:"Animation/Skin.swift",
+    note:"Captures the Skeleton and owns the joint-matrix palette MTLBuffer that DrawManager binds for GPU skinning." },
+];
+
+const EDGES = [
+  // Platform shell wiring
+  { from:"GameViewController", to:"MacGameUIView", prop:"rootView", kind:"strong", card:"1" },
+  { from:"MacGameUIView", to:"AircraftThumbnailStore", prop:"@State thumbnailStore", kind:"strong", card:"1" },
+  { from:"MacGameUIView", to:"MetalViewWrapper", prop:"body rebuilds", kind:"wires" },
+  { from:"MetalViewWrapper", to:"GameView", prop:"makeNSView creates", kind:"wires" },
+  { from:"MetalViewWrapper", to:"Engine", prop:"Engine.Start(rendererType:)", kind:"wires" },
+  { from:"Engine", to:"GameView", prop:"MetalView (computed passthrough)", kind:"wires" },
+  { from:"Renderer", to:"GameView", prop:"_metalView", kind:"strong", card:"1" },
+  { from:"GameView", to:"Renderer", prop:"delegate (MTKView)", kind:"weak", card:"?" },
+
+  // Engine core
+  { from:"Engine", to:"Renderer", prop:"renderer", kind:"strong", card:"?" },
+  { from:"Engine", to:"UpdateThread", prop:"updateThread", kind:"strong", card:"1" },
+  { from:"Engine", to:"AudioThread", prop:"audioThread", kind:"strong", card:"1" },
+  { from:"Engine", to:"MTLDevice · Queue · Library", prop:"Device · CommandQueue · DefaultLibrary", kind:"strong", card:"1" },
+  { from:"UpdateThread", to:"updateSemaphores", prop:"updateSemaphore · updateDoneSemaphore", kind:"strong", card:"1" },
+  { from:"Renderer", to:"updateSemaphores", prop:"update / updateDone", kind:"shared", card:"?" },
+  { from:"UpdateThread", to:"SceneManager", prop:"drives writeFrameSnapshot()", kind:"wires" },
+  { from:"AudioThread", to:"AudioManager", prop:"StartGameMusic() · Prepare()", kind:"wires" },
+
+  // SceneManager hub
+  { from:"SceneManager", to:"GameScene", prop:"CurrentScene", kind:"strong", card:"?" },
+  { from:"SceneManager", to:"Model", prop:"modelDatas · transparent keys", kind:"shared", card:"[]" },
+  { from:"SceneManager", to:"GameObject", prop:"batch gameObjects", kind:"shared", card:"[]" },
+  { from:"SceneManager", to:"ParticleEmitterObject", prop:"particleObjects", kind:"shared", card:"[]" },
+  { from:"SceneManager", to:"SkyBox · SkySphere", prop:"skyData.gameObjects", kind:"shared", card:"[]" },
+  { from:"SceneManager", to:"Mesh", prop:"meshDatas · snapshots", kind:"shared", card:"[]" },
+  { from:"SceneManager", to:"Submesh", prop:"meshData submesh lists", kind:"shared", card:"[]" },
+  { from:"SceneManager", to:"PendingSceneReset", prop:"_pendingReset", kind:"strong", card:"1" },
+
+  // Other managers
+  { from:"CameraManager", to:"Camera", prop:"_cameras · CurrentCamera", kind:"shared", card:"[]" },
+  { from:"LightManager", to:"LightObject / Sun", prop:"_lightObjects + buckets", kind:"shared", card:"[]" },
+  { from:"InputManager", to:"HID devices", prop:"controller · joystick · throttle · motion", kind:"strong", card:"1" },
+  { from:"InputManager", to:"Keyboard · Mouse", prop:"reads static state", kind:"wires" },
+  { from:"GameView", to:"Keyboard · Mouse", prop:"pushes key/mouse events", kind:"wires" },
+  { from:"AudioManager", to:"TFSAudioSystem", prop:"audioSystem", kind:"strong", card:"1" },
+  { from:"GameScene", to:"CameraManager", prop:"addCamera registers", kind:"wires" },
+  { from:"GameScene", to:"LightManager", prop:"addLight registers", kind:"wires" },
+
+  // Scene graph
+  { from:"GameScene", to:"Aircraft", prop:"playerAircraft", kind:"shared", card:"?" },
+  { from:"Node", to:"Node", prop:"children ⇄ parent ⟲", kind:"strong", card:"[]" },
+  { from:"FlightboxWithPhysics", to:"PhysicsWorld", prop:"physicsWorld", kind:"strong", card:"1" },
+  { from:"FlightboxWithPhysics", to:"RigidBody", prop:"entities", kind:"shared", card:"[]" },
+  { from:"FlightboxWithPhysics", to:"AttachedCamera", prop:"attachedCamera", kind:"shared", card:"1" },
+  { from:"FlightboxWithPhysics", to:"DebugCamera", prop:"debugCamera", kind:"shared", card:"1" },
+  { from:"FlightboxWithPhysics", to:"LightObject / Sun", prop:"sun", kind:"shared", card:"1" },
+  { from:"FlightboxWithPhysics", to:"PendingAircraftSwap", prop:"pendingSwap", kind:"strong", card:"1" },
+  { from:"GameObject", to:"Model", prop:"model", kind:"shared", card:"1" },
+  { from:"GameObject", to:"RigidBody", prop:"rigidBody", kind:"shared", card:"?" },
+  { from:"RigidBody", to:"GameObject", prop:"gameObject", kind:"weak", card:"?" },
+  { from:"Camera", to:"Model", prop:"model (.None)", kind:"shared", card:"1" },
+  { from:"AttachedCamera", to:"Aircraft", prop:"parent (Node) ⟲", kind:"strong", card:"?" },
+  { from:"Aircraft", to:"AircraftAnimator", prop:"animator", kind:"strong", card:"?" },
+  { from:"Aircraft", to:"F22SimpleFlightModel", prop:"flightModel", kind:"strong", card:"?" },
+  { from:"F22", to:"ParticleEmitterObject", prop:"afterburnerLeft / Right", kind:"strong", card:"1" },
+  { from:"F18", to:"SubMeshGameObject", prop:"8 control surfaces + stores", kind:"strong", card:"[]" },
+  { from:"SubMeshGameObject", to:"F18", prop:"parentMeshGameObject ⟲", kind:"strong", card:"?" },
+  { from:"ParticleEmitterObject", to:"ParticleEmitter", prop:"emitter", kind:"strong", card:"1" },
+  { from:"ParticleEmitter", to:"MTLBuffer", prop:"particleBuffer", kind:"strong", card:"?" },
+  { from:"ParticleEmitter", to:"MTLTexture", prop:"particleTexture", kind:"shared", card:"?" },
+  { from:"SkyBox · SkySphere", to:"MTLTexture", prop:"sky texture", kind:"shared", card:"1" },
+
+  // Physics
+  { from:"PhysicsWorld", to:"RigidBody", prop:"entities", kind:"shared", card:"[]" },
+  { from:"PhysicsWorld", to:"BroadPhaseCollisionDetector", prop:"broadPhase", kind:"strong", card:"1" },
+  { from:"PhysicsWorld", to:"Euler · Verlet · Hecker", prop:"static step() calls", kind:"wires" },
+
+  // Rendering
+  { from:"Renderer", to:"DrawManager", prop:"encodes via Draw*", kind:"wires" },
+  { from:"Deferred renderers", to:"MTLTexture", prop:"shadowMapArray · GBuffer · lightingResolve", kind:"strong", card:"1" },
+  { from:"DrawManager", to:"MTLBuffer", prop:"uniformsRingBuffers (3 × 32 MB)", kind:"strong", card:"[]" },
+  { from:"DrawManager", to:"Mesh", prop:"_fullScreenQuadMeshes", kind:"shared", card:"[]" },
+  { from:"DrawManager", to:"Model", prop:"_icosahedronDrawData", kind:"shared", card:"?" },
+  { from:"Graphics", to:"State libraries", prop:"7 library statics", kind:"strong", card:"1" },
+  { from:"State libraries", to:"MTL*State objects", prop:"_library caches", kind:"strong", card:"[]" },
+
+  // Asset pipeline
+  { from:"Assets", to:"ModelLibrary", prop:"Models", kind:"strong", card:"1" },
+  { from:"Assets", to:"MeshLibrary", prop:"Meshes", kind:"strong", card:"1" },
+  { from:"Assets", to:"TextureLibrary", prop:"Textures", kind:"strong", card:"1" },
+  { from:"Assets", to:"SingleSubmeshMeshLibrary", prop:"SingleSMMeshes", kind:"strong", card:"1" },
+  { from:"ModelLibrary", to:"Model", prop:"_cache (incl. UsdModel)", kind:"strong", card:"[]" },
+  { from:"ModelLibrary", to:"SingleSubmeshMeshLibrary", prop:"F18_* factories call", kind:"wires" },
+  { from:"MeshLibrary", to:"Mesh", prop:"_library (eager)", kind:"strong", card:"[]" },
+  { from:"TextureLibrary", to:"MTLTexture", prop:"_cache + setResolved", kind:"strong", card:"[]" },
+  { from:"SingleSubmeshMeshLibrary", to:"SingleSubmeshMesh", prop:"_cache", kind:"strong", card:"[]" },
+  { from:"TextureLoader", to:"MTLTexture", prop:"TFSCache × 3 (NSCache)", kind:"strong", card:"[]" },
+  { from:"Model", to:"Mesh", prop:"meshes", kind:"strong", card:"[]" },
+  { from:"Model", to:"MDLAsset", prop:"asset + mdlMeshes", kind:"strong", card:"?" },
+  { from:"Mesh", to:"Model", prop:"parentModel ⟲", kind:"strong", card:"?" },
+  { from:"Mesh", to:"Submesh", prop:"submeshes", kind:"strong", card:"[]" },
+  { from:"Submesh", to:"Mesh", prop:"parentMesh ⟲", kind:"strong", card:"?" },
+  { from:"Mesh", to:"MTLBuffer", prop:"vertexBuffer", kind:"strong", card:"1" },
+  { from:"Submesh", to:"MTLBuffer", prop:"_indexBuffer (offset-shared)", kind:"shared", card:"1" },
+  { from:"Mesh", to:"Skin", prop:"skin", kind:"strong", card:"?" },
+  { from:"Submesh", to:"Material", prop:"material (struct)", kind:"strong", card:"?" },
+  { from:"Material", to:"MTLTexture", prop:"7 semantic slots", kind:"shared", card:"?" },
+  { from:"UsdModel", to:"Skeleton", prop:"skeletons", kind:"strong", card:"[]" },
+  { from:"UsdModel", to:"AnimationClip", prop:"animationClips", kind:"strong", card:"[]" },
+  { from:"SingleSubmeshMesh", to:"MDLAsset", prop:"_loadedModels (static cache)", kind:"strong", card:"[]" },
+  { from:"SingleSubmeshMesh", to:"Submesh", prop:"_submesh", kind:"strong", card:"1" },
+
+  // Animation
+  { from:"AircraftAnimator", to:"UsdModel", prop:"model", kind:"weak", card:"?" },
+  { from:"AircraftAnimator", to:"AnimationLayerSystem", prop:"layerSystem", kind:"strong", card:"?" },
+  { from:"AnimationLayerSystem", to:"UsdModel", prop:"model", kind:"weak", card:"?" },
+  { from:"AnimationLayerSystem", to:"AnimationLayer", prop:"orderedLayers", kind:"strong", card:"[]" },
+  { from:"AnimationLayerSystem", to:"AnimationChannel", prop:"channelsByID", kind:"shared", card:"[]" },
+  { from:"AnimationLayerSystem", to:"ChannelMapping", prop:"channelMappings", kind:"strong", card:"[]" },
+  { from:"AnimationLayerSystem", to:"Skeleton", prop:"singleSkeleton", kind:"shared", card:"?" },
+  { from:"AnimationLayer", to:"AnimationChannel", prop:"channels", kind:"shared", card:"[]" },
+  { from:"ChannelMapping", to:"Skeleton", prop:"skeletonEntries[].skeleton", kind:"shared", card:"[]" },
+  { from:"ChannelMapping", to:"AnimationClip", prop:"skeletonEntries[].clip", kind:"shared", card:"?" },
+  { from:"AnimationChannel", to:"AnimationClip", prop:"animationClip", kind:"shared", card:"?" },
+  { from:"Skin", to:"Skeleton", prop:"skeleton", kind:"shared", card:"1" },
+  { from:"Skin", to:"MTLBuffer", prop:"jointMatrixPaletteBuffer", kind:"strong", card:"1" },
+];
+/* ===================== RENDERING ENGINE ===================== */
+const SVGNS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("graph");
+const NODE_H = 40, ROW_GAP = 14, COL_GAP = 18, CL_PAD = 18, CL_HEAD = 46;
+const nodeById = new Map(), clusterById = new Map();
+let scene, edgeEls = [], nodeEls = new Map(), selectedId = null;
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const monoW = (s, fs) => s.length * fs * 0.602;
+
+/* ----- layout: grid per cluster, then absolute node rects ----- */
+function layout() {
+  for (const c of CLUSTERS) clusterById.set(c.id, c);
+  for (const n of NODES) nodeById.set(n.id, n);
+  for (const c of CLUSTERS) {
+    const members = NODES.filter(n => n.cluster === c.id);
+    c.members = members;
+    let colW = 90;
+    for (const n of members) {
+      let w = 26 + monoW(n.id, 11.5);
+      if (n.badge) w += 14 + n.badge.length * 5.1 + 12;
+      colW = Math.max(colW, w);
+    }
+    c.colW = colW;
+    const rows = Math.ceil(members.length / c.cols);
+    c.w = c.cols * colW + (c.cols - 1) * COL_GAP + CL_PAD * 2;
+    c.h = CL_HEAD + rows * NODE_H + (rows - 1) * ROW_GAP + CL_PAD;
+    members.forEach((n, i) => {
+      const col = i % c.cols, row = Math.floor(i / c.cols);
+      n.x = c.x + CL_PAD + col * (colW + COL_GAP);
+      n.y = c.y + CL_HEAD + row * (NODE_H + ROW_GAP);
+      n.w = colW; n.h = NODE_H;
+      n.cx = n.x + n.w / 2; n.cy = n.y + n.h / 2;
+    });
+  }
+}
+
+/* ----- edge geometry ----- */
+function edgeGeometry(e, off) {
+  const a = nodeById.get(e.from), b = nodeById.get(e.to);
+  if (a === b) {
+    // self-loop over the top of the node
+    const p0 = { x: a.cx - 26, y: a.y }, p3 = { x: a.cx + 26, y: a.y - 2 };
+    const c1 = { x: a.cx - 46, y: a.y - 40 }, c2 = { x: a.cx + 46, y: a.y - 40 };
+    const t = { x: p3.x - c2.x, y: p3.y - c2.y }, tl = Math.hypot(t.x, t.y) || 1;
+    const tipDir = { x: t.x / tl, y: t.y / tl };
+    return {
+      p0, c1, c2, tip: p3, tipDir,
+      base: { x: p3.x - tipDir.x * 7, y: p3.y - tipDir.y * 7 },
+      mid: { x: a.cx, y: a.y - 31 }
+    };
+  }
+  const dx = b.cx - a.cx, dy = b.cy - a.cy;
+  let p0, p3, c1, c2, tipDir;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    const s = Math.sign(dx) || 1;
+    p0 = { x: a.cx + s * a.w / 2, y: a.cy + off };
+    p3 = { x: b.cx - s * b.w / 2 - s * 2, y: b.cy + off };
+    const k = Math.min(Math.max(Math.abs(p3.x - p0.x) * 0.42, 34), 240);
+    c1 = { x: p0.x + s * k, y: p0.y };
+    c2 = { x: p3.x - s * k, y: p3.y };
+  } else {
+    const s = Math.sign(dy) || 1;
+    p0 = { x: a.cx + off, y: a.cy + s * a.h / 2 };
+    p3 = { x: b.cx + off, y: b.cy - s * b.h / 2 - s * 2 };
+    const k = Math.min(Math.max(Math.abs(p3.y - p0.y) * 0.42, 30), 200);
+    c1 = { x: p0.x, y: p0.y + s * k };
+    c2 = { x: p3.x, y: p3.y - s * k };
+  }
+  const t = { x: p3.x - c2.x, y: p3.y - c2.y }, tl = Math.hypot(t.x, t.y) || 1;
+  tipDir = { x: t.x / tl, y: t.y / tl };
+  const base = { x: p3.x - tipDir.x * 7, y: p3.y - tipDir.y * 7 };
+  const mid = {
+    x: (p0.x + 3 * c1.x + 3 * c2.x + p3.x) / 8,
+    y: (p0.y + 3 * c1.y + 3 * c2.y + p3.y) / 8
+  };
+  return { p0, c1, c2, base, tip: p3, tipDir, mid };
+}
+
+function cardText(e) {
+  const t = e.to;
+  return e.card === "[]" ? "[" + t + "]" : e.card === "?" ? t + "?" : t;
+}
+
+/* ----- build the scene ----- */
+function build() {
+  layout();
+  scene = el("g", { id: "scene" }, svg);
+  const gClusters = el("g", {}, scene);
+  const gEdges = el("g", {}, scene);
+  const gNodes = el("g", {}, scene);
+
+  for (const c of CLUSTERS) {
+    const g = el("g", { style: `--hue: var(${c.hue})` }, gClusters);
+    el("rect", { class: "cluster-box", x: c.x, y: c.y, width: c.w, height: c.h, rx: 14,
+                 style: "stroke: color-mix(in srgb, var(--hue) 34%, var(--hairline))" }, g);
+    const lb = el("text", { class: "cluster-label", x: c.x + CL_PAD, y: c.y + 27,
+                 style: "fill: color-mix(in srgb, var(--hue) 72%, var(--ink))" }, g);
+    lb.textContent = c.name;
+    const hint = el("text", { class: "cluster-hint", x: c.x + CL_PAD + c.name.length * 10 + 14, y: c.y + 26 }, g);
+    hint.textContent = c.hint;
+  }
+
+  // spread parallel edges between the same node pair
+  const pairCount = new Map();
+  for (const e of EDGES) {
+    const key = [e.from, e.to].sort().join("→");
+    if (!pairCount.has(key)) pairCount.set(key, []);
+    pairCount.get(key).push(e);
+  }
+  for (const [, group] of pairCount)
+    group.forEach((e, i) => e._off = (i - (group.length - 1) / 2) * 12);
+
+  for (const e of EDGES) {
+    if (!nodeById.has(e.from) || !nodeById.has(e.to)) { console.warn("edge refers to unknown node", e); continue; }
+    const geo = edgeGeometry(e, e._off || 0);
+    const g = el("g", { class: "edge " + e.kind }, gEdges);
+    el("path", { class: "edge-path",
+      d: `M ${geo.p0.x} ${geo.p0.y} C ${geo.c1.x} ${geo.c1.y}, ${geo.c2.x} ${geo.c2.y}, ${geo.base.x} ${geo.base.y}` }, g);
+    const px = -geo.tipDir.y, py = geo.tipDir.x;
+    const head = el("path", { d:
+      `M ${geo.tip.x} ${geo.tip.y} L ${geo.base.x + px * 3.4} ${geo.base.y + py * 3.4} L ${geo.base.x - px * 3.4} ${geo.base.y - py * 3.4} Z` }, g);
+    if (e.kind === "shared" || e.kind === "wires") { head.setAttribute("style", "fill: var(--surface); stroke: currentColor; stroke-width: 1.1"); }
+    else head.setAttribute("style", "fill: currentColor");
+    const lbl = e.prop + (e.card === "[]" ? " []" : e.card === "?" ? " ?" : "");
+    const lw = lbl.length * 6.1 + 12;
+    const gl = el("g", { class: "edge-label" }, g);
+    el("rect", { x: geo.mid.x - lw / 2, y: geo.mid.y - 9, width: lw, height: 17, rx: 4 }, gl);
+    const tx = el("text", { x: geo.mid.x, y: geo.mid.y + 3.5, "text-anchor": "middle" }, gl);
+    tx.textContent = lbl;
+    e._el = g;
+    edgeEls.push({ e, g });
+  }
+
+  for (const n of NODES) {
+    const c = clusterById.get(n.cluster);
+    const g = el("g", { class: "node", tabindex: "0", role: "button",
+                        "aria-label": n.id + " — " + (n.role || c.name),
+                        style: `--hue: var(${c.hue})` }, gNodes);
+    el("rect", { class: "node-box", x: n.x, y: n.y, width: n.w, height: n.h, rx: 8,
+                 style: "fill: color-mix(in srgb, var(--hue) 9%, var(--node)); stroke: color-mix(in srgb, var(--hue) 45%, var(--hairline))" }, g);
+    const name = el("text", { class: "node-name", x: n.x + 12, y: n.y + (n.role ? 18 : 24) }, g);
+    name.textContent = n.id;
+    if (n.role) {
+      const r = el("text", { class: "node-role", x: n.x + 12, y: n.y + 31 }, g);
+      r.textContent = n.role;
+    }
+    if (n.badge) {
+      const bw = n.badge.length * 5.1 + 10;
+      el("rect", { class: "node-badge-box", x: n.x + n.w - bw - 7, y: n.y + 6, width: bw, height: 13, rx: 4 }, g);
+      const bt = el("text", { class: "node-badge-text", x: n.x + n.w - bw / 2 - 7, y: n.y + 15.5, "text-anchor": "middle" }, g);
+      bt.textContent = n.badge;
+    }
+    g.addEventListener("pointerenter", () => { if (!selectedId) focus(n.id); });
+    g.addEventListener("pointerleave", () => { if (!selectedId) unfocus(); });
+    g.addEventListener("click", ev => { ev.stopPropagation(); select(n.id); });
+    g.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); select(n.id); } });
+    nodeEls.set(n.id, g);
+  }
+}
+
+/* ----- focus / selection ----- */
+function egoOf(id) {
+  const lit = new Set([id]);
+  const litEdges = [];
+  for (const { e, g } of edgeEls) {
+    if (g.classList.contains("hidden-kind")) continue;
+    if (e.from === id || e.to === id) { litEdges.push(g); lit.add(e.from); lit.add(e.to); }
+  }
+  return { lit, litEdges };
+}
+function focus(id) {
+  const { lit, litEdges } = egoOf(id);
+  scene.classList.add("focused");
+  for (const [nid, g] of nodeEls) g.classList.toggle("lit", lit.has(nid));
+  for (const { g } of edgeEls) g.classList.remove("lit");
+  for (const g of litEdges) g.classList.add("lit");
+}
+function unfocus() {
+  scene.classList.remove("focused");
+  for (const [, g] of nodeEls) g.classList.remove("lit");
+  for (const { g } of edgeEls) g.classList.remove("lit");
+}
+function select(id) {
+  if (selectedId) nodeEls.get(selectedId)?.classList.remove("selected");
+  selectedId = id;
+  if (!id) { unfocus(); document.getElementById("rail").classList.remove("has-selection"); return; }
+  nodeEls.get(id).classList.add("selected");
+  focus(id);
+  renderDetail(id);
+  document.getElementById("rail").classList.add("has-selection");
+}
+
+/* ----- detail panel ----- */
+function refRow(e, dir) {
+  const other = dir === "out" ? e.to : e.from;
+  const kindCls = "kind " + e.kind;
+  const kindTxt = e.kind;
+  const propHtml = dir === "out"
+    ? `<span class="prop">${e.prop}:</span> <a class="target" data-id="${other}">${cardText(e)}</a>`
+    : `<a class="target" data-id="${other}">${other}</a><span class="prop">.${e.prop}${e.card === "[]" ? " []" : ""}</span>`;
+  return `<div class="ref">${propHtml}<span class="${kindCls}">${kindTxt}</span></div>`;
+}
+function renderDetail(id) {
+  const n = nodeById.get(id), c = clusterById.get(n.cluster);
+  const outs = EDGES.filter(e => e.from === id);
+  const ins = EDGES.filter(e => e.to === id);
+  const d = document.getElementById("detail");
+  d.innerHTML = `
+    <button class="back" id="back-btn">← Overview</button>
+    <div class="type-head">
+      <span class="dot" style="background: var(${c.hue})"></span>
+      <div>
+        <div class="type-name">${n.id}</div>
+        <div class="type-meta">${n.role ? n.role + " · " : ""}${c.name}</div>
+        ${n.file ? `<div class="type-file">${n.file}</div>` : ""}
+      </div>
+    </div>
+    ${n.note ? `<div class="type-note">${n.note}</div>` : ""}
+    <div class="rail-section"><h2>Owns / references (${outs.length})</h2>
+      <div class="refs">${outs.map(e => refRow(e, "out")).join("") || `<div class="empty-note">Leaf object — holds no tracked references.</div>`}</div>
+    </div>
+    <div class="rail-section"><h2>Held by (${ins.length})</h2>
+      <div class="refs">${ins.map(e => refRow(e, "in")).join("") || `<div class="empty-note">Nothing points here — a root of the graph.</div>`}</div>
+    </div>`;
+  d.querySelector("#back-btn").addEventListener("click", () => select(null));
+  d.querySelectorAll(".target").forEach(a =>
+    a.addEventListener("click", () => { const t = a.dataset.id; select(t); centerOn(t); }));
+}
+
+/* ----- overview: stats, legend, index ----- */
+function renderOverview() {
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><b>${NODES.length}</b><span>types</span></div>
+    <div class="stat"><b>${EDGES.length}</b><span>references</span></div>
+    <div class="stat"><b>${CLUSTERS.length}</b><span>subsystems</span></div>`;
+  const line = (dash, hollow) => `
+    <svg width="34" height="10" viewBox="0 0 34 10" aria-hidden="true">
+      <line x1="1" y1="5" x2="26" y2="5" stroke="currentColor" stroke-width="1.5" ${dash ? `stroke-dasharray="${dash}"` : ""}/>
+      <path d="M 33 5 L 26 1.8 L 26 8.2 Z" ${hollow ? 'fill="var(--panel)" stroke="currentColor"' : 'fill="currentColor"'}/>
+    </svg>`;
+  document.getElementById("legend").innerHTML = `
+    <div class="legend-row">${line("", false)}<span class="lbl"><b>strong</b> — owns the target (sole or structural owner)</span></div>
+    <div class="legend-row">${line("", true)}<span class="lbl"><b>shared</b> — strong ref to a co-owned object (library caches, dual registries)</span></div>
+    <div class="legend-row">${line("4 3", false)}<span class="lbl"><b>weak</b> — back-reference, no ownership</span></div>
+    <div class="legend-row">${line("1.5 3.6", true)}<span class="lbl"><b>wires</b> — no stored reference: creates / registers / calls</span></div>
+    <div class="legend-row"><svg width="34" height="14" aria-hidden="true"><rect x="4" y="1" width="27" height="12" rx="4" fill="var(--surface)" stroke="var(--hairline)"/><text x="17.5" y="10" text-anchor="middle" font-size="7.5" fill="var(--ink-2)" font-weight="600">STATIC</text></svg><span class="lbl"><b>badge</b> — static / singleton, lives for the process</span></div>
+    <div class="legend-row"><svg width="34" height="12" aria-hidden="true"><text x="17" y="10" text-anchor="middle" font-size="10" fill="var(--ink-2)" font-family="ui-monospace,Menlo,monospace">[ ]</text></svg><span class="lbl"><b>collection</b> — an array / registry of the target</span></div>
+    <div class="legend-row"><svg width="34" height="12" aria-hidden="true"><text x="17" y="10" text-anchor="middle" font-size="11" fill="var(--ink-2)">⟲</text></svg><span class="lbl"><b>cycle</b> — deliberate strong cycle, broken manually at teardown</span></div>
+    <p style="margin:10px 0 0; font-size:12px; color:var(--ink-3)">Several arrows converging on one box mean the object is kept alive by all of them — the deliberate sharing pattern this engine is built on. Hover any type to isolate its references; click to inspect.</p>`;
+  document.getElementById("index").innerHTML = CLUSTERS.map(c => `
+    <div class="index-cluster">
+      <div class="cl-name"><span class="dot" style="background: var(${c.hue})"></span>${c.name}
+        <span style="color:var(--ink-3); font-weight:500">· ${c.members.length}</span></div>
+      <div class="members">${c.members.map(n => `<button class="member" data-id="${n.id}">${n.id}</button>`).join("")}</div>
+    </div>`).join("");
+  document.getElementById("index").querySelectorAll(".member").forEach(b =>
+    b.addEventListener("click", () => { select(b.dataset.id); centerOn(b.dataset.id); }));
+}
+
+/* ----- viewBox pan / zoom ----- */
+let vb = { x: 0, y: 0, w: 100, h: 100 }, world = { w: 100, h: 100 };
+function applyVB() { svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
+function contentBounds() {
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const c of CLUSTERS) { x0 = Math.min(x0, c.x); y0 = Math.min(y0, c.y); x1 = Math.max(x1, c.x + c.w); y1 = Math.max(y1, c.y + c.h); }
+  return { x: x0 - 30, y: y0 - 30, w: x1 - x0 + 60, h: y1 - y0 + 60 };
+}
+function fit() {
+  const b = contentBounds();
+  world = { w: b.w, h: b.h };
+  const r = svg.getBoundingClientRect();
+  const ar = r.width / Math.max(1, r.height), bar = b.w / b.h;
+  if (bar > ar) { vb = { x: b.x, y: b.y - (b.w / ar - b.h) / 2, w: b.w, h: b.w / ar }; }
+  else { vb = { x: b.x - (b.h * ar - b.w) / 2, y: b.y, w: b.h * ar, h: b.h }; }
+  applyVB();
+}
+function clientToWorld(cx, cy) {
+  const m = svg.getScreenCTM();
+  const p = new DOMPoint(cx, cy).matrixTransform(m.inverse());
+  return { x: p.x, y: p.y };
+}
+function zoomAt(cx, cy, factor) {
+  const p = clientToWorld(cx, cy);
+  const nw = Math.min(Math.max(vb.w / factor, world.w / 9), world.w * 1.7);
+  const f = vb.w / nw;
+  vb = { x: p.x - (p.x - vb.x) / f, y: p.y - (p.y - vb.y) / f, w: nw, h: vb.h / f };
+  applyVB();
+}
+function centerOn(id) {
+  const n = nodeById.get(id);
+  const m = 60; // only recenter when the node is outside the comfortable view
+  if (n.cx > vb.x + m && n.cx < vb.x + vb.w - m && n.cy > vb.y + m && n.cy < vb.y + vb.h - m) return;
+  vb.x = n.cx - vb.w / 2; vb.y = n.cy - vb.h / 2;
+  applyVB();
+}
+svg.addEventListener("wheel", ev => {
+  ev.preventDefault();
+  zoomAt(ev.clientX, ev.clientY, Math.pow(1.0016, -ev.deltaY));
+}, { passive: false });
+let pan = null;
+svg.addEventListener("pointerdown", ev => {
+  if (ev.button !== 0) return;
+  pan = { x: ev.clientX, y: ev.clientY, vx: vb.x, vy: vb.y, moved: false };
+  svg.setPointerCapture(ev.pointerId);
+});
+svg.addEventListener("pointermove", ev => {
+  if (!pan) return;
+  const scale = vb.w / svg.getBoundingClientRect().width;
+  const dx = (ev.clientX - pan.x) * scale, dy = (ev.clientY - pan.y) * scale;
+  if (Math.abs(ev.clientX - pan.x) + Math.abs(ev.clientY - pan.y) > 4) { pan.moved = true; svg.classList.add("panning"); }
+  vb.x = pan.vx - dx; vb.y = pan.vy - dy;
+  applyVB();
+});
+svg.addEventListener("pointerup", ev => {
+  svg.classList.remove("panning");
+  const wasDrag = pan && pan.moved;
+  pan = null;
+  if (!wasDrag && (ev.target === svg || ev.target.closest("#scene") === null || ev.target.classList.contains("cluster-box")))
+    select(null);
+});
+document.getElementById("zoom-in").addEventListener("click", () => {
+  const r = svg.getBoundingClientRect();
+  zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.35);
+});
+document.getElementById("zoom-out").addEventListener("click", () => {
+  const r = svg.getBoundingClientRect();
+  zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1 / 1.35);
+});
+document.getElementById("zoom-fit").addEventListener("click", fit);
+window.addEventListener("resize", () => { const keep = { ...vb }; fit(); vb = keep; applyVB(); });
+
+/* ----- search ----- */
+const searchBox = document.getElementById("search");
+searchBox.addEventListener("input", () => {
+  const q = searchBox.value.trim().toLowerCase();
+  if (q && selectedId) select(null);
+  if (!q) { scene.classList.remove("searching"); nodeEls.forEach(g => g.classList.remove("hit")); return; }
+  scene.classList.add("searching");
+  for (const [id, g] of nodeEls) g.classList.toggle("hit", id.toLowerCase().includes(q));
+});
+searchBox.addEventListener("keydown", ev => {
+  if (ev.key === "Enter") {
+    const q = searchBox.value.trim().toLowerCase();
+    const hit = NODES.find(n => n.id.toLowerCase().includes(q));
+    if (hit) { select(hit.id); centerOn(hit.id); }
+  }
+  if (ev.key === "Escape") { searchBox.value = ""; searchBox.dispatchEvent(new Event("input")); searchBox.blur(); }
+});
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape" && document.activeElement !== searchBox) { select(null); }
+});
+
+/* ----- edge-kind toggles ----- */
+document.querySelectorAll(".chip[data-kind]").forEach(chip => {
+  chip.addEventListener("click", () => {
+    const on = chip.getAttribute("aria-pressed") !== "true";
+    chip.setAttribute("aria-pressed", on);
+    for (const { e, g } of edgeEls)
+      if (e.kind === chip.dataset.kind) g.classList.toggle("hidden-kind", !on);
+    if (selectedId) focus(selectedId); else unfocus();
+  });
+});
+
+/* ----- boot ----- */
+build();
+renderOverview();
+fit();
+</script>
+</script>
+</body>
+</html>
