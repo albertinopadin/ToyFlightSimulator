@@ -50,8 +50,7 @@ tiled_deferred_point_light_fragment(         PointLightOut  in              [[ s
         .color = 1
     };
     
-    LightData light = lightDatas[in.instanceId];
-    float3 color = Lighting::CalculatePointLighting(light, worldPosition, normal, material);
+    float3 color = Lighting::CalculatePointLighting(lightDatas[in.instanceId], worldPosition, normal, material);
     color *= 0.9;
     return float4(color, 1);
 }

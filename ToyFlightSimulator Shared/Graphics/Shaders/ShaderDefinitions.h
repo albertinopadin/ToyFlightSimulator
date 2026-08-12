@@ -1,5 +1,5 @@
 //
-//  Shared.metal
+//  ShaderDefinitions.h
 //  ToyFlightSimulator iOS
 //
 //  Created by Albertino Padin on 9/25/22.
@@ -72,8 +72,6 @@ inline float2 ApplyUVTransform(float2 uv, float3x3 transform) {
     return (transform * float3(uv, 1.0)).xy;
 }
 
-#endif
-
 // For Tiled Deferred Renderer:
 struct GBufferOut {
     float4 albedo   [[ color(TFSRenderTargetAlbedo) ]];
@@ -100,3 +98,5 @@ struct TessellationVertexOut {
     float height;
     float2 uv;
 };
+
+#endif

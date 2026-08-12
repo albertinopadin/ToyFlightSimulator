@@ -59,7 +59,7 @@ public:
         return totalAmbient + totalDiffuse + totalSpecular;
     }
     
-    static float3 CalculateDirectionalLighting(LightData light, float3 normal, MaterialProperties material) {
+    static float3 CalculateDirectionalLighting(constant LightData &light, float3 normal, MaterialProperties material) {
         float4 baseColor = material.color;
         float3 metallic = material.shininess;
         float3 ambientOcclusion = material.ambient;
@@ -210,7 +210,7 @@ public:
         return 0.5 + 0.5 * lit;
     }
 
-    static float3 CalculatePointLighting(LightData light,
+    static float3 CalculatePointLighting(constant LightData &light,
                                          float3 fragmentWorldPosition,
                                          float3 normal, MaterialProperties material) {
         float d = distance(light.position, fragmentWorldPosition);
