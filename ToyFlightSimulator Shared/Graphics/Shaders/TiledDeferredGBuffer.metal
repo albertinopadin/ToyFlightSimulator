@@ -53,6 +53,8 @@ tiled_deferred_gbuffer_animated_vertex(
     float4x4 skinMatrix = BlendJointMatrix(jointMatrices, in.joints, in.jointWeights);
     position = skinMatrix * position;
     normal = skinMatrix * normal;
+    float3 skinnedTangent = (skinMatrix * float4(in.tangent, 0)).xyz;
+    float3 skinnedBitangent = (skinMatrix * float4(in.bitangent, 0)).xyz;
     
     float4 worldPosition = modelInstance.modelMatrix * position;
 
@@ -61,9 +63,9 @@ tiled_deferred_gbuffer_animated_vertex(
         .normal = normal.xyz,
         .uv = in.textureCoordinate,
         .worldPosition = worldPosition.xyz / worldPosition.w,
-        .worldNormal = modelInstance.normalMatrix * in.normal,
-        .worldTangent = modelInstance.normalMatrix * in.tangent,
-        .worldBitangent = modelInstance.normalMatrix * in.bitangent,
+        .worldNormal = modelInstance.normalMatrix * normal.xyz,
+        .worldTangent = modelInstance.normalMatrix * skinnedTangent,
+        .worldBitangent = modelInstance.normalMatrix * skinnedBitangent,
         .instanceId = instanceId,
         .objectColor = modelInstance.objectColor,
         .useObjectColor = modelInstance.useObjectColor

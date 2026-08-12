@@ -77,6 +77,8 @@ vertex ColorInOut gbuffer_animated_vertex(VertexIn                   in         
     float4x4 skinMatrix = BlendJointMatrix(jointMatrices, in.joints, in.jointWeights);
     modelPosition = skinMatrix * modelPosition;
     normal = skinMatrix * normal;
+    float3 skinnedTangent = (skinMatrix * float4(in.tangent, 0)).xyz;
+    float3 skinnedBitangent = (skinMatrix * float4(in.bitangent, 0)).xyz;
 
     float4 worldPosition = modelInstance.modelMatrix * modelPosition;
     float4 eyePosition = sceneConstants.viewMatrix * worldPosition;
@@ -89,8 +91,8 @@ vertex ColorInOut gbuffer_animated_vertex(VertexIn                   in         
         .worldPosition = worldPosition.xyz / worldPosition.w,
         .worldNormal = modelInstance.normalMatrix * normal.xyz,
         .eye_position = eyePosition.xyz,
-        .tangent = half3(normalize(modelInstance.normalMatrix * in.tangent)),
-        .bitangent = half3(-normalize(modelInstance.normalMatrix * in.bitangent)),
+        .tangent = half3(normalize(modelInstance.normalMatrix * skinnedTangent)),
+        .bitangent = half3(-normalize(modelInstance.normalMatrix * skinnedBitangent)),
         .normal = half3(normalize(modelInstance.normalMatrix * normal.xyz)),
         .instanceId = instanceId,
         .useObjectColor = modelInstance.useObjectColor

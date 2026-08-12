@@ -49,6 +49,8 @@ single_pass_deferred_transparency_animated_vertex(
     float4x4 skinMatrix = BlendJointMatrix(jointMatrices, in.joints, in.jointWeights);
     modelPosition = skinMatrix * modelPosition;
     normal = skinMatrix * normal;
+    float3 skinnedTangent = (skinMatrix * float4(in.tangent, 0)).xyz;
+    float3 skinnedBitangent = (skinMatrix * float4(in.bitangent, 0)).xyz;
 
     float4 worldPosition = modelInstance.modelMatrix * modelPosition;
 
@@ -58,8 +60,8 @@ single_pass_deferred_transparency_animated_vertex(
         .uv = in.textureCoordinate,
         .worldPosition = worldPosition.xyz / worldPosition.w,
         .worldNormal = modelInstance.normalMatrix * normal.xyz,
-        .worldTangent = modelInstance.normalMatrix * in.tangent,
-        .worldBitangent = modelInstance.normalMatrix * in.bitangent,
+        .worldTangent = modelInstance.normalMatrix * skinnedTangent,
+        .worldBitangent = modelInstance.normalMatrix * skinnedBitangent,
         .instanceId = instanceId,
         .objectColor = modelInstance.objectColor,
         .useObjectColor = modelInstance.useObjectColor
