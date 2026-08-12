@@ -15,7 +15,8 @@ or **SUSPECTED** (shader-side evidence only).
 
 **Fix tracking:** findings marked ✅ FIXED are done, with the fixing commit noted in place.
 Currently fixed: **P1** and the **`ShaderDefinitions.h` include-guard hole** (§5) in
-`e086508`; **E1** and **P2** (skinning consolidation via `ShaderHelpers.h`) in `b4fb581`
+`e086508`; **E1** and **P2** (skinning consolidation via `ShaderHelpers.h`) in `b4fb581`;
+**C7** (skinned `worldNormal` + tangent basis in animated vertices) in `d1b3286`
 (all 2026-08-12). All other findings are open. Note: `ShaderHelpers.h` already *stages* the
 E3–E7 helpers with doc comments, but those findings stay open until their call sites are
 converted.
@@ -400,7 +401,15 @@ significantly skewed normal on every untextured object in the single-pass render
 
 ---
 
-### C7 🟠 Animated tiled G-buffer vertex feeds the *unskinned* normal to `worldNormal`
+### C7 ✅ FIXED — Animated tiled G-buffer vertex feeds the *unskinned* normal to `worldNormal`
+
+> **Fixed in `d1b3286` (2026-08-12):** `worldNormal` in the tiled animated vertex now derives
+> from the skinned normal, and the tangent/bitangent outputs are skinned (via the `skinMatrix`
+> local from E1) in all three animated vertex producers. The fix's scope was slightly wider
+> than this finding recorded: `GBuffer.metal`'s animated `tangent`/`bitangent` had the same
+> defect, and unlike the other two files that TBN is consumed *today* by
+> `gbuffer_fragment_material`'s normal mapping. The bitangent handedness negation is
+> preserved; static vertex functions are untouched.
 
 **File:** `TiledDeferredGBuffer.metal:76` — **CONFIRMED**
 
@@ -423,10 +432,9 @@ frozen in bind pose.
 `worldTangent`/`worldBitangent` are also unskinned here and in
 `single_pass_deferred_transparency_animated_vertex` — currently harmless-ish (only the normal
 feeds lighting until C1's fix lands, after which skinned tangents matter for normal-mapped
-animated meshes). *(Update: the E1 extraction landed in `b4fb581` as a pure consolidation
-without touching output fields, so this finding stays open — but it's now a small change:
-the blended `skinMatrix` is already a local in the animated vertex, ready to apply to the
-`worldNormal`/tangent assignments.)*
+animated meshes). *(The E1 extraction landed in `b4fb581` as a pure consolidation without
+touching output fields; the follow-up `d1b3286` then applied the `skinMatrix` local to the
+`worldNormal` and tangent assignments — see the FIXED banner above.)*
 
 ---
 
@@ -852,8 +860,8 @@ inline FullScreenVertexOut FullScreenTriangleVertex(uint vid) {
 > `SetupAnimation` binds the palette before switching to an animated PSO and restores the
 > pass PSO before unbinding, so the guard was unreachable. **Caveat vs. the text below:** the
 > application was a pure consolidation — output fields were not touched, so C7 (unskinned
-> `worldNormal` in the tiled animated vertex) **remains open**, contrary to this section's
-> original "fixing C7" aside. Verified: identical math (matrix-vector products are linear in
+> `worldNormal` in the tiled animated vertex) was left open by that commit and subsequently
+> fixed in `d1b3286`. Verified: identical math (matrix-vector products are linear in
 > the matrix), all shaders compile standalone, macOS Debug build passes.
 
 The identical 12-line skinning block appears in:
