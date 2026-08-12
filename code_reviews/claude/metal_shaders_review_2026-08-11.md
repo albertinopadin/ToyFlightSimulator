@@ -13,6 +13,10 @@ actually wired to pipelines, what data the CPU uploads, and which depth conventi
 renderer runs under. Findings below are labeled **CONFIRMED** (verified against both sides)
 or **SUSPECTED** (shader-side evidence only).
 
+**Fix tracking:** findings marked ✅ FIXED are done, with the fixing commit noted in place.
+Currently fixed: **P1** and the **`ShaderDefinitions.h` include-guard hole** (§5) — commit
+`e086508`, 2026-08-12. All other findings are open.
+
 ---
 
 ## Contents
@@ -600,25 +604,23 @@ one extra mat4·vec4 per fragment). Low priority; no visible artifact expected e
 MaterialProperties material {
     .color = 1                       // white — gBuffer.albedo never read
 };
-LightData light = lightDatas[in.instanceId];   // ~700-byte copy, see P1
-float3 color = Lighting::CalculatePointLighting(light, worldPosition, normal, material);
+float3 color = Lighting::CalculatePointLighting(lightDatas[in.instanceId], worldPosition, normal, material);
 color *= 0.9;                        // magic constant
 ```
+
+*(Snippet and diff updated after `e086508` removed the P1-related local `LightData` copy here;
+the albedo and 0.9 issues remain open.)*
 
 Point-light contribution isn't tinted by the surface it hits (a red sphere under a white point
 light glows white). Fix:
 
 ```diff
--    MaterialProperties material {
+     MaterialProperties material {
 -        .color = 1
--    };
--    
--    LightData light = lightDatas[in.instanceId];
--    float3 color = Lighting::CalculatePointLighting(light, worldPosition, normal, material);
--    color *= 0.9;
-+    MaterialProperties material {
 +        .color = gBuffer.albedo
-+    };
+     };
+-    float3 color = Lighting::CalculatePointLighting(lightDatas[in.instanceId], worldPosition, normal, material);
+-    color *= 0.9;
 +    float3 color = Lighting::CalculatePointLighting(lightDatas[in.instanceId],
 +                                                    worldPosition, normal, material);
 ```
@@ -629,7 +631,14 @@ light glows white). Fix:
 
 ## 2. Performance findings
 
-### P1 ~700-byte `LightData` structs copied by value per fragment
+### P1 ✅ FIXED — ~700-byte `LightData` structs copied by value per fragment
+
+> **Fixed in `e086508` (2026-08-12):** both `Lighting.metal` signatures now take
+> `constant LightData &`, and `TiledDeferredPointLight.metal` passes
+> `lightDatas[in.instanceId]` directly instead of through a local copy. Verified: all call
+> sites bind to `constant` lvalues, all shaders compile standalone, macOS Debug build passes.
+> The one remaining by-value copy (`GetPhongIntensity:29`) is dead code slated for deletion
+> under D6. Original finding kept below for the record.
 
 **Files:** `Lighting.metal:62, 213`, `TiledDeferredPointLight.metal:53` (and the dead
 `GetPhongIntensity` at line 29) — **CONFIRMED**
@@ -662,7 +671,7 @@ that run full-screen. The shadow path already does this right (`constant LightDa
 ```
 
 Call sites: `TiledDeferredDirectionalLight.metal:52` already passes a `constant` ref ✓;
-`TiledDeferredPointLight.metal:53-54` must drop its local copy (shown in C13's diff).
+`TiledDeferredPointLight.metal:53-54` must drop its local copy (done in `e086508`).
 `MaterialProperties` (~64 B) by value is fine.
 
 ### P2 Skinning: blend the matrix once instead of eight matrix·vector transforms
@@ -1000,11 +1009,12 @@ listed keys are not: `InstancedVertex`, `ParticlesFragmentMSAA`, `TiledMSAAGBuff
 
 ## 5. Minor notes & hygiene
 
-- **`ShaderDefinitions.h` include-guard hole:** the `#endif` for `SHARED_METAL` sits at line
-  75; `GBufferOut`, `VertexOut`, and `TessellationVertexOut` (lines 77-102) live *outside* the
-  guard. Today `#import` semantics save it from double-definition, but any `#include` of this
-  header breaks. Move the `#endif` to EOF. The file's header comment also still says
-  `Shared.metal`.
+- ✅ **FIXED in `e086508` (2026-08-12) — `ShaderDefinitions.h` include-guard hole.** The
+  `#endif` now sits at EOF so `GBufferOut`, `VertexOut`, and `TessellationVertexOut` are
+  inside the `SHARED_METAL` guard, and the stale `Shared.metal` header comment now reads
+  `ShaderDefinitions.h`. (Original finding: the `#endif` sat at line 75, leaving those three
+  structs unguarded — safe only under `#import` semantics; any `#include` would have
+  double-defined them.)
 - **`Lighting.metal` imported as a header** (`#import "Lighting.metal"` from 6 files) while
   also compiling standalone. It works (in-class statics are implicitly inline), but renaming
   it `Lighting.h` would say what it is and remove one no-op TU from the metallib build.

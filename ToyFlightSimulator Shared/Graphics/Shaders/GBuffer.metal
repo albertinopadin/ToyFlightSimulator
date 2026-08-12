@@ -148,16 +148,17 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut           in             [
     return gBuffer;
 }
 
-fragment GBufferData gbuffer_fragment_material(ColorInOut                          in             [[ stage_in ]],
-                                               constant SceneConstants            &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-                                               constant LightData                 &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
-                                               constant MaterialProperties        &material       [[ buffer(TFSBufferIndexMaterial) ]],
-                                               constant MaterialTextureTransforms &uvXforms       [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
-                                               sampler                             sampler2d      [[ sampler(0) ]],
-                                               texture2d<half>                     baseColorMap   [[ texture(TFSTextureIndexBaseColor) ]],
-                                               texture2d<half>                     normalMap      [[ texture(TFSTextureIndexNormal) ]],
-                                               texture2d<half>                     specularMap    [[ texture(TFSTextureIndexSpecular) ]],
-                                               depth2d_array<float>                shadowArray    [[ texture(TFSTextureIndexShadow) ]])
+fragment GBufferData gbuffer_fragment_material(
+                    ColorInOut                          in             [[ stage_in ]],
+                    constant SceneConstants            &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                    constant LightData                 &lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+                    constant MaterialProperties        &material       [[ buffer(TFSBufferIndexMaterial) ]],
+                    constant MaterialTextureTransforms &uvXforms       [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
+                    sampler                             sampler2d      [[ sampler(0) ]],
+                    texture2d<half>                     baseColorMap   [[ texture(TFSTextureIndexBaseColor) ]],
+                    texture2d<half>                     normalMap      [[ texture(TFSTextureIndexNormal) ]],
+                    texture2d<half>                     specularMap    [[ texture(TFSTextureIndexSpecular) ]],
+                    depth2d_array<float>                shadowArray    [[ texture(TFSTextureIndexShadow) ]])
 {
     float2 baseUV     = in.tex_coord.xy;
     float2 normalUV   = in.tex_coord.xy;
