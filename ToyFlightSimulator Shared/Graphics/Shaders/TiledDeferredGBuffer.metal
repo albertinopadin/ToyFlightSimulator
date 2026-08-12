@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 #import "Lighting.metal"
 
 //constant bool hasSkeleton [[ function_constant(0) ]];
@@ -40,31 +41,18 @@ tiled_deferred_gbuffer_vertex(
 
 vertex VertexOut
 tiled_deferred_gbuffer_animated_vertex(
-           VertexIn       in              [[ stage_in ]],
-  constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-  constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
-  constant float4x4       *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
-           uint           instanceId      [[ instance_id ]]) {
+                           VertexIn       in              [[ stage_in ]],
+                  constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                  constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                  constant float4x4       *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
+                           uint           instanceId      [[ instance_id ]]) {
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 position = float4(in.position, 1);
     float4 normal = float4(in.normal, 0);
     
-    // Hope this works, ugh...
-    if (jointMatrices != nullptr) {
-        float4 weights = in.jointWeights;
-        ushort4 joints = in.joints;
-        
-        position = weights.x * (jointMatrices[joints.x] * position) +
-                weights.y * (jointMatrices[joints.y] * position) +
-                weights.z * (jointMatrices[joints.z] * position) +
-                weights.w * (jointMatrices[joints.w] * position);
-        
-        normal = weights.x * (jointMatrices[joints.x] * normal) +
-                weights.y * (jointMatrices[joints.y] * normal) +
-                weights.z * (jointMatrices[joints.z] * normal) +
-                weights.w * (jointMatrices[joints.w] * normal);
-    }
-    
+    float4x4 skinMatrix = BlendJointMatrix(jointMatrices, in.joints, in.jointWeights);
+    position = skinMatrix * position;
+    normal = skinMatrix * normal;
     
     float4 worldPosition = modelInstance.modelMatrix * position;
 
@@ -84,15 +72,16 @@ tiled_deferred_gbuffer_animated_vertex(
 }
 
 fragment GBufferOut
-tiled_deferred_gbuffer_fragment(VertexOut                          in                  [[ stage_in ]],
-                                constant SceneConstants            &sceneConstants     [[ buffer(TFSBufferIndexSceneConstants) ]],
-                                constant MaterialProperties        &material           [[ buffer(TFSBufferIndexMaterial) ]],
-                                constant MaterialTextureTransforms &uvXforms           [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
-                                constant LightData                 &lightData          [[ buffer(TFSBufferDirectionalLightData) ]],
-                                sampler                            sampler2d           [[ sampler(0) ]],
-                                texture2d<half>                    baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
-                                texture2d<half>                    normalTexture       [[ texture(TFSTextureIndexNormal) ]],
-                                depth2d_array<float>               shadowArray         [[ texture(TFSTextureIndexShadow) ]]) {
+tiled_deferred_gbuffer_fragment(
+            VertexOut                          in                  [[ stage_in ]],
+            constant SceneConstants            &sceneConstants     [[ buffer(TFSBufferIndexSceneConstants) ]],
+            constant MaterialProperties        &material           [[ buffer(TFSBufferIndexMaterial) ]],
+            constant MaterialTextureTransforms &uvXforms           [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
+            constant LightData                 &lightData          [[ buffer(TFSBufferDirectionalLightData) ]],
+            sampler                            sampler2d           [[ sampler(0) ]],
+            texture2d<half>                    baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
+            texture2d<half>                    normalTexture       [[ texture(TFSTextureIndexNormal) ]],
+            depth2d_array<float>               shadowArray         [[ texture(TFSTextureIndexShadow) ]]) {
     float2 baseUV   = in.uv;
     float2 normalUV = in.uv;
     if (uvXforms.hasTextureTransforms) {

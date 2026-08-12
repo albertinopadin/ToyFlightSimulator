@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 
 struct ShadowOutput
 {
@@ -40,16 +41,7 @@ vertex ShadowOutput shadow_animated_vertex(
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 position = float4(in.position, 1.0);
     
-    // Hope this works, ugh...
-    if (jointMatrices != nullptr) {
-        float4 weights = in.jointWeights;
-        ushort4 joints = in.joints;
-        
-        position = weights.x * (jointMatrices[joints.x] * position) +
-                weights.y * (jointMatrices[joints.y] * position) +
-                weights.z * (jointMatrices[joints.z] * position) +
-                weights.w * (jointMatrices[joints.w] * position);
-    }
+    position = BlendJointMatrix(jointMatrices, in.joints, in.jointWeights) * position;
     
     ShadowOutput out = {
         .position = cascadeVP * modelInstance.modelMatrix * position

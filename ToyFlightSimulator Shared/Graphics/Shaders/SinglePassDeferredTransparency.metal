@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 
 vertex VertexOut
 single_pass_deferred_transparency_vertex(   VertexIn       in              [[ stage_in ]],
@@ -35,29 +36,19 @@ single_pass_deferred_transparency_vertex(   VertexIn       in              [[ st
 }
 
 vertex VertexOut
-single_pass_deferred_transparency_animated_vertex(   VertexIn       in              [[ stage_in ]],
-                                            constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
-                                            constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
-                                            constant float4x4       *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
-                                            uint                    instanceId      [[ instance_id ]]) {
+single_pass_deferred_transparency_animated_vertex(
+                                         VertexIn       in              [[ stage_in ]],
+                                constant SceneConstants &sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                constant ModelConstants *modelConstants [[ buffer(TFSBufferModelConstants) ]],
+                                constant float4x4       *jointMatrices  [[ buffer(TFSBufferIndexJointBuffer) ]],
+                                uint                    instanceId      [[ instance_id ]]) {
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 modelPosition = float4(in.position, 1);
     float4 normal = float4(in.normal, 0);
 
-    if (jointMatrices != nullptr) {
-        float4 weights = in.jointWeights;
-        ushort4 joints = in.joints;
-
-        modelPosition = weights.x * (jointMatrices[joints.x] * modelPosition) +
-                weights.y * (jointMatrices[joints.y] * modelPosition) +
-                weights.z * (jointMatrices[joints.z] * modelPosition) +
-                weights.w * (jointMatrices[joints.w] * modelPosition);
-
-        normal = weights.x * (jointMatrices[joints.x] * normal) +
-                weights.y * (jointMatrices[joints.y] * normal) +
-                weights.z * (jointMatrices[joints.z] * normal) +
-                weights.w * (jointMatrices[joints.w] * normal);
-    }
+    float4x4 skinMatrix = BlendJointMatrix(jointMatrices, in.joints, in.jointWeights);
+    modelPosition = skinMatrix * modelPosition;
+    normal = skinMatrix * normal;
 
     float4 worldPosition = modelInstance.modelMatrix * modelPosition;
 
@@ -77,11 +68,12 @@ single_pass_deferred_transparency_animated_vertex(   VertexIn       in          
 }
 
 fragment float4
-single_pass_deferred_transparency_fragment(   VertexOut                          in                  [[ stage_in ]],
-                                     constant MaterialProperties                 &material           [[ buffer(TFSBufferIndexMaterial) ]],
-                                     constant MaterialTextureTransforms          &uvXforms           [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
-                                     sampler                                     sampler2d           [[ sampler(0) ]],
-                                     texture2d<half>                             baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]]) {
+single_pass_deferred_transparency_fragment(
+                 VertexOut                    in                  [[ stage_in ]],
+        constant MaterialProperties           &material           [[ buffer(TFSBufferIndexMaterial) ]],
+        constant MaterialTextureTransforms    &uvXforms           [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
+        sampler                               sampler2d           [[ sampler(0) ]],
+        texture2d<half>                       baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]]) {
     float2 baseUV = in.uv;
     if (uvXforms.hasTextureTransforms) {
         baseUV = ApplyUVTransform(in.uv, uvXforms.baseColorUVTransform);

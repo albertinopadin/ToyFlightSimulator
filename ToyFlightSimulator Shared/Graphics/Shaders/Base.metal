@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 #import "Lighting.metal"
 
 struct FragmentOutput {
@@ -50,21 +51,10 @@ vertex RasterizerData base_animated_vertex(const VertexIn vIn [[ stage_in ]],
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 position = float4(vIn.position, 1);
     float4 normal = float4(vIn.normal, 0);
-
-    if (jointMatrices != nullptr) {
-        float4 weights = vIn.jointWeights;
-        ushort4 joints = vIn.joints;
-
-        position = weights.x * (jointMatrices[joints.x] * position) +
-                weights.y * (jointMatrices[joints.y] * position) +
-                weights.z * (jointMatrices[joints.z] * position) +
-                weights.w * (jointMatrices[joints.w] * position);
-
-        normal = weights.x * (jointMatrices[joints.x] * normal) +
-                weights.y * (jointMatrices[joints.y] * normal) +
-                weights.z * (jointMatrices[joints.z] * normal) +
-                weights.w * (jointMatrices[joints.w] * normal);
-    }
+    
+    float4x4 skinMatrix = BlendJointMatrix(jointMatrices, vIn.joints, vIn.jointWeights);
+    position = skinMatrix * position;
+    normal = skinMatrix * normal;
 
     float4 worldPosition = modelInstance.modelMatrix * position;
 

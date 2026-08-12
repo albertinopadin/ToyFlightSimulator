@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 #import "Lighting.metal"
 
 // Per-vertex inputs fed by vertex buffer laid out with MTLVertexDescriptor in Metal API
@@ -72,21 +73,10 @@ vertex ColorInOut gbuffer_animated_vertex(VertexIn                   in         
     ModelConstants modelInstance = modelConstants[instanceId];
     float4 modelPosition = float4(in.position, 1.0);
     float4 normal = float4(in.normal, 0);
-
-    if (jointMatrices != nullptr) {
-        float4 weights = in.jointWeights;
-        ushort4 joints = in.joints;
-
-        modelPosition = weights.x * (jointMatrices[joints.x] * modelPosition) +
-                weights.y * (jointMatrices[joints.y] * modelPosition) +
-                weights.z * (jointMatrices[joints.z] * modelPosition) +
-                weights.w * (jointMatrices[joints.w] * modelPosition);
-
-        normal = weights.x * (jointMatrices[joints.x] * normal) +
-                weights.y * (jointMatrices[joints.y] * normal) +
-                weights.z * (jointMatrices[joints.z] * normal) +
-                weights.w * (jointMatrices[joints.w] * normal);
-    }
+    
+    float4x4 skinMatrix = BlendJointMatrix(jointMatrices, in.joints, in.jointWeights);
+    modelPosition = skinMatrix * modelPosition;
+    normal = skinMatrix * normal;
 
     float4 worldPosition = modelInstance.modelMatrix * modelPosition;
     float4 eyePosition = sceneConstants.viewMatrix * worldPosition;
