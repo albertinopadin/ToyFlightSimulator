@@ -14,8 +14,11 @@ renderer runs under. Findings below are labeled **CONFIRMED** (verified against 
 or **SUSPECTED** (shader-side evidence only).
 
 **Fix tracking:** findings marked ✅ FIXED are done, with the fixing commit noted in place.
-Currently fixed: **P1** and the **`ShaderDefinitions.h` include-guard hole** (§5) — commit
-`e086508`, 2026-08-12. All other findings are open.
+Currently fixed: **P1** and the **`ShaderDefinitions.h` include-guard hole** (§5) in
+`e086508`; **E1** and **P2** (skinning consolidation via `ShaderHelpers.h`) in `b4fb581`
+(all 2026-08-12). All other findings are open. Note: `ShaderHelpers.h` already *stages* the
+E3–E7 helpers with doc comments, but those findings stay open until their call sites are
+converted.
 
 ---
 
@@ -420,7 +423,10 @@ frozen in bind pose.
 `worldTangent`/`worldBitangent` are also unskinned here and in
 `single_pass_deferred_transparency_animated_vertex` — currently harmless-ish (only the normal
 feeds lighting until C1's fix lands, after which skinned tangents matter for normal-mapped
-animated meshes). The E1 skinning helper fixes all of these at once.
+animated meshes). *(Update: the E1 extraction landed in `b4fb581` as a pure consolidation
+without touching output fields, so this finding stays open — but it's now a small change:
+the blended `skinMatrix` is already a local in the animated vertex, ready to apply to the
+`worldNormal`/tangent assignments.)*
 
 ---
 
@@ -674,7 +680,10 @@ Call sites: `TiledDeferredDirectionalLight.metal:52` already passes a `constant`
 `TiledDeferredPointLight.metal:53-54` must drop its local copy (done in `e086508`).
 `MaterialProperties` (~64 B) by value is fine.
 
-### P2 Skinning: blend the matrix once instead of eight matrix·vector transforms
+### P2 ✅ FIXED — Skinning: blend the matrix once instead of eight matrix·vector transforms
+
+> **Fixed in `b4fb581` (2026-08-12)** as part of the E1 extraction: each animated vertex now
+> computes one `skinMatrix` via `BlendJointMatrix` and reuses it for position and normal.
 
 **Files:** all five skinned vertex functions (see E1) — the current pattern does 8 `float4x4 * float4`
 multiplies (4 for position, 4 for normal) plus vector blends. Blending the palette matrix
@@ -835,7 +844,17 @@ inline FullScreenVertexOut FullScreenTriangleVertex(uint vid) {
 #endif /* ShaderHelpers_h */
 ```
 
-### E1 Skinning — 5 duplicated blocks → `BlendJointMatrix`
+### E1 ✅ FIXED — Skinning: 5 duplicated blocks → `BlendJointMatrix`
+
+> **Fixed in `b4fb581` (2026-08-12):** `ShaderHelpers.h` added with `BlendJointMatrix`; all
+> five sites below converted to the blend-once `skinMatrix` form (which is also P2). The
+> `jointMatrices != nullptr` guards were dropped after verifying the DrawManager invariant:
+> `SetupAnimation` binds the palette before switching to an animated PSO and restores the
+> pass PSO before unbinding, so the guard was unreachable. **Caveat vs. the text below:** the
+> application was a pure consolidation — output fields were not touched, so C7 (unskinned
+> `worldNormal` in the tiled animated vertex) **remains open**, contrary to this section's
+> original "fixing C7" aside. Verified: identical math (matrix-vector products are linear in
+> the matrix), all shaders compile standalone, macOS Debug build passes.
 
 The identical 12-line skinning block appears in:
 
