@@ -17,15 +17,17 @@ or **SUSPECTED** (shader-side evidence only).
 Currently fixed: **P1** and the **`ShaderDefinitions.h` include-guard hole** (§5) in
 `e086508`; **E1** and **P2** (skinning consolidation via `ShaderHelpers.h`) in `b4fb581`;
 **C7** (skinned `worldNormal` + tangent basis in animated vertices) in `d1b3286`
-(all 2026-08-12). All other findings are open. Note: `ShaderHelpers.h` already *stages* the
-E3–E7 helpers with doc comments, but those findings stay open until their call sites are
-converted.
+(all 2026-08-12); **C10** (terrain world-position G-buffer write), **C5** (point-light volume
+calibration — the CPU-side `LightData.modelMatrix` variant), and **C14** (missing MSAA
+point-light PSO bind, a new renderer-side finding) in `cc06a3c` (2026-08-13). All other
+findings are open. Note: `ShaderHelpers.h` already *stages* the E3–E7 helpers with doc
+comments, but those findings stay open until their call sites are converted.
 
 ---
 
 ## Contents
 
-1. [Correctness findings](#1-correctness-findings) (C1–C13)
+1. [Correctness findings](#1-correctness-findings) (C1–C14)
 2. [Performance findings](#2-performance-findings) (P1–P7)
 3. [Common code to extract](#3-common-code-to-extract) (E1–E8)
 4. [Dead code inventory](#4-dead-code-inventory) (D1–D7)
@@ -284,7 +286,15 @@ The specular exponent on line 70 (`powr(..., specular_intensity)`) uses an *inte
 
 ---
 
-### C5 🔴 Tiled point-light volume ignores the light's radius
+### C5 ✅ FIXED — Tiled point-light volume ignores the light's radius
+
+> **Fixed in `cc06a3c` (2026-08-13):** via the CPU-side variant at the end of this section,
+> not the shader-constant Fix diff below (kept for the record). `setLightRadius` scales the
+> node by `radius / IcosahedronMesh.inscribedRadius`, the tiled vertex applies
+> `light.modelMatrix`, `PointLightObject` defaults to a 10 m radius, and FlightboxScene's
+> manual `setScale` calls became `setLightRadius(10.0)`. The default attenuation was also
+> softened `(1,1,1)` → `(0.5,0.5,0.5)`. None of this was observable in the MSAA renderers
+> until C14 (missing PSO bind, same commit) was fixed alongside.
 
 **File:** `TiledDeferredPointLight.metal:30-31` — **CONFIRMED**
 (`IcosahedronMesh` is built once with `MDLMesh.newIcosahedron(withRadius: 0.7557)`,
@@ -323,6 +333,151 @@ of the intended scaling path.) The single-pass renderer doesn't have this bug: i
 +    float3 world = in.position.xyz * (light.radius / kMeshInscribedRadius) + light.position;
 +    float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * float4(world, 1);
 ```
+
+**Why** — is `kMeshInscribedRadius` right, why does the shader need it at all, and where should
+it live?
+
+**The constant is numerically correct — measured, not assumed.** Verified 2026-08-13 with a
+headless ModelIO script (build `MDLMesh.newIcosahedron`, read vertices via
+`vertexAttributeData(forAttributeNamed:)`, inradius = min origin→face-plane distance over the
+index buffer's triangles):
+
+| quantity | measured |
+|---|---|
+| `withRadius:` semantics | **circumradius** — all 12 vertices land at exactly the param distance |
+| engine mesh circumradius (param 0.75576) | 0.75576 |
+| engine mesh inscribed radius | **0.60057** |
+| inradius/circumradius, regular icosahedron | 0.79465 |
+| shader constant `0.7557 × 0.7947` | 0.60055 — agrees to 0.003% |
+
+So the two factors are `(mesh circumradius) × (inradius/circumradius ratio)`. The genuinely
+fishy part is upstream: `BasicMeshes.swift:150`'s `icoRadius = √3/12·(3+√5) ≈ 0.75576` is the
+inradius-to-**edge** ratio of a regular icosahedron — Apple's DeferredLighting sample's
+expression with the reciprocal dropped (Apple passes `1.0 / (√3/12·(3+√5))`, commented "so the
+minimum radius is 1"; even that overshoots ~5% against measured ModelIO, yielding inradius
+1.051). The engine mesh's size is an accident of copying, not a chosen dimension.
+
+**Why a mesh-size constant is irreducible.** The vertex shader sees one model-space vertex at
+a time. `light.radius` says how big the volume *should* be in world meters; nothing in any
+binding says how big the mesh *is* in model units. The scale must be desired/actual, and
+"actual mesh size" is asset metadata — the GPU cannot derive the extent of a mesh it never
+sees whole. The information is unavoidable; only its *home* is a design choice.
+
+**Why the *inscribed* radius.** The polyhedron must **contain** the light's sphere of
+influence. An icosahedron's flat faces cut chords inside its vertex sphere — face centers sit
+20.5% closer than vertices. Calibrate by circumradius and the volume clips lit fragments near
+each face center, giving the light a faceted rim. Calibrate by inradius and the faces are
+tangent to the light sphere — containment guaranteed; the cost is a thin shell of extra
+fragments whose attenuation ≈ 0 (and which `CalculatePointLighting`'s `< 0.01 → 0` floor
+rounds to exact black). Erring big is free; erring small is a visible artifact.
+
+⚠️ **Erratum (2026-08-13):** an earlier revision of this section claimed `LightData()`
+zero-inits (radius 0 → volumes collapse). Wrong — `MetalTypes.swift:109-131` defines an
+explicit `LightData` extension `init()` with `radius: 1.0`, `attenuation: [1, 1, 1]`,
+`brightness: 1.0`, so unset lights default to a 1 m volume, not zero. Still ship a usable
+default radius (no scene calls `setLightRadius`; the only call site, `FlightboxScene:73`, is
+commented out — 1 m is barely visible). The *real* default-value problem is
+`attenuation = (1,1,1)`: `1/(1 + d + d²)` is 0.14 at 2 m, 0.032 at 5 m, and drops below
+`CalculatePointLighting`'s `< 0.01 → black` floor past ~9.4 m — every point light is
+effectively a dim ≲3 m glow regardless of `radius`, and no attenuation setter exists.
+(`cc06a3c` softens the default to `(0.5, 0.5, 0.5)`, stretching the black floor to ~13.6 m.)
+A radius-windowed falloff like the single-pass `(1 − d/r)²` would make `radius` the single
+knob (C13 territory).
+
+**Cleaner variant — fold the calibration into `LightData.modelMatrix` on the CPU.** The
+plumbing already exists: `LightObject.update()` copies the node's `modelMatrix` into
+`lightData.modelMatrix` every frame (LightObject.swift:80), and the single-pass volume
+vertices already consume it (`light_mask_vertex` / `deferred_point_lighting_vertex`,
+PointLights.metal:24/49). Nothing couples radius → scale today — which means **the
+single-pass renderer has the same latent bug through a different mechanism**: its volumes are
+the raw mesh at whatever node scale the scene hand-set (`FlightboxScene` calls
+`pl.setScale(2.0)` — evidence the modelMatrix channel was the intended calibration path,
+driven manually), while its fragment gates on `light_distance < light_radius` with a
+`(1 − d/r)²` falloff, so the volume covers only a sliver of the falloff sphere. Folding the
+scale into the node fixes both renderers at once, moves the constant into Swift next to the
+mesh it describes, unifies the tiled vertex with the single-pass ones, and deletes the MSL
+constant:
+
+```diff
+--- a/ToyFlightSimulator Shared/AssetPipeline/Libraries/Meshes/BasicMeshes.swift
++++ b/ToyFlightSimulator Shared/AssetPipeline/Libraries/Meshes/BasicMeshes.swift
+@@ class IcosahedronMesh: Mesh {
+ class IcosahedronMesh: Mesh {
++    /// ModelIO's `withRadius:` is the CIRCUMRADIUS — all 12 vertices land at exactly this
++    /// distance (measured 2026-08-13). The expression is the inradius/edge ratio of a
++    /// regular icosahedron, inherited from Apple's DeferredLighting sample minus the
++    /// reciprocal — i.e. the mesh's size is a historical accident, kept for compatibility.
++    static let circumradius: Float = sqrtf(3.0) / 12.0 * (3.0 + sqrtf(5.0))   // ≈ 0.75576
++
++    /// Center-to-face-plane distance: the radius of the largest sphere the mesh fully
++    /// CONTAINS (r/R of a regular icosahedron ≈ 0.79465; measured 0.60057). Light volumes
++    /// scale by `radius / inscribedRadius` so the flat faces clear the light's sphere.
++    /// Pure constants — safe to reference from Metal-free logic tests.
++    static let inscribedRadius: Float = circumradius * 0.79465                // ≈ 0.60057
++
+     override init() {
+-        let icoRadius = sqrtf(3.0) / 12.0 * (3.0 + sqrtf(5.0))
+-        let mdlIcosahedron = MDLMesh.newIcosahedron(withRadius: icoRadius, 
++        let mdlIcosahedron = MDLMesh.newIcosahedron(withRadius: Self.circumradius,
+                                                     inwardNormals: false,
+                                                     allocator: Self.mtkMeshBufferAllocator)
+--- a/ToyFlightSimulator Shared/GameObjects/LightObject.swift
++++ b/ToyFlightSimulator Shared/GameObjects/LightObject.swift
+@@ extension LightObject {
+-    public func setLightRadius(_ radius: Float) { self.lightData.radius = radius }
++    /// Sets the falloff radius AND scales the node so the icosahedron volume mesh contains
++    /// the radius-sized sphere of influence. `update()` copies the node's modelMatrix into
++    /// `lightData.modelMatrix`, which every volume vertex path consumes
++    /// (PointLights.metal light_mask_vertex / deferred_point_lighting_vertex,
++    /// TiledDeferredPointLight.metal) — the mesh-size calibration lives here, next to the
++    /// asset it describes, not hardcoded in MSL.
++    public func setLightRadius(_ radius: Float) {
++        self.lightData.radius = radius
++        if lightType == Point {
++            self.setScale(radius / IcosahedronMesh.inscribedRadius)
++        }
++    }
+--- a/ToyFlightSimulator Shared/GameObjects/PointLightObject.swift
++++ b/ToyFlightSimulator Shared/GameObjects/PointLightObject.swift
+@@ class PointLightObject: LightObject {
+     init() {
+         super.init(name: "Point Light", lightType: Point, modelType: .Icosahedron)
++        // LightData's extension init defaults radius to 1 m — technically valid but
++        // barely visible. Give point lights a usable default; scenes override as needed.
++        setLightRadius(10.0)
+     }
+--- a/ToyFlightSimulator Shared/Graphics/Shaders/TiledDeferredPointLight.metal
++++ b/ToyFlightSimulator Shared/Graphics/Shaders/TiledDeferredPointLight.metal
+@@ tiled_deferred_point_light_vertex(...)
+-//    float4 lightPosition = float4(lightDatas[instanceId].position, 0);
+-//    float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * (in.position + lightPosition);
+-
+-    constant LightData &light = lightDatas[instanceId];
+-
+-    const float kMeshInscribedRadius = 0.7557 * 0.7947;
+-    float3 world = in.position.xyz * (light.radius / kMeshInscribedRadius) + light.position;
+-    float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * float4(world, 1);
+-
++    // Volume sizing (radius / mesh inscribed radius) is baked into the light's modelMatrix
++    // CPU-side (LightObject.setLightRadius) — the same contract as the single-pass volume
++    // vertices in PointLights.metal.
++    float4 world = lightDatas[instanceId].modelMatrix * float4(in.position.xyz, 1);
++    float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * world;
+```
+
+Caveats, checked against the code:
+
+- Scaling the light's node is side-effect-free: `LightObject.objectType == .none`, so lights
+  never enter SceneManager's batched draws (`DrawIcosahedrons` draws
+  `SceneManager.icosahedrons`, not lights), and while `DrawPointLights` writes the lights'
+  `ModelConstants`, the volume vertex functions read `light_data`/`lightDatas`, not
+  ModelConstants. `Sun` is unaffected (coupling gated on `Point`).
+- `setLightRadius` now owns the node scale — `FlightboxScene`'s manual `pl.setScale(2.0)`
+  (today: a ~1.5 m volume) should become a real radius call, e.g. the commented-out
+  `setLightRadius(10.0)`.
+- A light parented under a scaled node inherits that scale into the volume (consistent with
+  world-space semantics; no current scene does this).
+- `deferred_point_lighting_fragment`'s eye/world-space mixing is a separate bug — see C3/C4.
 
 Also in this file's fragment (see C13): the surface albedo is ignored.
 
@@ -501,7 +656,11 @@ broken `surfaceNormal` plus `GetPhongIntensity`'s clamping, not to the idea of l
 
 ---
 
-### C10 🟠 Terrain G-buffer writes the *window-space* position into the world-position target
+### C10 ✅ FIXED — Terrain G-buffer writes the *window-space* position into the world-position target
+
+> **Fixed in `cc06a3c` (2026-08-13):** as the Fix diff below — the pre-projection world
+> position rides through `TessellationVertexOut` and the fragment stores it with w = 1;
+> the superseded commented-out mvp lines were removed.
 
 **File:** `Tessellation.metal:149-153` — **CONFIRMED** (TiledMSAATessellated renderer)
 
@@ -556,6 +715,50 @@ terrain texture's alpha happens to be.
 +        .position = float4(in.worldPosition, 1.0)
      };
 ```
+
+**Why** — what was actually in the buffer, and why nobody ever saw it:
+
+`[[position]]` means two different things on the two sides of the rasterizer. In the vertex
+stage it's the clip-space position the shader computed; the rasterizer consumes that, and what
+a `[[position]]`-attributed **fragment** input delivers is the window coordinate: `x, y` are
+the fragment's pixel coordinates in the viewport (half-pixel centers, e.g. `(1412.5, 380.5)`),
+`z` is the depth-buffer value after the viewport transform (reverse-Z here: ~1 near, ~0 far),
+`w` is `1/clip.w`. So terrain fragments wrote `(1412.5, 380.5, 0.997)` into a target where
+every other object writes world-space meters like `(83.2, -4.1, 1120.7)`.
+
+A G-buffer target's "correct" contents are defined entirely by its consumer — the geometry is
+gone by the time the lighting pass runs, so whatever the lighting math needs is what must be
+stored. The one consumer of `GBufferOut.position` is `tiled_deferred_point_light_fragment` →
+`Lighting::CalculatePointLighting` (Lighting.metal:216-219), which computes
+`distance(light.position, fragmentWorldPosition)` and
+`normalize(light.position - fragmentWorldPosition)` — both meaningful only if the stored value
+shares a space with `light.position`, i.e. world space. (Window-`xy` + depth is not an absurd
+thing to find in a position target — depth-reconstruction renderers store exactly that and
+rebuild world position via the inverse view-projection, cf. the eye-ray variant in C4/E7 — but
+that only works if the consumer does the reconstruction math. This one uses the texel
+directly.)
+
+Why it produced no visible artifacts — three layers of masking, stacked:
+
+1. **The directional pass never reads position.** `tiled_deferred_directional_light_fragment`
+   uses only `gBuffer.albedo` + `gBuffer.normal`; the shadow term was already computed in the
+   G-buffer pass and stashed in `albedo.a`. So 100% of the lighting actually visible on
+   terrain (sun + shadows) never touched the broken data.
+2. **`FlightboxWithTerrain` had no point lights** (at analysis time — one was added along
+   with the fix as its visual check). The scene added one `Sun` and nothing else, so the
+   point-light volume pass drew zero instances and the bogus texels sat unread in a
+   memoryless tile attachment.
+3. **Even with a point light near terrain, the symptom is darkness, not glitch colors.**
+   `distance((1412, 380, 0.99), lightPos)` is on the order of 10³, so quadratic attenuation
+   collapses toward zero, and `CalculatePointLighting` floors totals below 0.01 to exact
+   black; the volume pass blends additively, and adding zero changes nothing. Add C5 (the
+   unscaled icosahedron volume covers well under a meter of screen) and the observable
+   "artifact" was terrain *not receiving a subtle glow* — an absence-of-effect bug, the kind a
+   GPU frame capture catches (the position target under terrain shows a smooth screen-space
+   gradient instead of world coordinates) and eyeballs don't.
+
+The fix is therefore latent until a point light hovers near terrain under TiledMSAATessellated
+— and actually *seeing* the glow also wants C5 (scale the volume by `light.radius`).
 
 ---
 
@@ -640,6 +843,49 @@ light glows white). Fix:
 ```
 
 (Whether to keep the 0.9 fudge is a tuning call; if kept, name it.)
+
+---
+
+### C14 ✅ FIXED — MSAA renderers never bind the point-light PSO (stage ran on the directional pipeline)
+
+> **Fixed in `cc06a3c` (2026-08-13):** both MSAA renderers now bind `.TiledMSAAPointLight`
+> in `encodePointLightStage` (`TiledDeferredRenderer` already bound its equivalent).
+
+**Files:** `TiledMSAATessellatedRenderer.swift` / `TiledMultisampleRenderer.swift`
+(`encodePointLightStage`) — **CONFIRMED**. Found 2026-08-13 while visually verifying C5/C10;
+a renderer-side encode bug, outside the original shader review's scope but blocking all of
+its point-light fixes.
+
+`encodePointLightStage` called `DrawManager.DrawPointLights(...)` without setting any
+pipeline, and `DrawManager.Draw` deliberately never sets pipelines — PSO state is the
+caller's job. The volumes therefore drew with `.TiledMSAADirectionalLight` still bound from
+the immediately preceding stage:
+
+- vertex = `tiled_deferred_vertex_quad`, which indexes a **6-entry** constant array with
+  `[[vertex_id]]` — the indexed icosahedron draw feeds it index values 0–11, so half the
+  fetches read **out of bounds** (undefined behavior, garbage triangles);
+- fragment = the directional-light fragment, re-running sun lighting wherever those
+  triangles landed (a visually near-idempotent rewrite, which is why the stage always read
+  as a no-op);
+- the actual point-light shaders (`tiled_deferred_point_light_vertex/fragment`) **never
+  executed** in either MSAA renderer — point lights have been a silent no-op there since the
+  stage was written, and shader-side fixes (C5/C10/C13) are unobservable in these renderers
+  without this bind.
+
+`TiledMSAAPointLightPipelineState` had existed in the library the whole time — correct
+shader pair, additive blending, `rasterSampleCount = 4` — with zero call sites.
+
+**Fix** (as landed, both renderers):
+
+```diff
+     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
++        // DrawManager never sets pipelines — without this bind the volumes draw on the
++        // directional-light PSO left over from the previous stage (quad vertex shader,
++        // out-of-bounds vertex fetches, and the point-light shaders never run).
++        setRenderPipelineState(renderEncoder, state: .TiledMSAAPointLight)
+         DrawManager.DrawPointLights(with: renderEncoder)
+     }
+```
 
 ---
 
