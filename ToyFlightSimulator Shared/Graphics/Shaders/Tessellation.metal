@@ -85,14 +85,15 @@ tessellation_vertex(patch_control_point<TerrainControlPoint> controlPoints      
     float height = (color.r * 2 - 1) * terrain.height;
     position.y = height;
     
-    float4x4 mvp = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * modelConstants.modelMatrix ;
-    position = mvp * position;
+    float4 worldPosition = modelConstants.modelMatrix * position;
+    position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * worldPosition;
     
     TessellationVertexOut out {
         .position = position,
         .color = float4(color.r),
         .height = height,
-        .uv = xy
+        .uv = xy,
+        .worldPosition = worldPosition.xyz
     };
     
     return out;
@@ -149,7 +150,9 @@ tessellation_gbuffer_fragment(TessellationVertexOut in              [[ stage_in 
     GBufferOut out {
         .albedo = color,
         .normal = normal,
-        .position = in.position
+        // World-space meters — the point-light pass reads this target as the fragment's
+        // world position. ([[position]] at the fragment stage is the window coordinate.)
+        .position = float4(in.worldPosition, 1.0)
     };
     return out;
 }

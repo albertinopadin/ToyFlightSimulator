@@ -146,9 +146,21 @@ class CapsuleMesh: Mesh {
 }
 
 class IcosahedronMesh: Mesh {
+    /// ModelIO's `withRadius:` is the CIRCUMRADIUS — all 12 vertices land at exactly this
+    /// distance (measured 2026-08-13). The expression is the inradius/edge ratio of a regular
+    /// icosahedron, inherited from Apple's DeferredLighting sample minus the reciprocal —
+    /// i.e. the mesh's size is a historical accident, kept for compatibility.
+    static let circumradius: Float = sqrtf(3.0) / 12.0 * (3.0 + sqrtf(5.0))   // ≈ 0.75576
+
+    /// Center-to-face-plane distance: the radius of the largest sphere the mesh fully
+    /// CONTAINS (r/R of a regular icosahedron ≈ 0.79465; measured 0.60057). Light volumes
+    /// scale by `radius / inscribedRadius` so the flat faces clear the light's sphere of
+    /// influence — sizing by circumradius would clip lit fragments near each face center.
+    /// Pure constants — safe to reference from Metal-free logic tests.
+    static let inscribedRadius: Float = circumradius * 0.79465                // ≈ 0.60057
+
     override init() {
-        let icoRadius = sqrtf(3.0) / 12.0 * (3.0 + sqrtf(5.0))
-        let mdlIcosahedron = MDLMesh.newIcosahedron(withRadius: icoRadius, 
+        let mdlIcosahedron = MDLMesh.newIcosahedron(withRadius: Self.circumradius, 
                                                     inwardNormals: false,
                                                     allocator: Self.mtkMeshBufferAllocator)
         

@@ -70,15 +70,16 @@ final class FlightboxScene: GameScene {
             pl.setPosition(capsule.getPositionX(), 0.5, capsule.getPositionZ())
             pl.setLightColor(BLUE_COLOR.xyz)
             pl.setLightBrightness(1.0)
-            //        pl.setLightRadius(10.0)
-            pl.setScale(2.0)
+            // setLightRadius owns the node scale for point lights (volume sizing) —
+            // don't call setScale on them directly.
+            pl.setLightRadius(10.0)
             addLight(pl)
             
             //        pl2.setPosition(-capsule.getPositionX(), capsule.getPositionY(), capsule.getPositionZ())
             pl2.setPosition(-capsule.getPositionX(), 0.5, capsule.getPositionZ())
             pl2.setLightColor(RED_COLOR.xyz)
             pl2.setLightBrightness(1.0)
-            pl2.setScale(3.0)
+            pl2.setLightRadius(10.0)
             addLight(pl2)
         }
         

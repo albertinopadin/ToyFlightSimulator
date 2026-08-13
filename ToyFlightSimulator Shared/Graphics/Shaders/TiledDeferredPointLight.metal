@@ -27,8 +27,12 @@ tiled_deferred_point_light_vertex(         PointLightIn   in              [[ sta
                                   constant LightData      *lightDatas     [[ buffer(TFSBufferPointLightsData) ]],
                                            uint           instanceId      [[ instance_id ]])
 {
-    float4 lightPosition = float4(lightDatas[instanceId].position, 0);
-    float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * (in.position + lightPosition);
+    // Volume sizing (radius / mesh inscribed radius) is baked into the light's modelMatrix
+    // CPU-side (LightObject.setLightRadius) — the same contract as the single-pass volume
+    // vertices in PointLights.metal.
+    float4 world = lightDatas[instanceId].modelMatrix * float4(in.position.xyz, 1);
+    float4 position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * world;
+
     PointLightOut out {
         .position = position,
         .instanceId = instanceId

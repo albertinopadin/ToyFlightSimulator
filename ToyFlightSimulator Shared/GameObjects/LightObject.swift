@@ -188,6 +188,17 @@ extension LightObject {
     public func setLightSpecularIntensity(_ intensity: Float) { self.lightData.specularIntensity = intensity }
     public func getLightSpecularIntensity() -> Float { return self.lightData.specularIntensity }
 
-    public func setLightRadius(_ radius: Float) { self.lightData.radius = radius }
+    /// Sets the falloff radius AND scales the node so the icosahedron volume mesh contains
+    /// the radius-sized sphere of influence. `update()` copies the node's modelMatrix into
+    /// `lightData.modelMatrix`, which every volume vertex path consumes (PointLights.metal
+    /// light_mask_vertex / deferred_point_lighting_vertex, TiledDeferredPointLight.metal) —
+    /// the mesh-size calibration lives here, next to the asset it describes, not in MSL.
+    /// This setter owns the node scale for point lights; don't also call setScale on them.
+    public func setLightRadius(_ radius: Float) {
+        self.lightData.radius = radius
+        if lightType == Point {
+            self.setScale(radius / IcosahedronMesh.inscribedRadius)
+        }
+    }
     public func getLightRadius() -> Float { return self.lightData.radius }
 }

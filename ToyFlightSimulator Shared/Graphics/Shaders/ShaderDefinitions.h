@@ -97,6 +97,7 @@ struct TessellationVertexOut {
     float4 color;
     float height;
     float2 uv;
+    float3 worldPosition;
 };
 
 #endif

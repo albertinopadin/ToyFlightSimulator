@@ -107,6 +107,7 @@ extension MaterialTextureTransforms: sizeable {
 }
 
 extension LightData: sizeable {
+    // TODO: Make these properties configurable from the init:
     init() {
         let identity = matrix_identity_float4x4
         self.init(type: Directional,
@@ -118,7 +119,7 @@ extension LightData: sizeable {
                   color: [1, 1, 1],
                   brightness: 1.0,
                   radius: 1.0,
-                  attenuation: [1, 1, 1],
+                  attenuation: [0.5, 0.5, 0.5],
                   ambientIntensity: 1.0,
                   diffuseIntensity: 1.0,
                   specularIntensity: 1.0,

@@ -107,6 +107,10 @@ final class TiledMultisampleRenderer: Renderer, ShadowRendering, ParticleRenderi
     }
     
     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
+        // DrawManager never sets pipelines — without this bind the volumes draw on the
+        // directional-light PSO left over from the previous stage (quad vertex shader,
+        // out-of-bounds vertex fetches, and the point-light shaders never run).
+        setRenderPipelineState(renderEncoder, state: .TiledMSAAPointLight)
         DrawManager.DrawPointLights(with: renderEncoder)
     }
     

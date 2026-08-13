@@ -106,7 +106,6 @@ final class TiledMSAATessellatedRenderer:   Renderer,
     
     func encodeDirectionalLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Directional Light Stage") {
-//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAADirectionalLight])
             setRenderPipelineState(renderEncoder, state: .TiledMSAADirectionalLight)
             // Draw full screen quad
             renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
@@ -114,6 +113,10 @@ final class TiledMSAATessellatedRenderer:   Renderer,
     }
     
     func encodePointLightStage(using renderEncoder: MTLRenderCommandEncoder) {
+        // DrawManager never sets pipelines — without this bind the volumes draw on the
+        // directional-light PSO left over from the previous stage (quad vertex shader,
+        // out-of-bounds vertex fetches, and the point-light shaders never run).
+        setRenderPipelineState(renderEncoder, state: .TiledMSAAPointLight)
         DrawManager.DrawPointLights(with: renderEncoder)
     }
     
@@ -121,8 +124,6 @@ final class TiledMSAATessellatedRenderer:   Renderer,
         encodeRenderStage(using: renderEncoder, label: "Transparent Object Rendering") {
             let psoType: RenderPipelineStateType = .TiledMSAATransparency
             setRenderPipelineState(renderEncoder, state: psoType)
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredGBuffer])
-//            renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.CloserNoWrite])
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.TiledDeferredTransparency])
             DrawManager.DrawTransparent(with: renderEncoder, psoType: psoType)
         }
@@ -130,7 +131,6 @@ final class TiledMSAATessellatedRenderer:   Renderer,
     
     func encodeMSAAResolveStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "MSAA Resolve Stage") {
-//            renderEncoder.setRenderPipelineState(Graphics.RenderPipelineStates[.TiledMSAAAverageResolve])
             setRenderPipelineState(renderEncoder, state: .TiledMSAAAverageResolve)
             renderEncoder.dispatchThreadsPerTile(MTLSize(width: 16, height: 16, depth: 1))
         }
