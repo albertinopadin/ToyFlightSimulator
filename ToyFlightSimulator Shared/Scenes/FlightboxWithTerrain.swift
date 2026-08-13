@@ -12,6 +12,13 @@ final class FlightboxWithTerrain: GameScene {
     var sun = Sun(modelType: .Sphere)
     var quad = Quad()
     var capsule = CapsuleObject()
+    let pointLight = PointLightObject()
+    
+//        let jet = F35()
+    let jet = F22()
+//        let jet = F22_CGTrader()
+//        let jet = CollidableF22()
+//        let jet = F18()
     
     private func addTerrain() {
         let groundColor = float4(0.3, 0.7, 0.1, 1.0)
@@ -24,12 +31,6 @@ final class FlightboxWithTerrain: GameScene {
 
     override func buildScene() {
         addTerrain()
-        
-//        let jet = F35()
-        let jet = F22()
-//        let jet = F22_CGTrader()
-//        let jet = CollidableF22()
-//        let jet = F18()
         
         addCamera(attachedCamera)
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)
@@ -88,6 +89,11 @@ final class FlightboxWithTerrain: GameScene {
         sphereRed.setColor([1.0, 0.0, 0.0, 0.4])
         addChild(sphereRed)
         
+        pointLight.setPosition(jetPos.x, jetPos.y + 1, jetPos.z + 1)
+        pointLight.setColor(RED_COLOR)
+        pointLight.setLightColor(RED_COLOR.xyz)
+        addLight(pointLight)
+        
         print("Flightbox scene children:")
         for child in children {
             print(child.getName())
@@ -107,6 +113,9 @@ final class FlightboxWithTerrain: GameScene {
         let fdTime = Float(GameTime.DeltaTime)
         
         quad.rotateZ(fdTime)
+        pointLight.setPosition(jet.getPositionX(),
+                               jet.getPositionY() + (sin(Float(GameTime.TotalGameTime)) * 0.5),
+                               jet.getPositionZ())
         
 //        InputManager.handleMouseClickDebounced(command: .ClickSelect) {
 //            print("Mouse position in window: \(Mouse.GetMouseWindowPosition())")
