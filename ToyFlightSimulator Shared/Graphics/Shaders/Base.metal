@@ -99,13 +99,13 @@ material_fragment(          RasterizerData      rd              [[ stage_in ]],
                             texture2d<float>    baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
                             texture2d<float>    normalMap       [[ texture(TFSTextureIndexNormal) ]]) {
     float2 texCoord = rd.textureCoordinate;
-    float4 color = material.color;
-
-    if (rd.useObjectColor) {
-        color = rd.objectColor;
-    } else if (!is_null_texture(baseColorMap)) {
-        color = baseColorMap.sample(sampler2d, texCoord);
-    }
+    
+    float4 color = ResolveBaseColor(rd.useObjectColor,
+                                    rd.objectColor,
+                                    material.color,
+                                    baseColorMap,
+                                    sampler2d,
+                                    texCoord);
     
     float3 unitNormal;
     // TODO: This results in very dark scene:

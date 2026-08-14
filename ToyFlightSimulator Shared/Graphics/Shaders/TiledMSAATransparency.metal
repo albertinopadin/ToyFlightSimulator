@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 
 fragment float4
 tiled_msaa_transparency_fragment(VertexOut                          in                  [[ stage_in ]],
@@ -39,11 +40,7 @@ tiled_msaa_transparency_fragment(VertexOut                          in          
         color /= numSamples;
     }
     
-    if (color.a < 1.0 && material.opacity < 1.0) {
-        color.a = max(color.a, material.opacity);
-    } else {
-        color.a = min(color.a, material.opacity);
-    }
+    color.a = ResolveOpacity(color.a, material.opacity);
     
     return color;
 }

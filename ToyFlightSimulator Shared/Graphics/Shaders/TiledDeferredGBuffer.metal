@@ -90,14 +90,13 @@ tiled_deferred_gbuffer_fragment(
         baseUV   = ApplyUVTransform(in.uv, uvXforms.baseColorUVTransform);
         normalUV = ApplyUVTransform(in.uv, uvXforms.normalUVTransform);
     }
-
-    float4 color = material.color;
-
-    if (in.useObjectColor) {
-        color = in.objectColor;
-    } else if (!is_null_texture(baseColorTexture)) {
-        color = float4(baseColorTexture.sample(sampler2d, baseUV));
-    }
+    
+    float4 color = ResolveBaseColor(in.useObjectColor,
+                                    in.objectColor,
+                                    material.color,
+                                    baseColorTexture,
+                                    sampler2d,
+                                    baseUV);
 
     // Per-fragment view-space depth from the perspective-correctly interpolated
     // worldPosition. worldPos - cameraPos is Sterbenz-exact in float32 for

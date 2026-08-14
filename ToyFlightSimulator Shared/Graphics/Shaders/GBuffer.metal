@@ -161,17 +161,15 @@ fragment GBufferData gbuffer_fragment_material(
         specularUV = ApplyUVTransform(in.tex_coord.xy, uvXforms.specularUVTransform);
     }
 
-    half4 base_color_sample;
+    half4 base_color_sample = half4(ResolveBaseColor(in.useObjectColor,
+                                                     in.objectColor,
+                                                     in.color,
+                                                     baseColorMap,
+                                                     sampler2d,
+                                                     baseUV));
+    
     half4 normal_sample;
     half specular_contrib;
-
-    if (in.useObjectColor) {
-        base_color_sample = half4(in.objectColor);
-    } else if (!is_null_texture(baseColorMap)) {
-        base_color_sample = baseColorMap.sample(sampler2d, baseUV);
-    } else {
-        base_color_sample = half4(in.color);
-    }
 
     if (!in.useObjectColor && !is_null_texture(normalMap)) {
         normal_sample = normalMap.sample(sampler2d, normalUV);

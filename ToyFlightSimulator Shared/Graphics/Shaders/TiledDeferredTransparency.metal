@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 
 vertex VertexOut
 tiled_deferred_transparency_vertex(VertexIn                in              [[ stage_in ]],
@@ -45,19 +46,14 @@ tiled_deferred_transparency_fragment(VertexOut                          in      
         baseUV = ApplyUVTransform(in.uv, uvXforms.baseColorUVTransform);
     }
 
-    float4 color = material.color;
-
-    if (in.useObjectColor) {
-        color = in.objectColor;
-    } else if (!is_null_texture(baseColorTexture)) {
-        color = float4(baseColorTexture.sample(sampler2d, baseUV));
-    }
+    float4 color = ResolveBaseColor(in.useObjectColor,
+                                    in.objectColor,
+                                    material.color,
+                                    baseColorTexture,
+                                    sampler2d,
+                                    baseUV);
     
-    if (color.a < 1.0 && material.opacity < 1.0) {
-        color.a = max(color.a, material.opacity);
-    } else {
-        color.a = min(color.a, material.opacity);
-    }
+    color.a = ResolveOpacity(color.a, material.opacity);
     
     return color;
 }

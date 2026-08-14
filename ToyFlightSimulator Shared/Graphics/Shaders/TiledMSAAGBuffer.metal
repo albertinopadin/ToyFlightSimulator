@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 #import "Lighting.metal"
 
 fragment GBufferOut
@@ -28,14 +29,13 @@ depth2d_array<float>               shadowArray         [[ texture(TFSTextureInde
         baseUV   = ApplyUVTransform(in.uv, uvXforms.baseColorUVTransform);
         normalUV = ApplyUVTransform(in.uv, uvXforms.normalUVTransform);
     }
-
-    float4 color = material.color;
-
-    if (in.useObjectColor) {
-        color = in.objectColor;
-    } else if (!is_null_texture(baseColorTexture)) {
-        color = float4(baseColorTexture.sample(sampler2d, baseUV));
-    }
+    
+    float4 color = ResolveBaseColor(in.useObjectColor,
+                                    in.objectColor,
+                                    material.color,
+                                    baseColorTexture,
+                                    sampler2d,
+                                    baseUV);
 
     float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
     color.a = Lighting::CalculateShadow(in.worldPosition,

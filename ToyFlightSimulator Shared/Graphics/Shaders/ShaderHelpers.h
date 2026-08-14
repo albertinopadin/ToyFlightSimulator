@@ -64,6 +64,20 @@ inline float4 ResolveBaseColor(bool useObjectColor,
     return fallbackColor;
 }
 
+// Same cascade for float-element textures (Base.metal and the OIT material
+// fragment bind texture2d<float>) — MSL textures don't implicitly convert
+// between element types, so each needs its own overload.
+inline float4 ResolveBaseColor(bool useObjectColor,
+                               float4 objectColor,
+                               float4 fallbackColor,
+                               texture2d<float> baseColorMap,
+                               sampler s,
+                               float2 uv) {
+    if (useObjectColor)                 { return objectColor; }
+    if (!is_null_texture(baseColorMap)) { return float4(baseColorMap.sample(s, uv)); }
+    return fallbackColor;
+}
+
 // Recover the eye-space position of a G-buffer fragment: scale the interpolated
 // view ray so its z equals the stored eye-space depth. The depth is a
 // z-coordinate, not a radial distance — normalize(eyeRay) * depth lands off the

@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 #import "Lighting.metal"
 
 // Heavily inspired from: https://developer.apple.com/documentation/metal/metal_sample_code_library/implementing_order-independent_transparency_with_image_blocksd
@@ -88,13 +89,13 @@ transparent_material_fragment(RasterizerData                     rd             
     if (uvXforms.hasTextureTransforms) {
         texCoord = ApplyUVTransform(rd.textureCoordinate, uvXforms.baseColorUVTransform);
     }
-    float4 color = rd.color;
-
-    if (rd.useObjectColor) {
-        color = rd.objectColor;
-    } else if (!is_null_texture(baseColorMap)) {
-        color = baseColorMap.sample(sampler2d, texCoord);
-    }
+    
+    float4 color = ResolveBaseColor(rd.useObjectColor,
+                                    rd.objectColor,
+                                    rd.color,
+                                    baseColorMap,
+                                    sampler2d,
+                                    texCoord);
     
     // TODO: This darkens the transparent objects:
 //    float3 unitNormal;
@@ -120,11 +121,7 @@ transparent_material_fragment(RasterizerData                     rd             
     TransparentFragmentStore out;
     half4 finalColor = half4(color);
     
-    if (finalColor.w < 1.0 && material.opacity < 1.0) {
-        finalColor.w = max(finalColor.w, half(material.opacity));
-    } else {
-        finalColor.w = min(finalColor.w, half(material.opacity));
-    }
+    finalColor.w = ResolveOpacity(finalColor.w, material.opacity);
     
     if (finalColor.w > 0.1) {
         finalColor.w = 0.1;
