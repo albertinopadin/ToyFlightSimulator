@@ -168,26 +168,23 @@ fragment GBufferData gbuffer_fragment_material(
                                                      sampler2d,
                                                      baseUV));
     
-    half4 normal_sample;
-    half specular_contrib;
-
+    half3 eye_normal;
     if (!in.useObjectColor && !is_null_texture(normalMap)) {
-        normal_sample = normalMap.sample(sampler2d, normalUV);
+        eye_normal = ApplyNormalMapEye(normalMap.sample(sampler2d, normalUV).xyz,
+                                       in.tangent,
+                                       in.bitangent,
+                                       in.normal);
     } else {
-        normal_sample = half4(in.normal, 1.0);
+        eye_normal = normalize(in.normal);
     }
+    
+    half specular_contrib;
 
     if (!in.useObjectColor && !is_null_texture(specularMap)) {
         specular_contrib = specularMap.sample(sampler2d, specularUV).r;
     } else {
         specular_contrib = 1.0;
     }
-    
-    // Calculate normal in eye space
-    half3 tangent_normal = normalize((normal_sample.xyz * 2.0) - 1.0);
-    half3 eye_normal = normalize(tangent_normal.x * in.tangent +
-                                 tangent_normal.y * in.bitangent +
-                                 tangent_normal.z * in.normal);
     
     // Cascade-aware shadow, recomputing view-space depth per-fragment.
     float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);

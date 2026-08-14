@@ -29,6 +29,17 @@ inline float4x4 BlendJointMatrix(constant float4x4 *jointMatrices, ushort4 joint
 }
 
 // Decode a [0,1]-encoded tangent-space normal-map sample and rotate it onto the
+// interpolated surface basis. World-space float variant for the tiled G-buffer,
+// whose T/B/N interpolants are float3 in world space. Each basis vector is
+// renormalized: interpolation denormalizes them unevenly, which reweights the
+// tangent-space components — a skew that normalizing only the combined result
+// would keep.
+inline float3 ApplyNormalMapWorld(half3 sampleRGB, float3 T, float3 B, float3 N) {
+    float3 tn = normalize(float3(sampleRGB) * 2.0 - 1.0);
+    return normalize(tn.x * normalize(T) + tn.y * normalize(B) + tn.z * normalize(N));
+}
+
+// Decode a [0,1]-encoded tangent-space normal-map sample and rotate it onto the
 // interpolated surface basis. Eye-space half-precision variant for the
 // single-pass deferred G-buffer, whose T/B/N interpolants are half3 in eye
 // space. Only normal-map SAMPLES get the *2-1 decode — an interpolated
