@@ -19,9 +19,11 @@ Currently fixed: **P1** and the **`ShaderDefinitions.h` include-guard hole** (§
 **C7** (skinned `worldNormal` + tangent basis in animated vertices) in `d1b3286`
 (all 2026-08-12); **C10** (terrain world-position G-buffer write), **C5** (point-light volume
 calibration — the CPU-side `LightData.modelMatrix` variant), and **C14** (missing MSAA
-point-light PSO bind, a new renderer-side finding) in `cc06a3c` (2026-08-13). All other
-findings are open. Note: `ShaderHelpers.h` already *stages* the E3–E7 helpers with doc
-comments, but those findings stay open until their call sites are converted.
+point-light PSO bind, a new renderer-side finding) in `cc06a3c` (2026-08-13); **E3**
+(opacity resolve → `ResolveOpacity`) and **E5** (base-color cascade → `ResolveBaseColor`,
+plus a `texture2d<float>` overload) in `5105324` (2026-08-14). All other findings are open.
+Note: `ShaderHelpers.h` already *stages* the E4/E6/E7 helpers with doc comments, but those
+findings stay open until their call sites are converted.
 
 ---
 
@@ -1177,7 +1179,13 @@ then delete `SinglePassDeferredTransparency.metal` (moving its *animated* vertex
 function without a tiled twin — into `TiledDeferredTransparency.metal`), and remove the
 orphaned `ShaderLibrary` keys. Net: −~100 lines and one source of truth for transparency.
 
-### E3 Opacity resolve — 4 duplicated blocks → `ResolveOpacity`
+### E3 ✅ FIXED — Opacity resolve — 4 duplicated blocks → `ResolveOpacity`
+
+> **Fixed in `5105324` (2026-08-14):** all four sites converted (E2 hasn't landed, so the
+> pre-E2 site list applied — three live + one dead). The OIT half variant got no dedicated
+> half overload: its half alpha promotes through the float helper and narrows back on
+> assignment, which selects the same branch (the old code compared `material.opacity` as
+> float too) and agrees to half rounding.
 
 Sites: `SinglePassDeferredTransparency.metal:98-102`, `TiledDeferredTransparency.metal:56-60`,
 `TiledMSAATransparency.metal:42-46` (dead file), `OrderIndependentTransparency.metal:123-127`
@@ -1202,7 +1210,16 @@ G-buffer fragment once terrain gets a real TBN. This is the one extraction that 
 existing* — today one file decodes-but-shouldn't (C6) while another should-but-doesn't (C1);
 a single named helper makes the convention impossible to miss.
 
-### E5 Base-color cascade — 7 duplicated blocks → `ResolveBaseColor`
+### E5 ✅ FIXED — Base-color cascade — 7 duplicated blocks → `ResolveBaseColor`
+
+> **Fixed in `5105324` (2026-08-14):** all seven sites converted with their original
+> fallbacks preserved. `ShaderHelpers.h` gained a second `ResolveBaseColor` overload for
+> `texture2d<float>` — Base.metal and the OIT material fragment bind float-element
+> base-color textures while the other five bind `texture2d<half>`, and MSL textures don't
+> implicitly convert between element types. `gbuffer_fragment_material` wraps the float4
+> result back to `half4` (exact round trip on the sample path).
+> `TiledMSAATransparency.metal`'s cascade was deliberately left: its `texture2d_ms` can't
+> bind to the helper, the file is dead (D3), and it was never on this finding's site list.
 
 The `useObjectColor → texture sample → fallback` cascade appears in
 `GBuffer.metal:176-182` (fallback `in.color`), `TiledDeferredGBuffer.metal:105-109`
