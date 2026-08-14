@@ -22,8 +22,9 @@ calibration — the CPU-side `LightData.modelMatrix` variant), and **C14** (miss
 point-light PSO bind, a new renderer-side finding) in `cc06a3c` (2026-08-13); **E3**
 (opacity resolve → `ResolveOpacity`) and **E5** (base-color cascade → `ResolveBaseColor`,
 plus a `texture2d<float>` overload) in `5105324` (2026-08-14). All other findings are open.
-Note: `ShaderHelpers.h` already *stages* the E4/E6/E7 helpers with doc comments, but those
-findings stay open until their call sites are converted.
+Note: `ShaderHelpers.h` already *stages* the E6/E7 helpers and E4's *eye* variant with doc
+comments (`ApplyNormalMapWorld` from §3's proposal was never added to the file — E4's diffs
+include it), but those findings stay open until their call sites are converted.
 
 ---
 
@@ -1209,6 +1210,93 @@ Live call sites after fixes: `TiledDeferredGBuffer.metal` (world variant),
 G-buffer fragment once terrain gets a real TBN. This is the one extraction that *fixes bugs by
 existing* — today one file decodes-but-shouldn't (C6) while another should-but-doesn't (C1);
 a single named helper makes the convention impossible to miss.
+
+**Diffs** (added 2026-08-14, written against the tree at `5105324`, i.e. after the E3/E5
+conversion; both call-site files already `#import "ShaderHelpers.h"`).
+
+`b4fb581` staged only the eye variant, so `ApplyNormalMapWorld` lands with this finding,
+slotted above its eye twin:
+
+```diff
+--- a/ToyFlightSimulator Shared/Graphics/Shaders/ShaderHelpers.h
++++ b/ToyFlightSimulator Shared/Graphics/Shaders/ShaderHelpers.h
+@@
++// Decode a [0,1]-encoded tangent-space normal-map sample and rotate it onto the
++// interpolated surface basis. World-space float variant for the tiled G-buffer,
++// whose T/B/N interpolants are float3 in world space. Each basis vector is
++// renormalized: interpolation denormalizes them unevenly, which reweights the
++// tangent-space components — a skew that normalizing only the combined result
++// would keep.
++inline float3 ApplyNormalMapWorld(half3 sampleRGB, float3 T, float3 B, float3 N) {
++    float3 tn = normalize(float3(sampleRGB) * 2.0 - 1.0);
++    return normalize(tn.x * normalize(T) + tn.y * normalize(B) + tn.z * normalize(N));
++}
++
+ // Decode a [0,1]-encoded tangent-space normal-map sample and rotate it onto the
+ // interpolated surface basis. Eye-space half-precision variant for the
+ // single-pass deferred G-buffer, whose T/B/N interpolants are half3 in eye
+```
+
+(The eye variant deliberately does *not* renormalize T/B/N — that keeps the C6 conversion
+below equivalent-to-half-rounding with the existing single-pass math on the texture path. If
+the asymmetry ever bothers, change it as its own tuning commit, not inside the extraction.)
+
+**Tiled call site** (`TiledDeferredGBuffer.metal`): the conversion is exactly C1's Fix diff,
+which still applies verbatim — E5 rewrote the base-color block above it, but the normal block
+(now lines 111–115) is untouched. `VertexOut` already carries `worldTangent`/`worldBitangent`
+(float3, ShaderDefinitions.h:88–89), populated by both the static and animated vertices
+(skinned since `d1b3286`/C7) and currently never read by the fragment.
+
+**Single-pass call site** (`GBuffer.metal` `gbuffer_fragment_material`): the collapsed form of
+C6's material fix. `normal_sample` has no consumer besides the decode (`eye_normal` alone
+feeds `normal_shadow`), so the sample-vs-fallback cascade and the unconditional decode fuse
+into one branch:
+
+```diff
+--- a/ToyFlightSimulator Shared/Graphics/Shaders/GBuffer.metal
++++ b/ToyFlightSimulator Shared/Graphics/Shaders/GBuffer.metal
+@@ fragment GBufferData gbuffer_fragment_material(...)
+-    half4 normal_sample;
+     half specular_contrib;
+ 
+-    if (!in.useObjectColor && !is_null_texture(normalMap)) {
+-        normal_sample = normalMap.sample(sampler2d, normalUV);
+-    } else {
+-        normal_sample = half4(in.normal, 1.0);
+-    }
++    // Decode + TBN only on the sample path (fixes C6): the interpolated
++    // geometric normal is already in [-1,1] and must skip the *2-1 decode.
++    half3 eye_normal;
++    if (!in.useObjectColor && !is_null_texture(normalMap)) {
++        eye_normal = ApplyNormalMapEye(normalMap.sample(sampler2d, normalUV).xyz,
++                                       in.tangent, in.bitangent, in.normal);
++    } else {
++        eye_normal = normalize(in.normal);
++    }
+ 
+     if (!in.useObjectColor && !is_null_texture(specularMap)) {
+         specular_contrib = specularMap.sample(sampler2d, specularUV).r;
+     } else {
+         specular_contrib = 1.0;
+     }
+-    
+-    // Calculate normal in eye space
+-    half3 tangent_normal = normalize((normal_sample.xyz * 2.0) - 1.0);
+-    half3 eye_normal = normalize(tangent_normal.x * in.tangent +
+-                                 tangent_normal.y * in.bitangent +
+-                                 tangent_normal.z * in.normal);
+```
+
+On the texture path this matches the old math to half rounding (the old `* 2.0` promoted
+through float and narrowed back; the helper stays in half — the TBN combine and final
+normalize are identical). On the fallback path it *changes* behavior — that is C6's fix, the
+point of the exercise.
+
+Not converted by E4: `gbuffer_fragment_base` (C6's other half) has no normal map at all — its
+fix is plain `normalize(in.normal)` with the decode/TBN deleted, no helper involved. And
+`Tessellation.metal`'s raw-sample normal write (noted under C10) can't call the helper until
+the terrain pipeline produces tangents. Verification is §6 step 2's: the normal-mapped F-22
+under TiledDeferred and SinglePassDeferred, before/after screenshots per renderer.
 
 ### E5 ✅ FIXED — Base-color cascade — 7 duplicated blocks → `ResolveBaseColor`
 
