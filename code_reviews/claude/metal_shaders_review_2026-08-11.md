@@ -26,11 +26,14 @@ TBN → `ApplyNormalMapEye` at the single-pass material fragment — which is al
 material-fragment half — plus `ApplyNormalMapWorld` staged for C1) in `fad8684`
 (2026-08-14); **E7** (eye-space reconstruction → `ReconstructEyePosition` at both sites —
 the DirectionalLight site being C4's wrong-form problem 2) and **E8** (terrain layer pick →
-file-local `SampleTerrainLayer`) in `62e3dbf` (2026-08-14). All other findings are open
+file-local `SampleTerrainLayer`) in `62e3dbf` (2026-08-14); **C1** (tiled G-buffer normal
+decode + TBN — `ApplyNormalMapWorld`'s first caller; mirrored into the dead D2 duplicate)
+and **C2** (OIT sort keyed on view-space depth via `1/position.w`, plus removal of the
+10%-opacity clamp, confirming that SUSPECTED item as a debugging leftover) in `0ec59ea`
+(2026-08-15). All other findings are open
 (C6 is half-fixed: `gbuffer_fragment_base` remains; C4 is partially fixed: problems 1 and 3
-remain). Note: `ShaderHelpers.h` still *stages* the E6 helpers — and `ApplyNormalMapWorld`
-— with doc comments; E6 stays open until its call sites are converted, and
-`ApplyNormalMapWorld`'s one call site is C1's fix.
+remain). Note: `ShaderHelpers.h` still *stages* the E6 helpers with doc comments; E6 stays
+open until its call sites are converted.
 
 ---
 
@@ -49,7 +52,17 @@ Severity key: 🔴 visible rendering error on a live path · 🟠 wrong but mask
 
 ## 1. Correctness findings
 
-### C1 🔴 Tiled G-buffer writes the raw normal-map texel as the world normal (no decode, no TBN)
+### C1 ✅ FIXED — Tiled G-buffer writes the raw normal-map texel as the world normal (no decode, no TBN)
+
+> **Fixed in `0ec59ea` (2026-08-15):** as the Fix diff below — `tiled_deferred_gbuffer_fragment`
+> now feeds the sample and the (finally-read) `worldTangent`/`worldBitangent`/`worldNormal`
+> to `ApplyNormalMapWorld` — the staged E4 world variant's first caller; the no-map path is
+> unchanged. `normal.w` is now always 1.0 where the mapped path previously stored the
+> sample's alpha — safe: both tiled lighting fragments read only `gBuffer.normal.xyz`. The
+> same change was mirrored into the dead `tiled_msaa_gbuffer_fragment` (D2) so it stays
+> consistent until deleted. The terrain G-buffer fragment's raw sample (C10's "also here"
+> note) remains, pending a real terrain TBN. Compiles standalone; macOS Debug build passes.
+> §6 step 2's visual check (the normal-mapped F-22 per renderer) is now unblocked.
 
 **File:** `TiledDeferredGBuffer.metal:121-125` — **CONFIRMED**
 **Affects:** TiledDeferred, TiledDeferredMSAA, TiledMSAATessellated (all three tiled renderers
@@ -103,7 +116,16 @@ in *tangent* space interpreted as *world* space. The vertex stage even computes
 
 ---
 
-### C2 🔴 OIT layer sort is inverted under reverse-Z — transparency blends front-to-back
+### C2 ✅ FIXED — OIT layer sort is inverted under reverse-Z — transparency blends front-to-back
+
+> **Fixed in `0ec59ea` (2026-08-15):** as the Fix diff below — both `transparent_fragment`
+> and `transparent_material_fragment` now key on `half(1.0 / rd.position.w)` (view-space
+> depth), restoring nearest-in-layer-0 ordering and back-to-front compositing;
+> `blend_fragments` needed no change, as predicted. The 10%-opacity hard clamp (the
+> SUSPECTED item below) was also removed — confirmed a debugging leftover, so
+> `ResolveOpacity(sampled alpha, material.opacity)` alone governs OIT opacity now.
+> Compiles standalone; macOS Debug build passes. §6 step 4's visual check (overlapping
+> canopy/afterburner layering) is now unblocked.
 
 **File:** `OrderIndependentTransparency.metal:56-67, 135-148, 160-163` — **CONFIRMED**
 (`OITRenderer.swift:76` clears depth to `Preferences.MainClearDepth` = 0.0 and uses the
@@ -1230,11 +1252,11 @@ Sites: `SinglePassDeferredTransparency.metal:98-102`, `TiledDeferredTransparency
 > collapsed sample-path-only form (texture path agrees with the old math to half rounding;
 > the fallback-path behavior change IS C6's material-fragment fix, so C6 is now half-fixed).
 > Scope per this section's own carve-outs: the tiled call site was NOT converted — that
-> conversion is exactly C1's Fix diff and stays with C1, so `ApplyNormalMapWorld` sits
-> staged with zero callers until C1 lands — and `gbuffer_fragment_base` (C6's other half,
-> no helper involved) also remains open. Verified: `GBuffer.metal` compiles standalone
+> conversion is exactly C1's Fix diff and stayed with C1 (landed in `0ec59ea`, 2026-08-15,
+> making `ApplyNormalMapWorld` live) — and `gbuffer_fragment_base` (C6's other half,
+> no helper involved) remains open. Verified: `GBuffer.metal` compiles standalone
 > (type-checking both helpers); macOS Debug build passes. §6 step 2's visual check (the
-> normal-mapped F-22 per renderer) stays pending until C1 completes the pair.
+> normal-mapped F-22 per renderer) unblocked once C1 landed.
 
 Live call sites after fixes: `TiledDeferredGBuffer.metal` (world variant),
 `GBuffer.metal` `gbuffer_fragment_material` (eye variant), and `Tessellation.metal`'s
@@ -1273,10 +1295,9 @@ below equivalent-to-half-rounding with the existing single-pass math on the text
 the asymmetry ever bothers, change it as its own tuning commit, not inside the extraction.)
 
 **Tiled call site** (`TiledDeferredGBuffer.metal`): the conversion is exactly C1's Fix diff,
-which still applies verbatim — E5 rewrote the base-color block above it, but the normal block
-(now lines 111–115) is untouched. `VertexOut` already carries `worldTangent`/`worldBitangent`
-(float3, ShaderDefinitions.h:88–89), populated by both the static and animated vertices
-(skinned since `d1b3286`/C7) and currently never read by the fragment.
+landed with C1 in `0ec59ea` (2026-08-15). `VertexOut` already carried
+`worldTangent`/`worldBitangent` (float3, ShaderDefinitions.h:88–89), populated by both the
+static and animated vertices (skinned since `d1b3286`/C7) — the fragment finally reads them.
 
 **Single-pass call site** (`GBuffer.metal` `gbuffer_fragment_material`): the collapsed form of
 C6's material fix. `normal_sample` has no consumer besides the decode (`eye_normal` alone
@@ -1415,7 +1436,7 @@ All verified by exhaustive grep of `ShaderLibrary` keys against every `Shaders[.
 | # | Item | Evidence |
 |---|---|---|
 | D1 | **`Instanced.metal` — whole file.** `InstancedVertex` key never referenced; `base_vertex` already is the instanced path. | grep: 0 refs |
-| D2 | **`TiledMSAAGBuffer.metal` — whole file.** `TiledMSAAPipeline.swift:51,66` binds `TiledDeferredGBufferFragment` instead. | grep: 0 refs |
+| D2 | **`TiledMSAAGBuffer.metal` — whole file.** `TiledMSAAPipeline.swift:51,66` binds `TiledDeferredGBufferFragment` instead. (C1's fix was mirrored into it in `0ec59ea` so it stays consistent until deleted.) | grep: 0 refs |
 | D3 | **`TiledMSAATransparency.metal` — whole file.** MSAA pipeline binds `TiledDeferredTransparencyFragment`. For the record it also has a real bug: it accumulates MSAA texel reads *on top of* `color = material.color` before dividing — the average includes the material color as a phantom sample. Don't resurrect without fixing; also `texture2d_ms` for a *material* texture can't be bound to the regular file textures DrawManager provides. | grep: 0 refs |
 | D4 | **`fragment_particle_msaa`** (`Particles.metal:75-100`). Same `texture2d_ms`-material concern. `ParticlePipeline.swift:64-70` uses `ParticlesFragment` for the MSAA pipeline (correct — MSAA-ness lives in `rasterSampleCount`, not the material texture). | grep: 0 refs |
 | D5 | **`transparent_fragment`** (`OrderIndependentTransparency.metal:50-75`). OIT pipelines bind `TransparentMaterialFragment` only. Deleting it removes one of the two copies of the layer-insert loop. | grep: 0 refs |
