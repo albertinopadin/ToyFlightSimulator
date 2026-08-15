@@ -24,10 +24,13 @@ point-light PSO bind, a new renderer-side finding) in `cc06a3c` (2026-08-13); **
 plus a `texture2d<float>` overload) in `5105324` (2026-08-14); **E4** (normal-map decode +
 TBN → `ApplyNormalMapEye` at the single-pass material fragment — which is also C6's
 material-fragment half — plus `ApplyNormalMapWorld` staged for C1) in `fad8684`
-(2026-08-14). All other findings are open (C6 is half-fixed: `gbuffer_fragment_base`
-remains). Note: `ShaderHelpers.h` still *stages* the E6/E7 helpers — and, since E4,
-`ApplyNormalMapWorld` — with doc comments; E6/E7 stay open until their call sites are
-converted, and `ApplyNormalMapWorld`'s one call site is C1's fix.
+(2026-08-14); **E7** (eye-space reconstruction → `ReconstructEyePosition` at both sites —
+the DirectionalLight site being C4's wrong-form problem 2) and **E8** (terrain layer pick →
+file-local `SampleTerrainLayer`) in `62e3dbf` (2026-08-14). All other findings are open
+(C6 is half-fixed: `gbuffer_fragment_base` remains; C4 is partially fixed: problems 1 and 3
+remain). Note: `ShaderHelpers.h` still *stages* the E6 helpers — and `ApplyNormalMapWorld`
+— with doc comments; E6 stays open until its call sites are converted, and
+`ApplyNormalMapWorld`'s one call site is C1's fix.
 
 ---
 
@@ -221,6 +224,13 @@ already binds both `light_data` and `sceneConstants`) and pass it flat:
 ---
 
 ### C4 🔴 Single-pass directional light: direction derived from unnormalized position, wrong position reconstruction, bogus halfway vector
+
+> **Partially fixed in `62e3dbf` (2026-08-14, the E7 conversion):** problem 2 only —
+> `eye_space_fragment_pos` now comes from `ReconstructEyePosition` (the correct
+> PointLights-style ray scaling), superseding that hunk of the Fix diff below. Problems 1
+> (diffuse direction from the unnormalized world position) and 3 (halfway vector subtracting
+> a world position from an eye-space point) are still live; the rest of the Fix still
+> applies.
 
 **File:** `DirectionalLight.metal:45-72` — **CONFIRMED**
 
@@ -1362,12 +1372,25 @@ Replace, in order of ease:
 Each conversion needs its `drawPrimitives` call to use `vertexCount: 3` and no vertex buffer;
 verify cull mode as noted in the helper comment.
 
-### E7 Eye-space position reconstruction — 2 sites, 1 currently wrong
+### E7 ✅ FIXED — Eye-space position reconstruction — 2 sites, 1 currently wrong
+
+> **Fixed in `62e3dbf` (2026-08-14):** both sites converted; both files gained the
+> `ShaderHelpers.h` import. The PointLights site is a pure refactor — the helper's body IS
+> the old expression, so point-light output is bit-identical. The DirectionalLight site is
+> the behavior change this finding pointed at: C4's problem 2 (reconstruction), leaving C4
+> partially fixed — its problems 1 and 3 remain and its Fix diff's other hunks still apply.
+> The reconstructed position feeds only the specular halfway vector there, so diffuse is
+> unchanged. Verified: both files compile standalone; macOS Debug build passes.
 
 `PointLights.metal:70` (correct form) and `DirectionalLight.metal:57` (wrong form, C4) both
 become `ReconstructEyePosition(in.eye_position, depth)`.
 
-### E8 Terrain height→layer blend — 2 duplicated blocks
+### E8 ✅ FIXED — Terrain height→layer blend — 2 duplicated blocks
+
+> **Fixed in `62e3dbf` (2026-08-14):** as proposed below — file-local `static
+> SampleTerrainLayer`, both fragments converted, branch-for-branch identical thresholds.
+> `tiling` stays a hardcoded 1.0 inside each fragment; the §5 fold-into-`Terrain`-uniform
+> note stands.
 
 `Tessellation.metal:107-116` and `129-138` duplicate the height-threshold texture pick. Local
 to one file, so a `static` function in `Tessellation.metal` is enough:
