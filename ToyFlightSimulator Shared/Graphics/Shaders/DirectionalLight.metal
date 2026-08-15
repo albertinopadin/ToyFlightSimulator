@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 
 struct QuadInOut
 {
@@ -54,7 +55,7 @@ deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_i
     // Calculate specular contribution from directional light
     
     // Used eye_space depth to determine the position of the fragment in eye_space
-    float3 eye_space_fragment_pos = normalize(in.eye_position) * depth;
+    float3 eye_space_fragment_pos = ReconstructEyePosition(in.eye_position, depth);
 
 //    float4 eye_light_direction = lightData.eyeDirection;
 

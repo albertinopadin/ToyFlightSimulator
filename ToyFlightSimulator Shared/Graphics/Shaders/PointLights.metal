@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 
 typedef struct {
     float4 position [[ position ]];
@@ -67,7 +68,7 @@ deferred_point_lighting_fragment_common(LightInOut               in,
                                         half4                    albedo_specular)
 {
     // Used eye_space depth to determine the position of the fragment in eye_space
-    float3 eye_space_fragment_pos = in.eye_position * (depth / in.eye_position.z);
+    float3 eye_space_fragment_pos = ReconstructEyePosition(in.eye_position, depth);
 
     float3 light_eye_position = light_data[in.iid].position;
     float light_distance = length(light_eye_position - eye_space_fragment_pos);

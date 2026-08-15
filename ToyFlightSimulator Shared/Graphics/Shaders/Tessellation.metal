@@ -19,6 +19,18 @@ float getCameraDistance(float3 pointA, float3 pointB, float3 cameraPosition, flo
     return cameraDistance;
 }
 
+static float4 SampleTerrainLayer(float height,
+                                 float2 uv,
+                                 float tiling,
+                                 texture2d<float> grass,
+                                 texture2d<float> cliff,
+                                 texture2d<float> snow,
+                                 sampler s) {
+    if (height < -0.5) { return grass.sample(s, uv * tiling); }
+    if (height <  0.3) { return cliff.sample(s, uv * tiling); }
+    return snow.sample(s, uv * tiling);
+}
+
 // This kernel computes tessellation for quads (for things like terrain)
 kernel void compute_tessellation(
   constant float                          *edgeFactors    [[ buffer(0) ]],
@@ -106,21 +118,13 @@ tessellation_fragment(TessellationVertexOut in              [[ stage_in ]],
                       texture2d<float>      snowTexture     [[ texture(TFSTextureIndexSnow) ]]) {
     constexpr sampler sample;
     float tiling = 1.0;  // Get this passed in ??? 
-    float4 color;
-    
-    if (in.height < -0.5) {
-        color = grassTexture.sample(sample, in.uv * tiling);
-    } else if (in.height < 0.3) {
-        color = cliffTexture.sample(sample, in.uv * tiling);
-    } else {
-        color = snowTexture.sample(sample, in.uv * tiling);
-    }
-    
+    float4 color = SampleTerrainLayer(in.height, in.uv, tiling, grassTexture, cliffTexture, snowTexture, sample);
     return color;
 }
 
 fragment GBufferOut
-tessellation_gbuffer_fragment(TessellationVertexOut in              [[ stage_in ]],
+tessellation_gbuffer_fragment(
+                      TessellationVertexOut in              [[ stage_in ]],
                       texture2d<float>      grassTexture    [[ texture(TFSTextureIndexGrass) ]],
                       texture2d<float>      cliffTexture    [[ texture(TFSTextureIndexCliff) ]],
                       texture2d<float>      snowTexture     [[ texture(TFSTextureIndexSnow) ]],
@@ -128,15 +132,7 @@ tessellation_gbuffer_fragment(TessellationVertexOut in              [[ stage_in 
                       depth2d_array<float>  shadowArray     [[ texture(TFSTextureIndexShadow) ]]) {
     constexpr sampler sample;
     float tiling = 1.0;  // Get this passed in ???
-    float4 color;
-    
-    if (in.height < -0.5) {
-        color = grassTexture.sample(sample, in.uv * tiling);
-    } else if (in.height < 0.3) {
-        color = cliffTexture.sample(sample, in.uv * tiling);
-    } else {
-        color = snowTexture.sample(sample, in.uv * tiling);
-    }
+    float4 color = SampleTerrainLayer(in.height, in.uv, tiling, grassTexture, cliffTexture, snowTexture, sample);
     
     // TODO:
 //    color.a = Lighting::CalculateShadowMSAA(in.shadowPosition, shadowTexture);
