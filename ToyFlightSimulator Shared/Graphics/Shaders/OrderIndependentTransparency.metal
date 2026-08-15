@@ -53,8 +53,11 @@ fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stag
     half4 finalColor = half4(rd.color);
     finalColor.xyz *= finalColor.w;
     
-    // Get fragment distance from camera:
-    half depth = rd.position.z / rd.position.w;
+    // View-space depth as the sort key ([[position]].w = 1/clipW, and clipW is
+    // view depth for both forward- and reverse-Z projections; the old
+    // z_ndc/w key inverted the sort under reverse-Z). Ascending order keeps
+    // the NEAREST kNumLayers fragments, layer 0 = nearest.
+    half depth = half(1.0 / rd.position.w);
     
     for (short i = 0; i < kNumLayers; ++i) {
         half layerDepth = fragmentValues.depths[i];
@@ -123,14 +126,13 @@ transparent_material_fragment(RasterizerData                     rd             
     
     finalColor.w = ResolveOpacity(finalColor.w, material.opacity);
     
-    if (finalColor.w > 0.1) {
-        finalColor.w = 0.1;
-    }
-    
     finalColor.xyz *= finalColor.w;
     
-    // Get fragment distance from camera:
-    half depth = rd.position.z / rd.position.w;
+    // View-space depth as the sort key ([[position]].w = 1/clipW, and clipW is
+    // view depth for both forward- and reverse-Z projections; the old
+    // z_ndc/w key inverted the sort under reverse-Z). Ascending order keeps
+    // the NEAREST kNumLayers fragments, layer 0 = nearest.
+    half depth = half(1.0 / rd.position.w);
     
     for (short i = 0; i < kNumLayers; ++i) {
         half layerDepth = fragmentValues.depths[i];

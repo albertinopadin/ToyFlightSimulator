@@ -107,12 +107,14 @@ tiled_deferred_gbuffer_fragment(
                                         in.worldNormal,
                                         lightData,
                                         shadowArray);
-
-    float4 normal = float4(normalize(in.worldNormal), 1.0);
-
+    
+    float3 N = normalize(in.worldNormal);
     if (!in.useObjectColor && !is_null_texture(normalTexture)) {
-        normal = float4(normalTexture.sample(sampler2d, normalUV));
+        half3 tangentSample = normalTexture.sample(sampler2d, normalUV).xyz;
+        N = ApplyNormalMapWorld(tangentSample, in.worldTangent, in.worldBitangent, in.worldNormal);
     }
+    
+    float4 normal = float4(N, 1.0);
     
     GBufferOut out {
         .albedo = color,
