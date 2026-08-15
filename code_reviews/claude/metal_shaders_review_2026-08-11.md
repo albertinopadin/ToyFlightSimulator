@@ -21,10 +21,13 @@ Currently fixed: **P1** and the **`ShaderDefinitions.h` include-guard hole** (§
 calibration — the CPU-side `LightData.modelMatrix` variant), and **C14** (missing MSAA
 point-light PSO bind, a new renderer-side finding) in `cc06a3c` (2026-08-13); **E3**
 (opacity resolve → `ResolveOpacity`) and **E5** (base-color cascade → `ResolveBaseColor`,
-plus a `texture2d<float>` overload) in `5105324` (2026-08-14). All other findings are open.
-Note: `ShaderHelpers.h` already *stages* the E6/E7 helpers and E4's *eye* variant with doc
-comments (`ApplyNormalMapWorld` from §3's proposal was never added to the file — E4's diffs
-include it), but those findings stay open until their call sites are converted.
+plus a `texture2d<float>` overload) in `5105324` (2026-08-14); **E4** (normal-map decode +
+TBN → `ApplyNormalMapEye` at the single-pass material fragment — which is also C6's
+material-fragment half — plus `ApplyNormalMapWorld` staged for C1) in `fad8684`
+(2026-08-14). All other findings are open (C6 is half-fixed: `gbuffer_fragment_base`
+remains). Note: `ShaderHelpers.h` still *stages* the E6/E7 helpers — and, since E4,
+`ApplyNormalMapWorld` — with doc comments; E6/E7 stay open until their call sites are
+converted, and `ApplyNormalMapWorld`'s one call site is C1's fix.
 
 ---
 
@@ -68,7 +71,8 @@ normal-mapped surface (the aircraft) is lit with a normal that points roughly `(
 in *tangent* space interpreted as *world* space. The vertex stage even computes
 `worldTangent`/`worldBitangent` for exactly this purpose and the fragment never reads them.
 
-**Fix** (uses the `ApplyNormalMapWorld` helper from E4):
+**Fix** (uses the `ApplyNormalMapWorld` helper from E4 — staged in `ShaderHelpers.h` since
+`fad8684`, so only this call-site diff remains):
 
 ```diff
 --- a/ToyFlightSimulator Shared/Graphics/Shaders/TiledDeferredGBuffer.metal
@@ -487,6 +491,12 @@ Also in this file's fragment (see C13): the surface albedo is ignored.
 ---
 
 ### C6 🟠 Single-pass G-buffer runs the *geometric* normal through the normal-map decode
+
+> **Half-fixed in `fad8684` (2026-08-14, the E4 conversion):** the
+> `gbuffer_fragment_material` fallback path no longer decodes the interpolated geometric
+> normal — E4's collapsed `ApplyNormalMapEye` form landed, superseding the **Fix (material)**
+> diff below. `gbuffer_fragment_base` is still open and still runs the bogus decode; its
+> **Fix (base)** diff below (plain `normalize(in.normal)`, no helper) remains to apply.
 
 **File:** `GBuffer.metal:117-128` (`gbuffer_fragment_base`) and `184-200`
 (`gbuffer_fragment_material`, fallback path) — **CONFIRMED** live via
@@ -1203,7 +1213,18 @@ Sites: `SinglePassDeferredTransparency.metal:98-102`, `TiledDeferredTransparency
 +    color.a = ResolveOpacity(color.a, material.opacity);
 ```
 
-### E4 Normal-map decode + TBN — the helper C1/C6 use
+### E4 ✅ FIXED — Normal-map decode + TBN — the helper C1/C6 use
+
+> **Fixed in `fad8684` (2026-08-14):** as the diffs below — `ApplyNormalMapWorld` added
+> above its eye twin (doc comment included) and `gbuffer_fragment_material` converted to the
+> collapsed sample-path-only form (texture path agrees with the old math to half rounding;
+> the fallback-path behavior change IS C6's material-fragment fix, so C6 is now half-fixed).
+> Scope per this section's own carve-outs: the tiled call site was NOT converted — that
+> conversion is exactly C1's Fix diff and stays with C1, so `ApplyNormalMapWorld` sits
+> staged with zero callers until C1 lands — and `gbuffer_fragment_base` (C6's other half,
+> no helper involved) also remains open. Verified: `GBuffer.metal` compiles standalone
+> (type-checking both helpers); macOS Debug build passes. §6 step 2's visual check (the
+> normal-mapped F-22 per renderer) stays pending until C1 completes the pair.
 
 Live call sites after fixes: `TiledDeferredGBuffer.metal` (world variant),
 `GBuffer.metal` `gbuffer_fragment_material` (eye variant), and `Tessellation.metal`'s
