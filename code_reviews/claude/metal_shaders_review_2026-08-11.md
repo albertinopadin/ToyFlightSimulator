@@ -37,8 +37,10 @@ in `e6949e5` (2026-08-16); **C6** (completed — `gbuffer_fragment_base` no long
 geometric normal through the sample decode, finishing the finding after E4's
 material-fragment half), **C8** (Base.metal direction vectors via the 3×3 `normalMatrix`),
 **C9** (`unitNormal` initialized — the UB read removed), and **C13** (tiled point lights
-tinted by the G-buffer albedo; the 0.9 fudge dropped) in `80d8f50` (2026-08-16).
-All other findings are open. Note: `ShaderHelpers.h` still
+tinted by the G-buffer albedo; the 0.9 fudge dropped) in `80d8f50` (2026-08-16);
+**C12** (cascade selection + blend on true view-space depth — free via `eye_position.z`
+in the single-pass G-buffer, a view-matrix dot4 in the tiled ones) in `878becf`
+(2026-08-16). All other findings are open. Note: `ShaderHelpers.h` still
 *stages* the E6 helpers with doc comments; E6 stays open until its call sites are
 converted.
 
@@ -881,7 +883,17 @@ the scale computation.
 
 ---
 
-### C12 🟡 Cascade selection metric doesn't match the CPU's split metric (comment is wrong at minimum)
+### C12 ✅ FIXED — Cascade selection metric doesn't match the CPU's split metric (comment is wrong at minimum)
+
+> **Fixed in `878becf` (2026-08-16):** the **Fix (true view-z)** diffs below, as
+> prescribed — with one tightening in `GBuffer.metal`: both fragments pass the
+> already-interpolated `in.eye_position.z` straight into `CalculateShadow` (no local),
+> visibly the same value the G-buffer writes as `.depth`. The tiled G-buffers derive
+> view-z via the view matrix exactly as diffed. Selection, the 10% cross-fade, and
+> `SelectCascade`'s naming now share one metric; the stale comments (GBuffer's
+> "recomputing per-fragment", TiledDeferred's Sterbenz note about the removed
+> subtraction) were replaced. Verified: all three files compile standalone via
+> `metal -c`; macOS Debug build passes.
 
 **Files:** `GBuffer.metal:131, 203`, `TiledDeferredGBuffer.metal:114`,
 `TiledMSAAGBuffer.metal:40` vs. `ShadowCascadeFitting.swift:27` — **CONFIRMED (minor)**
