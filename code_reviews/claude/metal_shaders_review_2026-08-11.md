@@ -30,10 +30,13 @@ file-local `SampleTerrainLayer`) in `62e3dbf` (2026-08-14); **C1** (tiled G-buff
 decode + TBN — `ApplyNormalMapWorld`'s first caller; mirrored into the dead D2 duplicate)
 and **C2** (OIT sort keyed on view-space depth via `1/position.w`, plus removal of the
 10%-opacity clamp, confirming that SUSPECTED item as a debugging leftover) in `0ec59ea`
-(2026-08-15). All other findings are open
-(C6 is half-fixed: `gbuffer_fragment_base` remains; C4 is partially fixed: problems 1 and 3
-remain). Note: `ShaderHelpers.h` still *stages* the E6 helpers with doc comments; E6 stays
-open until its call sites are converted.
+(2026-08-15); **C3** (point-light eye-space position computed per instance in the vertex
+stage, passed flat) and **C4** (problems 1 and 3 — sun diffuse from `lightEyeDirection`,
+real eye-space Blinn-Phong halfway vector — completing the finding after E7's problem 2)
+in `e6949e5` (2026-08-16). All other findings are open
+(C6 is half-fixed: `gbuffer_fragment_base` remains). Note: `ShaderHelpers.h` still
+*stages* the E6 helpers with doc comments; E6 stays open until its call sites are
+converted.
 
 ---
 
@@ -190,7 +193,17 @@ per material, not a shader-wide constant. **SUSPECTED** intent bug — please co
 
 ---
 
-### C3 🔴 Single-pass point lights compare a world-space light position against eye-space fragments
+### C3 ✅ FIXED — Single-pass point lights compare a world-space light position against eye-space fragments
+
+> **Fixed in `e6949e5` (2026-08-16):** as the Fix diff below — the vertex computes the
+> light's eye-space position once per instance into the new flat-interpolated
+> `LightInOut.light_eye_position` (with a comment recording that `LightData.position` is
+> world-space) and the fragment reads it. The parenthetical `eye_space_light_pos` note is
+> satisfied by construction: that local derives from the same `light_eye_position`
+> variable, so direction, diffuse, and halfway vector all correct together. Compiles
+> standalone; macOS Debug build passes. §6 step 3's visual check (PhysicsStressTestScene
+> point lights + a low sun) is now fully unblocked — C4's remaining problems landed in the
+> same commit.
 
 **File:** `PointLights.metal:70-80` — **CONFIRMED**
 (`LightObject.update()` stores `lightData.position = getPosition()` — world space; only
@@ -245,14 +258,20 @@ already binds both `light_data` and `sceneConstants`) and pass it flat:
 
 ---
 
-### C4 🔴 Single-pass directional light: direction derived from unnormalized position, wrong position reconstruction, bogus halfway vector
+### C4 ✅ FIXED — Single-pass directional light: direction derived from unnormalized position, wrong position reconstruction, bogus halfway vector
 
-> **Partially fixed in `62e3dbf` (2026-08-14, the E7 conversion):** problem 2 only —
-> `eye_space_fragment_pos` now comes from `ReconstructEyePosition` (the correct
+> **Fixed across two commits.** Problem 2 in `62e3dbf` (2026-08-14, the E7 conversion):
+> `eye_space_fragment_pos` comes from `ReconstructEyePosition` (the correct
 > PointLights-style ray scaling), superseding that hunk of the Fix diff below. Problems 1
-> (diffuse direction from the unnormalized world position) and 3 (halfway vector subtracting
-> a world position from an eye-space point) are still live; the rest of the Fix still
-> applies.
+> and 3 in `e6949e5` (2026-08-16), as the remaining hunks: diffuse is
+> `saturate(dot(normal, sun_eye_direction))` with `sun_eye_direction =
+> lightData.lightEyeDirection` (verified surface→sun, eye space, renormalized from the
+> live view matrix each frame — LightManager.swift:60/86, LightObject.swift:31), and the
+> specular half-vector is real Blinn-Phong in eye space, `H = normalize(L + V)` with
+> `V = -normalize(eye_space_fragment_pos)`. The superseded lines were deleted, not left
+> commented. The specular-exponent note below (intensity used as exponent) remains open by
+> design — tuning, not correctness. Compiles standalone; macOS Debug build passes. §6
+> step 3's visual check is now unblocked.
 
 **File:** `DirectionalLight.metal:45-72` — **CONFIRMED**
 
@@ -516,7 +535,8 @@ Caveats, checked against the code:
   `setLightRadius(10.0)`.
 - A light parented under a scaled node inherits that scale into the volume (consistent with
   world-space semantics; no current scene does this).
-- `deferred_point_lighting_fragment`'s eye/world-space mixing is a separate bug — see C3/C4.
+- `deferred_point_lighting_fragment`'s eye/world-space mixing is a separate bug — see C3/C4
+  (both since fixed in `e6949e5`).
 
 Also in this file's fragment (see C13): the surface albedo is ignored.
 
@@ -1399,9 +1419,10 @@ verify cull mode as noted in the helper comment.
 > `ShaderHelpers.h` import. The PointLights site is a pure refactor — the helper's body IS
 > the old expression, so point-light output is bit-identical. The DirectionalLight site is
 > the behavior change this finding pointed at: C4's problem 2 (reconstruction), leaving C4
-> partially fixed — its problems 1 and 3 remain and its Fix diff's other hunks still apply.
-> The reconstructed position feeds only the specular halfway vector there, so diffuse is
-> unchanged. Verified: both files compile standalone; macOS Debug build passes.
+> partially fixed at the time — its problems 1 and 3 followed in `e6949e5` (2026-08-16),
+> completing C4. The reconstructed position feeds only the specular halfway vector there,
+> so diffuse was unchanged by this commit. Verified: both files compile standalone; macOS
+> Debug build passes.
 
 `PointLights.metal:70` (correct form) and `DirectionalLight.metal:57` (wrong form, C4) both
 become `ReconstructEyePosition(in.eye_position, depth)`.
