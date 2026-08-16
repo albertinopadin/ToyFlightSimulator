@@ -901,6 +901,65 @@ mismatch, and the rotation-invariant bounding-sphere fitting makes a radial metr
 and fix the comments (or compute true view-z: `(sceneConstants.viewMatrix * float4(in.worldPosition,1)).z`,
 one extra mat4·vec4 per fragment). Low priority; no visible artifact expected either way.
 
+**Fix (true view-z)** — the recommended story (diffs added 2026-08-16, written against the
+tree at `80d8f50`; supersedes the parenthetical costing above). Two facts found while
+closing C6/C8/C9/C13 tip "either metric is defensible" toward view-z:
+
+- The "one extra mat4·vec4" price only applies to the tiled files. The single-pass
+  `ColorInOut` already interpolates `eye_position`, so both `GBuffer.metal` sites get true
+  view-z as a component read — *cheaper* than the current `distance()`, which pays a sqrt.
+- The mismatch isn't selection-only: `CalculateShadow`'s cross-fade compares the same
+  `fragViewSpaceDepth` against `cascadeSplitDepths` spans, so a radial metric also starts
+  each 10% blend early at screen edges. View-z additionally restores a by-construction
+  guarantee: a slice's bounding sphere contains every fragment of that slice, so the
+  depth-selected cascade always covers its fragment (texel snap aside — the fallthrough's
+  job). Radial selection promotes edge fragments into the *next* slice's cascade, where
+  coverage rests on box overlap instead.
+
+`GBuffer.metal`, same change in both fragments (`gbuffer_fragment_base` and
+`gbuffer_fragment_material`):
+
+```diff
+-    // Cascade-aware shadow, recomputing view-space depth per-fragment.
+-    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
++    // Cascade-aware shadow. eye_position is already interpolated, so true
++    // view-space depth (the metric cascadeSplitDepths is defined in) is a
++    // component read; the old radial distance() paid a sqrt and promoted
++    // screen-edge fragments into coarser cascades slightly early.
++    float fragViewSpaceDepth = in.eye_position.z;
+```
+
+`TiledDeferredGBuffer.metal` (`VertexOut` carries no eye-space position, so derive from
+`worldPosition`; only `.z` is consumed, so the compiler folds the mat4·vec4 to one dot4):
+
+```diff
+-    // Per-fragment view-space depth from the perspective-correctly interpolated
+-    // worldPosition. worldPos - cameraPos is Sterbenz-exact in float32 for
+-    // visible fragments, avoiding the precision collapse of writing it per-vertex.
+-    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
++    // Per-fragment view-space depth (the metric cascadeSplitDepths is defined
++    // in), derived from the perspective-correctly interpolated worldPosition
++    // rather than a per-vertex interpolant (precision); only .z is consumed,
++    // so the multiply folds to a dot4.
++    float fragViewSpaceDepth = (sceneConstants.viewMatrix * float4(in.worldPosition, 1)).z;
+```
+
+`TiledMSAAGBuffer.metal` (same one-liner, no comment in place today):
+
+```diff
+-    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
++    float fragViewSpaceDepth = (sceneConstants.viewMatrix * float4(in.worldPosition, 1)).z;
+```
+
+No `Lighting.metal` change: `SelectCascade`'s parameter/comment and the blend logic already
+say view-space depth — this fix makes the call sites match them. Expected visual delta:
+none, except marginally sharper shadows at screen edges near cascade boundaries (fragments
+hold the finer cascade to the defined split). If the radial story is preferred instead, the
+honest minimum is renames, not just comments: `fragViewSpaceDepth` → `fragCameraDistance`
+at all four sites, `SelectCascade`'s parameter + doc comment, and the
+`VertexOut.worldPosition` struct comment ("fragment derives viewSpaceDepth",
+ShaderDefinitions.h:86).
+
 ---
 
 ### C13 ✅ FIXED — Tiled point lights ignore surface albedo
