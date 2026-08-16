@@ -33,13 +33,16 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
         .totalGameTime = sceneConstants.totalGameTime,
         .worldPosition = worldPosition.xyz,
         .toCameraVector = sceneConstants.cameraPosition - worldPosition.xyz,
-        .surfaceNormal = normalize(modelInstance.modelMatrix * float4(vIn.normal, 1.0)).xyz,
-        .surfaceTangent = normalize(modelInstance.modelMatrix * float4(vIn.tangent, 1.0)).xyz,
-        .surfaceBitangent = normalize(modelInstance.modelMatrix * float4(vIn.bitangent, 1.0)).xyz,
+        // Direction vectors go through the 3x3 normalMatrix: a modelMatrix
+        // multiply with w = 1 would add the model translation and then
+        // normalize across all four components.
+        .surfaceNormal = normalize(modelInstance.normalMatrix * vIn.normal),
+        .surfaceTangent = normalize(modelInstance.normalMatrix * vIn.tangent),
+        .surfaceBitangent = normalize(modelInstance.normalMatrix * vIn.bitangent),
         .instanceId = instanceId,
         .useObjectColor = modelInstance.useObjectColor
     };
-    
+
     return rd;
 }
 
@@ -67,9 +70,9 @@ vertex RasterizerData base_animated_vertex(const VertexIn vIn [[ stage_in ]],
         .totalGameTime = sceneConstants.totalGameTime,
         .worldPosition = worldPosition.xyz,
         .toCameraVector = sceneConstants.cameraPosition - worldPosition.xyz,
-        .surfaceNormal = normalize(modelInstance.modelMatrix * float4(normal.xyz, 1.0)).xyz,
-        .surfaceTangent = normalize(modelInstance.modelMatrix * float4(vIn.tangent, 1.0)).xyz,
-        .surfaceBitangent = normalize(modelInstance.modelMatrix * float4(vIn.bitangent, 1.0)).xyz,
+        .surfaceNormal = normalize(modelInstance.normalMatrix * normal.xyz),
+        .surfaceTangent = normalize(modelInstance.normalMatrix * vIn.tangent),
+        .surfaceBitangent = normalize(modelInstance.normalMatrix * vIn.bitangent),
         .instanceId = instanceId,
         .useObjectColor = modelInstance.useObjectColor
     };
@@ -107,7 +110,9 @@ material_fragment(          RasterizerData      rd              [[ stage_in ]],
                                     sampler2d,
                                     texCoord);
     
-    float3 unitNormal;
+    // color1 carries this normal even while the lit path below stays commented
+    // out, so it must be initialized unconditionally.
+    float3 unitNormal = normalize(rd.surfaceNormal);
     // TODO: This results in very dark scene:
 //    if (material.isLit) {
 //        unitNormal = normalize(rd.surfaceNormal);

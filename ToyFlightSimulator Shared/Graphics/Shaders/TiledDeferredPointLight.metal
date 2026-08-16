@@ -50,11 +50,12 @@ tiled_deferred_point_light_fragment(         PointLightOut  in              [[ s
     float3 normal = gBuffer.normal.xyz;
     float3 worldPosition = gBuffer.position.xyz;
     
+    // CalculatePointLighting reads only material.color; feeding it the G-buffer
+    // albedo tints the light's contribution by the surface it hits.
     MaterialProperties material {
-        .color = 1
+        .color = gBuffer.albedo
     };
-    
+
     float3 color = Lighting::CalculatePointLighting(lightDatas[in.instanceId], worldPosition, normal, material);
-    color *= 0.9;
     return float4(color, 1);
 }

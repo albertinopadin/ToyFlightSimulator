@@ -107,17 +107,13 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut           in             [
                                            depth2d_array<float> shadowArray    [[ texture(TFSTextureIndexShadow) ]])
 {
     half4 base_color = half4(in.color);
-    half4 normal = half4(in.normal, 1.0);
     half specularContribution = 1.0;  // Hardcoded for base
-
-    // Calculate normal in eye space
-    half3 tangent_normal = normalize((normal.xyz * 2.0) - 1.0);
-
-    half3 eye_normal = (tangent_normal.x * in.tangent +
-                        tangent_normal.y * in.bitangent +
-                        tangent_normal.z * in.normal);
-
-    eye_normal = normalize(eye_normal);
+    
+    // No normal map is bound in the base pass: in.normal is the interpolated
+    // eye-space geometric normal, already in [-1,1]. ApplyNormalMapEye's
+    // [0,1] -> [-1,1] decode is for texture samples only; just renormalize
+    // (interpolation denormalizes).
+    half3 eye_normal = normalize(in.normal);
 
     // Cascade-aware shadow, recomputing view-space depth per-fragment.
     float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
@@ -169,6 +165,9 @@ fragment GBufferData gbuffer_fragment_material(
                                                      baseUV));
     
     half3 eye_normal;
+    // The guard is load-bearing: submeshes without a normal map bind nothing at
+    // this index (sampling a null texture is undefined), and a geometric normal
+    // is already in [-1,1] so it must skip the [0,1] sample decode.
     if (!in.useObjectColor && !is_null_texture(normalMap)) {
         eye_normal = ApplyNormalMapEye(normalMap.sample(sampler2d, normalUV).xyz,
                                        in.tangent,
