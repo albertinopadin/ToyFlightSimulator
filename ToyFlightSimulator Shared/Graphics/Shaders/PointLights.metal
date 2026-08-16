@@ -36,6 +36,7 @@ light_mask_vertex(const device float4         * vertices        [[ buffer(TFSBuf
 typedef struct {
     float4 position [[ position ]];
     float3 eye_position;
+    float3 light_eye_position [[ flat ]];
     uint   iid [[ flat ]];
 } LightInOut;
 
@@ -53,6 +54,10 @@ deferred_point_lighting_vertex(const device float4          *vertices        [[ 
     LightInOut out = {
         .position = sceneConstants.projectionMatrix * eyePosition,
         .eye_position = eyePosition.xyz,
+        // LightData.position is WORLD-space (LightObject.update stores getPosition());
+        // view-transform it once per instance so the fragment's radius test, direction,
+        // and attenuation compare eye-space against eye-space.
+        .light_eye_position = (sceneConstants.viewMatrix * float4(light_data[iid].position, 1)).xyz,
         .iid = iid
     };
 
@@ -70,7 +75,7 @@ deferred_point_lighting_fragment_common(LightInOut               in,
     // Used eye_space depth to determine the position of the fragment in eye_space
     float3 eye_space_fragment_pos = ReconstructEyePosition(in.eye_position, depth);
 
-    float3 light_eye_position = light_data[in.iid].position;
+    float3 light_eye_position = in.light_eye_position;
     float light_distance = length(light_eye_position - eye_space_fragment_pos);
     float light_radius = light_data[in.iid].radius;
 
