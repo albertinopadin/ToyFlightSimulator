@@ -33,8 +33,12 @@ and **C2** (OIT sort keyed on view-space depth via `1/position.w`, plus removal 
 (2026-08-15); **C3** (point-light eye-space position computed per instance in the vertex
 stage, passed flat) and **C4** (problems 1 and 3 — sun diffuse from `lightEyeDirection`,
 real eye-space Blinn-Phong halfway vector — completing the finding after E7's problem 2)
-in `e6949e5` (2026-08-16). All other findings are open
-(C6 is half-fixed: `gbuffer_fragment_base` remains). Note: `ShaderHelpers.h` still
+in `e6949e5` (2026-08-16); **C6** (completed — `gbuffer_fragment_base` no longer runs the
+geometric normal through the sample decode, finishing the finding after E4's
+material-fragment half), **C8** (Base.metal direction vectors via the 3×3 `normalMatrix`),
+**C9** (`unitNormal` initialized — the UB read removed), and **C13** (tiled point lights
+tinted by the G-buffer albedo; the 0.9 fudge dropped) in `80d8f50` (2026-08-16).
+All other findings are open. Note: `ShaderHelpers.h` still
 *stages* the E6 helpers with doc comments; E6 stays open until its call sites are
 converted.
 
@@ -538,17 +542,23 @@ Caveats, checked against the code:
 - `deferred_point_lighting_fragment`'s eye/world-space mixing is a separate bug — see C3/C4
   (both since fixed in `e6949e5`).
 
-Also in this file's fragment (see C13): the surface albedo is ignored.
+Also in this file's fragment (see C13, since fixed in `80d8f50`): the surface albedo was
+ignored.
 
 ---
 
-### C6 🟠 Single-pass G-buffer runs the *geometric* normal through the normal-map decode
+### C6 ✅ FIXED — Single-pass G-buffer runs the *geometric* normal through the normal-map decode
 
-> **Half-fixed in `fad8684` (2026-08-14, the E4 conversion):** the
-> `gbuffer_fragment_material` fallback path no longer decodes the interpolated geometric
-> normal — E4's collapsed `ApplyNormalMapEye` form landed, superseding the **Fix (material)**
-> diff below. `gbuffer_fragment_base` is still open and still runs the bogus decode; its
-> **Fix (base)** diff below (plain `normalize(in.normal)`, no helper) remains to apply.
+> **Fixed across two commits.** The `gbuffer_fragment_material` half landed in `fad8684`
+> (2026-08-14, the E4 conversion — the collapsed `ApplyNormalMapEye` form, superseding the
+> **Fix (material)** diff below). The `gbuffer_fragment_base` half landed in `80d8f50`
+> (2026-08-16) exactly as the **Fix (base)** diff below: decode + TBN deleted, plain
+> `normalize(in.normal)`. The material fragment's fallback branch now carries a comment
+> marking it load-bearing — an interim edit had collapsed it into an unconditional
+> `ApplyNormalMapEye` call, which would have sampled a null texture (UB in MSL) and
+> re-decoded the geometric normal on every no-normal-map submesh; reverted in the same
+> commit. Verified: standalone `metal -c` + macOS Debug build; §6 step 2's
+> SinglePassDeferred visual check now covers untextured objects too.
 
 **File:** `GBuffer.metal:117-128` (`gbuffer_fragment_base`) and `184-200`
 (`gbuffer_fragment_material`, fallback path) — **CONFIRMED** live via
@@ -658,7 +668,16 @@ touching output fields; the follow-up `d1b3286` then applied the `skinMatrix` lo
 
 ---
 
-### C8 🟠 `Base.metal` / `Instanced.metal` transform normals as *points* (w = 1)
+### C8 ✅ FIXED — `Base.metal` / `Instanced.metal` transform normals as *points* (w = 1)
+
+> **Fixed in `80d8f50` (2026-08-16):** as the diff below in both `base_vertex` and
+> `base_animated_vertex` (the latter feeding the skinned `normal.xyz`) — directions go
+> through the 3×3 `normalMatrix`, so no translation leaks in and `normalize()` runs over
+> three components. One nuance the aside below overstates: `Transform.normalMatrix(from:)`
+> is the plain upper-left 3×3 of the model matrix, NOT an inverse-transpose, so it does not
+> correct for non-uniform scale — fine for the rigid + uniform-scale model matrices the
+> engine produces (meterization folds a uniform scale). `Instanced.metal` is untouched:
+> `instanced_vertex` is dead, and deleting it stays with D1.
 
 **Files:** `Base.metal:35-37, 80-82`, `Instanced.metal:28-30` — **CONFIRMED**
 (`base_vertex`/`base_animated_vertex` are live: OIT's opaque pipelines,
@@ -691,7 +710,13 @@ is muted because the OIT lighting path is commented out (C9), but `base_fragment
 
 ---
 
-### C9 🟠 `material_fragment` reads an uninitialized variable (UB on a live path)
+### C9 ✅ FIXED — `material_fragment` reads an uninitialized variable (UB on a live path)
+
+> **Fixed in `80d8f50` (2026-08-16):** the minimal fix below —
+> `unitNormal = normalize(rd.surfaceNormal)` — plus a comment that `color1` needs the value
+> even while the lit path stays commented out. The commented-out Phong experiment is left in
+> place; with C8's `surfaceNormal` fixed in the same commit, the "very dark scene" TODO's
+> suspected cause is gone, so re-enabling it can be retried as its own tuning change.
 
 **File:** `Base.metal:120-143` — **CONFIRMED** live
 (`OrderIndependentTransparencyPipeline.swift:62,73`, `BasicPipeline.swift:24`).
@@ -878,7 +903,13 @@ one extra mat4·vec4 per fragment). Low priority; no visible artifact expected e
 
 ---
 
-### C13 🟡 Tiled point lights ignore surface albedo
+### C13 ✅ FIXED — Tiled point lights ignore surface albedo
+
+> **Fixed in `80d8f50` (2026-08-16):** `material.color = gBuffer.albedo` as the diff below,
+> so `CalculatePointLighting`'s `light.color * material.color.xyz` tints by the surface. The
+> `*= 0.9` fudge was removed entirely (the "tuning call" below, resolved by dropping it).
+> §6 step 5's visual check (a large-radius point light under TiledDeferred) is now
+> meaningful — with C14's PSO bind already fixed, it applies to the MSAA renderers too.
 
 **File:** `TiledDeferredPointLight.metal:49-55` — **CONFIRMED**
 
@@ -1274,7 +1305,8 @@ Sites: `SinglePassDeferredTransparency.metal:98-102`, `TiledDeferredTransparency
 > Scope per this section's own carve-outs: the tiled call site was NOT converted — that
 > conversion is exactly C1's Fix diff and stayed with C1 (landed in `0ec59ea`, 2026-08-15,
 > making `ApplyNormalMapWorld` live) — and `gbuffer_fragment_base` (C6's other half,
-> no helper involved) remains open. Verified: `GBuffer.metal` compiles standalone
+> no helper involved) followed in `80d8f50` (2026-08-16), completing C6. Verified:
+> `GBuffer.metal` compiles standalone
 > (type-checking both helpers); macOS Debug build passes. §6 step 2's visual check (the
 > normal-mapped F-22 per renderer) unblocked once C1 landed.
 
@@ -1365,7 +1397,8 @@ normalize are identical). On the fallback path it *changes* behavior — that is
 point of the exercise.
 
 Not converted by E4: `gbuffer_fragment_base` (C6's other half) has no normal map at all — its
-fix is plain `normalize(in.normal)` with the decode/TBN deleted, no helper involved. And
+fix is plain `normalize(in.normal)` with the decode/TBN deleted, no helper involved
+(applied in `80d8f50`, 2026-08-16). And
 `Tessellation.metal`'s raw-sample normal write (noted under C10) can't call the helper until
 the terrain pipeline produces tangents. Verification is §6 step 2's: the normal-mapped F-22
 under TiledDeferred and SinglePassDeferred, before/after screenshots per renderer.
