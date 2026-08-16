@@ -98,10 +98,11 @@ tiled_deferred_gbuffer_fragment(
                                     sampler2d,
                                     baseUV);
 
-    // Per-fragment view-space depth from the perspective-correctly interpolated
-    // worldPosition. worldPos - cameraPos is Sterbenz-exact in float32 for
-    // visible fragments, avoiding the precision collapse of writing it per-vertex.
-    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
+    // Per-fragment view-space depth, the metric cascadeSplitDepths is defined
+    // in — derived from the perspective-correctly interpolated worldPosition
+    // rather than a per-vertex interpolant (precision); only .z is consumed,
+    // so the multiply folds to a dot4.
+    float fragViewSpaceDepth = (sceneConstants.viewMatrix * float4(in.worldPosition, 1)).z;
     color.a = Lighting::CalculateShadow(in.worldPosition,
                                         fragViewSpaceDepth,
                                         in.worldNormal,

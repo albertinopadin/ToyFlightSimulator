@@ -115,10 +115,11 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut           in             [
     // (interpolation denormalizes).
     half3 eye_normal = normalize(in.normal);
 
-    // Cascade-aware shadow, recomputing view-space depth per-fragment.
-    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
+    // Cascade-aware shadow. eye_position.z is true view-space depth, the metric
+    // cascadeSplitDepths is defined in — a radial camera distance would promote
+    // screen-edge fragments into coarser cascades early.
     float shadow_sample = Lighting::CalculateShadow(in.worldPosition,
-                                                    fragViewSpaceDepth,
+                                                    in.eye_position.z,
                                                     in.worldNormal,
                                                     lightData,
                                                     shadowArray);
@@ -185,10 +186,11 @@ fragment GBufferData gbuffer_fragment_material(
         specular_contrib = 1.0;
     }
     
-    // Cascade-aware shadow, recomputing view-space depth per-fragment.
-    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
+    // Cascade-aware shadow. eye_position.z is true view-space depth, the metric
+    // cascadeSplitDepths is defined in — a radial camera distance would promote
+    // screen-edge fragments into coarser cascades early.
     float shadow_sample = Lighting::CalculateShadow(in.worldPosition,
-                                                    fragViewSpaceDepth,
+                                                    in.eye_position.z,
                                                     in.worldNormal,
                                                     lightData,
                                                     shadowArray);

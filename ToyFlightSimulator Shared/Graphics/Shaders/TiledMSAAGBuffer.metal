@@ -37,7 +37,7 @@ depth2d_array<float>               shadowArray         [[ texture(TFSTextureInde
                                     sampler2d,
                                     baseUV);
 
-    float fragViewSpaceDepth = distance(in.worldPosition, sceneConstants.cameraPosition);
+    float fragViewSpaceDepth = (sceneConstants.viewMatrix * float4(in.worldPosition, 1)).z;
     color.a = Lighting::CalculateShadow(in.worldPosition,
                                         fragViewSpaceDepth,
                                         in.worldNormal,
