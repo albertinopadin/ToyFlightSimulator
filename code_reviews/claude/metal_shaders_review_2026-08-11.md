@@ -40,7 +40,9 @@ material-fragment half), **C8** (Base.metal direction vectors via the 3×3 `norm
 tinted by the G-buffer albedo; the 0.9 fudge dropped) in `80d8f50` (2026-08-16);
 **C12** (cascade selection + blend on true view-space depth — free via `eye_position.z`
 in the single-pass G-buffer, a view-matrix dot4 in the tiled ones) in `878becf`
-(2026-08-16). All other findings are open. Note: `ShaderHelpers.h` still
+(2026-08-16); **P3** (the affine `/ worldPosition.w` divides dropped at all seven sites)
+and **P4** (vertex-stage T/B/N normalizes removed — fragments renormalize once) in
+`ab04296` (2026-08-17). All other findings are open. Note: `ShaderHelpers.h` still
 *stages* the E6 helpers with doc comments; E6 stays open until its call sites are
 converted.
 
@@ -1122,7 +1124,14 @@ normal   = skin * normal;
 
 This lands automatically with the E1 extraction.
 
-### P3 `worldPosition.xyz / worldPosition.w` after an affine model transform
+### P3 ✅ FIXED — `worldPosition.xyz / worldPosition.w` after an affine model transform
+
+> **Fixed in `ab04296` (2026-08-17):** all seven listed sites are now plain
+> `worldPosition.xyz`; a tree-wide grep confirms no `/ worldPosition.w` remains. The
+> animated vertices are exact too, not just approximately so: `BlendJointMatrix` blends
+> affine joint matrices with weights summing to 1, so the skinned position's w is still
+> exactly 1 when the (affine) modelMatrix sees it. Verified: all five files compile
+> standalone via `xcrun metal -c`; macOS Debug build passes. No visual delta expected.
 
 **Files:** `GBuffer.metal:54,99`, `TiledDeferredGBuffer.metal:30,75`,
 `TiledDeferredTransparency.metal:26`, `SinglePassDeferredTransparency.metal:26,68`
@@ -1131,7 +1140,22 @@ This lands automatically with the E1 extraction.
 seven vertex shaders. Replace with `worldPosition.xyz`. (Micro, but it's also *clarity*: the
 divide implies a projective transform that isn't there.)
 
-### P4 Redundant normalize chains between vertex and fragment stages
+### P4 ✅ FIXED — Redundant normalize chains between vertex and fragment stages
+
+> **Fixed in `ab04296` (2026-08-17):** vertex-stage `normalize()` removed from
+> `GBuffer.metal`'s T/B/N (both vertices; the bitangent handedness negation preserved) and
+> `Base.metal`'s `surfaceNormal`/`surfaceTangent`/`surfaceBitangent` (both vertices).
+> Every fragment consumer was verified to renormalize: `gbuffer_fragment_base` and the
+> material fragment's no-map fallback (`normalize(in.normal)`), the mapped path via
+> `ApplyNormalMapEye`'s final normalize — the interpolants now carry the normalMatrix's
+> uniform scale (rigid + uniform-scale model matrices only, per C8's note), common to all
+> three vectors, so it cancels there and the resulting direction is unchanged — and
+> `base_fragment`/`material_fragment` (`normalize(rd.surfaceNormal)`; the tangent fields
+> feed only commented-out code). `worldNormal` was never vertex-normalized and its consumer
+> `SlopeScaledWorldBias` normalizes internally. Comments at both vertex sites and on
+> `ApplyNormalMapEye` now record the cross-stage contract (and why the Eye variant skips
+> the World variant's per-input renormalization). `Instanced.metal` untouched — dead (D1).
+> Verified: compiles standalone; macOS Debug build passes.
 
 **File:** `GBuffer.metal:57-59, 102-104` — the vertex stage normalizes T/B/N, converts to
 `half3`, and the fragment renormalizes anyway (it must — interpolation denormalizes).
