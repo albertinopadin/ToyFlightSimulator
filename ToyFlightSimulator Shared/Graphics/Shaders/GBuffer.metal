@@ -52,12 +52,15 @@ vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ s
         .objectColor = modelInstance.objectColor,
         .tex_coord = in.textureCoordinate,
         .position = sceneConstants.projectionMatrix * eyePosition,
-        .worldPosition = worldPosition.xyz / worldPosition.w,
+        .worldPosition = worldPosition.xyz,
         .worldNormal = modelInstance.normalMatrix * in.normal,
         .eye_position = eyePosition.xyz,
-        .tangent = half3(normalize(modelInstance.normalMatrix * in.tangent)),
-        .bitangent = half3(-normalize(modelInstance.normalMatrix * in.bitangent)),
-        .normal = half3(normalize(modelInstance.normalMatrix * in.normal)),
+        // T/B/N are left unnormalized: interpolation denormalizes them anyway,
+        // so the fragments renormalize once (normalize / ApplyNormalMapEye's
+        // final normalize, where the normalMatrix's uniform scale cancels).
+        .tangent = half3(modelInstance.normalMatrix * in.tangent),
+        .bitangent = half3(-(modelInstance.normalMatrix * in.bitangent)),
+        .normal = half3(modelInstance.normalMatrix * in.normal),
         .instanceId = instanceId,
         .useObjectColor = modelInstance.useObjectColor
     };
@@ -88,12 +91,12 @@ vertex ColorInOut gbuffer_animated_vertex(VertexIn                   in         
         .objectColor = modelInstance.objectColor,
         .tex_coord = in.textureCoordinate,
         .position = sceneConstants.projectionMatrix * eyePosition,
-        .worldPosition = worldPosition.xyz / worldPosition.w,
+        .worldPosition = worldPosition.xyz,
         .worldNormal = modelInstance.normalMatrix * normal.xyz,
         .eye_position = eyePosition.xyz,
-        .tangent = half3(normalize(modelInstance.normalMatrix * skinnedTangent)),
-        .bitangent = half3(-normalize(modelInstance.normalMatrix * skinnedBitangent)),
-        .normal = half3(normalize(modelInstance.normalMatrix * normal.xyz)),
+        .tangent = half3(modelInstance.normalMatrix * skinnedTangent),
+        .bitangent = half3(-(modelInstance.normalMatrix * skinnedBitangent)),
+        .normal = half3(modelInstance.normalMatrix * normal.xyz),
         .instanceId = instanceId,
         .useObjectColor = modelInstance.useObjectColor
     };

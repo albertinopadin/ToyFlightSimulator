@@ -24,7 +24,7 @@ tiled_deferred_transparency_vertex(VertexIn                in              [[ st
         .position = position,
         .normal = in.normal,
         .uv = in.textureCoordinate,
-        .worldPosition = worldPosition.xyz / worldPosition.w,
+        .worldPosition = worldPosition.xyz,
         .worldNormal = modelInstance.normalMatrix * in.normal,
         .worldTangent = modelInstance.normalMatrix * in.tangent,
         .worldBitangent = modelInstance.normalMatrix * in.bitangent,

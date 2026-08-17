@@ -35,10 +35,12 @@ vertex RasterizerData base_vertex(const VertexIn vIn [[ stage_in ]],
         .toCameraVector = sceneConstants.cameraPosition - worldPosition.xyz,
         // Direction vectors go through the 3x3 normalMatrix: a modelMatrix
         // multiply with w = 1 would add the model translation and then
-        // normalize across all four components.
-        .surfaceNormal = normalize(modelInstance.normalMatrix * vIn.normal),
-        .surfaceTangent = normalize(modelInstance.normalMatrix * vIn.tangent),
-        .surfaceBitangent = normalize(modelInstance.normalMatrix * vIn.bitangent),
+        // normalize across all four components. They are left unnormalized
+        // here — interpolation denormalizes anyway, so the fragments
+        // renormalize once.
+        .surfaceNormal = modelInstance.normalMatrix * vIn.normal,
+        .surfaceTangent = modelInstance.normalMatrix * vIn.tangent,
+        .surfaceBitangent = modelInstance.normalMatrix * vIn.bitangent,
         .instanceId = instanceId,
         .useObjectColor = modelInstance.useObjectColor
     };
@@ -70,9 +72,9 @@ vertex RasterizerData base_animated_vertex(const VertexIn vIn [[ stage_in ]],
         .totalGameTime = sceneConstants.totalGameTime,
         .worldPosition = worldPosition.xyz,
         .toCameraVector = sceneConstants.cameraPosition - worldPosition.xyz,
-        .surfaceNormal = normalize(modelInstance.normalMatrix * normal.xyz),
-        .surfaceTangent = normalize(modelInstance.normalMatrix * vIn.tangent),
-        .surfaceBitangent = normalize(modelInstance.normalMatrix * vIn.bitangent),
+        .surfaceNormal = modelInstance.normalMatrix * normal.xyz,
+        .surfaceTangent = modelInstance.normalMatrix * vIn.tangent,
+        .surfaceBitangent = modelInstance.normalMatrix * vIn.bitangent,
         .instanceId = instanceId,
         .useObjectColor = modelInstance.useObjectColor
     };

@@ -44,6 +44,10 @@ inline float3 ApplyNormalMapWorld(half3 sampleRGB, float3 T, float3 B, float3 N)
 // single-pass deferred G-buffer, whose T/B/N interpolants are half3 in eye
 // space. Only normal-map SAMPLES get the *2-1 decode — an interpolated
 // geometric normal is already in [-1,1] and must not pass through this.
+// T/B/N arrive unnormalized (the vertex stage doesn't normalize): the
+// normalMatrix's uniform scale is common to all three, so it cancels in the
+// final normalize; the small uneven interpolation skew the World variant
+// corrects per-input is accepted on this half-precision path.
 inline half3 ApplyNormalMapEye(half3 sampleRGB, half3 T, half3 B, half3 N) {
     half3 tn = normalize(sampleRGB * 2.0h - 1.0h);
     return normalize(tn.x * T + tn.y * B + tn.z * N);
