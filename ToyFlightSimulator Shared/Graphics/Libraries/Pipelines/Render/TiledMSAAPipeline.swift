@@ -76,7 +76,7 @@ struct TiledMSAAGBufferAnimatedPipelineState: RenderPipelineState {
 struct TiledMSAADirectionalLightPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Multisampled Directional Light") { descriptor in
-            descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredQuadVertex]
+            descriptor.vertexFunction = Graphics.Shaders[.FullScreenVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredDirectionalLightFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             Self.setGBufferPixelFormatsForTiledMultisampledPipeline(descriptor: descriptor)
@@ -161,7 +161,7 @@ struct TiledMSAAAverageResolvePipelineState: RenderPipelineState {
 struct TiledMSAACompositePipelineState: RenderPipelineState {
     var renderPipelineState: any MTLRenderPipelineState = {
         createRenderPipelineState(label: "Composition") { descriptor in
-            descriptor.vertexFunction = Graphics.Shaders[.CompositeVertex]
+            descriptor.vertexFunction = Graphics.Shaders[.FullScreenVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.CompositeFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
         }

@@ -8,19 +8,6 @@
 import MetalKit
 
 final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateDrawablePresenting, @unchecked Sendable {
-    // Create quad for fullscreen composition drawing
-    private let _quadVertices: [TFSSimpleVertex] = [
-        .init(position: .init(x: -1, y: -1)),
-        .init(position: .init(x: -1, y:  1)),
-        .init(position: .init(x:  1, y: -1)),
-
-        .init(position: .init(x:  1, y: -1)),
-        .init(position: .init(x: -1, y:  1)),
-        .init(position: .init(x:  1, y:  1))
-    ]
-
-    private let _quadVertexBuffer: MTLBuffer!
-
     var shadowMapArray: MTLTexture
     var shadowRenderPassDescriptors: [MTLRenderPassDescriptor]
 
@@ -71,16 +58,12 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
     
     
     init() {
-        _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
-                                                     length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
         shadowMapArray = Self.makeShadowMapArray(label: "Shadow Map Array")
         shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowArray: shadowMapArray)
         super.init(type: .SinglePassDeferredLighting)
     }
 
     init(_ mtkView: MTKView) {
-        _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
-                                                     length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
         shadowMapArray = Self.makeShadowMapArray(label: "Shadow Map Array")
         shadowRenderPassDescriptors = Self.makeShadowRenderPassDescriptors(shadowArray: shadowMapArray)
         super.init(mtkView, type: .SinglePassDeferredLighting)
@@ -120,12 +103,7 @@ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateD
             renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.DirectionalLighting])
             renderEncoder.setCullMode(.back)
             renderEncoder.setStencilReferenceValue(128)
-            renderEncoder.setVertexBuffer(_quadVertexBuffer,
-                                          offset: 0,
-                                          index: TFSBufferIndexMeshVertex.index)
-            
-            // Draw full screen quad
-            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+            drawFullScreenTriangle(with: renderEncoder)
         }
     }
     

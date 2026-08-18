@@ -107,8 +107,7 @@ final class TiledMSAATessellatedRenderer:   Renderer,
     func encodeDirectionalLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Directional Light Stage") {
             setRenderPipelineState(renderEncoder, state: .TiledMSAADirectionalLight)
-            // Draw full screen quad
-            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+            drawFullScreenTriangle(with: renderEncoder)
         }
     }
     

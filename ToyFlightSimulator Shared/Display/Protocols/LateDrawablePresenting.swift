@@ -81,7 +81,7 @@ extension LateDrawablePresenting {
         encodeRenderStage(using: renderEncoder, label: "Composite Stage") {
             setRenderPipelineState(renderEncoder, state: .Composite)
             renderEncoder.setFragmentTexture(lightingResolveTexture, index: 0)
-            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+            drawFullScreenTriangle(with: renderEncoder)
         }
     }
 }

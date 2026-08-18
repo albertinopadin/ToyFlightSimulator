@@ -137,12 +137,15 @@ final class SceneManager {
         _sceneType = sceneType
         _rendererType = rendererType
 
-        // Warm the models that only the render thread touches (the OIT composite
-        // quad, the point-light/icosahedron volume). The library builds entries
-        // lazily under its lock, so without this the first frame would build them
-        // mid-encode on the render thread. Re-runs on scene switches are cheap
-        // cache hits. (Sky textures resolve in SkyBox/SkySphere.init; everything
-        // else is first touched during scene build.)
+        // Warm models so the lazy library doesn't build them under its lock at
+        // a bad moment: the Icosahedron is only ever referenced from the render
+        // thread (point-light volumes) and would otherwise build mid-encode on
+        // the first frame. The render thread no longer touches the Quad
+        // (full-screen passes are bufferless triangles), but ground/terrain
+        // quads use it at scene build, so the touch stays; re-runs on scene
+        // switches are cheap cache hits. (Sky textures resolve in
+        // SkyBox/SkySphere.init; everything else is first touched during
+        // scene build.)
         _ = Assets.Models[.Quad]
         _ = Assets.Models[.Icosahedron]
 

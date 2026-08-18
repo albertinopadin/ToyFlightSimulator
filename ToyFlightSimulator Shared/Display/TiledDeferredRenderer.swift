@@ -90,8 +90,7 @@ final class TiledDeferredRenderer: Renderer, ShadowRendering, ParticleRendering,
     func encodeDirectionalLightStage(using renderEncoder: MTLRenderCommandEncoder) {
         encodeRenderStage(using: renderEncoder, label: "Directional Light Stage") {
             setRenderPipelineState(renderEncoder, state: .TiledDeferredDirectionalLight)
-            // Draw full screen quad
-            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+            drawFullScreenTriangle(with: renderEncoder)
         }
     }
     

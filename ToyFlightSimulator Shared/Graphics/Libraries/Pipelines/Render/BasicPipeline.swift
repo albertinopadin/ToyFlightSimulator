@@ -41,8 +41,11 @@ struct FinalRenderPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Final Render") { descriptor in
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
-            descriptor.vertexFunction = Graphics.Shaders[.FinalVertex]
+            // No vertexDescriptor: full_screen_vertex is bufferless (vertex_id
+            // only). A leftover descriptor makes the debug layer demand a vertex
+            // buffer at index 0 on every draw, even though the function has no
+            // [[stage_in]].
+            descriptor.vertexFunction = Graphics.Shaders[.FullScreenVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.FinalFragment]
         }
     }()

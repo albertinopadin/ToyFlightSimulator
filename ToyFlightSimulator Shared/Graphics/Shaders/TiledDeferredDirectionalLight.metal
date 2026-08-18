@@ -9,32 +9,13 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 #import "Lighting.metal"
 
-constant float3 vertices[6] = {
-    float3(-1,  1,  0),    // triangle 1
-    float3( 1, -1,  0),
-    float3(-1, -1,  0),
-    float3(-1,  1,  0),    // triangle 2
-    float3( 1,  1,  0),
-    float3( 1, -1,  0)
-};
-
-struct VertexQuadOut {
-    float4 position [[ position ]];
-};
-
-vertex VertexQuadOut tiled_deferred_vertex_quad(uint vertexId [[ vertex_id ]]) {
-    VertexQuadOut out {
-        .position = float4(vertices[vertexId], 1)
-    };
-    return out;
-}
-
 fragment float4
-tiled_deferred_directional_light_fragment(         VertexQuadOut  in         [[ stage_in ]],
-                                          constant LightData      &lightData [[ buffer(TFSBufferDirectionalLightData) ]],
-                                                   GBufferOut     gBuffer) {
+tiled_deferred_directional_light_fragment(         FullScreenVertexOut  in         [[ stage_in ]],
+                                          constant LightData            &lightData [[ buffer(TFSBufferDirectionalLightData) ]],
+                                                   GBufferOut           gBuffer) {
     float4 albedo = gBuffer.albedo;
     float3 normal = gBuffer.normal.xyz;
     

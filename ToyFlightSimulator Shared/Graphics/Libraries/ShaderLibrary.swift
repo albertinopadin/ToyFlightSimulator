@@ -11,8 +11,7 @@ enum ShaderType {
     case BaseVertex
     case InstancedVertex
     case SkySphereVertex
-    case FinalVertex
-    case QuadPassVertex
+    case FullScreenVertex
     
     case ShadowVertex
     case SinglePassDeferredGBufferVertex
@@ -44,7 +43,6 @@ enum ShaderType {
     
     case TiledDeferredGBufferVertex
     case TiledDeferredGBufferFragment
-    case TiledDeferredQuadVertex
     case TiledDeferredDirectionalLightFragment
     case TiledDeferredPointLightVertex
     case TiledDeferredPointLightFragment
@@ -60,7 +58,6 @@ enum ShaderType {
     case TiledMSAAAverageResolve
     case ParticlesFragmentMSAA
     
-    case CompositeVertex
     case CompositeFragment
     
     case TessellationVertex
@@ -87,8 +84,7 @@ final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable
         _library.updateValue(Shader(functionName: "base_vertex"), forKey: .BaseVertex)
         _library.updateValue(Shader(functionName: "instanced_vertex"), forKey: .InstancedVertex)
         _library.updateValue(Shader(functionName: "skysphere_vertex"), forKey: .SkySphereVertex)
-        _library.updateValue(Shader(functionName: "final_vertex"), forKey: .FinalVertex)
-        _library.updateValue(Shader(functionName: "quad_pass_vertex"), forKey: .QuadPassVertex)
+        _library.updateValue(Shader(functionName: "full_screen_vertex"), forKey: .FullScreenVertex)
         
         _library.updateValue(Shader(functionName: "shadow_vertex"), forKey: .ShadowVertex)
         _library.updateValue(Shader(functionName: "shadow_animated_vertex"), forKey: .ShadowAnimatedVertex)
@@ -128,7 +124,6 @@ final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable
         // TiledDeferred:
         _library.updateValue(Shader(functionName: "tiled_deferred_gbuffer_vertex"), forKey: .TiledDeferredGBufferVertex)
         _library.updateValue(Shader(functionName: "tiled_deferred_gbuffer_fragment"), forKey: .TiledDeferredGBufferFragment)
-        _library.updateValue(Shader(functionName: "tiled_deferred_vertex_quad"), forKey: .TiledDeferredQuadVertex)
         _library.updateValue(Shader(functionName: "tiled_deferred_directional_light_fragment"),
                              forKey: .TiledDeferredDirectionalLightFragment)
         _library.updateValue(Shader(functionName: "tiled_deferred_point_light_vertex"), 
@@ -150,7 +145,6 @@ final class ShaderLibrary: Library<ShaderType, MTLFunction>, @unchecked Sendable
         
         _library.updateValue(Shader(functionName: "fragment_particle_msaa"), forKey: .ParticlesFragmentMSAA)
         
-        _library.updateValue(Shader(functionName: "compositeVertexShader"), forKey: .CompositeVertex)
         _library.updateValue(Shader(functionName: "compositeFragmentShader"), forKey: .CompositeFragment)
         
         _library.updateValue(Shader(functionName: "tessellation_vertex"), forKey: .TessellationVertex)

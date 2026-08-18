@@ -227,10 +227,6 @@ typedef struct
     float light_radius;
     float light_speed;
 } TFSPointLight;
-
-typedef struct {
-    vector_float2 position;
-} TFSSimpleVertex;
     
 typedef struct {
     packed_float3 position;

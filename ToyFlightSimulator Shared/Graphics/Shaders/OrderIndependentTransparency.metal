@@ -25,20 +25,6 @@ struct TransparentFragmentStore {
     TransparentFragmentValues values [[ imageblock_data ]];
 };
 
-// A vertex function that generates a full-screen quad pass:
-vertex RasterizerData quad_pass_vertex(uint vid [[ vertex_id ]]) {
-    float4 position;
-    position.x = (vid == 2) ? 3.0 : -1.0;
-    position.y = (vid == 0) ? -3.0 : 1.0;
-    position.zw = 1.0;
-    
-    RasterizerData out = {
-        .position = position
-    };
-    
-    return out;
-}
-
 kernel void init_transparent_fragment_store(imageblock<TransparentFragmentValues, imageblock_layout_explicit> blockData,
                                             ushort2 localThreadID [[ thread_position_in_threadgroup ]]) {
     threadgroup_imageblock TransparentFragmentValues* fragmentValues = blockData.data(localThreadID);

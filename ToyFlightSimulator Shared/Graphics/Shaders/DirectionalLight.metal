@@ -18,11 +18,14 @@ struct QuadInOut
 };
 
 vertex QuadInOut
-deferred_directional_lighting_vertex(constant TFSSimpleVertex * vertices       [[ buffer(TFSBufferIndexMeshVertex) ]],
-                                     constant SceneConstants  & sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+deferred_directional_lighting_vertex(constant SceneConstants  & sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
                                      uint                       vid            [[ vertex_id ]])
 {
-    float4 position = float4(vertices[vid].position, 0, 1);
+    // This pass keeps its own vertex (rather than binding full_screen_vertex)
+    // only to interpolate the eye ray below; the geometry is the shared
+    // full-screen triangle. All vertices sit at z = 0, w = 1, so the ray
+    // interpolates exactly linearly across the screen.
+    float4 position = FullScreenTriangleVertex(vid).position;
     float4 unprojected_eye_coord = sceneConstants.projectionMatrixInverse * position;
     
     QuadInOut out = {

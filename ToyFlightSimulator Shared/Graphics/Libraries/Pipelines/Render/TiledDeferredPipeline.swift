@@ -61,7 +61,7 @@ struct TiledDeferredGBufferAnimatedPipelineState: RenderPipelineState {
 struct TiledDeferredDirectionalLightPipelineState: RenderPipelineState {
     var renderPipelineState: MTLRenderPipelineState = {
         createRenderPipelineState(label: "Tiled Deferred Directional Light") { descriptor in
-            descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredQuadVertex]
+            descriptor.vertexFunction = Graphics.Shaders[.FullScreenVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.TiledDeferredDirectionalLightFragment]
             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
             Self.setGBufferPixelFormatsForTiledDeferredPipeline(descriptor: descriptor)

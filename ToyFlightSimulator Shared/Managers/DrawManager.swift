@@ -309,7 +309,6 @@ final class DrawManager {
     // lock (and builds the model on first access), so resolve once and reuse
     // instead of subscripting every frame. Models stay cached in the library for
     // the process lifetime, so these references never go stale. Render-thread only.
-    nonisolated(unsafe) private static var _fullScreenQuadMeshes: [Mesh]?
     nonisolated(unsafe) private static var _icosahedronDrawData: (model: Model, mesh: Mesh, submeshes: [Submesh])?
 
     /// Icosahedron model/mesh/submeshes shared by DrawPointLights and DrawIcosahedrons.
@@ -320,28 +319,6 @@ final class DrawManager {
         let data = (model: model, mesh: mesh, submeshes: model.meshes.flatMap { $0.submeshes })
         _icosahedronDrawData = data
         return data
-    }
-
-    static func DrawFullScreenQuad(with renderEncoder: MTLRenderCommandEncoder) {
-        if _fullScreenQuadMeshes == nil {
-            _fullScreenQuadMeshes = Assets.Models[.Quad].meshes
-        }
-        guard let meshes = _fullScreenQuadMeshes else { return }
-
-        for mesh in meshes {
-            if let vertexBuffer = mesh.vertexBuffer {
-                renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-                
-                for submesh in mesh.submeshes {
-                    renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                        indexCount: submesh.indexCount,
-                                                        indexType: submesh.indexType,
-                                                        indexBuffer: submesh.indexBuffer,
-                                                        indexBufferOffset: submesh.indexBufferOffset,
-                                                        instanceCount: mesh.instanceCount)
-                }
-            }
-        }
     }
     
     // Scratch buffers for ad-hoc draws — uniforms are refilled in place each frame.

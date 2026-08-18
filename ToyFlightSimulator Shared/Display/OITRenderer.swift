@@ -122,8 +122,7 @@ final class OITRenderer: Renderer, @unchecked Sendable {
                 setRenderPipelineState(renderEncoder, state: .Blend)
                 renderEncoder.setCullMode(.none)
                 renderEncoder.setDepthStencilState(Graphics.DepthStencilStates[.AlwaysNoWrite])
-                // Draw full screen quad:
-                renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+                drawFullScreenTriangle(with: renderEncoder)
             }
         }
     }
@@ -134,7 +133,7 @@ final class OITRenderer: Renderer, @unchecked Sendable {
             encodeRenderStage(using: renderEncoder, label: "Final Render") {
                 setRenderPipelineState(renderEncoder, state: .Final)
                 renderEncoder.setFragmentTexture(Assets.Textures[.BaseColorRender_0], index: 0)
-                DrawManager.DrawFullScreenQuad(with: renderEncoder)
+                drawFullScreenTriangle(with: renderEncoder)
             }
         }
     }

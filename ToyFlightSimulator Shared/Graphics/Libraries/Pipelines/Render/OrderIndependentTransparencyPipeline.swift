@@ -118,7 +118,7 @@ struct BlendRenderPipelineState: RenderPipelineState {
             descriptor.depthAttachmentPixelFormat = Preferences.MainDepthPixelFormat
             descriptor.stencilAttachmentPixelFormat = .invalid
             descriptor.vertexDescriptor = nil
-            descriptor.vertexFunction = Graphics.Shaders[.QuadPassVertex]
+            descriptor.vertexFunction = Graphics.Shaders[.FullScreenVertex]
             descriptor.fragmentFunction = Graphics.Shaders[.BlendFragment]
         }
     }()

@@ -36,4 +36,15 @@ extension RenderPassEncoding {
         encodingBlock()
         renderEncoder.popDebugGroup()
     }
+    
+    /// The one full-screen draw (E6): a single bufferless triangle whose
+    /// positions come from the bound vertex function (full_screen_vertex or a
+    /// FullScreenTriangleVertex-based specialization — vertex_id only). The
+    /// PSO must NOT set a vertexDescriptor: the debug layer validates draws
+    /// against the descriptor's layouts and would demand a vertex buffer at
+    /// index 0 even though nothing reads one.
+    @inline(__always)
+    func drawFullScreenTriangle(with renderEncoder: MTLRenderCommandEncoder) {
+        renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+    }
 }

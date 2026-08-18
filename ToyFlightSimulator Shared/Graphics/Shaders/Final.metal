@@ -9,27 +9,13 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "ShaderHelpers.h"
 
-struct FinalRasterizerData {
-    float4 position [[ position ]];
-    float2 textureCoordinate;
-};
-
-vertex FinalRasterizerData final_vertex(const VertexIn vIn [[ stage_in ]]) {
-    FinalRasterizerData rd = {
-        .position = float4(vIn.position, 1.0),
-        .textureCoordinate = float2(vIn.textureCoordinate)
-    };
-    
-    return rd;
-}
-
-fragment half4 final_fragment(const FinalRasterizerData rd [[ stage_in ]],
+fragment half4 final_fragment(const FullScreenVertexOut in [[ stage_in ]],
                               texture2d<float> baseTexture [[ texture(0) ]]) {
     sampler s;
-    float2 textureCoordinate = rd.textureCoordinate;
-    textureCoordinate.y = 1 - textureCoordinate.y;  // Flip
-    float4 color = baseTexture.sample(s, textureCoordinate);
-    
+    // FullScreenVertexOut.uv is texture-oriented (uv (0,0) = NDC top-left =
+    // texel (0,0) of the render target), so no y flip before sampling.
+    float4 color = baseTexture.sample(s, in.uv);
     return half4(color);
 }
