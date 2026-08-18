@@ -44,11 +44,12 @@ in the single-pass G-buffer, a view-matrix dot4 in the tiled ones) in `878becf`
 and **P4** (vertex-stage T/B/N normalizes removed — fragments renormalize once) in
 `ab04296` (2026-08-17); **P5** (particle kernel: one device→thread load, with a
 deliberately narrow store-back — see the banner for why not whole-struct) in `c1c6d81`
-(2026-08-18). All other findings are open. Note: `ShaderHelpers.h` still
-*stages* the E6 helpers with doc comments; E6 stays open until its call sites are
-converted — the full call-site conversion diffs (shader + Swift PSO/draw edits, with a
-per-site cull/winding audit) were staged under E6 on 2026-08-18, closing P7 with them
-when they land.
+(2026-08-18); **E6** and **P7** (every full-screen pass — composite, Final, OIT blend,
+both tiled directional lights, the single-pass directional light — on the one bufferless
+`FullScreenTriangleVertex` triangle, per the call-site diffs staged under E6; the Final
+PSO also drops its leftover vertexDescriptor, which the debug layer's draw validation
+had turned into a required-but-unbound vertex buffer at index 0) in `5bc2e21`
+(2026-08-18). All other findings are open.
 
 ---
 
@@ -1201,7 +1202,11 @@ cost unless the compiler's cross-stage elimination catches it (worth confirming 
 capture). Slimmer per-pass structs (a `SkyVertexOut` with position+uv) are cheap insurance and
 document the actual contract.
 
-### P7 Five different full-screen-pass mechanisms
+*(E6's landing (`5bc2e21`) deleted `quad_pass_vertex` — the worst offender here, paying for
+all ~15 fields to populate 1 and read none. `skysphere_vertex`'s 3-of-15 is what remains of
+this finding.)*
+
+### P7 ✅ FIXED — Five different full-screen-pass mechanisms
 
 Full-screen passes exist in five flavors: 6-vertex constant-array quad ×2
 (`Composition.metal:12-19`, `TiledDeferredDirectionalLight.metal:14-21`), 3-vertex
@@ -1211,10 +1216,11 @@ super-triangle (`OrderIndependentTransparency.metal:28-39`), vertex-buffer quad
 buffer bindings, a vertex descriptor, and 3 vertices of redundant work — trivial GPU savings,
 real maintenance savings.
 
-**Fix:** one conversion diff set, staged under E6 on 2026-08-18 — shader-side call sites,
-the Swift-side ShaderLibrary/PSO/draw edits, and a per-site cull/winding audit. (Found while
-staging: the OIT "3-vertex" pass is actually drawn with `vertexCount: 6` — vids 3–5 collapse
-to a degenerate spare triangle.) P7 closes when E6's diffs land.
+**✅ FIXED in `5bc2e21` (2026-08-18)** via E6's conversion diff set — shader-side call
+sites, the Swift-side ShaderLibrary/PSO/draw edits, and a per-site cull/winding audit
+(see E6's banner and diffs). (Found while staging: the OIT "3-vertex" pass was actually
+drawn with `vertexCount: 6` — vids 3–5 collapse to a degenerate spare triangle. That
+draw is now the shared bufferless `vertexCount: 3`.)
 
 ---
 
@@ -1559,7 +1565,22 @@ The `useObjectColor → texture sample → fallback` cascade appears in
 +                                    material.color, baseColorTexture, sampler2d, baseUV);
 ```
 
-### E6 Full-screen pass — 5 mechanisms → 1 shared triangle
+### E6 ✅ FIXED — Full-screen pass — 5 mechanisms → 1 shared triangle
+
+**✅ FIXED in `5bc2e21` (2026-08-18).** The staged diffs below landed essentially
+verbatim, with the Swift draw sites going through one shared
+`RenderPassEncoding.drawFullScreenTriangle(with:)` helper instead of five inline
+`drawPrimitives` calls. One landing lesson worth keeping: the Final PSO's
+`vertexDescriptor = .Simple` deletion is load-bearing, not cosmetic — the debug layer
+validates every draw against the pipeline's descriptor layouts even when the vertex
+function has no `[[stage_in]]`, so leaving it in produced
+`missing vertexDescriptor Buffer binding at index 0` the moment the draw went
+bufferless. One behavioral footnote beyond the equivalence list: the OIT blend geometry
+moves from z = 1 (`quad_pass_vertex` set `position.zw = 1`) to the helper's z = 0 —
+inert under that stage's `AlwaysNoWrite` depth state. The `SetScene` `.Quad` warm-up
+note below was applied. Verified by macOS Debug build and on-screen runs with the
+validation layer (OIT explicitly confirmed); the six-renderer screenshot sweep from
+the notes remains optional.
 
 Replace, in order of ease:
 1. `TiledDeferredDirectionalLight.metal:14-32` (`tiled_deferred_vertex_quad` + constant array) — direct swap, position-only.
@@ -1571,8 +1592,8 @@ Replace, in order of ease:
 Each conversion needs its `drawPrimitives` call to use `vertexCount: 3` and no vertex buffer;
 verify cull mode as noted in the helper comment.
 
-**Fix diffs** (added 2026-08-18, written against the tree at `a86ef83`; one conversion —
-this section and P7 close together when it lands). Design: ONE shared vertex entry point,
+**Fix diffs** (added 2026-08-18, written against the tree at `a86ef83`; landed in
+`5bc2e21` — this section and P7 closed together). Design: ONE shared vertex entry point,
 `full_screen_vertex`, homed in `Composition.metal` (the file keeps its composite fragment, so
 it becomes "the full-screen file"), bound by all five generic full-screen PSOs — Composite,
 Final, OIT Blend, and both tiled directional lights. Only the single-pass directional light
