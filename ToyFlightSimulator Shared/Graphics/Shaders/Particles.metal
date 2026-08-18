@@ -18,26 +18,37 @@ struct ParticleVertexOut {
 
 kernel void compute_particle(device Particle *particles [[ buffer(0) ]],
                              uint id [[ thread_position_in_grid ]]) {
-//    float xVelocity = particles[id].speed * cos(particles[id].direction.x);
-//    float yVelocity = particles[id].speed * sin(particles[id].direction.y);
-//    float zVelocity = particles[id].speed * sin(particles[id].direction.z);
-    float xVelocity = particles[id].speed * particles[id].direction.x;
-    float yVelocity = particles[id].speed * particles[id].direction.y;
-    float zVelocity = particles[id].speed * particles[id].direction.z;
+    // One coalesced device→thread load instead of ~14 per-field reads (P5).
+    Particle p = particles[id];
+    float xVelocity = p.speed * p.direction.x;
+    float yVelocity = p.speed * p.direction.y;
+    float zVelocity = p.speed * p.direction.z;
     
-    particles[id].position.x += xVelocity;
-    particles[id].position.y += yVelocity;
-    particles[id].position.z += zVelocity;
-    particles[id].age += 1.0;
+    p.position.x += xVelocity;
+    p.position.y += yVelocity;
+    p.position.z += zVelocity;
+    p.age += 1.0;
     
-    float age = particles[id].age / particles[id].life;
-    particles[id].scale = mix(particles[id].startScale, particles[id].endScale, age);
+    float age = p.age / p.life;
+    p.scale = mix(p.startScale, p.endScale, age);
     
-    if (particles[id].age > particles[id].life) {
-        particles[id].position = particles[id].startPosition;
-        particles[id].age = 0;
-        particles[id].scale = particles[id].startScale;
+    if (p.age > p.life) {
+        p.position = p.startPosition;
+        p.age = 0;
+        p.scale = p.startScale;
     }
+
+    // Write back only the mutated fields, not the whole struct: emit() (update
+    // thread) writes fresh spawns into this same shared buffer while earlier
+    // frames' dispatches are still in flight, and this dispatch covers all
+    // particleCount slots, born or not. A whole-struct store losing that race
+    // would stomp the spawn's CPU-only fields (direction/speed/life/color/...)
+    // with stale pre-spawn data, permanently deadening the slot; racing on
+    // {position, age, scale} matches the old per-field write set and self-heals
+    // on the next pass.
+    particles[id].position = p.position;
+    particles[id].age = p.age;
+    particles[id].scale = p.scale;
 }
 
 vertex ParticleVertexOut vertex_particle(const device Particle *particles [[ buffer(0) ]],
