@@ -42,7 +42,9 @@ tinted by the G-buffer albedo; the 0.9 fudge dropped) in `80d8f50` (2026-08-16);
 in the single-pass G-buffer, a view-matrix dot4 in the tiled ones) in `878becf`
 (2026-08-16); **P3** (the affine `/ worldPosition.w` divides dropped at all seven sites)
 and **P4** (vertex-stage T/B/N normalizes removed — fragments renormalize once) in
-`ab04296` (2026-08-17). All other findings are open. Note: `ShaderHelpers.h` still
+`ab04296` (2026-08-17); **P5** (particle kernel: one device→thread load, with a
+deliberately narrow store-back — see the banner for why not whole-struct) in `c1c6d81`
+(2026-08-18). All other findings are open. Note: `ShaderHelpers.h` still
 *stages* the E6 helpers with doc comments; E6 stays open until its call sites are
 converted.
 
@@ -879,6 +881,12 @@ so particle velocity and lifetime scale with FPS (120 Hz ProMotion = 2× faster 
 +    p.age += deltaTime;                             // Particle.life becomes seconds
 ```
 
+*(P5's load-once landed standalone in `c1c6d81` (2026-08-18), so the `Particle p` line and
+the per-field-read conversion sketched above are already in the tree; what remains for C11
+is the `deltaTime` binding + integration and the reorder below. When rebasing, keep the
+narrow `{position, age, scale}` store-back — the rationale is in P5's banner and at the
+store site.)*
+
 Also: the lifetime check runs *after* `scale` is computed, so the frame a particle expires it
 renders with `mix(start, end, age/life > 1)` — an extrapolated scale. Reorder the reset before
 the scale computation.
@@ -1162,7 +1170,22 @@ divide implies a projective transform that isn't there.)
 Normalize once, in the fragment. Same pattern in `Base.metal` (`base_fragment` renormalizes
 `surfaceNormal`).
 
-### P5 Particle kernel round-trips device memory ~14 times per thread
+### P5 ✅ FIXED — Particle kernel round-trips device memory ~14 times per thread
+
+> **Fixed in `c1c6d81` (2026-08-18):** `compute_particle` now snapshots
+> `Particle p = particles[id]` once and does all integration/lifetime math on the local
+> copy — landed standalone, ahead of C11 rather than folded into its diff. One deliberate
+> narrowing vs. the "store once" prescription below: the write-back stores only the three
+> mutated fields (`position`, `age`, `scale`), NOT the whole struct.
+> `ParticleEmitter.emit()` (update thread) writes fresh spawns into this same
+> shared-storage buffer while earlier frames' dispatches are still in flight, and the
+> dispatch covers all `particleCount` slots, born or not — a whole-struct store losing
+> that pre-existing birth-frame race would stomp the spawn's CPU-only fields
+> (direction/speed/life/color/…) with stale pre-spawn data, permanently deadening the
+> slot, where the old write set loses only {position, age, scale} and self-heals on the
+> next pass. Both constraints are commented at the store site. The commented-out cos/sin
+> velocity experiment was deleted in passing. C11 (deltaTime) remains open and composes
+> on top. Verified: compiles standalone via `xcrun metal -c`; macOS Debug build passes.
 
 **File:** `Particles.metal:19-41` — every `particles[id].field` access is a device-memory
 dereference the compiler can't always coalesce through the write aliasing. Load `Particle p`
