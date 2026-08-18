@@ -46,7 +46,9 @@ and **P4** (vertex-stage T/B/N normalizes removed — fragments renormalize once
 deliberately narrow store-back — see the banner for why not whole-struct) in `c1c6d81`
 (2026-08-18). All other findings are open. Note: `ShaderHelpers.h` still
 *stages* the E6 helpers with doc comments; E6 stays open until its call sites are
-converted.
+converted — the full call-site conversion diffs (shader + Swift PSO/draw edits, with a
+per-site cull/winding audit) were staged under E6 on 2026-08-18, closing P7 with them
+when they land.
 
 ---
 
@@ -1209,6 +1211,11 @@ super-triangle (`OrderIndependentTransparency.metal:28-39`), vertex-buffer quad
 buffer bindings, a vertex descriptor, and 3 vertices of redundant work — trivial GPU savings,
 real maintenance savings.
 
+**Fix:** one conversion diff set, staged under E6 on 2026-08-18 — shader-side call sites,
+the Swift-side ShaderLibrary/PSO/draw edits, and a per-site cull/winding audit. (Found while
+staging: the OIT "3-vertex" pass is actually drawn with `vertexCount: 6` — vids 3–5 collapse
+to a degenerate spare triangle.) P7 closes when E6's diffs land.
+
 ---
 
 ## 3. Common code to extract
@@ -1563,6 +1570,392 @@ Replace, in order of ease:
 
 Each conversion needs its `drawPrimitives` call to use `vertexCount: 3` and no vertex buffer;
 verify cull mode as noted in the helper comment.
+
+**Fix diffs** (added 2026-08-18, written against the tree at `a86ef83`; one conversion —
+this section and P7 close together when it lands). Design: ONE shared vertex entry point,
+`full_screen_vertex`, homed in `Composition.metal` (the file keeps its composite fragment, so
+it becomes "the full-screen file"), bound by all five generic full-screen PSOs — Composite,
+Final, OIT Blend, and both tiled directional lights. Only the single-pass directional light
+keeps a specialized vertex (it interpolates the eye ray), rebuilt on
+`FullScreenTriangleVertex`. The old `.FinalVertex`/`.QuadPassVertex`/`.TiledDeferredQuadVertex`/
+`.CompositeVertex` keys collapse into one `.FullScreenVertex`.
+
+Pre-verified equivalences — why the expected visual delta is **none**:
+
+- **Composite uv is algebraically identical.** At post-flip NDC `(x, y)` the old shader's
+  uv is `((x+1)/2, (1−y)/2)` (it computes uv from the pre-flip position); the helper emits
+  `((x+1)/2, 0.5 − y/2)` — the same expression, so the drawable composite is bit-identical.
+- **Final's `1 − uv.y` flip is absorbed.** The helper's uv is already texture-oriented
+  (uv (0,0) at NDC top-left), which is exactly what the old flip manufactured from the Quad
+  mesh's bottom-left-origin texcoords. The fragment samples `rd.uv` directly.
+- **The single-pass eye ray is unchanged.** The old quad and the helper both emit
+  `z = 0, w = 1`, so `projectionMatrixInverse * position` is the same function of NDC x/y,
+  and with clip w ≡ 1 interpolation is exactly linear — off-screen vertices at ±3 NDC
+  interpolate to the identical per-pixel values the quad produced.
+- **The tiled directional fragment reads no varyings**, so retyping its `[[stage_in]]` from
+  the position-only `VertexQuadOut` to `FullScreenVertexOut` costs nothing — Metal compiles
+  the vertex/fragment pair together per PSO and dead-strips the unused uv interpolant.
+- **OIT was already a super-triangle, drawn badly.** `quad_pass_vertex`'s formula sends
+  vids 3–5 all to `(-1, 1)` — the existing `vertexCount: 6` draw rasterizes the 3-vertex
+  triangle plus one degenerate zero-area spare (P7's list understates this one: the
+  *mechanism* was already a super-triangle; only the draw call never got the memo).
+
+Cull/winding audit (resolving the helper comment's "verify per pass" note — the helper
+triangle is **clockwise in window space**, matching every site that culls):
+
+| Draw site | Cull state at draw time | Verdict |
+|---|---|---|
+| Single-pass directional (`SinglePassDeferredLightingRenderer`) | explicit `.back`; front = `.clockwise` persisting from `DrawManager.DrawOpaque` earlier in the same encoder | old quad was CW; helper CW ✓ |
+| Tiled directional (all 3 renderers) | inherits `.clockwise`/`.back` from the G-buffer stage's `DrawOpaque` (same encoder) | old quad was CW; helper CW ✓ |
+| OIT blend | explicit `setCullMode(.none)` | winding irrelevant ✓ |
+| OIT final | fresh encoder, cull never set (default `.none`) | ✓ |
+| Composite (late CB, all `LateDrawablePresenting` renderers) | fresh encoder, cull never set (default `.none`) | ✓ |
+
+Metal side:
+
+```diff
+--- a/ToyFlightSimulator Shared/Graphics/Shaders/Composition.metal
++++ b/ToyFlightSimulator Shared/Graphics/Shaders/Composition.metal
+@@
+ #include <metal_stdlib>
+ using namespace metal;
+ 
+-/// The normalized device coordinates (NDC) for two triangles that form a full-screen quad.
+-constant float2 quadVertices[] = {
+-    float2(-1, -1),
+-    float2(-1,  1),
+-    float2( 1,  1),
+-    float2(-1, -1),
+-    float2( 1,  1),
+-    float2( 1, -1)
+-};
+-
+-/// A vertex format for drawing a full-screen quad.
+-struct CompositionVertexOut {
+-    float4 position [[position]];
+-    float2 uv;
+-};
+-
+-/// Outputs the normalized device coordinates (NDC) to render a full-screen quad based on the vertex ID.
+-vertex CompositionVertexOut
+-compositeVertexShader(unsigned short vid [[vertex_id]])
+-{
+-    const float2 position = quadVertices[vid];
+-
+-    CompositionVertexOut out;
+-
+-    out.position = float4(position, 0, 1);
+-    out.position.y *= -1;
+-    out.uv = position * 0.5f + 0.5f;
+-
+-    return out;
+-}
++#import "ShaderHelpers.h"
++
++/// THE full-screen vertex stage (E6): every generic full-screen PSO binds this
++/// one function — composite, tiled directional light, OIT blend, OIT final.
++/// A pass needing extra varyings (the single-pass directional light's eye ray)
++/// builds its own vertex on FullScreenTriangleVertex instead.
++vertex FullScreenVertexOut full_screen_vertex(uint vid [[vertex_id]])
++{
++    return FullScreenTriangleVertex(vid);
++}
+ 
+ /// Copies the input resolve texture to the output.
+ fragment half4
+-compositeFragmentShader(CompositionVertexOut in [[stage_in]],
++compositeFragmentShader(FullScreenVertexOut in [[stage_in]],
+                         texture2d<half> resolvedTexture)
+```
+
+```diff
+--- a/ToyFlightSimulator Shared/Graphics/Shaders/TiledDeferredDirectionalLight.metal
++++ b/ToyFlightSimulator Shared/Graphics/Shaders/TiledDeferredDirectionalLight.metal
+@@
+ #import "ShaderDefinitions.h"
++#import "ShaderHelpers.h"
+ #import "Lighting.metal"
+ 
+-constant float3 vertices[6] = {
+-    float3(-1,  1,  0),    // triangle 1
+-    float3( 1, -1,  0),
+-    float3(-1, -1,  0),
+-    float3(-1,  1,  0),    // triangle 2
+-    float3( 1,  1,  0),
+-    float3( 1, -1,  0)
+-};
+-
+-struct VertexQuadOut {
+-    float4 position [[ position ]];
+-};
+-
+-vertex VertexQuadOut tiled_deferred_vertex_quad(uint vertexId [[ vertex_id ]]) {
+-    VertexQuadOut out {
+-        .position = float4(vertices[vertexId], 1)
+-    };
+-    return out;
+-}
+-
+ fragment float4
+-tiled_deferred_directional_light_fragment(         VertexQuadOut  in         [[ stage_in ]],
++tiled_deferred_directional_light_fragment(         FullScreenVertexOut in    [[ stage_in ]],
+                                           constant LightData      &lightData [[ buffer(TFSBufferDirectionalLightData) ]],
+                                                    GBufferOut     gBuffer) {
+```
+
+```diff
+--- a/ToyFlightSimulator Shared/Graphics/Shaders/OrderIndependentTransparency.metal
++++ b/ToyFlightSimulator Shared/Graphics/Shaders/OrderIndependentTransparency.metal
+@@
+-// A vertex function that generates a full-screen quad pass:
+-vertex RasterizerData quad_pass_vertex(uint vid [[ vertex_id ]]) {
+-    float4 position;
+-    position.x = (vid == 2) ? 3.0 : -1.0;
+-    position.y = (vid == 0) ? -3.0 : 1.0;
+-    position.zw = 1.0;
+-    
+-    RasterizerData out = {
+-        .position = position
+-    };
+-    
+-    return out;
+-}
+-
+ kernel void init_transparent_fragment_store(...)
+```
+
+(`blend_fragments` takes no `[[stage_in]]` at all — imageblock + `color(0)` only — so the
+Blend PSO just rebinds its vertex function; no fragment change. This deletion is also the
+P6 fix for the worst offender: a fat `RasterizerData` with 14 undefined fields is no longer
+smuggled through the rasterizer for a pass that reads none of them.)
+
+```diff
+--- a/ToyFlightSimulator Shared/Graphics/Shaders/Final.metal
++++ b/ToyFlightSimulator Shared/Graphics/Shaders/Final.metal
+@@
+ #import "ShaderDefinitions.h"
++#import "ShaderHelpers.h"
+ 
+-struct FinalRasterizerData {
+-    float4 position [[ position ]];
+-    float2 textureCoordinate;
+-};
+-
+-vertex FinalRasterizerData final_vertex(const VertexIn vIn [[ stage_in ]]) {
+-    FinalRasterizerData rd = {
+-        .position = float4(vIn.position, 1.0),
+-        .textureCoordinate = float2(vIn.textureCoordinate)
+-    };
+-    
+-    return rd;
+-}
+-
+-fragment half4 final_fragment(const FinalRasterizerData rd [[ stage_in ]],
++fragment half4 final_fragment(const FullScreenVertexOut rd [[ stage_in ]],
+                               texture2d<float> baseTexture [[ texture(0) ]]) {
+     sampler s;
+-    float2 textureCoordinate = rd.textureCoordinate;
+-    textureCoordinate.y = 1 - textureCoordinate.y;  // Flip
+-    float4 color = baseTexture.sample(s, textureCoordinate);
++    // FullScreenVertexOut.uv is already texture-oriented (y down); the old
++    // 1 - uv.y flip compensated the Quad mesh's bottom-left-origin texcoords.
++    float4 color = baseTexture.sample(s, rd.uv);
+     
+     return half4(color);
+ }
+```
+
+```diff
+--- a/ToyFlightSimulator Shared/Graphics/Shaders/DirectionalLight.metal
++++ b/ToyFlightSimulator Shared/Graphics/Shaders/DirectionalLight.metal
+@@ vertex QuadInOut deferred_directional_lighting_vertex(...)
+ vertex QuadInOut
+-deferred_directional_lighting_vertex(constant TFSSimpleVertex * vertices       [[ buffer(TFSBufferIndexMeshVertex) ]],
+-                                     constant SceneConstants  & sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
++deferred_directional_lighting_vertex(constant SceneConstants  & sceneConstants [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                      uint                       vid            [[ vertex_id ]])
+ {
+-    float4 position = float4(vertices[vid].position, 0, 1);
++    // Full-screen triangle (E6) instead of the old TFSSimpleVertex quad buffer;
++    // this pass keeps its own vertex only to interpolate the eye ray below.
++    float4 position = FullScreenTriangleVertex(vid).position;
+     float4 unprojected_eye_coord = sceneConstants.projectionMatrixInverse * position;
+```
+
+```diff
+--- a/ToyFlightSimulator Shared/Graphics/Shaders/TFSCommon.h
++++ b/ToyFlightSimulator Shared/Graphics/Shaders/TFSCommon.h
+@@
+-typedef struct {
+-    vector_float2 position;
+-} TFSSimpleVertex;
+-    
+ typedef struct {
+     packed_float3 position;
+ } TFSShadowVertex;
+```
+
+(`TFSSimpleVertex`'s only consumer was this pass pair, so it joins D7's Apple-sample
+leftovers — deleted here rather than left to rot.)
+
+Swift side — ShaderLibrary key collapse (4 keys → 1):
+
+```diff
+--- a/ToyFlightSimulator Shared/Graphics/Libraries/ShaderLibrary.swift
++++ b/ToyFlightSimulator Shared/Graphics/Libraries/ShaderLibrary.swift
+@@ enum ShaderType
+     case BaseVertex
+     case InstancedVertex
+     case SkySphereVertex
+-    case FinalVertex
+-    case QuadPassVertex
++    case FullScreenVertex
+@@
+     case TiledDeferredGBufferVertex
+     case TiledDeferredGBufferFragment
+-    case TiledDeferredQuadVertex
+     case TiledDeferredDirectionalLightFragment
+@@
+-    case CompositeVertex
+     case CompositeFragment
+@@ makeLibrary()
+-        _library.updateValue(Shader(functionName: "final_vertex"), forKey: .FinalVertex)
+-        _library.updateValue(Shader(functionName: "quad_pass_vertex"), forKey: .QuadPassVertex)
++        _library.updateValue(Shader(functionName: "full_screen_vertex"), forKey: .FullScreenVertex)
+@@
+-        _library.updateValue(Shader(functionName: "tiled_deferred_vertex_quad"), forKey: .TiledDeferredQuadVertex)
+         _library.updateValue(Shader(functionName: "tiled_deferred_directional_light_fragment"),
+                              forKey: .TiledDeferredDirectionalLightFragment)
+@@
+-        _library.updateValue(Shader(functionName: "compositeVertexShader"), forKey: .CompositeVertex)
+         _library.updateValue(Shader(functionName: "compositeFragmentShader"), forKey: .CompositeFragment)
+```
+
+PSO rebinds (5 sites; Final also drops its vertex descriptor — the whole point of item 4):
+
+```diff
+--- a/ToyFlightSimulator Shared/Graphics/Libraries/Pipelines/Render/BasicPipeline.swift
++++ b/ToyFlightSimulator Shared/Graphics/Libraries/Pipelines/Render/BasicPipeline.swift
+@@ struct FinalRenderPipelineState
+         createRenderPipelineState(label: "Final Render") { descriptor in
+             descriptor.colorAttachments[TFSRenderTargetLighting.index].pixelFormat = Preferences.MainPixelFormat
+-            descriptor.vertexDescriptor = Graphics.VertexDescriptors[.Simple]
+-            descriptor.vertexFunction = Graphics.Shaders[.FinalVertex]
++            descriptor.vertexFunction = Graphics.Shaders[.FullScreenVertex]
+             descriptor.fragmentFunction = Graphics.Shaders[.FinalFragment]
+--- a/ToyFlightSimulator Shared/Graphics/Libraries/Pipelines/Render/OrderIndependentTransparencyPipeline.swift
++++ b/ToyFlightSimulator Shared/Graphics/Libraries/Pipelines/Render/OrderIndependentTransparencyPipeline.swift
+@@ struct BlendRenderPipelineState
+             descriptor.vertexDescriptor = nil
+-            descriptor.vertexFunction = Graphics.Shaders[.QuadPassVertex]
++            descriptor.vertexFunction = Graphics.Shaders[.FullScreenVertex]
+             descriptor.fragmentFunction = Graphics.Shaders[.BlendFragment]
+--- a/ToyFlightSimulator Shared/Graphics/Libraries/Pipelines/Render/TiledDeferredPipeline.swift
++++ b/ToyFlightSimulator Shared/Graphics/Libraries/Pipelines/Render/TiledDeferredPipeline.swift
+@@ struct TiledDeferredDirectionalLightPipelineState
+-            descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredQuadVertex]
++            descriptor.vertexFunction = Graphics.Shaders[.FullScreenVertex]
+--- a/ToyFlightSimulator Shared/Graphics/Libraries/Pipelines/Render/TiledMSAAPipeline.swift
++++ b/ToyFlightSimulator Shared/Graphics/Libraries/Pipelines/Render/TiledMSAAPipeline.swift
+@@ struct TiledMSAADirectionalLightPipelineState
+-            descriptor.vertexFunction = Graphics.Shaders[.TiledDeferredQuadVertex]
++            descriptor.vertexFunction = Graphics.Shaders[.FullScreenVertex]
+@@ struct TiledMSAACompositePipelineState
+-            descriptor.vertexFunction = Graphics.Shaders[.CompositeVertex]
++            descriptor.vertexFunction = Graphics.Shaders[.FullScreenVertex]
+```
+
+Draw-site conversions (every generic site becomes the same bufferless 3-vertex draw):
+
+```diff
+--- a/ToyFlightSimulator Shared/Display/Protocols/LateDrawablePresenting.swift
++++ b/ToyFlightSimulator Shared/Display/Protocols/LateDrawablePresenting.swift
+@@ encodeCompositeStage
+             setRenderPipelineState(renderEncoder, state: .Composite)
+             renderEncoder.setFragmentTexture(lightingResolveTexture, index: 0)
+-            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
++            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+--- a/ToyFlightSimulator Shared/Display/TiledDeferredRenderer.swift
++++ b/ToyFlightSimulator Shared/Display/TiledDeferredRenderer.swift
+@@ encodeDirectionalLightStage
+             setRenderPipelineState(renderEncoder, state: .TiledDeferredDirectionalLight)
+-            // Draw full screen quad
+-            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
++            // Draw full-screen triangle
++            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+```
+
+Same two-line change in `TiledMultisampleRenderer.swift` and `TiledMSAATessellatedRenderer.swift`
+(their `encodeDirectionalLightStage` bodies are identical but for the `.TiledMSAADirectionalLight`
+PSO), and in `OITRenderer.swift`'s Blend Fragments stage. OIT's final stage replaces the mesh
+walk entirely:
+
+```diff
+--- a/ToyFlightSimulator Shared/Display/OITRenderer.swift
++++ b/ToyFlightSimulator Shared/Display/OITRenderer.swift
+@@ finalRenderPass
+                 setRenderPipelineState(renderEncoder, state: .Final)
+                 renderEncoder.setFragmentTexture(Assets.Textures[.BaseColorRender_0], index: 0)
+-                DrawManager.DrawFullScreenQuad(with: renderEncoder)
++                renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+```
+
+The single-pass renderer loses its quad plumbing wholesale:
+
+```diff
+--- a/ToyFlightSimulator Shared/Display/SinglePassDeferredLightingRenderer.swift
++++ b/ToyFlightSimulator Shared/Display/SinglePassDeferredLightingRenderer.swift
+@@ class SinglePassDeferredLightingRenderer
+ final class SinglePassDeferredLightingRenderer: Renderer, ShadowRendering, LateDrawablePresenting, @unchecked Sendable {
+-    // Create quad for fullscreen composition drawing
+-    private let _quadVertices: [TFSSimpleVertex] = [
+-        .init(position: .init(x: -1, y: -1)),
+-        .init(position: .init(x: -1, y:  1)),
+-        .init(position: .init(x:  1, y: -1)),
+-
+-        .init(position: .init(x:  1, y: -1)),
+-        .init(position: .init(x: -1, y:  1)),
+-        .init(position: .init(x:  1, y:  1))
+-    ]
+-
+-    private let _quadVertexBuffer: MTLBuffer!
+-
+     var shadowMapArray: MTLTexture
+@@ init()   (both initializers)
+     init() {
+-        _quadVertexBuffer = Engine.Device.makeBuffer(bytes: _quadVertices,
+-                                                     length: MemoryLayout<TFSSimpleVertex>.stride * _quadVertices.count)
+         shadowMapArray = Self.makeShadowMapArray(label: "Shadow Map Array")
+@@ encodeDirectionalLightingStage
+             renderEncoder.setCullMode(.back)
+             renderEncoder.setStencilReferenceValue(128)
+-            renderEncoder.setVertexBuffer(_quadVertexBuffer,
+-                                          offset: 0,
+-                                          index: TFSBufferIndexMeshVertex.index)
+-            
+-            // Draw full screen quad
+-            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
++            // Full-screen triangle; position + eye ray come from
++            // deferred_directional_lighting_vertex, no vertex buffer.
++            renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+```
+
+And `DrawManager` drops the now-orphaned quad path (`DrawFullScreenQuad` plus its
+`_fullScreenQuadMeshes` cache, DrawManager.swift:312/325-345) — no other caller exists.
+
+Post-landing notes:
+
+- **`SceneManager.SetScene`'s `Assets.Models[.Quad]` warm-up loses its original
+  justification** (it existed because `DrawFullScreenQuad` resolved the model on the render
+  thread mid-encode). Keep the touch — scene ground quads still use the model and the
+  warm-up is one dictionary hit — but its comment should stop citing the render thread once
+  this lands.
+- **Verification:** all six renderers before/after screenshots (§6 pattern). Composite and
+  OIT-final outputs should be bit-identical, directional lighting analytically identical;
+  a GPU capture should show 3-vertex bufferless draws at every converted site.
+- Net deletions: 4 vertex functions, 3 varying structs, 2 constant quad arrays,
+  `TFSSimpleVertex` + the `_quadVertices`/`_quadVertexBuffer` plumbing, 2 runtime buffer
+  binds, 1 vertex descriptor, `DrawFullScreenQuad` + cache, and 3 ShaderType keys.
 
 ### E7 ✅ FIXED — Eye-space position reconstruction — 2 sites, 1 currently wrong
 
