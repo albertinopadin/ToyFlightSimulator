@@ -49,7 +49,9 @@ both tiled directional lights, the single-pass directional light — on the one 
 `FullScreenTriangleVertex` triangle, per the call-site diffs staged under E6; the Final
 PSO also drops its leftover vertexDescriptor, which the debug layer's draw validation
 had turned into a required-but-unbound vertex buffer at index 0) in `5bc2e21`
-(2026-08-18). All other findings are open.
+(2026-08-18); **C11** (the particle kernel integrated over a real `deltaTime` binding, with
+the afterburner/`fire()` descriptors converted to physical units and the expiry-reorder note
+deliberately dropped — see the banner) in `19b8913` (2026-08-20). All other findings are open.
 
 ---
 
@@ -861,7 +863,25 @@ The fix is therefore latent until a point light hovers near terrain under TiledM
 
 ---
 
-### C11 🟡 Particle simulation is frame-rate dependent
+### C11 ✅ FIXED — Particle simulation is frame-rate dependent
+
+> **Fixed in `19b8913` (2026-08-20):** as the Fix sketch below — `compute_particle` takes
+> `constant float &deltaTime [[ buffer(1) ]]` and integrates
+> `position += speed·direction·dt`, `age += dt`, composing on P5's load-once shape with the
+> narrow `{position, age, scale}` store-back preserved. `ParticleEmitterObject.computeUpdate`
+> binds `Float(GameTime.DeltaTime)` per dispatch via `setBytes` — read on the render thread,
+> but strictly after the frame's render↔update handshake, so it is this tick's value and the
+> update thread is parked (commented at the site). Descriptors converted to physical units:
+> afterburner speed 1/frame → 100 m/s, life 50 frames → 0.1 s (≈ 10 m plume; pool
+> 2500 → 100 000, birthRate 10 → 20, point size 50 → 20 landed alongside as tuning), and the
+> dormant `fire()` converted 1:1 at the historical 60 fps cadence (12 m/s, 3 s,
+> −0.83…1.17 s) so re-enabling it doesn't inherit frame-based numbers. The reorder suggested
+> in the "Also" note was deliberately NOT applied — see the resolution note there. Pool
+> saturation (the recycling design's steady state) now logs once per fill instead of every
+> update tick. Follow-up spun out of verification: the dispatch still covers all
+> `particleCount` slots, born or not — findings and a proposed fix in
+> `investigations/claude/particle_unborn_slots_2026-08-20.md`. Compiles standalone; macOS
+> Debug build passes.
 
 **File:** `Particles.metal:19-41` — **CONFIRMED** (no time uniform is bound)
 
@@ -893,6 +913,16 @@ store site.)*
 Also: the lifetime check runs *after* `scale` is computed, so the frame a particle expires it
 renders with `mix(start, end, age/life > 1)` — an extrapolated scale. Reorder the reset before
 the scale computation.
+
+*(Resolution (2026-08-20): NOT reordered, on purpose. The reset block has always restored
+`p.scale = p.startScale` — confirmed at the review commit `870d464` — so the expiry frame
+renders the respawned scale in either order; the extrapolated mix never lands, and the
+observation above missed the reset's third line. Reordering would actually regress:
+never-emitted slots are zero-filled (`makeBuffer(length:)` is documented as "Creates a buffer
+the method clears with zero values"), so their `life == 0` makes the mix produce inf/NaN,
+which the current mix-then-reset order overwrites before store-back — reset-first would store
+NaN (`0/0`) into those slots' `scale` every frame. The constraint is commented in the
+kernel.)*
 
 ---
 
@@ -1187,8 +1217,9 @@ Normalize once, in the fragment. Same pattern in `Base.metal` (`base_fragment` r
 > (direction/speed/life/color/…) with stale pre-spawn data, permanently deadening the
 > slot, where the old write set loses only {position, age, scale} and self-heals on the
 > next pass. Both constraints are commented at the store site. The commented-out cos/sin
-> velocity experiment was deleted in passing. C11 (deltaTime) remains open and composes
-> on top. Verified: compiles standalone via `xcrun metal -c`; macOS Debug build passes.
+> velocity experiment was deleted in passing. C11 (deltaTime) has since landed on top in
+> `19b8913` (2026-08-20). Verified: compiles standalone via `xcrun metal -c`; macOS Debug
+> build passes.
 
 **File:** `Particles.metal:19-41` — every `particles[id].field` access is a device-memory
 dereference the compiler can't always coalesce through the write aliasing. Load `Particle p`
