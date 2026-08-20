@@ -16,19 +16,24 @@ struct ParticleVertexOut {
     float4 color;
 };
 
+// deltaTime is the update tick's frame delta in seconds (C11): descriptor
+// speed/life are physical units (m/s, seconds), so the simulation advances at
+// the same rate regardless of frame rate.
 kernel void compute_particle(device Particle *particles [[ buffer(0) ]],
+                             constant float &deltaTime [[ buffer(1) ]],
                              uint id [[ thread_position_in_grid ]]) {
     // One coalesced device→thread load instead of ~14 per-field reads (P5).
     Particle p = particles[id];
-    float xVelocity = p.speed * p.direction.x;
-    float yVelocity = p.speed * p.direction.y;
-    float zVelocity = p.speed * p.direction.z;
-    
-    p.position.x += xVelocity;
-    p.position.y += yVelocity;
-    p.position.z += zVelocity;
-    p.age += 1.0;
-    
+    float3 pVelocity = p.speed * p.direction;
+    p.position += pVelocity * deltaTime;
+    p.age += deltaTime;
+
+    // Scale-then-reset order is load-bearing, don't swap: the reset overwrites
+    // scale with startScale, so the expiry frame renders the respawn (never the
+    // extrapolated mix) — and the dispatch covers ALL particleCount slots, so
+    // never-emitted slots (zero-filled at buffer creation → life == 0) hit
+    // inf/NaN in the mix, which this order overwrites before store-back.
+    // Resetting first would store NaN (0/0) into those slots' scale.
     float age = p.age / p.life;
     p.scale = mix(p.startScale, p.endScale, age);
     

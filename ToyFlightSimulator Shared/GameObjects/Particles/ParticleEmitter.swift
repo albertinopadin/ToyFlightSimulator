@@ -41,6 +41,7 @@ final class ParticleEmitter: @unchecked Sendable {
     var birthRate: Int
     var birthDelay: Int = 0
     private var birthTimer: Int = 0
+    private var loggedPoolSaturation = false
     
     var particleTexture: MTLTexture?
     var particleBuffer: MTLBuffer?
@@ -86,13 +87,16 @@ final class ParticleEmitter: @unchecked Sendable {
         descriptor.positionZRange = -1...1
         descriptor.direction = [0, 1, 0]
         descriptor.directionRange = -0.3...0.3
-        descriptor.speed = 0.2
+        // Units are physical since C11 (speed m/s, life seconds): converted 1:1
+        // from the old per-dispatch values at the historical 60 fps cadence
+        // (0.2/frame → 12 m/s, 180 frames → 3 s, −50…70 frames → −0.83…1.17 s).
+        descriptor.speed = 12.0
         descriptor.pointSize = Float(size.width)
         descriptor.startScale = 0
         descriptor.startScaleRange = 0.5...1.0
         descriptor.endScaleRange = 0...0
-        descriptor.life = 180
-        descriptor.lifeRange = -50...70
+        descriptor.life = 3.0
+        descriptor.lifeRange = -0.83...1.17
         descriptor.color = Self.FIRE_COLOR
         return Self.fire(descriptor: descriptor)
     }
@@ -100,8 +104,8 @@ final class ParticleEmitter: @unchecked Sendable {
     static func afterburner(descriptor: ParticleDescriptor) -> ParticleEmitter {
         return ParticleEmitter(descriptor,
                                texture: "fire",
-                               particleCount: 2500,
-                               birthRate: 10,
+                               particleCount: 100_000,
+                               birthRate: 20,
                                birthDelay: 0,
                                blending: true)
     }
@@ -111,26 +115,38 @@ final class ParticleEmitter: @unchecked Sendable {
         descriptor.position = position
         descriptor.positionXRange = -0.4...0.4
         descriptor.positionYRange = -0.4...0.4
-        descriptor.positionZRange = -0.4...0.4
+        descriptor.positionZRange = -0.1...0.1
         descriptor.direction = [0, 0, -1]
         descriptor.directionRange = -0.05...0.05
-        descriptor.speed = 1.0
+        // Units are physical since C11: speed in m/s, life in seconds — plume
+        // length ≈ speed × life = 10 m.
+        descriptor.speed = 100.0
+        descriptor.speedRange = 0...0
         descriptor.pointSize = Float(size.width)
         descriptor.startScale = 0
         descriptor.startScaleRange = 0.1...0.4
         descriptor.endScaleRange = 0...0
-        descriptor.life = 50
-        descriptor.lifeRange = -50...70
+        descriptor.life = 0.1
+        descriptor.lifeRange = 0...0
         descriptor.color = Self.FIRE_COLOR
         return Self.afterburner(descriptor: descriptor)
     }
     
     func reset() {
         currentParticles = 0
+        loggedPoolSaturation = false
     }
-    
+
     func emit() {
         if currentParticles >= particleCount {
+            // Expected steady state, not an error: compute_particle recycles
+            // expired particles in place and currentParticles never shrinks
+            // while emitting, so a live emitter always fills its pool. Log once
+            // — this path runs every update tick once the pool is full.
+            if !loggedPoolSaturation {
+                loggedPoolSaturation = true
+                print("[ParticleEmitter emit] Particle pool saturated: \(currentParticles)/\(particleCount); existing particles recycle in place")
+            }
             return
         }
         
@@ -153,7 +169,8 @@ final class ParticleEmitter: @unchecked Sendable {
             particlePointer.pointee.position = [positionX, positionY, positionZ]
             particlePointer.pointee.startPosition = particlePointer.pointee.position
             particlePointer.pointee.size = particleDescriptor.pointSize + Float.random(in: particleDescriptor.pointSizeRange)
-            particlePointer.pointee.direction = particleDescriptor.direction + Float.random(in: particleDescriptor.directionRange)
+            particlePointer.pointee.direction = particleDescriptor.direction +
+                                                Float.random(in: particleDescriptor.directionRange)
             particlePointer.pointee.speed = particleDescriptor.speed + Float.random(in: particleDescriptor.speedRange)
             particlePointer.pointee.scale = particleDescriptor.startScale + Float.random(in: particleDescriptor.startScaleRange)
             particlePointer.pointee.startScale = particlePointer.pointee.scale

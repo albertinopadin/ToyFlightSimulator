@@ -30,6 +30,12 @@ class ParticleEmitterObject: GameObject, ParticleEmitterEntity {
         if shouldEmit && emitter.currentParticles > 0 {
             let threadsPerGrid = MTLSize(width: emitter.particleCount, height: 1, depth: 1)
             computeEncoder.setBuffer(emitter.particleBuffer, offset: 0, index: 0)
+            // Frame delta in seconds (C11). Reading this on the render thread is
+            // safe: encoding starts only after this frame's render↔update
+            // handshake (updateDoneSemaphore), so the update thread has already
+            // written this tick's value and is parked until the next frame.
+            var dt = Float(GameTime.DeltaTime)
+            computeEncoder.setBytes(&dt, length: Float.size, index: 1)
             computeEncoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
         }
     }
