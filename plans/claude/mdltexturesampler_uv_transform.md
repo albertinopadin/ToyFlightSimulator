@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-25
 **Supersedes:** `plans/codex/mdltexturesampler_transform_shader_plan_2026-04-22.md`
-**Research basis:** `investigations/claude/texture_uv_transform_research_2026-04-25.md`
+**Research basis:** `research/claude/texture_uv_transform_research_2026-04-25.md`
 
 ## Summary
 

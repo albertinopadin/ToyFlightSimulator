@@ -2,7 +2,7 @@
 
 **Date**: January 2026
 **Status**: Ready for Implementation
-**Prerequisites**: Research complete (see `investigations/animation-layer-channel-system.md`)
+**Prerequisites**: Research complete (see `research/claude/animation-layer-channel-system.md`)
 
 ---
 

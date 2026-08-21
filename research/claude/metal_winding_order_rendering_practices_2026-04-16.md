@@ -317,4 +317,4 @@ These are all probes, not code changes. The user explicitly asked for no code mo
 
 ### In-repo prior work
 
-- `investigations/codex/metal_modelio_triangle_winding_research_2026-04-16.md` — prior Model I/O introspection research and the `analyzeAuthoredWinding` / `screenSpaceWinding` helpers reused above.
+- `research/codex/metal_modelio_triangle_winding_research_2026-04-16.md` — prior Model I/O introspection research and the `analyzeAuthoredWinding` / `screenSpaceWinding` helpers reused above.

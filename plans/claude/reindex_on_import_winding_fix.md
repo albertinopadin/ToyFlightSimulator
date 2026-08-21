@@ -2,8 +2,8 @@
 
 **Date:** 2026-04-16
 **Companion docs:**
-- `investigations/claude/metal_winding_order_rendering_practices_2026-04-16.md` (full architectural analysis)
-- `investigations/codex/metal_modelio_triangle_winding_research_2026-04-16.md` (Model I/O introspection background)
+- `research/claude/metal_winding_order_rendering_practices_2026-04-16.md` (full architectural analysis)
+- `research/codex/metal_modelio_triangle_winding_research_2026-04-16.md` (Model I/O introspection background)
 - `scripts/inspect_winding.swift` (the probe used to gather the evidence below)
 
 **Status:** DRAFT — awaiting user review before any code change.

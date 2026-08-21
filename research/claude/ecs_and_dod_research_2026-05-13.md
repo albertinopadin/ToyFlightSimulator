@@ -411,7 +411,7 @@ A pre-refactor frame capture is the baseline. After every refactor phase, captur
 
 Run **Instruments → Allocations** (or "Swift Allocations" in newer Xcodes) with the "VM Tracker" instrument and watch for:
 
-- Steady-state allocation rate per frame. The render-stuttering investigation in `investigations/claude/render-thread-stuttering-research.md` already established that 60 dict + ~300 array allocations per second from `GetUniformsData` caused stutter. The DOD refactor should not regress this.
+- Steady-state allocation rate per frame. The render-stuttering investigation in `research/claude/render-thread-stuttering-research.md` already established that 60 dict + ~300 array allocations per second from `GetUniformsData` caused stutter. The DOD refactor should not regress this.
 - Any new `[PhysicsEntity]` boxed-storage allocations (these will show up as small Heap allocations every frame).
 
 ### 5.5 Comparing iterations — the discipline
@@ -419,7 +419,7 @@ Run **Instruments → Allocations** (or "Swift Allocations" in newer Xcodes) wit
 For each phase of the refactor:
 
 1. Record a 10-second profile on a fixed scene (`FlightboxWithPhysics` is a good test scene — it has aircraft, ground, and active physics).
-2. Save the `.trace` to `investigations/claude/perf/` with the phase name and date.
+2. Save the `.trace` to `research/claude/perf/` with the phase name and date.
 3. Diff the metrics that should change (the ones targeted by the phase) and verify the metrics that should *not* change are flat.
 4. Only proceed to the next phase if the current phase's win is measurable and no regression appeared.
 

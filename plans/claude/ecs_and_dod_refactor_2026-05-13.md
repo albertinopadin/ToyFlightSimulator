@@ -1,7 +1,7 @@
 # Plan: Incremental DOD / ECS Refactor of ToyFlightSimulator
 
 **Date:** 2026-05-13
-**Companion research:** `investigations/claude/ecs_and_dod_research_2026-05-13.md`
+**Companion research:** `research/claude/ecs_and_dod_research_2026-05-13.md`
 
 ## Goals
 
@@ -74,7 +74,7 @@ os_signpost(.end, log: PerfSignpost.log, name: "writeSnapshot", signpostID: Perf
 
 3. Profile in Release configuration with `Instruments → Game Performance` template for 10 seconds of representative play.
 
-4. Open the trace and record these numbers into `investigations/claude/perf/baseline_2026-05-13.md`:
+4. Open the trace and record these numbers into `research/claude/perf/baseline_2026-05-13.md`:
 
    - Average frame time (ms), 99th-percentile frame time (ms).
    - Average duration of each signpost interval (ms).
@@ -797,7 +797,7 @@ ToyFlightSimulator Shared/
       PhysicsStores.swift      // SphereStore, PlaneStore
   Utils/
     PerfSignposts.swift
-investigations/claude/perf/
+research/claude/perf/
   baseline_2026-05-13.md
   phase1_<date>.md
   ...                          // one file per measurement gate

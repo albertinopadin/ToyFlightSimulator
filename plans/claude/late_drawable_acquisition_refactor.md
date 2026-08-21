@@ -11,7 +11,7 @@ The four renderers in this list all currently acquire `view.currentDrawable` (or
 
 Apple's documented guidance (Metal Best Practices Guide → Drawables; WWDC 2019 Session 606) is to acquire the drawable **as late as possible** and release it **as soon as possible**, because drawables come from a small pool (max 3) and holding one across CPU encoding work shrinks the pool and stalls `nextDrawable()` on subsequent frames. Today the drawable is held for ~1–8 ms per frame; the goal is to drop that to microseconds.
 
-Full design rationale and references: [`investigations/claude/metal_drawable_acquisition_and_presentation_research_2026-04-19.md`](../../investigations/claude/metal_drawable_acquisition_and_presentation_research_2026-04-19.md).
+Full design rationale and references: [`research/claude/metal_drawable_acquisition_and_presentation_research_2026-04-19.md`](../../research/claude/metal_drawable_acquisition_and_presentation_research_2026-04-19.md).
 
 The fix (per §267–275 of that document) is structural: render GBuffer/lighting/MSAA-resolve into an **app-owned intermediate texture** in an early command buffer, then in a separate late command buffer acquire the drawable and execute only a trivial composite-into-drawable pass before presenting.
 
