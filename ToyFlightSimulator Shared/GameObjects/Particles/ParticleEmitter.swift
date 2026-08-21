@@ -123,7 +123,7 @@ final class ParticleEmitter: @unchecked Sendable {
         descriptor.direction = [0, 0, -1]
         descriptor.directionRange = -0.05...0.05
         // Units are physical since C11: speed in m/s, life in seconds — plume
-        // length ≈ speed × life = 10 m.
+        // length ≈ speed × life ≈ 8–12 m with the life spread below.
         descriptor.speed = 100.0
         descriptor.speedRange = 0...0
         descriptor.pointSize = Float(size.width)
@@ -131,7 +131,11 @@ final class ParticleEmitter: @unchecked Sendable {
         descriptor.startScaleRange = 0.1...0.4
         descriptor.endScaleRange = 0...0
         descriptor.life = 0.1
-        descriptor.lifeRange = 0...0
+        // Spread lives ±20% so recycle cycles decorrelate: with identical
+        // lives every particle wraps in lockstep and any shared phase persists
+        // forever; unequal lives make phases precess past each other into a
+        // uniform continuum (fire()'s wide lifeRange has the same effect).
+        descriptor.lifeRange = -0.02...0.02
         descriptor.color = Self.FIRE_COLOR
         return Self.afterburner(descriptor: descriptor)
     }
@@ -193,8 +197,20 @@ final class ParticleEmitter: @unchecked Sendable {
                 particlePointer.pointee.endScale = particlePointer.pointee.startScale
             }
             
-            particlePointer.pointee.age = 0
-            particlePointer.pointee.life = particleDescriptor.life + Float.random(in: particleDescriptor.lifeRange)
+            // Random initial phase: with age = 0 an entire tick's batch shares
+            // one age and marches as a single sheet, so the plume is born
+            // quantized to the tick grid (and later collapses onto it — see
+            // debugging/claude/afterburner_plume_strobing_collapse.md). A
+            // uniform phase in [0, life) spreads spawns along the full plume;
+            // pre-integrate position below so the drawn distance matches the
+            // phase from the first frame (the kernel preserves
+            // position == startPosition + velocity·age thereafter).
+            let life = particleDescriptor.life + .random(in: particleDescriptor.lifeRange)
+            let age = Float.random(in: 0..<max(life, .ulpOfOne))
+            particlePointer.pointee.age = age
+            particlePointer.pointee.life = life
+            particlePointer.pointee.position = particlePointer.pointee.startPosition + particlePointer.pointee.direction * particlePointer.pointee.speed * age
+            
             particlePointer.pointee.color = particleDescriptor.color
             particlePointer = particlePointer.advanced(by: 1)
         }

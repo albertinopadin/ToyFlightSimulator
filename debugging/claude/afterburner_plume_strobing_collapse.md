@@ -11,6 +11,11 @@ fixed live-prefix build.
 `ParticleEmitterObject.swift`, `Afterburner.swift`, `F22.swift`, `MacGameUIView.swift`).
 **Companion:** `code_reviews/claude/particle_unborn_slots_2026-08-20.md` (the live-prefix
 dispatch investigation; this bug is independent of that fix and predates it).
+**Status (2026-08-21):** Fixed — F1, F2, and F3 are applied as proposed in §5 (alongside
+a nozzle x-offset calibration 0.700 → 0.600 in `F22.swift`). During review of the applied
+change, the F1 diff's *removal* of the kernel's unconditional
+`p.position += pVelocity * deltaTime` turned out to have been missed, which
+double-integrated position (~2× plume length); corrected in the same commit.
 
 ---
 

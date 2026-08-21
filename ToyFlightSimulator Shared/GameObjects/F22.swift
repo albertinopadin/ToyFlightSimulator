@@ -33,11 +33,11 @@ class F22: Aircraft {
         // old native-unit offsets — same model-relative placement as before.
         // TODO(meterization): eyeball against the actual nozzles in meters.
         afterburnerLeft.off()
-        afterburnerLeft.setPosition(-0.700, 0.098, -4)
+        afterburnerLeft.setPosition(-0.600, 0.098, -4)
         addChild(afterburnerLeft)
 
         afterburnerRight.off()
-        afterburnerRight.setPosition(0.700, 0.098, -4)
+        afterburnerRight.setPosition(0.600, 0.098, -4)
         addChild(afterburnerRight)
     }
     
