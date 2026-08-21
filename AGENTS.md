@@ -27,7 +27,7 @@
 - `Utils/`: locks/caches, ModelIO helpers, curves, finite-safe vector helpers, debug logging, random colors, Metal HUD control.
 - `Views/`: shared macOS/iOS SwiftUI menu controls.
 - `ToyFlightSimulatorTests/`: legacy XCTest plus Swift Testing suites for math, utils, assets, cameras, registration, physics, scenes, and shadows.
-- `scripts/`: USD/material/skeleton and winding inspection utilities. `code_reviews/`, `debugging/`, `investigations/`, and `plans/` contain historical design context; verify against current source before following them.
+- `scripts/`: USD/material/skeleton and winding inspection utilities. `code_reviews/`, `debugging/`, `plans/`, and `research/` contain historical design context; verify against current source before following them.
 
 ## Runtime and Thread Flow (Critical)
 

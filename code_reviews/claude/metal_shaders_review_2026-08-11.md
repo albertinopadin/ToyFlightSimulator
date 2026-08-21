@@ -878,10 +878,10 @@ The fix is therefore latent until a point light hovers near terrain under TiledM
 > −0.83…1.17 s) so re-enabling it doesn't inherit frame-based numbers. The reorder suggested
 > in the "Also" note was deliberately NOT applied — see the resolution note there. Pool
 > saturation (the recycling design's steady state) now logs once per fill instead of every
-> update tick. Follow-up spun out of verification: the dispatch still covers all
-> `particleCount` slots, born or not — findings and a proposed fix in
-> `investigations/claude/particle_unborn_slots_2026-08-20.md`. Compiles standalone; macOS
-> Debug build passes.
+> update tick. Follow-up spun out of verification: at the time, the dispatch still covered
+> all `particleCount` slots, born or not — findings and the fix (since applied in `d2c14a9`:
+> live-prefix dispatch) in `code_reviews/claude/particle_unborn_slots_2026-08-20.md`.
+> Compiles standalone; macOS Debug build passes.
 
 **File:** `Particles.metal:19-41` — **CONFIRMED** (no time uniform is bound)
 

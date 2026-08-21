@@ -7,6 +7,10 @@
 `Fire.swift`, `Particles.metal`, `DrawManager.DrawParticles`, `ParticleRendering`,
 `Node.computeParticles`, `TFSCommon.h` (`struct Particle`), verified at `19b8913` (the C11
 commit).
+**Status (2026-08-21):** Fixed in `d2c14a9` — §5 live-prefix dispatch, the §6.1 batch
+clamp, §6.3 per-lane direction spread, and the §6.5 density knob (pool 100 000 → 10 000)
+are applied; the kernel comments now carry the born-particle rationale instead of the
+unborn-slot one.
 
 ---
 
@@ -136,7 +140,8 @@ Effects:
   `shouldEmit` already is — encode happens after the frame's update handshake, so the value
   is current; a stale-low read would merely skip a spawn's first compute frame.
 
-Not applied here (the task was to investigate); it composes cleanly on `19b8913`.
+Not applied as part of the investigation itself; since applied — see **Status** in the
+header.
 
 ## 6. Adjacent findings (initialization/emission path, found while verifying)
 

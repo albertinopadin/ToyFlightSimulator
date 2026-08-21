@@ -25,8 +25,9 @@ over a shared engine in `ToyFlightSimulator Shared/`, with tests in `ToyFlightSi
 tree for specifics; two conventions aren't visible from it:
 
 - `Math/`: `Transform.*` is canonical — `Math`/`MathUtils` hold niche helpers only.
-- `code_reviews/ debugging/ investigations/ plans/`: Claude-authored review, debugging, research, and plan
-  docs. Each has a `claude/` subdir; `debugging/screenshots/` holds visual artifacts.
+- `code_reviews/ debugging/ plans/ research/`: agent-authored review, debugging, plan, and research docs
+  (`research/` is primarily deep web research done when implementing new systems or features). Each has a
+  `claude/` subdir (some also `codex/`/`gemini/`); `debugging/screenshots/` holds visual artifacts.
 
 ## Architecture
 
