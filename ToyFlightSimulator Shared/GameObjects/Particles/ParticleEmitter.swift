@@ -197,19 +197,16 @@ final class ParticleEmitter: @unchecked Sendable {
                 particlePointer.pointee.endScale = particlePointer.pointee.startScale
             }
             
-            // Random initial phase: with age = 0 an entire tick's batch shares
-            // one age and marches as a single sheet, so the plume is born
-            // quantized to the tick grid (and later collapses onto it — see
-            // debugging/claude/afterburner_plume_strobing_collapse.md). A
-            // uniform phase in [0, life) spreads spawns along the full plume;
-            // pre-integrate position below so the drawn distance matches the
-            // phase from the first frame (the kernel preserves
-            // position == startPosition + velocity·age thereafter).
-            let life = particleDescriptor.life + .random(in: particleDescriptor.lifeRange)
-            let age = Float.random(in: 0..<max(life, .ulpOfOne))
-            particlePointer.pointee.age = age
-            particlePointer.pointee.life = life
-            particlePointer.pointee.position = particlePointer.pointee.startPosition + particlePointer.pointee.direction * particlePointer.pointee.speed * age
+            // Spawn at the nozzle with age = 0: an igniting plume visibly
+            // extends outward over one particle transit instead of appearing
+            // at full length. Safe against the phase collapse
+            // (debugging/claude/afterburner_plume_strobing_collapse.md): the
+            // batch shares this initial phase only until its first expiry —
+            // per-particle lives decorrelate batch-mates there, and the
+            // kernel's remainder-carry keeps them separated forever after
+            // (sim variant C).
+            particlePointer.pointee.age = 0
+            particlePointer.pointee.life = particleDescriptor.life + .random(in: particleDescriptor.lifeRange)
             
             particlePointer.pointee.color = particleDescriptor.color
             particlePointer = particlePointer.advanced(by: 1)

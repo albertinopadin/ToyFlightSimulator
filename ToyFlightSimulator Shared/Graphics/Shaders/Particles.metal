@@ -37,9 +37,8 @@ kernel void compute_particle(device Particle *particles [[ buffer(0) ]],
         // each particle's fractional phase and also absorbs a multi-life
         // hitch (deltaTime > life) in one step. Re-enter at the phase-correct
         // offset, not at the nozzle: position stays exactly on
-        // position == startPosition + velocity·age (emit() pre-integrates
-        // spawns onto the same invariant), so integration drift also
-        // self-corrects once per cycle.
+        // position == startPosition + velocity·age (spawns start on it at
+        // age = 0), so integration drift also self-corrects once per cycle.
         p.age = fmod(p.age, p.life);
         p.position = p.startPosition + pVelocity * p.age;
     } else {

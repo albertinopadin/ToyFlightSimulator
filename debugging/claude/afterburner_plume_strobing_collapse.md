@@ -16,6 +16,11 @@ a nozzle x-offset calibration 0.700 → 0.600 in `F22.swift`). During review of 
 change, the F1 diff's *removal* of the kernel's unconditional
 `p.position += pVelocity * deltaTime` turned out to have been missed, which
 double-integrated position (~2× plume length); corrected in the same commit.
+**Update (2026-08-21, later):** F3 reverted to `age = 0` spawns — the pre-placed random
+phase made an igniting plume appear at full length instead of extending out of the
+nozzle. F1+F2 alone are sufficient against the collapse (sim variant C: ~1150 phases,
+100% coverage for the full run); a batch's shared spawn phase decorrelates at its first
+expiry via the per-particle lives and stays decorrelated via the remainder-carry.
 
 ---
 
@@ -234,6 +239,9 @@ Per-particle plume length becomes 8–12 m — a naturally ragged flame edge ins
 hard cutoff (a bonus, not a cost).
 
 ### F3 — emit(): random initial phase (`ParticleEmitter.swift`)
+
+*(Applied, then reverted the same day in favor of the ignition grow-out — see
+**Status**. Kept here as the record of what was evaluated.)*
 
 Replaces the `age`/`life` assignments at the bottom of the spawn loop (direction and
 speed are already written by this point):
