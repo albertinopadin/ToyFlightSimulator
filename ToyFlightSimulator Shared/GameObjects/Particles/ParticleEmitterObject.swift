@@ -28,7 +28,14 @@ class ParticleEmitterObject: GameObject, ParticleEmitterEntity {
     
     func computeUpdate(_ computeEncoder: any MTLComputeCommandEncoder, threadsPerGroup: MTLSize) {
         if shouldEmit && emitter.currentParticles > 0 {
-            let threadsPerGrid = MTLSize(width: emitter.particleCount, height: 1, depth: 1)
+            // Dispatch only the born prefix: emit() fills slots contiguously from 0
+            // and expiry recycles in place, so [0, currentParticles) is exactly the
+            // set of ever-born slots (the count never shrinks while emitting; only
+            // reset() zeroes it). Never-emitted slots are never touched by the GPU —
+            // no reliance on the buffer's zero-fill, no wasted threads.
+            // currentParticles is read under the same handshake guarantee as dt
+            // below; a stale-low read would only skip a spawn's first compute frame.
+            let threadsPerGrid = MTLSize(width: emitter.currentParticles, height: 1, depth: 1)
             computeEncoder.setBuffer(emitter.particleBuffer, offset: 0, index: 0)
             // Frame delta in seconds (C11). Reading this on the render thread is
             // safe: encoding starts only after this frame's render↔update

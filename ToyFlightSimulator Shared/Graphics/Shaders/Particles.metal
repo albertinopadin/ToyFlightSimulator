@@ -30,10 +30,12 @@ kernel void compute_particle(device Particle *particles [[ buffer(0) ]],
 
     // Scale-then-reset order is load-bearing, don't swap: the reset overwrites
     // scale with startScale, so the expiry frame renders the respawn (never the
-    // extrapolated mix) — and the dispatch covers ALL particleCount slots, so
-    // never-emitted slots (zero-filled at buffer creation → life == 0) hit
-    // inf/NaN in the mix, which this order overwrites before store-back.
-    // Resetting first would store NaN (0/0) into those slots' scale.
+    // extrapolated mix). The order also contains the inf/NaN math a zero-filled
+    // never-emitted slot would produce (life == 0 → age/life = +inf → NaN mix).
+    // The dispatch now covers only the born prefix [0, currentParticles) (see
+    // ParticleEmitterObject.computeUpdate), so that path is normally never
+    // taken — the ordering keeps it harmless if the dispatch width ever
+    // regresses to the whole pool. Resetting first would store NaN scales.
     float age = p.age / p.life;
     p.scale = mix(p.startScale, p.endScale, age);
     
@@ -45,12 +47,15 @@ kernel void compute_particle(device Particle *particles [[ buffer(0) ]],
 
     // Write back only the mutated fields, not the whole struct: emit() (update
     // thread) writes fresh spawns into this same shared buffer while earlier
-    // frames' dispatches are still in flight, and this dispatch covers all
-    // particleCount slots, born or not. A whole-struct store losing that race
-    // would stomp the spawn's CPU-only fields (direction/speed/life/color/...)
-    // with stale pre-spawn data, permanently deadening the slot; racing on
-    // {position, age, scale} matches the old per-field write set and self-heals
-    // on the next pass.
+    // frames' dispatches are still in flight. Live-prefix dispatch shrinks that
+    // window (an in-flight grid encoded with an older, smaller count never
+    // covers the slots emit() is filling) but doesn't close it: off() → reset()
+    // → on() within the ≤3 frames-in-flight window respawns into LOW indices
+    // that still-executing grids DO cover. A whole-struct store losing that
+    // race would stomp the spawn's CPU-only fields (direction/speed/life/
+    // color/...) with stale pre-spawn data, permanently deadening the slot;
+    // racing on {position, age, scale} matches the old per-field write set and
+    // self-heals on the next pass.
     particles[id].position = p.position;
     particles[id].age = p.age;
     particles[id].scale = p.scale;

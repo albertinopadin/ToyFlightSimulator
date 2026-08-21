@@ -104,7 +104,11 @@ final class ParticleEmitter: @unchecked Sendable {
     static func afterburner(descriptor: ParticleDescriptor) -> ParticleEmitter {
         return ParticleEmitter(descriptor,
                                texture: "fire",
-                               particleCount: 100_000,
+                               // Pool size IS the steady-state plume density: recycling
+                               // never kills particles, so a live emitter always fills
+                               // its pool (birthRate only sets the ramp-up speed). 10k
+                               // keeps blended-point overdraw manageable.
+                               particleCount: 10_000,
                                birthRate: 20,
                                birthDelay: 0,
                                blending: true)
@@ -161,22 +165,30 @@ final class ParticleEmitter: @unchecked Sendable {
         
         var particlePointer = particleBuffer.contents().bindMemory(to: Particle.self, capacity: particleCount)
         particlePointer = particlePointer.advanced(by: currentParticles)
+
+        // Clamp the final batch to the remaining pool space: the writes below go
+        // through a raw pointer with no bounds check, and nothing forces
+        // particleCount to be a multiple of birthRate.
+        let batch = min(birthRate, particleCount - currentParticles)
         
-        for _ in 0..<birthRate {
+        for _ in 0..<batch {
             let positionX = particleDescriptor.position.x + .random(in: particleDescriptor.positionXRange)
             let positionY = particleDescriptor.position.y + .random(in: particleDescriptor.positionYRange)
             let positionZ = particleDescriptor.position.z + .random(in: particleDescriptor.positionZRange)
             particlePointer.pointee.position = [positionX, positionY, positionZ]
             particlePointer.pointee.startPosition = particlePointer.pointee.position
-            particlePointer.pointee.size = particleDescriptor.pointSize + Float.random(in: particleDescriptor.pointSizeRange)
+            particlePointer.pointee.size = particleDescriptor.pointSize + .random(in: particleDescriptor.pointSizeRange)
+            // Per-lane randoms → conical spread around `direction`. (A scalar
+            // Float.random here would broadcast ONE offset to all three lanes,
+            // collapsing the spread onto the (1,1,1) diagonal.)
             particlePointer.pointee.direction = particleDescriptor.direction +
-                                                Float.random(in: particleDescriptor.directionRange)
-            particlePointer.pointee.speed = particleDescriptor.speed + Float.random(in: particleDescriptor.speedRange)
-            particlePointer.pointee.scale = particleDescriptor.startScale + Float.random(in: particleDescriptor.startScaleRange)
+                                                float3.random(in: particleDescriptor.directionRange)
+            particlePointer.pointee.speed = particleDescriptor.speed + .random(in: particleDescriptor.speedRange)
+            particlePointer.pointee.scale = particleDescriptor.startScale + .random(in: particleDescriptor.startScaleRange)
             particlePointer.pointee.startScale = particlePointer.pointee.scale
             
             if let range = particleDescriptor.endScaleRange {
-                particlePointer.pointee.endScale = particleDescriptor.endScale + Float.random(in: range)
+                particlePointer.pointee.endScale = particleDescriptor.endScale + .random(in: range)
             } else {
                 particlePointer.pointee.endScale = particlePointer.pointee.startScale
             }
@@ -187,6 +199,6 @@ final class ParticleEmitter: @unchecked Sendable {
             particlePointer = particlePointer.advanced(by: 1)
         }
         
-        currentParticles += birthRate
+        currentParticles += batch
     }
 }
