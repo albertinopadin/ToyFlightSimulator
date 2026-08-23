@@ -158,7 +158,7 @@ Shadow map storage: one `depth32Float` `texture2DArray`, 4096² × 4 slices. `Sh
 
 ### Threading
 - **Main Thread**: Rendering (MTKView delegate), UI, input capture
-- **UpdateThread**: Game logic + physics. Wakes on `updateSemaphore`, calls `SceneManager.writeFrameSnapshot(frameIndex:)` to write ModelConstants directly into the next ring-buffer slot, then signals `updateDoneSemaphore`. Delta time from `DispatchTime.now().uptimeNanoseconds`.
+- **UpdateThread**: Game logic + physics. Wakes on `updateSemaphore`, calls `SceneManager.writeFrameSnapshot(frameIndex:)` to write ModelConstants directly into the next ring-buffer slot, then signals `updateDoneSemaphore`. Delta time from `DispatchTime.now().uptimeNanoseconds`, clamped to `maxDeltaTime` (100 ms) so a parked thread (menu pause, occlusion, debugger — and the first-ever tick, whose previous time is 0) doesn't integrate the whole gap as one step; stalled time is dropped, not carried. Particle compute is additionally skipped while `SceneManager.Paused` (the async view-pause lets a frame or two draw with stale dt).
 - **AudioThread**: Kicked after scene built (prevents crackling). Plays startup music if `Preferences.PlayMusicOnStartup`, otherwise calls `AudioManager.Prepare()` to build the lazy AVAudioEngine graph off-main so the first UI volume change doesn't stall the main thread. AVAudioEngine for MP3 playback
 - **Synchronization**: `OSAllocatedUnfairLock` (managers, caches, input state), `DispatchSemaphore` (`inFlightSemaphore` for max 3 frames in flight; `updateSemaphore` + `updateDoneSemaphore` for render↔update handshake within a frame)
 

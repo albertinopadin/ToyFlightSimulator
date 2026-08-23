@@ -10,8 +10,9 @@ persistence.
 `ParticleRendering.swift`, `UpdateThread.swift`, `SceneManager.swift`, `Engine.swift`,
 `GameTime.swift`, `FlightboxScene.swift`, `F22.swift`, `DrawManager.DrawParticles`,
 `Node.computeParticles`, verified at `cbbebed`.
-**Status:** Issue A applied 2026-08-23 (A1–A3 + the regression tests), which also closes Issue C.
-B1/B2 remain proposed. Field notes from applying are marked **Applied** inline below.
+**Status:** Fully applied. Issue A applied 2026-08-23 (A1–A3 + the regression tests, `37beab2`),
+which also closes Issue C; Issue B (B1+B2) applied later the same day. Field notes from applying
+are marked **Applied** inline below.
 
 ---
 
@@ -293,6 +294,12 @@ which is what its consumers (animation phases, `pl2`'s orbit) actually want.
 - **B1 alone** — leaves the resume spike, which is the bigger half. **B2 alone** — leaves the
   straggler frames advancing a nominally-paused sim (and any future render-while-paused mode
   would silently regress). Both are two-line changes; take both.
+
+**Applied (2026-08-23, later):** both diffs as proposed (guard placed before the encoder is
+created; the clamp bounds only the delta while the clock still advances to now, so stalled time
+is dropped rather than carried). Full suite green via the serial flow. The §Verification steps
+for B (pause 30 s mid-burn → frozen plume behind the menu → resume with no aircraft lurch, no
+`TotalGameTime` snap, plume advancing ≤ 100 ms) remain the in-game acceptance check.
 
 ---
 

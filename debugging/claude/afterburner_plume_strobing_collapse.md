@@ -281,7 +281,9 @@ same treatment — for a looping flame that is equally desirable.
 - **`off()` → `reset()` → `on()` respawn race** — unchanged; the narrow store-back
   banner still covers it. (`F22.doUpdate` calls `off()` every tick below 0.8 throttle,
   so reset-while-in-flight remains a normal event.)
-- **Particles ignoring pause** (§6.4 of the unborn-slots doc) — unchanged.
+- **Particles ignoring pause** (§6.4 of the unborn-slots doc) — unchanged. *(Fixed
+  2026-08-23 — pause gate on the compute encode + UpdateThread dt clamp; see
+  `code_reviews/claude/particle_remaining_issues_plan_2026-08-23.md`, Issue B.)*
 - **A tempting simplification for later:** with F1+F3 the kernel maintains
   `position ≡ startPosition + velocity·age` exactly, and `scale` is also a pure function
   of `age` — the vertex shader could derive both and the compute store-back could shrink

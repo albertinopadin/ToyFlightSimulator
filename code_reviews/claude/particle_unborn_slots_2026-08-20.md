@@ -15,6 +15,9 @@ unborn-slot one.
 persistence fixed — emitters are per-instance now (no shared `static let`); see
 `particle_remaining_issues_plan_2026-08-23.md`. §6.4 (pause) remains open there, with a
 corrected diagnosis (the leak is the post-resume tick, not compute running during pause).
+**Status (2026-08-23, later):** §6.4 fixed too — `encodeParticleComputePass` skips while
+paused and `UpdateThread` clamps a tick's dt to 100 ms. Every finding in this doc is now
+resolved.
 
 ---
 
@@ -176,6 +179,13 @@ header.
    compute, so the plume keeps burning during pause. Pre-existing (pre-C11 `age += 1`
    ignored pause the same way); a fix belongs with pause plumbing (skip
    `encodeParticleComputePass` while paused, or bind 0), not with C11.
+   **Fixed 2026-08-23, with a corrected diagnosis:** steady-state pause actually parks BOTH
+   loops (Paused also pauses the MTKView, stopping draw and the update handshake), so the
+   real leaks were (i) a stale-dt straggler frame or two while the async view-pause lands
+   and (ii) the post-resume tick integrating the entire pause (and, on the first-ever tick,
+   machine uptime) in one step. `encodeParticleComputePass` now skips while paused, and
+   `UpdateThread` clamps a tick's dt to 100 ms — see
+   `particle_remaining_issues_plan_2026-08-23.md`, Issue B.
 5. **Saturated-pool draw cost.** At the new 100 000 cap, steady state is 100 000 blended
    20 px points along a 10 m plume — substantial overdraw on the MSAA renderers. If that
    density wasn't the goal, the knob that actually controls steady-state density is
