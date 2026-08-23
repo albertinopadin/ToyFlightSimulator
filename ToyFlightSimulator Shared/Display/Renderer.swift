@@ -123,7 +123,7 @@ class Renderer: NSObject, MTKViewDelegate, BaseRendering, @unchecked Sendable {
     
     public func render(_ renderBlock: () -> ()) {
         let currentTime = DispatchTime.now().uptimeNanoseconds
-        self.renderDeltaTime = Double(currentTime - self.renderPreviousTime) / 1e9
+        self.renderDeltaTime = Double(currentTime - self.renderPreviousTime) / GameTime.NanosecondsPerSecond
         self.renderPreviousTime = currentTime
         GameStatsManager.sharedInstance.recordRenderDeltaTime(self.renderDeltaTime)
 

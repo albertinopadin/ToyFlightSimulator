@@ -31,7 +31,8 @@ final class UpdateThread: TFSThread {
             _ = updateSemaphore.wait(timeout: .distantFuture)
 
             let currentTime = DispatchTime.now().uptimeNanoseconds
-            let updateDeltaTime = min(Double(currentTime - updatePreviousTime) / 1e9, Self.maxDeltaTime)
+            let updateDeltaTime = min(Double(currentTime - updatePreviousTime) / GameTime.NanosecondsPerSecond,
+                                      Self.maxDeltaTime)
             updatePreviousTime = currentTime
             SceneManager.Update(deltaTime: updateDeltaTime)
             GameStatsManager.sharedInstance.sceneUpdated()
