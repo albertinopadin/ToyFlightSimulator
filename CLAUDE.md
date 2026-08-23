@@ -154,7 +154,7 @@ Platform-abstracted via `InputManager` singleton. **macOS**: Keyboard (256-key s
 Shadow map storage: one `depth32Float` `texture2DArray`, 4096² × 4 slices. `ShadowRendering` encodes one render pass per cascade, binding that cascade's VP at buffer index 13 (`TFSBufferIndexShadowCascadeVP`); no `setDepthBias` — bias is slope-scaled in-shader from `shadowWorldSlack`. Light space is forward-Z ortho (clear 1.0, `.less*`) even though the main camera is reverse-Z. Sampling (Lighting.metal): `SelectCascade` by view-space depth → 5×5 hardware `sample_compare` PCF → cross-fade to the next cascade over the last 10% of each cascade's range (`CASCADE_BLEND_FRACTION = 0.1`); out-of-bounds projection falls through to the next cascade (texel-snap edge case).
 
 ### Particles (GameObjects/Particles/)
-`ParticleEmitter` descriptor-based (birth rate, life, speed, scale, color). Predefined: Fire (1200 particles, upward), Afterburner (1200, forward). Compute shader updates positions, render stage draws with appropriate pipeline.
+`ParticleEmitter` descriptor-based (birth rate, life, speed, scale, color; physical units — speed m/s, life s). Predefined: Fire (1200-particle pool, upward), Afterburner (10k pool, aft). Emitters are **per-instance** — each F-22 nozzle owns its own pool/buffer (a shared static emitter used to double-step the shared sim by n·dt and leak the filled pool across scene teardowns/aircraft swaps; regression-tested in `AfterburnerEmitterTests`). Compute shader updates positions (dispatched over the born prefix only), render stage draws with appropriate pipeline.
 
 ### Threading
 - **Main Thread**: Rendering (MTKView delegate), UI, input capture
@@ -180,7 +180,7 @@ Two frameworks coexist:
 - **XCTest**: `NodeTests`, `RendererTests` (unchanged legacy suites)
 - **Swift Testing** (Apple's `@Test` framework, requires Xcode 26.2+): suites under `Math/`, `Utils/`, `AssetPipeline/`, `Cameras/`, `GameObjects/`, `Managers/`, `Physics/`, `Scenes/`, `Shadows/`. Shared helpers in `TestSupport/` (`ApproxEqual.swift` for Float/SIMD/matrix tolerance comparisons; `Finite.swift` for NaN/Inf checks on SIMD vectors/matrices; `TestTags.swift` for `.math`, `.utils`, `.concurrency`, `.assetPipeline`, `.physics`, `.gameObjects`, `.scenes` filtering). Concurrency tests use `.timeLimit(.minutes(1))` to fail fast on lock leakage.
 
-CI (`.github/workflows/`): test runs must pass `-parallel-testing-enabled NO` — serial execution avoids MTKView/CAMetalLayer drawable deadlocks in the app-hosted suite. Keep that flag.
+CI (`.github/workflows/`): test runs must pass `-parallel-testing-enabled NO` — serial execution avoids MTKView/CAMetalLayer drawable deadlocks in the app-hosted suite. Keep that flag. The macOS scheme and `ToyFlightSimulator macOS.xctestplan` have target parallelization off for the same reason (parallel IDE runs clone the app-hosted runner, launching one host-app instance per worker) — keep it off; Swift Testing's in-process concurrency is unaffected.
 
 ## Debugging
 

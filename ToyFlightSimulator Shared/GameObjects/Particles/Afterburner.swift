@@ -8,14 +8,16 @@
 import MetalKit
 
 final class Afterburner: ParticleEmitterObject {
-    // Shared by ALL Afterburner instances (the F-22 mounts two): one pool and
-    // buffer, drawn once per instance at that instance's transform — but each
-    // instance also dispatches the compute update, so the shared simulation
-    // advances n·deltaTime per frame when n instances are live.
-    static let afterburnerEmitter = ParticleEmitter.afterburner(size: CGSize(width: 20, height: 20))
-                                                                
     init(name: String) {
-        super.init(name: name, emitter: Self.afterburnerEmitter)
+        // Per-instance emitter (same pattern as Fire): each nozzle owns its
+        // pool and buffer, so the simulation advances exactly 1·deltaTime per
+        // frame no matter how many afterburners are live, off() resets only
+        // this nozzle, and the pool dies with the object at scene teardown /
+        // aircraft swap instead of carrying a full plume into the next scene.
+        // (A shared static emitter caused all three — see
+        // code_reviews/claude/particle_remaining_issues_plan_2026-08-23.md.)
+        let afterburnerEmitter = ParticleEmitter.afterburner(size: CGSize(width: 20, height: 20))
+        super.init(name: name, emitter: afterburnerEmitter)
     }
     
     func on() {

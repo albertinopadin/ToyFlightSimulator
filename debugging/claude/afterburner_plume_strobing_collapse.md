@@ -21,6 +21,10 @@ phase made an igniting plume appear at full length instead of extending out of t
 nozzle. F1+F2 alone are sufficient against the collapse (sim variant C: ~1150 phases,
 100% coverage for the full run); a batch's shared spawn phase decorrelates at its first
 expiry via the per-particle lives and stays decorrelated via the remainder-carry.
+**Update (2026-08-23):** §6's shared-emitter double-stepping is fixed — emitters are
+per-instance now, so each nozzle's simulation advances 1·dt (physical 100 m/s); see
+`code_reviews/claude/particle_remaining_issues_plan_2026-08-23.md`. The collapse fix is
+step-rate-independent, so nothing here changes.
 
 ---
 
@@ -272,7 +276,8 @@ same treatment — for a looping flame that is equally desirable.
 
 - **Shared-emitter double-stepping (2·dt)** — documented at the `static let` in
   `Afterburner.swift`; plume length is invariant to it and the fix works with or without
-  it. Per-instance emitters would be a separate design change.
+  it. Per-instance emitters would be a separate design change. *(That change landed
+  2026-08-23 — see the header update.)*
 - **`off()` → `reset()` → `on()` respawn race** — unchanged; the narrow store-back
   banner still covers it. (`F22.doUpdate` calls `off()` every tick below 0.8 throttle,
   so reset-while-in-flight remains a normal event.)

@@ -11,6 +11,10 @@ commit).
 clamp, §6.3 per-lane direction spread, and the §6.5 density knob (pool 100 000 → 10 000)
 are applied; the kernel comments now carry the born-particle rationale instead of the
 unborn-slot one.
+**Status (2026-08-23):** §4's shared-emitter double-stepping and §6.2's cross-scene pool
+persistence fixed — emitters are per-instance now (no shared `static let`); see
+`particle_remaining_issues_plan_2026-08-23.md`. §6.4 (pause) remains open there, with a
+corrected diagnosis (the leak is the post-resume tick, not compute running during pause).
 
 ---
 
@@ -159,7 +163,9 @@ header.
    afterburner starts with the previous scene's full plume mid-flight (drawn immediately at
    the new aircraft's position). `Afterburner.off()` resets, but nothing on the teardown
    path does. FlightboxScene's standalone `Afterburner` shares the same pool as the F-22's
-   two.
+   two. **Fixed 2026-08-23:** emitters are per-instance (the pool dies with its object;
+   FlightboxScene's dead standalone deleted) — see
+   `particle_remaining_issues_plan_2026-08-23.md`.
 3. **`direction` spread is diagonal, not conical.**
    `particleDescriptor.direction + Float.random(in: directionRange)` adds ONE scalar to all
    three components (SIMD broadcast), so the spawn spread moves the direction along

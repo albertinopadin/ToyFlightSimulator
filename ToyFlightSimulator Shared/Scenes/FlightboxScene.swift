@@ -14,7 +14,6 @@ final class FlightboxScene: GameScene {
     var capsule = CapsuleObject()
     
     var pl2 = PointLightObject()
-    let afterburner = Afterburner(name: "Afterburner")
     
     override func buildScene() {
         addGround()

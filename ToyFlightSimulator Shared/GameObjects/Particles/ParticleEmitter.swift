@@ -109,7 +109,13 @@ final class ParticleEmitter: @unchecked Sendable {
                                // its pool (birthRate only sets the ramp-up speed). 10k
                                // keeps blended-point overdraw manageable.
                                particleCount: 10_000,
-                               birthRate: 20,
+                               // 40 preserves the pre-per-instance ramp (~2.1 s to
+                               // saturation at 120 fps): the shared pool was fed by
+                               // BOTH F-22 nozzles at 20/tick; a per-instance pool
+                               // has a single feeder. Ramp speed is all this knob
+                               // buys — perceived density saturates well before the
+                               // pool fills, so 20 vs 40 looks nearly identical.
+                               birthRate: 40,
                                birthDelay: 0,
                                blending: true)
     }
