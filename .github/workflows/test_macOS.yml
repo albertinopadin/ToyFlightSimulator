@@ -28,6 +28,15 @@ jobs:
         # FlightboxWithPhysics starting scene keeps rendering at 60 fps),
         # which blocks the runner from exiting. Serial mode avoids that
         # and still completes the full suite in ~12 s locally.
+        #
+        # That serialization can only come from this flag: **/xcshareddata
+        # is gitignored, so the shared scheme — and its TestPlanReference
+        # to ToyFlightSimulatorTests/ToyFlightSimulator macOS.xctestplan —
+        # never reaches the runner. xcodebuild falls back to an autocreated
+        # scheme with no test plan here; the plan's serial-testing settings
+        # protect local Xcode/xcodebuild runs only. For CI to honor the
+        # test plan, xcshareddata would have to be un-ignored and the
+        # scheme committed.
         run: |
           set -o pipefail
           xcodebuild test \
