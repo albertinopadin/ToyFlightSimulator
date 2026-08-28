@@ -234,6 +234,16 @@ final class FlightboxWithPhysics: GameScene {
             }
 
             addChild(playerAircraft)
+
+            // Overlay survives the swap in whatever mode it was in.
+            // RemoveObject above already detached + unregistered the old
+            // subtree (overlay volumes included); hostWasReplaced drops the
+            // stale refs and re-applies the mode to the new aircraft — which
+            // must already be in the scene graph, hence after addChild.
+            // buildScene's initial call runs with the overlay off, so this
+            // reduces to bookkeeping there.
+            playerAircraftType = aircraft
+            colliderOverlay.hostWasReplaced(by: playerAircraft, spec: AircraftColliderSpec.spec(for: aircraft))
         }
     }
 

@@ -31,6 +31,21 @@ enum ColliderShape: Equatable {
                 return .box(halfExtents: he * s)
         }
     }
+
+    /// Debug validation: every dimension finite and > 0. A capsule halfHeight
+    /// of 0 is allowed — that's a legal sphere-equivalent.
+    var hasFinitePositiveDimensions: Bool {
+        switch self {
+            case .sphere(radius: let r):
+                return r.isFinite && r > 0
+            case .capsule(radius: let r, halfHeight: let hh):
+                return r.isFinite && r > 0 && hh.isFinite && hh >= 0
+            case .box(halfExtents: let he):
+                return he.x.isFinite && he.x > 0
+                    && he.y.isFinite && he.y > 0
+                    && he.z.isFinite && he.z > 0
+        }
+    }
 }
 
 /// Which functional part of the object a collider represents, so contact
@@ -62,6 +77,8 @@ struct LocalCollider {
          localRotation: simd_quatf = .identity,
          group: ColliderGroup = .airframe,
          isEnabled: Bool = true) {
+        assert(shape.hasFinitePositiveDimensions,
+               "Collider '\(name)' has non-finite or non-positive dimensions: \(shape)")
         self.name = name
         self.shape = shape
         self.localPosition = localPosition

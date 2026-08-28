@@ -60,6 +60,7 @@ vertex ColorInOut gbuffer_vertex(VertexIn                   in              [[ s
         // final normalize, where the normalMatrix's uniform scale cancels).
         .tangent = half3(modelInstance.normalMatrix * in.tangent),
         .bitangent = half3(-(modelInstance.normalMatrix * in.bitangent)),
+//        .bitangent = half3(modelInstance.normalMatrix * in.bitangent),
         .normal = half3(modelInstance.normalMatrix * in.normal),
         .instanceId = instanceId,
         .useObjectColor = modelInstance.useObjectColor
@@ -96,6 +97,7 @@ vertex ColorInOut gbuffer_animated_vertex(VertexIn                   in         
         .eye_position = eyePosition.xyz,
         .tangent = half3(modelInstance.normalMatrix * skinnedTangent),
         .bitangent = half3(-(modelInstance.normalMatrix * skinnedBitangent)),
+//        .bitangent = half3(modelInstance.normalMatrix * skinnedBitangent),
         .normal = half3(modelInstance.normalMatrix * normal.xyz),
         .instanceId = instanceId,
         .useObjectColor = modelInstance.useObjectColor

@@ -607,4 +607,42 @@ final class SceneManager {
             }
         }
     }
+    
+    // MARK: - Debug-overlay support (ColliderDebugOverlay)
+
+    /// Temporarily removes ONE node's own renderable registration
+    /// (non-recursive — children like afterburner emitters stay registered
+    /// and drawn). Reuses the marker-captured add/remove machinery, so
+    /// "hidden" is indistinguishable from "not currently registered": subtree
+    /// Unregister (aircraft swap) and TeardownScene need no special cases —
+    /// an unregistered node is a no-op for both. Update-thread only, like all
+    /// registration traffic.
+    static func SetRenderableHidden(_ gameObject: GameObject, _ hidden: Bool) {
+        if hidden {
+            // Already hidden, or never registered → no-op.
+            guard let marker = gameObject.registeredObjectType else { return }
+            remove(gameObject, from: marker)
+            gameObject.registeredObjectType = nil
+        } else if gameObject.registeredObjectType == nil {
+            Register(gameObject)
+            rehideExtractedSubmeshes(of: gameObject)
+        }
+    }
+
+    /// F-18 caveat: un-hiding can rebuild the model's ModelData from scratch
+    /// (CreateModelData), which resurrects submeshes that SubMeshGameObject
+    /// registration had hidden in the parent's draw lists — that side effect
+    /// is deliberately not undone on unregister, and re-registering the
+    /// PARENT doesn't re-run it. So re-run the hide pass for every extracted
+    /// submesh in the subtree. hideSubmeshInParentModel is idempotent (a
+    /// submesh already absent from the opaque lists is skipped), so
+    /// over-calling is harmless — e.g. when a second live instance of the
+    /// same Model kept the ModelData alive and nothing was actually rebuilt.
+    private static func rehideExtractedSubmeshes(of gameObject: GameObject) {
+        for node in subtreeNodes(of: gameObject) {
+            if let subMeshChild = node as? SubMeshGameObject {
+                hideSubmeshInParentModel(subMeshChild)
+            }
+        }
+    }
 }

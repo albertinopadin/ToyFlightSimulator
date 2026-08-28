@@ -17,6 +17,15 @@ class GameScene: Node {
     internal var _rendererType: RendererType!
     
     internal var playerAircraft: Aircraft? = nil
+
+    /// Keys the collider overlay's spec lookup. Scenes that assign
+    /// playerAircraft set this alongside it (FlightboxWithPhysics: on every
+    /// swap). nil ⇒ the X key is a no-op in this scene.
+    internal var playerAircraftType: AircraftType? = nil
+
+    /// Debug collider overlay (X key) — base-class-owned so every
+    /// player-aircraft scene gets the cycle without per-scene wiring.
+    let colliderOverlay = ColliderDebugOverlay()
     
     override init(name: String) {
         print("[Scene init] Initilizing scene named: \(name)")
@@ -76,6 +85,13 @@ class GameScene: Node {
         LightManager.RemoveAllLights()
         CameraManager.RemoveAllCameras()
         removeAllChildren()
+
+        // The subtree is going away wholesale (SceneManager.TeardownScene
+        // clears every batched collection right after this returns) —
+        // bookkeeping-only reset, no scene-graph surgery on the dying
+        // subtree. With 0.3b, dropping these refs is what lets the detached
+        // volumes deallocate. The rebuilt scene starts with the overlay off.
+        colliderOverlay.reset()
     }
     
     func addCamera(_ camera: Camera, _ isCurrentCamera: Bool = true) {
@@ -156,6 +172,12 @@ class GameScene: Node {
             // Update-thread mutation: keeps cascade fitting, viewMatrix, and
             // cameraPosition on the same camera for the whole tick.
             CameraManager.CycleCamera()
+        }
+        
+        InputManager.HasDiscreteCommandDebounced(command: .CycleColliderOverlay) {
+            // Update-thread scene-graph mutation, same rule as CycleCamera.
+            guard let aircraft = playerAircraft, let type = playerAircraftType else { return }
+            colliderOverlay.cycle(on: aircraft, spec: AircraftColliderSpec.spec(for: type))
         }
 
         InputManager.HasMultiInputCommand(command: .ResetScene) {

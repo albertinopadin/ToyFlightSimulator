@@ -13,7 +13,11 @@ class Mesh {
     private static let loadingQueue = DispatchQueue(label: "mesh-model-loading-queue")
     
     public var name: String = "Mesh"
-    public var parentModel: Model?
+    /// Back-reference only — Model owns its meshes strongly, so this must be
+    /// weak or every Model↔Mesh pair is a retain cycle. Library models mask
+    /// the cycle (cached for the process lifetime), but runtime-built one-off
+    /// models (ColliderDebugOverlay capsule volumes) must deallocate.
+    public weak var parentModel: Model?
     public let mdlMesh: MDLMesh?
     
     public var vertexBuffer: MTLBuffer! = nil

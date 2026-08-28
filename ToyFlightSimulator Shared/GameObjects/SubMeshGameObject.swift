@@ -10,7 +10,7 @@ import MetalKit
 class SubMeshGameObject: GameObject {
     private var _singleSMMesh: SingleSubmeshMesh!
     public var submeshName: String = ""
-    public var parentMeshGameObject: GameObject?
+    public weak var parentMeshGameObject: GameObject?
     
     init(name: String,
          modelType: ModelType,

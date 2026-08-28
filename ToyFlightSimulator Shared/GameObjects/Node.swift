@@ -47,7 +47,7 @@ class Node: ClickSelectable {
     /// Read by GameObject to decide whether to recompute modelConstants.
     private(set) var worldMatrixDirty: Bool = true
     
-    var parent: Node? = nil
+    weak var parent: Node? = nil
     var children: [Node] = []
     
     var modelMatrix: matrix_float4x4 {

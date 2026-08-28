@@ -19,6 +19,9 @@ enum DiscreteCommand {
     case ToggleGear
     case CycleCamera
 
+    /// Collider debug overlay: off → volumesOverHull → volumesOnly → off.
+    case CycleColliderOverlay
+
     case Pause
     case ClickSelect
 }
@@ -115,7 +118,8 @@ final class InputManager {
         .JettisonFuelTank: .j,
         .ToggleFlaps: .f,
         .ToggleGear: .g,
-        .CycleCamera: .c
+        .CycleCamera: .c,
+        .CycleColliderOverlay: .x
     ]
     
     nonisolated(unsafe) private static var multiKeyInputMappings: [SpecialUserCommand: [Keycodes]] = [
