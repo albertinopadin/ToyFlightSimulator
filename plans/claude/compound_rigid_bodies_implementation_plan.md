@@ -16,6 +16,46 @@
 
 ## Changelog
 
+- **2026-08-28** (night) — **Steps 0.6, 0.7, 0.8 landed; 0.3b closed** (Phase 0 code complete). The
+  0.6 inits and 0.7's SplitMix64 were hand-transcribed from the spec blocks; verification caught one
+  transcription bug before anything ran: `init(detachedAt:)` assigned `isStandalone = false` (copied
+  from the attached init's line), which would have parked every harness body at `.zero` and recorded
+  flatline goldens. Fixed, spec doc comments filled in. All six goldens recorded via
+  `TEST_RUNNER_TFS_REGEN_PHYSICS_BASELINES=1` (regen run fails by design; clean re-run green;
+  trajectories spot-checked — bounce decay, latch settling at y=0.499 with v exactly zero, head-on
+  rebound mirror-exact to ±9.0 m). 0.8's suites landed: `ColliderShapeTests`,
+  `AircraftColliderSpecTests`, `ColliderOverlayMappingTests`, `MeshBoundsTests`,
+  `NodeOwnershipTests` (closing 0.3b), plus the `NodeTests` XCTest additions and `RigidBodyTests`
+  detached-mode tests. Full serial app-hosted run: 240 Swift Testing tests in 40 suites + XCTest,
+  all green. Exit criteria 3 and 4 ✓; 1–2 (manual visual) and 5 (CI) remain open.
+- **2026-08-28** (evening) — **0.7 fully specified**: the harness pseudocode is replaced by the complete
+  implementation — `SplitMix64` written out (the SplittableRandom mixer); a `ParityScenario` enum
+  (String raw values = golden filenames, `CaseIterable` feeds the parameterized test) with all six
+  builders, whose RNG draw order is pinned as part of the golden contract; `ParityRunner` with
+  fail-fast `#require` invariants on every step and first-divergence-only golden reporting; and the
+  regen command (`TEST_RUNNER_` prefix forwards the env var into the app-hosted runner; the regen run
+  fails by design). Details the scenario table left open are now pinned in code: rest_latch's plane
+  e = 1.0 (min() picks the ball's 0.2; latch fires on the third contact, ~70 steps in),
+  head_on_pair keeps gravity ON (lockstep fall keeps the contact normal X-pure, so the e=1 swap stays
+  exact), sampleEvery 1 (simple) / 3 (chaotic), seeds `0xF22_0005`/`_0006`, per-scenario speed
+  budgets, 1 m tunneling slack, and a new `allFinite(SIMD3<Float>)` overload in TestSupport/Finite.swift.
+  (Recorded mid-transcription: SeededRandom.swift already sits in the tree as an empty skeleton.)
+- **2026-08-28** (later still) — **0.6's `RigidBody` code fully specified**: the `init(detachedAt:)`
+  sketch is now the complete implementation (full parameter list mirroring the attached designated
+  init, full body), plus the constraint that forces a second *designated* init: delegation to
+  `init(gameObject:)` is impossible because `isStandalone` is a `let` that init assigns `false`, and
+  a shared private designated init would rewrite the attached init whose fallbacks
+  `RigidBodyTests.rigidBodyToleratesNilGameObject` pins. Recorded mid-transcription — at this
+  revision the storage, accessors, and the attached init's `isStandalone = false` line were already
+  in the (uncommitted) working tree; the remaining 0.6 code is the three `detachedAt` inits (base +
+  both `BasicRigidBodies` subclasses) and the storage doc comment.
+- **2026-08-28** (later) — **Step 0.5 done**: the pending in-app anchor check ran. Verified via a
+  temporary update-thread auto-trigger firing the overlay's normal `cycle` path once in
+  FlightboxWithPhysics (keystroke injection isn't available headlessly; the X-key wiring itself was
+  already verified in 0.4's landing), with app stdout captured: the fuselage capsule prints exactly
+  **18.90 m at uniformScale 1.0** (real F-22: 18.92 m), the wings/empennage/legacy-sphere lines match
+  their spec arithmetic, and the `uniformScale` debug assert stayed quiet. Log excerpt in the 0.5
+  addendum; the trigger was reverted after the run. Visual fit/tuning (exit criterion 2) remains open.
 - **2026-08-28** — **Step 0.4 landed** (all five files; macOS Debug build green; X cycle verified
   visually in-app), together with **0.3b's code half** (`Node.parent` and
   `SubMeshGameObject.parentMeshGameObject` → `weak`; `NodeOwnershipTests` still owed) and one extra
@@ -254,11 +294,12 @@ var uniformScale: Float { ... }
 
 > **Addendum (2026-07-20):** Step 0.3 is implemented, with one **correction** to the original text: the claim that the `rotationMatrix` setter "handles the dirty-flagging" was wrong — that setter was a bare `_rotationMatrix` store, so the one-line `setRotation(_:)` silently never took effect (the cached local/world matrices were never invalidated). Fixed at the root: `Node.rotationMatrix`'s setter now routes through `updateModelMatrixAndMarkTransformDirty`, which also repairs a latent order-dependence in `F18.weaponReleaseSetup` (its direct `rotationMatrix =` assignment only worked because the `setScale` on the next line happened to dirty the node). `setRotation(_ q:)` additionally calls `afterRotation()` so both `setRotation` overloads fire the subclass hook identically. macOS Debug build green with 0.3 in the tree. **(2026-08-27:** these fixes landed without tests — 0.8 now includes NodeTests pinning both the quaternion overload and direct `rotationMatrix =` dirty propagation.)
 
-## Step 0.3b — Scene-graph ownership fix: `Node.parent` becomes `weak` *(added 2026-08-27)*
+## Step 0.3b — Scene-graph ownership fix: `Node.parent` becomes `weak` *(added 2026-08-27)* ✅
 
 - [x] `Node.parent` → `weak var parent: Node?` *(landed 2026-08-28, same commit as 0.4)*
 - [x] `SubMeshGameObject.parentMeshGameObject` → `weak` (same commit — it's the same class of back-reference)
-- [ ] Back-reference audit + deallocation tests (below) — **still owed**; tracked in 0.8 (`NodeOwnershipTests`)
+- [x] Back-reference audit + deallocation tests (below) — landed 2026-08-28 as `NodeOwnershipTests`
+  (0.8): detached island, 3-deep detached chain, reparent survival, weak zeroing — all four green
 
 > **Addendum (2026-08-28):** the two weak flips landed with 0.4 (whose lifecycle rules assume them). A
 > third back-reference of the same class surfaced while landing 0.4 and was flipped in the same commit:
@@ -266,7 +307,7 @@ var uniformScale: Float { ... }
 > Model ↔ Mesh pair a retain cycle. Library models mask it (process-lifetime cache), but 0.4's bespoke
 > capsule volumes are the first runtime-built one-off Models — each overlay show would have leaked a
 > Model + CapsuleMesh (MTLBuffers included) per cycle. `NodeOwnershipTests` remain owed before 0.3b is
-> done.
+> done. *(Landed 2026-08-28 — all four green; see 0.8. Step 0.3b ✅.)*
 
 **Why this is in Phase 0:** the overlay parents render-only volumes to the aircraft, and its lifecycle
 rules (0.4) depend on what happens to a detached subtree. Today `Node.parent` is **strong**
@@ -813,11 +854,12 @@ failure directions for tuning.
 >    one-off Model actually deallocates when the overlay is cycled off.
 > 4. The first landing had `logWorldDimensions` computing dimensions but not printing them; the print
 >    statements were filled in during review. **0.5's in-app anchor check (fuselage ≈ 18.9 m in the
->    log) has therefore not run yet** — it needs one more in-app X press.
+>    log) has therefore not run yet** — it needs one more in-app X press. *(Ran later that day — see
+>    the 0.5 addendum; step 0.5 ✅.)*
 > 5. The full exit-criterion-1 checklist (swap while visible, Cmd+R while visible, renderer switch,
 >    ghost-free repeated cycling) is still open — only the basic cycle has been eyeballed so far.
 
-## Step 0.5 — Units contract: sanity anchor + mesh-mapping regression
+## Step 0.5 — Units contract: sanity anchor + mesh-mapping regression ✅
 
 **Contract (post-meterization):** collider dimensions and offsets are authored in post-import
 engine-local units = **meters** (import folds `realWorldLength / nativeLength` into the basis transform;
@@ -826,8 +868,8 @@ math as an optional gameplay multiplier — every meterized aircraft runs at 1.0
 (uniformity) plus Phase A's `scaled(by:)` path keep colliders correct if a scene ever scales an aircraft
 deliberately. The old "model units × 3.0 = world meters" contract is dead; nothing may reintroduce it.
 
-- [ ] `logWorldDimensions` (the code ships inside 0.4's `ColliderDebugOverlay`; this checkbox is the
-  in-app verification) prints, on every overlay show, one line per collider: name, shape,
+- [x] `logWorldDimensions` (the code ships inside 0.4's `ColliderDebugOverlay`; this checkbox is the
+  in-app verification — **ran 2026-08-28**, addendum below) prints, on every overlay show, one line per collider: name, shape,
   world-space dimensions (spec meters × `uniformScale`). **Sanity anchor:** fuselage capsule total
   = 2·(8.1 + 1.35)·1.0 = **18.9 m** against the real jet's 18.92 m. If the printed number and the
   on-screen capsule disagree with the model's visible nose-tail span, the spec numbers (or the import
@@ -845,7 +887,29 @@ deliberately. The old "model units × 3.0 = world meters" contract is dead; noth
 - [x] `Node.uniformScale` assertion active in debug builds (step 0.3) — this *is* the enforcement of the
   contract; Codex's full `assetToBodyMeters` transform stays deferred per combined doc §4.1.
 
-## Step 0.6 — Metal-free parity enabler: explicit detached bodies (behavior-neutral)
+> **Addendum (2026-08-28) — the in-app anchor check ran; step complete.** Method: a temporary
+> auto-trigger on the update thread fired the same `colliderOverlay.cycle` call as the X handler once,
+> ~4 s into a FlightboxWithPhysics run (keystroke injection isn't available headlessly — no
+> Accessibility — and the X-key wiring itself was already verified visually in 0.4's landing; the
+> trigger was reverted after the run, tree back to the 0.4 commit's state, rebuild green). Captured
+> app stdout:
+>
+> ```
+> [ColliderDebugOverlay] F-22_CGTrader collider world dimensions (uniformScale 1.0):
+>   fuselage: capsule ø 2.70 m × 18.90 m end-to-end
+>   wings: box 13.20 m × 0.36 m × 5.40 m
+>   empennage: box 6.00 m × 2.70 m × 3.00 m
+>   legacy sphere: ø 4.00 m (world)
+> ```
+>
+> The fuselage line IS the sanity anchor (18.90 m at scale 1.0 vs the real jet's 18.92 m); every other
+> line matches its spec arithmetic (wings 2·[6.6, 0.18, 2.7], empennage 2·[3.0, 1.35, 1.5], legacy
+> sphere ø = 2 × the 2.0 m `collisionRadius`), the bespoke capsule mesh built cleanly on the update
+> thread, and the `uniformScale` debug assert stayed quiet. The checkbox's escalation clause (printed
+> number vs. on-screen capsule vs. the model's visible nose–tail span) is exit criterion 2's A/B
+> eyeballing and stays open there.
+
+## Step 0.6 — Metal-free parity enabler: explicit detached bodies (behavior-neutral) ✅
 
 *(Redesigned 2026-08-27 — the original "relax inits to `GameObject?` + fallback storage" would have
 silently changed tested behavior: `RigidBodyTests.rigidBodyToleratesNilGameObject` pins that an attached
@@ -853,7 +917,8 @@ body whose weak `gameObject` was released answers `getPosition() == .zero` and t
 no-op. Routing those through fallback storage flips both expectations and erases the distinction between
 "intentional standalone body" and "attached body whose object died unexpectedly".)*
 
-- [ ] `Physics/World/RigidBody.swift`: explicit standalone mode
+- [x] `Physics/World/RigidBody.swift`: explicit standalone mode (full implementation — transcribe as-is)
+  *(landed 2026-08-28 — see the addendum at the end of this step for the one transcription bug caught in review)*
 
 ```swift
 /// Standalone-mode storage (parity-harness bodies built with init(detachedAt:)).
@@ -862,27 +927,74 @@ no-op. Routing those through fallback storage flips both expectations and erases
 private let isStandalone: Bool
 private var standalonePosition: float3 = .zero
 
-// Existing internal init(gameObject: GameObject?, ...) unchanged (isStandalone = false).
+// The attached designated init gains exactly ONE line, at the end of its
+// stored-property block; everything else — parameters, defaults, the trailing
+// back-registration — stays byte-identical:
+internal init(gameObject: GameObject?, /* existing parameters unchanged */) {
+    // ... existing stored-property assignments unchanged ...
+    self.shouldApplyGravity = shouldApplyGravity
+    self.isStandalone = false
+
+    // Register with object this is attached to:
+    gameObject?.rigidBody = self
+}
 
 /// Parity-harness bodies: the REAL physics classes, no GameObject, no Metal.
 /// Internal — production code constructs attached bodies only.
-internal init(detachedAt position: float3, collisionShape: CollisionShape = .Sphere, ...) {
-    // same stored-property init, gameObject = nil, isStandalone = true,
-    // standalonePosition = position, no back-registration
+///
+/// A second DESIGNATED init on purpose. Delegating to init(gameObject:) is
+/// impossible — `isStandalone` is a `let` that init assigns `false`, and a
+/// delegating init can't reassign it — and extracting a shared private
+/// designated init would mean rewriting the attached init, whose
+/// released-weak fallback behavior is pinned by
+/// RigidBodyTests.rigidBodyToleratesNilGameObject. Parameters mirror
+/// init(gameObject:) exactly (same names, order, defaults; `detachedAt
+/// position` stands in for `gameObject`), and both bodies repeat the full
+/// stored-property block in the same order, so the two diff cleanly and a
+/// future default-less stored property is a compile error in BOTH inits.
+internal init(detachedAt position: float3,
+              collisionShape: CollisionShape = .Sphere,
+              collidedWith: Set<ObjectIdentifier> = [],
+              mass: Float = 1,
+              velocity: float3 = .zero,
+              acceleration: float3 = .zero,
+              force: float3 = .zero,
+              restitution: Float = 1,
+              isStatic: Bool = false,
+              shouldApplyGravity: Bool = true) {
+    self.gameObject = nil
+    self.collisionShape = collisionShape
+    self.collidedWith = collidedWith
+    self.mass = mass
+    self.velocity = velocity
+    self.acceleration = acceleration
+    self.force = force
+    self.restitution = restitution
+    self.isStatic = isStatic
+    self.shouldApplyGravity = shouldApplyGravity
+    self.isStandalone = true
+    self.standalonePosition = position
+    // Deliberately NO back-registration: there is no GameObject to attach
+    // to. Harness code hands the body straight to PhysicsWorld
+    // (addEntity/setEntities).
 }
 
 func setPosition(_ position: float3) {
-    if isStandalone { standalonePosition = position }
-    else { gameObject?.setPosition(position) }
+    if isStandalone {
+        standalonePosition = position
+    }
+    else {
+        self.gameObject?.setPosition(position)
+    }
 }
 
 func getPosition() -> float3 {
-    isStandalone ? standalonePosition : (gameObject?.getPosition() ?? .zero)
+    isStandalone ? standalonePosition : (self.gameObject?.getPosition() ?? .zero)
 }
 ```
 
-- [ ] `Physics/World/BasicRigidBodies.swift`: detached convenience inits on the `final` subclasses
-  (production inits keep their **non-optional** `GameObject`):
+- [x] `Physics/World/BasicRigidBodies.swift`: detached convenience inits on the `final` subclasses
+  (production inits keep their **non-optional** `GameObject`) *(landed 2026-08-28, verbatim)*:
 
 ```swift
 // SphereRigidBody
@@ -910,12 +1022,37 @@ node's basis vectors; the harness exercises collision/solver paths, not flight m
 `PhysicsWorldSmokeTests` (GameObject-backed) keep guarding the attached path; the released-weak tests
 keep guarding the fallbacks.
 
-## Step 0.7 — Parity harness + golden baselines
+> **Addendum (2026-08-28, landing):** hand-transcribed and verified against the spec block above.
+> One transcription bug caught in review before anything ran: the detached init assigned
+> `isStandalone = false` (copied from the attached init's line), which routes set/getPosition through
+> the nil gameObject — every detached body would have sat at `.zero` forever and 0.7's goldens would
+> have recorded flatlines. Fixed to `true`; the `RigidBodyTests` detached-mode tests (0.8) pin the
+> position round-trip so the mistake can't recur silently. Attached-path and released-weak suites
+> unchanged and green, as the redesign promised.
 
-- [ ] `ToyFlightSimulatorTests/TestSupport/SeededRandom.swift` — seedable `SplitMix64: RandomNumberGenerator`, **plus direct Float derivation** (Swift's default RNG is unseedable, and `Float.random(in:using:)`'s u64→Float mapping is a stdlib implementation detail — goldens outlive toolchains, so the harness owns the mapping):
+## Step 0.7 — Parity harness + golden baselines ✅
+
+- [x] `ToyFlightSimulatorTests/TestSupport/SeededRandom.swift` — seedable `SplitMix64: RandomNumberGenerator`, **plus direct Float derivation** (Swift's default RNG is unseedable, and `Float.random(in:using:)`'s u64→Float mapping is a stdlib implementation detail — goldens outlive toolchains, so the harness owns the mapping):
 
 ```swift
-struct SplitMix64: RandomNumberGenerator { ... next() -> UInt64 ... }
+/// SplitMix64 (Steele/Lea/Flood — the java.util.SplittableRandom mixer).
+/// Tiny, seedable, and written out in full HERE so goldens never depend on
+/// stdlib RNG internals. No imports needed.
+struct SplitMix64: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        self.state = seed
+    }
+
+    mutating func next() -> UInt64 {
+        state &+= 0x9E37_79B9_7F4A_7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+        return z ^ (z >> 31)
+    }
+}
 
 extension SplitMix64 {
     /// Uniform in [0, 1): top 24 bits → Float. Bypasses Float.random(in:using:).
@@ -926,8 +1063,27 @@ extension SplitMix64 {
 }
 ```
 
-- [ ] `ToyFlightSimulatorTests/Physics/PhysicsParityTests.swift` — scenarios + runner + comparisons (`.tags(.physics)`, Swift Testing)
-- [ ] `ToyFlightSimulatorTests/Physics/Baselines/*.json` — committed goldens (test-target membership irrelevant; loaded via `#filePath`)
+- [x] `ToyFlightSimulatorTests/TestSupport/Finite.swift` — add the `float3` overload the harness
+  invariants use (the file currently covers only `SIMD4`/`float4x4`):
+
+```swift
+func allFinite(_ v: SIMD3<Float>) -> Bool {
+    v.x.isFinite && v.y.isFinite && v.z.isFinite
+}
+```
+
+- [x] `ToyFlightSimulatorTests/Physics/PhysicsParityTests.swift` — scenarios + runner + comparisons (`.tags(.physics)`, Swift Testing)
+- [x] `ToyFlightSimulatorTests/Physics/Baselines/*.json` — committed goldens (test-target membership irrelevant; loaded via `#filePath`)
+
+> **Addendum (2026-08-28, landing):** the harness landed as the implementation section below,
+> transcribed as-is; all six goldens were recorded the same day (single_bounce ~20 KB each,
+> head_on 19 KB, rest_latch 41 KB, cluster 84 KB, stress 180 KB of sortedKeys pretty JSON). The
+> regen run failed by design with the six "regenerated" issues while determinism + rest-latch
+> passed; the clean re-run is fully green, invariants included. Trajectory spot checks: the Verlet
+> bounce is still airborne at step 300 (e=0.9 outlives the 5 s window, as the arithmetic predicted),
+> rest_latch settles at y=0.499 with finalVelocity exactly [0,0,0] and gravity latched off,
+> head_on_pair contacts at exactly ±0.5 and rebounds mirror-exact to ±9.0 with lockstep fall. The
+> `TEST_RUNNER_` prefix forwarded the regen flag into the app-hosted runner as documented.
 
 ### What the harness is for, and how Phase A verifies against it
 
@@ -943,9 +1099,10 @@ commits**:
    flip the characterization asserts deliberately + assert the semantic invariants below + regenerate
    goldens via `TFS_REGEN_PHYSICS_BASELINES=1` with the diff reviewed like code.
 
-Scenario table (all Metal-free via 0.6 detached bodies; fixed seeds, e.g. `0xF22_0001` per scenario, live
-next to the definitions; cluster/grid run broad phase **on** because response applies in pair order —
-pair *ordering* is part of the locked-in behavior):
+Scenario table (all Metal-free via 0.6 detached bodies; fixed seeds — `0xF22_0005` cluster,
+`0xF22_0006` stress, the only two scenarios that draw randomness — live next to the definitions;
+cluster/grid run broad phase **on** because response applies in pair order — pair *ordering* is part of
+the locked-in behavior):
 
 | Scenario | Setup | Solver / broad phase | Golden steps @ dt | A-response expectation (A-routing must match ALL goldens) |
 |---|---|---|---|---|
@@ -962,57 +1119,379 @@ that hold for current AND Phase A behavior**: every position/velocity finite; no
 (y ≥ plane − r − ε for every sphere); speed bounded by a generous initial+gravity budget. Invariants are
 asserted from day one — they're the part of the contract that survives regoldens.
 
-### Harness pseudocode
+### Harness implementation (full — transcribe as-is)
+
+All of `PhysicsParityTests.swift`. The code below is the authority on details the scenario table
+leaves open: plane restitutions, seeds, sampling cadence, gravity staying on in `head_on_pair`, and
+the invariant budgets. Imports match the other physics suites: `import Foundation`, `import Testing`,
+`import simd`, `@testable import ToyFlightSimulator`.
 
 ```swift
-struct PhysicsBaseline: Codable {
-    struct BodyTrack: Codable {
-        var samples: [[Float]]        // [x,y,z] every `sampleEvery` steps (t=0 included)
-        var finalVelocity: [Float]
-        var finalShouldApplyGravity: Bool   // makes the rest-latch visible in the data
+// MARK: - Scenarios
+
+/// One case per row of the scenario table; rawValue == golden filename stem.
+enum ParityScenario: String, CaseIterable, CustomTestStringConvertible {
+    case singleBounceVerlet = "single_bounce_verlet"
+    case singleBounceEuler  = "single_bounce_euler"
+    case restLatch          = "rest_latch"
+    case headOnPair         = "head_on_pair"
+    case ballCluster16      = "ball_cluster_16"
+    case stressGrid50       = "stress_grid_50"
+
+    var testDescription: String { rawValue }
+
+    var solver: PhysicsUpdateType { self == .singleBounceEuler ? .NaiveEuler : .HeckerVerlet }
+
+    var useBroadPhase: Bool {
+        switch self {
+            case .ballCluster16, .stressGrid50: return true
+            default: return false
+        }
     }
-    var scenario: String, solver: String, useBroadPhase: Bool
-    var dt: Float, steps: Int, sampleEvery: Int
-    var tracks: [BodyTrack]           // index-aligned with scenario body order
+
+    var dt: Float { 1.0 / 60.0 }
+
+    /// Steps covered by the committed golden.
+    var goldenSteps: Int {
+        switch self {
+            case .singleBounceVerlet, .singleBounceEuler: return 300
+            case .restLatch:     return 600
+            case .headOnPair:    return 120
+            case .ballCluster16: return 180
+            case .stressGrid50:  return 120
+        }
+    }
+
+    /// Total steps run; the tail past goldenSteps is invariant-checked only
+    /// (the chaos policy: goldens stay short where contact ordering amplifies
+    /// float noise, invariants carry the rest of the run).
+    var totalSteps: Int {
+        switch self {
+            case .ballCluster16, .stressGrid50: return 600
+            default: return goldenSteps
+        }
+    }
+
+    /// Sampling cadence inside the golden window (t=0 always included).
+    /// Dense for the simple scenarios (readable Phase A diffs), thinned for
+    /// the many-body ones (keeps committed JSON in the tens of KB).
+    var sampleEvery: Int {
+        switch self {
+            case .ballCluster16, .stressGrid50: return 3
+            default: return 1
+        }
+    }
+
+    /// Invariant bound. Deliberately ~2× the max physically attainable speed
+    /// (initial speed + fall from max spawn height): catches energy blowups,
+    /// not micro-noise, and must keep holding after Phase A's response
+    /// rewrite.
+    var speedBudget: Float {
+        switch self {
+            case .singleBounceVerlet, .singleBounceEuler, .restLatch:
+                return 20   // impact from ≤ 5 m ≈ 7 m/s
+            case .headOnPair:
+                return 40   // ±5 m/s closing + 2 s free fall ≈ 20 m/s
+            case .ballCluster16:
+                return 30   // fall from ≤ 10 m ≈ 14 m/s
+            case .stressGrid50:
+                return 50   // fall from ≤ 20 m ≈ 20 m/s, + ≤ 2.8 m/s initial
+        }
+    }
+
+    /// Ground-plane height for the tunneling invariant; nil = no floor
+    /// (head_on_pair falls freely by design — see build()).
+    var floorY: Float? { self == .headOnPair ? nil : 0 }
+
+    var sphereRadius: Float {
+        switch self {
+            case .ballCluster16: return 0.4
+            case .stressGrid50:  return 0.3
+            default:             return 0.5
+        }
+    }
+
+    struct Built {
+        let world: PhysicsWorld
+        /// Tracked bodies, index-aligned with the golden's tracks. The static
+        /// plane (when present) is in the world but never tracked.
+        let spheres: [SphereRigidBody]
+    }
+
+    /// All bodies via the 0.6 detached inits — no GameObject, no Metal.
+    /// Masses stay at the RigidBody default (1), matching the table.
+    func build() -> Built {
+        switch self {
+            case .singleBounceVerlet, .singleBounceEuler:
+                let ball = SphereRigidBody(detachedAt: [0, 5, 0], collisionRadius: 0.5)
+                ball.restitution = 0.9
+                return Built(world: makeWorld([ball, floorPlane(restitution: 0.9)]),
+                             spheres: [ball])
+
+            case .restLatch:
+                // Plane e = 1.0, so min() picks the ball's 0.2: impacts decay
+                // 7 → 1.4 → 0.28 m/s, and the third contact is under
+                // HeckerCollisionResponse's 0.55 m/s rest threshold against a
+                // static body ⇒ the one-way latch fires (velocity/acceleration
+                // zeroed, shouldApplyGravity = false) within ~70 steps.
+                let ball = SphereRigidBody(detachedAt: [0, 3, 0], collisionRadius: 0.5)
+                ball.restitution = 0.2
+                return Built(world: makeWorld([ball, floorPlane(restitution: 1.0)]),
+                             spheres: [ball])
+
+            case .headOnPair:
+                // No plane, gravity left ON: both spheres fall in lockstep, so
+                // the contact normal stays X-pure and the e=1 equal-mass
+                // velocity swap plus the |vA| == |vB| mirror symmetry are
+                // exact. (Restitution stays at the RigidBody default 1.)
+                let a = SphereRigidBody(detachedAt: [-2, 0, 0], collisionRadius: 0.5)
+                a.velocity = [5, 0, 0]
+                let b = SphereRigidBody(detachedAt: [2, 0, 0], collisionRadius: 0.5)
+                b.velocity = [-5, 0, 0]
+                return Built(world: makeWorld([a, b]), spheres: [a, b])
+
+            case .ballCluster16:
+                // BallPhysicsScene's spawn distribution with the scene's
+                // unseeded `.random` swapped for the harness RNG. DRAW ORDER
+                // IS PART OF THE GOLDEN CONTRACT: x, y, z per ball, balls in
+                // order. (The scene's color draw is not mirrored — the
+                // harness stream is its own.)
+                var rng = SplitMix64(seed: 0xF22_0005)
+                var balls: [SphereRigidBody] = []
+                for _ in 0..<16 {
+                    let pos = float3(rng.float(in: -7...7),
+                                     rng.float(in: 1...10),
+                                     rng.float(in: -7...0))
+                    let ball = SphereRigidBody(detachedAt: pos, collisionRadius: 0.4)
+                    ball.restitution = 0.9
+                    balls.append(ball)
+                }
+                return Built(world: makeWorld(balls + [floorPlane(restitution: 1.0)]),
+                             spheres: balls)
+
+            case .stressGrid50:
+                // PhysicsStressTestScene.createSpheres(count: 50): 8×8 grid
+                // (Int(sqrt(50))+1), spacing 2, origin -8; jittered x/z;
+                // y and initial velocity seeded; plane e = 0.9. Draw order
+                // per ball: xJitter, y, zJitter, vx, vz.
+                var rng = SplitMix64(seed: 0xF22_0006)
+                let gridSize = 8
+                let spacing: Float = 2.0
+                let start = -Float(gridSize) * spacing / 2
+                var balls: [SphereRigidBody] = []
+                for i in 0..<50 {
+                    let pos = float3(start + Float(i % gridSize) * spacing + rng.float(in: -0.5...0.5),
+                                     rng.float(in: 5...20),
+                                     start + Float(i / gridSize) * spacing + rng.float(in: -0.5...0.5))
+                    let ball = SphereRigidBody(detachedAt: pos, collisionRadius: 0.3)
+                    ball.restitution = 0.8
+                    ball.velocity = [rng.float(in: -2...2), 0, rng.float(in: -2...2)]
+                    balls.append(ball)
+                }
+                return Built(world: makeWorld(balls + [floorPlane(restitution: 0.9)]),
+                             spheres: balls)
+        }
+    }
+
+    private func floorPlane(restitution: Float) -> PlaneRigidBody {
+        // Position .zero + up normal is load-bearing: the sphere/plane narrow
+        // phase hardcodes a plane through the origin
+        // (PhysicsWorld.getPenetrationDepth(ball:plane:)).
+        let plane = PlaneRigidBody(detachedAt: .zero, collisionNormal: [0, 1, 0])
+        plane.restitution = restitution
+        plane.isStatic = true
+        return plane
+    }
+
+    private func makeWorld(_ entities: [RigidBody]) -> PhysicsWorld {
+        let world = PhysicsWorld(entities: entities, updateType: solver)
+        world.useBroadPhase = useBroadPhase
+        return world
+    }
+}
+
+// MARK: - Baseline model + runner
+
+/// Golden-file schema. Codable → JSON; Equatable → the determinism test.
+/// Flat [Float] triples, not float3: keeps the synthesized Codable output a
+/// plain JSON array. (Float round-trips JSON exactly — the 1e-4 compare
+/// tolerance exists for FMA/toolchain variance, not serialization.)
+struct PhysicsBaseline: Codable, Equatable {
+    struct BodyTrack: Codable, Equatable {
+        var samples: [[Float]]              // [x,y,z]: t=0, then every sampleEvery-th step of the golden window
+        var finalVelocity: [Float]          // at the END of the golden window (not totalSteps)
+        var finalShouldApplyGravity: Bool   // makes the rest latch visible in the data
+    }
+
+    var scenario: String
+    var solver: String
+    var useBroadPhase: Bool
+    var dt: Float
+    var steps: Int                          // golden window length (== goldenSteps)
+    var sampleEvery: Int
+    var tracks: [BodyTrack]                 // index-aligned with Built.spheres
 }
 
 enum ParityRunner {
-    static func run(_ scenario: ParityScenario) -> PhysicsBaseline {
-        let (world, bodies) = scenario.build()        // SphereRigidBody(detachedAt:) / PlaneRigidBody(detachedAt:)
-        // step, sample every sampleEvery, run invariant checks every step past the golden window
+    /// Steps the scenario to totalSteps: samples the golden window, snapshots
+    /// final state at goldenSteps, and #requires the chaos-policy invariants
+    /// on EVERY step (fail-fast: one readable failure, not a cascade of
+    /// thousands once a body blows up).
+    static func run(_ scenario: ParityScenario) throws -> PhysicsBaseline {
+        let built = scenario.build()
+        var samples: [[[Float]]] = built.spheres.map { [flat($0.getPosition())] }
+        var finalVelocity: [[Float]] = []
+        var finalGravity: [Bool] = []
+
+        for step in 1...scenario.totalSteps {
+            built.world.update(deltaTime: scenario.dt)
+
+            if step <= scenario.goldenSteps && step % scenario.sampleEvery == 0 {
+                for (i, ball) in built.spheres.enumerated() {
+                    samples[i].append(flat(ball.getPosition()))
+                }
+            }
+            if step == scenario.goldenSteps {
+                finalVelocity = built.spheres.map { flat($0.velocity) }
+                finalGravity  = built.spheres.map { $0.shouldApplyGravity }
+            }
+
+            for (i, ball) in built.spheres.enumerated() {
+                let p = ball.getPosition()
+                let v = ball.velocity
+                try #require(allFinite(p) && allFinite(v),
+                             "body \(i) non-finite at step \(step): p=\(p) v=\(v)")
+                if let floorY = scenario.floorY {
+                    // 1 m slack: the response can leave a frame of transient
+                    // penetration, but a tunneled ball falls away forever and
+                    // trips this within a few steps.
+                    try #require(p.y > floorY - scenario.sphereRadius - 1.0,
+                                 "body \(i) tunneled at step \(step): y=\(p.y)")
+                }
+                try #require(simd_length(v) <= scenario.speedBudget,
+                             "body \(i) over the speed budget at step \(step): |v|=\(simd_length(v))")
+            }
+        }
+
+        return PhysicsBaseline(scenario: scenario.rawValue,
+                               solver: String(describing: scenario.solver),
+                               useBroadPhase: scenario.useBroadPhase,
+                               dt: scenario.dt,
+                               steps: scenario.goldenSteps,
+                               sampleEvery: scenario.sampleEvery,
+                               tracks: built.spheres.indices.map {
+                                   .init(samples: samples[$0],
+                                         finalVelocity: finalVelocity[$0],
+                                         finalShouldApplyGravity: finalGravity[$0])
+                               })
     }
 
-    /// Baselines live in-repo next to the tests; #filePath keeps this working
-    /// both locally and on the CI checkout.
-    static var baselinesDir: URL { ... }
+    private static func flat(_ v: float3) -> [Float] { [v.x, v.y, v.z] }
+
+    /// Committed goldens live next to the tests; #filePath works on both the
+    /// local checkout and CI's.
+    static var baselinesDir: URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()          // …/ToyFlightSimulatorTests/Physics/
+            .appendingPathComponent("Baselines")
+    }
 
     /// TFS_REGEN_PHYSICS_BASELINES=1 (mirrors TFS_REGEN_THUMBNAILS) rewrites
-    /// the golden instead of comparing, then fails the test with a "re-run
-    /// without the flag" message so a regen can never silently pass CI.
-    static func assertMatchesGolden(_ fresh: PhysicsBaseline, named: String) {
-        // compare metadata exactly; samples/velocities with tolerance 1e-4
-        // on mismatch: report first divergent (body, step) + values   // makes Phase A diffs readable
+    /// the golden instead of comparing, then records an issue so a regen run
+    /// can never silently pass CI.
+    static func assertMatchesGolden(_ fresh: PhysicsBaseline,
+                                    tolerance: Float = 1e-4,
+                                    sourceLocation: SourceLocation = #_sourceLocation) throws {
+        let url = baselinesDir.appendingPathComponent("\(fresh.scenario).json")
+
+        if ProcessInfo.processInfo.environment["TFS_REGEN_PHYSICS_BASELINES"] == "1" {
+            try FileManager.default.createDirectory(at: baselinesDir,
+                                                    withIntermediateDirectories: true)
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]   // stable diffs — regoldens are reviewed like code
+            try encoder.encode(fresh).write(to: url)
+            Issue.record("regenerated \(fresh.scenario).json — review the diff, then re-run without TFS_REGEN_PHYSICS_BASELINES",
+                         sourceLocation: sourceLocation)
+            return
+        }
+
+        let golden = try JSONDecoder().decode(PhysicsBaseline.self,
+                                              from: Data(contentsOf: url))
+
+        // Metadata compares EXACTLY — solver/steps/dt drift is a harness bug,
+        // never something to tolerance past.
+        try #require(fresh.scenario == golden.scenario
+                     && fresh.solver == golden.solver
+                     && fresh.useBroadPhase == golden.useBroadPhase
+                     && fresh.dt == golden.dt
+                     && fresh.steps == golden.steps
+                     && fresh.sampleEvery == golden.sampleEvery
+                     && fresh.tracks.count == golden.tracks.count,
+                     "metadata mismatch vs \(fresh.scenario).json — regenerate deliberately",
+                     sourceLocation: sourceLocation)
+
+        // Report only the FIRST divergent (body, step): everything after the
+        // first contact-order flip is downstream noise, and one readable
+        // location is what makes a Phase A routing bug debuggable.
+        for (body, (f, g)) in zip(fresh.tracks, golden.tracks).enumerated() {
+            for (s, (fs, gs)) in zip(f.samples, g.samples).enumerated() {
+                if (0..<3).contains(where: { abs(fs[$0] - gs[$0]) > tolerance }) {
+                    Issue.record("body \(body) diverges at sample \(s) (step \(s * fresh.sampleEvery)): fresh \(fs) vs golden \(gs)",
+                                 sourceLocation: sourceLocation)
+                    return
+                }
+            }
+            if f.finalShouldApplyGravity != g.finalShouldApplyGravity
+                || (0..<3).contains(where: { abs(f.finalVelocity[$0] - g.finalVelocity[$0]) > tolerance }) {
+                Issue.record("body \(body) final state diverges: v \(f.finalVelocity) vs \(g.finalVelocity), gravity \(f.finalShouldApplyGravity) vs \(g.finalShouldApplyGravity)",
+                             sourceLocation: sourceLocation)
+                return
+            }
+        }
     }
 }
+
+// MARK: - Tests
 
 @Suite("Physics parity", .tags(.physics))
 struct PhysicsParityTests {
-    @Test(arguments: ParityScenario.all)
-    func matchesGolden(_ s: ParityScenario) { ... }
-
-    @Test func harnessIsDeterministic() {
-        // Two fresh runs of the seeded cluster must agree bit-for-bit —
-        // validates the harness itself (seeding, no hidden global state).
-        #expect(ParityRunner.run(.ballCluster16) == ParityRunner.run(.ballCluster16))
+    @Test("current behavior matches the committed golden",
+          arguments: ParityScenario.allCases)
+    func matchesGolden(_ scenario: ParityScenario) throws {
+        try ParityRunner.assertMatchesGolden(try ParityRunner.run(scenario))
     }
 
-    @Test("CURRENT behavior: rest latch freezes gravity (Phase A flips this)")
-    func restLatchCharacterization() {
-        let result = ParityRunner.run(.restLatch)
-        #expect(result.tracks[0].finalShouldApplyGravity == false)   // the one-way latch, documented
-        #expect(velocity ≈ .zero)
+    @Test("harness is deterministic — two fresh runs agree bit-for-bit")
+    func harnessIsDeterministic() throws {
+        // Validates the harness itself (seeding, no hidden global state) on
+        // the scenario with the most RNG + broad-phase surface.
+        let first  = try ParityRunner.run(.ballCluster16)
+        let second = try ParityRunner.run(.ballCluster16)
+        #expect(first == second)
+    }
+
+    @Test("CURRENT behavior: rest latch freezes gravity (A-response flips this)")
+    func restLatchCharacterization() throws {
+        let track = try ParityRunner.run(.restLatch).tracks[0]
+        // The one-way latch zeroes velocity/acceleration and clears
+        // shouldApplyGravity; with gravity off, Verlet then holds the state
+        // bit-exactly — so EXACT zero (not approx) is the honest assert.
+        #expect(track.finalShouldApplyGravity == false)
+        #expect(track.finalVelocity == [0, 0, 0])
     }
 }
+```
+
+Regenerating goldens (first landing, and A-response's reviewed regolden) — the `TEST_RUNNER_` prefix
+forwards the variable into the app-hosted runner process; the regen run FAILS by design
+(`Issue.record`), so the sequence is regen → review/commit the JSON → re-run without the flag → green:
+
+```bash
+TEST_RUNNER_TFS_REGEN_PHYSICS_BASELINES=1 xcodebuild test-without-building \
+  -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulator macOS" \
+  -sdk macosx -configuration Debug -parallel-testing-enabled NO \
+  -only-testing:"ToyFlightSimulatorTests/PhysicsParityTests" \
+  CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 ```
 
 Tolerance note: same-machine reruns should be exact; 1e-4 absorbs toolchain/FMA variance between local
@@ -1022,30 +1501,34 @@ Parameterized cases run concurrently in-process (see the note under Verification
 scenario builds its own `PhysicsWorld` and bodies, and nothing in the harness may touch process-wide
 state.
 
-## Step 0.8 — Unit tests (Metal-free, Swift Testing, `.physics` / `.utils` / `.gameObjects` tags)
+## Step 0.8 — Unit tests (Metal-free, Swift Testing, `.physics` / `.utils` / `.gameObjects` tags) ✅
 
-- [ ] `ColliderShapeTests`: `scaled(by:)` for all three shapes; `hasFinitePositiveDimensions` (rejects
+*(All landed 2026-08-28. Full serial app-hosted run: 240 Swift Testing tests in 40 suites + the XCTest
+suites, all green — existing suites untouched.)*
+
+- [x] `ColliderShapeTests`: `scaled(by:)` for all three shapes; `hasFinitePositiveDimensions` (rejects
   NaN/∞/negative, accepts halfHeight 0); `LocalCollider` defaults (identity rotation, `.airframe`, enabled)
-- [ ] `AircraftColliderSpecTests`: f22_cgtrader returns 3 enabled colliders with expected names/groups
+- [x] `AircraftColliderSpecTests`: f22_cgtrader returns 3 enabled colliders with expected names/groups
   and **unique names**; all dimensions finite/positive; unauthored types return `[]` (exhaustive switch —
   compile-time enforced, test documents it); **fuselage total length = 2·(8.1+1.35) ≈ 18.9 m at scale
   1.0** (the sanity anchor, as a test so it can't rot)
-- [ ] `MeshBoundsTests` (`.utils`): pins measured ModelIO semantics with nil-allocator `MDLMesh` —
+- [x] `MeshBoundsTests` (`.utils`): pins measured ModelIO semantics with nil-allocator `MDLMesh` —
   capsule extent [1,5,1] → bounds ±[1,2.5,1] (x/z=radius, y=total); box [1,2,3] → ±[0.5,1,1.5]
   (full extent); sphere [2,2,2] → ±2 (radius semantics — documents the latent `SphereMesh` 2× quirk)
-- [ ] `ColliderOverlayMappingTests`: sphere child scale = radius; box child scale = 2·halfExtents
+- [x] `ColliderOverlayMappingTests`: sphere child scale = radius; box child scale = 2·halfExtents
   (non-uniform); capsule child scale = 1 and `capsuleMeshParams(radius:halfHeight:)` =
-  `(radius, 2·(halfHeight + radius))`; `worldDimensions` numbers
-- [ ] `NodeOwnershipTests` (0.3b): weak-parent deallocation suite as specified there
-- [ ] `NodeTests` additions (XCTest, existing file): direct `rotationMatrix =` assignment dirties the
+  `(radius, 2·(halfHeight + radius))`; `worldDimensions` numbers (strings + longest-axis, at scale 1
+  and scale 2)
+- [x] `NodeOwnershipTests` (0.3b): weak-parent deallocation suite as specified there
+- [x] `NodeTests` additions (XCTest, existing file): direct `rotationMatrix =` assignment dirties the
   cached local/world matrices (modelMatrix reflects it with no other setter call); `setRotation(_ q:)`
   equivalent to `setRotation(angle:axis:)` for the same rotation and fires the same dirty path — pins
   the 0.3 root fix and the F18 order-dependence repair
-- [ ] `RigidBody` detached-mode tests (in existing `RigidBodyTests`): `init(detachedAt:)` set/get
+- [x] `RigidBody` detached-mode tests (in existing `RigidBodyTests`): `init(detachedAt:)` set/get
   round-trips; detached `SphereRigidBody`/`PlaneRigidBody` AABBs correct; **existing attached-path and
   released-weak tests unchanged and green** (that's the point of the redesign)
-- [ ] `PhysicsParityTests` as in step 0.7 (determinism + goldens + invariants + rest-latch characterization)
-- [ ] Overlay class itself: **not** unit-tested (constructs GameObjects → Metal; per project rule the
+- [x] `PhysicsParityTests` as in step 0.7 (determinism + goldens + invariants + rest-latch characterization)
+- [x] Overlay class itself: **not** unit-tested (constructs GameObjects → Metal; per project rule the
   logic lives in the pure mapping enum instead). Manual verification checklist below.
 
 ## Phase 0 exit criteria
@@ -1060,22 +1543,24 @@ state.
    wings box reaches the wingtips, empennage box covers the tails — A/B cycling against the hull for
    placement) — tuned values recorded in `AircraftColliderSpec` with overlay screenshots in
    `debugging/screenshots/`.
-3. - [ ] **Units anchor holds**: overlay log prints fuselage total ≈ **18.9 m at scale 1.0** (vs 18.92 m
-   real F-22); `MeshBoundsTests` + `ColliderOverlayMappingTests` green (the measured capsule mapping
-   can't rot).
-4. - [ ] **Parity baselines committed**: all scenario goldens recorded, parity suite green against them
-   on a clean re-run (determinism + invariants included), runnable Metal-free via the corrected
-   `build-for-testing` / `test-without-building` pattern.
+3. - [x] **Units anchor holds** *(2026-08-28)*: overlay log prints fuselage total ≈ **18.9 m at scale 1.0**
+   (vs 18.92 m real F-22 — ran in 0.5); `MeshBoundsTests` + `ColliderOverlayMappingTests` green (the
+   measured capsule mapping can't rot).
+4. - [x] **Parity baselines committed** *(2026-08-28)*: all six scenario goldens recorded, parity suite
+   green against them on a clean re-run (determinism + invariants included), run Metal-free via the
+   corrected `build-for-testing` / `test-without-building` pattern.
 5. - [ ] **No unintended behavior change**: full existing test suite green in CI; `PhysicsWorldSmokeTests`
    (attached-body path) untouched and green; game plays identically with the overlay off. The one
    deliberate change is 0.3b's ownership fix — detached subtrees (old aircraft after a swap/reset) now
    deallocate, pinned by `NodeOwnershipTests`.
 
-**Implementation order within Phase 0:** 0.1 ✓ → 0.2 ✓(re-authored) → 0.3 ✓ → 0.3b (code ✓, tests
-owed) → 0.4 ✓ → 0.5 (in-app anchor check pending) → **0.6** → **0.7** (baselines locked before any
-later phase touches physics) → 0.8 interleaved throughout. 0.3b preceded the overlay because 0.4's
-lifecycle rules assume it; the overlay steps (0.4/0.5) landed before the parity steps (0.6/0.7) — the
-two tracks are independent and either order was allowed; both before Phase A starts.
+**Implementation order within Phase 0:** 0.1 ✓ → 0.2 ✓(re-authored) → 0.3 ✓ → 0.3b ✓ → 0.4 ✓ → 0.5 ✓ →
+0.6 ✓ → 0.7 ✓ (baselines locked before any later phase touches physics) → 0.8 ✓. **Phase 0 code
+complete 2026-08-28.** Open before Phase A planning: exit criterion 1 (in-app overlay checklist),
+criterion 2 (visual spec tuning + screenshots) — both human-at-the-controls — and criterion 5 (full
+suite green in CI). 0.3b preceded the overlay because 0.4's lifecycle rules assume it; the overlay
+steps (0.4/0.5) landed before the parity steps (0.6/0.7) — the two tracks are independent and either
+order was allowed; both before Phase A starts.
 
 ---
 

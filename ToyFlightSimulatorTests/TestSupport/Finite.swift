@@ -5,6 +5,10 @@
 
 import simd
 
+func allFinite(_ v: SIMD3<Float>) -> Bool {
+    v.x.isFinite && v.y.isFinite && v.z.isFinite
+}
+
 func allFinite(_ v: SIMD4<Float>) -> Bool {
     v.x.isFinite && v.y.isFinite && v.z.isFinite && v.w.isFinite
 }

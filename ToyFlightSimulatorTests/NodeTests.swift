@@ -235,6 +235,53 @@ final class NodeTests: XCTestCase {
         XCTAssertEqual(node.getPosition().z, expectedPosition.z, accuracy: 0.001)
     }
     
+    // Pins the 0.3 root fix: the rotationMatrix setter must dirty the cached
+    // local/world matrices itself. Before the fix it was a bare storage write,
+    // and a direct assignment (F18.weaponReleaseSetup) only took effect if an
+    // unrelated setter happened to run afterwards.
+    func testDirectRotationMatrixAssignmentDirtiesModelMatrix() {
+        let node = Node(name: "TestNode")
+        _ = node.modelMatrix  // settle the lazy caches so staleness would show
+
+        let rotation = simd_float4x4(simd_quatf(angle: .pi / 2, axis: float3(0, 1, 0)))
+        node.rotationMatrix = rotation
+
+        // With identity T and S, the local model matrix IS the rotation —
+        // and no other setter ran to launder a stale cache.
+        let model = node.modelMatrix
+        for i in 0..<4 {
+            for j in 0..<4 {
+                XCTAssertEqual(model[i][j], rotation[i][j], accuracy: 0.0001)
+            }
+        }
+    }
+
+    // Pins the 0.3 quaternion overload: setRotation(_ q:) must be equivalent
+    // to setRotation(angle:axis:) for the same rotation, including firing the
+    // same dirty path (compared through modelMatrix, not just rotationMatrix).
+    func testQuaternionSetRotationMatchesAngleAxis() {
+        let angleAxisNode = Node(name: "AngleAxis")
+        let quaternionNode = Node(name: "Quaternion")
+        _ = angleAxisNode.modelMatrix
+        _ = quaternionNode.modelMatrix
+
+        let angle: Float = .pi / 3
+        let axis = float3(0, 1, 0)
+        angleAxisNode.setRotation(angle: angle, axis: axis)
+        quaternionNode.setRotation(simd_quatf(angle: angle, axis: axis))
+
+        for i in 0..<4 {
+            for j in 0..<4 {
+                XCTAssertEqual(quaternionNode.rotationMatrix[i][j],
+                               angleAxisNode.rotationMatrix[i][j],
+                               accuracy: 0.0001)
+                XCTAssertEqual(quaternionNode.modelMatrix[i][j],
+                               angleAxisNode.modelMatrix[i][j],
+                               accuracy: 0.0001)
+            }
+        }
+    }
+
     func testModelMatrixUpdates() {
         let node = Node(name: "TestNode")
         

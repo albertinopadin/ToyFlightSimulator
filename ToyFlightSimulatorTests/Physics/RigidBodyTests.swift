@@ -106,6 +106,53 @@ struct RigidBodyTests {
                 "setPosition is a no-op when gameObject is nil")
     }
 
+    // MARK: - Detached (standalone) bodies — step 0.6
+
+    @Test("init(detachedAt:) round-trips position with no GameObject")
+    func detachedPositionRoundTrip() {
+        let body = SphereRigidBody(detachedAt: [1, 2, 3], collisionRadius: 0.5)
+        #expect(body.gameObject == nil)
+        #expect(approxEqual(body.getPosition(), [1, 2, 3]))
+
+        // Standalone storage, not the released-weak no-op fallback.
+        body.setPosition([-4, 5, -6])
+        #expect(approxEqual(body.getPosition(), [-4, 5, -6]))
+    }
+
+    @Test("detached bodies get the same stored-property defaults as attached ones")
+    func detachedDefaultsMatchAttached() {
+        let body = SphereRigidBody(detachedAt: .zero)
+        #expect(body.mass == 1)
+        #expect(body.restitution == 1)
+        #expect(!body.isStatic)
+        #expect(body.shouldApplyGravity)
+        #expect(approxEqual(body.velocity, .zero))
+        #expect(approxEqual(body.acceleration, .zero))
+        #expect(body.collisionShape == .Sphere)
+    }
+
+    @Test("detached SphereRigidBody AABB = position ± radius")
+    func detachedSphereAABB() {
+        let body = SphereRigidBody(detachedAt: [10, 20, 30], collisionRadius: 2.0)
+        let aabb = body.getAABB()
+        #expect(approxEqual(aabb.min, [8, 18, 28]))
+        #expect(approxEqual(aabb.max, [12, 22, 32]))
+    }
+
+    @Test("detached PlaneRigidBody normalizes its normal and brackets its position")
+    func detachedPlaneAABB() {
+        let plane = PlaneRigidBody(detachedAt: .zero, collisionNormal: [0, 2, 0])
+        #expect(approxEqual(plane.collisionNormal, [0, 1, 0]))
+        #expect(plane.collisionShape == .Plane)
+
+        // The "infinite" horizontal-plane AABB: thin in Y, huge in X/Z —
+        // enough for the broad phase to pair it with anything near the floor.
+        let aabb = plane.getAABB()
+        #expect(aabb.min.y <= 0 && aabb.max.y >= 0)
+        #expect(aabb.min.x <= -9999 && aabb.max.x >= 9999)
+        #expect(aabb.min.z <= -9999 && aabb.max.z >= 9999)
+    }
+
     // MARK: - F22 didSet overrides
 
     @Test("F22.rigidBody didSet stamps F22.mass and restitution=0.1")

@@ -14,6 +14,12 @@ public final class SphereRigidBody: RigidBody {
         self.collisionShape = .Sphere
     }
     
+    init(detachedAt position: float3, collisionRadius: Float = 1.0) {
+        super.init(detachedAt: position)
+        self.collisionRadius = collisionRadius
+        self.collisionShape = .Sphere
+    }
+    
     // Default AABB implementation for spheres
     override func getAABB() -> AABB {
         return AABB(center: getPosition(), radius: collisionRadius)
@@ -27,6 +33,12 @@ public final class PlaneRigidBody: RigidBody {
         super.init(gameObject: gameObject)
         // Normalize once at init so collision response can use the normal
         // directly without re-normalizing per contact.
+        self.collisionNormal = collisionNormal.normalize()
+        self.collisionShape = .Plane
+    }
+    
+    init(detachedAt position: float3, collisionNormal: float3 = [0, 1, 0]) {
+        super.init(detachedAt: position)
         self.collisionNormal = collisionNormal.normalize()
         self.collisionShape = .Plane
     }
