@@ -26,6 +26,8 @@ struct AircraftThumbnailSpecTests {
 
     // MARK: - Camera framing math
 
+    // "Golden value" = a hand-computed expected number pinned inline (unlike
+    // the physics goldens, which are committed files in Physics/Baselines/).
     @Test("Camera distance matches d = r / sin(min half-FOV) * margin for the default config")
     func cameraDistanceGoldenValue() {
         var config = ThumbnailCameraConfig()

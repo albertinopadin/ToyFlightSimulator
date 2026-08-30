@@ -6,8 +6,10 @@
 //
 
 /// SplitMix64 (Steele/Lea/Flood — the java.util.SplittableRandom mixer).
-/// Tiny, seedable, and written out in full HERE so goldens never depend on
-/// stdlib RNG internals.
+/// Tiny, seedable, and written out in full HERE so goldens (the committed
+/// known-good trajectory recordings in Physics/Baselines/*.json that
+/// PhysicsParityTests diffs fresh runs against) never depend on stdlib RNG
+/// internals.
 struct SplitMix64: RandomNumberGenerator {
     private var state: UInt64
 

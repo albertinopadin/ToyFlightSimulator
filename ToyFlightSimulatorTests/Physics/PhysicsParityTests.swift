@@ -3,10 +3,13 @@
 //  ToyFlightSimulatorTests
 //
 //  Step 0.7 of plans/claude/compound_rigid_bodies_implementation_plan.md:
-//  records the CURRENT physics engine's trajectories as committed goldens so
-//  Phase A's rewrite can be verified in two commits — A-routing must match
-//  every golden unchanged; A-response deliberately diverges from first
-//  contact and regoldens with a reviewed diff.
+//  records the CURRENT physics engine's trajectories as committed goldens
+//  (golden files in the golden-master-testing sense: known-good reference
+//  outputs, checked in as Baselines/*.json, that later runs must reproduce
+//  within tolerance) so Phase A's rewrite can be verified in two commits —
+//  A-routing must match every golden unchanged; A-response deliberately
+//  diverges from first contact and regoldens (re-records the baselines)
+//  with a reviewed diff.
 //
 
 import Foundation

@@ -145,8 +145,10 @@ diffs against a recorded baseline instead of against memory.
 2. The units contract (collider dimensions are post-import engine-local **meters**; `uniformScale` is a
    pass-through multiplier that is 1.0 for every meterized aircraft) enforced by a debug assertion and
    sanity-checked against the CGTrader F-22.
-3. A Metal-free, deterministic trajectory-capture harness with committed golden baselines for the current
-   physics behavior, plus the verification protocol Phase A will follow against them.
+3. A Metal-free, deterministic trajectory-capture harness with committed golden baselines ("goldens":
+   recorded known-good reference outputs — here `ToyFlightSimulatorTests/Physics/Baselines/*.json` —
+   that later runs are diffed against) for the current physics behavior, plus the verification protocol
+   Phase A will follow against them.
 
 **Non-goals (deferred):** `WorldCollider` + narrow phase (Phase A), any `RigidBody.colliders` storage
 (Phase A), strut visualization as `Line`s (Phase B, when `SuspensionStrut` exists), iOS menu toggle for

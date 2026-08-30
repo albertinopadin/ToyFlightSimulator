@@ -838,7 +838,8 @@ Unit (Swift Testing, Metal-free — new `ToyFlightSimulatorTests/AssetPipeline/A
 - Every `AircraftType` case has a spec, and spec `caseName`s are unique (guards the roster/spec
   sync when aircraft are added).
 - `cameraDistance(boundingRadius:)`: finite, positive, monotonic in radius, respects margin — a
-  couple of golden values (e.g., r=1, fov=30°, square aspect ⇒ `1/sin(15°)×1.08 ≈ 4.17`).
+  couple of golden values (hand-computed expected numbers — e.g., r=1, fov=30°, square aspect ⇒
+  `1/sin(15°)×1.08 ≈ 4.17`).
 - Cache key: stable across calls; changes when pixel size / heading / specVersion change; two
   different aircraft never collide.
 - Per this repo's convention, run scoped: `xcodebuild test-without-building
