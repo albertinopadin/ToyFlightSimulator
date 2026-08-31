@@ -16,6 +16,12 @@
 
 ## Changelog
 
+- **2026-08-31** (criterion 7 closed) — **Exit criterion 7 CLOSED by the project owner**: the
+  fixed PhysicsStressTestScene looks and feels good for at least the first 30 seconds (the
+  contact-heavy 50-sphere settle plus the broad-phase → O(n²) switch), on top of the measured
+  stats leg (~1.4× avg step at sub-millisecond scale, broad-phase behavior identical). **Phase A
+  now rests on exit criterion 6 alone** — CI green on the landed commits, which runs when they
+  reach the remote.
 - **2026-08-31** (camera fix) — **PhysicsStressTestScene camera fixed on main**: `[0, 15, +40]`
   → `[0, 15, −40]` with a comment naming the +Z-forward convention and the bisect. Verified by
   booting the scene on main (temporary Preferences flip, reverted): spheres render and settle,
@@ -3557,7 +3563,7 @@ iOS (unchanged from Phase 0's non-goals).
    under Swift Testing's default in-process concurrency, and review confirms no static mutable
    state was added anywhere in the step path (correction 1 held).
 6. - [ ] **CI green** on all three commits (serial app-hosted run, as configured).
-7. - [ ] **Perf sanity**: PhysicsStressTestScene frame rate and broad-phase stats comparable
+7. - [x] **Perf sanity**: PhysicsStressTestScene frame rate and broad-phase stats comparable
    pre/post (the routed path adds one narrow phase per pair — replacing two — plus one array
    append per contact; nothing else joined the hot path). *(Status 2026-08-31: BallPhysicsScene
    feels right and holds > 60 fps even at the contact-heavy start. The all-black stress scene
@@ -3571,8 +3577,9 @@ iOS (unchanged from Phase 0's non-goals).
    instead of sitting latched; ~5% of a 60 fps frame), broad-phase reduction identical
    (93–95% both eras), 100 spheres ~1.5 ms post. The camera fix landed on main the same day
    (z = −40; rendering verified by screenshot — spheres visible and settling; the −15° pitch
-   confirmed correct by the branch framing geometry). Remaining for this box: the owner's
-   frame-rate/feel pass on the now-visible scene.)*
+   confirmed correct by the branch framing geometry). CLOSED 2026-08-31: the owner ran the
+   fixed scene — looks and feels good for at least the first 30 seconds, covering the
+   contact-heavy 50-sphere settle and the broad-phase → O(n²) comparison switch.)*
 
 **Implementation order within Phase A:** A.1 → A.2 → A.3 → A.4 → A.5 as ONE commit (A-routing,
 gated by criterion 1) → A.6 as one commit (A-response, gated by criterion 2) → A.7 (A-aircraft,
