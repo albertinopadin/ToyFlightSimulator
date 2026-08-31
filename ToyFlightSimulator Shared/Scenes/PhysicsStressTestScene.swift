@@ -88,7 +88,11 @@ final class PhysicsStressTestScene: GameScene {
         (ground, groundRigidBody) = addGround(restitution: 0.9)
         addSun()
         
-        debugCamera.setPosition([0, 15, 40])
+        // +Z is forward: from z = -40 the camera faces the sphere grid
+        // (x/z in [-8, 8]). The pre-migration z = +40 faced AWAY from the
+        // scene — the "all black" stress scene, bisected 2026-08-31 on
+        // branch pre-phase-a-stress-check (predates Phase A).
+        debugCamera.setPosition([0, 15, -40])
         debugCamera.setRotationX(Float(-15).toRadians)
         addCamera(debugCamera)
         

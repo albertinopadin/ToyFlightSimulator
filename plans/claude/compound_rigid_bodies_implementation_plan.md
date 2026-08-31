@@ -16,6 +16,14 @@
 
 ## Changelog
 
+- **2026-08-31** (camera fix) — **PhysicsStressTestScene camera fixed on main**: `[0, 15, +40]`
+  → `[0, 15, −40]` with a comment naming the +Z-forward convention and the bisect. Verified by
+  booting the scene on main (temporary Preferences flip, reverted): spheres render and settle,
+  same framing as the branch check; the −15° pitch is correct (spheres sit slightly below view
+  center, exactly where a 15°-down pitch puts them from 40 m — an up-pitch would have framed
+  them out). Test branch `pre-phase-a-stress-check` deleted after serving the bisect (its two
+  commits were test-only scaffolding: boot-into-scene + the camera experiment). Criterion 7 now
+  waits only on the owner's frame-rate/feel pass.
 - **2026-08-31** (stress-scene bisect) — **The all-black PhysicsStressTestScene is NOT a Phase A
   regression, and its root cause is found.** On branch `pre-phase-a-stress-check` (off
   `ae1c8f4`, pre-Phase-A, booting straight into the scene) the render is identically black
@@ -3561,8 +3569,10 @@ iOS (unchanged from Phase 0's non-goals).
    50 spheres BP-on avg step 0.49–0.74 ms pre vs 0.67–0.94 ms post (~1.4× — the expected cost
    of the collider narrow phase plus resting bodies doing real support-impulse work every step
    instead of sitting latched; ~5% of a 60 fps frame), broad-phase reduction identical
-   (93–95% both eras), 100 spheres ~1.5 ms post. Remaining for this box: the in-app frame-rate
-   eyeball once the camera fix lands.)*
+   (93–95% both eras), 100 spheres ~1.5 ms post. The camera fix landed on main the same day
+   (z = −40; rendering verified by screenshot — spheres visible and settling; the −15° pitch
+   confirmed correct by the branch framing geometry). Remaining for this box: the owner's
+   frame-rate/feel pass on the now-visible scene.)*
 
 **Implementation order within Phase A:** A.1 → A.2 → A.3 → A.4 → A.5 as ONE commit (A-routing,
 gated by criterion 1) → A.6 as one commit (A-response, gated by criterion 2) → A.7 (A-aircraft,
