@@ -16,6 +16,14 @@
 
 ## Changelog
 
+- **2026-08-31** (in-app verification) — **Exit criterion 4 CLOSED by the project owner**: a
+  rolled touch logs the wings by name (`[Contact] F-22_CGTrader.wings touched Quad (depth
+  0.007 m)`), the X-key overlay shows only the red live-collider volumes (yellow ghost gone),
+  and ground contact was already confirmed. Criterion 7 got a partial — BallPhysicsScene feels
+  right and holds > 60 fps from the contact-heavy start — but stays open on a **known issue**:
+  PhysicsStressTestScene currently renders all black (owner-deferred to a follow-up commit; not
+  yet bisected, so it may or may not predate Phase A). Remaining Phase A exit items: 6 (CI when
+  the commits reach the remote) and 7 (blocked on the stress-scene render fix).
 - **2026-08-31** (latest) — **Step A.7 landed → A-aircraft commit COMPLETE** (hand-implemented by
   the project owner, then review-verified; comments, the two doc flips, and `CompoundBodyTests`
   completed at review). `FlightboxWithPhysics.applyAircraftSwap` now builds the player body from
@@ -3519,19 +3527,23 @@ iOS (unchanged from Phase 0's non-goals).
    outside authoring/setup sites.
 3. - [x] **General planes are correct**: `NarrowPhaseTests`' tilted + translated plane cases green
    (the y=0 hardcode is deleted, not routed around).
-4. - [ ] *(tests green; owner confirmed correct in-app ground contact 2026-08-31 — still owed:
-   the rolled-touch `wings` log and the X-key overlay/no-ghost check)* **The compound is live
-   and speaks**: `CompoundBodyTests` green (settles at ≈ 1.05 on
+4. - [x] **The compound is live and speaks**: `CompoundBodyTests` green (settles at ≈ 1.05 on
    "fuselage"; banked pose reports "wings" only); in-app, a belly touch logs `fuselage`, a rolled
    touch logs `wings`, and the overlay's red volumes match the live collider set (yellow ghost
-   gone for the F-22 — by design).
+   gone for the F-22 — by design). *(All confirmed by the project owner 2026-08-31: ground
+   contact, the rolled-touch log — `[Contact] F-22_CGTrader.wings touched Quad (depth 0.007 m)`
+   — and the red-volumes-only overlay.)*
 5. - [x] **No process-wide state**: the parity determinism test stays green, the full suite passes
    under Swift Testing's default in-process concurrency, and review confirms no static mutable
    state was added anywhere in the step path (correction 1 held).
 6. - [ ] **CI green** on all three commits (serial app-hosted run, as configured).
 7. - [ ] **Perf sanity**: PhysicsStressTestScene frame rate and broad-phase stats comparable
    pre/post (the routed path adds one narrow phase per pair — replacing two — plus one array
-   append per contact; nothing else joined the hot path).
+   append per contact; nothing else joined the hot path). *(Partial 2026-08-31: BallPhysicsScene
+   feels right and holds > 60 fps even at the contact-heavy start. BLOCKED on the stress scene
+   itself: it currently renders all black — known issue, owner-deferred to a follow-up commit;
+   not yet bisected, so it may or may not predate Phase A. Re-check this criterion once the
+   scene renders.)*
 
 **Implementation order within Phase A:** A.1 → A.2 → A.3 → A.4 → A.5 as ONE commit (A-routing,
 gated by criterion 1) → A.6 as one commit (A-response, gated by criterion 2) → A.7 (A-aircraft,
