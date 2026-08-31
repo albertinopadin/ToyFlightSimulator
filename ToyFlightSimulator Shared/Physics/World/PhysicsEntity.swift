@@ -23,7 +23,12 @@ protocol PhysicsEntity: AnyObject {
     var force: float3 { get set }
     var restitution: Float { get set }
     var isStatic: Bool { get set }
-    var shouldApplyGravity: Bool { get set }  // Hack...
+
+    /// Static/kinematic gravity opt-out, set by authoring only. No longer
+    /// solver state: the response never writes it (the rest latch died in
+    /// Phase A — resting is a per-step contact-impulse equilibrium, research
+    /// §3.2).
+    var shouldApplyGravity: Bool { get set }
 
     func setPosition(_ position: float3)
     func getPosition() -> float3

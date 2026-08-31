@@ -9,7 +9,9 @@ import simd
 
 final class EulerSolver: PhysicsSolver {
     /// Below this relative speed, colliding bodies are parked (anti-jitter hack).
-    /// Stored squared so the hot path compares length_squared with no sqrt.
+    /// LEGACY — read only by applyLegacyEulerResponse below; the live response
+    /// (HeckerCollisionResponse.applyCollisionResponse) replaced it with the
+    /// restitution velocity threshold in the A-response commit.
     private static let restSpeedThresholdSquared: Float = 0.55 * 0.55
     
     /// PhysicsSolver conformance — allocates a local scratch. Kept for the
@@ -67,6 +69,10 @@ final class EulerSolver: PhysicsSolver {
 
     /// Narrow phase + response for one candidate pair — same routing shape as
     /// HeckerCollisionResponse.resolvePair (guard order preserved exactly).
+    /// Since the A-response commit both solvers share the corrected
+    /// applyCollisionResponse: the per-axis reflection was an axis-aligned-
+    /// plane special case the response-semantics invariants can't hold under
+    /// (single_bounce_euler's regolden pins the divergence).
     private static func resolvePair(_ ei: RigidBody, _ ej: RigidBody, contacts: inout [Contact]) {
         guard ei.shouldCollide(with: ej),
               !ei.collidedWith.contains(ObjectIdentifier(ej)) else { return }
@@ -77,7 +83,7 @@ final class EulerSolver: PhysicsSolver {
         ei.collidedWith.insert(ObjectIdentifier(ej))
         ej.collidedWith.insert(ObjectIdentifier(ei))
         
-        applyLegacyEulerResponse(ei, ej, contact: contacts[deepest])
+        HeckerCollisionResponse.applyCollisionResponse(ei, ej, contact: contacts[deepest])
         
         for contact in contacts[firstNew...] {
             ei.onContact?(contact, ej)
@@ -85,18 +91,24 @@ final class EulerSolver: PhysicsSolver {
         }
     }
     
-    /// A-ROUTING TRANSCRIPTION — behavior-frozen (see the Hecker twin). The
-    /// per-axis reflection and the zero-both-velocities rest hack survive
-    /// routing verbatim; A.6 deletes this whole function in favor of the
-    /// shared corrected response.
+    /// LEGACY — UNREFERENCED since the A-response commit, kept deliberately as
+    /// reference code (project-owner decision; the plan's A.6 File 2 said to
+    /// delete it). This is the faithful A-routing transcription of the
+    /// original Euler response — per-axis velocity reflection plus the
+    /// zero-both-velocities rest hack — preserved so the pre-Phase-A behavior
+    /// stays readable next to its replacement. Nothing may call it: the
+    /// response-semantics suite (CollisionResponseTests.eulerPathRests) and
+    /// the regoldened single_bounce_euler baseline both pin the shared
+    /// corrected response as the live path. Delete freely once it stops
+    /// earning its keep as documentation.
     private static func applyLegacyEulerResponse(_ ei: RigidBody, _ ej: RigidBody, contact: Contact) {
         let collisionVector = contact.normal      // unit, strict B → A
         let restitution = min(ei.restitution, ej.restitution)
         let unormCollisionVector = contact.normal * contact.depth
 
-        // Hack to prevent infinite bouncing (dies in A.6; zeroes BOTH bodies,
-        // no static gate — preserved exactly, single_bounce_euler pins it;
-        // squared compare — was .magnitude < 0.55):
+        // Hack to prevent infinite bouncing (zeroes BOTH bodies, no static
+        // gate — preserved exactly as transcribed in A-routing; squared
+        // compare — was .magnitude < 0.55):
         if simd_length_squared(ei.velocity - ej.velocity) < restSpeedThresholdSquared {
             ei.velocity = .zero
             ej.velocity = .zero

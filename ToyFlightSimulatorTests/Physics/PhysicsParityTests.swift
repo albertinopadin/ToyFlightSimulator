@@ -120,10 +120,13 @@ enum ParityScenario: String, CaseIterable, CustomTestStringConvertible {
 
             case .restLatch:
                 // Plane e = 1.0, so min() picks the ball's 0.2: impacts decay
-                // 7 → 1.4 → 0.28 m/s, and the third contact is under
-                // HeckerCollisionResponse's 0.55 m/s rest threshold against a
-                // static body ⇒ the one-way latch fires (velocity/acceleration
-                // zeroed, shouldApplyGravity = false) within ~70 steps.
+                // 7 → 1.4 → 0.28 m/s. Since the A-response commit the third
+                // contact is below the 1 m/s restitution velocity threshold ⇒
+                // e forced to 0 and the ball enters the per-step
+                // support-impulse equilibrium — gravity stays ON, pinned by
+                // the golden's finalShouldApplyGravity. (Pre-A-response, this
+                // same scenario pinned the one-way rest latch: the 0.55 m/s
+                // threshold froze the ball with gravity off.)
                 let ball = SphereRigidBody(detachedAt: [0, 3, 0], collisionRadius: 0.5)
                 ball.restitution = 0.2
                 return Built(world: makeWorld([ball, floorPlane(restitution: 1.0)]),
@@ -363,13 +366,23 @@ struct PhysicsParityTests {
         #expect(first == second)
     }
 
-    @Test("CURRENT behavior: rest latch freezes gravity (A-response flips this)")
-    func restLatchCharacterization() throws {
+    @Test("A-response behavior: resting keeps gravity on (the latch is gone)")
+    func restingKeepsGravityOn() throws {
         let track = try ParityRunner.run(.restLatch).tracks[0]
-        // The one-way latch zeroes velocity/acceleration and clears
-        // shouldApplyGravity; with gravity off, Verlet then holds the state
-        // bit-exactly — so EXACT zero (not approx) is the honest assert.
-        #expect(track.finalShouldApplyGravity == false)
-        #expect(track.finalVelocity == [0, 0, 0])
+        // Support-cycle equilibrium: the e=0 impulse cancels each step's
+        // gravity, so the boundary-frame velocity is at most ~one gravity
+        // step (g·dt ≈ 0.163 m/s), and the ball floats within slop + β
+        // residual of touching. EXACT zeros would be dishonest now — that
+        // was the latch's signature.
+        #expect(track.finalShouldApplyGravity == true)
+        let v = track.finalVelocity
+        #expect(simd_length(float3(v[0], v[1], v[2])) <= 0.25)
+        // β-equilibrium depth ≈ slop + (per-step gravity sink)/β ≈ 1–2 cm at
+        // 60 Hz — the 0.03 bound is deliberately loose; observed at the
+        // 2026-08-31 regolden: y = 0.4882 (1.18 cm depth), |v| = 0.1635
+        // (exactly g·dt). Tighten toward those once Phase B's fixed step
+        // makes them dt-stable.
+        let restingY = track.samples.last![1]
+        #expect(abs(restingY - 0.5) <= 0.03)
     }
 }

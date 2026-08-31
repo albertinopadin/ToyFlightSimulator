@@ -16,6 +16,38 @@
 
 ## Changelog
 
+- **2026-08-31** (later) — **Step A.6 landed → A-response commit COMPLETE** (hand-implemented by
+  the project owner, then review-verified against the listings; comments and test deliverables
+  completed at review). The response math matched the A.6 listing operation-for-operation on
+  arrival — constants, β/slop correction, approach guard, threshold, always-applied impulse; the
+  review's additions were the plan's doc comments (the constants' rationale, the numbered step
+  comments, and replacing the now-stale "A-ROUTING TRANSCRIPTION — behavior-frozen" doc that
+  still sat on the corrected body) plus the whole regolden/test track. **One amendment to A.6
+  File 2**: `applyLegacyEulerResponse` (and its `restSpeedThresholdSquared`) is RETAINED as
+  clearly-marked unreferenced reference code instead of deleted — project-owner decision; the
+  doc comment on it says exactly that, nothing calls it, and `eulerPathRests` + the regoldened
+  `single_bounce_euler` pin the shared corrected response as the live path. Regolden review
+  (diffs read like code against the 0.7/A.6 signature table): `single_bounce_verlet`/`_euler`
+  diverge first at steps 59/58 (first contact ≈ 57–58; free fall identical before), apex
+  sequences strictly decreasing (4.144→3.452→2.890 / 4.280→3.687), gravity on at the window end;
+  `rest_latch` diverges from the first post-contact sample (step 45 — first contact ≈ 43–44 from
+  the 2.5 m fall; the table's "~step 66" was the OLD latch step, not first contact) and lands
+  the predicted equilibrium: final |v| = 0.1635 = exactly g·dt, last y = 0.4882 (1.18 cm =
+  slop + sink/β residual), gravity ON — the latch signature is gone from the JSON;
+  `head_on_pair` is the strongest confirmation: the contact lands at depth EXACTLY 0 (3 m gap,
+  10 m/s closing, dt 1/60 → the inclusive boundary), so correction is 0 in both eras and the
+  e=1 equal-mass swap is structurally identical — the regolden differs only in last-ulp fp
+  noise (≤ ~3e-7, the inverse-mass association), mirror symmetry exact to 0.0, velocities swap
+  to exactly ±5; `ball_cluster_16` diverges at the first sampled step because bodies 1–2 spawn
+  0.742 m apart (< 0.8 sum — the OLD response rest-latched that pair at spawn, the new one
+  support-cycles it), `stress_grid_50` at step 63 ≈ the first floor contacts from the 5 m spawn
+  floor; both chaos scenarios finite, within UN-EDITED speed budgets, all
+  finalShouldApplyGravity true. The characterization test flipped to `restingKeepsGravityOn`
+  (observed equilibrium recorded in its comment), `CollisionResponseTests` landed (8 semantic
+  pins incl. the latch regression and the Euler-path rest), and
+  `grep "shouldApplyGravity = " Physics/` shows exactly the two initializer assignments — zero
+  solver writes. Full serial suite green: 286 tests / 45 suites + XCTest. Exit criterion 2
+  closes here.
 - **2026-08-31** — **A.8 routing-track suites backfilled** (own commit, sequenced before the
   A-response commit). The A-routing commit landed without the A.8 suites owed to it — this
   commit pays that debt: `WorldColliderBuilderTests` (7 hand-computed pose/AABB pins),
@@ -2909,7 +2941,7 @@ suite whose assertions hold for the NEW behavior and would have failed under the
 
 ### File 1 — `HeckerCollisionResponse.swift` (the ~40 lines that pay for the whole phase)
 
-- [ ] Constants replaced:
+- [x] Constants replaced:
 
 ```diff
  final class HeckerCollisionResponse {
@@ -2932,7 +2964,7 @@ suite whose assertions hold for the NEW behavior and would have failed under the
 +    private static let positionCorrectionBeta: Float = 0.2
 ```
 
-- [ ] `applyCollisionResponse` — the routed transcription's body is replaced wholesale
+- [x] `applyCollisionResponse` — the routed transcription's body is replaced wholesale
   (`internal` now: `EulerSolver` shares it). Full listing:
 
 ```swift
@@ -3003,8 +3035,12 @@ Sanity traces (worth keeping in the doc — they're the review anchors for the r
 
 ### File 2 — `EulerSolver.swift` (unification)
 
-- [ ] Delete `applyLegacyEulerResponse` and the solver's own `restSpeedThresholdSquared`;
-  `resolvePair`'s response line becomes:
+- [x] `resolvePair`'s response line becomes the shared corrected call (below). **Amended at
+  landing**: the deletion half did NOT happen — `applyLegacyEulerResponse` and its
+  `restSpeedThresholdSquared` are retained as clearly-marked, UNREFERENCED reference code
+  (project-owner decision, 2026-08-31 changelog); nothing calls them, and
+  `CollisionResponseTests.eulerPathRests` + the regoldened `single_bounce_euler` pin the shared
+  response as the live path:
 
 ```diff
 -        applyLegacyEulerResponse(ei, ej, contact: contacts[deepest])
@@ -3019,7 +3055,7 @@ wholesale reshape.
 
 ### File 3 — `PhysicsEntity.swift` (one comment)
 
-- [ ] `shouldApplyGravity`'s `// Hack...` note finally becomes honest:
+- [x] `shouldApplyGravity`'s `// Hack...` note finally becomes honest:
 
 ```diff
 -    var shouldApplyGravity: Bool { get set }  // Hack...
@@ -3036,7 +3072,7 @@ static setup) — that grep is part of the exit criteria.
 
 ### Regolden + test changes (same commit)
 
-- [ ] **Regolden all six** via the 0.7 command (`TEST_RUNNER_TFS_REGEN_PHYSICS_BASELINES=1`, regen
+- [x] **Regolden all six** via the 0.7 command (`TEST_RUNNER_TFS_REGEN_PHYSICS_BASELINES=1`, regen
   run fails by design, clean re-run green). Review the JSON diffs against these expected
   signatures before committing:
 
@@ -3047,7 +3083,7 @@ static setup) — that grep is part of the exit criteria.
 | `head_on_pair` | Identical until impact (~step 18); post-impact the ±x symmetry holds sample-for-sample (mirror-exactness is a review check, not just a tolerance), velocities swap to ±5 on X with lockstep Y fall. |
 | `ball_cluster_16` / `stress_grid_50` | Full regolden, no sample-level review expected beyond spot checks; the **chaos-policy invariants must pass UN-EDITED** (finite, no tunneling at 1 m slack, speed budgets) — they were designed to survive exactly this change. If a budget trips, that's a response bug, not a budget to raise. |
 
-- [ ] **Flip the characterization test** (PhysicsParityTests.swift) — the old
+- [x] **Flip the characterization test** (PhysicsParityTests.swift) — the old
   `restLatchCharacterization` documented the latch; its replacement documents the equilibrium:
 
 ```swift
@@ -3070,7 +3106,7 @@ static setup) — that grep is part of the exit criteria.
     }
 ```
 
-- [ ] **New suite** `ToyFlightSimulatorTests/Physics/CollisionResponseTests.swift` (Metal-free —
+- [x] **New suite** `ToyFlightSimulatorTests/Physics/CollisionResponseTests.swift` (Metal-free —
   detached bodies through real `PhysicsWorld`s; `.tags(.physics)`). Full listing — these are the
   semantic pins research §4.7 asked for:
 
@@ -3432,9 +3468,9 @@ Suites land inside their step's commit — listed here 0.8-style so nothing is o
   (event plumbing smoke on the GameObject-backed path).
 
 **A-response commit:**
-- [ ] `CollisionResponseTests` as listed in A.6 (the semantic pins: latch regression, approach
+- [x] `CollisionResponseTests` as listed in A.6 (the semantic pins: latch regression, approach
   guard, threshold both sides, inverse-mass correction split, Euler-path rest).
-- [ ] `PhysicsParityTests`: regoldened baselines + the flipped characterization test.
+- [x] `PhysicsParityTests`: regoldened baselines + the flipped characterization test.
 
 **A-aircraft commit:**
 - [ ] `CompoundBodyTests` as listed in A.7 (settle-by-name; banked-wings-only).
@@ -3458,7 +3494,7 @@ iOS (unchanged from Phase 0's non-goals).
    dry-run rewrites all six baselines **byte-identical** (`git diff --exit-code` on Baselines/);
    `PhysicsWorldSmokeTests` untouched and green; FlightboxWithPhysics plays identically by eye
    (balls still bounce, settle, and latch exactly as before this commit).
-2. - [ ] **A-response semantics hold**: regoldens reviewed against the A.6 signature table and
+2. - [x] **A-response semantics hold**: regoldens reviewed against the A.6 signature table and
    committed; `CollisionResponseTests` green (latch regression included); the flipped
    characterization test green; chaos-policy invariants passed **un-edited**;
    `grep -rn "shouldApplyGravity = " "ToyFlightSimulator Shared/Physics"` shows zero writes

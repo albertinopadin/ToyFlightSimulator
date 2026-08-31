@@ -11,10 +11,19 @@
 import simd
 
 final class HeckerCollisionResponse {
-    /// Below this relative speed a contact is treated as resting (squared — no sqrt).
-    private static let restSpeedThresholdSquared: Float = 0.55 * 0.55
-    /// Impulse delta-v below this squared magnitude is discarded (1.0² == 1.0).
-    private static let minDeltaVeloSquared: Float = 1.0
+    /// Below this normal approach speed, restitution is 0: the impulse solves
+    /// the normal velocity to exactly zero instead of bouncing, so resting is
+    /// an equilibrium re-established every step — gravity stays ON. (Box2D's
+    /// b2_velocityThreshold and Jolt's restitution threshold are both ≈ 1 m/s.)
+    private static let restitutionVelocityThreshold: Float = 1.0
+    /// Penetration allowed before position correction engages (meters). The
+    /// slop keeps persistent contacts measurably touching instead of
+    /// oscillating across the surface.
+    private static let penetrationSlop: Float = 0.005
+    /// Fraction of (depth − slop) corrected per step (Baumgarte-style); damps
+    /// correction-induced energy. Replaces the legacy full-depth teleports
+    /// and the ×2 static-branch overshoot.
+    private static let positionCorrectionBeta: Float = 0.2
 
     /// Broad-phase pair path. P7: the per-call [String: Int] index map is gone —
     /// entities are classes, so the response mutates them through the references.
@@ -42,8 +51,8 @@ final class HeckerCollisionResponse {
     /// ONE narrow phase per pair (the old flow ran geometry twice — collided()
     /// then getCollisionData()). Bookkeeping order preserved exactly: the
     /// already-collided guard, then narrow phase, then symmetric insertion,
-    /// then response. New and inert-by-default: the filtering guard (A.4) and
-    /// the per-contact events (nobody registered until A.7).
+    /// then response, then the per-contact events (first consumers: A.7's
+    /// ContactDebugLogger on the player aircraft, and CompoundBodyTests).
     private static func resolvePair(_ entityA: RigidBody, _ entityB: RigidBody, contacts: inout [Contact]) {
         guard entityA.shouldCollide(with: entityB), !entityA.collidedWith.contains(ObjectIdentifier(entityB)) else { return }
         
@@ -61,96 +70,57 @@ final class HeckerCollisionResponse {
         }
     }
 
-    /// A-ROUTING TRANSCRIPTION — behavior-frozen. This is the pre-routing
-    /// response verbatim (rest latch, minDeltaVelo impulse discard, ×2 static
-    /// corrections and all), consuming the pair's deepest Contact instead of
-    /// re-running geometry through PhysicsWorld.getCollisionData. Where the
-    /// strict B→A normal differs from the legacy shape-dependent normal,
-    /// `legacyNormal` reconstructs the old value exactly (IEEE negation is
-    /// exact — see the plan's sign-symmetry note). Do NOT clean anything up
-    /// here: A.6 replaces this body deliberately, against regenerated goldens.
-    private static func applyCollisionResponse(_ entityA: RigidBody, _ entityB: RigidBody, contact: Contact) {
-        // Hack (dies in A.6): the one-way rest latch, preserved bit-for-bit.
-        if simd_length_squared(entityA.velocity - entityB.velocity) < restSpeedThresholdSquared {
-            if entityB.isStatic {
-                entityA.velocity = .zero
-                entityA.acceleration = .zero
-                entityA.shouldApplyGravity = false
+    /// Corrected linear contact response (research §3.2; combined doc A5) —
+    /// the A-response commit's deliberate behavior change, regoldened. Both
+    /// legacy hacks (the one-way rest latch and the minDeltaVelo impulse
+    /// discard) are gone: resting is a per-step equilibrium instead of frozen
+    /// state, and shouldApplyGravity is never written here. Consumes the
+    /// pair's deepest contact; symmetric in inverse mass, so the
+    /// static/dynamic branching of the legacy code collapses (a static body
+    /// has infinite mass ⇒ inverse mass 0 ⇒ it neither moves nor changes
+    /// velocity). deltaTime-independent by design until Phase B's fixed step
+    /// (β is per-step, matching the legacy correction's shape). `internal`:
+    /// EulerSolver shares it.
+    internal static func applyCollisionResponse(_ entityA: RigidBody, _ entityB: RigidBody, contact: Contact) {
+        let n = contact.normal                       // unit, strict B → A
+        let invMassA: Float = entityA.isStatic ? 0 : 1 / entityA.mass
+        let invMassB: Float = entityB.isStatic ? 0 : 1 / entityB.mass
+        let invMassSum = invMassA + invMassB
+        guard invMassSum > 0 else { return }         // two statics: nothing to move
 
-                print("[HeckerCollisionResponse resolveCollisions] Gravity should not apply to entity: \(ObjectIdentifier(entityA))")
+        // 1) Position correction with slop, split by inverse mass. Corrects
+        //    only the penetration BEYOND the slop, and only a β-fraction of
+        //    it per step.
+        let correction = positionCorrectionBeta * max(0, contact.depth - penetrationSlop) / invMassSum
+        if correction > 0 {
+            if !entityA.isStatic {
+                entityA.setPosition(entityA.getPosition() + n * (correction * invMassA))
             }
-
-            if entityA.isStatic {
-                entityB.velocity = .zero
-                entityB.acceleration = .zero
-                entityB.shouldApplyGravity = false
-
-                print("[HeckerCollisionResponse resolveCollisions] Gravity should not apply to entity: \(ObjectIdentifier(entityB))")
+            if !entityB.isStatic {
+                entityB.setPosition(entityB.getPosition() - n * (correction * invMassB))
             }
-
-            return
         }
 
-        let penetrationDepth = contact.depth
-        let collisionNormal = contact.normal   // unit, strict B → A
+        // 2) Impulse only when approaching (n points toward A, so approaching
+        //    means relative velocity along −n). The legacy response applied
+        //    impulses to separating contacts too, which can add energy.
+        let relativeVelocity = entityA.velocity - entityB.velocity
+        let approach = dot(relativeVelocity, n)
+        guard approach < 0 else { return }
 
-        if !entityA.isStatic && !entityB.isStatic {
-            // Legacy normal == strict normal in this branch (sphere-sphere was
-            // already B→A; dynamic planes don't exist). Verbatim.
-            entityA.setPosition(entityA.getPosition() + collisionNormal * (penetrationDepth / 2))
-            entityB.setPosition(entityB.getPosition() - collisionNormal * (penetrationDepth / 2))
+        // 3) Restitution only above the threshold; below it e = 0 ⇒ the
+        //    normal velocity is solved to exactly zero (the support impulse).
+        let e = -approach > restitutionVelocityThreshold ? min(entityA.restitution, entityB.restitution) : 0
 
-            let relativeVelo = entityA.velocity - entityB.velocity
-            let e = min(entityA.restitution, entityB.restitution)
-            var j = -(1 + e) * dot(relativeVelo, collisionNormal)
-            j /= ((1.0 / entityA.mass) + (1.0 / entityB.mass))
-
-            let entityADeltaVelo = j / entityA.mass * collisionNormal
-            let entityBDeltaVelo = j / entityB.mass * collisionNormal
-
-            entityA.velocity += simd_length_squared(entityADeltaVelo) > minDeltaVeloSquared ? entityADeltaVelo : .zero
-            entityB.velocity -= simd_length_squared(entityBDeltaVelo) > minDeltaVeloSquared ? entityBDeltaVelo : .zero
-
-            return
+        // 4) ALWAYS applied — the deleted minDeltaVelo discard threw away the
+        //    per-step support impulse (≈ m·g·dt) that resting requires; that
+        //    impulse IS the normal force integrated over the step.
+        let j = -(1 + e) * approach / invMassSum
+        if !entityA.isStatic {
+            entityA.velocity += n * (j * invMassA)
         }
-
-        if !entityA.isStatic && entityB.isStatic {
-            // Legacy normal == strict normal here too: with B static, B is
-            // the plane (normal toward A) or a static sphere (B→A formula
-            // either way). Verbatim, ×2 overshoot included.
-            entityA.setPosition(entityA.getPosition() + collisionNormal * (penetrationDepth * 2))
-
-            let relativeVelo = entityA.velocity
-            let e = min(entityA.restitution, entityB.restitution)
-            var j = -(1 + e) * dot(relativeVelo, collisionNormal)
-            j /= 1.0 / entityA.mass
-
-            let entityADeltaVelo = j / entityA.mass * collisionNormal
-            entityA.velocity += simd_length_squared(entityADeltaVelo) > minDeltaVeloSquared ? entityADeltaVelo : .zero
-
-            return
-        }
-
-        if entityA.isStatic && !entityB.isStatic {
-            // The one convention-divergent branch. The legacy normal here was
-            // the static body's OUTWARD normal (the plane's normal, pointing
-            // toward B — not B→A); strict B→A is its exact negation, so
-            // reconstruct it and keep the body verbatim. For the unreachable
-            // static-SPHERE-as-A configuration this silently fixes the legacy
-            // inverted position correction (impulse term is bit-identical in
-            // both configurations — the sign symmetry note has the algebra).
-            let legacyNormal = -collisionNormal
-            entityB.setPosition(entityB.getPosition() + legacyNormal * (penetrationDepth * 2))
-
-            let relativeVelo = entityB.velocity
-            let e = min(entityA.restitution, entityB.restitution)
-            var j = -(1 + e) * dot(relativeVelo, legacyNormal)
-            j /= 1.0 / entityB.mass
-
-            let entityBDeltaVelo = j / entityB.mass * legacyNormal
-            entityB.velocity += simd_length_squared(entityBDeltaVelo) > minDeltaVeloSquared ? entityBDeltaVelo : .zero
-
-            return
+        if !entityB.isStatic {
+            entityB.velocity -= n * (j * invMassB)
         }
     }
 }
