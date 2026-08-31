@@ -119,4 +119,64 @@ struct PhysicsWorldSmokeTests {
         #expect(approxEqual(sphere.getPosition(), [0, 50, 0], tolerance: 1e-3),
                 "Body with shouldApplyGravity=false drifted: \(sphere.getPosition())")
     }
+
+    @Test("onContact fires for an attached colliding pair (event plumbing smoke)")
+    func onContactFiresOnAttachedPath() {
+        let sphere = Sphere()
+        sphere.setPosition([0, 0.4, 0])   // overlapping the floor (r 0.5)
+        let rb = SphereRigidBody(gameObject: sphere, collisionRadius: 0.5)
+        rb.restitution = 0.0
+
+        let ground = Quad()
+        let groundRB = PlaneRigidBody(gameObject: ground, collisionNormal: [0, 1, 0])
+        groundRB.isStatic = true
+
+        var sphereContacts: [Contact] = []
+        var planeContacts: [Contact] = []
+        rb.onContact = { contact, other in
+            sphereContacts.append(contact)
+            #expect(other === groundRB)
+        }
+        groundRB.onContact = { contact, other in
+            planeContacts.append(contact)
+            #expect(other === rb)
+        }
+
+        let world = PhysicsWorld(entities: [rb, groundRB], updateType: .HeckerVerlet)
+        world.useBroadPhase = false
+        world.update(deltaTime: 1.0 / 60.0)
+
+        // Both sides observe the contact once, each expressed with itself as
+        // A: the sphere sees the plane's up normal (B → A), the plane the
+        // negation. Simple bodies carry no collider identity.
+        #expect(sphereContacts.count == 1)
+        #expect(planeContacts.count == 1)
+        #expect(approxEqual(sphereContacts.first?.normal ?? .zero, [0, 1, 0]))
+        #expect(approxEqual(planeContacts.first?.normal ?? .zero, [0, -1, 0]))
+        #expect(sphereContacts.first?.colliderNameA == nil)
+    }
+
+    @Test("two bodies on the SAME GameObject never pair (a future multi-body object must not self-collide)")
+    func sameGameObjectBodiesAreExcluded() {
+        let sphere = Sphere()
+        sphere.setPosition([0, 5, 0])
+        // Coincident by construction: both bodies read the one node's
+        // position, so if the pair were narrow-phased it would contact.
+        let rbA = SphereRigidBody(gameObject: sphere, collisionRadius: 0.5)
+        let rbB = SphereRigidBody(gameObject: sphere, collisionRadius: 0.5)
+        rbA.shouldApplyGravity = false
+        rbB.shouldApplyGravity = false
+
+        var fired = false
+        rbA.onContact = { _, _ in fired = true }
+        rbB.onContact = { _, _ in fired = true }
+
+        let world = PhysicsWorld(entities: [rbA, rbB], updateType: .HeckerVerlet)
+        world.useBroadPhase = false
+        for _ in 0..<10 { world.update(deltaTime: 1.0 / 60.0) }
+
+        #expect(!fired, "same-GameObject pair must be filtered before the narrow phase")
+        #expect(approxEqual(rbA.velocity, .zero))
+        #expect(approxEqual(rbB.velocity, .zero))
+    }
 }

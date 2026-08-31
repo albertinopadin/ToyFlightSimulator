@@ -16,6 +16,21 @@
 
 ## Changelog
 
+- **2026-08-31** — **A.8 routing-track suites backfilled** (own commit, sequenced before the
+  A-response commit). The A-routing commit landed without the A.8 suites owed to it — this
+  commit pays that debt: `WorldColliderBuilderTests` (7 hand-computed pose/AABB pins),
+  `NarrowPhaseTests` (the §4.7 geometry matrix: translated AND tilted planes for all three
+  shapes, every separated-nil case, box-box pinned nil-even-overlapping, sphere-in-box
+  least-axis + x→y→z tie determinism, the three Ericson capsule-capsule cases, capsule-box
+  approximation sanity, flipped-pair metadata both ways, the two legacy-exact sphere-sphere
+  pins, plane-as-A flip with deepest-index survival), `RigidBodyTests` additions (rebuild-count
+  cache discipline via a @testable subclass hook, synthesized sphere view + nil metadata,
+  `collisionRadius.didSet`, compound AABB union, empty-list zero-AABB fallback), the
+  `CollisionFilteringTests` mask truth table, `PhysicsSolverTests`' collider-less-pair pin
+  (the old force-cast crash site), and the two `PhysicsWorldSmokeTests` additions (attached
+  onContact smoke both ways; same-GameObject exclusion). All response-independent — green
+  against the old response at this commit and the corrected one after it. Exit criterion 3
+  (general planes) closes here.
 - **2026-08-30** (later) — **Step A.5 landed → A-routing commit COMPLETE** (hand-implemented by the
   project owner, then review-verified against the listings). Both response paths now run ONE
   `NarrowPhase.generateContacts` per pair via the shared `resolvePair` shape (filter guard →
@@ -37,8 +52,9 @@
   `EulerSolver.step` test caller instead (the only affected call site), and PhysicsParityTests'
   floorPlane comment was rewritten (it named the deleted `getPenetrationDepth(ball:plane:)`;
   origin+up stays load-bearing via A.5's bit-exactness argument 3). The in-app
-  FlightboxWithPhysics eyeball (verification checklist + exit criterion 1) stays open for the
-  project owner.
+  FlightboxWithPhysics eyeball was confirmed by the project owner the same day — physics plays
+  as before — closing the A-routing verification checklist and exit criterion 1 (criterion 6's
+  CI leg runs when the commits reach the remote).
 - **2026-08-30** — **Steps A.1–A.4 landed** (the first half of the A-routing commit — hand-implemented
   by the project owner from the spec blocks, then review-verified against the listings
   operation-for-operation). The routing itself has NOT flipped yet: `Contact`/`NarrowPhase` compile
@@ -1701,7 +1717,7 @@ like 0.8.
 | **`PhysicsMaterial` is defined now, consumed by nothing** | A1 reserves the field on `LocalCollider` so specs don't churn when Phase D's friction lands (combined doc, minor-differences table). Defining the two-field struct now costs ~6 lines and makes the reservation compile-checked. |
 | **`onContact` fires from the routing commit; classification stays out** | The event plumbing is behavior-neutral (nobody registered) and routing is exactly when the all-contacts scratch loop is written; wiring it later would mean re-touching the response loops. Crash/landing *classification* built on these events remains Phase B3. |
 
-## Step A.1 — Vocabulary completion (edit `Physics/Collision/ColliderShape.swift`) — A-routing
+## Step A.1 — Vocabulary completion (edit `Physics/Collision/ColliderShape.swift`) — A-routing ✅
 
 Phase 0 pulled the data-only half of A1 forward; this step appends the remainder to the same file
 (per 0.1's "Phase A will append, not restructure"): the reserved material, the world-space snapshot
@@ -1828,7 +1844,7 @@ Notes:
   overlay's scene-graph composition (child transforms compose under the parent's rotation and scale),
   so physics and the rendered volumes agree by construction.
 
-## Step A.2 — `RigidBody` integration (edit `Physics/World/RigidBody.swift`, `BasicRigidBodies.swift`) — A-routing
+## Step A.2 — `RigidBody` integration (edit `Physics/World/RigidBody.swift`, `BasicRigidBodies.swift`) — A-routing ✅
 
 The flat-compound storage (research D1/§3.5), the dirty-flag snapshot cache (deviation 1), the
 compound AABB, filtering state, and the contact event. All additive — nothing consumes `colliders`
@@ -2052,7 +2068,7 @@ mid-step rebuild reusing the start-of-step rotation is not a staleness hole toda
 makes rotation solver state, its pose writes must funnel through a rigid-body setter that
 invalidates, same as position — noted here so the requirement doesn't get lost.
 
-## Step A.3 — `Contact` + `NarrowPhase` (new files) — A-routing
+## Step A.3 — `Contact` + `NarrowPhase` (new files) — A-routing ✅
 
 Adopts the original research doc §2.3 listings with the D3 hybrid amendment (emit ALL collider-pair
 contacts, return the deepest's index for the linear response) and this plan's deviations (no
@@ -2432,7 +2448,7 @@ Implementation notes, the parts that are easy to get wrong:
   tuple members — `(p0:, p1:, radius:)` and `(center:, radius:)` — for readability; callers
   destructure positionally, so the call sites above are unchanged.)*
 
-## Step A.4 — Pair filtering (edit `BroadPhase/BroadPhaseCollisionDetector.swift` + the pair consumers) — A-routing
+## Step A.4 — Pair filtering (edit `BroadPhase/BroadPhaseCollisionDetector.swift` + the pair consumers) — A-routing ✅
 
 The predicate itself (`RigidBody.shouldCollide(with:)`) and the `CollisionCategory` vocabulary land
 in A.2; this step is the three application points. With the default masks (`default` category,
@@ -2469,7 +2485,7 @@ construction, pinned by the goldens.
 instead because three call sites across two subsystems consume it and it's a body-pair predicate,
 not a sweep-and-prune detail. Micro-deviation, recorded here.)
 
-## Step A.5 — One narrow phase per pair: routing the responses + the deletions — completes A-routing
+## Step A.5 — One narrow phase per pair: routing the responses + the deletions — completes A-routing ✅
 
 The heart of the routing commit. Both response paths stop calling
 `PhysicsWorld.collided`/`getCollisionData` (which ran the geometry twice per pair) and consume one
@@ -2876,7 +2892,7 @@ fix the routing, never the golden.
 - [x] `build-for-testing` green; full serial suite green against **unchanged** goldens
 - [x] Regen dry-run byte-identical (protocol above)
 - [x] `PhysicsWorldSmokeTests` untouched and green (attached-body path)
-- [ ] In-app FlightboxWithPhysics eyeball: dispersed balls bounce, settle, and (still) latch
+- [x] In-app FlightboxWithPhysics eyeball: dispersed balls bounce, settle, and (still) latch
   exactly as before; aircraft sphere behavior unchanged
 - [x] Commit message marks this as the A-routing commit per the 0.7 protocol
 
@@ -3385,11 +3401,11 @@ assumes.)*
 Suites land inside their step's commit — listed here 0.8-style so nothing is owed at the end:
 
 **A-routing commit:**
-- [ ] `WorldColliderBuilderTests` (new): known pose compositions (offset × rotation × scale against
+- [x] `WorldColliderBuilderTests` (new): known pose compositions (offset × rotation × scale against
   hand-computed positions/rotations — including the fuselage Y→Z capsule); disabled-child omission;
   `scaled(by:)` flowing into shapes; `WorldCollider.aabb` for a rotated capsule and box vs
   hand-computed bounds; empty-collider list → empty output.
-- [ ] `NarrowPhaseTests` (new): the §4.7 geometry matrix —
+- [x] `NarrowPhaseTests` (new): the §4.7 geometry matrix —
   sphere/capsule/box vs **translated AND tilted** planes (known depths/normals/points — the tests
   the y=0 hack made impossible); every `shapeVsShape` nil (separated) case; sphere-in-box
   least-penetration axis (incl. tie determinism); capsule-capsule via `closestPointsOnSegments`
@@ -3398,21 +3414,21 @@ Suites land inside their step's commit — listed here 0.8-style so nothing is o
   capsule vs named sphere both ways — A metadata stays on A); **legacy-exact sphere-sphere pins**:
   inclusive boundary (surfaces exactly touching ⇒ contact, depth 0) and coincident centers ⇒ zero
   normal; plane-as-A flip (normal negated, names swapped, deepest index valid into the array).
-- [ ] `RigidBodyTests` additions: `worldColliders()` rebuilds after `setPosition` /
+- [x] `RigidBodyTests` additions: `worldColliders()` rebuilds after `setPosition` /
   `invalidateWorldColliders` / `colliders` mutation (and NOT in between — cache identity check);
   `SphereRigidBody` view = world-meter radius at live position with nil metadata;
   `collisionRadius.didSet` invalidates; compound `getAABB` union on a detached multi-collider
   body + empty-list fallback to the legacy delegate.
-- [ ] Filtering: mask-combination truth table on detached bodies (`shouldCollide` is pure); the
+- [x] Filtering: mask-combination truth table on detached bodies (`shouldCollide` is pure); the
   same-GameObject exclusion lives in **`PhysicsWorldSmokeTests`** (app-hosted — GameObjects are
   legal there, per the Metal-free-design rule's split).
-- [ ] `PhysicsParityTests`: UNCHANGED, green against UNCHANGED goldens — this suite *is* the
+- [x] `PhysicsParityTests`: UNCHANGED, green against UNCHANGED goldens — this suite *is* the
   routing gate, plus the byte-identical regen dry-run from A.5.
-- [ ] Mechanical edits: `TestRigidBody` loses `collisionShape`; `RigidBodyTests` loses its four
+- [x] Mechanical edits: `TestRigidBody` loses `collisionShape`; `RigidBodyTests` loses its four
   `.collisionShape` expectations; solver-step test call sites gain the scratch argument.
   (Bonus effect worth a test: `TestRigidBody` pairs — which the legacy narrow phase would
   force-cast-crash on — now safely yield zero contacts: no colliders, no legacy shape.)
-- [ ] `PhysicsWorldSmokeTests` addition: `onContact` fires for an attached colliding pair
+- [x] `PhysicsWorldSmokeTests` addition: `onContact` fires for an attached colliding pair
   (event plumbing smoke on the GameObject-backed path).
 
 **A-response commit:**
@@ -3438,7 +3454,7 @@ iOS (unchanged from Phase 0's non-goals).
 
 ## Phase A exit criteria
 
-1. - [ ] **A-routing is invisible**: full serial suite green against unchanged goldens; the regen
+1. - [x] **A-routing is invisible**: full serial suite green against unchanged goldens; the regen
    dry-run rewrites all six baselines **byte-identical** (`git diff --exit-code` on Baselines/);
    `PhysicsWorldSmokeTests` untouched and green; FlightboxWithPhysics plays identically by eye
    (balls still bounce, settle, and latch exactly as before this commit).
@@ -3447,7 +3463,7 @@ iOS (unchanged from Phase 0's non-goals).
    characterization test green; chaos-policy invariants passed **un-edited**;
    `grep -rn "shouldApplyGravity = " "ToyFlightSimulator Shared/Physics"` shows zero writes
    outside authoring/setup sites.
-3. - [ ] **General planes are correct**: `NarrowPhaseTests`' tilted + translated plane cases green
+3. - [x] **General planes are correct**: `NarrowPhaseTests`' tilted + translated plane cases green
    (the y=0 hardcode is deleted, not routed around).
 4. - [ ] **The compound is live and speaks**: `CompoundBodyTests` green (settles at ≈ 1.05 on
    "fuselage"; banked pose reports "wings" only); in-app, a belly touch logs `fuselage`, a rolled

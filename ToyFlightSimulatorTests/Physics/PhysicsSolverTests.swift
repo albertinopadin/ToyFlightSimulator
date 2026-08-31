@@ -132,6 +132,23 @@ struct EulerSolverTests {
         #expect(approxEqual(entities[0].velocity, [1, 0, 0]))
         #expect(approxEqual(entities[0].force, .zero))
     }
+
+    @Test("collider-less TestRigidBody pairs yield zero contacts (the legacy narrow phase force-cast-crashed here)")
+    func colliderlessPairYieldsNoContacts() {
+        // Plain RigidBody doubles have no colliders and aren't Sphere/Plane
+        // subclasses, so the collider-based narrow phase emits nothing — where
+        // the deleted CollisionShape switch would have force-cast and crashed.
+        let a = TestRigidBody(position: .zero, shouldApplyGravity: false)
+        let b = TestRigidBody(position: [0.1, 0, 0], shouldApplyGravity: false)
+
+        var contacts: [Contact] = []
+        EulerSolver.step(deltaTime: 0.1, gravity: .zero, entities: [a, b],
+                         collisionPairs: [(a, b)], contactsScratch: &contacts)
+
+        #expect(contacts.isEmpty)
+        #expect(approxEqual(a.velocity, .zero))
+        #expect(approxEqual(b.velocity, .zero))
+    }
 }
 
 @Suite("VerletSolver", .tags(.physics))
