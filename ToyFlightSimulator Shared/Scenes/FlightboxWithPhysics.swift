@@ -216,9 +216,30 @@ final class FlightboxWithPhysics: GameScene {
         }
 
         if let playerAircraft {
-            let acRigidBody = SphereRigidBody(gameObject: playerAircraft)
-            acRigidBody.collisionRadius = 2.0
+            // Compound-spec'd aircraft get the real Phase A body; aircraft
+            // without an authored spec keep the legacy 2 m sphere
+            // (AircraftColliderSpec returns [] for them — the exhaustive
+            // switch forces the decision per type).
+            let spec = AircraftColliderSpec.spec(for: aircraft)
+            let acRigidBody: RigidBody
+
+            if spec.isEmpty {
+                let sphereBody = SphereRigidBody(gameObject: playerAircraft)
+                sphereBody.collisionRadius = 2.0
+                acRigidBody = sphereBody
+            } else {
+                acRigidBody = RigidBody(gameObject: playerAircraft)
+                acRigidBody.colliders = spec
+            }
+
             acRigidBody.restitution = 0.2
+
+            // Debug scaffolding (A.7 exit criterion): named contact reporting,
+            // throttled so a resting aircraft doesn't spam 60 lines/s.
+            let contactLogger = ContactDebugLogger(bodyLabel: playerAircraft.getName())
+            acRigidBody.onContact = { contact, other in
+                contactLogger.log(contact, against: other)
+            }
 
             entities = Self.swappedEntities(entities, removing: prevAcRigidBody, adding: acRigidBody)
             if installEntities {

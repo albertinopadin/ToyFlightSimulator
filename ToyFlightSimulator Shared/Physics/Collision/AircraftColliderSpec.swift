@@ -12,7 +12,10 @@
 /// = spec meters × uniformScale = spec meters; `uniformScale` stays in the
 /// world-collider math only as an optional gameplay multiplier — see the
 /// units contract in plans/claude/compound_rigid_bodies_implementation_plan.md
-/// (step 0.5). Numbers are PLACEHOLDERS until tuned with the X-key debug overlay.
+/// (step 0.5). Numbers overlay-verified in-app 2026-08-29 (Phase 0 exit
+/// criterion 2); now LIVE physics geometry (FlightboxWithPhysics installs the
+/// spec on the player aircraft's RigidBody) — re-run the X-key overlay after
+/// any edit.
 enum AircraftColliderSpec {
     /// Exhaustive over AircraftType with no `default` (same convention as
     /// SceneManager's registration switches): adding an aircraft forces a

@@ -16,6 +16,24 @@
 
 ## Changelog
 
+- **2026-08-31** (latest) — **Step A.7 landed → A-aircraft commit COMPLETE** (hand-implemented by
+  the project owner, then review-verified; comments, the two doc flips, and `CompoundBodyTests`
+  completed at review). `FlightboxWithPhysics.applyAircraftSwap` now builds the player body from
+  `AircraftColliderSpec` — the CGTrader F-22 gets a plain `RigidBody` carrying the Phase
+  0-verified three-primitive compound, spec-less aircraft keep the legacy 2 m sphere, and a
+  per-swap `ContactDebugLogger` instance reports named contacts (throttled, print-only,
+  per-instance — no process-wide state). The spec's doc comment flipped PLACEHOLDERS →
+  overlay-verified-and-live (the deferred half of Phase 0 criterion 2), and the overlay's ghost
+  branch documents that the yellow legacy sphere disappears for compound aircraft BY
+  CONSTRUCTION. `CompoundBodyTests` pins the pipeline end to end Metal-free: the detached
+  compound settles at y ≈ 1.05 on "fuselage" only (the legacy sphere rested at 2.0), and the
+  90°-banked pose contacts "wings" alone at depth ≈ 1.6. The project owner verified in-app the
+  same day that the compound F-22 contacts the ground plane correctly; exit criterion 4's
+  remaining eyeballs (a rolled touch logging `wings`, the X-key overlay showing red volumes
+  with no yellow ghost) stay open until flown. Exit criterion 5 (no process-wide state) closes
+  here: the determinism test is green, the suite passes under Swift Testing's default
+  in-process concurrency, and review confirms Phase A added no static mutable state (the
+  response's statics are `let` constants; the logger is per-instance).
 - **2026-08-31** (later) — **Step A.6 landed → A-response commit COMPLETE** (hand-implemented by
   the project owner, then review-verified against the listings; comments and test deliverables
   completed at review). The response math matched the A.6 listing operation-for-operation on
@@ -2928,7 +2946,7 @@ fix the routing, never the golden.
   exactly as before; aircraft sphere behavior unchanged
 - [x] Commit message marks this as the A-routing commit per the 0.7 protocol
 
-## Step A.6 — The corrected response (rest fix) — the A-response commit
+## Step A.6 — The corrected response (rest fix) — the A-response commit ✅
 
 Implements research §3.2's five-point replacement, verbatim in intent: restitution velocity
 threshold, always-applied impulses, approach guard, slop+β position correction, gravity never
@@ -3253,13 +3271,13 @@ Visible-ish at 30 Hz on close inspection; accepted for the A→B window because 
 substeps make the bound constant (combined doc D4 already commits to this). Don't tune β/slop to
 mask 30 Hz jitter — fix the timestep in B1 instead.
 
-## Step A.7 — The F-22 compound goes live — the A-aircraft commit
+## Step A.7 — The F-22 compound goes live — the A-aircraft commit ✅
 
 The Phase 0-verified spec becomes the player aircraft's real collision geometry. Sequenced AFTER
 A.6 deliberately: the compound resting on its fuselage capsule needs the corrected response (under
 the legacy response it would rest-latch mid-air on first belly contact and freeze there).
 
-- [ ] **FlightboxWithPhysics.applyAircraftSwap** — spec-driven body construction (unauthored
+- [x] **FlightboxWithPhysics.applyAircraftSwap** — spec-driven body construction (unauthored
   aircraft keep the legacy sphere, so the F-16/F-18/F-35 swap paths are untouched until their
   specs are written):
 
@@ -3296,7 +3314,7 @@ the legacy response it would rest-latch mid-air on first belly contact and freez
 for the sphere (the override is on `Aircraft`, keyed on `RigidBody`, not the subclass), so the
 flight-model mass plumbing is untouched either way.
 
-- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Debug/ContactDebugLogger.swift`
+- [x] **File (new):** `ToyFlightSimulator Shared/Physics/Debug/ContactDebugLogger.swift`
 
 ```swift
 /// Debug-only contact reporter: prints which named collider touched what, at
@@ -3325,11 +3343,11 @@ final class ContactDebugLogger {
 }
 ```
 
-- [ ] **AircraftColliderSpec doc comment**: flip "Numbers are PLACEHOLDERS until tuned with the
+- [x] **AircraftColliderSpec doc comment**: flip "Numbers are PLACEHOLDERS until tuned with the
   X-key debug overlay" → "Numbers overlay-verified in-app 2026-08-29 (Phase 0 exit criterion 2);
   now live physics geometry — re-run the X-key overlay after any edit." (This is the deferred
   half of Phase 0 criterion 2's closure.)
-- [ ] **ColliderDebugOverlay doc note**: the yellow legacy-sphere ghost keys on
+- [x] **ColliderDebugOverlay doc note**: the yellow legacy-sphere ghost keys on
   `rigidBody as? SphereRigidBody`, so it disappears for compound-bodied aircraft *by
   construction* — the red volumes are now the LIVE colliders, not a proposal. One doc-comment
   line on `buildVolumes`' ghost branch saying so; zero code change.
@@ -3432,7 +3450,7 @@ The quat→matrix spelling was also compile-checked: `simd_float3x3(simd_quatf(a
 simd overlay init, and π/2-about-X does map the capsule's local Y axis onto Z as the fuselage spec
 assumes.)*
 
-## Step A.8 — Test ledger (Metal-free unless noted, Swift Testing, `.physics` / `.gameObjects` tags)
+## Step A.8 — Test ledger (Metal-free unless noted, Swift Testing, `.physics` / `.gameObjects` tags) ✅
 
 Suites land inside their step's commit — listed here 0.8-style so nothing is owed at the end:
 
@@ -3473,8 +3491,8 @@ Suites land inside their step's commit — listed here 0.8-style so nothing is o
 - [x] `PhysicsParityTests`: regoldened baselines + the flipped characterization test.
 
 **A-aircraft commit:**
-- [ ] `CompoundBodyTests` as listed in A.7 (settle-by-name; banked-wings-only).
-- [ ] `AircraftColliderSpecTests`: unchanged and green (the spec is now load-bearing — its
+- [x] `CompoundBodyTests` as listed in A.7 (settle-by-name; banked-wings-only).
+- [x] `AircraftColliderSpecTests`: unchanged and green (the spec is now load-bearing — its
   existing name/dimension/anchor pins carry more weight, none change).
 
 ## Phase A non-goals (deferred, with their homes)
@@ -3501,11 +3519,13 @@ iOS (unchanged from Phase 0's non-goals).
    outside authoring/setup sites.
 3. - [x] **General planes are correct**: `NarrowPhaseTests`' tilted + translated plane cases green
    (the y=0 hardcode is deleted, not routed around).
-4. - [ ] **The compound is live and speaks**: `CompoundBodyTests` green (settles at ≈ 1.05 on
+4. - [ ] *(tests green; owner confirmed correct in-app ground contact 2026-08-31 — still owed:
+   the rolled-touch `wings` log and the X-key overlay/no-ghost check)* **The compound is live
+   and speaks**: `CompoundBodyTests` green (settles at ≈ 1.05 on
    "fuselage"; banked pose reports "wings" only); in-app, a belly touch logs `fuselage`, a rolled
    touch logs `wings`, and the overlay's red volumes match the live collider set (yellow ghost
    gone for the F-22 — by design).
-5. - [ ] **No process-wide state**: the parity determinism test stays green, the full suite passes
+5. - [x] **No process-wide state**: the parity determinism test stays green, the full suite passes
    under Swift Testing's default in-process concurrency, and review confirms no static mutable
    state was added anywhere in the step path (correction 1 held).
 6. - [ ] **CI green** on all three commits (serial app-hosted run, as configured).

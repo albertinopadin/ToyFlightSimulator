@@ -196,6 +196,11 @@ final class ColliderDebugOverlay {
         // aircraft, so the parent's scale divides back out — 1.0 for
         // meterized aircraft, kept explicit so a deliberately scaled aircraft
         // still ghosts correctly.
+        // Since the A-aircraft commit this branch no longer matches a
+        // compound-bodied aircraft (its body is a plain RigidBody, not a
+        // SphereRigidBody), so the yellow ghost disappears BY CONSTRUCTION and
+        // the red volumes above are the LIVE colliders, not a proposal. The
+        // ghost still renders for spec-less aircraft on the legacy sphere.
         if let sphereBody = target.rigidBody as? SphereRigidBody {
             let ghost = GameObject(name: "ColliderOverlay_legacySphere", modelType: .Sphere)
             ghost.setColor(Self.legacyColor)
