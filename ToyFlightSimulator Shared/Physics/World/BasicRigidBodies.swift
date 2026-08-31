@@ -6,7 +6,9 @@
 //
 
 public final class SphereRigidBody: RigidBody {
-    var collisionRadius: Float = 1.0
+    var collisionRadius: Float = 1.0 {
+        didSet { invalidateWorldColliders() }
+    }
     
     init(gameObject: GameObject, collisionRadius: Float = 1.0) {
         super.init(gameObject: gameObject)
@@ -20,9 +22,29 @@ public final class SphereRigidBody: RigidBody {
         self.collisionShape = .Sphere
     }
     
-    // Default AABB implementation for spheres
+    // Default AABB implementation for spheres. Kept alongside the compound
+    // union path in RigidBody.getAABB(): reads the live position directly —
+    // cheaper than the union-of-one and bit-identical to it.
     override func getAABB() -> AABB {
         return AABB(center: getPosition(), radius: collisionRadius)
+    }
+
+    /// Legacy body-level sphere → one synthesized WorldCollider view, so the
+    /// narrow phase has a single collider-based dispatch (Phase A deviation
+    /// 2): collisionRadius is WORLD meters, so node scale is deliberately NOT
+    /// applied, and the metadata is nil — Contact reports nil collider names
+    /// for simple bodies, per its doc contract. The `colliders` list is
+    /// ignored on this class by design (a compound body is a plain RigidBody).
+    override internal func rebuildWorldColliders() {
+        assert(colliders.isEmpty, "SphereRigidBody ignores `colliders` — use a plain RigidBody for compounds")
+        
+        worldCollidersScratch.removeAll(keepingCapacity: true)
+        worldCollidersScratch.append(WorldCollider(shape: .sphere(radius: collisionRadius),
+                                                   position: getPosition(),
+                                                   rotation: matrix_identity_float3x3,
+                                                   sourceIndex: nil,
+                                                   name: nil,
+                                                   group: nil))
     }
 }
 

@@ -16,6 +16,36 @@
 
 ## Changelog
 
+- **2026-08-30** — **Steps A.1–A.4 landed** (the first half of the A-routing commit — hand-implemented
+  by the project owner from the spec blocks, then review-verified against the listings
+  operation-for-operation). The routing itself has NOT flipped yet: `Contact`/`NarrowPhase` compile
+  but nothing calls them until A.5 rewires the response paths, and the legacy
+  `collided`/`getCollisionData` flow still runs every pair. Behavior-neutral by construction — the
+  only live change is A.4's broad-phase `shouldCollide` guard, inert under the default masks
+  (verified: full serial suite green, 240 tests / 40 suites, goldens byte-untouched). One
+  micro-deviation from the A.3 listing: `capsuleSegment` / `capsuleAsSphere` return named tuple
+  members (`(p0:, p1:, radius:)` / `(center:, radius:)`) for readability — callers destructure
+  positionally, so the listed call sites are unchanged. A.5 remains open; the A-routing golden
+  gate (bit-for-bit regen dry-run) applies when it lands.
+- **2026-08-29** — **Phase 0 closed ✅; Phase A planned** (full section appended below). Exit
+  criteria 1 and 2 verified in-app by the project owner (X-cycle checklist including
+  swap/reset/renderer-switch survival; spec numbers eyeballed in both overlay modes and accepted
+  as authored — no retune needed, so no spec-number commit; the spec file's PLACEHOLDER doc comment
+  flips to "overlay-verified" in step A.7, when the numbers become load-bearing). Criterion 5
+  closed by CI: the macOS Tests workflow is green on main at `0ec9a3e` (run 33221486316,
+  2026-08-28), which contains the whole Phase 0 parity track. The Phase A plan implements combined
+  doc §4.2 amended by all four pre-Phase-A corrections, split into **three separately verified
+  commits** (A-routing: goldens must match bit-for-bit; A-response: reviewed regolden + semantic
+  asserts; A-aircraft: the F-22 compound goes live). Planning-time findings recorded as Phase A
+  deviations: (1) the world-collider cache is **dirty-flag** based — the research sketch's static
+  `currentStepIndex` token is eliminated entirely, resolving corrections 1 and 2 with one
+  mechanism; (2) `SphereRigidBody` **stays a body-level shape** — its `collisionRadius` is WORLD
+  meters while `LocalCollider` dimensions are local×`uniformScale`, so the research's
+  "install a one-sphere collider list" would double-scale every scaled ball (FlightboxWithPhysics'
+  dispersed objects run node scale ≈ radius); (3) the narrow phase emits **strict B→A normals**
+  from day one, with the routing-commit response transcribed via exact IEEE sign symmetry
+  (the legacy convention was shape-dependent); (4) `EulerSolver`'s bespoke response unifies onto
+  the corrected shared response in A-response.
 - **2026-08-28** (night) — **Steps 0.6, 0.7, 0.8 landed; 0.3b closed** (Phase 0 code complete). The
   0.6 inits and 0.7's SplitMix64 were hand-transcribed from the spec blocks; verification caught one
   transcription bug before anything ran: `init(detachedAt:)` assigned `isStandalone = false` (copied
@@ -1535,12 +1565,16 @@ suites, all green — existing suites untouched.)*
 
 ## Phase 0 exit criteria
 
-1. - [ ] **Overlay works in-app** (manual, FlightboxWithPhysics, macOS): X cycles off → volumes-over-hull
+1. - [x] **Overlay works in-app** *(verified in-app by the project owner 2026-08-29)* (manual,
+   FlightboxWithPhysics, macOS): X cycles off → volumes-over-hull
    → volumes-only → off; volumes-only hides the F-22 hull but keeps afterburners visible; repeated
    cycling leaves no ghost renderables and no stranded-hidden aircraft; overlay survives: aircraft swap
    while visible (re-attaches to the new aircraft in the same mode), Cmd+R reset while visible (comes
    back clean on next X), renderer switch.
-2. - [ ] **Spec numbers eyeballed and committed**: overfit checked in volumes-over-hull (nothing
+2. - [x] **Spec numbers eyeballed and committed** *(verified in-app 2026-08-29 — the authored values
+   fit well in both overlay modes and were accepted unchanged, so no retune commit exists; the spec
+   file's "PLACEHOLDERS until tuned" doc comment flips to "overlay-verified" in Phase A step A.7,
+   when the numbers become load-bearing physics)*: overfit checked in volumes-over-hull (nothing
    protrudes that shouldn't), underfit checked in volumes-only (capsule end caps reach nose and tail,
    wings box reaches the wingtips, empennage box covers the tails — A/B cycling against the hull for
    placement) — tuned values recorded in `AircraftColliderSpec` with overlay screenshots in
@@ -1551,16 +1585,18 @@ suites, all green — existing suites untouched.)*
 4. - [x] **Parity baselines committed** *(2026-08-28)*: all six scenario goldens recorded, parity suite
    green against them on a clean re-run (determinism + invariants included), run Metal-free via the
    corrected `build-for-testing` / `test-without-building` pattern.
-5. - [ ] **No unintended behavior change**: full existing test suite green in CI; `PhysicsWorldSmokeTests`
+5. - [x] **No unintended behavior change** *(closed 2026-08-29: macOS Tests workflow green on main at
+   `0ec9a3e` — CI run 33221486316, 2026-08-28 — with the full Phase 0 tree in; in-app play verified
+   alongside criterion 1)*: full existing test suite green in CI; `PhysicsWorldSmokeTests`
    (attached-body path) untouched and green; game plays identically with the overlay off. The one
    deliberate change is 0.3b's ownership fix — detached subtrees (old aircraft after a swap/reset) now
    deallocate, pinned by `NodeOwnershipTests`.
 
 **Implementation order within Phase 0:** 0.1 ✓ → 0.2 ✓(re-authored) → 0.3 ✓ → 0.3b ✓ → 0.4 ✓ → 0.5 ✓ →
 0.6 ✓ → 0.7 ✓ (baselines locked before any later phase touches physics) → 0.8 ✓. **Phase 0 code
-complete 2026-08-28.** Open before Phase A planning: exit criterion 1 (in-app overlay checklist),
-criterion 2 (visual spec tuning + screenshots) — both human-at-the-controls — and criterion 5 (full
-suite green in CI). 0.3b preceded the overlay because 0.4's lifecycle rules assume it; the overlay
+complete 2026-08-28; all five exit criteria closed 2026-08-29 — Phase 0 ✅ done** (criteria 1–2
+verified in-app by the project owner, criterion 5 by the CI run noted on its checkbox). 0.3b
+preceded the overlay because 0.4's lifecycle rules assume it; the overlay
 steps (0.4/0.5) landed before the parity steps (0.6/0.7) — the two tracks are independent and either
 order was allowed; both before Phase A starts.
 
@@ -1593,4 +1629,1821 @@ section must adopt when it's appended:
 
 ---
 
-*(Phase A plan will be appended here.)*
+# Phase A — colliders on `RigidBody`, one narrow phase, corrected contact response
+
+*(Planned 2026-08-29, against the tree at `0ec9a3e` with Phase 0 fully closed.)*
+
+Implements combined doc **§4.2** (its A1–A5), amended by the four pre-Phase-A design corrections
+above and by the planning-time findings recorded in the deviations table below. At the end of this
+phase: every body's collision geometry flows through one `WorldCollider`-based narrow phase that
+emits typed `Contact`s (all collider pairs, not booleans); the response is the corrected impulse
+model (restitution velocity threshold, slop+β positional correction, approach guard — the rest
+latch and the impulse-discard hack are gone, `shouldApplyGravity` stops being solver state); pair
+filtering exists; the `CollisionShape` enum and the force-cast switches are deleted; and the
+CGTrader F-22 collides as the Phase 0-verified three-primitive compound instead of a 2 m sphere,
+reporting per-collider contacts by name through `onContact`.
+
+**The three-commit protocol** (expands 0.7's two-commit split — the aircraft flip gets its own
+commit because it changes *which geometry exists*, which neither golden track covers):
+
+| Commit | Steps | Verification gate |
+|---|---|---|
+| **A-routing** | A.1–A.5 | Behavior-preserving. All six parity goldens must pass **unchanged** — the expectation is bit-for-bit, not merely within the 1e-4 tolerance (the argument for why bit-exactness is achievable is in A.5). Full suite green. Game plays identically. Any golden diff = a routing bug, full stop. |
+| **A-response** | A.6 | The deliberate behavior change. Regolden all six scenarios with the JSON diff reviewed like code against the per-scenario expectations in 0.7's table; flip the rest-latch characterization test; land the new response-semantics suite. Chaos-policy invariants must hold un-edited. |
+| **A-aircraft** | A.7 | The F-22 swaps sphere → compound. No goldens involve aircraft; verified by a new Metal-free detached-compound settle test + in-app contact logging + the overlay (whose red volumes are now the live colliders). |
+
+Steps map to the combined doc as: A.1↔A1, A.2↔A2, A.3↔A3, A.4↔A4, A.5+A.6↔A5 (split on the
+routing/response boundary), A.7↔the §4.2 exit criterion's aircraft wiring. A.8 is the test ledger,
+like 0.8.
+
+**Where each pre-Phase-A correction lands:**
+
+| Correction | Resolution | Step |
+|---|---|---|
+| 1. No static step/scratch state | The step-index cache token is **eliminated, not instanced**: world-collider snapshots are dirty-flag cached per body (deviation 1), and the contact scratch array is owned by each `PhysicsWorld` instance and passed `inout` to the response/solvers. No `currentStepIndex` exists anywhere in Phase A. | A.2, A.5 |
+| 2. World-collider cache invalidation | `RigidBody.setPosition` is the funnel through which every mid-step move happens (response corrections, solver integration) and it sets the dirty flag — a later pair in the same step narrow-phases against the corrected pose automatically. Between-step node changes (attitude rotation, teleports) are covered by the world invalidating every entity at the top of each step. | A.2 |
+| 3. World-transform contract | The cheap answer, as pre-decided: `rebuildWorldColliders()` debug-asserts `node.parent == nil \|\| node.parent is GameScene` for attached bodies with colliders. | A.2 |
+| 4. Two-commit verification split | The three-commit protocol above (routing/response exactly as 0.7 defined them; A-aircraft added on top). | all |
+
+### Deviations from the research docs (deliberate, argued)
+
+| Deviation | Why |
+|---|---|
+| **Dirty-flag world-collider cache; no `frame:` token, no `currentStepIndex` at all** | The research sketch (§4.2 A2) keyed the cache on a static step counter — banned by correction 1, and merely instancing the counter would still leave correction 2 unsolved (a once-per-step token can't see mid-step position corrections). A per-body `worldCollidersDirty` flag set by `setPosition` / `colliders.didSet` / the world's start-of-step sweep resolves both corrections with one mechanism, is the codebase's own idiom (Node's transform dirty flags), and needs no parameter threading through `getAABB()`/narrow-phase signatures. Phase B's accumulator can add a per-instance counter if something ever needs one. |
+| **`SphereRigidBody` stays a body-level shape — it does NOT install a one-sphere `LocalCollider` list** (research §3.5 said it should) | Units conflict found while planning: `collisionRadius` is **world meters** (the Phase 0 overlay's legacy-ghost math documents this — it divides by parent scale), but `LocalCollider` dimensions are **local meters × `uniformScale`**. Installing `.sphere(radius: collisionRadius)` would make the effective radius `collisionRadius × scale` — and the scaled callers are not hypothetical: `FlightboxWithPhysics.makeRandomDispersedObjects` builds balls with node scale ≈ `collisionRadius` (unit-radius mesh scaled to size), which would double-scale every one of them. Instead the sphere synthesizes a **single `WorldCollider` view** (radius used as world meters, scale deliberately not applied, nil metadata) inside the same `worldColliders()` entry point — so the narrow phase still has exactly ONE collider-based dispatch and the flat-compound end state holds. Migrating ball call sites to local-space colliders (`radius: 1` at scale s) is exact but pure churn; deferred until something needs it. |
+| **Narrow phase emits strict "B → A" normals from day one; the routing-commit response adapts by exact sign symmetry** | The legacy normal convention is *shape-dependent*: sphere-sphere returns `posA − posB` (B→A), but sphere-plane returns the plane's normal **whichever side the plane is on** — i.e. "static-body-outward" — and the response's asymmetric branches were written against that mix. Baking the mix into `NarrowPhase` would poison the new vocabulary permanently. Emitting strict B→A and transcribing the response with an explicit `legacyNormal = -contact.normal` where the conventions differ is bit-identical for every reachable configuration (IEEE argument in A.5). One knowingly-accepted divergence: the legacy `(A static, B dynamic)` **sphere-sphere** branch pushed the dynamic body *toward* the static one (a latent position-correction bug); no scene or golden contains a static sphere, and the transcription silently fixes it. Dynamic planes are likewise unreachable (every `PlaneRigidBody` is static) and remain unsupported. |
+| **Contact gates are inclusive (`depth >= 0`)** where the research listings used strict `> 0` | The legacy gates are inclusive (`<=` on both the sphere-sphere and sphere-plane predicates), and a depth-exactly-0 contact triggers the legacy response. Measure-zero in practice, but the routing commit transcribes rather than editorializes; the new capsule/box primitives adopt the same boundary for consistency. |
+| **Legacy-exact `sphereVsSphere`** (inclusive gate; coincident-centers → **zero normal**, not the research's `[0,1,0]` fallback) | Same transcription discipline: the degenerate fallback is reachable (perfect overlap) and therefore part of the locked-in behavior. A-response may not change it either — it's response-independent geometry; if a better fallback is ever wanted it's its own reviewed regolden. |
+| **`EulerSolver`'s bespoke response is deleted in A-response; both solvers share the corrected `applyCollisionResponse`** | The per-axis velocity-reflection code is an axis-aligned-plane special case (exactly the class of wrongness as the y=0 depth hack) and its rest hack zeroes *both* bodies' velocities with no static gate. The A-response semantic invariants (apex decay, settle ≤ slop, gravity stays on) cannot hold under it. For up-normal planes its reflection ≈ the impulse response (`v_y → −e·v_y`, tangent untouched), so `single_bounce_euler`'s regolden diverges exactly as 0.7's table already predicts. Routing (A.5) still transcribes it faithfully — the deletion happens only against the reviewed regolden. |
+| **`PhysicsMaterial` is defined now, consumed by nothing** | A1 reserves the field on `LocalCollider` so specs don't churn when Phase D's friction lands (combined doc, minor-differences table). Defining the two-field struct now costs ~6 lines and makes the reservation compile-checked. |
+| **`onContact` fires from the routing commit; classification stays out** | The event plumbing is behavior-neutral (nobody registered) and routing is exactly when the all-contacts scratch loop is written; wiring it later would mean re-touching the response loops. Crash/landing *classification* built on these events remains Phase B3. |
+
+## Step A.1 — Vocabulary completion (edit `Physics/Collision/ColliderShape.swift`) — A-routing
+
+Phase 0 pulled the data-only half of A1 forward; this step appends the remainder to the same file
+(per 0.1's "Phase A will append, not restructure"): the reserved material, the world-space snapshot
+type, and the pure builder that turns one into the other.
+
+- [x] `PhysicsMaterial` (reserved) + `LocalCollider.material` field
+
+```swift
+/// Reserved per-collider surface override (combined doc, minor-differences
+/// table): friction / restitution per collider arrive with tangent friction in
+/// Phase D. Until then body-level restitution applies and NOTHING reads this —
+/// it exists so authored specs don't churn when Phase D lands.
+struct PhysicsMaterial: Equatable {
+    var friction: Float = 0.5
+    /// nil ⇒ inherit the body's restitution.
+    var restitution: Float? = nil
+}
+```
+
+`LocalCollider` gains the stored field and one init parameter, both defaulted so no Phase 0 call
+site (spec file, overlay, tests) changes:
+
+```diff
+     /// Cheap runtime on/off (Jolt MutableCompoundShape's role). Disabled
+     /// colliders generate no contacts, don't contribute to the AABB, and the
+     /// debug overlay skips them.
+     var isEnabled: Bool
++    /// Reserved: per-collider friction/restitution override (Phase D).
++    /// Body-level restitution applies until then.
++    var material: PhysicsMaterial?
+
+     init(name: String,
+          shape: ColliderShape,
+          localPosition: float3 = .zero,
+          localRotation: simd_quatf = .identity,
+          group: ColliderGroup = .airframe,
+-         isEnabled: Bool = true) {
++         isEnabled: Bool = true,
++         material: PhysicsMaterial? = nil) {
+         assert(shape.hasFinitePositiveDimensions,
+                "Collider '\(name)' has non-finite or non-positive dimensions: \(shape)")
+         ...
++        self.material = material
+     }
+```
+
+- [x] `WorldCollider` — the derived per-query snapshot (research §3.4's split). **One change from
+  the research listing:** the identity fields are optional, because a `WorldCollider` can also be
+  the *synthesized view of a legacy body-level shape* (deviation 2 — `SphereRigidBody`), and
+  `Contact`'s documented contract is "collider names/groups are nil for simple bodies". A real
+  compound child always carries all three.
+
+```swift
+/// A LocalCollider transformed into world space for one narrow-phase query.
+/// Derived and read-only (research §3.4: LocalCollider = authored spec,
+/// WorldCollider = per-step snapshot). Obtain via RigidBody.worldColliders();
+/// never store across steps — the backing array is reused scratch.
+struct WorldCollider {
+    let shape: ColliderShape        // dimensions already × uniformScale
+    let position: float3            // world center
+    let rotation: float3x3          // world orientation (orthonormal)
+    /// Identity of the authored LocalCollider. All three are nil for the
+    /// synthesized view of a legacy body-level shape (SphereRigidBody), which
+    /// is what keeps Contact's "nil for simple bodies" contract truthful.
+    let sourceIndex: Int?
+    let name: String?
+    let group: ColliderGroup?
+
+    /// World-axis-aligned bounds (broad-phase input; compound AABB = union).
+    var aabb: AABB {
+        switch shape {
+            case .sphere(radius: let r):
+                return AABB(center: position, radius: r)
+            case .capsule(radius: let r, halfHeight: let hh):
+                // Segment endpoint extents + radius inflation.
+                let axisExtent = abs(rotation.columns.1 * hh)
+                return AABB(center: position,
+                            halfExtents: axisExtent + float3(repeating: r))
+            case .box(halfExtents: let he):
+                // World-axis extents of an oriented box: |R| · he
+                let extents = abs(rotation.columns.0) * he.x
+                            + abs(rotation.columns.1) * he.y
+                            + abs(rotation.columns.2) * he.z
+                return AABB(center: position, halfExtents: extents)
+        }
+    }
+}
+```
+
+- [x] `WorldColliderBuilder` — the pure local→world transform, extracted per the Metal-free test
+  rule (the `RigidBody` wrapper feeds node state in; tests feed poses directly and never construct
+  a GameObject):
+
+```swift
+/// Pure LocalCollider × body-pose → WorldCollider transform. Kept free of
+/// RigidBody/Node so the math is unit-testable Metal-free (the attached-body
+/// wrapper in RigidBody.rebuildWorldColliders is three lines of state
+/// gathering around this).
+enum WorldColliderBuilder {
+    /// Appends the world snapshot of every ENABLED collider into `out`
+    /// (cleared first, capacity kept — reused-scratch discipline).
+    static func build(_ colliders: [LocalCollider],
+                      bodyPosition: float3,
+                      bodyRotation: float3x3,
+                      uniformScale: Float,
+                      into out: inout [WorldCollider]) {
+        out.removeAll(keepingCapacity: true)
+        for (index, collider) in colliders.enumerated() where collider.isEnabled {
+            out.append(WorldCollider(
+                shape: collider.shape.scaled(by: uniformScale),
+                position: bodyPosition + bodyRotation * (collider.localPosition * uniformScale),
+                rotation: bodyRotation * float3x3(collider.localRotation),
+                sourceIndex: index,
+                name: collider.name,
+                group: collider.group))
+        }
+    }
+}
+```
+
+Notes:
+- `float3x3(collider.localRotation)` is the simd overlay's quaternion→matrix init; no helper needed.
+- The offset transform order (`rotate(localPosition × scale)`) matches the research A2 sketch and the
+  overlay's scene-graph composition (child transforms compose under the parent's rotation and scale),
+  so physics and the rendered volumes agree by construction.
+
+## Step A.2 — `RigidBody` integration (edit `Physics/World/RigidBody.swift`, `BasicRigidBodies.swift`) — A-routing
+
+The flat-compound storage (research D1/§3.5), the dirty-flag snapshot cache (deviation 1), the
+compound AABB, filtering state, and the contact event. All additive — nothing consumes `colliders`
+until A.3/A.5 route the narrow phase through it, and no existing body has a non-empty list until
+A.7, so this lands behavior-neutral by construction.
+
+- [x] `RigidBody` additions (full listing — insert after the `shouldApplyGravity` stored property,
+  before the `gameObject` declaration):
+
+```swift
+    /// Compound collision geometry: primitive colliders at body-local offsets
+    /// (combined doc D1/§3.5 — one body, many shapes; the model every surveyed
+    /// engine uses). Empty ⇒ the body has no compound volume: PlaneRigidBody
+    /// is special-cased at body level in the narrow phase, SphereRigidBody
+    /// synthesizes a one-sphere view (see rebuildWorldColliders — the legacy
+    /// classes deliberately IGNORE this list), and a plain RigidBody with no
+    /// colliders generates no contacts.
+    var colliders: [LocalCollider] = [] {
+        didSet { invalidateWorldColliders() }
+    }
+
+    /// Collision filtering (research §1.5): a pair is narrow-phased only if
+    /// each body's category intersects the other's mask. Defaults preserve
+    /// today's behavior — everything collides with everything.
+    var categoryMask: UInt32 = CollisionCategory.default
+    var collidesWithMask: UInt32 = CollisionCategory.all
+
+    /// Fired once per contact this body participates in, on the UpdateThread,
+    /// during collision resolution (after the response for that pair; every
+    /// collider-pair contact fires, not just the deepest one the linear
+    /// response consumed). The Contact is expressed with self as A. Keep the
+    /// handler cheap, and never mutate physics state from inside it — the
+    /// step is mid-flight.
+    var onContact: ((Contact, RigidBody) -> Void)?
+
+    /// World-space collider snapshot, dirty-flag cached (Phase A deviation 1 —
+    /// replaces the research sketch's static step-index token). Invalidation:
+    ///  - PhysicsWorld invalidates every entity at the top of each step
+    ///    (covers node transforms changed BETWEEN steps: attitude rotation,
+    ///    teleports, scene setup);
+    ///  - setPosition invalidates (covers MID-step moves — response position
+    ///    corrections and solver integration all funnel through it — which is
+    ///    the pre-Phase-A correction-2 requirement: a later pair in the same
+    ///    step narrow-phases against the corrected pose);
+    ///  - colliders.didSet (and SphereRigidBody.collisionRadius.didSet)
+    ///    invalidate on shape changes.
+    /// Code that mutates a body's node OUTSIDE a stepped world (tests, tools)
+    /// must either go through setPosition or call invalidateWorldColliders().
+    /// `worldCollidersScratch` is internal ONLY so subclass rebuild overrides
+    /// can write it; everything else reads via worldColliders().
+    internal var worldCollidersScratch: [WorldCollider] = []
+    private var worldCollidersDirty = true
+
+    func invalidateWorldColliders() {
+        worldCollidersDirty = true
+    }
+
+    /// The body's enabled colliders in world space. The returned array is
+    /// reused scratch — consume within the current step, never store (same
+    /// rule as the broad phase's pairs array).
+    func worldColliders() -> [WorldCollider] {
+        if worldCollidersDirty {
+            rebuildWorldColliders()
+            worldCollidersDirty = false
+        }
+        return worldCollidersScratch
+    }
+
+    /// Override point (SphereRigidBody synthesizes its legacy view here).
+    internal func rebuildWorldColliders() {
+        guard !colliders.isEmpty else {
+            worldCollidersScratch.removeAll(keepingCapacity: true)
+            return
+        }
+        if let node = gameObject {
+            // Pre-Phase-A correction 3: the physics path composes LOCAL
+            // transforms (getPosition/getRotationMatrix), valid only while
+            // rigid-body owners are scene-root children. Revisit (world
+            // transforms) if bodies ever nest.
+            assert(node.parent == nil || node.parent is GameScene,
+                   "RigidBody colliders on nested node '\(node.getName())' — world-collider math assumes a scene-root child")
+            WorldColliderBuilder.build(colliders,
+                                       bodyPosition: node.getPosition(),
+                                       bodyRotation: node.getRotationMatrix().upperLeft3x3,
+                                       uniformScale: node.uniformScale,
+                                       into: &worldCollidersScratch)
+        } else {
+            // Standalone (parity-harness) bodies AND the released-weak
+            // fallback state: identity pose at getPosition() — for released
+            // attached bodies that's .zero, matching their pre-Phase-A AABB
+            // behavior (the zombie already collided at the origin).
+            WorldColliderBuilder.build(colliders,
+                                       bodyPosition: getPosition(),
+                                       bodyRotation: matrix_identity_float3x3,
+                                       uniformScale: 1.0,
+                                       into: &worldCollidersScratch)
+        }
+    }
+
+    /// Symmetric filtering predicate (research §1.5), consumed by the broad
+    /// phase at pair emission and by both legacy O(n²) paths: category/mask
+    /// both ways, plus never pair two bodies attached to the same GameObject
+    /// (a future multi-body object must not self-collide). Bodies with nil
+    /// gameObjects (detached harness bodies) never match each other.
+    func shouldCollide(with other: RigidBody) -> Bool {
+        guard (categoryMask & other.collidesWithMask) != 0,
+              (other.categoryMask & collidesWithMask) != 0 else { return false }
+        if let mine = gameObject, let theirs = other.gameObject, mine === theirs {
+            return false
+        }
+        return true
+    }
+```
+
+- [x] `RigidBody.setPosition` — one added line in the shared mutation funnel:
+
+```diff
+     func setPosition(_ position: float3) {
++        invalidateWorldColliders()
+         if isStandalone {
+             standalonePosition = position
+         }
+         else {
+             self.gameObject?.setPosition(position)
+         }
+     }
+```
+
+- [x] `RigidBody.getAABB()` — compound union when colliders exist, unchanged delegate otherwise
+  (no plain-`RigidBody` entity exists before A.7, so this is dead code until then — which is the
+  point: it lands inside the golden-verified routing commit anyway):
+
+```diff
+     func getAABB() -> AABB {
+-        self.gameObject?.getAABB() ?? AABB(center: .zero, radius: .zero)
++        let worlds = worldColliders()
++        guard var merged = worlds.first?.aabb else {
++            // No colliders: the legacy node-AABB delegate, unchanged.
++            return self.gameObject?.getAABB() ?? AABB(center: .zero, radius: .zero)
++        }
++        for collider in worlds.dropFirst() {
++            merged = merged.merged(with: collider.aabb)
++        }
++        return merged
+     }
+```
+
+- [x] `CollisionCategory` (same file, below the class — research §1.5 vocabulary; **assignment of
+  non-default categories to scene bodies is deliberately deferred** until something needs filtering,
+  because with `collidesWithMask = .all` everywhere the masks are inert):
+
+```swift
+/// Bitmask vocabulary for collision filtering. Extend as needed; assign
+/// categories when a scene actually needs to filter (Phase B/C) — the
+/// defaults (default category, all-mask) keep every pair live.
+enum CollisionCategory {
+    static let `default`: UInt32 = 1 << 0
+    static let world: UInt32     = 1 << 1   // ground plane, terrain
+    static let vehicle: UInt32   = 1 << 2   // player + AI aircraft
+    static let structure: UInt32 = 1 << 3   // buildings, towers
+    static let debris: UInt32    = 1 << 4   // random physics objects
+    static let all: UInt32       = .max
+}
+```
+
+- [x] `SphereRigidBody` (BasicRigidBodies.swift) — the legacy view (deviation 2). `collisionRadius`
+  gains an invalidating `didSet` (FlightboxWithPhysics assigns it post-init); the AABB override
+  **stays** (reads live position directly — cheaper than the union-of-one and bit-identical to it):
+
+```diff
+ public final class SphereRigidBody: RigidBody {
+-    var collisionRadius: Float = 1.0
++    var collisionRadius: Float = 1.0 {
++        didSet { invalidateWorldColliders() }
++    }
++
++    /// Legacy body-level sphere → one synthesized WorldCollider view, so the
++    /// narrow phase has a single collider-based dispatch (Phase A deviation
++    /// 2): collisionRadius is WORLD meters, so node scale is deliberately NOT
++    /// applied, and the metadata is nil — Contact reports nil collider names
++    /// for simple bodies, per its doc contract. The `colliders` list is
++    /// ignored on this class by design (a compound body is a plain RigidBody).
++    override internal func rebuildWorldColliders() {
++        assert(colliders.isEmpty,
++               "SphereRigidBody ignores `colliders` — use a plain RigidBody for compounds")
++        worldCollidersScratch.removeAll(keepingCapacity: true)
++        worldCollidersScratch.append(WorldCollider(shape: .sphere(radius: collisionRadius),
++                                                   position: getPosition(),
++                                                   rotation: matrix_identity_float3x3,
++                                                   sourceIndex: nil,
++                                                   name: nil,
++                                                   group: nil))
++    }
+```
+
+`PlaneRigidBody` is untouched: the narrow phase special-cases planes at body level (an infinite
+static plane is world geometry, not a compound child — both research docs agree), its `getAABB()`
+huge-slab override stands, and its inherited `rebuildWorldColliders()` yields an empty scratch
+that nothing queries.
+
+### Why the dirty-flag cache is correct (the reasoning correction 2 demanded)
+
+The cache can only be consulted from the update thread, and there are exactly two windows where a
+body's world pose changes:
+
+1. **Between steps** (aircraft attitude via `Node.setRotation`, scene setup, teleports): none of
+   these route through `RigidBody.setPosition`, so the flag alone would go stale — that's what the
+   world's start-of-step sweep (`invalidateWorldColliders()` next to `resetCollisions()`, A.5) is
+   for. This sweep is load-bearing, not belt-and-braces: a settled aircraft writes NO transforms
+   (the attitude filter snaps to zero), but a banking one rotates every frame without ever calling
+   `setPosition`.
+2. **Mid-step** (response position corrections; solver integration): every one of these goes
+   through `RigidBody.setPosition` — grep the solvers and response, there is no other position
+   write — so the flag flips and the *next* `worldColliders()` call rebuilds. This exactly
+   reproduces the legacy timing, where `getCollisionData` read `getPosition()` live at each pair:
+   a pair resolved after an earlier pair moved a shared body sees the corrected pose in both
+   worlds, old and new. (That equivalence is part of the bit-exactness argument in A.5.)
+
+Rotation cannot change mid-step (nothing in the solvers or response touches rotation), so a
+mid-step rebuild reusing the start-of-step rotation is not a staleness hole today. When Phase D
+makes rotation solver state, its pose writes must funnel through a rigid-body setter that
+invalidates, same as position — noted here so the requirement doesn't get lost.
+
+## Step A.3 — `Contact` + `NarrowPhase` (new files) — A-routing
+
+Adopts the original research doc §2.3 listings with the D3 hybrid amendment (emit ALL collider-pair
+contacts, return the deepest's index for the linear response) and this plan's deviations (no
+`frame:` parameter; strict B→A normals; legacy-exact sphere primitives; inclusive gates; optional
+collider metadata flowing from `WorldCollider`).
+
+- [x] **File (new):** `ToyFlightSimulator Shared/Physics/Collision/Contact.swift`
+
+```swift
+/// One collision contact produced by the narrow phase.
+/// `normal` is unit length and points from B toward A — the direction that
+/// separates A. NOTE: this is a STRICT convention; the legacy code's normal
+/// was shape-dependent (sphere-plane pairs always carried the plane's normal,
+/// whichever side the plane was on). The A-routing response transcription
+/// accounts for the difference explicitly — see the sign-symmetry note there.
+struct Contact {
+    let normal: float3
+    let depth: Float
+    /// Representative world-space contact point. Unused by the linear-only
+    /// response; populated from day one so it becomes the lever arm when
+    /// angular dynamics land (combined doc D2 prep).
+    let point: float3
+    /// Sub-collider names/groups for compound bodies (nil for simple bodies —
+    /// a legacy sphere's synthesized view and the infinite plane carry no
+    /// collider identity).
+    let colliderNameA: String?
+    let colliderGroupA: ColliderGroup?
+    let colliderNameB: String?
+    let colliderGroupB: ColliderGroup?
+
+    /// Geometry + metadata from the colliders that produced the contact
+    /// (either may be nil: plane side, or a legacy body-level shape's view —
+    /// whose own metadata fields are nil anyway, and optional chaining
+    /// flattens them straight through).
+    init(normal: float3, depth: Float, point: float3,
+         collider a: WorldCollider? = nil, against b: WorldCollider? = nil) {
+        self.normal = normal
+        self.depth = depth
+        self.point = point
+        self.colliderNameA = a?.name
+        self.colliderGroupA = a?.group
+        self.colliderNameB = b?.name
+        self.colliderGroupB = b?.group
+    }
+
+    private init(normal: float3, depth: Float, point: float3,
+                 colliderNameA: String?, colliderGroupA: ColliderGroup?,
+                 colliderNameB: String?, colliderGroupB: ColliderGroup?) {
+        self.normal = normal
+        self.depth = depth
+        self.point = point
+        self.colliderNameA = colliderNameA
+        self.colliderGroupA = colliderGroupA
+        self.colliderNameB = colliderNameB
+        self.colliderGroupB = colliderGroupB
+    }
+
+    /// The same contact expressed with A and B swapped.
+    var flipped: Contact {
+        Contact(normal: -normal, depth: depth, point: point,
+                colliderNameA: colliderNameB, colliderGroupA: colliderGroupB,
+                colliderNameB: colliderNameA, colliderGroupB: colliderGroupA)
+    }
+}
+```
+
+- [x] **File (new):** `ToyFlightSimulator Shared/Physics/Collision/NarrowPhase.swift`
+
+```swift
+import simd
+
+/// Pure narrow phase: WorldCollider geometry in, Contacts out. No body
+/// mutation, no Metal — every function below is unit-testable per the
+/// project's Metal-free rule (research §3.4: the Local/World split is what
+/// makes this a pure function).
+///
+/// The sphere-sphere and sphere-plane paths are TRANSCRIPTIONS of the deleted
+/// PhysicsWorld shape switches — operation-for-operation, so the A-routing
+/// commit is bit-identical against the Phase 0 goldens. Do not "improve" the
+/// arithmetic here without a deliberate, reviewed golden regeneration.
+enum NarrowPhase {
+    // MARK: - Body-level dispatch
+
+    /// Appends EVERY contacting collider pair between the two bodies into
+    /// `contacts` (combined doc D3 hybrid: events and classification need all
+    /// of them — a wingtip and the belly can scrape simultaneously). Returns
+    /// the ABSOLUTE index (into `contacts`) of the deepest appended contact —
+    /// the linear-only response consumes exactly that one; Phase D's solver
+    /// will consume them all and the return value disappears. nil ⇒ no
+    /// intersection (nothing appended).
+    @discardableResult
+    static func generateContacts(_ a: RigidBody, _ b: RigidBody,
+                                 into contacts: inout [Contact]) -> Int? {
+        // Planes are infinite static world geometry, special-cased at body
+        // level (research §3.5); always presented to the shape tests as the
+        // B side, flipped back on exit if the plane arrived as A.
+        if a is PlaneRigidBody {
+            guard !(b is PlaneRigidBody) else { return nil }   // plane/plane: nothing to do
+            let firstNew = contacts.count
+            guard let deepest = generateContacts(b, a, into: &contacts) else { return nil }
+            for i in firstNew..<contacts.count {
+                contacts[i] = contacts[i].flipped
+            }
+            return deepest
+        }
+
+        if let plane = b as? PlaneRigidBody {
+            let planePoint = plane.getPosition()
+            let planeNormal = plane.collisionNormal
+            var deepest: Int? = nil
+            for collider in a.worldColliders() {
+                if let contact = shapeVsPlane(collider,
+                                              planePoint: planePoint,
+                                              planeNormal: planeNormal) {
+                    contacts.append(contact)
+                    if deepest == nil || contact.depth > contacts[deepest!].depth {
+                        deepest = contacts.count - 1
+                    }
+                }
+            }
+            return deepest
+        }
+
+        // Volume vs volume: children × children. A legacy SphereRigidBody's
+        // "children" are its one synthesized view, so this loop IS the
+        // sphere-sphere, sphere-compound, and compound-compound path at once.
+        var deepest: Int? = nil
+        for colliderA in a.worldColliders() {
+            for colliderB in b.worldColliders() {
+                if let contact = shapeVsShape(colliderA, colliderB) {
+                    contacts.append(contact)
+                    if deepest == nil || contact.depth > contacts[deepest!].depth {
+                        deepest = contacts.count - 1
+                    }
+                }
+            }
+        }
+        return deepest
+    }
+
+    // MARK: - Shape vs plane
+
+    /// Sphere/capsule/box vs the infinite plane through planePoint. The
+    /// sphere case is the legacy sphere-plane test in general-plane form —
+    /// bit-identical for every plane that exists today (they all sit at the
+    /// origin with a +Y normal; equivalence argued in the A.5 notes), and
+    /// CORRECT for tilted/translated planes, which the deleted
+    /// getPenetrationDepth(ball:plane:) y=0 hardcode never was.
+    /// Gates are inclusive (depth >= 0), matching the legacy `<=` boundaries.
+    static func shapeVsPlane(_ collider: WorldCollider,
+                             planePoint: float3,
+                             planeNormal n: float3) -> Contact? {
+        switch collider.shape {
+            case .sphere(radius: let r):
+                let signedDistance = dot(collider.position - planePoint, n)
+                let depth = r - signedDistance
+                guard depth >= 0 else { return nil }
+                return Contact(normal: n, depth: depth,
+                               point: collider.position - n * signedDistance,
+                               collider: collider)
+
+            case .capsule(radius: let r, halfHeight: let hh):
+                // Deeper end-cap center decides. A capsule lying flat on the
+                // plane picks one end — adequate for the linear response
+                // (co-normal contacts resolve with one impulse); Phase D's
+                // manifold work refines this.
+                let axis = collider.rotation.columns.1
+                let p0 = collider.position - axis * hh
+                let p1 = collider.position + axis * hh
+                let d0 = dot(p0 - planePoint, n)
+                let d1 = dot(p1 - planePoint, n)
+                let (endCenter, signedDistance) = d0 < d1 ? (p0, d0) : (p1, d1)
+                let depth = r - signedDistance
+                guard depth >= 0 else { return nil }
+                return Contact(normal: n, depth: depth,
+                               point: endCenter - n * signedDistance,
+                               collider: collider)
+
+            case .box(halfExtents: let he):
+                let c0 = collider.rotation.columns.0
+                let c1 = collider.rotation.columns.1
+                let c2 = collider.rotation.columns.2
+                // Projection radius of the OBB onto the plane normal.
+                let projectionRadius = he.x * abs(dot(c0, n))
+                                     + he.y * abs(dot(c1, n))
+                                     + he.z * abs(dot(c2, n))
+                let signedDistance = dot(collider.position - planePoint, n)
+                let depth = projectionRadius - signedDistance
+                guard depth >= 0 else { return nil }
+                // Deepest corner: step against the normal on each box axis.
+                func axisSign(_ x: Float) -> Float { x >= 0 ? 1 : -1 }
+                let corner = collider.position
+                    - c0 * (he.x * axisSign(dot(c0, n)))
+                    - c1 * (he.y * axisSign(dot(c1, n)))
+                    - c2 * (he.z * axisSign(dot(c2, n)))
+                return Contact(normal: n, depth: depth, point: corner,
+                               collider: collider)
+        }
+    }
+
+    // MARK: - Shape vs shape
+
+    static func shapeVsShape(_ a: WorldCollider, _ b: WorldCollider) -> Contact? {
+        switch (a.shape, b.shape) {
+            case (.sphere(radius: let ra), .sphere(radius: let rb)):
+                return sphereVsSphere(centerA: a.position, radiusA: ra,
+                                      centerB: b.position, radiusB: rb,
+                                      a: a, b: b)
+
+            case (.sphere(radius: let r), .capsule):
+                // Closest point on B's segment to A's center → sphere-sphere.
+                let (pB, rB) = capsuleAsSphere(b, towards: a.position)
+                return sphereVsSphere(centerA: a.position, radiusA: r,
+                                      centerB: pB, radiusB: rB, a: a, b: b)
+            case (.capsule, .sphere):
+                return shapeVsShape(b, a)?.flipped
+
+            case (.capsule, .capsule):
+                let (segA0, segA1, rA) = capsuleSegment(a)
+                let (segB0, segB1, rB) = capsuleSegment(b)
+                let (pA, pB) = closestPointsOnSegments(segA0, segA1, segB0, segB1)
+                return sphereVsSphere(centerA: pA, radiusA: rA,
+                                      centerB: pB, radiusB: rB, a: a, b: b)
+
+            case (.sphere(radius: let r), .box(halfExtents: let he)):
+                return sphereVsBox(center: a.position, radius: r,
+                                   box: b, halfExtents: he, a: a, b: b)
+            case (.box, .sphere):
+                return shapeVsShape(b, a)?.flipped
+
+            case (.capsule, .box(halfExtents: let he)):
+                // Approximation: nearest point of the capsule segment to the
+                // box CENTER, then sphere-vs-box. Adequate for crash
+                // detection; exact segment-OBB (or GJK) is the Phase C/D
+                // upgrade path (combined doc §4.4).
+                let (p, r) = capsuleAsSphere(a, towards: b.position)
+                return sphereVsBox(center: p, radius: r, box: b, halfExtents: he,
+                                   a: a, b: b)
+            case (.box, .capsule):
+                return shapeVsShape(b, a)?.flipped
+
+            case (.box, .box):
+                // Not needed while structures are static and vehicle compounds
+                // are capsule/box-vs-sphere/plane dominated. Upgrade path:
+                // SAT (15 axes) or GJK/EPA — Phase C decides if it's ever hit.
+                return nil
+        }
+    }
+
+    // MARK: - Primitive helpers (pure — unit-testable without Metal)
+
+    /// LEGACY-EXACT transcription of the deleted PhysicsWorld sphere-sphere
+    /// pair: squared-distance gate, INCLUSIVE boundary, one sqrt on the hit
+    /// path, and the degenerate coincident-centers case yields a ZERO normal
+    /// (as before — reachable via perfect overlap and therefore pinned;
+    /// changing it to an arbitrary up-vector is a behavior change requiring a
+    /// golden regen of its own).
+    private static func sphereVsSphere(centerA: float3, radiusA: Float,
+                                       centerB: float3, radiusB: Float,
+                                       a: WorldCollider, b: WorldCollider) -> Contact? {
+        let radiusSum = radiusA + radiusB
+        let delta = centerA - centerB
+        let distanceSquared = simd_length_squared(delta)
+        guard distanceSquared <= radiusSum * radiusSum else { return nil }
+        let distance = simd_length(delta)
+        let normal: float3 = distance > 0 ? delta / distance : .zero
+        return Contact(normal: normal, depth: radiusSum - distance,
+                       point: centerB + normal * radiusB,
+                       collider: a, against: b)
+    }
+
+    private static func sphereVsBox(center: float3, radius: Float,
+                                    box: WorldCollider, halfExtents he: float3,
+                                    a: WorldCollider, b: WorldCollider) -> Contact? {
+        // Sphere center in box-local space (R orthonormal: inverse = transpose).
+        let local = box.rotation.transpose * (center - box.position)
+        let clamped = simd_clamp(local, -he, he)
+
+        if local.x == clamped.x && local.y == clamped.y && local.z == clamped.z {
+            // Center inside the box: push out along the axis of least
+            // penetration (depth = face distance + radius).
+            let distances = he - abs(local)
+            var axis = 0
+            if distances.y < distances.x { axis = 1 }
+            if distances.z < distances[axis] { axis = 2 }
+            var localNormal = float3.zero
+            localNormal[axis] = local[axis] >= 0 ? 1 : -1
+            return Contact(normal: box.rotation * localNormal,
+                           depth: distances[axis] + radius,
+                           point: center,
+                           collider: a, against: b)
+        }
+
+        let closest = box.position + box.rotation * clamped
+        let delta = center - closest
+        let distance = simd_length(delta)
+        guard distance <= radius else { return nil }
+        let normal: float3 = distance > 0 ? delta / distance : [0, 1, 0]
+        return Contact(normal: normal, depth: radius - distance, point: closest,
+                       collider: a, against: b)
+    }
+
+    private static func capsuleSegment(_ c: WorldCollider) -> (float3, float3, Float) {
+        guard case .capsule(radius: let r, halfHeight: let hh) = c.shape else {
+            fatalError("capsuleSegment on non-capsule collider")
+        }
+        let axis = c.rotation.columns.1
+        return (c.position - axis * hh, c.position + axis * hh, r)
+    }
+
+    private static func capsuleAsSphere(_ c: WorldCollider,
+                                        towards target: float3) -> (float3, Float) {
+        let (p0, p1, r) = capsuleSegment(c)
+        return (closestPointOnSegment(p0, p1, to: target), r)
+    }
+
+    static func closestPointOnSegment(_ p0: float3, _ p1: float3,
+                                      to point: float3) -> float3 {
+        let segment = p1 - p0
+        let lengthSquared = simd_length_squared(segment)
+        guard lengthSquared > .ulpOfOne else { return p0 }
+        let t = max(0, min(1, dot(point - p0, segment) / lengthSquared))
+        return p0 + segment * t
+    }
+
+    /// Closest points between two segments (Ericson, Real-Time Collision
+    /// Detection §5.1.9, clamped form).
+    static func closestPointsOnSegments(_ p1: float3, _ q1: float3,
+                                        _ p2: float3, _ q2: float3) -> (float3, float3) {
+        let d1 = q1 - p1, d2 = q2 - p2, r = p1 - p2
+        let a = dot(d1, d1), e = dot(d2, d2), f = dot(d2, r)
+        var s: Float = 0, t: Float = 0
+        if a <= .ulpOfOne && e <= .ulpOfOne { return (p1, p2) }
+        if a <= .ulpOfOne {
+            t = max(0, min(1, f / e))
+        } else {
+            let c = dot(d1, r)
+            if e <= .ulpOfOne {
+                s = max(0, min(1, -c / a))
+            } else {
+                let b = dot(d1, d2)
+                let denominator = a * e - b * b
+                s = denominator > .ulpOfOne ? max(0, min(1, (b * f - c * e) / denominator)) : 0
+                t = (b * s + f) / e
+                if t < 0 {
+                    t = 0
+                    s = max(0, min(1, -c / a))
+                } else if t > 1 {
+                    t = 1
+                    s = max(0, min(1, (b - c) / a))
+                }
+            }
+        }
+        return (p1 + d1 * s, p2 + d2 * t)
+    }
+}
+```
+
+Implementation notes, the parts that are easy to get wrong:
+
+- **The plane-as-A flip is an in-place rewrite of the appended slice.** The recursive call appends
+  contacts expressed with the volume body as A; the loop then flips each one so the caller's (A=plane,
+  B=volume) orientation holds, and the deepest index survives untouched because flipping preserves
+  both position-in-array and depth. Forgetting the flip would hand the response a normal pointing
+  *into* the dynamic body.
+- **`sphereVsBox`'s center-inside branch cannot return nil** — the sphere center inside the box is
+  always a hit regardless of radius. The subscript-based axis selection (`distances[axis]`) is the
+  standard least-penetration face pick; ties resolve toward x→y→z in that order, deterministically.
+- **`shapeVsShape`'s flipped-swap cases must not double-tag metadata**: the swapped call already
+  builds the contact with (b, a) metadata, and `.flipped` swaps it back — A's collider info ends up
+  on the A side. The tests in A.8 pin this with a named capsule vs named sphere both ways.
+- **Deepest-index bookkeeping is per-call, absolute.** The response caller records `firstNew =
+  contacts.count` before the call for its event slice; the returned index is already absolute, so
+  no offset math (an off-by-firstNew here would fire the response on the wrong pair's contact —
+  ugly and silent in single-contact scenes).
+- *(Landed 2026-08-30 with one micro-deviation: `capsuleSegment` and `capsuleAsSphere` return named
+  tuple members — `(p0:, p1:, radius:)` and `(center:, radius:)` — for readability; callers
+  destructure positionally, so the call sites above are unchanged.)*
+
+## Step A.4 — Pair filtering (edit `BroadPhase/BroadPhaseCollisionDetector.swift` + the pair consumers) — A-routing
+
+The predicate itself (`RigidBody.shouldCollide(with:)`) and the `CollisionCategory` vocabulary land
+in A.2; this step is the three application points. With the default masks (`default` category,
+`all` mask) and no two bodies sharing a GameObject, every guard evaluates true today — inert by
+construction, pinned by the goldens.
+
+- [x] Broad phase — filter at pair emission (both loops), so filtered pairs never reach the narrow
+  phase at all:
+
+```diff
+                 // Check full AABB overlap (Y and Z axes)
+-                if aabbA.overlaps(aabbB) {
++                if aabbA.overlaps(aabbB)
++                    && dynamicEntities[i].shouldCollide(with: dynamicEntities[j]) {
+                     pairsScratch.append((dynamicEntities[i], dynamicEntities[j]))
+                 }
+```
+
+```diff
+-                if dynamicAABB.overlaps(staticAABBs[si]) {
++                if dynamicAABB.overlaps(staticAABBs[si])
++                    && dynamicEntities[di].shouldCollide(with: staticEntities[si]) {
+                     pairsScratch.append((dynamicEntities[di], staticEntities[si]))
+                 }
+```
+
+- [ ] Both legacy O(n²) paths guard at pair visit (inside the shared `resolvePair`s — see A.5's
+  listings), otherwise masks would silently not work under `useBroadPhase == false`, which is
+  exactly the configuration the parity harness runs four of six scenarios in. The guard is also
+  re-evaluated on broad-phase pairs there — redundant by two integer ANDs, kept because a single
+  choke point is worth more than two saved cycles.
+
+(The research doc placed `shouldCollide` as a static on the broad phase; it lives on `RigidBody`
+instead because three call sites across two subsystems consume it and it's a body-pair predicate,
+not a sweep-and-prune detail. Micro-deviation, recorded here.)
+
+## Step A.5 — One narrow phase per pair: routing the responses + the deletions — completes A-routing
+
+The heart of the routing commit. Both response paths stop calling
+`PhysicsWorld.collided`/`getCollisionData` (which ran the geometry twice per pair) and consume one
+`NarrowPhase.generateContacts` call; contact events fire; then the entire `CollisionShape` layer is
+deleted. **The response math is transcribed, not improved** — every hack survives to A.6, because
+this commit's contract is bit-identical goldens.
+
+### File 1 — `Physics/World/PhysicsWorld.swift`
+
+- [ ] Per-instance contact scratch + start-of-step invalidation + scratch plumbing:
+
+```diff
+ final class PhysicsWorld {
+     public static let gravity: float3 = [0, -9.81, 0]
+     ...
+     private var broadPhase = BroadPhaseCollisionDetector()
++    /// Per-instance contact scratch (pre-Phase-A correction 1: parameterized
++    /// parity cases run multiple live worlds concurrently in one process — no
++    /// statics anywhere in the step path). Cleared and refilled by the
++    /// response each step; contents are reused scratch, same discipline as
++    /// the broad phase's pairs array.
++    private var contactsScratch: [Contact] = []
+
+     public func update(deltaTime: Float) {
+         for entity in entities {
+             entity.resetCollisions()
++            // Deviation 1: start-of-step invalidation covers node transforms
++            // changed since the last step — attitude rotation never routes
++            // through RigidBody.setPosition, so the dirty flag alone can't
++            // see it. Mid-step moves are covered by setPosition itself.
++            entity.invalidateWorldColliders()
+         }
+```
+
+and the four private update methods pass the scratch through:
+
+```swift
+    private func naiveUpdate(deltaTime: Float, collisionPairs: [(RigidBody, RigidBody)]) {
+        EulerSolver.step(deltaTime: deltaTime,
+                         gravity: PhysicsWorld.gravity,
+                         entities: entities,
+                         collisionPairs: collisionPairs,
+                         contactsScratch: &contactsScratch)
+    }
+
+    private func heckerVerletUpdate(deltaTime: Float, collisionPairs: [(RigidBody, RigidBody)]) {
+        HeckerCollisionResponse.resolveCollisions(deltaTime: deltaTime,
+                                                  collisionPairs: collisionPairs,
+                                                  contactsScratch: &contactsScratch)
+        VerletSolver.step(deltaTime: deltaTime, gravity: PhysicsWorld.gravity, entities: entities)
+    }
+
+    private func naiveUpdateOriginal(deltaTime: Float) {
+        EulerSolver.step(deltaTime: deltaTime,
+                         gravity: PhysicsWorld.gravity,
+                         entities: entities,
+                         contactsScratch: &contactsScratch)
+    }
+
+    private func heckerVerletUpdateOriginal(deltaTime: Float) {
+        HeckerCollisionResponse.resolveCollisions(deltaTime: deltaTime,
+                                                  entities: entities,
+                                                  contactsScratch: &contactsScratch)
+        VerletSolver.step(deltaTime: deltaTime, gravity: PhysicsWorld.gravity, entities: entities)
+    }
+```
+
+### File 2 — `Physics/CollisionResponse/HeckerCollisionResponse.swift`
+
+- [ ] Both `resolveCollisions` variants collapse onto one `resolvePair`; the response consumes the
+  deepest contact; events fire per contact, after the response (handlers observe post-response
+  state):
+
+```swift
+    /// Broad-phase pair path.
+    static func resolveCollisions(deltaTime: Float,
+                                  collisionPairs: [(RigidBody, RigidBody)],
+                                  contactsScratch: inout [Contact]) {
+        contactsScratch.removeAll(keepingCapacity: true)
+        for (entityA, entityB) in collisionPairs {
+            resolvePair(entityA, entityB, contacts: &contactsScratch)
+        }
+    }
+
+    /// Legacy O(n²) path for `useBroadPhase == false`. Visits each unordered
+    /// pair once, as before.
+    static func resolveCollisions(deltaTime: Float,
+                                  entities: [RigidBody],
+                                  contactsScratch: inout [Contact]) {
+        contactsScratch.removeAll(keepingCapacity: true)
+        for a in 0..<entities.count {
+            for b in (a + 1)..<entities.count {
+                resolvePair(entities[a], entities[b], contacts: &contactsScratch)
+            }
+        }
+    }
+
+    /// ONE narrow phase per pair (the old flow ran geometry twice — collided()
+    /// then getCollisionData()). Bookkeeping order preserved exactly: the
+    /// already-collided guard, then narrow phase, then symmetric insertion,
+    /// then response. New and inert-by-default: the filtering guard (A.4) and
+    /// the per-contact events (nobody registered until A.7).
+    private static func resolvePair(_ entityA: RigidBody, _ entityB: RigidBody,
+                                    contacts: inout [Contact]) {
+        guard entityA.shouldCollide(with: entityB),
+              !entityA.collidedWith.contains(ObjectIdentifier(entityB)) else { return }
+
+        let firstNew = contacts.count
+        guard let deepest = NarrowPhase.generateContacts(entityA, entityB,
+                                                         into: &contacts) else { return }
+
+        entityA.collidedWith.insert(ObjectIdentifier(entityB))
+        entityB.collidedWith.insert(ObjectIdentifier(entityA))
+
+        applyCollisionResponse(entityA, entityB, contact: contacts[deepest])
+
+        // Events fire for EVERY contact of the pair (combined doc D3) —
+        // classification needs them all, not just the one the linear
+        // response consumed.
+        for contact in contacts[firstNew...] {
+            entityA.onContact?(contact, entityB)
+            entityB.onContact?(contact.flipped, entityA)
+        }
+    }
+```
+
+- [ ] The transcribed response — **behavior-frozen through the routing commit** (full listing; the
+  per-branch comments are part of the deliverable, they carry the convention bookkeeping):
+
+```swift
+    /// A-ROUTING TRANSCRIPTION — behavior-frozen. This is the pre-routing
+    /// response verbatim (rest latch, minDeltaVelo impulse discard, ×2 static
+    /// corrections and all), consuming the pair's deepest Contact instead of
+    /// re-running geometry through PhysicsWorld.getCollisionData. Where the
+    /// strict B→A normal differs from the legacy shape-dependent normal,
+    /// `legacyNormal` reconstructs the old value exactly (IEEE negation is
+    /// exact — see the plan's sign-symmetry note). Do NOT clean anything up
+    /// here: A.6 replaces this body deliberately, against regenerated goldens.
+    private static func applyCollisionResponse(_ entityA: RigidBody, _ entityB: RigidBody,
+                                               contact: Contact) {
+        // Hack (dies in A.6): the one-way rest latch, preserved bit-for-bit.
+        if simd_length_squared(entityA.velocity - entityB.velocity) < restSpeedThresholdSquared {
+            if entityB.isStatic {
+                entityA.velocity = .zero
+                entityA.acceleration = .zero
+                entityA.shouldApplyGravity = false
+
+                print("[HeckerCollisionResponse resolveCollisions] Gravity should not apply to entity: \(ObjectIdentifier(entityA))")
+            }
+
+            if entityA.isStatic {
+                entityB.velocity = .zero
+                entityB.acceleration = .zero
+                entityB.shouldApplyGravity = false
+
+                print("[HeckerCollisionResponse resolveCollisions] Gravity should not apply to entity: \(ObjectIdentifier(entityB))")
+            }
+
+            return
+        }
+
+        let penetrationDepth = contact.depth
+        let collisionNormal = contact.normal   // unit, strict B → A
+
+        if !entityA.isStatic && !entityB.isStatic {
+            // Legacy normal == strict normal in this branch (sphere-sphere was
+            // already B→A; dynamic planes don't exist). Verbatim.
+            entityA.setPosition(entityA.getPosition() + collisionNormal * (penetrationDepth / 2))
+            entityB.setPosition(entityB.getPosition() - collisionNormal * (penetrationDepth / 2))
+
+            let relativeVelo = entityA.velocity - entityB.velocity
+            let e = min(entityA.restitution, entityB.restitution)
+            var j = -(1 + e) * dot(relativeVelo, collisionNormal)
+            j /= ((1.0 / entityA.mass) + (1.0 / entityB.mass))
+
+            let entityADeltaVelo = j / entityA.mass * collisionNormal
+            let entityBDeltaVelo = j / entityB.mass * collisionNormal
+
+            entityA.velocity += simd_length_squared(entityADeltaVelo) > minDeltaVeloSquared ? entityADeltaVelo : .zero
+            entityB.velocity -= simd_length_squared(entityBDeltaVelo) > minDeltaVeloSquared ? entityBDeltaVelo : .zero
+
+            return
+        }
+
+        if !entityA.isStatic && entityB.isStatic {
+            // Legacy normal == strict normal here too: with B static, B is
+            // the plane (normal toward A) or a static sphere (B→A formula
+            // either way). Verbatim, ×2 overshoot included.
+            entityA.setPosition(entityA.getPosition() + collisionNormal * (penetrationDepth * 2))
+
+            let relativeVelo = entityA.velocity
+            let e = min(entityA.restitution, entityB.restitution)
+            var j = -(1 + e) * dot(relativeVelo, collisionNormal)
+            j /= 1.0 / entityA.mass
+
+            let entityADeltaVelo = j / entityA.mass * collisionNormal
+            entityA.velocity += simd_length_squared(entityADeltaVelo) > minDeltaVeloSquared ? entityADeltaVelo : .zero
+
+            return
+        }
+
+        if entityA.isStatic && !entityB.isStatic {
+            // The one convention-divergent branch. The legacy normal here was
+            // the static body's OUTWARD normal (the plane's normal, pointing
+            // toward B — not B→A); strict B→A is its exact negation, so
+            // reconstruct it and keep the body verbatim. For the unreachable
+            // static-SPHERE-as-A configuration this silently fixes the legacy
+            // inverted position correction (impulse term is bit-identical in
+            // both configurations — the sign symmetry note has the algebra).
+            let legacyNormal = -collisionNormal
+            entityB.setPosition(entityB.getPosition() + legacyNormal * (penetrationDepth * 2))
+
+            let relativeVelo = entityB.velocity
+            let e = min(entityA.restitution, entityB.restitution)
+            var j = -(1 + e) * dot(relativeVelo, legacyNormal)
+            j /= 1.0 / entityB.mass
+
+            let entityBDeltaVelo = j / entityB.mass * legacyNormal
+            entityB.velocity += simd_length_squared(entityBDeltaVelo) > minDeltaVeloSquared ? entityBDeltaVelo : .zero
+
+            return
+        }
+    }
+```
+
+### File 3 — `Physics/Solver/EulerSolver.swift`
+
+- [ ] Step overloads gain the scratch (the 3-arg protocol requirement survives as a wrapper);
+  `resolvePair` gets the identical routing treatment with its own frozen transcription:
+
+```swift
+    /// PhysicsSolver conformance — allocates a local scratch. Kept for the
+    /// protocol and for direct test calls; PhysicsWorld always passes its own
+    /// scratch via the overloads below, so no hot path allocates.
+    public static func step(deltaTime: Float, gravity: float3, entities: [RigidBody]) {
+        var contacts: [Contact] = []
+        step(deltaTime: deltaTime, gravity: gravity, entities: entities,
+             contactsScratch: &contacts)
+    }
+
+    /// Legacy O(n²) step — the useBroadPhase == false comparison baseline.
+    public static func step(deltaTime: Float, gravity: float3, entities: [RigidBody],
+                            contactsScratch: inout [Contact]) {
+        applyForces(deltaTime: deltaTime, gravity: gravity, entities: entities)
+        contactsScratch.removeAll(keepingCapacity: true)
+        resolveCollisionsAllPairs(entities: entities, contacts: &contactsScratch)
+        moveObjects(deltaTime: deltaTime, entities: entities)
+        zeroForces(entities: entities)
+    }
+
+    /// P1: broad-phase-driven step.
+    public static func step(deltaTime: Float, gravity: float3, entities: [RigidBody],
+                            collisionPairs: [(RigidBody, RigidBody)],
+                            contactsScratch: inout [Contact]) {
+        applyForces(deltaTime: deltaTime, gravity: gravity, entities: entities)
+        contactsScratch.removeAll(keepingCapacity: true)
+        for (ei, ej) in collisionPairs {
+            resolvePair(ei, ej, contacts: &contactsScratch)
+        }
+        moveObjects(deltaTime: deltaTime, entities: entities)
+        zeroForces(entities: entities)
+    }
+
+    static func resolveCollisionsAllPairs(entities: [RigidBody],
+                                          contacts: inout [Contact]) {
+        for i in 0..<entities.count {
+            for j in (i + 1)..<entities.count {
+                resolvePair(entities[i], entities[j], contacts: &contacts)
+            }
+        }
+    }
+
+    /// Narrow phase + response for one candidate pair — same routing shape as
+    /// HeckerCollisionResponse.resolvePair (guard order preserved exactly).
+    private static func resolvePair(_ ei: RigidBody, _ ej: RigidBody,
+                                    contacts: inout [Contact]) {
+        guard ei.shouldCollide(with: ej),
+              !ei.collidedWith.contains(ObjectIdentifier(ej)) else { return }
+
+        let firstNew = contacts.count
+        guard let deepest = NarrowPhase.generateContacts(ei, ej,
+                                                         into: &contacts) else { return }
+
+        ei.collidedWith.insert(ObjectIdentifier(ej))
+        ej.collidedWith.insert(ObjectIdentifier(ei))
+
+        applyLegacyEulerResponse(ei, ej, contact: contacts[deepest])
+
+        for contact in contacts[firstNew...] {
+            ei.onContact?(contact, ej)
+            ej.onContact?(contact.flipped, ei)
+        }
+    }
+
+    /// A-ROUTING TRANSCRIPTION — behavior-frozen (see the Hecker twin). The
+    /// per-axis reflection and the zero-both-velocities rest hack survive
+    /// routing verbatim; A.6 deletes this whole function in favor of the
+    /// shared corrected response.
+    private static func applyLegacyEulerResponse(_ ei: RigidBody, _ ej: RigidBody,
+                                                 contact: Contact) {
+        let collisionVector = contact.normal      // unit, strict B → A
+        let restitution = min(ei.restitution, ej.restitution)
+        let unormCollisionVector = contact.normal * contact.depth
+
+        // Hack to prevent infinite bouncing (dies in A.6; zeroes BOTH bodies,
+        // no static gate — preserved exactly, single_bounce_euler pins it):
+        if simd_length_squared(ei.velocity - ej.velocity) < restSpeedThresholdSquared {
+            ei.velocity = .zero
+            ej.velocity = .zero
+            return
+        }
+
+        if !ei.isStatic && !ej.isStatic {
+            // Legacy normal == strict normal in this branch. Verbatim.
+            ei.setPosition(ei.getPosition() + unormCollisionVector)
+            ei.velocity = (ei.velocity + collisionVector) * restitution
+
+            ej.setPosition(ej.getPosition() - unormCollisionVector)
+            ej.velocity = (ej.velocity - collisionVector) * restitution
+            return
+        }
+
+        if !ei.isStatic && ej.isStatic {
+            // Legacy normal == strict normal here. Verbatim, ×2 included.
+            ei.setPosition(ei.getPosition() + unormCollisionVector * 2)
+            let vX = collisionVector.x != 0 ? ei.velocity.x * -collisionVector.x * restitution : ei.velocity.x
+            let vY = collisionVector.y != 0 ? ei.velocity.y * -collisionVector.y * restitution : ei.velocity.y
+            let vZ = collisionVector.z != 0 ? ei.velocity.z * -collisionVector.z * restitution : ei.velocity.z
+            ei.velocity = [vX, vY, vZ]
+            return
+        }
+
+        if ei.isStatic && !ej.isStatic {
+            // Convention-divergent branch: reconstruct the legacy
+            // static-outward normal (exact negation), then verbatim.
+            let legacyVector = -collisionVector
+            let legacyUnorm = legacyVector * contact.depth
+            ej.setPosition(ej.getPosition() + legacyUnorm * 2)
+            let vX = legacyVector.x != 0 ? ej.velocity.x * -legacyVector.x * restitution : ej.velocity.x
+            let vY = legacyVector.y != 0 ? ej.velocity.y * -legacyVector.y * restitution : ej.velocity.y
+            let vZ = legacyVector.z != 0 ? ej.velocity.z * -legacyVector.z * restitution : ej.velocity.z
+            ej.velocity = [vX, vY, vZ]
+            return
+        }
+    }
+```
+
+### The deletions (same commit, once nothing references them)
+
+- [ ] `PhysicsWorld`: `collided(entityA:entityB:)` + the three shape-pair `collided(...)` helpers,
+  `getCollisionData`, the `CollisionData` struct, both `getPenetrationDepth` overloads (the
+  ball/plane one IS the y=0 hack — its death is what makes tilted/translated planes work), and
+  `getDistance` (zero callers, verified 2026-08-29).
+- [ ] `CollisionShape` enum + the `collisionShape` protocol requirement (`PhysicsEntity.swift`).
+- [ ] `RigidBody`: the stored property and both designated inits' `collisionShape`
+  parameter/assignment. The two inits still mirror each other line-for-line afterwards, so 0.6's
+  mirroring contract survives; update that doc comment only if the diff makes it stale.
+- [ ] `SphereRigidBody` / `PlaneRigidBody`: the four `self.collisionShape = ...` lines.
+- [ ] Test edits (mechanical, behavior-neutral): `TestRigidBody` drops its `collisionShape`
+  parameter + pass-through (PhysicsSolverTests.swift); `RigidBodyTests` drops its four
+  `#expect(... .collisionShape == ...)` lines (assertions about a deleted property — every other
+  expectation in those tests stands). `EulerSolver.resolveCollisionsAllPairs` callers in tests, if
+  any, gain the scratch argument.
+- [ ] `PhysicsEntity.shouldApplyGravity`'s `// Hack...` comment **stays** — it's still true until
+  A.6.
+
+### Why the goldens must not move — the bit-exactness argument
+
+The routing commit's gate is *stronger* than the harness tolerance: the goldens should be
+**byte-identical**. That's provable, not hopeful, because every reachable configuration reduces to
+the legacy arithmetic operation-for-operation:
+
+1. **Sphere-sphere** — transcribed: same inclusive squared-distance gate
+   (`simd_distance_squared(a,b)` ≡ `simd_length_squared(a − b)`, the same fused expression), same
+   one-sqrt data path (`simd_length(delta)` ≡ `sqrt(length_squared(delta))`), same depth and
+   zero-normal degenerate.
+2. **Sphere-plane, gate** — legacy `dot(planePos − spherePos, −n) ≤ r` vs new
+   `r − dot(spherePos − planePos, n) ≥ 0`. Two exact steps: `dot(−v, n) = −dot(v, n)` bit-exactly
+   (per-component negation is exact; the negated products sum to the negated sum), and
+   `fl(r − d) ≥ 0 ⟺ d ≤ r` because IEEE-754 subtraction of distinct floats never rounds to zero
+   (x − y = 0 ⟺ x = y), so the sign of the computed difference is the sign of the real difference.
+3. **Sphere-plane, depth** — every existing plane sits at the origin with normal `[0, 1, 0]`
+   (`addGround` never repositions the Quad; the harness `floorPlane` is `detachedAt: .zero`; the
+   normalize of `[0,1,0]` is exact). Then `dot(c − 0, [0,1,0])` evaluates to `c.y` exactly (`±0`
+   terms are absorbed), and `r − c.y` is the legacy expression verbatim.
+4. **The static-A response branch** — `legacyNormal = -collisionNormal` is exact, and every
+   downstream expression consumes `legacyNormal` where the legacy code consumed its normal, so the
+   floating-point evaluations are literally the same. (This is why the transcription reconstructs
+   the legacy normal instead of algebraically folding the sign in — reviewability AND exactness.)
+5. **The legacy-sphere world view** adds no arithmetic — `position` and `radius` are copied fields.
+6. **Cache timing** reproduces legacy live reads — argued in A.2; in particular a pair resolved
+   after an earlier pair corrected a shared body sees the corrected pose in both worlds.
+7. **Pair ordering is untouched** — same broad-phase emission order, same O(n²) loop order, same
+   `collidedWith` bookkeeping order.
+
+And the empirical check, which outranks the proof: with the routing commit in the tree, run the
+regen command from 0.7 and then `git diff --exit-code "ToyFlightSimulatorTests/Physics/Baselines"`
+— it must come back **empty** (all six JSONs rewritten byte-identical). Discard the regen run's
+designed failure, re-run the suite clean, green. Any diff at all means a transcription slipped;
+fix the routing, never the golden.
+
+### A-routing verification checklist
+
+- [ ] `build-for-testing` green; full serial suite green against **unchanged** goldens
+- [ ] Regen dry-run byte-identical (protocol above)
+- [ ] `PhysicsWorldSmokeTests` untouched and green (attached-body path)
+- [ ] In-app FlightboxWithPhysics eyeball: dispersed balls bounce, settle, and (still) latch
+  exactly as before; aircraft sphere behavior unchanged
+- [ ] Commit message marks this as the A-routing commit per the 0.7 protocol
+
+## Step A.6 — The corrected response (rest fix) — the A-response commit
+
+Implements research §3.2's five-point replacement, verbatim in intent: restitution velocity
+threshold, always-applied impulses, approach guard, slop+β position correction, gravity never
+touched. Both hacks die together (they interlock — removing either alone breaks resting), the ×2
+overshoot dies, and `EulerSolver` unifies onto the shared response (deviation: its per-axis
+reflection is an axis-aligned special case the semantic invariants can't hold under). **Every
+scenario diverges from its first contact — that is the point.** Verification is the 0.7 protocol:
+flip the characterization assert, regolden with the diff reviewed like code, land the semantic
+suite whose assertions hold for the NEW behavior and would have failed under the old.
+
+### File 1 — `HeckerCollisionResponse.swift` (the ~40 lines that pay for the whole phase)
+
+- [ ] Constants replaced:
+
+```diff
+ final class HeckerCollisionResponse {
+-    /// Below this relative speed a contact is treated as resting (squared — no sqrt).
+-    private static let restSpeedThresholdSquared: Float = 0.55 * 0.55
+-    /// Impulse delta-v below this squared magnitude is discarded (1.0² == 1.0).
+-    private static let minDeltaVeloSquared: Float = 1.0
++    /// Below this normal approach speed, restitution is 0: the impulse solves
++    /// the normal velocity to exactly zero instead of bouncing, so resting is
++    /// an equilibrium re-established every step — gravity stays ON. (Box2D's
++    /// b2_velocityThreshold and Jolt's restitution threshold are both ≈ 1 m/s.)
++    private static let restitutionVelocityThreshold: Float = 1.0
++    /// Penetration allowed before position correction engages (meters). The
++    /// slop keeps persistent contacts measurably touching instead of
++    /// oscillating across the surface.
++    private static let penetrationSlop: Float = 0.005
++    /// Fraction of (depth − slop) corrected per step (Baumgarte-style); damps
++    /// correction-induced energy. Replaces the legacy full-depth teleports
++    /// and the ×2 static-branch overshoot.
++    private static let positionCorrectionBeta: Float = 0.2
+```
+
+- [ ] `applyCollisionResponse` — the routed transcription's body is replaced wholesale
+  (`internal` now: `EulerSolver` shares it). Full listing:
+
+```swift
+    /// Corrected linear contact response (research §3.2; combined doc A5).
+    /// Consumes the pair's deepest contact; symmetric in inverse mass, so the
+    /// static/dynamic branching of the legacy code collapses (a static body
+    /// has infinite mass ⇒ inverse mass 0 ⇒ it neither moves nor changes
+    /// velocity). deltaTime-independent by design until Phase B's fixed step
+    /// (β is per-step, matching the legacy correction's shape).
+    internal static func applyCollisionResponse(_ entityA: RigidBody, _ entityB: RigidBody,
+                                                contact: Contact) {
+        let n = contact.normal                       // unit, B → A
+        let invMassA: Float = entityA.isStatic ? 0 : 1 / entityA.mass
+        let invMassB: Float = entityB.isStatic ? 0 : 1 / entityB.mass
+        let invMassSum = invMassA + invMassB
+        guard invMassSum > 0 else { return }         // two statics: nothing to move
+
+        // 1) Position correction with slop, split by inverse mass. Corrects
+        //    only the penetration BEYOND the slop, and only a β-fraction of
+        //    it per step.
+        let correction = positionCorrectionBeta * max(0, contact.depth - penetrationSlop) / invMassSum
+        if correction > 0 {
+            if !entityA.isStatic {
+                entityA.setPosition(entityA.getPosition() + n * (correction * invMassA))
+            }
+            if !entityB.isStatic {
+                entityB.setPosition(entityB.getPosition() - n * (correction * invMassB))
+            }
+        }
+
+        // 2) Impulse only when approaching (n points toward A, so approaching
+        //    means relative velocity along −n). The legacy response applied
+        //    impulses to separating contacts too, which can add energy.
+        let relativeVelocity = entityA.velocity - entityB.velocity
+        let approach = dot(relativeVelocity, n)
+        guard approach < 0 else { return }
+
+        // 3) Restitution only above the threshold; below it e = 0 ⇒ the
+        //    normal velocity is solved to exactly zero (the support impulse).
+        let e = -approach > restitutionVelocityThreshold
+            ? min(entityA.restitution, entityB.restitution)
+            : 0
+
+        // 4) ALWAYS applied — the deleted minDeltaVelo discard threw away the
+        //    per-step support impulse (≈ m·g·dt) that resting requires; that
+        //    impulse IS the normal force integrated over the step.
+        let j = -(1 + e) * approach / invMassSum
+        if !entityA.isStatic {
+            entityA.velocity += n * (j * invMassA)
+        }
+        if !entityB.isStatic {
+            entityB.velocity -= n * (j * invMassB)
+        }
+    }
+```
+
+Sanity traces (worth keeping in the doc — they're the review anchors for the regolden):
+- **Resting ball on the plane** (plane is B, n = up): each step gravity adds `−g·dt` of normal
+  velocity; `approach ≈ −g·dt`, `−approach ≈ 0.16 m/s < 1` ⇒ `e = 0`; `j = m·g·dt` cancels it
+  exactly. Gravity never touched; jitter bounded by `g·dt²` (≈ 2.7 mm at 60 Hz, ≈ 68 µm at Phase
+  B's 120 Hz — the bound becomes constant when B1's fixed step lands).
+- **head_on_pair** (e = 1, equal masses, n = B→A = −x̂ for A on the left): `approach = −10`,
+  `e = 1`, `j = 10`; A gets `+n·j·1 = −5 − 5`… i.e. the exact velocity swap, mirror symmetry
+  preserved — the golden's semantic asserts survive.
+- **Degenerate zero normal** (coincident centers, pinned legacy behavior): zero correction
+  direction, `approach = 0` ⇒ guard exits ⇒ no impulse. Same net no-op as the legacy code's
+  zero-vector arithmetic.
+
+### File 2 — `EulerSolver.swift` (unification)
+
+- [ ] Delete `applyLegacyEulerResponse` and the solver's own `restSpeedThresholdSquared`;
+  `resolvePair`'s response line becomes:
+
+```diff
+-        applyLegacyEulerResponse(ei, ej, contact: contacts[deepest])
++        HeckerCollisionResponse.applyCollisionResponse(ei, ej, contact: contacts[deepest])
+```
+
+The Euler step keeps its own structure (forces → resolve → move); only the per-pair response math
+is shared. For up-normal planes the old reflection was already ≈ the impulse response
+(`v_y → −e·v_y`, tangent untouched), so `single_bounce_euler`'s divergence signature matches the
+0.7 table: identical free fall, first-contact divergence from the correction + threshold, no
+wholesale reshape.
+
+### File 3 — `PhysicsEntity.swift` (one comment)
+
+- [ ] `shouldApplyGravity`'s `// Hack...` note finally becomes honest:
+
+```diff
+-    var shouldApplyGravity: Bool { get set }  // Hack...
++    /// Static/kinematic gravity opt-out, set by authoring only. No longer
++    /// solver state: the response never writes it (the rest latch died in
++    /// Phase A — resting is a per-step contact-impulse equilibrium, research
++    /// §3.2).
++    var shouldApplyGravity: Bool { get set }
+```
+
+After this commit, `grep -rn "shouldApplyGravity = " "ToyFlightSimulator Shared/Physics"` must
+show **zero writes** outside solver gravity *reads* and authoring sites (`floorPlane`-style
+static setup) — that grep is part of the exit criteria.
+
+### Regolden + test changes (same commit)
+
+- [ ] **Regolden all six** via the 0.7 command (`TEST_RUNNER_TFS_REGEN_PHYSICS_BASELINES=1`, regen
+  run fails by design, clean re-run green). Review the JSON diffs against these expected
+  signatures before committing:
+
+| Scenario | Expected diff signature |
+|---|---|
+| `single_bounce_verlet` / `_euler` | Samples identical through free fall (first contact ≈ step 57: 4.5 m of fall); divergence begins at the first post-contact sample and never before. Bounces persist (impact ≈ 9.4 m/s ≫ threshold; e = 0.9), apex sequence strictly decreasing, ball still airborne-or-settling at step 300 with `finalShouldApplyGravity == true`. |
+| `rest_latch` | Wholesale change after first contact (~step 66). Final: gravity **on**, speed ≤ ~one gravity step (g·dt ≈ 0.163 m/s), y within ~3 cm of 0.5 (slop + β-equilibrium residual). The latch's `false`/exact-zero signature must be GONE from the JSON. |
+| `head_on_pair` | Identical until impact (~step 18); post-impact the ±x symmetry holds sample-for-sample (mirror-exactness is a review check, not just a tolerance), velocities swap to ±5 on X with lockstep Y fall. |
+| `ball_cluster_16` / `stress_grid_50` | Full regolden, no sample-level review expected beyond spot checks; the **chaos-policy invariants must pass UN-EDITED** (finite, no tunneling at 1 m slack, speed budgets) — they were designed to survive exactly this change. If a budget trips, that's a response bug, not a budget to raise. |
+
+- [ ] **Flip the characterization test** (PhysicsParityTests.swift) — the old
+  `restLatchCharacterization` documented the latch; its replacement documents the equilibrium:
+
+```swift
+    @Test("A-response behavior: resting keeps gravity on (the latch is gone)")
+    func restingKeepsGravityOn() throws {
+        let track = try ParityRunner.run(.restLatch).tracks[0]
+        // Support-cycle equilibrium: the e=0 impulse cancels each step's
+        // gravity, so the boundary-frame velocity is at most ~one gravity
+        // step (g·dt ≈ 0.163 m/s), and the ball floats within slop + β
+        // residual of touching. EXACT zeros would be dishonest now — that
+        // was the latch's signature.
+        #expect(track.finalShouldApplyGravity == true)
+        let v = track.finalVelocity
+        #expect(simd_length(float3(v[0], v[1], v[2])) <= 0.25)
+        // β-equilibrium depth ≈ slop + (per-step gravity sink)/β ≈ 1–2 cm at
+        // 60 Hz — the 0.03 bound is deliberately loose; record the observed
+        // equilibrium in a comment when the regolden lands, then tighten.
+        let restingY = track.samples.last![1]
+        #expect(abs(restingY - 0.5) <= 0.03)
+    }
+```
+
+- [ ] **New suite** `ToyFlightSimulatorTests/Physics/CollisionResponseTests.swift` (Metal-free —
+  detached bodies through real `PhysicsWorld`s; `.tags(.physics)`). Full listing — these are the
+  semantic pins research §4.7 asked for:
+
+```swift
+import Foundation
+import Testing
+import simd
+@testable import ToyFlightSimulator
+
+@Suite("Corrected contact response", .tags(.physics))
+struct CollisionResponseTests {
+    private static let dt: Float = 1.0 / 60.0
+
+    private func makeRestingWorld(updateType: PhysicsUpdateType = .HeckerVerlet)
+        -> (world: PhysicsWorld, ball: SphereRigidBody) {
+        let ball = SphereRigidBody(detachedAt: [0, 0.499, 0], collisionRadius: 0.5)
+        ball.restitution = 0.2
+        let plane = PlaneRigidBody(detachedAt: .zero)
+        plane.isStatic = true
+        let world = PhysicsWorld(entities: [ball, plane], updateType: updateType)
+        world.useBroadPhase = false
+        return (world, ball)
+    }
+
+    @Test("resting body keeps gravity on forever (the latch regression)")
+    func restingKeepsGravity() {
+        let (world, ball) = makeRestingWorld()
+        for _ in 0..<600 { world.update(deltaTime: Self.dt) }
+        #expect(ball.shouldApplyGravity)
+        // β-equilibrium ≈ slop + per-step-sink/β ≈ 1–2 cm at 60 Hz; loose
+        // bound on purpose — tighten once the landed equilibrium is measured.
+        #expect(abs(ball.getPosition().y - 0.5) <= 0.03)
+        #expect(simd_length(ball.velocity) <= 0.25)             // ≤ ~one gravity step
+    }
+
+    @Test("a pushed resting body still falls afterward (old latch made it float away)")
+    func pushedRestingBodyStillFalls() {
+        let (world, ball) = makeRestingWorld()
+        for _ in 0..<300 { world.update(deltaTime: Self.dt) }   // settle
+        ball.velocity = [0, 3, 0]                               // pop it upward
+        for _ in 0..<240 { world.update(deltaTime: Self.dt) }   // 4 s: up ≈ 0.46 m and back
+        #expect(ball.shouldApplyGravity)
+        #expect(ball.getPosition().y <= 0.6, "gravity must bring it back down")
+    }
+
+    @Test("no impulse on separating contacts (legacy applied one, adding energy)")
+    func separatingContactGetsNoImpulse() {
+        let a = SphereRigidBody(detachedAt: [0, 0, 0], collisionRadius: 0.5)
+        a.velocity = [0, 5, 0]
+        a.shouldApplyGravity = false
+        let b = SphereRigidBody(detachedAt: [0, -0.9, 0], collisionRadius: 0.5)
+        b.velocity = [0, -5, 0]
+        b.shouldApplyGravity = false
+        let world = PhysicsWorld(entities: [a, b], updateType: .HeckerVerlet)
+        world.useBroadPhase = false
+        world.update(deltaTime: Self.dt)
+        // Overlapping (depth 0.1) but separating: position correction may act,
+        // velocities must not change (gravity off ⇒ integration is exact too).
+        #expect(approxEqual(a.velocity, [0, 5, 0]))
+        #expect(approxEqual(b.velocity, [0, -5, 0]))
+    }
+
+    @Test("below the restitution threshold even e=1 does not bounce")
+    func noBounceBelowThreshold() {
+        // 3 cm drop ⇒ impact ≈ 0.77 m/s < 1 m/s ⇒ e forced to 0.
+        let ball = SphereRigidBody(detachedAt: [0, 0.53, 0], collisionRadius: 0.5)
+        ball.restitution = 1.0
+        let plane = PlaneRigidBody(detachedAt: .zero)
+        plane.isStatic = true
+        let world = PhysicsWorld(entities: [ball, plane], updateType: .HeckerVerlet)
+        world.useBroadPhase = false
+        var maxYAfterContact: Float = 0
+        var touched = false
+        for _ in 0..<180 {
+            world.update(deltaTime: Self.dt)
+            let y = ball.getPosition().y
+            if y < 0.5 { touched = true }
+            if touched { maxYAfterContact = max(maxYAfterContact, y) }
+        }
+        #expect(touched)
+        #expect(maxYAfterContact <= 0.52, "sub-threshold impact must settle, not bounce")
+    }
+
+    @Test("above the restitution threshold it bounces at ≈ e·impact")
+    func bouncesAboveThreshold() {
+        // 2 m drop ⇒ impact ≈ 6.3 m/s; e = 0.5 ⇒ apex ≈ e²·h = 0.5 m above rest.
+        let ball = SphereRigidBody(detachedAt: [0, 2.5, 0], collisionRadius: 0.5)
+        ball.restitution = 0.5
+        let plane = PlaneRigidBody(detachedAt: .zero)
+        plane.isStatic = true
+        let world = PhysicsWorld(entities: [ball, plane], updateType: .HeckerVerlet)
+        world.useBroadPhase = false
+        var touched = false
+        var apexAfterBounce: Float = 0
+        for _ in 0..<240 {
+            world.update(deltaTime: Self.dt)
+            let y = ball.getPosition().y
+            if y < 0.55 { touched = true }
+            if touched { apexAfterBounce = max(apexAfterBounce, y) }
+        }
+        #expect(touched)
+        #expect(apexAfterBounce >= 0.8 && apexAfterBounce <= 1.15,
+                "first rebound apex ≈ 0.5 + e²·2.0 = 1.0 m (window absorbs correction losses)")
+    }
+
+    @Test("dynamic pair splits the position correction by inverse mass")
+    func correctionSplitsByInverseMass() {
+        // Pure-overlap pair at rest, gravity off: only the correction acts.
+        // mass 1 vs mass 3 ⇒ displacement magnitudes 3 : 1, moving apart.
+        let a = SphereRigidBody(detachedAt: [0, 0, 0], collisionRadius: 0.5)
+        a.mass = 1
+        a.shouldApplyGravity = false
+        let b = SphereRigidBody(detachedAt: [0.9, 0, 0], collisionRadius: 0.5)
+        b.mass = 3
+        b.shouldApplyGravity = false
+        let world = PhysicsWorld(entities: [a, b], updateType: .HeckerVerlet)
+        world.useBroadPhase = false
+        world.update(deltaTime: Self.dt)
+        let movedA = -a.getPosition().x          // A pushed toward −x (n = B→A = −x̂)
+        let movedB = b.getPosition().x - 0.9     // B pushed toward +x
+        #expect(movedA > 0 && movedB > 0, "correction separates the pair")
+        #expect(approxEqual(movedA / movedB, 3.0, tolerance: 1e-3))
+    }
+
+    @Test("the Euler path rests too (the reflection hack is gone)")
+    func eulerPathRests() {
+        let (world, ball) = makeRestingWorld(updateType: .NaiveEuler)
+        for _ in 0..<300 { world.update(deltaTime: Self.dt) }
+        #expect(ball.shouldApplyGravity)
+        #expect(abs(ball.getPosition().y - 0.5) <= 0.03)
+        #expect(simd_length(ball.velocity) <= 0.25)
+    }
+}
+```
+
+*(If `approxEqual(_:_:tolerance:)` for scalars doesn't already exist in TestSupport/ApproxEqual,
+add the overload there rather than inline.)*
+
+### Interim variable-dt caveat (recorded, accepted)
+
+The response is dt-independent, but the *equilibrium jitter* bound is `g·dt²` with dt still the
+frame delta until Phase B: ≈ 10.9 mm at the menu's 30 Hz floor, 2.7 mm at 60, 0.68 mm at 120.
+Visible-ish at 30 Hz on close inspection; accepted for the A→B window because B1's 1/120 s fixed
+substeps make the bound constant (combined doc D4 already commits to this). Don't tune β/slop to
+mask 30 Hz jitter — fix the timestep in B1 instead.
+
+## Step A.7 — The F-22 compound goes live — the A-aircraft commit
+
+The Phase 0-verified spec becomes the player aircraft's real collision geometry. Sequenced AFTER
+A.6 deliberately: the compound resting on its fuselage capsule needs the corrected response (under
+the legacy response it would rest-latch mid-air on first belly contact and freeze there).
+
+- [ ] **FlightboxWithPhysics.applyAircraftSwap** — spec-driven body construction (unauthored
+  aircraft keep the legacy sphere, so the F-16/F-18/F-35 swap paths are untouched until their
+  specs are written):
+
+```diff
+         if let playerAircraft {
+-            let acRigidBody = SphereRigidBody(gameObject: playerAircraft)
+-            acRigidBody.collisionRadius = 2.0
+-            acRigidBody.restitution = 0.2
++            // Compound-spec'd aircraft get the real Phase A body; aircraft
++            // without an authored spec keep the legacy 2 m sphere
++            // (AircraftColliderSpec returns [] for them — the exhaustive
++            // switch forces the decision per type).
++            let spec = AircraftColliderSpec.spec(for: aircraft)
++            let acRigidBody: RigidBody
++            if spec.isEmpty {
++                let sphereBody = SphereRigidBody(gameObject: playerAircraft)
++                sphereBody.collisionRadius = 2.0
++                acRigidBody = sphereBody
++            } else {
++                acRigidBody = RigidBody(gameObject: playerAircraft)
++                acRigidBody.colliders = spec
++            }
++            acRigidBody.restitution = 0.2
++
++            // Debug scaffolding (A.7 exit criterion): named contact reporting,
++            // throttled so a resting aircraft doesn't spam 60 lines/s.
++            let contactLogger = ContactDebugLogger(bodyLabel: playerAircraft.getName())
++            acRigidBody.onContact = { contact, other in
++                contactLogger.log(contact, against: other)
++            }
+```
+
+`Aircraft.rigidBody`'s mass-sync `didSet` fires on the init's back-registration exactly as it did
+for the sphere (the override is on `Aircraft`, keyed on `RigidBody`, not the subclass), so the
+flight-model mass plumbing is untouched either way.
+
+- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Debug/ContactDebugLogger.swift`
+
+```swift
+/// Debug-only contact reporter: prints which named collider touched what, at
+/// most once per interval per collider name. Installed into RigidBody.onContact
+/// (fires on the UpdateThread during the physics step — GameTime is owned by
+/// the same thread, so reading it here is safe), so keep it print-only.
+final class ContactDebugLogger {
+    private let bodyLabel: String
+    private let interval: Double
+    private var lastLogTime: [String: Double] = [:]
+
+    init(bodyLabel: String, interval: Double = 1.0) {
+        self.bodyLabel = bodyLabel
+        self.interval = interval
+    }
+
+    func log(_ contact: Contact, against other: RigidBody) {
+        let name = contact.colliderNameA ?? "body"
+        let now = GameTime.TotalGameTime
+        if let last = lastLogTime[name], now - last < interval { return }
+        lastLogTime[name] = now
+        let otherLabel = other.gameObject?.getName() ?? "static geometry"
+        print("[Contact] \(bodyLabel).\(name) touched \(otherLabel)"
+              + String(format: " (depth %.3f m)", contact.depth))
+    }
+}
+```
+
+- [ ] **AircraftColliderSpec doc comment**: flip "Numbers are PLACEHOLDERS until tuned with the
+  X-key debug overlay" → "Numbers overlay-verified in-app 2026-08-29 (Phase 0 exit criterion 2);
+  now live physics geometry — re-run the X-key overlay after any edit." (This is the deferred
+  half of Phase 0 criterion 2's closure.)
+- [ ] **ColliderDebugOverlay doc note**: the yellow legacy-sphere ghost keys on
+  `rigidBody as? SphereRigidBody`, so it disappears for compound-bodied aircraft *by
+  construction* — the red volumes are now the LIVE colliders, not a proposal. One doc-comment
+  line on `buildVolumes`' ghost branch saying so; zero code change.
+
+### Behavior notes (expected, reviewed in-app — write these into the commit message)
+
+- **Ride height changes**: the sphere held the F-22's origin at y = 2.0 on the ground; the
+  fuselage capsule's lowest surface is `localPosition.y − radius = 0.3 − 1.35 = −1.05`, so the
+  origin now rests at ≈ 1.05 (minus the β-equilibrium residual). The jet visibly sits lower and
+  longer — nose and tail overhang match the hull instead of a 2 m ball.
+- **It rests on its belly** — with gear down the wheels clip the ground exactly as they already
+  did with the sphere. Correct-looking gear contact is Phase B's raycast suspension
+  (`.landingGear` colliders stay reserved); not a regression, just newly visible honesty.
+- **Wingtip/tail strikes now exist**: rolling into the ground contacts "wings" (and "empennage"
+  when pitched), each reported by name through the logger. The 2 m sphere could never say which
+  part hit.
+
+### Metal-free integration pins (new suite `ToyFlightSimulatorTests/Physics/CompoundBodyTests.swift`)
+
+Full listing — this is the A.7 regression net (detached plain `RigidBody` + spec colliders: the
+0.6 detached machinery makes the REAL compound path testable without Metal):
+
+```swift
+import Foundation
+import Testing
+import simd
+@testable import ToyFlightSimulator
+
+@Suite("Compound body integration", .tags(.physics))
+struct CompoundBodyTests {
+    private static let dt: Float = 1.0 / 60.0
+
+    /// The live F-22 spec on a detached body settles on its fuselage capsule:
+    /// lowest surface = localPosition.y − radius = 0.3 − 1.35 = −1.05, so the
+    /// body origin rests at ≈ +1.05 (minus the β-equilibrium residual). The
+    /// legacy sphere rested at 2.0 — this pins the compound actually driving
+    /// the response, end to end (broad phase AABB union → narrow phase →
+    /// corrected response), and pins WHICH collider carries the contact.
+    @Test("F-22 compound settles on the fuselage capsule, reported by name")
+    func f22CompoundSettlesOnFuselage() {
+        let body = RigidBody(detachedAt: [0, 5, 0])
+        body.colliders = AircraftColliderSpec.spec(for: .f22_cgtrader)
+        body.restitution = 0.2
+        let plane = PlaneRigidBody(detachedAt: .zero)
+        plane.isStatic = true
+        let world = PhysicsWorld(entities: [body, plane], updateType: .HeckerVerlet)
+        world.useBroadPhase = false
+
+        var contactNames: Set<String> = []
+        body.onContact = { contact, _ in
+            if let name = contact.colliderNameA { contactNames.insert(name) }
+        }
+
+        for _ in 0..<600 { world.update(deltaTime: Self.dt) }
+
+        #expect(body.shouldApplyGravity)
+        #expect(simd_length(body.velocity) <= 0.25)
+        let restY = body.getPosition().y
+        #expect(abs(restY - 1.05) <= 0.05,
+                "origin should rest ≈ 1.05 (fuselage capsule bottom), not the sphere's 2.0")
+        #expect(contactNames == ["fuselage"],
+                "level settle touches the fuselage only — wings/empennage sit higher")
+    }
+
+    /// A 90°-banked pose contacts the plane with the WINGS alone — the
+    /// wingtip-strike identity the 2 m sphere could never report. Pure
+    /// geometry (WorldColliderBuilder + shapeVsPlane), no stepping: detached
+    /// bodies can't rotate, and this needs no world — which also makes it the
+    /// direct unit pin for rotated compound poses.
+    @Test("banked 90°, only the wings box reaches the ground, by name")
+    func bankedPoseContactsWingsOnly() {
+        let spec = AircraftColliderSpec.spec(for: .f22_cgtrader)
+        let roll90 = float3x3(simd_quatf(angle: .halfPi, axis: Z_AXIS))
+        var worlds: [WorldCollider] = []
+        WorldColliderBuilder.build(spec,
+                                   bodyPosition: [0, 5, 0],
+                                   bodyRotation: roll90,
+                                   uniformScale: 1.0,
+                                   into: &worlds)
+
+        var touching: [String] = []
+        for collider in worlds {
+            if let contact = NarrowPhase.shapeVsPlane(collider,
+                                                      planePoint: .zero,
+                                                      planeNormal: [0, 1, 0]) {
+                touching.append(contact.colliderNameA ?? "?")
+                // Rolled wings: half-span 6.6 projects fully onto the plane
+                // normal → depth = 6.6 − (5 + rotated local offset) ≈ 1.6.
+                #expect(contact.depth > 1.0 && contact.depth < 2.5)
+            }
+        }
+        #expect(touching == ["wings"],
+                "at 5 m banked 90°, fuselage (r 1.35) and empennage (3.0 span) stay clear")
+    }
+}
+```
+
+*(`Z_AXIS` exists in Math.swift alongside `X_AXIS` — verified 2026-08-29, no new constant needed.
+The quat→matrix spelling was also compile-checked: `simd_float3x3(simd_quatf(angle:axis:))` is the
+simd overlay init, and π/2-about-X does map the capsule's local Y axis onto Z as the fuselage spec
+assumes.)*
+
+## Step A.8 — Test ledger (Metal-free unless noted, Swift Testing, `.physics` / `.gameObjects` tags)
+
+Suites land inside their step's commit — listed here 0.8-style so nothing is owed at the end:
+
+**A-routing commit:**
+- [ ] `WorldColliderBuilderTests` (new): known pose compositions (offset × rotation × scale against
+  hand-computed positions/rotations — including the fuselage Y→Z capsule); disabled-child omission;
+  `scaled(by:)` flowing into shapes; `WorldCollider.aabb` for a rotated capsule and box vs
+  hand-computed bounds; empty-collider list → empty output.
+- [ ] `NarrowPhaseTests` (new): the §4.7 geometry matrix —
+  sphere/capsule/box vs **translated AND tilted** planes (known depths/normals/points — the tests
+  the y=0 hack made impossible); every `shapeVsShape` nil (separated) case; sphere-in-box
+  least-penetration axis (incl. tie determinism); capsule-capsule via `closestPointsOnSegments`
+  (parallel, crossing, degenerate-point Ericson cases); capsule-box approximation sanity (contact
+  exists where obviously overlapping, nil where obviously clear); flipped-pair metadata (named
+  capsule vs named sphere both ways — A metadata stays on A); **legacy-exact sphere-sphere pins**:
+  inclusive boundary (surfaces exactly touching ⇒ contact, depth 0) and coincident centers ⇒ zero
+  normal; plane-as-A flip (normal negated, names swapped, deepest index valid into the array).
+- [ ] `RigidBodyTests` additions: `worldColliders()` rebuilds after `setPosition` /
+  `invalidateWorldColliders` / `colliders` mutation (and NOT in between — cache identity check);
+  `SphereRigidBody` view = world-meter radius at live position with nil metadata;
+  `collisionRadius.didSet` invalidates; compound `getAABB` union on a detached multi-collider
+  body + empty-list fallback to the legacy delegate.
+- [ ] Filtering: mask-combination truth table on detached bodies (`shouldCollide` is pure); the
+  same-GameObject exclusion lives in **`PhysicsWorldSmokeTests`** (app-hosted — GameObjects are
+  legal there, per the Metal-free-design rule's split).
+- [ ] `PhysicsParityTests`: UNCHANGED, green against UNCHANGED goldens — this suite *is* the
+  routing gate, plus the byte-identical regen dry-run from A.5.
+- [ ] Mechanical edits: `TestRigidBody` loses `collisionShape`; `RigidBodyTests` loses its four
+  `.collisionShape` expectations; solver-step test call sites gain the scratch argument.
+  (Bonus effect worth a test: `TestRigidBody` pairs — which the legacy narrow phase would
+  force-cast-crash on — now safely yield zero contacts: no colliders, no legacy shape.)
+- [ ] `PhysicsWorldSmokeTests` addition: `onContact` fires for an attached colliding pair
+  (event plumbing smoke on the GameObject-backed path).
+
+**A-response commit:**
+- [ ] `CollisionResponseTests` as listed in A.6 (the semantic pins: latch regression, approach
+  guard, threshold both sides, inverse-mass correction split, Euler-path rest).
+- [ ] `PhysicsParityTests`: regoldened baselines + the flipped characterization test.
+
+**A-aircraft commit:**
+- [ ] `CompoundBodyTests` as listed in A.7 (settle-by-name; banked-wings-only).
+- [ ] `AircraftColliderSpecTests`: unchanged and green (the spec is now load-bearing — its
+  existing name/dimension/anchor pins carry more weight, none change).
+
+## Phase A non-goals (deferred, with their homes)
+
+Fixed timestep + force generators (B1); raycast gear suspension (B2 — `.landingGear` colliders
+stay reserved); crash/landing *classification* on the contact events (B3); **sleeping** (the
+legitimate optimization the rest latch was a broken version of — post-A, research §3.2's closing
+note); assigning non-default `CollisionCategory` values to scene bodies (when filtering is first
+needed); box-box narrow phase and exact capsule-box (Phase C/D, if fidelity demands); CCD (D+);
+angular response consuming `Contact.point` (D); migrating ball call sites from
+`collisionRadius` to local-space colliders (only if something needs it); overlay/menu parity on
+iOS (unchanged from Phase 0's non-goals).
+
+## Phase A exit criteria
+
+1. - [ ] **A-routing is invisible**: full serial suite green against unchanged goldens; the regen
+   dry-run rewrites all six baselines **byte-identical** (`git diff --exit-code` on Baselines/);
+   `PhysicsWorldSmokeTests` untouched and green; FlightboxWithPhysics plays identically by eye
+   (balls still bounce, settle, and latch exactly as before this commit).
+2. - [ ] **A-response semantics hold**: regoldens reviewed against the A.6 signature table and
+   committed; `CollisionResponseTests` green (latch regression included); the flipped
+   characterization test green; chaos-policy invariants passed **un-edited**;
+   `grep -rn "shouldApplyGravity = " "ToyFlightSimulator Shared/Physics"` shows zero writes
+   outside authoring/setup sites.
+3. - [ ] **General planes are correct**: `NarrowPhaseTests`' tilted + translated plane cases green
+   (the y=0 hardcode is deleted, not routed around).
+4. - [ ] **The compound is live and speaks**: `CompoundBodyTests` green (settles at ≈ 1.05 on
+   "fuselage"; banked pose reports "wings" only); in-app, a belly touch logs `fuselage`, a rolled
+   touch logs `wings`, and the overlay's red volumes match the live collider set (yellow ghost
+   gone for the F-22 — by design).
+5. - [ ] **No process-wide state**: the parity determinism test stays green, the full suite passes
+   under Swift Testing's default in-process concurrency, and review confirms no static mutable
+   state was added anywhere in the step path (correction 1 held).
+6. - [ ] **CI green** on all three commits (serial app-hosted run, as configured).
+7. - [ ] **Perf sanity**: PhysicsStressTestScene frame rate and broad-phase stats comparable
+   pre/post (the routed path adds one narrow phase per pair — replacing two — plus one array
+   append per contact; nothing else joined the hot path).
+
+**Implementation order within Phase A:** A.1 → A.2 → A.3 → A.4 → A.5 as ONE commit (A-routing,
+gated by criterion 1) → A.6 as one commit (A-response, gated by criterion 2) → A.7 (A-aircraft,
+gated by criterion 4). A.8's suites land inside their listed commits. No step may straddle a
+commit boundary: the 0.7 protocol (now three-way) is the verification story, and it only works if
+each commit is exactly one of "routing", "response", "geometry".
+
+---
+
+*(Phase B plan will be appended here.)*

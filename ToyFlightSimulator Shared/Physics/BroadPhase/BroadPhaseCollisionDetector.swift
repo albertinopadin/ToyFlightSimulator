@@ -107,7 +107,7 @@ final class BroadPhaseCollisionDetector {
                 }
 
                 // Check full AABB overlap (Y and Z axes)
-                if aabbA.overlaps(aabbB) {
+                if aabbA.overlaps(aabbB) && dynamicEntities[i].shouldCollide(with: dynamicEntities[j]) {
                     pairsScratch.append((dynamicEntities[i], dynamicEntities[j]))
                 }
             }
@@ -120,7 +120,7 @@ final class BroadPhaseCollisionDetector {
             for si in 0..<staticEntities.count {
                 checksPerformed += 1
 
-                if dynamicAABB.overlaps(staticAABBs[si]) {
+                if dynamicAABB.overlaps(staticAABBs[si]) && dynamicEntities[di].shouldCollide(with: staticEntities[si]) {
                     pairsScratch.append((dynamicEntities[di], staticEntities[si]))
                 }
             }
