@@ -184,9 +184,12 @@ enum ParityScenario: String, CaseIterable, CustomTestStringConvertible {
     }
 
     private func floorPlane(restitution: Float) -> PlaneRigidBody {
-        // Position .zero + up normal is load-bearing: the sphere/plane narrow
-        // phase hardcodes a plane through the origin
-        // (PhysicsWorld.getPenetrationDepth(ball:plane:)).
+        // Position .zero + up normal is load-bearing: the goldens were
+        // captured under the legacy y=0 plane hardcode (the deleted
+        // PhysicsWorld.getPenetrationDepth(ball:plane:)), and A-routing's
+        // bit-exactness vs those goldens needs NarrowPhase's general form
+        // dot(c − planePos, n) to reduce to c.y exactly — which it does only
+        // for planePos = .zero, n = [0, 1, 0] (plan A.5, argument 3).
         let plane = PlaneRigidBody(detachedAt: .zero, collisionNormal: [0, 1, 0])
         plane.restitution = restitution
         plane.isStatic = true

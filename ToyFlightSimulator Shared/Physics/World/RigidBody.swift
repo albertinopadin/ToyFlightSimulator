@@ -32,7 +32,6 @@ public class RigidBody: PhysicsEntity {
         }
     }
     
-    var collisionShape: CollisionShape
     var collidedWith: Set<ObjectIdentifier>
     var mass: Float
     var velocity: float3
@@ -158,7 +157,6 @@ public class RigidBody: PhysicsEntity {
     /// (and therefore without Metal/asset loading); all production rigid bodies
     /// pass a non-nil GameObject.
     internal init(gameObject: GameObject?,
-                  collisionShape: CollisionShape = .Sphere,
                   collidedWith: Set<ObjectIdentifier> = [],
                   mass: Float = 1,
                   velocity: float3 = .zero,
@@ -168,7 +166,6 @@ public class RigidBody: PhysicsEntity {
                   isStatic: Bool = false,
                   shouldApplyGravity: Bool = true) {
         self.gameObject = gameObject
-        self.collisionShape = collisionShape
         self.collidedWith = collidedWith
         self.mass = mass
         self.velocity = velocity
@@ -197,7 +194,6 @@ public class RigidBody: PhysicsEntity {
     /// stored-property block in the same order, so the two diff cleanly and a
     /// future default-less stored property is a compile error in BOTH inits.
     internal init(detachedAt position: float3,
-                  collisionShape: CollisionShape = .Sphere,
                   collidedWith: Set<ObjectIdentifier> = [],
                   mass: Float = 1,
                   velocity: float3 = .zero,
@@ -207,7 +203,6 @@ public class RigidBody: PhysicsEntity {
                   isStatic: Bool = false,
                   shouldApplyGravity: Bool = true) {
         self.gameObject = nil
-        self.collisionShape = collisionShape
         self.collidedWith = collidedWith
         self.mass = mass
         self.velocity = velocity

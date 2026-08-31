@@ -19,11 +19,9 @@ final class TestRigidBody: RigidBody {
          velocity: float3 = .zero,
          force: float3 = .zero,
          isStatic: Bool = false,
-         shouldApplyGravity: Bool = true,
-         collisionShape: CollisionShape = .Sphere) {
+         shouldApplyGravity: Bool = true) {
         self.position = position
         super.init(gameObject: nil,
-                   collisionShape: collisionShape,
                    mass: mass,
                    velocity: velocity,
                    force: force,
@@ -127,7 +125,9 @@ struct EulerSolverTests {
         let body = TestRigidBody(mass: 1.0, force: [10, 0, 0], shouldApplyGravity: false)
         let entities: [RigidBody] = [body]
 
-        EulerSolver.step(deltaTime: 0.1, gravity: .zero, entities: entities, collisionPairs: [])
+        var contacts: [Contact] = []
+        EulerSolver.step(deltaTime: 0.1, gravity: .zero, entities: entities,
+                         collisionPairs: [], contactsScratch: &contacts)
 
         #expect(approxEqual(entities[0].velocity, [1, 0, 0]))
         #expect(approxEqual(entities[0].force, .zero))

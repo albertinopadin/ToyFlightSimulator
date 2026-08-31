@@ -19,7 +19,6 @@ struct RigidBodyTests {
 
         let rb = SphereRigidBody(gameObject: sphere, collisionRadius: 1.5)
         #expect(sphere.rigidBody === rb)
-        #expect(rb.collisionShape == .Sphere)
         #expect(rb.collisionRadius == 1.5)
     }
 
@@ -30,7 +29,6 @@ struct RigidBodyTests {
 
         let rb = PlaneRigidBody(gameObject: quad, collisionNormal: [0, 1, 0])
         #expect(quad.rigidBody === rb)
-        #expect(rb.collisionShape == .Plane)
         #expect(approxEqual(rb.collisionNormal, [0, 1, 0]))
     }
 
@@ -128,7 +126,6 @@ struct RigidBodyTests {
         #expect(body.shouldApplyGravity)
         #expect(approxEqual(body.velocity, .zero))
         #expect(approxEqual(body.acceleration, .zero))
-        #expect(body.collisionShape == .Sphere)
     }
 
     @Test("detached SphereRigidBody AABB = position ± radius")
@@ -143,7 +140,6 @@ struct RigidBodyTests {
     func detachedPlaneAABB() {
         let plane = PlaneRigidBody(detachedAt: .zero, collisionNormal: [0, 2, 0])
         #expect(approxEqual(plane.collisionNormal, [0, 1, 0]))
-        #expect(plane.collisionShape == .Plane)
 
         // The "infinite" horizontal-plane AABB: thin in Y, huge in X/Z —
         // enough for the broad phase to pair it with anything near the floor.

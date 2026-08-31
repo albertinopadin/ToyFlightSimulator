@@ -8,16 +8,10 @@
 import Foundation
 import simd
 
-enum CollisionShape {
-    case Sphere
-    case Plane
-}
-
 /// Contract for anything that participates in the physics simulation.
 /// AnyObject-constrained: entities are reference types, so solvers mutate
 /// them through the reference (no inout/existential writeback needed).
 protocol PhysicsEntity: AnyObject {
-    var collisionShape: CollisionShape { get set }
     /// Identities of entities already collided with this step.
     /// ObjectIdentifier == the entity's address: free to obtain, hashes as a
     /// single word, valid for the entity's lifetime (reset every step anyway).

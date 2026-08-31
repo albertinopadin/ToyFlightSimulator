@@ -18,47 +18,59 @@ final class HeckerCollisionResponse {
 
     /// Broad-phase pair path. P7: the per-call [String: Int] index map is gone —
     /// entities are classes, so the response mutates them through the references.
-    static func resolveCollisions(deltaTime: Float, collisionPairs: [(RigidBody, RigidBody)]) {
+    static func resolveCollisions(deltaTime: Float,
+                                  collisionPairs: [(RigidBody, RigidBody)],
+                                  contactsScratch: inout [Contact]) {
+        contactsScratch.removeAll(keepingCapacity: true)
         for (entityA, entityB) in collisionPairs {
-            let alreadyCollided = entityA.collidedWith.contains(ObjectIdentifier(entityB))
-
-            // Perform narrow-phase collision detection
-            if !alreadyCollided && PhysicsWorld.collided(entityA: entityA, entityB: entityB) {
-                entityA.collidedWith.insert(ObjectIdentifier(entityB))
-                entityB.collidedWith.insert(ObjectIdentifier(entityA))
-
-                applyCollisionResponse(entityA, entityB)
-            }
+            resolvePair(entityA, entityB, contacts: &contactsScratch)
         }
     }
 
     /// Legacy O(n²) path for `useBroadPhase == false`. Visits each unordered
     /// pair once — the old (j, i) revisit was already suppressed by the
     /// collidedWith guard.
-    static func resolveCollisions(deltaTime: Float, entities: [RigidBody]) {
+    static func resolveCollisions(deltaTime: Float, entities: [RigidBody], contactsScratch: inout [Contact]) {
+        contactsScratch.removeAll(keepingCapacity: true)
         for a in 0..<entities.count {
             for b in (a + 1)..<entities.count {
-                let entityA = entities[a]
-                let entityB = entities[b]
-
-                let alreadyCollided = entityA.collidedWith.contains(ObjectIdentifier(entityB))
-
-                if !alreadyCollided && PhysicsWorld.collided(entityA: entityA, entityB: entityB) {
-                    entityA.collidedWith.insert(ObjectIdentifier(entityB))
-                    entityB.collidedWith.insert(ObjectIdentifier(entityA))
-
-                    applyCollisionResponse(entityA, entityB)
-                }
+                resolvePair(entities[a], entities[b], contacts: &contactsScratch)
             }
         }
     }
+    
+    /// ONE narrow phase per pair (the old flow ran geometry twice — collided()
+    /// then getCollisionData()). Bookkeeping order preserved exactly: the
+    /// already-collided guard, then narrow phase, then symmetric insertion,
+    /// then response. New and inert-by-default: the filtering guard (A.4) and
+    /// the per-contact events (nobody registered until A.7).
+    private static func resolvePair(_ entityA: RigidBody, _ entityB: RigidBody, contacts: inout [Contact]) {
+        guard entityA.shouldCollide(with: entityB), !entityA.collidedWith.contains(ObjectIdentifier(entityB)) else { return }
+        
+        let firstNew = contacts.count
+        guard let deepest = NarrowPhase.generateContacts(entityA, entityB, into: &contacts) else { return }
+        
+        entityA.collidedWith.insert(ObjectIdentifier(entityB))
+        entityB.collidedWith.insert(ObjectIdentifier(entityA))
+        
+        applyCollisionResponse(entityA, entityB, contact: contacts[deepest])
+        
+        for contact in contacts[firstNew...] {
+            entityA.onContact?(contact, entityB)
+            entityB.onContact?(contact.flipped, entityA)
+        }
+    }
 
-    // Helper method to apply collision response
-    private static func applyCollisionResponse(_ entityA: RigidBody, _ entityB: RigidBody) {
-        // Hack:
-        // TODO: This will fail if the static entity is not directly below the non-static
-        //       entity. Need to figure out a better way...
-        // TODO: My units seem to be messed up, 'small' collisions seem to be ~ 0.7 m/s
+    /// A-ROUTING TRANSCRIPTION — behavior-frozen. This is the pre-routing
+    /// response verbatim (rest latch, minDeltaVelo impulse discard, ×2 static
+    /// corrections and all), consuming the pair's deepest Contact instead of
+    /// re-running geometry through PhysicsWorld.getCollisionData. Where the
+    /// strict B→A normal differs from the legacy shape-dependent normal,
+    /// `legacyNormal` reconstructs the old value exactly (IEEE negation is
+    /// exact — see the plan's sign-symmetry note). Do NOT clean anything up
+    /// here: A.6 replaces this body deliberately, against regenerated goldens.
+    private static func applyCollisionResponse(_ entityA: RigidBody, _ entityB: RigidBody, contact: Contact) {
+        // Hack (dies in A.6): the one-way rest latch, preserved bit-for-bit.
         if simd_length_squared(entityA.velocity - entityB.velocity) < restSpeedThresholdSquared {
             if entityB.isStatic {
                 entityA.velocity = .zero
@@ -79,14 +91,12 @@ final class HeckerCollisionResponse {
             return
         }
 
-        let collisionData = PhysicsWorld.getCollisionData(entityA, entityB)
-        let penetrationDepth = collisionData.penetrationDepth
-        // collisionVector is already unit-length (getCollisionData normalizes
-        // every branch; PlaneRigidBody normalizes at init) — the old second
-        // normalize() here was a redundant sqrt.
-        let collisionNormal = collisionData.collisionVector
+        let penetrationDepth = contact.depth
+        let collisionNormal = contact.normal   // unit, strict B → A
 
         if !entityA.isStatic && !entityB.isStatic {
+            // Legacy normal == strict normal in this branch (sphere-sphere was
+            // already B→A; dynamic planes don't exist). Verbatim.
             entityA.setPosition(entityA.getPosition() + collisionNormal * (penetrationDepth / 2))
             entityB.setPosition(entityB.getPosition() - collisionNormal * (penetrationDepth / 2))
 
@@ -105,6 +115,9 @@ final class HeckerCollisionResponse {
         }
 
         if !entityA.isStatic && entityB.isStatic {
+            // Legacy normal == strict normal here too: with B static, B is
+            // the plane (normal toward A) or a static sphere (B→A formula
+            // either way). Verbatim, ×2 overshoot included.
             entityA.setPosition(entityA.getPosition() + collisionNormal * (penetrationDepth * 2))
 
             let relativeVelo = entityA.velocity
@@ -119,14 +132,22 @@ final class HeckerCollisionResponse {
         }
 
         if entityA.isStatic && !entityB.isStatic {
-            entityB.setPosition(entityB.getPosition() + collisionNormal * (penetrationDepth * 2))
+            // The one convention-divergent branch. The legacy normal here was
+            // the static body's OUTWARD normal (the plane's normal, pointing
+            // toward B — not B→A); strict B→A is its exact negation, so
+            // reconstruct it and keep the body verbatim. For the unreachable
+            // static-SPHERE-as-A configuration this silently fixes the legacy
+            // inverted position correction (impulse term is bit-identical in
+            // both configurations — the sign symmetry note has the algebra).
+            let legacyNormal = -collisionNormal
+            entityB.setPosition(entityB.getPosition() + legacyNormal * (penetrationDepth * 2))
 
             let relativeVelo = entityB.velocity
             let e = min(entityA.restitution, entityB.restitution)
-            var j = -(1 + e) * dot(relativeVelo, collisionNormal)
+            var j = -(1 + e) * dot(relativeVelo, legacyNormal)
             j /= 1.0 / entityB.mass
 
-            let entityBDeltaVelo = j / entityB.mass * collisionNormal
+            let entityBDeltaVelo = j / entityB.mass * legacyNormal
             entityB.velocity += simd_length_squared(entityBDeltaVelo) > minDeltaVeloSquared ? entityBDeltaVelo : .zero
 
             return

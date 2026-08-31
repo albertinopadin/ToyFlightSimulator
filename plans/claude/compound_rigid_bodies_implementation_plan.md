@@ -16,6 +16,29 @@
 
 ## Changelog
 
+- **2026-08-30** (later) — **Step A.5 landed → A-routing commit COMPLETE** (hand-implemented by the
+  project owner, then review-verified against the listings). Both response paths now run ONE
+  `NarrowPhase.generateContacts` per pair via the shared `resolvePair` shape (filter guard →
+  narrow phase → symmetric insertion → deepest-contact response → per-contact events), and the
+  entire `CollisionShape` layer is deleted (PhysicsWorld's `collided`×4 / `getCollisionData` /
+  `CollisionData` / both `getPenetrationDepth`s, y=0 hack included / `getDistance`; the enum +
+  protocol requirement; RigidBody's stored property + both init params; the four subclass
+  assignments; the `TestRigidBody`/`RigidBodyTests` mechanical edits). Review caught three
+  transcription slips before anything ran, all fixed to the listings: (1) the Hecker broad-phase
+  loop called `resolvePair(entityA, entityA)` — every candidate pair narrow-phased a body against
+  itself and the real pair never resolved; (2) `EulerSolver.resolvePair` still pre-gated on the
+  doomed `PhysicsWorld.collided` and lacked the A.4 `shouldCollide` guard; (3) `EulerSolver`'s
+  static-A branch consumed the strict B→A normal directly (missing the `legacyVector`
+  reconstruction — wrong-sign reflection whenever the static body arrives as `ei`). Gate results:
+  build + full serial suite green (240 tests / 40 suites), goldens byte-untouched, and the regen
+  dry-run rewrote all six goldens **byte-identical** (designed failure observed; `git diff
+  --exit-code` on Baselines/ empty; clean re-run green). Two notes: the plan's
+  "`resolveCollisionsAllPairs` callers gain the scratch" landed as the pair-consuming
+  `EulerSolver.step` test caller instead (the only affected call site), and PhysicsParityTests'
+  floorPlane comment was rewritten (it named the deleted `getPenetrationDepth(ball:plane:)`;
+  origin+up stays load-bearing via A.5's bit-exactness argument 3). The in-app
+  FlightboxWithPhysics eyeball (verification checklist + exit criterion 1) stays open for the
+  project owner.
 - **2026-08-30** — **Steps A.1–A.4 landed** (the first half of the A-routing commit — hand-implemented
   by the project owner from the spec blocks, then review-verified against the listings
   operation-for-operation). The routing itself has NOT flipped yet: `Contact`/`NarrowPhase` compile
@@ -2436,7 +2459,7 @@ construction, pinned by the goldens.
                  }
 ```
 
-- [ ] Both legacy O(n²) paths guard at pair visit (inside the shared `resolvePair`s — see A.5's
+- [x] Both legacy O(n²) paths guard at pair visit (inside the shared `resolvePair`s — see A.5's
   listings), otherwise masks would silently not work under `useBroadPhase == false`, which is
   exactly the configuration the parity harness runs four of six scenarios in. The guard is also
   re-evaluated on broad-phase pairs there — redundant by two integer ANDs, kept because a single
@@ -2456,7 +2479,7 @@ this commit's contract is bit-identical goldens.
 
 ### File 1 — `Physics/World/PhysicsWorld.swift`
 
-- [ ] Per-instance contact scratch + start-of-step invalidation + scratch plumbing:
+- [x] Per-instance contact scratch + start-of-step invalidation + scratch plumbing:
 
 ```diff
  final class PhysicsWorld {
@@ -2516,7 +2539,7 @@ and the four private update methods pass the scratch through:
 
 ### File 2 — `Physics/CollisionResponse/HeckerCollisionResponse.swift`
 
-- [ ] Both `resolveCollisions` variants collapse onto one `resolvePair`; the response consumes the
+- [x] Both `resolveCollisions` variants collapse onto one `resolvePair`; the response consumes the
   deepest contact; events fire per contact, after the response (handlers observe post-response
   state):
 
@@ -2573,7 +2596,7 @@ and the four private update methods pass the scratch through:
     }
 ```
 
-- [ ] The transcribed response — **behavior-frozen through the routing commit** (full listing; the
+- [x] The transcribed response — **behavior-frozen through the routing commit** (full listing; the
   per-branch comments are part of the deliverable, they carry the convention bookkeeping):
 
 ```swift
@@ -2674,7 +2697,7 @@ and the four private update methods pass the scratch through:
 
 ### File 3 — `Physics/Solver/EulerSolver.swift`
 
-- [ ] Step overloads gain the scratch (the 3-arg protocol requirement survives as a wrapper);
+- [x] Step overloads gain the scratch (the 3-arg protocol requirement survives as a wrapper);
   `resolvePair` gets the identical routing treatment with its own frozen transcription:
 
 ```swift
@@ -2796,21 +2819,21 @@ and the four private update methods pass the scratch through:
 
 ### The deletions (same commit, once nothing references them)
 
-- [ ] `PhysicsWorld`: `collided(entityA:entityB:)` + the three shape-pair `collided(...)` helpers,
+- [x] `PhysicsWorld`: `collided(entityA:entityB:)` + the three shape-pair `collided(...)` helpers,
   `getCollisionData`, the `CollisionData` struct, both `getPenetrationDepth` overloads (the
   ball/plane one IS the y=0 hack — its death is what makes tilted/translated planes work), and
   `getDistance` (zero callers, verified 2026-08-29).
-- [ ] `CollisionShape` enum + the `collisionShape` protocol requirement (`PhysicsEntity.swift`).
-- [ ] `RigidBody`: the stored property and both designated inits' `collisionShape`
+- [x] `CollisionShape` enum + the `collisionShape` protocol requirement (`PhysicsEntity.swift`).
+- [x] `RigidBody`: the stored property and both designated inits' `collisionShape`
   parameter/assignment. The two inits still mirror each other line-for-line afterwards, so 0.6's
   mirroring contract survives; update that doc comment only if the diff makes it stale.
-- [ ] `SphereRigidBody` / `PlaneRigidBody`: the four `self.collisionShape = ...` lines.
-- [ ] Test edits (mechanical, behavior-neutral): `TestRigidBody` drops its `collisionShape`
+- [x] `SphereRigidBody` / `PlaneRigidBody`: the four `self.collisionShape = ...` lines.
+- [x] Test edits (mechanical, behavior-neutral): `TestRigidBody` drops its `collisionShape`
   parameter + pass-through (PhysicsSolverTests.swift); `RigidBodyTests` drops its four
   `#expect(... .collisionShape == ...)` lines (assertions about a deleted property — every other
   expectation in those tests stands). `EulerSolver.resolveCollisionsAllPairs` callers in tests, if
   any, gain the scratch argument.
-- [ ] `PhysicsEntity.shouldApplyGravity`'s `// Hack...` comment **stays** — it's still true until
+- [x] `PhysicsEntity.shouldApplyGravity`'s `// Hack...` comment **stays** — it's still true until
   A.6.
 
 ### Why the goldens must not move — the bit-exactness argument
@@ -2850,12 +2873,12 @@ fix the routing, never the golden.
 
 ### A-routing verification checklist
 
-- [ ] `build-for-testing` green; full serial suite green against **unchanged** goldens
-- [ ] Regen dry-run byte-identical (protocol above)
-- [ ] `PhysicsWorldSmokeTests` untouched and green (attached-body path)
+- [x] `build-for-testing` green; full serial suite green against **unchanged** goldens
+- [x] Regen dry-run byte-identical (protocol above)
+- [x] `PhysicsWorldSmokeTests` untouched and green (attached-body path)
 - [ ] In-app FlightboxWithPhysics eyeball: dispersed balls bounce, settle, and (still) latch
   exactly as before; aircraft sphere behavior unchanged
-- [ ] Commit message marks this as the A-routing commit per the 0.7 protocol
+- [x] Commit message marks this as the A-routing commit per the 0.7 protocol
 
 ## Step A.6 — The corrected response (rest fix) — the A-response commit
 
