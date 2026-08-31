@@ -16,6 +16,18 @@
 
 ## Changelog
 
+- **2026-08-31** (stress-scene bisect) — **The all-black PhysicsStressTestScene is NOT a Phase A
+  regression, and its root cause is found.** On branch `pre-phase-a-stress-check` (off
+  `ae1c8f4`, pre-Phase-A, booting straight into the scene) the render is identically black
+  while physics runs perfectly (stress stats stream to stdout throughout). Root cause: the
+  scene's `DebugCamera` sits at `[0, 15, +40]` with no yaw — under the +Z-forward convention it
+  faces AWAY from the sphere grid (spawned in x/z ∈ [−8, 8]) — a leftover from before the
+  +Z-forward migration, unnoticed because nobody had run the scene since. Confirmed by flipping
+  the camera to z = −40 on the test branch: the scene renders (spheres visible, settling). The
+  one-line fix on main is deferred to the owner's follow-up commit, which should also re-check
+  the −15° pitch sign. Bonus: criterion 7's stats leg was measured from stdout on both trees —
+  see the criterion's annotation for the numbers (step cost ~1.4× at sub-ms scale, broad-phase
+  behavior identical).
 - **2026-08-31** (in-app verification) — **Exit criterion 4 CLOSED by the project owner**: a
   rolled touch logs the wings by name (`[Contact] F-22_CGTrader.wings touched Quad (depth
   0.007 m)`), the X-key overlay shows only the red live-collider volumes (yellow ghost gone),
@@ -3539,11 +3551,18 @@ iOS (unchanged from Phase 0's non-goals).
 6. - [ ] **CI green** on all three commits (serial app-hosted run, as configured).
 7. - [ ] **Perf sanity**: PhysicsStressTestScene frame rate and broad-phase stats comparable
    pre/post (the routed path adds one narrow phase per pair — replacing two — plus one array
-   append per contact; nothing else joined the hot path). *(Partial 2026-08-31: BallPhysicsScene
-   feels right and holds > 60 fps even at the contact-heavy start. BLOCKED on the stress scene
-   itself: it currently renders all black — known issue, owner-deferred to a follow-up commit;
-   not yet bisected, so it may or may not predate Phase A. Re-check this criterion once the
-   scene renders.)*
+   append per contact; nothing else joined the hot path). *(Status 2026-08-31: BallPhysicsScene
+   feels right and holds > 60 fps even at the contact-heavy start. The all-black stress scene
+   was BISECTED — NOT a Phase A regression (identical at pre-Phase-A `ae1c8f4`; branch
+   `pre-phase-a-stress-check`): the scene's DebugCamera at [0, 15, +40] faces +Z — away from
+   the sphere grid — a leftover from before the +Z-forward migration; flipping it to z = −40
+   on the test branch renders the scene. The camera fix on main is the owner's follow-up
+   commit. The STATS leg was measured meanwhile via stdout (the scene logs even while black):
+   50 spheres BP-on avg step 0.49–0.74 ms pre vs 0.67–0.94 ms post (~1.4× — the expected cost
+   of the collider narrow phase plus resting bodies doing real support-impulse work every step
+   instead of sitting latched; ~5% of a 60 fps frame), broad-phase reduction identical
+   (93–95% both eras), 100 spheres ~1.5 ms post. Remaining for this box: the in-app frame-rate
+   eyeball once the camera fix lands.)*
 
 **Implementation order within Phase A:** A.1 → A.2 → A.3 → A.4 → A.5 as ONE commit (A-routing,
 gated by criterion 1) → A.6 as one commit (A-response, gated by criterion 2) → A.7 (A-aircraft,
