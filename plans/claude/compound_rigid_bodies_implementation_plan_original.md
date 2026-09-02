@@ -16,6 +16,18 @@
 
 ## Changelog
 
+- **2026-08-31** (Phase B planned) — **Phase B plan appended** (full section at the end of this
+  document). Implements combined doc §4.3 — fixed timestep + per-substep force generators (B1),
+  raycast landing-gear suspension (B2), touchdown/crash classification (B3) — amended by the
+  deviations argued in the section's table (the load-bearing ones: B1 splits into a
+  golden-invisible plumbing commit and a regoldened timestep commit, mirroring A-routing vs
+  A-response; `accumulateForces` takes the world as a parameter so suspension can raycast;
+  strut rates deliberately do NOT scale with `uniformScale`; the linear model's gear load split
+  follows spring rates, not lever arms). Four separately verified commits: B-generators,
+  B-timestep, B-suspension, B-classification. Planned against the tree at `1753356`.
+- **2026-08-31** (Phase A closed) — **Exit criterion 6 CLOSED**: the three Phase A commits were
+  pushed and CI came back green (confirmed by the project owner). All seven Phase A exit
+  criteria are now closed — **Phase A ✅ done**.
 - **2026-08-31** (criterion 7 closed) — **Exit criterion 7 CLOSED by the project owner**: the
   fixed PhysicsStressTestScene looks and feels good for at least the first 30 seconds (the
   contact-heavy 50-sphere settle plus the broad-phase → O(n²) switch), on top of the measured
@@ -3562,7 +3574,9 @@ iOS (unchanged from Phase 0's non-goals).
 5. - [x] **No process-wide state**: the parity determinism test stays green, the full suite passes
    under Swift Testing's default in-process concurrency, and review confirms no static mutable
    state was added anywhere in the step path (correction 1 held).
-6. - [ ] **CI green** on all three commits (serial app-hosted run, as configured).
+6. - [x] **CI green** on all three commits (serial app-hosted run, as configured). *(Closed
+   2026-08-31: the Phase A commits were pushed and CI came back green — confirmed by the
+   project owner at Phase B planning time. **Phase A ✅ complete.**)*
 7. - [x] **Perf sanity**: PhysicsStressTestScene frame rate and broad-phase stats comparable
    pre/post (the routed path adds one narrow phase per pair — replacing two — plus one array
    append per contact; nothing else joined the hot path). *(Status 2026-08-31: BallPhysicsScene
@@ -3589,4 +3603,1557 @@ each commit is exactly one of "routing", "response", "geometry".
 
 ---
 
-*(Phase B plan will be appended here.)*
+# Phase B — fixed timestep, force generators, raycast landing gear, touchdown classification
+
+*(Planned 2026-08-31, against the tree at `1753356` with all seven Phase A exit criteria closed.)*
+
+Implements combined doc **§4.3** (its B1–B3), amended by the deviations argued below. At the end
+of this phase: physics advances in **fixed 1/120 s substeps** behind an accumulator, so the
+menu's 30–120 Hz refresh selection no longer changes physics behavior (today it does —
+`update(deltaTime:)` consumes the raw frame delta); forces are computed **inside** the step by
+per-substep **force generators** instead of one frame late in `Aircraft.doUpdate`; the F-22
+stands, taxis, and lands on **three raycast suspension struts** (spring + damper on the one
+aircraft body — no gear bodies, no joints, per both research docs' strongest shared verdict)
+gated by the existing gear animation; and the contact/strut machinery reports **touchdown,
+gear-overload, scrape, and crash events by name** through a print-only reporter, the same
+debug-scaffolding idiom as A.7's `ContactDebugLogger`.
+
+**What Phase B deliberately does NOT change:** the narrow phase, the contact response
+(`applyCollisionResponse` is byte-untouched), the collider specs, and the scene-graph/overlay
+machinery except where a strut layer is added. The response constants (β, slop, restitution
+threshold) are NOT retuned — A.6's interim variable-dt caveat said "fix the timestep in B1
+instead of tuning β/slop", and that is exactly what B.3 does.
+
+**The four-commit protocol** (extends Phase A's three-commit discipline; same rule — no step
+straddles a commit boundary, each commit is exactly one kind of change):
+
+| Commit | Steps | Verification gate |
+|---|---|---|
+| **B-generators** | B.1–B.2 | Behavior-preserving for everything the goldens cover. All six parity goldens must pass **unchanged**, and the regen dry-run must rewrite them **byte-identical** (the A-routing gate). The one intended behavior change — the aircraft's flight-model force is computed in the step instead of one frame late — is outside golden coverage (no scenario contains an aircraft) and is verified in-app: flight feels identical, throttle response at most one frame crisper. |
+| **B-timestep** | B.3 | The deliberate behavior change. Regolden all six scenarios with the JSON diff reviewed against the signature table in B.3; chaos-policy invariants and every semantic suite (`CollisionResponseTests`, `CompoundBodyTests`, the flipped characterization test) must pass **un-edited**; the new `FixedTimestepTests` partitioning case must pass with **exact** (`==`) equality. In-app: ball scenes settle identically at 30/60/120 Hz. |
+| **B-suspension** | B.4–B.5 | Goldens untouched (no harness scenario has struts). New Metal-free `GearSuspensionWorldTests` settle suite green (ride height ≈ 1.93 m, gravity on, zero airframe contacts). In-app: the F-22 sits on its wheels, gear-up drops it to the A.7 belly rest, the overlay's cyan strut lines match the modeled gear. |
+| **B-classification** | B.6 | Goldens untouched (observers only). Pure classifier suite green. In-app: touchdown logs sink rate + compressions, a hard arrival logs `GearOverload`, a gear-up belly touch logs a classified `CRASH`/`Scrape` with the collider name. |
+
+**Where the standing design rules land:**
+
+| Standing rule | Resolution | Step |
+|---|---|---|
+| Correction 1 — no process-wide state | The accumulator, the force-generator list, and all suspension state (compressions, WoW, overload latches) are per-instance. Parity/partitioning tests run multiple concurrent worlds, as before. | B.3, B.4 |
+| Correction 2 — world-collider cache invalidation | Unchanged mechanism: the start-of-step invalidation sweep now runs once per **substep** (it lives at the top of the step body, which the accumulator calls per substep), and `setPosition` still covers mid-step moves. | B.3 |
+| Correction 3 — world-transform contract | The suspension composes strut poses from the same LOCAL `getPosition()`/`getRotationMatrix()` the collider path uses — valid for scene-root children, which the A.2 assert already guards on the aircraft's body. | B.5 |
+| A.6's interim variable-dt caveat | **Closed by B.3**: the rest-equilibrium jitter bound `g·dt²` becomes a constant 0.68 mm (was 2.7 mm at 60 Hz, 10.9 mm at the menu's 30 Hz floor). | B.3 |
+| A.2's "Phase D rotation funnel" note | Unchanged and unthreatened: the suspension **reads** body rotation, never writes it. Rotation stays kinematic (attitude filter, between frames). | — |
+
+### Deviations from the research docs (deliberate, argued)
+
+| Deviation | Why |
+|---|---|
+| **§4.3's B1 splits into two commits** (B-generators, then B-timestep) | Phase A's core lesson applied: never land a pure-plumbing change and a behavior change in one commit. The generator machinery is golden-invisible (no harness world registers one — the new loop iterates an empty array), so it gets the byte-identical A-routing gate; the timestep is a wholesale trajectory change (halved dt), so it gets the reviewed-regolden A-response gate. One commit doing both would leave any golden diff unattributable. |
+| **`accumulateForces(substepDelta:world:)` — the world is a parameter** (research listed `accumulateForces(substepDelta:)` alone) | The suspension must raycast against ground geometry, and the world owns the entity list. Passing it per call gives generators a query surface with **no stored back-reference** — the world holds generators strongly, generators hold nothing, so no retain cycle can exist by construction (the 0.3b class of bug, designed out instead of audited for). |
+| **`PhysicsWorld.update(deltaTime:)` keeps its name and signature** (research renamed it `update(frameDelta:)`) | Four scenes and ~15 test call sites; the parameter genuinely still is the frame delta. The semantics ("wall time in, fixed substeps inside") live in the doc comment. Renaming is churn with no behavior. |
+| **The gear gate is `Aircraft.isGearDown`** (research: `gearExtension > 0.99`) | `isGearDown` is the animator's existing "landing-gear layer fully active" bool — exactly the fully-deployed test, already consulted by gameplay. Mid-transit gear producing partial suspension is D8 territory (animated collider poses) and both docs agreed to defer it; a strut that cuts out during retraction falls back to the airframe colliders, which is the honest linear-phase behavior. |
+| **Suspension raycasts through a real (tiny) `PhysicsWorld` API** (`raycastStaticPlanes`), not a plane handed in by the scene | Generalizes to every static plane in the world (tilted/translated runways work — the same generality A.5 bought the narrow phase) and gives Phase C's static structures a natural extension point. Cost is O(static planes) per strut per substep — one plane in every current scene. |
+| **Strut geometric fields scale with `uniformScale`; spring/damper rates do NOT** | Extension of the 0.5 units contract. Lengths are model geometry (meters × scale, like collider dimensions). Rates are sized against the aircraft's **absolute mass** (k = load/compression), and scaling a model does not change its mass — a scaled aircraft with scaled rates would sag or launch. Asserted nowhere (scale is 1.0 everywhere); documented on `SuspensionStrut`. |
+| **`GearEvent`s fire from the B-suspension commit, consumers arrive in B-classification** | The A-routing `onContact` precedent verbatim: event plumbing is behavior-neutral while nobody is registered, and the suspension loop is written exactly once — wiring events later would mean re-touching it. |
+| **The linear model's gear load split follows spring rates, not lever arms** | With no pitch DOF (rotation is kinematic), equal-reach struts share one compression `x`, so per-strut load is `k_i·x` — rates alone set the split (≈ 89/11 mains/nose here), not the research's geometry-derived 85/15 static table. Documented, not fought: the discrepancy is invisible in the linear phase (total force balance and ride height are exact) and resolves itself when Phase D's pitch equilibrium makes lever arms real. |
+| **Touchdown sink rate is vertical (−v.y), strut force acts along body-up** | Level-runway simplifications, both noted at the code site: sink-along-plane-normal and force-along-ground-normal generalizations are one-liners when a tilted runway first exists. JSBSim applies strut force along the strut axis (body-up), which is what we do. |
+
+## Step B.1 — Force-generator plumbing + `addForce(atWorldPoint:)` — B-generators
+
+The mechanism research §3.3 argued for (D5's "middle path"): keep the physics step exactly where
+it is — the top of the scene's `doUpdate`, before children traverse, which is what lets the
+whole subtree (attached camera included) see post-physics transforms in the same frame — and fix
+the force latency from the other side, by having the world call registered force sources at the
+top of each step. Everything in this step is inert until B.2 registers the first generator.
+
+- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/World/PhysicsForceGenerator.swift`
+
+```swift
+//
+//  PhysicsForceGenerator.swift
+//  ToyFlightSimulator
+//
+
+/// A per-substep force source (combined doc §3.3 / D5 "middle path" — this is
+/// Codex's accumulateForces phase, shipped alone).
+///
+/// WHY THIS EXISTS: the physics step runs at the TOP of the scene's doUpdate,
+/// before children traverse — that placement lets the aircraft's subtree
+/// (attached camera included) see post-physics transforms in the same frame,
+/// and it must not move (research §3.3). But it also meant forces computed in
+/// a child's doUpdate (the flight model, in Aircraft) were written AFTER the
+/// step had already consumed forces — one frame late, every frame. Generators
+/// fix the latency from the other side: the world calls them at the top of
+/// each step, so forces are computed from live, current-step state — which is
+/// also what B.5's stiff suspension springs need for stability.
+///
+/// Contract:
+///  - Called on the UpdateThread, once per physics step (per fixed SUBSTEP
+///    once B.3 lands), before collision detection and integration.
+///  - Read live body/world state; accumulate into body.force (+= or
+///    RigidBody.addForce). Forces are zeroed at the end of every step, so
+///    write them fresh on every call — a stale one-shot write would act for
+///    exactly one substep.
+///  - Never mutate positions, rotations, velocities, or the entity list here;
+///    the step is about to consume them.
+protocol PhysicsForceGenerator: AnyObject {
+    func accumulateForces(substepDelta: Float, world: PhysicsWorld)
+}
+```
+
+- [ ] **Edit:** `Physics/World/RigidBody.swift` — the D2-prep force API (combined doc §4.3 B1),
+  placed next to the existing accessors:
+
+```swift
+    /// Accumulates a force acting at a world-space point (combined doc D2
+    /// prep). The linear integrator only consumes the force itself; the
+    /// torque a force-at-a-point should also produce is deliberately dropped
+    /// until Phase D adds angular dynamics — call sites written against this
+    /// API today (the suspension) become torque-correct for free when it
+    /// lands, with zero signature churn.
+    func addForce(_ force: float3, atWorldPoint point: float3) {
+        self.force += force
+        // Phase D: torque += cross(point - worldCenterOfMass, force)
+    }
+```
+
+- [ ] **Edit:** `Physics/World/PhysicsWorld.swift` — the generator list and its call site.
+  Storage, next to `contactsScratch`:
+
+```swift
+    /// Per-substep force sources (flight model, gear suspension). Strong
+    /// references, per-instance (correction-1 discipline). Whoever installs a
+    /// generator must remove it when its body leaves the world — see the
+    /// aircraft-swap wiring in B.2 — or the world keeps the whole detached
+    /// object island alive (the 0.3b lesson) and keeps computing forces for a
+    /// body that is no longer stepped.
+    private var forceGenerators: [PhysicsForceGenerator] = []
+```
+
+  Registration, next to `setEntities`/`addEntity` (identity-based, like the entity bookkeeping):
+
+```swift
+    public func addForceGenerator(_ generator: PhysicsForceGenerator) {
+        // Identity-deduped so re-running scene wiring can't double-drive a
+        // body (a duplicate registration would silently double thrust).
+        guard !forceGenerators.contains(where: { $0 === generator }) else { return }
+        forceGenerators.append(generator)
+    }
+
+    public func removeForceGenerator(_ generator: PhysicsForceGenerator) {
+        forceGenerators.removeAll { $0 === generator }
+    }
+```
+
+  And the call, at the very top of `update(deltaTime:)`:
+
+```diff
+     public func update(deltaTime: Float) {
++        // Force generators run FIRST: forces must exist before the solvers
++        // integrate them (EulerSolver.applyForces consumes them immediately;
++        // VerletSolver folds them into this step's a(t+dt)). With no
++        // generators registered this loop is a no-op — which is what makes
++        // the B-generators commit golden-invisible.
++        for generator in forceGenerators {
++            generator.accumulateForces(substepDelta: deltaTime, world: self)
++        }
++
+         for entity in entities {
+             entity.resetCollisions()
+```
+
+That is the whole step. Nothing constructs a generator yet; `addForce(atWorldPoint:)` has no
+caller until B.5. Both are dead code inside a commit whose gate (byte-identical goldens) proves
+they perturbed nothing.
+
+## Step B.2 — `Aircraft` becomes the first generator: flight force moves into the step — completes B-generators
+
+Today `Aircraft.doUpdate` (a child, running AFTER the scene stepped physics) writes
+`rigidBody.force`, which the step only consumes NEXT frame — the one-frame force latency
+research §3.3 diagnosed. The fix: `doUpdate` keeps what belongs to the frame cadence (input
+sampling, the kinematic attitude filter, animator updates, gear toggle) and only *caches* the
+sampled control input; the force itself is computed by `accumulateForces` at the top of the
+step, from live state. The remaining one-frame *input* latency (stick sampled in frame N−1's
+doUpdate feeds frame N's substeps) is standard in engines that decouple input from fixed steps
+and imperceptible next to the attitude filter's time constants — accepted, per §3.3.
+
+- [ ] **Edit:** `GameObjects/Aircraft.swift` — conformance on the class line:
+
+```diff
+-class Aircraft: GameObject {
++class Aircraft: GameObject, PhysicsForceGenerator {
+```
+
+  the cached input, next to `flightModel`:
+
+```swift
+    /// Control input sampled once per frame in doUpdate, consumed by
+    /// accumulateForces on every physics substep. nil while the aircraft is
+    /// unfocused or not player-driven — the legacy gate exactly: no flight
+    /// force without focus (the aircraft flies ballistic, as before).
+    private var latestControlInput: ControlInput?
+```
+
+  the generator body, placed right after `doUpdate` (transcribe as-is — B.5 and B.6 extend it
+  at the marked points):
+
+```swift
+    /// PhysicsForceGenerator: called by the world at the top of each physics
+    /// step (each SUBSTEP once B.3 lands), on the UpdateThread. Reads live
+    /// body state; doUpdate — which runs later in the frame, after the step —
+    /// only refreshes the cached input this consumes.
+    func accumulateForces(substepDelta: Float, world: PhysicsWorld) {
+        guard let rigidBody else { return }
+
+        if let input = latestControlInput,
+           let flightModel,
+           let state = rigidBody.getState() {
+            rigidBody.force += flightModel.computeForce(state: state, input: input)
+        }
+
+        // B.5 adds the landing-gear suspension pass HERE — outside the input
+        // guard above, because a parked, unfocused aircraft must be held up.
+    }
+```
+
+  and the `doUpdate` migration — the force block is replaced by the cache write, everything
+  else stays:
+
+```diff
+         if shouldUpdateOnPlayerInput && hasFocus {
+             let controlInput = getControlInput()
+             let deltaMove = dt * _moveSpeed
+ 
+-            if let rigidBody,
+-               let flightModel,
+-               let rigidBodyState = rigidBody.getState() {
+-                let force = flightModel.computeForce(state: rigidBodyState, input: controlInput)
+-                rigidBody.force += force
+-            } else {
++            // Physics-driven flight forces are no longer computed here (one
++            // frame late — doUpdate runs after the scene stepped the world).
++            // accumulateForces computes them inside the step from live state;
++            // this method just refreshes the input it consumes.
++            latestControlInput = controlInput
++            if rigidBody == nil || flightModel == nil {
++                // Kinematic fallback for aircraft without physics (the F16
++                // wingman). NOTE one deliberate micro-change: the legacy
++                // branch also fell back here when getState() returned nil (a
++                // released-gameObject zombie); now a zombie gets neither
++                // force nor kinematic motion, which is the more honest no-op.
+                 moveAlongVector(getFwdVector(), distance: deltaMove * controlInput.throttle)
+             }
+ 
+             applyPlayerAttitudeInput(deltaTime: dt, controlInput: controlInput)
+             applyPlayerSideMove(deltaMove: deltaMove)
+             handleGearToggle()
+         } else {
++            latestControlInput = nil   // no flight force while unfocused (legacy gate)
+             decayAttitudeRates(deltaTime: dt)
+```
+
+- [ ] **Edit:** `Scenes/FlightboxWithPhysics.swift` — generator bookkeeping in
+  `applyAircraftSwap`, right after the entity-list swap (mirroring it):
+
+```diff
+             entities = Self.swappedEntities(entities, removing: prevAcRigidBody, adding: acRigidBody)
+             if installEntities {
+                 physicsWorld.setEntities(entities)
+             }
++
++            // Force-generator bookkeeping mirrors the entity swap. Without
++            // the remove, the world's strong generator list would keep the
++            // whole detached aircraft island alive (the 0.3b lesson) and
++            // keep driving a body that's no longer in the world. buildScene's
++            // initial call has prevAc == nil, so this reduces to one add
++            // (addForceGenerator is identity-deduped anyway).
++            if let prevAc {
++                physicsWorld.removeForceGenerator(prevAc)
++            }
++            physicsWorld.addForceGenerator(playerAircraft)
+```
+
+No other scene changes: `FreeCamFlightboxScene`'s F22 has a rigid body but **no flight model**
+(nothing ever assigned one), so it was never force-driven and registers no generator; the F16
+wingman in FlightboxWithPhysics has neither body nor model and keeps its kinematic fallback.
+
+### Why the goldens must not move — the (short) bit-exactness argument
+
+1. No harness scenario registers a force generator — the new world loop iterates an empty array
+   and executes zero arithmetic.
+2. Nothing else on the step path changed. `addForce(atWorldPoint:)` has no callers;
+   `latestControlInput` lives on a class no harness world contains.
+3. The aircraft's timing change is real but outside golden coverage (no scenario contains an
+   aircraft, a flight model, or a generator).
+
+And the empirical check that outranks it, same as A-routing: run the 0.7 regen command, then
+`git diff --exit-code "ToyFlightSimulatorTests/Physics/Baselines"` must come back **empty**.
+
+### B-generators verification checklist
+
+- [ ] `build-for-testing` green; full serial suite green against **unchanged** goldens
+- [ ] Regen dry-run byte-identical (`git diff --exit-code` on Baselines/ empty; discard the
+  designed regen failure; clean re-run green)
+- [ ] New `PhysicsWorldForceGeneratorTests` green (B.7 ledger)
+- [ ] In-app FlightboxWithPhysics: flight feel unchanged (throttle/climb/turn; throttle response
+  at most one frame crisper); swap F-22 → F-16 → F-22 and confirm no double-thrust (the dedupe
+  + remove wiring) and the old aircraft still deallocates
+- [ ] Commit message marks this as the B-generators commit per the four-commit protocol
+
+## Step B.3 — Fixed 1/120 s substeps — the B-timestep commit
+
+Implements combined doc **D4** (its verdict and all three reasons, one TFS-specific): physics
+behavior must not vary with the menu's `RefreshRatePicker` (30–120 Hz), stiff suspension
+springs (B.5) want a small fixed step, and the rest equilibrium's jitter bound `g·dt²` becomes
+a constant. This closes A.6's recorded interim caveat. **Every golden regoldens** — halving the
+integration step changes every trajectory — under exactly the A-response discipline: reviewed
+diff, semantic suites un-edited, plus a new exactness test unique to this commit
+(partitioning invariance).
+
+- [ ] **Edit:** `Physics/World/PhysicsWorld.swift` — the accumulator. The existing
+  `update(deltaTime:)` body moves verbatim into a private `step(deltaTime:)`; the new `update`
+  is the loop (full listing — transcribe as-is):
+
+```swift
+    /// Fixed simulation timestep (combined doc D4). Physics must not vary
+    /// with the menu's 30–120 Hz refresh selection — before this commit it
+    /// did: update(deltaTime:) consumed the raw frame delta, so bounce decay,
+    /// per-second correction strength, and rest jitter all changed with
+    /// display rate. 1/120 s divides every selectable frame period exactly
+    /// (120 Hz → 1 substep/frame, 60 → 2, 30 → 4) and makes the rest-jitter
+    /// bound g·dt² a constant 0.68 mm (closes the A.6 interim caveat).
+    public static let fixedDelta: Float = 1.0 / 120.0
+
+    /// Spiral-of-death clamp: at most 8 substeps (66.7 ms of simulated time)
+    /// per update call; wall time beyond that is DROPPED, not carried —
+    /// UpdateThread.maxDeltaTime's "stalls are truncated, real hitches pass
+    /// through" policy, one level down. Replaces the scenes' ad-hoc
+    /// `GameTime.DeltaTime < 1.0` guards.
+    public static let maxSubstepsPerFrame = 8
+
+    private var accumulator: Float = 0
+
+    /// deltaTime is WALL/frame time. The world advances simulation time in
+    /// fixed substeps and banks the remainder for the next call. At 60 Hz
+    /// this runs exactly 2 substeps per call and the accumulator returns to
+    /// exactly 0: Float(1/60) is bit-exactly 2 × Float(1/120) (both round the
+    /// same 1/15 mantissa; scaling by a power of two is exact), and both
+    /// subtractions are exact. At 30 Hz the 3·fixedDelta intermediate can
+    /// round, leaving ulp-level residue — bounded far below fixedDelta over
+    /// any session length that matters, and an eventual extra substep would
+    /// be genuine accumulated time anyway.
+    public func update(deltaTime: Float) {
+        accumulator = min(accumulator + deltaTime,
+                          Float(Self.maxSubstepsPerFrame) * Self.fixedDelta)
+        while accumulator >= Self.fixedDelta {
+            step(deltaTime: Self.fixedDelta)
+            accumulator -= Self.fixedDelta
+        }
+    }
+
+    /// One fixed substep. The body is exactly the pre-B.3 update(deltaTime:):
+    /// force generators, then the reset/invalidate sweep, then broad phase →
+    /// solver dispatch. Correction 2's cache flow is untouched — it just runs
+    /// once per substep now.
+    private func step(deltaTime: Float) {
+        for generator in forceGenerators {
+            generator.accumulateForces(substepDelta: deltaTime, world: self)
+        }
+
+        for entity in entities {
+            entity.resetCollisions()
+            entity.invalidateWorldColliders()
+        }
+
+        // ... the rest of the old update() body, unchanged (broad-phase
+        // branch, solver switch) ...
+    }
+```
+
+- [ ] **Edit (×4):** the scene call sites drop their pre-accumulator hitch guards — the clamp
+  lives inside the world now (and `UpdateThread.maxDeltaTime` already caps the input at 100 ms).
+  `FlightboxWithPhysics.doUpdate`:
+
+```diff
+-        let fdTime = Float(GameTime.DeltaTime)
+-
+-        if GameTime.DeltaTime < 1.0 {
+-            physicsWorld.update(deltaTime: fdTime)
+-        }
++        // Hitch clamping lives in the world's accumulator now (≤ 8 × 1/120 s
++        // of simulated time per call); UpdateThread additionally caps
++        // DeltaTime at 100 ms. The old `< 1.0` guard predates both.
++        physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+```
+
+  `BallPhysicsScene` / `PhysicsStressTestScene` / `FreeCamFlightboxScene`: same deletion of the
+  `<= 1.0` / `< 1.0` wrapper, keeping the `timeit` instrumentation where it exists. **Note for
+  the stress scene's printed stats:** each timed `update` call now contains 2 substeps at 60 Hz,
+  so the per-call number roughly doubles — that is the substep count, not a per-step regression;
+  compare per-substep cost (or per-frame budget), and expect ≈ 1.3–1.9 ms/frame at 50 spheres
+  (≈ 10% of a 60 Hz frame) against the criterion-7 measurements.
+
+### Regolden + review signatures (the A-response protocol, re-run)
+
+Regolden all six via the 0.7 command; review the JSON diffs against these expected signatures
+before committing:
+
+| Scenario | Expected diff signature |
+|---|---|
+| `single_bounce_verlet` | Free-fall samples match within float noise only — velocity Verlet integrates constant gravity **exactly at any step size** (the ½·a·dt² term is exact quadrature), so pre-contact divergence beyond rounding means a bug. First contact can land one substep earlier (finer time resolution); bounce structure preserved, apexes shift at cm scale, still strictly decreasing, gravity on. |
+| `single_bounce_euler` | Free fall itself shifts measurably — semi-implicit Euler carries a +½·g·t·dt position bias (it integrates with v_{k+1}), so halving dt halves the overshoot: the ball sits ≈ ½·g·t·(1/120) lower-error (≈ 4 cm at t = 1 s), and first contact lands a few substeps later. Expected and correct — the finer step is closer to the true parabola. |
+| `rest_latch` | Equilibrium tightens: final \|v\| ≈ g·(1/120) ≈ **0.0818** (was 0.1635 = g/60); resting y ≈ 0.5 − (slop + ½·g·dt²/β) ≈ **0.4933** (was 0.4882 — the A-response changelog's observed 1.18 cm depth is slop 5 mm + ½·g·dt²/β ≈ 6.8 mm at 60 Hz; at 120 Hz the sink term quarters to ≈ 1.7 mm). Gravity ON throughout. |
+| `head_on_pair` | Contact lands at the same sim time (0.3 s = exactly 36 substeps; the gap/closing-speed arithmetic is unchanged). Mirror symmetry exact to 0.0, velocities swap to ±5, lockstep Y fall — the file should differ mostly in the Y column's finer-step values. |
+| `ball_cluster_16` / `stress_grid_50` | Full regolden; **chaos-policy invariants must pass UN-EDITED** (finite, 1 m tunneling slack, speed budgets). A tripped budget is a timestep bug, not a budget to raise. |
+
+- [ ] **Which existing suites stay green UN-EDITED, and why** (check each; a failure here is a
+  bug signal, not a bound to widen — the same discipline as the chaos invariants):
+  - `CollisionResponseTests` — every bound is a ceiling and the equilibrium tightens under the
+    smaller step: `restingKeepsGravity` (\|v\| ≤ 0.25 vs new ≈ 0.08; \|y−0.5\| ≤ 0.03 vs new
+    ≈ 0.007), `noBounceBelowThreshold`, `bouncesAboveThreshold` (apex window already absorbs
+    correction losses), `correctionSplitsByInverseMass` (the 3:1 inverse-mass ratio holds per
+    substep, so it holds per frame), `separatingContactGetsNoImpulse` (velocities untouched in
+    both substeps), `eulerPathRests`, `pushedRestingBodyStillFalls`.
+  - `CompoundBodyTests` — settle ≈ 1.05 within ±0.05 (equilibrium moves ~3 mm tighter);
+    the banked-pose test never steps a world.
+  - `PhysicsParityTests.restingKeepsGravityOn` (the flipped characterization) — same ceilings.
+  - `PhysicsWorldSmokeTests` — every call site uses dt = 1/60 ⇒ exactly 2 substeps per call;
+    nothing asserts step-count-sensitive arithmetic.
+  - `PhysicsWorldForceGeneratorTests` — the ONE planned edit: its two per-update call-count /
+    half-kick arithmetic expectations flip to per-substep values (flagged in its B.7 entry).
+- [ ] **Flag on the harness semantics** (doc-comment edit in `PhysicsParityTests`, no schema
+  change): `ParityScenario.dt` remains the per-`update` frame delta; each update now advances
+  two 1/120 substeps internally. Sampling cadence and golden JSON shape are unchanged.
+
+- [ ] **File (new):** `ToyFlightSimulatorTests/Physics/FixedTimestepTests.swift` — the commit's
+  own suite (Metal-free, `.tags(.physics)`; full listing — transcribe as-is):
+
+```swift
+import Foundation
+import Testing
+import simd
+@testable import ToyFlightSimulator
+
+@Suite("Fixed timestep", .tags(.physics))
+struct FixedTimestepTests {
+    /// Substep counter: accumulateForces fires exactly once per substep, so
+    /// the generator hook doubles as the substep observer.
+    private final class SubstepCounter: PhysicsForceGenerator {
+        var calls = 0
+        var lastDelta: Float = 0
+        func accumulateForces(substepDelta: Float, world: PhysicsWorld) {
+            calls += 1
+            lastDelta = substepDelta
+        }
+    }
+
+    private func makeCountingWorld() -> (world: PhysicsWorld, counter: SubstepCounter) {
+        let world = PhysicsWorld(entities: [], updateType: .HeckerVerlet)
+        let counter = SubstepCounter()
+        world.addForceGenerator(counter)
+        return (world, counter)
+    }
+
+    @Test("a 60 Hz frame runs exactly two substeps, at fixedDelta each")
+    func sixtyHzFrames() {
+        let (world, counter) = makeCountingWorld()
+        for _ in 0..<10 { world.update(deltaTime: 1.0 / 60.0) }
+        #expect(counter.calls == 20)
+        #expect(counter.lastDelta == PhysicsWorld.fixedDelta)
+    }
+
+    @Test("sub-substep frames accumulate: 1/240 s frames step every 2nd call")
+    func accumulationAcrossSmallFrames() {
+        // 1/240 is exactly half of fixedDelta (power-of-two scaling is exact),
+        // so calls alternate 0,1,0,1 with zero residue drift.
+        let (world, counter) = makeCountingWorld()
+        for _ in 0..<8 { world.update(deltaTime: 1.0 / 240.0) }
+        #expect(counter.calls == 4)
+    }
+
+    @Test("hitch clamp: a huge frame runs maxSubstepsPerFrame and drops the rest")
+    func spiralOfDeathClamp() {
+        let (world, counter) = makeCountingWorld()
+        world.update(deltaTime: 10.0)
+        #expect(counter.calls == PhysicsWorld.maxSubstepsPerFrame)
+        // The dropped time is GONE (not banked): the next frame is normal.
+        world.update(deltaTime: 1.0 / 60.0)
+        #expect(counter.calls == PhysicsWorld.maxSubstepsPerFrame + 2)
+    }
+
+    /// THE B-timestep invariant (research §4.7's determinism row): how wall
+    /// time is sliced into update() calls must not change the simulation.
+    /// All three slicings execute the identical fixed-substep sequence, so
+    /// positions compare EXACTLY (Float ==) — not within tolerance — contacts
+    /// and broad-phase ordering included. (The 1/30 path's ulp-level
+    /// accumulator residue stays orders of magnitude below fixedDelta across
+    /// this window — see the accumulator doc comment.)
+    @Test("frame partitioning is exact: 1×(1/30) ≡ 2×(1/60) ≡ 4×(1/120)",
+          arguments: [ParityScenario.singleBounceVerlet, ParityScenario.ballCluster16])
+    func partitioningInvariance(_ scenario: ParityScenario) {
+        let a = scenario.build()
+        let b = scenario.build()
+        let c = scenario.build()
+        for _ in 0..<90 {   // 3 s of sim time, compared at every 1/30 s boundary
+            a.world.update(deltaTime: 1.0 / 30.0)
+            for _ in 0..<2 { b.world.update(deltaTime: 1.0 / 60.0) }
+            for _ in 0..<4 { c.world.update(deltaTime: 1.0 / 120.0) }
+            for i in a.spheres.indices {
+                #expect(a.spheres[i].getPosition() == b.spheres[i].getPosition())
+                #expect(b.spheres[i].getPosition() == c.spheres[i].getPosition())
+            }
+        }
+    }
+}
+```
+
+### B-timestep verification checklist
+
+- [ ] Regolden ×6 reviewed against the signature table and committed; clean re-run green
+- [ ] `FixedTimestepTests` green (partitioning case exact)
+- [ ] Semantic suites green un-edited (the list above, checked one by one)
+- [ ] In-app: BallPhysicsScene at 30/60/120 Hz refresh — balls settle identically by eye;
+  FlightboxWithPhysics plays normally; menu pause/resume and Cmd+R behave (accumulator state is
+  per-world and dies with the scene)
+- [ ] Stress-scene cost recorded pre/post (per-frame ≈ 2× at 60 Hz, per-substep comparable);
+  sleeping remains the deferred lever if a target scene ever misses frame budget
+- [ ] Commit message marks this as the B-timestep commit
+
+## Step B.4 — Suspension vocabulary: strut spec, pure solver, ray support — B-suspension
+
+The industry gear model both research docs converged on (combined doc §1, §4.3 B2): the
+aircraft stays ONE rigid body; each gear leg is a **raycast spring-damper** — a ray from a
+body-local attach point along body −Y finds the ground, the compression (how far the wheel
+would sit below the surface) drives `F = k·x + c·ẋ`, and the force pushes the body up along
+the strut. Animation keeps owning *deployment* (the gear meshes); physics owns *support*.
+Everything in this step is Metal-free and pure-testable; nothing runs in the game until B.5
+wires it into `Aircraft`.
+
+- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/SuspensionStrut.swift`
+  (new `Vehicle/` folder; target membership automatic) — the spec struct and the pure per-strut
+  solver:
+
+```swift
+//
+//  SuspensionStrut.swift
+//  ToyFlightSimulator
+//
+
+/// One landing-gear strut: a raycast spring-damper on the aircraft body
+/// (research verdict, both docs: gear is NOT made of bodies — Bullet
+/// btRaycastVehicle, Unity WheelCollider, Jolt VehicleConstraint, and JSBSim
+/// FGLGear all model it this way).
+///
+/// UNITS: geometric fields (attachLocal, restLength, maxTravel, wheelRadius)
+/// are post-import engine-local METERS, multiplied by the body's uniformScale
+/// when world quantities are computed — the same contract as LocalCollider.
+/// Rate fields (springRate, damping, maxSupportForce) are ABSOLUTE SI values
+/// sized against the aircraft's real mass and deliberately do NOT scale:
+/// scaling a model doesn't change its mass, and scaled rates would make a
+/// scaled aircraft sag or launch.
+struct SuspensionStrut {
+    var name: String
+    /// Strut attach point on the airframe, body-local meters (Y up, +Z nose).
+    var attachLocal: float3
+    /// Uncompressed strut length from the attach point along body −Y, meters.
+    var restLength: Float
+    /// Maximum compression before the strut bottoms out, meters.
+    var maxTravel: Float
+    /// The ray reaches restLength + wheelRadius below the attach point — the
+    /// uncompressed wheel's contact patch.
+    var wheelRadius: Float
+    /// N/m. Sized as k = strut static load / target static compression.
+    var springRate: Float
+    /// N·s/m while the strut is compressing.
+    var compressionDamping: Float
+    /// N·s/m while the strut is extending. Oleo struts damp rebound harder
+    /// than compression (Codex refinement, adopted in the combined doc);
+    /// this is also what makes a popped-up aircraft leave the ground cleanly
+    /// instead of oscillating.
+    var reboundDamping: Float
+    /// Clamp on the total strut force, N — and the gear-overload event
+    /// threshold (B.6). A strut pushed past this is structurally failing in
+    /// gameplay terms.
+    var maxSupportForce: Float
+}
+
+/// Pure per-strut math — no bodies, no world, unit-testable per the
+/// Metal-free rule. LandingGearSuspension (the stateful wrapper) feeds it
+/// raycast results and previous compressions; tests feed it numbers.
+enum SuspensionSolver {
+    struct StrutStep {
+        let compression: Float        // meters, ∈ [0, maxTravel·scale]
+        let compressionRate: Float    // m/s, + while compressing
+        let force: Float              // N along +bodyUp; ≥ 0 (a strut PUSHES)
+        let bottomedOut: Bool         // compression hit maxTravel
+        let overloaded: Bool          // unclamped force ≥ maxSupportForce, or bottomed
+    }
+
+    /// distanceToGround: raycast result along −bodyUp from the attach point;
+    /// nil ⇒ nothing within reach ⇒ the strut dangles (all zeros).
+    static func solve(strut: SuspensionStrut,
+                      uniformScale: Float,
+                      distanceToGround: Float?,
+                      previousCompression: Float,
+                      substepDelta: Float) -> StrutStep {
+        let reach = (strut.restLength + strut.wheelRadius) * uniformScale
+        guard let distance = distanceToGround, distance <= reach else {
+            return StrutStep(compression: 0, compressionRate: 0, force: 0,
+                             bottomedOut: false, overloaded: false)
+        }
+
+        // How far the uncompressed wheel would sit below the surface = how
+        // far the strut must compress to keep it on the surface.
+        let rawCompression = reach - distance
+        let maxTravel = strut.maxTravel * uniformScale
+        let bottomedOut = rawCompression >= maxTravel
+        let compression = min(rawCompression, maxTravel)
+
+        // Compression velocity by finite difference (Codex verdict D-minor):
+        // equivalent to projecting body velocity today, and it stays correct
+        // when Phase D's attitude dynamics start moving the strut — with no
+        // point-velocity machinery. At touchdown it recovers the sink rate
+        // exactly (penetration per substep / dt = closing speed).
+        let rate = (compression - previousCompression) / substepDelta
+
+        // Oleo asymmetry: damp harder on extension than on compression.
+        let damping = rate >= 0 ? strut.compressionDamping : strut.reboundDamping
+
+        // A strut pushes, never pulls: without the max(0, ·) floor, a fast
+        // rebound's damper term would exceed the spring and suck the aircraft
+        // back down onto the runway.
+        let unclamped = strut.springRate * compression + damping * rate
+        let force = max(0, min(unclamped, strut.maxSupportForce))
+        let overloaded = unclamped >= strut.maxSupportForce || bottomedOut
+
+        return StrutStep(compression: compression, compressionRate: rate,
+                         force: force, bottomedOut: bottomedOut, overloaded: overloaded)
+    }
+}
+```
+
+- [ ] **Edit:** `Physics/Collision/NarrowPhase.swift` — the pure ray-plane primitive, placed
+  with the other primitive helpers (it's geometry; `NarrowPhaseTests` is its home):
+
+```swift
+    /// Ray vs infinite plane: parametric distance t ≥ 0 along `direction`
+    /// (unit length) to the plane through planePoint, or nil. FRONT-FACE
+    /// ONLY (denominator < 0 ⇒ the ray approaches the plane against its
+    /// normal): a suspension ray must come at the ground from above — an
+    /// inverted aircraft's struts hit nothing, which is exactly right.
+    static func rayVsPlane(origin: float3, direction: float3,
+                           planePoint: float3, planeNormal n: float3) -> Float? {
+        let denominator = dot(direction, n)
+        guard denominator < -1e-6 else { return nil }   // parallel, or facing away
+        let t = dot(planePoint - origin, n) / denominator
+        return t >= 0 ? t : nil                          // plane behind the origin: no hit
+    }
+```
+
+- [ ] **Edit:** `Physics/World/PhysicsWorld.swift` — the world-level query the generators
+  consume (this is why `accumulateForces` carries the `world:` parameter):
+
+```swift
+/// Result of a static-plane raycast — the suspension's query result.
+struct PlaneRaycastHit {
+    let point: float3       // world-space hit point (the wheel contact patch)
+    let normal: float3      // the plane's normal
+    let distance: Float     // along the ray, from the origin
+}
+```
+
+```swift
+    /// Nearest static-plane hit along a ray, or nil. O(static planes) per
+    /// call — one plane in every current scene, queried once per strut per
+    /// substep. Phase C extends the query set if structures ever need rays;
+    /// cache the plane list at setEntities if profiling ever cares.
+    public func raycastStaticPlanes(from origin: float3,
+                                    direction: float3,
+                                    maxDistance: Float) -> PlaneRaycastHit? {
+        var nearest: PlaneRaycastHit? = nil
+        for case let plane as PlaneRigidBody in entities where plane.isStatic {
+            if let t = NarrowPhase.rayVsPlane(origin: origin,
+                                              direction: direction,
+                                              planePoint: plane.getPosition(),
+                                              planeNormal: plane.collisionNormal),
+               t <= maxDistance,
+               t < (nearest?.distance ?? .infinity) {
+                nearest = PlaneRaycastHit(point: origin + direction * t,
+                                          normal: plane.collisionNormal,
+                                          distance: t)
+            }
+        }
+        return nearest
+    }
+```
+
+- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/LandingGearSuspension.swift` —
+  the stateful per-aircraft wrapper: owns the strut list and per-strut compressions, applies
+  forces, fires events (inert until B.6 registers a consumer — the A-routing `onContact`
+  precedent):
+
+```swift
+//
+//  LandingGearSuspension.swift
+//  ToyFlightSimulator
+//
+
+/// Gear/ground events (B.6's classification consumes these; nobody is
+/// registered until then). Fired on the UpdateThread, mid-substep — handlers
+/// must be cheap and must not mutate physics state (same rule as onContact).
+enum GearEvent {
+    /// Weight-on-wheels went false → true. sinkRate is the body's downward
+    /// speed at that substep, BEFORE the strut forces act on it (level-runway
+    /// vertical rate; a plane-normal generalization is a one-liner when a
+    /// tilted runway first exists).
+    case touchdown(sinkRate: Float, compressions: [Float])
+    /// Weight-on-wheels went true → false (bounce, or takeoff).
+    case liftoff
+    /// A strut's unclamped force crossed maxSupportForce, or it bottomed out.
+    /// Edge-triggered per strut: fires once per exceedance episode.
+    case gearOverload(strutName: String, force: Float, bottomedOut: Bool)
+}
+
+/// Per-aircraft suspension state. Owned by Aircraft; driven from its
+/// accumulateForces every substep — OUTSIDE the input/focus guard, because a
+/// parked aircraft must be held up (research §4.3 B2, flagged in both docs).
+/// Per-instance state only (correction-1 discipline); UpdateThread only.
+final class LandingGearSuspension {
+    let struts: [SuspensionStrut]
+    /// Current compression per strut, meters; index-aligned with `struts`.
+    private(set) var compressions: [Float]
+    /// Overload edge-trigger latches, index-aligned with `struts`.
+    private var wasOverloaded: [Bool]
+    /// True while any strut carries compression (the classic WoW signal).
+    private(set) var isWeightOnWheels = false
+    /// B.6's consumer. Inert (nil) until the B-classification commit.
+    var onGearEvent: ((GearEvent) -> Void)?
+
+    init(struts: [SuspensionStrut]) {
+        self.struts = struts
+        self.compressions = Array(repeating: 0, count: struts.count)
+        self.wasOverloaded = Array(repeating: false, count: struts.count)
+    }
+
+    /// One substep of suspension. gearDeployed is the animation gate
+    /// (Aircraft.isGearDown): retracted or mid-transit gear generates no
+    /// forces and holds zero compressions.
+    func accumulateForces(body: RigidBody,
+                          bodyPosition: float3,
+                          bodyRotation: float3x3,
+                          uniformScale: Float,
+                          gearDeployed: Bool,
+                          world: PhysicsWorld,
+                          substepDelta: Float) {
+        guard gearDeployed else {
+            resetToAirborne()
+            return
+        }
+
+        // Strut axis is body ±Y: rays go down along −up, forces push along +up.
+        let up = bodyRotation.columns.1
+        let down = -up
+
+        for (i, strut) in struts.enumerated() {
+            let attachWorld = bodyPosition + bodyRotation * (strut.attachLocal * uniformScale)
+            let reach = (strut.restLength + strut.wheelRadius) * uniformScale
+            let hit = world.raycastStaticPlanes(from: attachWorld,
+                                               direction: down,
+                                               maxDistance: reach)
+
+            let step = SuspensionSolver.solve(strut: strut,
+                                              uniformScale: uniformScale,
+                                              distanceToGround: hit?.distance,
+                                              previousCompression: compressions[i],
+                                              substepDelta: substepDelta)
+            compressions[i] = step.compression
+
+            if step.force > 0, let hit {
+                // Applied at the wheel contact patch: a no-op difference from
+                // the body origin today (linear-only), the pitch/roll moments
+                // when Phase D consumes the point (D2 prep, like Contact.point).
+                body.addForce(up * step.force, atWorldPoint: hit.point)
+            }
+
+            if step.overloaded && !wasOverloaded[i] {
+                onGearEvent?(.gearOverload(strutName: strut.name,
+                                           force: step.force,
+                                           bottomedOut: step.bottomedOut))
+            }
+            wasOverloaded[i] = step.overloaded
+        }
+
+        // Weight-on-wheels transitions, AFTER all struts updated. Touchdown
+        // reports the incoming velocity: this runs in the force phase, before
+        // this substep's collision response and integration touch it.
+        let anyContact = compressions.contains { $0 > 0 }
+        if anyContact != isWeightOnWheels {
+            isWeightOnWheels = anyContact
+            if anyContact {
+                onGearEvent?(.touchdown(sinkRate: max(0, -body.velocity.y),
+                                        compressions: compressions))
+            } else {
+                onGearEvent?(.liftoff)
+            }
+        }
+    }
+
+    /// Gear retracted (or mid-transit): no forces, compressions zeroed so the
+    /// next deployment's finite differences start from rest. KNOWN QUIRK,
+    /// accepted: deploying gear while already sitting on the belly makes the
+    /// first contacting substep read a large instant compression, so the jet
+    /// pops up onto its wheels — bounded by maxSupportForce, and a bellied
+    /// aircraft is already a crashed state.
+    private func resetToAirborne() {
+        for i in compressions.indices {
+            compressions[i] = 0
+            wasOverloaded[i] = false
+        }
+        if isWeightOnWheels {
+            isWeightOnWheels = false
+            onGearEvent?(.liftoff)
+        }
+    }
+}
+```
+
+- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/AircraftGearSpec.swift` —
+  the strut specs, `AircraftColliderSpec`'s pattern exactly (exhaustive switch, placeholder
+  numbers until overlay-verified):
+
+```swift
+//
+//  AircraftGearSpec.swift
+//  ToyFlightSimulator
+//
+
+/// Landing-gear strut specs per player-selectable aircraft — the
+/// AircraftColliderSpec pattern for gear. Geometry in post-import body-local
+/// METERS; rates in absolute SI (see SuspensionStrut's units note).
+enum AircraftGearSpec {
+    /// Exhaustive over AircraftType with no `default` (project convention):
+    /// adding an aircraft forces a conscious authored-or-empty decision.
+    /// [] ⇒ no suspension: the aircraft rests on its collision geometry,
+    /// exactly as in Phase A.
+    static func spec(for type: AircraftType) -> [SuspensionStrut] {
+        switch type {
+            case .f22_cgtrader:
+                return f22CGTrader
+            case .f16, .f18, .f22, .f35:
+                return []
+        }
+    }
+
+    /// Geometry: PLACEHOLDERS until strut-overlay-verified (the Phase 0
+    /// discipline — B.5's overlay draws these as cyan lines; eyeball against
+    /// the modeled gear, tune, then flip this comment).
+    ///
+    /// Geometry anchors (public F-22 airport-planning data): wheel track
+    /// ≈ 3.25 m (here 2·1.62 = 3.24), wheelbase ≈ 6.0 m (here 5.2 + 0.9 =
+    /// 6.1). All three struts share one total reach — origin to uncompressed
+    /// wheel bottom = −attachLocal.y + restLength + wheelRadius = 2.05 m —
+    /// so a level aircraft touches all wheels together. 2.05 ≈ the legacy
+    /// 2 m collision sphere (which was approximating the gear stance all
+    /// along), which is why the ride height lands near the familiar value.
+    ///
+    /// Rate sizing (combined doc §4.3 B2, F-22 at 30 t — the in-game
+    /// F22SimpleFlightModel.mass = 30_000 kg, which Aircraft's didSet pair
+    /// syncs into RigidBody.mass):
+    ///   W = 30_000 · 9.81 ≈ 294.3 kN
+    ///   k: mains 1.1 MN/m each + nose 268 kN/m → Σk = 2.468 MN/m
+    ///   static compression x = W / Σk ≈ 0.119 m (equal-reach struts share
+    ///     one x in the linear model — load split follows RATES, ≈ 89/11
+    ///     mains/nose; the plan's deviations table has the why)
+    ///   ride height = 2.05 − x ≈ 1.93 m   ← pinned by AircraftGearSpecTests
+    ///   c = 2ζ√(k·m_share): mains ≈ 146 kN·s/m (ζ≈0.6), nose ≈ 34 kN·s/m
+    ///     (ζ≈0.5); rebound = 1.5× compression (oleo asymmetry)
+    ///   maxSupportForce ≈ 3× static load per strut: a ≥ 3 m/s-sink arrival
+    ///     trips it on damping alone (146 kN·s/m · 3 ≈ 438 kN > 400 kN) —
+    ///     which is the real-world hard-landing boundary (≈ 10 fps).
+    /// Stability at the 1/120 s substep: ω = √(Σk/m) ≈ 9.1 rad/s (period
+    /// 0.69 s ≈ 83 substeps); damping per substep (Σc/m)·dt ≈ 0.09 ≪ 2 —
+    /// explicit integration has an order of magnitude of margin (this is
+    /// exactly why B.3 precedes B.4 — combined doc D4's second reason).
+    private static let f22CGTrader: [SuspensionStrut] = [
+        SuspensionStrut(name: "noseGear",
+                        attachLocal: [0, -0.55, 5.2],
+                        restLength: 1.20, maxTravel: 0.40, wheelRadius: 0.30,
+                        springRate: 268_000,
+                        compressionDamping: 34_000, reboundDamping: 51_000,
+                        maxSupportForce: 100_000),
+        SuspensionStrut(name: "mainGearLeft",
+                        attachLocal: [-1.62, -0.55, -0.9],
+                        restLength: 1.05, maxTravel: 0.45, wheelRadius: 0.45,
+                        springRate: 1_100_000,
+                        compressionDamping: 146_000, reboundDamping: 219_000,
+                        maxSupportForce: 400_000),
+        SuspensionStrut(name: "mainGearRight",
+                        attachLocal: [1.62, -0.55, -0.9],
+                        restLength: 1.05, maxTravel: 0.45, wheelRadius: 0.45,
+                        springRate: 1_100_000,
+                        compressionDamping: 146_000, reboundDamping: 219_000,
+                        maxSupportForce: 400_000)
+    ]
+
+    /// Static-equilibrium stance for a level aircraft with equal-reach struts
+    /// (pure — the spec test's ride-height anchor, and the overlay's stance
+    /// log): all struts share one compression x = m·g / Σk, and ride height
+    /// = reach − x. nil for empty specs.
+    static func staticStance(struts: [SuspensionStrut],
+                             mass: Float,
+                             gravity: Float = 9.81) -> (compression: Float, rideHeight: Float)? {
+        guard let first = struts.first else { return nil }
+        let totalRate = struts.reduce(0) { $0 + $1.springRate }
+        guard totalRate > 0 else { return nil }
+        let x = mass * gravity / totalRate
+        let reach = first.restLength + first.wheelRadius - first.attachLocal.y
+        return (x, reach - x)
+    }
+}
+```
+
+Implementation notes, the parts that are easy to get wrong:
+
+- **The finite-difference damper is self-calibrating at touchdown.** First contacting substep:
+  previous compression 0, new compression = penetration this substep = sink·dt, so
+  `rate = sink·dt/dt = sink` — the damper sees the true closing speed with no special case.
+- **The push-only floor (`max(0, ·)`) is load-bearing, not cosmetic.** During rebound the
+  damper term is negative; on a fast rebound it exceeds the spring term and the unclamped force
+  points DOWN. A strut cannot pull an aircraft toward the runway — without the floor, a bounced
+  aircraft would be dragged back into oscillation.
+- **`overloaded` is computed from the UNCLAMPED force** — the clamp is what makes the event
+  meaningful (the strut wanted more than it structurally has).
+- **Event ordering**: per-strut overload events fire inside the strut loop; the WoW transition
+  fires after the loop, so a `touchdown` event always reports the complete compressions array
+  of its own substep.
+- **`compressions` is `[Float]` (a value type)** — the copy captured in the `touchdown` event
+  is immutable-by-construction; no handler can see later mutation.
+
+## Step B.5 — Aircraft + scene + overlay wiring — completes B-suspension
+
+- [ ] **Edit:** `GameObjects/Aircraft.swift` — the suspension property (next to `animator`) and
+  the accumulateForces extension at B.2's marked point:
+
+```swift
+    /// Raycast landing-gear suspension; nil for aircraft without an authored
+    /// gear spec (they rest on their collision geometry, as in Phase A).
+    /// Installed by the scene alongside the rigid body — see
+    /// FlightboxWithPhysics.applyAircraftSwap.
+    var gearSuspension: LandingGearSuspension?
+```
+
+```diff
+         // B.5 adds the landing-gear suspension pass HERE — outside the input
+         // guard above, because a parked, unfocused aircraft must be held up.
++        // The pose accessors are the aircraft's own node state (self IS the
++        // gameObject) — same LOCAL-transform contract as the collider path
++        // (pre-Phase-A correction 3; the A.2 assert guards the body).
++        // isGearDown is animator state, written only in doUpdate — stable
++        // across the frame's substeps.
++        gearSuspension?.accumulateForces(body: rigidBody,
++                                         bodyPosition: getPosition(),
++                                         bodyRotation: getRotationMatrix().upperLeft3x3,
++                                         uniformScale: uniformScale,
++                                         gearDeployed: isGearDown,
++                                         world: world,
++                                         substepDelta: substepDelta)
+     }
+```
+
+- [ ] **Edit:** `Scenes/FlightboxWithPhysics.swift` — spec installation in `applyAircraftSwap`,
+  next to the collider-spec installation it mirrors:
+
+```diff
+             acRigidBody.restitution = 0.2
++
++            // Gear suspension, the AircraftColliderSpec pattern: authored
++            // struts or nothing. The old aircraft's suspension dies with its
++            // island (it hangs off the aircraft, which the generator remove
++            // below stops driving).
++            let gearStruts = AircraftGearSpec.spec(for: aircraft)
++            playerAircraft.gearSuspension =
++                gearStruts.isEmpty ? nil : LandingGearSuspension(struts: gearStruts)
+```
+
+- [ ] **Overlay strut layer** (the Phase 0 non-goals note "the overlay grows a strut layer in
+  Phase B" comes due). Threading `gearSpec` through is mechanical — `cycle`, `hostWasReplaced`,
+  `apply`, `buildVolumes`, and `logWorldDimensions` each gain a `gearSpec: [SuspensionStrut]`
+  parameter, and the two call sites pass it:
+
+  `Scenes/GameScene.swift` (the X handler):
+
+```diff
+             guard let aircraft = playerAircraft, let type = playerAircraftType else { return }
+-            colliderOverlay.cycle(on: aircraft, spec: AircraftColliderSpec.spec(for: type))
++            colliderOverlay.cycle(on: aircraft,
++                                  spec: AircraftColliderSpec.spec(for: type),
++                                  gearSpec: AircraftGearSpec.spec(for: type))
+```
+
+  `Scenes/FlightboxWithPhysics.swift` (the swap hook):
+
+```diff
+-            colliderOverlay.hostWasReplaced(by: playerAircraft, spec: AircraftColliderSpec.spec(for: aircraft))
++            colliderOverlay.hostWasReplaced(by: playerAircraft,
++                                            spec: AircraftColliderSpec.spec(for: aircraft),
++                                            gearSpec: AircraftGearSpec.spec(for: aircraft))
+```
+
+  `Physics/Debug/ColliderDebugOverlay.swift` — the pure mapping half gets the endpoint helper
+  (tested in `ColliderOverlayMappingTests`):
+
+```swift
+    /// Strut overlay line, in the AIRCRAFT's local space (the Line is a
+    /// child, so the parent's scale composes — same rule as childScale):
+    /// from the attach point to the uncompressed wheel-bottom reach along
+    /// body −Y. A static rest-pose line is exactly what geometry tuning
+    /// needs: with the gear down, its lower end should sit at the modeled
+    /// wheel's contact patch. (Live compression visualization is deferred —
+    /// see the Phase B non-goals.)
+    static func strutLineEndpoints(for strut: SuspensionStrut) -> (start: float3, end: float3) {
+        (strut.attachLocal,
+         strut.attachLocal - float3(0, strut.restLength + strut.wheelRadius, 0))
+    }
+```
+
+  and `buildVolumes` gains the strut loop after the collider loop (plus
+  `static let strutColor: float4 = [0, 1, 1, 1]` next to the other colors — opaque cyan;
+  `Line` renders through the dedicated `.lines` collection, so the alpha-routes-registration
+  rule for volumes doesn't apply):
+
+```swift
+        // Cyan strut lines (B.5): Line is a GameObject (objectType .lines),
+        // so the attach/register/removeFromScene lifecycle is identical to
+        // the volumes'. Line builds its vertex buffer at init — update-thread
+        // mesh construction, same established practice as the bespoke capsule.
+        for strut in gearSpec {
+            let (start, end) = ColliderOverlayMapping.strutLineEndpoints(for: strut)
+            let line = Line(startPoint: start, endPoint: end, color: Self.strutColor)
+            attach(line, to: target)
+        }
+```
+
+  `logWorldDimensions` gains the stance block (the B-phase sanity anchor, next to the collider
+  lines — this is the number the in-app settle must reproduce):
+
+```swift
+        if !gearSpec.isEmpty, let mass = target.rigidBody?.mass,
+           let stance = AircraftGearSpec.staticStance(struts: gearSpec, mass: mass) {
+            for strut in gearSpec {
+                let reach = strut.restLength + strut.wheelRadius - strut.attachLocal.y
+                print("  \(strut.name): attach \(strut.attachLocal), reach \(String(format: "%.2f m", reach))")
+            }
+            print("  gear stance: static compression \(String(format: "%.3f m", stance.compression)), "
+                  + "ride height ≈ \(String(format: "%.2f m", stance.rideHeight))")
+        }
+```
+
+### Behavior notes (expected, reviewed in-app — write these into the commit message)
+
+- **The jet stands on its wheels.** Ride height ≈ **1.93 m** at the origin (2.05 m gear reach
+  − 0.119 m static compression) — between the belly rest (1.05) and the old sphere's 2.0, and
+  close to the sphere's stance because the 2 m radius was always a gear-stance approximation.
+  The fuselage capsule's lowest point sits ≈ 0.88 m clear of the runway: ground ops produce
+  **zero airframe contacts** (watch the A.7 contact log go quiet with gear down — that silence
+  is the feature).
+- **Gear toggle is now load-bearing.** G-up on the ground: the struts cut out, the jet drops
+  ≈ 0.88 m onto its belly, and `[Contact] …fuselage` returns. G-down while bellied: the jet
+  pops back onto its wheels (bounded by maxSupportForce — the known quirk documented on
+  `resetToAirborne`).
+- **Wheels visually sink ≈ 12 cm** (the static compression) — the rendered gear is rigid and
+  doesn't compress. Two tuning levers at overlay time, pick per taste: accept it, or author
+  `restLength` ≈ x_static shorter so the rendered wheels kiss the pavement at equilibrium
+  (costing touchdown happening with wheels visually ≈ 12 cm buried for an instant). The real
+  fix — compression-driven gear-joint offsets — is a Phase D-era visual, in the non-goals.
+- **The jet slides on the ground.** No tangent friction, no brakes, no steering until Phase D —
+  only aero drag resists taxi drift. Same as the Phase A sphere; newly *noticeable* because the
+  jet now sits still enough to watch. Non-goal, listed.
+
+- [ ] **File (new):** `ToyFlightSimulatorTests/Physics/GearSuspensionWorldTests.swift` — the
+  step's regression net, and the B-phase analog of `CompoundBodyTests`: the REAL suspension +
+  compound + corrected response, end to end, Metal-free (full listing — transcribe as-is):
+
+```swift
+import Foundation
+import Testing
+import simd
+@testable import ToyFlightSimulator
+
+@Suite("Gear suspension (world)", .tags(.physics))
+struct GearSuspensionWorldTests {
+    private static let dt: Float = 1.0 / 60.0
+
+    /// Metal-free stand-in for Aircraft's generator conformance: drives the
+    /// REAL LandingGearSuspension over a detached body (identity rotation ==
+    /// a level aircraft). What it cannot exercise — node rotation feeding
+    /// bodyRotation, the isGearDown animator gate — is exactly B.5's in-app
+    /// eyeball checklist.
+    private final class SuspensionRig: PhysicsForceGenerator {
+        let body: RigidBody
+        let suspension: LandingGearSuspension
+        var gearDeployed = true
+
+        init(body: RigidBody, struts: [SuspensionStrut]) {
+            self.body = body
+            self.suspension = LandingGearSuspension(struts: struts)
+        }
+
+        func accumulateForces(substepDelta: Float, world: PhysicsWorld) {
+            suspension.accumulateForces(body: body,
+                                        bodyPosition: body.getPosition(),
+                                        bodyRotation: matrix_identity_float3x3,
+                                        uniformScale: 1.0,
+                                        gearDeployed: gearDeployed,
+                                        world: world,
+                                        substepDelta: substepDelta)
+        }
+    }
+
+    private func makeF22OnGear(startY: Float, velocityY: Float = 0)
+        -> (world: PhysicsWorld, body: RigidBody, rig: SuspensionRig) {
+        let body = RigidBody(detachedAt: [0, startY, 0])
+        body.mass = 30_000                                    // the flight model's mass
+        body.restitution = 0.2
+        body.velocity = [0, velocityY, 0]
+        body.colliders = AircraftColliderSpec.spec(for: .f22_cgtrader)
+        let rig = SuspensionRig(body: body, struts: AircraftGearSpec.spec(for: .f22_cgtrader))
+        let plane = PlaneRigidBody(detachedAt: .zero)
+        plane.isStatic = true
+        let world = PhysicsWorld(entities: [body, plane], updateType: .HeckerVerlet)
+        world.useBroadPhase = false
+        world.addForceGenerator(rig)
+        return (world, body, rig)
+    }
+
+    @Test("the F-22 settles on its struts at ride height — gravity on, belly clear")
+    func settlesOnStruts() {
+        let (world, body, rig) = makeF22OnGear(startY: 2.5)
+        var airframeTouched = false
+        body.onContact = { _, _ in airframeTouched = true }
+
+        for _ in 0..<600 { world.update(deltaTime: Self.dt) }   // 10 s
+
+        #expect(body.shouldApplyGravity)
+        #expect(rig.suspension.isWeightOnWheels)
+        #expect(abs(body.getPosition().y - 1.93) <= 0.02,
+                "Σk·x = W ⇒ x ≈ 0.119, ride height = 2.05 − x ≈ 1.93")
+        #expect(abs(rig.suspension.compressions[0] - 0.119) <= 0.01,
+                "equal-reach struts share the static compression")
+        #expect(simd_length(body.velocity) <= 0.05)
+        #expect(!airframeTouched,
+                "on its wheels the fuselage capsule (bottom −1.05) stays ≈ 0.88 m clear")
+    }
+
+    @Test("gear up: the same body falls through the struts to the A.7 belly rest")
+    func gearUpFallsToBelly() {
+        let (world, body, rig) = makeF22OnGear(startY: 2.5)
+        rig.gearDeployed = false
+        var contactNames: Set<String> = []
+        body.onContact = { contact, _ in
+            if let name = contact.colliderNameA { contactNames.insert(name) }
+        }
+
+        for _ in 0..<600 { world.update(deltaTime: Self.dt) }
+
+        #expect(abs(body.getPosition().y - 1.05) <= 0.05,
+                "CompoundBodyTests' settle, reproduced with suspension present but retracted")
+        #expect(contactNames == ["fuselage"])
+        #expect(!rig.suspension.isWeightOnWheels)
+    }
+
+    @Test("touchdown reports the incoming sink; a firm arrival overloads, a gentle one doesn't")
+    func touchdownAndOverloadEvents() {
+        // 4 m/s sink: the mains' damper alone gives 146 kN·s/m · 4 ≈ 584 kN,
+        // past the 400 kN clamp ⇒ overload on the rising edge.
+        let firm = makeF22OnGear(startY: 2.2, velocityY: -4)
+        var firstSink: Float? = nil
+        var overloadedStruts: Set<String> = []
+        firm.rig.suspension.onGearEvent = { event in
+            switch event {
+                case .touchdown(let sinkRate, _):
+                    if firstSink == nil { firstSink = sinkRate }
+                case .gearOverload(let strutName, _, _):
+                    overloadedStruts.insert(strutName)
+                case .liftoff:
+                    break
+            }
+        }
+        for _ in 0..<300 { firm.world.update(deltaTime: Self.dt) }
+        #expect(firstSink != nil && abs(firstSink! - 4.0) <= 0.4)
+        #expect(overloadedStruts.contains("mainGearLeft") && overloadedStruts.contains("mainGearRight"))
+
+        // 0.5 m/s: damper ≈ 73 kN, spring peaks well under the clamp — quiet.
+        let gentle = makeF22OnGear(startY: 2.2, velocityY: -0.5)
+        var gentleOverloads = 0
+        gentle.rig.suspension.onGearEvent = { if case .gearOverload = $0 { gentleOverloads += 1 } }
+        for _ in 0..<300 { gentle.world.update(deltaTime: Self.dt) }
+        #expect(gentleOverloads == 0)
+        #expect(gentle.rig.suspension.isWeightOnWheels)
+    }
+
+    @Test("a popped-up body leaves cleanly: struts push, never pull")
+    func strutsNeverPull() {
+        let (world, body, rig) = makeF22OnGear(startY: 2.5)
+        for _ in 0..<600 { world.update(deltaTime: Self.dt) }   // settle first
+        var sawLiftoff = false
+        rig.suspension.onGearEvent = { if case .liftoff = $0 { sawLiftoff = true } }
+
+        body.velocity = [0, 4, 0]                               // pop it upward
+        var maxY: Float = 0
+        for _ in 0..<240 {
+            world.update(deltaTime: Self.dt)
+            maxY = max(maxY, body.getPosition().y)
+        }
+
+        #expect(sawLiftoff)
+        // Ballistic apex from 4 m/s ≈ 0.82 m above launch; rebound damping
+        // only acts across the first ~0.12 m of strut extension. A strut that
+        // "pulled" would eat most of the apex — the push-only floor is what
+        // this pins.
+        #expect(maxY - 1.93 >= 0.5)
+    }
+}
+```
+
+*(The settle test's initial drop arrives at ≈ 3 m/s — it fires an overload during settling,
+deliberately un-asserted there: `touchdownAndOverloadEvents` owns event expectations.)*
+
+## Step B.6 — Touchdown & crash classification — the B-classification commit
+
+Research §4.3 B3, merged vocabulary: gear support comes from strut *compressions* (no contact
+events involved), airframe *contacts* classify as scrape-vs-crash by impact speed, and the
+overload event is the hook crash scoring wants. This commit is observers only — a pure
+classifier, one print-only reporter (the A.7 `ContactDebugLogger` idiom), and the wiring. No
+physics behavior changes; goldens untouched.
+
+**The one tricky prerequisite — pre-impact velocity.** `onContact` fires AFTER the response for
+that pair (A.5's documented ordering), so the body's velocity at event time is the post-impulse
+bounce, not the hit. Classifying against it would grade every crash as gentle. The force phase
+runs before collision resolution, so `Aircraft.accumulateForces` caches the substep's incoming
+velocity, and the contact handler classifies against that.
+
+- [ ] **Edit:** `GameObjects/Aircraft.swift` — the cache (one property + one line):
+
+```swift
+    /// The body's velocity at the top of the current substep, BEFORE the
+    /// collision response acts — what airframe-contact classification grades
+    /// against (onContact fires post-response, when the impulse has already
+    /// replaced the impact velocity with the bounce).
+    private(set) var preCollisionVelocity: float3 = .zero
+```
+
+```diff
+     func accumulateForces(substepDelta: Float, world: PhysicsWorld) {
+         guard let rigidBody else { return }
++        preCollisionVelocity = rigidBody.velocity
+```
+
+- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/AirframeContactClassifier.swift`
+  — the pure half:
+
+```swift
+//
+//  AirframeContactClassifier.swift
+//  ToyFlightSimulator
+//
+
+/// Crash-vs-landing vocabulary for airframe ground contacts (research
+/// combined doc §4.3 B3 — the merged Claude handleContact + Codex outcome
+/// model). Pure: classification is arithmetic on contact data + cached
+/// pre-impact state, testable Metal-free.
+enum AirframeContactClass {
+    /// The airframe touched gently — a skid, a tail scrape, a soft belly slide.
+    case scrape
+    /// The airframe hit hard — a crash in gameplay terms.
+    case impact
+}
+
+enum AirframeContactClassifier {
+    /// Normal-speed boundary between scrape and impact. 2 m/s sits between
+    /// "firm but survivable" (a hard LANDING is ≈ 3 m/s sink — on the GEAR)
+    /// and gentle contact (< 1 m/s). Strictly-greater gate; tunable.
+    static let impactSpeedThreshold: Float = 2.0
+
+    /// contactNormal is the Contact's strict B→A normal with the aircraft as
+    /// A (RigidBody.onContact's documented orientation), so approach speed is
+    /// −dot(v, n); a separating (post-bounce re-report) velocity clamps to 0.
+    static func classify(contactNormal: float3, preImpactVelocity: float3)
+        -> (classification: AirframeContactClass, normalSpeed: Float) {
+        let normalSpeed = max(0, -dot(preImpactVelocity, contactNormal))
+        return (normalSpeed > impactSpeedThreshold ? .impact : .scrape, normalSpeed)
+    }
+}
+```
+
+- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Debug/TouchdownReporter.swift` — the
+  print-only consumer (supersedes the plain A.7 contact logger on the player aircraft;
+  `ContactDebugLogger` itself stays for ad-hoc use on other bodies):
+
+```swift
+//
+//  TouchdownReporter.swift
+//  ToyFlightSimulator
+//
+
+import Foundation
+
+/// Print-only flight-test telemetry (the ContactDebugLogger idiom): gear
+/// events verbatim, airframe contacts classified. UpdateThread only; keep it
+/// print-only — it runs inside the physics step's event callbacks.
+final class TouchdownReporter {
+    private let bodyLabel: String
+    private let scrapeLogInterval: Double
+    private var lastScrapeLog: [String: Double] = [:]
+
+    init(bodyLabel: String, scrapeLogInterval: Double = 1.0) {
+        self.bodyLabel = bodyLabel
+        self.scrapeLogInterval = scrapeLogInterval
+    }
+
+    func report(_ event: GearEvent) {
+        switch event {
+            case .touchdown(let sinkRate, let compressions):
+                let comps = compressions.map { String(format: "%.3f", $0) }.joined(separator: ", ")
+                print("[Touchdown] \(bodyLabel) sink \(String(format: "%.2f", sinkRate)) m/s, compressions [\(comps)] m")
+            case .liftoff:
+                print("[Liftoff] \(bodyLabel)")
+            case .gearOverload(let strutName, let force, let bottomedOut):
+                print("[GearOverload] \(bodyLabel).\(strutName) at \(String(format: "%.0f", force)) N"
+                      + (bottomedOut ? " — BOTTOMED OUT" : ""))
+        }
+    }
+
+    /// Scrapes throttle per collider name (a sliding belly re-contacts every
+    /// step); impacts always print — a crash is never noise.
+    func reportAirframeContact(_ contact: Contact,
+                               preImpactVelocity: float3,
+                               isGearDown: Bool,
+                               against other: RigidBody) {
+        let (classification, normalSpeed) =
+            AirframeContactClassifier.classify(contactNormal: contact.normal,
+                                               preImpactVelocity: preImpactVelocity)
+        let name = contact.colliderNameA ?? "body"
+
+        if classification == .scrape {
+            let now = GameTime.TotalGameTime
+            if let last = lastScrapeLog[name], now - last < scrapeLogInterval { return }
+            lastScrapeLog[name] = now
+        }
+
+        let otherLabel = other.gameObject?.getName() ?? "static geometry"
+        let label = classification == .impact ? "CRASH" : "Scrape"
+        print("[\(label)] \(bodyLabel).\(name) hit \(otherLabel) at "
+              + String(format: "%.2f m/s", normalSpeed)
+              + " (gear \(isGearDown ? "down" : "up"))")
+    }
+}
+```
+
+- [ ] **Edit:** `Scenes/FlightboxWithPhysics.swift` — the wiring replaces A.7's plain contact
+  logger on the player aircraft:
+
+```diff
+-            // Debug scaffolding (A.7 exit criterion): named contact reporting,
+-            // throttled so a resting aircraft doesn't spam 60 lines/s.
+-            let contactLogger = ContactDebugLogger(bodyLabel: playerAircraft.getName())
+-            acRigidBody.onContact = { contact, other in
+-                contactLogger.log(contact, against: other)
+-            }
++            // B.6 telemetry: gear events verbatim + airframe contacts
++            // classified (supersedes A.7's plain contact logger here).
++            // CAPTURE RULE: the closures capture the reporter STRONGLY (it's
++            // owned by nothing else) and the aircraft WEAKLY — a strong
++            // aircraft capture would cycle aircraft → rigidBody → onContact →
++            // aircraft, exactly the 0.3b leak class.
++            let reporter = TouchdownReporter(bodyLabel: playerAircraft.getName())
++            playerAircraft.gearSuspension?.onGearEvent = { event in
++                reporter.report(event)
++            }
++            acRigidBody.onContact = { [weak playerAircraft] contact, other in
++                guard let playerAircraft else { return }
++                reporter.reportAirframeContact(contact,
++                                               preImpactVelocity: playerAircraft.preCollisionVelocity,
++                                               isGearDown: playerAircraft.isGearDown,
++                                               against: other)
++            }
+```
+
+  (Spec-less aircraft get the same wiring — `gearSuspension` is nil so only the contact leg is
+  live, and their sphere bodies report `body` as the collider name, as before.)
+
+- [ ] **Tests** (`AirframeContactClassifierTests`, new, pure; plus one integration case in
+  `GearSuspensionWorldTests`) — full listing:
+
+```swift
+import Testing
+import simd
+@testable import ToyFlightSimulator
+
+@Suite("Airframe contact classification", .tags(.physics))
+struct AirframeContactClassifierTests {
+    @Test("normal speed is the pre-impact approach along the contact normal")
+    func normalSpeedMath() {
+        // Descending onto level ground: n = up (B→A, aircraft as A), v down.
+        let r = AirframeContactClassifier.classify(contactNormal: [0, 1, 0],
+                                                   preImpactVelocity: [30, -5, 0])
+        #expect(approxEqual(r.normalSpeed, 5))
+        #expect(r.classification == .impact)
+    }
+
+    @Test("fast tangential motion with a gentle sink is a scrape, not a crash")
+    func tangentialIsGentle() {
+        let r = AirframeContactClassifier.classify(contactNormal: [0, 1, 0],
+                                                   preImpactVelocity: [80, -0.5, 0])
+        #expect(r.classification == .scrape)
+        #expect(approxEqual(r.normalSpeed, 0.5))
+    }
+
+    @Test("separating (post-bounce) velocity clamps to zero speed — scrape")
+    func separatingClampsToZero() {
+        let r = AirframeContactClassifier.classify(contactNormal: [0, 1, 0],
+                                                   preImpactVelocity: [0, 3, 0])
+        #expect(r.normalSpeed == 0)
+        #expect(r.classification == .scrape)
+    }
+
+    @Test("exactly threshold speed stays a scrape (strictly-greater gate, pinned)")
+    func thresholdBoundary() {
+        let r = AirframeContactClassifier.classify(
+            contactNormal: [0, 1, 0],
+            preImpactVelocity: [0, -AirframeContactClassifier.impactSpeedThreshold, 0])
+        #expect(r.classification == .scrape)
+    }
+}
+```
+
+  And in `GearSuspensionWorldTests`, the end-to-end pin of the caching pattern (rig gains the
+  same one-line `preCollisionVelocity` cache Aircraft has):
+
+```swift
+    @Test("a gear-up belly arrival classifies as a fuselage CRASH from pre-impact velocity")
+    func bellyImpactClassifiesAsCrash() {
+        let (world, body, rig) = makeF22OnGear(startY: 2.0, velocityY: -5)
+        rig.gearDeployed = false
+        var classified: [(String, AirframeContactClass, Float)] = []
+        body.onContact = { contact, _ in
+            let r = AirframeContactClassifier.classify(contactNormal: contact.normal,
+                                                       preImpactVelocity: rig.preCollisionVelocity)
+            classified.append((contact.colliderNameA ?? "?", r.classification, r.normalSpeed))
+        }
+        for _ in 0..<120 { world.update(deltaTime: Self.dt) }
+        let firstImpact = classified.first { $0.1 == .impact }
+        #expect(firstImpact != nil)
+        #expect(firstImpact?.0 == "fuselage")
+        #expect(firstImpact.map { $0.2 > 4.5 } == true,
+                "classification must see the ≈5 m/s arrival, not the post-impulse bounce")
+    }
+```
+
+## Step B.7 — Test ledger (Metal-free unless noted, Swift Testing, `.physics` tags)
+
+Suites land inside their step's commit — the 0.8/A.8 convention, so nothing is owed at the end:
+
+**B-generators commit:**
+- [ ] `PhysicsWorldForceGeneratorTests` (new): generator called once per `update`
+  *(B.3 edits this and the half-kick arithmetic to per-substep values — the only planned
+  forward edits in Phase B)*; a constant-force generator accelerates a detached body through
+  the Verlet half-kick (`Δv = ½·(F/m)·dt` on the bootstrap step); `addForceGenerator` is
+  identity-deduped (double-add ⇒ single call); `removeForceGenerator` stops calls; a removed
+  generator deallocates (weak-ref observation, the `NodeOwnershipTests` idiom — pins that the
+  world held the only strong reference).
+- [ ] `RigidBodyTests` addition: `addForce(_:atWorldPoint:)` accumulates into `force` and
+  nothing else (the torque half is Phase D's; the test documents the reservation).
+- [ ] `PhysicsParityTests`: UNCHANGED, green against UNCHANGED goldens, plus the byte-identical
+  regen dry-run — this *is* the commit gate.
+
+**B-timestep commit:**
+- [ ] `FixedTimestepTests` (new): as listed in B.3 — substep counts at 60 Hz / 240 Hz frames,
+  the spiral-of-death clamp with dropped-time verification, and the exact (`==`) partitioning
+  invariance over `singleBounceVerlet` and `ballCluster16`.
+- [ ] Regoldened baselines ×6, reviewed against B.3's signature table.
+- [ ] `PhysicsWorldForceGeneratorTests`: the two flagged expectations flip to per-substep.
+- [ ] Everything else green **un-edited** — `CollisionResponseTests`, `CompoundBodyTests`,
+  `restingKeepsGravityOn`, `PhysicsWorldSmokeTests`, the parity determinism test — per the
+  argued list in B.3.
+
+**B-suspension commit:**
+- [ ] `SuspensionSolverTests` (new, pure): out-of-reach / nil-distance ⇒ all zeros; static
+  compression ⇒ `k·x` at zero rate; compressing ⇒ compression-damping branch; rebounding ⇒
+  rebound branch; push-only floor (fast rebound ⇒ force exactly 0, never negative);
+  `maxSupportForce` clamp with `overloaded` from the UNCLAMPED value; bottom-out at
+  `maxTravel` (compression capped, flag set); `uniformScale` doubles reach/travel and leaves
+  rates alone; touchdown rate self-calibration (previous 0, penetration `v·dt` ⇒ rate `v`).
+- [ ] `NarrowPhaseTests` additions: `rayVsPlane` — hand-computed t for translated AND tilted
+  planes; parallel ⇒ nil; back-face approach ⇒ nil (the front-face-only gate, pinned); plane
+  behind the origin ⇒ nil.
+- [ ] `AircraftGearSpecTests` (new): f22_cgtrader returns exactly `noseGear`/`mainGearLeft`/
+  `mainGearRight` with unique names and finite positive dimensions; unauthored types return
+  `[]` (exhaustive switch documented); **all three reaches equal 2.05 m** (the equal-reach
+  contract `staticStance` assumes); **`staticStance` at mass 30 000 ⇒ compression ≈ 0.119 m,
+  ride height ≈ 1.93 m** — the B-phase sanity anchor, as a test so it can't rot (the 18.9 m
+  fuselage anchor's sibling).
+- [ ] `GearSuspensionWorldTests` (new): as listed in B.5 — settle at ride height with zero
+  airframe contacts, gear-up belly fallback, touchdown/overload events firm-vs-gentle, the
+  push-only liftoff.
+- [ ] `ColliderOverlayMappingTests` addition: `strutLineEndpoints` (start = attach, end =
+  attach − [0, restLength + wheelRadius, 0]).
+- [ ] `PhysicsParityTests`: untouched goldens stay green (no harness world has struts).
+
+**B-classification commit:**
+- [ ] `AirframeContactClassifierTests` (new, pure): as listed in B.6 (normal-speed math,
+  tangential gentleness, separating clamp, the strictly-greater boundary).
+- [ ] `GearSuspensionWorldTests` addition: `bellyImpactClassifiesAsCrash` (the pre-collision
+  velocity caching pattern, end to end).
+- [ ] Goldens untouched; full suite green.
+
+## Phase B non-goals (deferred, with their homes)
+
+Torque from asymmetric gear contact — one-wheel-first touchdown rolling the aircraft, nose
+settling after mains (Phase D consumes `addForce(atWorldPoint:)`'s point and the strut load
+split becomes geometric); ground **friction, brakes, and nosewheel steering** — the jet slides
+with only aero drag resisting (Phase D tangent friction; brakes ride on it); **compression-
+driven gear visuals** — wheels sink ≈ x_static into the pavement, tuning levers documented in
+B.5 (visual polish, Phase D-era); live strut-compression overlay (rest-pose lines suffice for
+geometry tuning); **sleeping** (unchanged from Phase A's non-goals; trigger = a target scene
+missing frame budget after B.3's substep doubling — measured, not feared); mid-transit gear
+collision (D8, `Skeleton.jointModelPoses`); tilted-runway generalizations of sink-rate and
+strut-force direction (one-liners, noted at their code sites); force generators for
+non-aircraft bodies (balls need none); weight-on-wheels UI/scoring beyond prints (gameplay,
+unscheduled); CCD, box-box, exact capsule-box (unchanged); iOS overlay/menu parity (unchanged).
+
+## Phase B exit criteria
+
+1. - [ ] **B-generators is invisible**: full serial suite green against unchanged goldens; the
+   regen dry-run rewrites all six baselines **byte-identical**; in-app flight feel unchanged;
+   an F-22 → F-16 → F-22 swap cycle shows no double-thrust and the old aircraft island still
+   deallocates.
+2. - [ ] **Physics is refresh-rate-independent**: `FixedTimestepTests` green with the
+   partitioning case passing on **exact** equality; regoldens reviewed against the B.3
+   signature table and committed; every semantic suite green **un-edited**; in-app, ball
+   scenes settle identically at 30/60/120 Hz and FlightboxWithPhysics plays normally; stress-
+   scene cost recorded pre/post (≈ 2× per update call at 60 Hz is the expected substep math,
+   not a regression).
+3. - [ ] **The jet stands on its wheels**: `GearSuspensionWorldTests` green (settle ≈ 1.93 m
+   with gravity on, WoW true, zero airframe contacts; gear-up reproduces the 1.05 belly rest
+   with `fuselage` contact); in-app, the F-22 settles on its gear at the logged stance height,
+   the gear toggle drops/raises it correctly, and the overlay's cyan strut lines land on the
+   modeled gear (spec numbers tuned and the PLACEHOLDER comment flipped — the Phase 0
+   criterion-2 ritual).
+4. - [ ] **Touchdown speaks**: in-app, a landing logs `[Touchdown]` with a plausible sink rate
+   and compressions; a firm arrival logs `[GearOverload]`; a gear-up belly touch logs
+   `[CRASH] …fuselage` (and a gentle one `[Scrape]`) — classified from pre-impact velocity.
+   `AirframeContactClassifierTests` and the belly-crash world test green.
+5. - [ ] **No process-wide state**: parity determinism + partitioning tests green under Swift
+   Testing's default in-process concurrency; accumulator, generator lists, and suspension
+   state verified per-instance; review confirms no new static mutable state anywhere in the
+   step path.
+6. - [ ] **CI green** on all four commits (serial app-hosted run, as configured).
+
+**Implementation order within Phase B:** B.1 → B.2 as ONE commit (B-generators, gated by
+criterion 1) → B.3 as one commit (B-timestep, gated by criterion 2) → B.4 → B.5 as one commit
+(B-suspension, gated by criterion 3) → B.6 (B-classification, gated by criterion 4). B.7's
+suites land inside their listed commits. The order is load-bearing twice over: generators must
+exist before the accumulator moves their call site into the substep loop, and the fixed step
+must precede the suspension (stiff spring-damper rates are sized against dt = 1/120 — combined
+doc D4's second reason). No step may straddle a commit boundary.
+
