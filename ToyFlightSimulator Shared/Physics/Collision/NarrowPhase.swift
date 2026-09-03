@@ -8,43 +8,27 @@
 import simd
 
 /// Pure narrow phase: WorldCollider geometry in, Contacts out. No body
-/// mutation, no Metal — every function below is unit-testable per the
-/// project's Metal-free rule (research §3.4: the Local/World split is what
-/// makes this a pure function).
-///
-/// The sphere-sphere and sphere-plane paths are TRANSCRIPTIONS of the deleted
-/// PhysicsWorld shape switches — operation-for-operation, so the A-routing
-/// commit is bit-identical against the Phase 0 goldens. Do not "improve" the
-/// arithmetic here without a deliberate, reviewed golden regeneration.
+/// mutation, no Metal. The sphere-sphere and sphere-plane paths reproduce the
+/// pre-Phase-A arithmetic operation for operation; changing them requires a
+/// reviewed golden regeneration.
 enum NarrowPhase {
     // MARK: - Body-level dispatch
 
-    /// Appends EVERY contacting collider pair between the two bodies into
-    /// `contacts` (combined doc D3 hybrid: events and classification need all
-    /// of them — a wingtip and the belly can scrape simultaneously). Returns
-    /// the ABSOLUTE index (into `contacts`) of the deepest appended contact —
-    /// the linear-only response consumes exactly that one; Phase D's solver
-    /// will consume them all and the return value disappears. nil ⇒ no
-    /// intersection (nothing appended).
+    /// Appends every contacting collider pair between the two bodies and
+    /// returns the index into `contacts` of the deepest one, or nil. The
+    /// linear response uses only the deepest; events use all.
     @discardableResult
     static func generateContacts(_ a: RigidBody, _ b: RigidBody, into contacts: inout [Contact]) -> Int? {
-        // Planes are infinite static world geometry, special-cased at body
-        // level (research §3.5); always presented to the shape tests as the
-        // B side, flipped back on exit if the plane arrived as A.
+        // Planes are handled at body level: always presented to the shape
+        // tests as the B side, flipped back on exit if the plane arrived as A.
         if a is PlaneRigidBody {
             guard !(b is PlaneRigidBody) else { return nil }   // plane/plane: nothing to do
             let firstNew = contacts.count
             guard let deepest = generateContacts(b, a, into: &contacts) else { return nil }
 
-            // The recursive call appended contacts expressed with the VOLUME
-            // body as A (normal pointing plane → volume, metadata on the A
-            // side), but our caller passed (A = plane, B = volume), and
-            // Contact ties normal direction and metadata sides to the
-            // caller's argument order — so rewrite each appended contact into
-            // the caller's orientation. Skipping this flip would hand the
-            // response a normal pointing INTO the dynamic body. The deepest
-            // index survives untouched: flipping changes neither a contact's
-            // position in the array nor its depth.
+            // The recursive call built contacts with the volume body as A;
+            // flip them so the caller's order (A = plane, B = volume) holds.
+            // Flipping keeps each index and depth, so `deepest` stays valid.
             for i in firstNew..<contacts.count {
                 contacts[i] = contacts[i].flipped
             }
@@ -58,27 +42,21 @@ enum NarrowPhase {
             var deepest: Int? = nil
             for collider in a.worldColliders() {
                 if let contact = shapeVsPlane(collider, planePoint: planePoint, planeNormal: planeNormal) {
-                    contacts.append(contact)
-                    if deepest == nil || contact.depth > contacts[deepest!].depth {
-                        deepest = contacts.count - 1
-                    }
+                    append(contact, to: &contacts, deepest: &deepest)
                 }
             }
             
             return deepest
         }
         
-        // Volume vs volume: children × children. A legacy SphereRigidBody's
-        // "children" are its one synthesized view, so this loop IS the
-        // sphere-sphere, sphere-compound, and compound-compound path at once.
+        // Volume vs volume: every collider of A against every collider of B.
+        // A SphereRigidBody contributes its one-sphere view, so this is also
+        // the sphere-sphere path.
         var deepest: Int? = nil
         for colliderA in a.worldColliders() {
             for colliderB in b.worldColliders() {
                 if let contact = shapeVsShape(colliderA, colliderB) {
-                    contacts.append(contact)
-                    if deepest == nil || contact.depth > contacts[deepest!].depth {
-                        deepest = contacts.count - 1
-                    }
+                    append(contact, to: &contacts, deepest: &deepest)
                 }
             }
         }
@@ -86,15 +64,18 @@ enum NarrowPhase {
         return deepest
     }
     
+    /// Appends `contact` and keeps `deepest` at the index of the deepest
+    /// contact appended so far. Ties keep the earlier contact, as before.
+    private static func append(_ contact: Contact, to contacts: inout [Contact], deepest: inout Int?) {
+        contacts.append(contact)
+        if let current = deepest, contacts[current].depth >= contact.depth { return }
+        deepest = contacts.count - 1
+    }
+    
     // MARK: - Shape vs plane
 
-    /// Sphere/capsule/box vs the infinite plane through planePoint. The
-    /// sphere case is the legacy sphere-plane test in general-plane form —
-    /// bit-identical for every plane that exists today (they all sit at the
-    /// origin with a +Y normal; equivalence argued in the A.5 notes), and
-    /// CORRECT for tilted/translated planes, which the deleted
-    /// getPenetrationDepth(ball:plane:) y=0 hardcode never was.
-    /// Gates are inclusive (depth >= 0), matching the legacy `<=` boundaries.
+    /// Sphere, capsule, or box against the infinite plane through planePoint.
+    /// Gates are inclusive (depth >= 0).
     static func shapeVsPlane(_ collider: WorldCollider, planePoint: float3, planeNormal n: float3) -> Contact? {
         switch collider.shape {
             case .sphere(radius: let r):
@@ -107,10 +88,8 @@ enum NarrowPhase {
                                collider: collider)
 
             case .capsule(radius: let r, halfHeight: let hh):
-                // Deeper end-cap center decides. A capsule lying flat on the
-                // plane picks one end — adequate for the linear response
-                // (co-normal contacts resolve with one impulse); Phase D's
-                // manifold work refines this.
+                // The deeper end-cap center decides. A capsule lying flat picks
+                // one end, which is enough for the linear response.
                 let axis = collider.rotation.columns.1
                 let p0 = collider.position - axis * hh
                 let p1 = collider.position + axis * hh
@@ -137,14 +116,8 @@ enum NarrowPhase {
                 let depth = projectionRadius - signedDistance
                 guard depth >= 0 else { return nil }
                 func axisSign(_ x: Float) -> Float { x >= 0 ? 1 : -1 }
-                // The deepest-penetrating corner (the box's support point in
-                // direction −n): every corner is center ± he.x·c0 ± he.y·c1
-                // ± he.z·c2, and stepping each axis AGAINST the plane normal
-                // — minus the axis if it points along n, plus if it points
-                // away — picks, per axis, the choice that lowers the
-                // projection onto n. Summed, that's the corner closest to
-                // (or furthest through) the plane, the natural
-                // representative contact point.
+                // Deepest corner: the box's support point in direction −n,
+                // stepping each axis against the plane normal.
                 let corner = collider.position
                            - c0 * (he.x * axisSign(dot(c0, n)))
                            - c1 * (he.y * axisSign(dot(c1, n)))
@@ -199,10 +172,9 @@ enum NarrowPhase {
                 return shapeVsShape(b, a)?.flipped
                 
             case (.capsule, .box(halfExtents: let he)):
-                // Approximation: nearest point of the capsule segment to the
-                // box CENTER, then sphere-vs-box. Adequate for crash
-                // detection; exact segment-OBB (or GJK) is the Phase C/D
-                // upgrade path (combined doc §4.4).
+                // Approximation: the capsule reduced to the sphere nearest the
+                // box center, then sphere-vs-box. Exact segment-OBB or GJK can
+                // replace it later.
                 let (p, r) = capsuleAsSphere(a, towards: b.position)
                 return sphereVsBox(center: p, radius: r, box: b, halfExtents: he, a: a, b: b)
 
@@ -210,32 +182,20 @@ enum NarrowPhase {
                 return shapeVsShape(b, a)?.flipped
 
             case (.box, .box):
-                // Not needed while structures are static and vehicle compounds
-                // are capsule/box-vs-sphere/plane dominated. Upgrade path:
-                // SAT (15 axes) or GJK/EPA — Phase C decides if it's ever hit.
+                // Not implemented: no box-box pair exists yet. SAT or GJK/EPA
+                // when one does.
                 return nil
         }
     }
 
     // MARK: - Primitive helpers (pure — unit-testable without Metal)
 
-    /// LEGACY-EXACT transcription of the deleted PhysicsWorld sphere-sphere
-    /// pair: squared-distance gate, INCLUSIVE boundary, one sqrt on the hit
-    /// path, and the degenerate coincident-centers case yields a ZERO normal
-    /// (as before — reachable via perfect overlap and therefore pinned;
-    /// changing it to an arbitrary up-vector is a behavior change requiring a
-    /// golden regen of its own).
+    /// Squared compare: no sqrt on the reject path, and the same form as the
+    /// legacy test, which the goldens cover. Coincident centers give a zero
+    /// normal, as before.
     private static func sphereVsSphere(centerA: float3, radiusA: Float,
                                        centerB: float3, radiusB: Float,
                                        a: WorldCollider, b: WorldCollider) -> Contact? {
-        // Deliberately NOT `distance(centerA, centerB) <= radiusSum`, for two
-        // reasons. (1) Rejection needs no sqrt: comparing squared quantities
-        // decides overlap just as well (both sides non-negative, squaring is
-        // monotonic), and rejection is the overwhelmingly common outcome for
-        // broad-phase candidates — the sqrt below runs only on actual hits.
-        // (2) The legacy pair test used exactly this squared form, and
-        // sqrt-then-compare can disagree with it at the boundary by one
-        // rounding step — the bit-for-bit golden gate pins the squared form.
         let radiusSum = radiusA + radiusB
         let delta = centerA - centerB
         let distanceSquared = simd_length_squared(delta)
@@ -294,10 +254,8 @@ enum NarrowPhase {
             fatalError("capsuleSegment on non-capsule collider")
         }
 
-        // ColliderShape defines .capsule as a segment along LOCAL +Y (see its
-        // doc comment), and a rotation matrix's columns are the world images
-        // of the local basis vectors — R·[0,1,0] IS columns.1 — so columns.1
-        // is the capsule axis in world space.
+        // The capsule axis is local +Y, so the rotation's second column is
+        // the axis in world space.
         let axis = c.rotation.columns.1
         return (c.position - axis * hh, c.position + axis * hh, r)
     }
@@ -312,25 +270,14 @@ enum NarrowPhase {
         let segment = p1 - p0
         let lengthSquared = simd_length_squared(segment)
         guard lengthSquared > .ulpOfOne else { return p0 }   // degenerate: both ends coincide
-        // Textbook point-onto-segment projection: dot(point − p0, segment)
-        // is |point − p0|·|segment|·cos θ — dividing by |segment|² leaves the
-        // parameter t of the perpendicular foot along p0→p1 measured in
-        // segment lengths (t = 0 at p0, t = 1 at p1). Clamping t to [0, 1]
-        // keeps the result on the segment rather than the infinite line, so
-        // beyond either end the nearest END point wins.
+        // Clamped projection onto the segment: t = 0 at p0, t = 1 at p1.
         let t = max(0, min(1, dot(point - p0, segment) / lengthSquared))
         return p0 + segment * t
     }
 
-    /// Closest points between two segments — the clamped-parameter algorithm
-    /// from Christer Ericson, "Real-Time Collision Detection" §5.1.9
-    /// (ClosestPtSegmentSegment), transcribed with the book's variable names
-    /// (d1/d2 directions, s/t parameters, a/b/c/e/f dot products):
-    /// minimize |(p1 + s·d1) − (p2 + t·d2)| over s,t ∈ [0,1] — solve the
-    /// unconstrained closest points of the two LINES, then clamp s and t
-    /// against each other's segment bounds (each clamp re-solves the other
-    /// parameter). The .ulpOfOne branches handle segments degenerated to
-    /// points. Book site: https://realtimecollisiondetection.net/books/rtcd/
+    /// Closest points between two segments: Ericson, Real-Time Collision
+    /// Detection §5.1.9 (ClosestPtSegmentSegment), with the book's variable
+    /// names. The .ulpOfOne branches handle segments degenerated to points.
     static func closestPointsOnSegments(_ p1: float3, _ q1: float3, _ p2: float3, _ q2: float3) -> (float3, float3) {
         let d1 = q1 - p1
         let d2 = q2 - p2

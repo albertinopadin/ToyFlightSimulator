@@ -41,46 +41,31 @@ public class RigidBody: PhysicsEntity {
     var isStatic: Bool
     var shouldApplyGravity: Bool
     
-    /// Compound collision geometry: primitive colliders at body-local offsets
-    /// (combined doc D1/§3.5 — one body, many shapes; the model every surveyed
-    /// engine uses). Empty ⇒ the body has no compound volume: PlaneRigidBody
-    /// is special-cased at body level in the narrow phase, SphereRigidBody
-    /// synthesizes a one-sphere view (see rebuildWorldColliders — the legacy
-    /// classes deliberately IGNORE this list), and a plain RigidBody with no
-    /// colliders generates no contacts.
+    /// Compound collision geometry: primitives at body-local offsets. Empty
+    /// for planes (handled at body level in the narrow phase), ignored by
+    /// SphereRigidBody (it uses collisionRadius); a plain RigidBody with no
+    /// colliders makes no contacts.
     var colliders: [LocalCollider] = [] {
         didSet { invalidateWorldColliders() }
     }
 
-    /// Collision filtering (research §1.5): a pair is narrow-phased only if
-    /// each body's category intersects the other's mask. Defaults preserve
-    /// today's behavior — everything collides with everything.
+    /// Collision filtering: a pair is tested only if each body's category
+    /// intersects the other's mask. Defaults collide with everything.
     var categoryMask: UInt32 = CollisionCategory.default
     var collidesWithMask: UInt32 = CollisionCategory.all
 
-    /// Fired once per contact this body participates in, on the UpdateThread,
-    /// during collision resolution (after the response for that pair; every
-    /// collider-pair contact fires, not just the deepest one the linear
-    /// response consumed). The Contact is expressed with self as A. Keep the
-    /// handler cheap, and never mutate physics state from inside it — the
-    /// step is mid-flight.
+    /// Called once per contact this body is part of, on the UpdateThread,
+    /// after the response for that pair. Every collider-pair contact fires,
+    /// not only the deepest. The Contact has self as A. Keep it cheap; do not
+    /// change physics state here.
     var onContact: ((Contact, RigidBody) -> Void)?
 
-    /// World-space collider snapshot, dirty-flag cached (Phase A deviation 1 —
-    /// replaces the research sketch's static step-index token). Invalidation:
-    ///  - PhysicsWorld invalidates every entity at the top of each step
-    ///    (covers node transforms changed BETWEEN steps: attitude rotation,
-    ///    teleports, scene setup);
-    ///  - setPosition invalidates (covers MID-step moves — response position
-    ///    corrections and solver integration all funnel through it — which is
-    ///    the pre-Phase-A correction-2 requirement: a later pair in the same
-    ///    step narrow-phases against the corrected pose);
-    ///  - colliders.didSet (and SphereRigidBody.collisionRadius.didSet)
-    ///    invalidate on shape changes.
-    /// Code that mutates a body's node OUTSIDE a stepped world (tests, tools)
-    /// must either go through setPosition or call invalidateWorldColliders().
-    /// `worldCollidersScratch` is internal ONLY so subclass rebuild overrides
-    /// can write it; everything else reads via worldColliders().
+    /// World-space collider cache behind a dirty flag. Invalidated by
+    /// setPosition, by collider changes, and by the world at the start of
+    /// every step (node rotation does not go through setPosition). Code that
+    /// moves a body outside a stepped world must call
+    /// invalidateWorldColliders(). `worldCollidersScratch` is internal only so
+    /// subclass rebuilds can write it.
     internal var worldCollidersScratch: [WorldCollider] = []
     private var worldCollidersDirty = true
 
@@ -99,44 +84,24 @@ public class RigidBody: PhysicsEntity {
         return worldCollidersScratch
     }
 
-    /// Override point (SphereRigidBody synthesizes its legacy view here).
+    /// Override point; SphereRigidBody builds its one-sphere view here.
     internal func rebuildWorldColliders() {
         guard !colliders.isEmpty else {
             worldCollidersScratch.removeAll(keepingCapacity: true)
             return
         }
 
-        if let node = gameObject {
-            // Pre-Phase-A correction 3: the physics path composes LOCAL
-            // transforms (getPosition/getRotationMatrix), valid only while
-            // rigid-body owners are scene-root children. Revisit (world
-            // transforms) if bodies ever nest.
-            assert(node.parent == nil || node.parent is GameScene,
-                   "RigidBody colliders on nested node '\(node.getName())' — world-collider math assumes a scene-root child")
-
-            WorldColliderBuilder.build(colliders,
-                                       bodyPosition: node.getPosition(),
-                                       bodyRotation: node.getRotationMatrix().upperLeft3x3,
-                                       uniformScale: node.uniformScale,
-                                       into: &worldCollidersScratch)
-        } else {
-            // Standalone (parity-harness) bodies AND the released-weak
-            // fallback state: identity pose at getPosition() — for released
-            // attached bodies that's .zero, matching their pre-Phase-A AABB
-            // behavior (the zombie already collided at the origin).
-            WorldColliderBuilder.build(colliders,
-                                       bodyPosition: getPosition(),
-                                       bodyRotation: matrix_identity_float3x3,
-                                       uniformScale: 1.0,
-                                       into: &worldCollidersScratch)
-        }
+        let pose = pose()
+        WorldColliderBuilder.build(colliders,
+                                   bodyPosition: pose.position,
+                                   bodyRotation: pose.rotation,
+                                   uniformScale: pose.uniformScale,
+                                   into: &worldCollidersScratch)
     }
 
-    /// Symmetric filtering predicate (research §1.5), consumed by the broad
-    /// phase at pair emission and by both legacy O(n²) paths: category/mask
-    /// both ways, plus never pair two bodies attached to the same GameObject
-    /// (a future multi-body object must not self-collide). Bodies with nil
-    /// gameObjects (detached harness bodies) never match each other.
+    /// Symmetric filter: category and mask both ways, and never two bodies on
+    /// the same GameObject. Detached bodies (nil gameObject) never match each
+    /// other on that rule.
     func shouldCollide(with other: RigidBody) -> Bool {
         guard (categoryMask & other.collidesWithMask) != 0,
               (other.categoryMask & collidesWithMask) != 0 else { return false }
@@ -147,16 +112,16 @@ public class RigidBody: PhysicsEntity {
     // GameObject this is attached to:
     weak let gameObject: GameObject?
     
-    /// Standalone-mode storage (parity-harness bodies built with init(detachedAt:)).
-    /// Attached bodies never touch this: a released weak gameObject keeps the
-    /// tested .zero / no-op fallbacks — that state is a bug signal, not a mode.
-    private let isStandalone: Bool
-    private var standalonePosition: float3 = .zero
+    /// Set only for detached bodies (tests): position lives here instead of
+    /// on a node. nil for attached bodies, including one whose GameObject was
+    /// released, which keeps reading .zero and ignoring setPosition.
+    private var standalonePosition: float3?
     
     /// `gameObject` is optional so test doubles can exist without a GameObject
-    /// (and therefore without Metal/asset loading); all production rigid bodies
-    /// pass a non-nil GameObject.
+    /// (and therefore without Metal). Production code passes a GameObject;
+    /// tests pass nil and, for a detached body, a `standalonePosition`.
     internal init(gameObject: GameObject?,
+                  standalonePosition: float3? = nil,
                   collidedWith: Set<ObjectIdentifier> = [],
                   mass: Float = 1,
                   velocity: float3 = .zero,
@@ -166,6 +131,7 @@ public class RigidBody: PhysicsEntity {
                   isStatic: Bool = false,
                   shouldApplyGravity: Bool = true) {
         self.gameObject = gameObject
+        self.standalonePosition = standalonePosition
         self.collidedWith = collidedWith
         self.mass = mass
         self.velocity = velocity
@@ -174,70 +140,36 @@ public class RigidBody: PhysicsEntity {
         self.restitution = restitution
         self.isStatic = isStatic
         self.shouldApplyGravity = shouldApplyGravity
-        self.isStandalone = false
 
         // Register with object this is attached to:
         gameObject?.rigidBody = self
     }
     
-    /// Parity-harness bodies: the REAL physics classes, no GameObject, no Metal.
-    /// Internal — production code constructs attached bodies only.
-    ///
-    /// A second DESIGNATED init on purpose. Delegating to init(gameObject:) is
-    /// impossible — `isStandalone` is a `let` that init assigns `false`, and a
-    /// delegating init can't reassign it — and extracting a shared private
-    /// designated init would mean rewriting the attached init, whose
-    /// released-weak fallback behavior is pinned by
-    /// RigidBodyTests.rigidBodyToleratesNilGameObject. Parameters mirror
-    /// init(gameObject:) exactly (same names, order, defaults; `detachedAt
-    /// position` stands in for `gameObject`), and both bodies repeat the full
-    /// stored-property block in the same order, so the two diff cleanly and a
-    /// future default-less stored property is a compile error in BOTH inits.
-    internal init(detachedAt position: float3,
-                  collidedWith: Set<ObjectIdentifier> = [],
-                  mass: Float = 1,
-                  velocity: float3 = .zero,
-                  acceleration: float3 = .zero,
-                  force: float3 = .zero,
-                  restitution: Float = 1,
-                  isStatic: Bool = false,
-                  shouldApplyGravity: Bool = true) {
-        self.gameObject = nil
-        self.collidedWith = collidedWith
-        self.mass = mass
-        self.velocity = velocity
-        self.acceleration = acceleration
-        self.force = force
-        self.restitution = restitution
-        self.isStatic = isStatic
-        self.shouldApplyGravity = shouldApplyGravity
-        self.isStandalone = true
-        self.standalonePosition = position
-        // Deliberately NO back-registration: there is no GameObject to attach
-        // to. Harness code hands the body straight to PhysicsWorld
-        // (addEntity/setEntities).
+    /// Detached body for Metal-free tests: the real class, no GameObject.
+    internal convenience init(detachedAt position: float3) {
+        self.init(gameObject: nil, standalonePosition: position)
     }
     
     func setPosition(_ position: float3) {
         invalidateWorldColliders()
         
-        if isStandalone {
+        if standalonePosition != nil {
             standalonePosition = position
         }
         else {
-            self.gameObject?.setPosition(position)
+            gameObject?.setPosition(position)
         }
     }
     
     func getPosition() -> float3 {
-        isStandalone ? standalonePosition : (self.gameObject?.getPosition() ?? .zero)
+        standalonePosition ?? gameObject?.getPosition() ?? .zero
     }
     
     func getAABB() -> AABB {
         // Compound bodies: union of the world colliders' bounds.
         let worlds = worldColliders()
         guard var merged = worlds.first?.aabb else {
-            // No colliders: the legacy node-AABB delegate, unchanged.
+            // No colliders: the node's own AABB.
             return self.gameObject?.getAABB() ?? AABB(center: .zero, radius: .zero)
         }
 
@@ -262,11 +194,25 @@ public class RigidBody: PhysicsEntity {
             return nil
         }
     }
+    
+    /// The body's world pose for collider and strut math. Attached bodies read
+    /// their node's LOCAL transform, which is valid only for scene-root
+    /// children (asserted). Detached bodies, and attached bodies whose
+    /// GameObject was released, get the identity rotation at getPosition().
+    func pose() -> (position: float3, rotation: float3x3, uniformScale: Float) {
+        guard let node = gameObject else {
+            return (getPosition(), matrix_identity_float3x3, 1.0)
+        }
+        
+        assert(node.parent == nil || node.parent is GameScene,
+               "RigidBody on nested node '\(node.getName())': pose math assumes a scene-root child")
+        
+        return (node.getPosition(), node.getRotationMatrix().upperLeft3x3, node.uniformScale)
+    }
 }
 
-/// Bitmask vocabulary for collision filtering. Extend as needed; assign
-/// categories when a scene actually needs to filter (Phase B/C) — the
-/// defaults (default category, all-mask) keep every pair live.
+/// Bitmask vocabulary for collision filtering. Nothing assigns categories
+/// yet; the defaults (default category, all mask) keep every pair live.
 enum CollisionCategory {
     static let `default`: UInt32    = 1 << 0
     static let world: UInt32        = 1 << 1    // ground plane, terrain

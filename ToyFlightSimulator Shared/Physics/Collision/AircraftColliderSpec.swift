@@ -5,17 +5,11 @@
 //  Created by Albertino Padin on 7/19/26.
 //
 
-/// Compound collider specs per player-selectable aircraft. Authored in
-/// post-import engine-local units, which meterization makes METERS (import
-/// folds `realWorldLength / nativeLength` into the basis transform — see
-/// ModelLibrary.makeLibrary()). Aircraft run at scale 1.0, so world meters
-/// = spec meters × uniformScale = spec meters; `uniformScale` stays in the
-/// world-collider math only as an optional gameplay multiplier — see the
-/// units contract in plans/claude/compound_rigid_bodies_implementation_plan.md
-/// (step 0.5). Numbers overlay-verified in-app 2026-08-29 (Phase 0 exit
-/// criterion 2); now LIVE physics geometry (FlightboxWithPhysics installs the
-/// spec on the player aircraft's RigidBody) — re-run the X-key overlay after
-/// any edit.
+/// Compound collider specs per aircraft in post-import meters (1 unit = 1 m
+/// after meterization; aircraft run at scale 1.0). Verified in-app with the
+/// overlay on 2026-08-29 and live physics geometry since Phase A. Re-check
+/// with the X-key overlay after any edit. Units contract: Phase 0 of
+/// plans/claude/compound_rigid_bodies_implementation_plan_simplified.md.
 enum AircraftColliderSpec {
     /// Exhaustive over AircraftType with no `default` (same convention as
     /// SceneManager's registration switches): adding an aircraft forces a
@@ -25,12 +19,11 @@ enum AircraftColliderSpec {
             case .f22_cgtrader:
                 return f22CGTrader
             case .f16, .f18, .f22, .f35:
-                return []   // authored when each aircraft gets its Phase A body
+                return []   // not authored yet: these keep the legacy sphere body
         }
     }
 
-    /// From research/claude/compound_rigid_bodies_research_2026-07-14.md §2.3
-    /// (three primitives ≈ the whole airframe). Real F-22: length 18.92 m,
+    /// Three primitives cover the airframe. Real F-22: length 18.92 m,
     /// wingspan 13.56 m.
     private static let f22CGTrader: [LocalCollider] = [
         LocalCollider(name: "fuselage",

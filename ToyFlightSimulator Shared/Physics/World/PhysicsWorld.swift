@@ -15,24 +15,20 @@ enum PhysicsUpdateType {
 final class PhysicsWorld {
     public static let gravity: float3 = [0, -9.81, 0]
 
-    // NOTE(P6): storage is the concrete class `RigidBody`, not `any PhysicsEntity`.
-    // RigidBody is currently the only conformer; concrete storage gives direct
-    // class dispatch in the solver loops instead of protocol-witness dispatch.
-    // If a second, non-RigidBody PhysicsEntity type is ever added, either give
-    // it a RigidBody base or revisit these signatures (PhysicsWorld, the
-    // solvers, HeckerCollisionResponse, BroadPhaseCollisionDetector).
+    // Storage is the concrete class RigidBody for direct dispatch in the solver
+    // loops. If a second PhysicsEntity type is ever added, give it a RigidBody
+    // base or revisit the solver signatures.
     private var entities: [RigidBody]
     private var updateType: PhysicsUpdateType
     private var broadPhase = BroadPhaseCollisionDetector()
-    
-    /// Per-instance contact scratch (pre-Phase-A correction 1: parameterized
-    /// parity cases run multiple live worlds concurrently in one process — no
-    /// statics anywhere in the step path). Cleared and refilled by the
-    /// response each step; contents are reused scratch, same discipline as
-    /// the broad phase's pairs array.
-    private var contactsScratch: [Contact] = []
 
-    // Performance testing flags
+    /// Reused per-instance scratch (tests run several worlds concurrently in
+    /// one process, so nothing here may be static).
+    private var contactsScratch: [Contact] = []
+    private var allPairsScratch: [(RigidBody, RigidBody)] = []
+
+    /// When false, every pair is a candidate: the O(n²) comparison baseline for
+    /// the broad phase's statistics. Four of the six parity goldens run this way.
     public var useBroadPhase: Bool = true
     /// Forwarded to the broad phase; when false (default) the per-frame
     /// CFAbsoluteTimeGetCurrent() calls and stat bookkeeping are skipped.
@@ -61,41 +57,53 @@ final class PhysicsWorld {
     public func update(deltaTime: Float) {
         for entity in entities {
             entity.resetCollisions()
-            // Deviation 1: start-of-step invalidation covers node transforms
-            // changed since the last step — attitude rotation never routes
-            // through RigidBody.setPosition, so the dirty flag alone can't
-            // see it. Mid-step moves are covered by setPosition itself.
+            // Node transforms can change between steps without going through
+            // RigidBody.setPosition (attitude rotation), so every world-collider
+            // cache is invalidated here. setPosition covers mid-step moves.
             entity.invalidateWorldColliders()
         }
 
+        let pairs: [(RigidBody, RigidBody)]
         if useBroadPhase {
-            // Use optimized broad-phase collision detection
             broadPhase.update(entities: entities)
-            let potentialPairs = broadPhase.getPotentialCollisionPairs()
-
-            switch self.updateType {
-                case .NaiveEuler:
-                    naiveUpdate(deltaTime: deltaTime, collisionPairs: potentialPairs)
-
-                case .HeckerVerlet:
-                    heckerVerletUpdate(deltaTime: deltaTime, collisionPairs: potentialPairs)
-            }
+            pairs = broadPhase.getPotentialCollisionPairs()
         } else {
-            // Use original O(n²) algorithm for comparison
-            switch self.updateType {
-                case .NaiveEuler:
-                    naiveUpdateOriginal(deltaTime: deltaTime)
+            Self.appendAllPairs(of: entities, into: &allPairsScratch)
+            pairs = allPairsScratch
+        }
+        
+        switch updateType {
+            case .NaiveEuler:
+                EulerSolver.step(deltaTime: deltaTime,
+                                 gravity: Self.gravity,
+                                 entities: entities,
+                                 collisionPairs: pairs,
+                                 contactsScratch: &contactsScratch)
+                
+            case .HeckerVerlet:
+                HeckerCollisionResponse.resolveCollisions(collisionPairs: pairs,
+                                                          contactsScratch: &contactsScratch)
+                VerletSolver.step(deltaTime: deltaTime, gravity: Self.gravity, entities: entities)
+        }
+    }
 
-                case .HeckerVerlet:
-                    heckerVerletUpdateOriginal(deltaTime: deltaTime)
+    /// Every unordered pair (i < j) in index order: the same visiting order as
+    /// the old O(n²) loops, so the goldens do not move.
+    static func appendAllPairs(of entities: [RigidBody], into out: inout [(RigidBody, RigidBody)]) {
+        out.removeAll(keepingCapacity: true)
+        for i in 0..<entities.count {
+            for j in (i + 1)..<entities.count {
+                out.append((entities[i], entities[j]))
             }
         }
     }
 
-    // Optimized update methods using broad-phase pairs
+    // MARK: - Deprecated update paths
+
+    /// Deprecated and unused. `update(deltaTime:)` now calls the solvers
+    /// directly on the candidate pairs (Phase A cleanup C3). Kept until the
+    /// single-path update has soaked; delete together with the three below.
     private func naiveUpdate(deltaTime: Float, collisionPairs: [(RigidBody, RigidBody)]) {
-        // P1: the Euler path resolves collisions against the broad-phase
-        // candidate pairs instead of its own O(n²) sweep.
         EulerSolver.step(deltaTime: deltaTime,
                          gravity: PhysicsWorld.gravity,
                          entities: entities,
@@ -103,24 +111,29 @@ final class PhysicsWorld {
                          contactsScratch: &contactsScratch)
     }
 
+    /// Deprecated and unused; see naiveUpdate.
     private func heckerVerletUpdate(deltaTime: Float, collisionPairs: [(RigidBody, RigidBody)]) {
-        HeckerCollisionResponse.resolveCollisions(deltaTime: deltaTime,
-                                                  collisionPairs: collisionPairs,
+        HeckerCollisionResponse.resolveCollisions(collisionPairs: collisionPairs,
                                                   contactsScratch: &contactsScratch)
         VerletSolver.step(deltaTime: deltaTime, gravity: PhysicsWorld.gravity, entities: entities)
     }
 
-    // Original O(n²) update methods for comparison
+    /// Deprecated and unused. The broad-phase-off mode of `update(deltaTime:)`
+    /// builds the same all-pairs list with appendAllPairs; this body was
+    /// rerouted through it when the O(n²) solver overloads were deleted.
     private func naiveUpdateOriginal(deltaTime: Float) {
+        Self.appendAllPairs(of: entities, into: &allPairsScratch)
         EulerSolver.step(deltaTime: deltaTime,
                          gravity: PhysicsWorld.gravity,
                          entities: entities,
+                         collisionPairs: allPairsScratch,
                          contactsScratch: &contactsScratch)
     }
 
+    /// Deprecated and unused; see naiveUpdateOriginal.
     private func heckerVerletUpdateOriginal(deltaTime: Float) {
-        HeckerCollisionResponse.resolveCollisions(deltaTime: deltaTime,
-                                                  entities: entities,
+        Self.appendAllPairs(of: entities, into: &allPairsScratch)
+        HeckerCollisionResponse.resolveCollisions(collisionPairs: allPairsScratch,
                                                   contactsScratch: &contactsScratch)
         VerletSolver.step(deltaTime: deltaTime, gravity: PhysicsWorld.gravity, entities: entities)
     }

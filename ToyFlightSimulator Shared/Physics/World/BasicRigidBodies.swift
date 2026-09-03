@@ -16,23 +16,20 @@ public final class SphereRigidBody: RigidBody {
     }
 
     init(detachedAt position: float3, collisionRadius: Float = 1.0) {
-        super.init(detachedAt: position)
+        super.init(gameObject: nil, standalonePosition: position)
         self.collisionRadius = collisionRadius
     }
     
-    // Default AABB implementation for spheres. Kept alongside the compound
-    // union path in RigidBody.getAABB(): reads the live position directly —
-    // cheaper than the union-of-one and bit-identical to it.
+    // Same box as the base union over the one-sphere view, without the
+    // rebuild.
     override func getAABB() -> AABB {
         return AABB(center: getPosition(), radius: collisionRadius)
     }
 
-    /// Legacy body-level sphere → one synthesized WorldCollider view, so the
-    /// narrow phase has a single collider-based dispatch (Phase A deviation
-    /// 2): collisionRadius is WORLD meters, so node scale is deliberately NOT
-    /// applied, and the metadata is nil — Contact reports nil collider names
-    /// for simple bodies, per its doc contract. The `colliders` list is
-    /// ignored on this class by design (a compound body is a plain RigidBody).
+    /// One-sphere world view so the narrow phase has a single collider-based
+    /// path. collisionRadius is world meters, so node scale is not applied;
+    /// name and group are nil. `colliders` is ignored on this class: a
+    /// compound body is a plain RigidBody.
     override internal func rebuildWorldColliders() {
         assert(colliders.isEmpty, "SphereRigidBody ignores `colliders` — use a plain RigidBody for compounds")
         
@@ -57,7 +54,7 @@ public final class PlaneRigidBody: RigidBody {
     }
 
     init(detachedAt position: float3, collisionNormal: float3 = [0, 1, 0]) {
-        super.init(detachedAt: position)
+        super.init(gameObject: nil, standalonePosition: position)
         self.collisionNormal = collisionNormal.normalize()
     }
     

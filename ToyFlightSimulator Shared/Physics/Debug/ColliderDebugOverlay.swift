@@ -14,11 +14,9 @@ import Foundation
 /// (worldDimensions reports WORLD sizes for the 0.5 units log, so it alone
 /// takes the parent scale as a parameter.)
 enum ColliderOverlayMapping {
-    /// ModelType.Sphere is ObjModel("sphere"), radius exactly 1.0 (measured —
-    /// see research/claude/meter_scale_units_research_2026-07-20.md). NOT
+    /// ModelType.Sphere is ObjModel("sphere"), radius exactly 1.0. Not
     /// SphereMesh, whose MDLMesh(sphereWithExtent:) call is radius-semantics
-    /// and builds 2× the requested size (measured 2026-08-27; latent, pinned
-    /// by MeshBoundsTests).
+    /// and builds twice the requested size (pinned by MeshBoundsTests).
     static let sphereMeshRadius: Float = 1.0
 
     /// ModelType.Cube wraps CubeMesh(size: 1.0) = MDLMesh(boxWithExtent: [1,1,1]);
@@ -40,20 +38,18 @@ enum ColliderOverlayMapping {
         }
     }
 
-    /// MEASURED (2026-08-27, ModelIO on macOS 26; locked by MeshBoundsTests):
-    /// MDLMesh(capsuleWithExtent: [x, y, z]) treats x/z as the RADIUS (not
-    /// diameter) and y as the TOTAL cap-to-cap length — extent [2,6,2] yields
-    /// bounds ±[2,3,2]; [1,2,1] degenerates to the unit sphere. So
+    /// MDLMesh(capsuleWithExtent: [x, y, z]) takes x/z as the radius and y as
+    /// the total cap-to-cap length (measured; pinned by MeshBoundsTests), so
     /// CapsuleMesh(radius:length:) builds exactly radius r, total length L,
-    /// and a collider capsule (halfHeight = cylinder half-segment) maps as:
+    /// and a collider capsule (halfHeight = half the segment) maps as:
     static func capsuleMeshParams(radius: Float, halfHeight: Float) -> (radius: Float, length: Float) {
         (radius, 2 * (halfHeight + radius))
     }
 
-    /// Axis-aligned LOCAL dimensions of a collider × the parent's uniform
-    /// scale, for the units log (0.5). Deliberately not "worldSpan": it
-    /// ignores rotation/translation, so it reports sizes, not extents.
-    /// longestAxisMeters is the 0.5 sanity anchor (fuselage capsule → 18.9).
+    /// Axis-aligned local dimensions of a collider × the parent's uniform
+    /// scale, for the units log. Rotation and translation are ignored, so it
+    /// reports sizes, not extents. longestAxisMeters is the sanity anchor
+    /// (fuselage capsule → 18.9).
     static func worldDimensions(of collider: LocalCollider, parentScale: Float) -> (dims: String, longestAxisMeters: Float) {
         switch collider.shape.scaled(by: parentScale) {
             case .sphere(radius: let r):
@@ -96,9 +92,9 @@ final class ColliderDebugOverlay {
         }
     }
 
-    /// Research doc §2.7 colors. Alpha < 1 is load-bearing: it makes
-    /// isTransparent true, which routes the volumes into the transparent
-    /// collection at registration — hence setColor BEFORE Register.
+    /// Alpha < 1 makes isTransparent true, which routes the volumes into the
+    /// transparent collection at registration, so setColor comes before
+    /// Register.
     static let specColor: float4    = [1, 0, 0, 0.3]
     static let legacyColor: float4  = [1, 1, 0, 0.25]
 
@@ -116,14 +112,10 @@ final class ColliderDebugOverlay {
         apply(mode.next, on: target, spec: spec)
     }
 
-    /// Aircraft swap (FlightboxWithPhysics.applyAircraftSwap): the old host's
-    /// subtree was already detached AND unregistered wholesale by
-    /// SceneManager.RemoveObject — our volumes included, and a hidden hull
-    /// needed no special case ("hidden" is just "not registered"). Dropping
-    /// our refs is what lets the detached island (old aircraft + volumes)
-    /// deallocate (0.3b); calling removeFromScene() on the stale refs would
-    /// be redundant scene-graph surgery on an already-dead subtree — don't.
-    /// Then re-apply the surviving mode to the new host.
+    /// Aircraft swap: SceneManager.RemoveObject already detached and
+    /// unregistered the old subtree, volumes included. Drop the stale
+    /// references (removeFromScene on them would be redundant) and re-apply
+    /// the mode to the new host.
     func hostWasReplaced(by newTarget: GameObject?, spec: [LocalCollider]) {
         let previousMode = mode
         reset()
@@ -172,10 +164,9 @@ final class ColliderDebugOverlay {
     }
 
     /// One volume per enabled spec collider, plus the yellow legacy-sphere
-    /// ghost. Ordering rules (see the plan's "Registration rules"): setColor
-    /// BEFORE Register; target.addChild — plain Node reparenting, because
-    /// GameScene.addChild is the only auto-registering path and the volumes
-    /// hang off the aircraft, not the scene root — THEN SceneManager.Register.
+    /// ghost. Order: setColor before Register; target.addChild (plain Node
+    /// reparenting, since only GameScene.addChild auto-registers and the
+    /// volumes hang off the aircraft), then SceneManager.Register.
     private func buildVolumes(on target: GameObject, spec: [LocalCollider]) {
         if spec.isEmpty {
             print("[ColliderDebugOverlay] no compound spec for \(target.getName()) yet - legacy sphere only")
@@ -190,17 +181,10 @@ final class ColliderDebugOverlay {
             attach(volume, to: target)
         }
 
-        // The legacy physics sphere sits on the body origin (SphereRigidBody
-        // has no local offset), so the ghost keeps the default zero position.
-        // collisionRadius is WORLD meters and the ghost is a CHILD of the
-        // aircraft, so the parent's scale divides back out — 1.0 for
-        // meterized aircraft, kept explicit so a deliberately scaled aircraft
-        // still ghosts correctly.
-        // Since the A-aircraft commit this branch no longer matches a
-        // compound-bodied aircraft (its body is a plain RigidBody, not a
-        // SphereRigidBody), so the yellow ghost disappears BY CONSTRUCTION and
-        // the red volumes above are the LIVE colliders, not a proposal. The
-        // ghost still renders for spec-less aircraft on the legacy sphere.
+        // The legacy sphere sits at the body origin. collisionRadius is world
+        // meters and the ghost is a child, so divide by the parent's scale. A
+        // compound aircraft has a plain RigidBody and gets no ghost; its red
+        // volumes are the live colliders.
         if let sphereBody = target.rigidBody as? SphereRigidBody {
             let ghost = GameObject(name: "ColliderOverlay_legacySphere", modelType: .Sphere)
             ghost.setColor(Self.legacyColor)
@@ -216,9 +200,9 @@ final class ColliderDebugOverlay {
     }
 
     /// Sphere/box volumes reuse the unit library models; capsules get a
-    /// bespoke mesh at exact dimensions through GameObject(name:model:)
-    /// (0.3). Mesh construction on the update thread is established practice
-    /// — scene resets rebuild whole scenes there.
+    /// bespoke mesh at exact dimensions through GameObject(name:model:).
+    /// Mesh construction on the update thread is established practice: scene
+    /// resets rebuild whole scenes there.
     private func makeVolume(for shape: ColliderShape, name: String) -> GameObject {
         switch shape {
             case .sphere:
@@ -233,9 +217,8 @@ final class ColliderDebugOverlay {
         }
     }
 
-    /// Step 0.5's units log, printed on every overlay show. Sanity anchor:
-    /// the fuselage capsule must read ≈ 18.90 m at scale 1.0 (real F-22:
-    /// 18.92 m).
+    /// Units log, printed on every overlay show. Sanity anchor: the fuselage
+    /// capsule must read about 18.90 m at scale 1.0 (real F-22: 18.92 m).
     private func logWorldDimensions(_ spec: [LocalCollider], on target: GameObject) {
         guard !spec.isEmpty else { return }
 

@@ -7,20 +7,9 @@
 
 import simd
 
-/// Reserved per-collider surface override (combined doc, minor-differences
-/// table): friction / restitution per collider arrive with tangent friction in
-/// Phase D. Until then body-level restitution applies and NOTHING reads this —
-/// it exists so authored specs don't churn when Phase D lands.
-struct PhysicsMaterial: Equatable {
-    var friction: Float = 0.5
-    /// nil ⇒ inherit the body's restitution.
-    var restitution: Float? = nil
-}
-
-/// Convex collision primitives, in the cost order every surveyed engine
-/// documents (sphere < capsule < box). Dimensions are authored in the owning
-/// model's local space and scaled by the GameObject's uniform scale when
-/// world-space colliders are computed.
+/// Convex collision primitives, cheapest first. Dimensions are authored in
+/// the model's local space and scaled by the GameObject's uniform scale when
+/// world colliders are built.
 enum ColliderShape: Equatable {
     /// Ball of the given radius.
     case sphere(radius: Float)
@@ -67,30 +56,24 @@ enum ColliderGroup {
     case structure     // buildings, towers, scenery
 }
 
-/// One primitive rigidly attached to a body at a local offset — the per-child
-/// entry of a compound (Bullet btCompoundShape child, Unity child collider,
-/// Jolt compound sub-shape).
+/// One primitive rigidly attached to a body at a local offset: the per-child
+/// entry of a compound.
 struct LocalCollider {
     var name: String
     var shape: ColliderShape
     var localPosition: float3
     var localRotation: simd_quatf
     var group: ColliderGroup
-    /// Cheap runtime on/off (Jolt MutableCompoundShape's role). Disabled
-    /// colliders generate no contacts, don't contribute to the AABB, and the
-    /// debug overlay skips them.
+    /// Runtime on/off. Disabled colliders generate no contacts, do not
+    /// contribute to the AABB, and the debug overlay skips them.
     var isEnabled: Bool
-    /// Reserved: per-collider friction/restitution override (Phase D).
-    /// Body-level restitution applies until then.
-    var material: PhysicsMaterial?
 
     init(name: String,
          shape: ColliderShape,
          localPosition: float3 = .zero,
          localRotation: simd_quatf = .identity,
          group: ColliderGroup = .airframe,
-         isEnabled: Bool = true,
-         material: PhysicsMaterial? = nil) {
+         isEnabled: Bool = true) {
         assert(shape.hasFinitePositiveDimensions,
                "Collider '\(name)' has non-finite or non-positive dimensions: \(shape)")
         self.name = name
@@ -99,21 +82,18 @@ struct LocalCollider {
         self.localRotation = localRotation
         self.group = group
         self.isEnabled = isEnabled
-        self.material = material
     }
 }
 
-/// A LocalCollider transformed into world space for one narrow-phase query.
-/// Derived and read-only (research §3.4: LocalCollider = authored spec,
-/// WorldCollider = per-step snapshot). Obtain via RigidBody.worldColliders();
-/// never store across steps — the backing array is reused scratch.
+/// A LocalCollider in world space for one narrow-phase query. Read it from
+/// RigidBody.worldColliders(); do not keep it across steps, the backing array
+/// is reused.
 struct WorldCollider {
     let shape: ColliderShape        // dimensions already × uniformScale
     let position: float3            // world center
     let rotation: float3x3          // world orientation (orthonormal)
-    /// Identity of the authored LocalCollider. All three are nil for the
-    /// synthesized view of a legacy body-level shape (SphereRigidBody), which
-    /// is what keeps Contact's "nil for simple bodies" contract truthful.
+    /// Identity of the authored LocalCollider. nil for the view of a
+    /// SphereRigidBody, which has no authored collider.
     let sourceIndex: Int?
     let name: String?
     let group: ColliderGroup?
@@ -124,24 +104,14 @@ struct WorldCollider {
             case .sphere(radius: let r):
                 return AABB(center: position, radius: r)
             case .capsule(radius: let r, halfHeight: let hh):
-                // A capsule is a segment with ball ends: endpoints sit at
-                // position ± axis·hh, where axis = rotation.columns.1 (the
-                // world direction of the local Y the capsule is defined
-                // along). The segment's reach from the center along each
-                // WORLD axis is the endpoint offset's per-component
-                // magnitude, |axis·hh| — e.g. its reach along world X is
-                // |axis.x|·hh. Then inflate by r on all three axes, because
-                // every surface point lies within r of the segment.
+                // Endpoints sit at position ± axis·hh (axis = columns.1, the
+                // world direction of local Y); the segment's reach along each
+                // world axis is |axis·hh|, then inflate by r on every axis.
                 let axisExtent = abs(rotation.columns.1 * hh)
                 return AABB(center: position, halfExtents: axisExtent + float3(repeating: r))
             case .box(halfExtents: let he):
-                // World-axis extents of an oriented box: |R|·he. Each column
-                // of R is one box axis in world space, and the box reaches
-                // ±he[i] along its axis i — so its reach along, say, world X
-                // is the sum of what the three half-axis vectors contribute
-                // there: |c0.x|·he.x + |c1.x|·he.y + |c2.x|·he.z. The three
-                // abs(column)·he terms compute that for all world axes at
-                // once, component-wise.
+                // World-axis extents of an oriented box: |R|·he, each column
+                // of R being one box axis in world space.
                 let extents = abs(rotation.columns.0) * he.x
                             + abs(rotation.columns.1) * he.y
                             + abs(rotation.columns.2) * he.z
@@ -150,15 +120,13 @@ struct WorldCollider {
     }
 }
 
-/// Pure LocalCollider × body-pose → WorldCollider transform. Kept free of
-/// RigidBody/Node so the math is unit-testable Metal-free (the attached-body
-/// wrapper in RigidBody.rebuildWorldColliders is three lines of state
-/// gathering around this). The offset transform order — rotate(localPosition
-/// × scale) — matches the debug overlay's scene-graph composition, so physics
-/// and the rendered volumes agree by construction.
+/// Pure LocalCollider × body pose → WorldCollider, kept free of RigidBody and
+/// Node so it is testable without Metal. The offset order,
+/// rotate(localPosition × scale), matches the overlay's scene-graph
+/// composition.
 enum WorldColliderBuilder {
-    /// Appends the world snapshot of every ENABLED collider into `out`
-    /// (cleared first, capacity kept — reused-scratch discipline).
+    /// Appends the world snapshot of every enabled collider into `out`
+    /// (cleared first, capacity kept).
     static func build(_ colliders: [LocalCollider],
                       bodyPosition: float3,
                       bodyRotation: float3x3,

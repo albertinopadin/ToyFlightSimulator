@@ -24,10 +24,8 @@ protocol PhysicsEntity: AnyObject {
     var restitution: Float { get set }
     var isStatic: Bool { get set }
 
-    /// Static/kinematic gravity opt-out, set by authoring only. No longer
-    /// solver state: the response never writes it (the rest latch died in
-    /// Phase A — resting is a per-step contact-impulse equilibrium, research
-    /// §3.2).
+    /// Gravity opt-out, set by authoring only. Neither the solvers nor the
+    /// collision response write it.
     var shouldApplyGravity: Bool { get set }
 
     func setPosition(_ position: float3)
@@ -44,10 +42,5 @@ extension PhysicsEntity {
 
     func zeroForce() {
         force = .zero
-    }
-
-    // Computed property for dynamic check (inverse of static)
-    var isDynamic: Bool {
-        return !isStatic
     }
 }

@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-20
 **Question:** How do we make 1 scene unit = 1 meter, so an aircraft at `setScale(1)` is its real-world size — instead of hand-tuning per-model scales until things "look somewhat right"?
-**Related docs:** `research/claude/compound_rigid_bodies_research_combined.md` (§4.1 units contract), `plans/claude/compound_rigid_bodies_implementation_plan.md` (step 0.5).
+**Related docs:** `research/claude/compound_rigid_bodies_research_combined.md` (§4.1 units contract), `plans/claude/compound_rigid_bodies_implementation_plan_original.md` (step 0.5).
 
 ---
 

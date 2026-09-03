@@ -2,14 +2,13 @@
 //  PhysicsParityTests.swift
 //  ToyFlightSimulatorTests
 //
-//  Step 0.7 of plans/claude/compound_rigid_bodies_implementation_plan.md:
-//  records the CURRENT physics engine's trajectories as committed goldens
-//  (golden files in the golden-master-testing sense: known-good reference
-//  outputs, checked in as Baselines/*.json, that later runs must reproduce
-//  within tolerance) so Phase A's rewrite can be verified in two commits —
-//  A-routing must match every golden unchanged; A-response deliberately
-//  diverges from first contact and regoldens (re-records the baselines)
-//  with a reviewed diff.
+//  Parity harness (Phase 0, "Parity harness", in
+//  plans/claude/compound_rigid_bodies_implementation_plan_simplified.md):
+//  records the physics engine's trajectories as committed goldens (golden
+//  files in the golden-master-testing sense: known-good reference outputs,
+//  checked in as Baselines/*.json, that later runs must reproduce within
+//  tolerance). A plumbing commit must leave every golden unchanged; a
+//  behavior commit regenerates them with a reviewed diff.
 //
 
 import Foundation
@@ -19,7 +18,7 @@ import simd
 
 // MARK: - Scenarios
 
-/// One case per row of the 0.7 scenario table; rawValue == golden filename stem.
+/// One case per row of the plan's scenario table; rawValue == golden filename stem.
 enum ParityScenario: String, CaseIterable, CustomTestStringConvertible {
     case singleBounceVerlet = "single_bounce_verlet"
     case singleBounceEuler  = "single_bounce_euler"
@@ -192,7 +191,7 @@ enum ParityScenario: String, CaseIterable, CustomTestStringConvertible {
         // PhysicsWorld.getPenetrationDepth(ball:plane:)), and A-routing's
         // bit-exactness vs those goldens needs NarrowPhase's general form
         // dot(c − planePos, n) to reduce to c.y exactly — which it does only
-        // for planePos = .zero, n = [0, 1, 0] (plan A.5, argument 3).
+        // for planePos = .zero, n = [0, 1, 0] (original plan, A.5 argument 3).
         let plane = PlaneRigidBody(detachedAt: .zero, collisionNormal: [0, 1, 0])
         plane.restitution = restitution
         plane.isStatic = true

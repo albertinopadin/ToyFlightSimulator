@@ -21,7 +21,7 @@ import simd
 ///      frame before any sorting happened.
 ///   3. Sweep the sorted order, emitting candidate pairs.
 final class BroadPhaseCollisionDetector {
-    // MARK: - Reused per-frame scratch (P3: no per-frame allocations)
+    // MARK: - Reused per-frame scratch (no per-frame allocations)
 
     private var staticEntities: [RigidBody] = []
     private var staticAABBs: [AABB] = []

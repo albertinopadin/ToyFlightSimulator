@@ -216,10 +216,9 @@ final class FlightboxWithPhysics: GameScene {
         }
 
         if let playerAircraft {
-            // Compound-spec'd aircraft get the real Phase A body; aircraft
-            // without an authored spec keep the legacy 2 m sphere
-            // (AircraftColliderSpec returns [] for them — the exhaustive
-            // switch forces the decision per type).
+            // Aircraft with an authored spec get a compound body; the rest
+            // keep the legacy 2 m sphere (AircraftColliderSpec returns [] for
+            // them; its exhaustive switch forces the decision per type).
             let spec = AircraftColliderSpec.spec(for: aircraft)
             let acRigidBody: RigidBody
 
@@ -234,8 +233,8 @@ final class FlightboxWithPhysics: GameScene {
 
             acRigidBody.restitution = 0.2
 
-            // Debug scaffolding (A.7 exit criterion): named contact reporting,
-            // throttled so a resting aircraft doesn't spam 60 lines/s.
+            // Debug scaffolding: named contact reporting, throttled so a
+            // resting aircraft doesn't spam 60 lines/s.
             let contactLogger = ContactDebugLogger(bodyLabel: playerAircraft.getName())
             acRigidBody.onContact = { contact, other in
                 contactLogger.log(contact, against: other)

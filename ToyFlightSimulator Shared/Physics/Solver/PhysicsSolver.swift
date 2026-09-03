@@ -5,7 +5,7 @@
 //  Created by Albertino Padin on 10/31/24.
 //
 
-// NOTE(P6): solvers operate on concrete [RigidBody] (see PhysicsWorld.entities).
+// Solvers operate on concrete [RigidBody] (see PhysicsWorld.entities).
 // Entities are classes, so no inout is needed — element mutation goes through
 // the reference.
 protocol PhysicsSolver {

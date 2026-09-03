@@ -86,11 +86,9 @@ class GameScene: Node {
         CameraManager.RemoveAllCameras()
         removeAllChildren()
 
-        // The subtree is going away wholesale (SceneManager.TeardownScene
-        // clears every batched collection right after this returns) —
-        // bookkeeping-only reset, no scene-graph surgery on the dying
-        // subtree. With 0.3b, dropping these refs is what lets the detached
-        // volumes deallocate. The rebuilt scene starts with the overlay off.
+        // Bookkeeping reset only: the whole subtree is being dropped and
+        // SceneManager.TeardownScene clears the batched collections. The
+        // rebuilt scene starts with the overlay off.
         colliderOverlay.reset()
     }
     
