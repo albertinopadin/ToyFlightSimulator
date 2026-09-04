@@ -178,28 +178,34 @@ struct VerletSolverTests {
 
     // MARK: - Velocity Verlet fidelity
 
-    @Test("Acceleration carries across steps: half-kicks sum to a full gravity kick")
+    @Test("Acceleration carries across steps; the first step is seeded, not half-kicked")
     func accelerationCarriesAcrossSteps() {
         let body = TestRigidBody(mass: 1.0)
         let entities: [RigidBody] = [body]
         let dt: Float = 0.1
 
-        // Step 1 bootstraps from a(t)=0: only the new-acceleration half-kick.
+        // Step 1: no carried a(t) yet, so it is seeded from this step's forces
+        // (B.3b): a full gravity kick and the ½·g·dt² curvature term. The old
+        // cold start from a(t)=0 gave only 0.5·g·dt here.
         VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
         #expect(approxEqual(body.acceleration, Self.gravity),
                 "acceleration must persist as a(t) for the next step, not be zeroed")
-        #expect(approxEqual(body.velocity, 0.5 * Self.gravity * dt))
+        #expect(body.accelerationIsWarm)
+        #expect(approxEqual(body.velocity, Self.gravity * dt))
+        #expect(approxEqual(body.getPosition(), 0.5 * Self.gravity * (dt * dt)))
 
-        // Step 2: carried a(t)=g plus new a(t+dt)=g → full g·dt this step.
-        // (The old zero-before-read implementation gave only 0.5·g·dt here.)
+        // Step 2: carried a(t)=g plus new a(t+dt)=g → another full g·dt, and
+        // the position stays on the parabola: ½·g·(2·dt)².
         VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
-        #expect(approxEqual(body.velocity, 1.5 * Self.gravity * dt))
+        #expect(approxEqual(body.velocity, 2 * Self.gravity * dt))
+        #expect(approxEqual(body.getPosition(), 0.5 * Self.gravity * ((2 * dt) * (2 * dt))))
     }
 
     @Test("With warmed acceleration, one step matches constant-acceleration kinematics")
     func warmedStepMatchesConstantAccelerationKinematics() {
         let body = TestRigidBody(mass: 1.0)
         body.acceleration = Self.gravity   // as if carried from a prior step
+        body.accelerationIsWarm = true     // take the carried branch, not the seed
         let entities: [RigidBody] = [body]
         let dt: Float = 0.1
 
@@ -208,6 +214,22 @@ struct VerletSolverTests {
         // x = ½·g·dt² (curvature term present), v = g·dt (both half-kicks).
         #expect(approxEqual(body.getPosition(), 0.5 * Self.gravity * (dt * dt)))
         #expect(approxEqual(body.velocity, Self.gravity * dt))
+    }
+
+    @Test("A body that starts static is cold, and seeded on its first dynamic step")
+    func staticBodyStaysColdThenSeeds() {
+        let body = TestRigidBody(mass: 1.0, isStatic: true)
+        let entities: [RigidBody] = [body]
+        let dt: Float = 0.1
+
+        VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
+        #expect(!body.accelerationIsWarm)
+        #expect(approxEqual(body.velocity, .zero))
+
+        body.isStatic = false
+        VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
+        #expect(body.accelerationIsWarm)
+        #expect(approxEqual(body.velocity, Self.gravity * dt), "seeded: a full kick, not the cold half kick")
     }
 
     @Test("Applied force is divided by mass (a = F/m + g), matching EulerSolver")

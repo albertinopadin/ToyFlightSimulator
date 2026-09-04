@@ -33,7 +33,7 @@ struct ForceGeneratorTests {
         #expect(lastDelta == PhysicsWorld.fixedDelta)
     }
 
-    @Test("a constant force accelerates the body through the Verlet half kicks")
+    @Test("a constant force accelerates the body through two full Verlet kicks")
     func constantForceAccelerates() {
         let body = RigidBody(detachedAt: .zero)
         body.mass = 2
@@ -41,13 +41,13 @@ struct ForceGeneratorTests {
         body.forceGenerator = { body, _, _ in body.force += [10, 0, 0] }
         let world = PhysicsWorld(entities: [body], updateType: .HeckerVerlet)
         world.update(deltaTime: Self.dt)
-        // Velocity Verlet bootstraps with a half kick: substep 1 gives
-        // ½·(F/m)·h, substep 2 the full (F/m)·h — 1.5 · 5 · h in total.
-        #expect(approxEqual(body.velocity.x, 1.5 * 5 * PhysicsWorld.fixedDelta))
+        // The first substep is seeded (B.3b), so both substeps kick the full
+        // (F/m)·h: 2 · 5 · h.
+        #expect(approxEqual(body.velocity.x, 2 * 5 * PhysicsWorld.fixedDelta))
         #expect(body.force == .zero, "forces are zeroed at the end of the step")
     }
 
-    @Test("force does not persist between substeps: a hook that writes once kicks once")
+    @Test("force does not persist between substeps: a hook that writes once stops kicking")
     func forceWrittenOnceKicksOnce() {
         let body = RigidBody(detachedAt: .zero)
         body.shouldApplyGravity = false
@@ -59,10 +59,12 @@ struct ForceGeneratorTests {
             }
         }
         let world = PhysicsWorld(entities: [body], updateType: .HeckerVerlet)
-        for _ in 0..<5 { world.update(deltaTime: Self.dt) }
-        // The one substep that saw the force contributes its half kick, the
-        // next substep the carried acceleration's other half, then nothing:
-        // Δv = (F/m)·h, not 10 substeps' worth.
-        #expect(approxEqual(body.velocity.x, 10 * PhysicsWorld.fixedDelta))
+        world.update(deltaTime: Self.dt)   // substep 1 sees the force, substep 2 does not
+        // Trapezoid kicks: ½·(10 + 10)·h on the seeded substep that saw the
+        // force, then ½·(10 + 0)·h from the carried a(t): 15·h in total.
+        let kicked = body.velocity.x
+        #expect(approxEqual(kicked, 1.5 * 10 * PhysicsWorld.fixedDelta))
+        for _ in 0..<4 { world.update(deltaTime: Self.dt) }
+        #expect(body.velocity.x == kicked, "no force after the first substep, no further change")
     }
 }

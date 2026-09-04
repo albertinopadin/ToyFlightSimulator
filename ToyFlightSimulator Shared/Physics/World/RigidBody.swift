@@ -41,6 +41,13 @@ public class RigidBody: PhysicsEntity {
     var isStatic: Bool
     var shouldApplyGravity: Bool
     
+    /// True once VerletSolver has stored a(t) for this body. Until then the
+    /// solver seeds a(t) from the current forces instead of integrating from
+    /// .zero, which ran every Verlet trajectory h/2 late (found at the B.3
+    /// regeneration). Written by VerletSolver only; cleared while the body is
+    /// static. EulerSolver does not carry acceleration and ignores it.
+    var accelerationIsWarm: Bool = false
+    
     /// Compound collision geometry: primitives at body-local offsets. Empty
     /// for planes (handled at body level in the narrow phase), ignored by
     /// SphereRigidBody (it uses collisionRadius); a plain RigidBody with no
