@@ -13,7 +13,24 @@ enum PhysicsUpdateType {
 }
 
 final class PhysicsWorld {
+    /// Fixed simulation step. Physics must not change with the menu's
+    /// 30–120 Hz refresh selection; before B-timestep it did, because
+    /// update(deltaTime:) consumed the raw frame delta. 1/120 s divides every
+    /// selectable frame period exactly (120 Hz: 1 substep per frame, 60 Hz: 2,
+    /// 30 Hz: 4) and makes the rest jitter bound g·dt² a constant 0.68 mm.
+    public static let fixedDelta: Float = 1.0 / 120.0
+    
+    /// At most this many substeps per update call (66.7 ms of simulated
+    /// time). Time beyond it is dropped, not carried, like
+    /// UpdateThread.maxDeltaTime one level down. Replaces the scenes'
+    /// `GameTime.DeltaTime < 1.0` guards.
+    public static let maxSubstepsPerUpdate = 8
+    
     public static let gravity: float3 = [0, -9.81, 0]
+    
+    /// Frame time not yet simulated. Per instance (rule 1: tests run several
+    /// worlds in one process). Always below fixedDelta after an update.
+    private var accumulator: Float = 0
 
     // Storage is the concrete class RigidBody for direct dispatch in the solver
     // loops. If a second PhysicsEntity type is ever added, give it a RigidBody
@@ -54,14 +71,28 @@ final class PhysicsWorld {
         self.entities += entities
     }
 
+    /// `deltaTime` is the frame delta. The world advances in fixed substeps
+    /// and banks the remainder. Counting by division and subtracting once is
+    /// exact in Float for 1/30, 1/60, 1/120 and 1/240 s frames (zero residue),
+    /// which lets FixedTimestepTests compare partitions with ==.
     public func update(deltaTime: Float) {
+        accumulator = min(accumulator + deltaTime, Float(Self.maxSubstepsPerUpdate) * Self.fixedDelta)
+        let substeps = Int(accumulator / Self.fixedDelta)
+        accumulator -= Float(substeps) * Self.fixedDelta
+        for _ in 0..<substeps {
+            step(deltaTime: Self.fixedDelta)
+        }
+    }
+    
+    /// One fixed substep: the pre-B-timestep update(deltaTime:) body, unchanged.
+    private func step(deltaTime: Float) {
         for entity in entities {
             entity.resetCollisions()
             // Node transforms can change between steps without going through
             // RigidBody.setPosition (attitude rotation), so every world-collider
             // cache is invalidated here. setPosition covers mid-step moves.
             entity.invalidateWorldColliders()
-            // Per-step forces (the flight model; the suspension after B.5).
+            // Per-substep forces (the flight model; the suspension after B.5).
             entity.forceGenerator?(entity, deltaTime, self)
         }
 

@@ -67,22 +67,14 @@ final class FreeCamFlightboxScene: GameScene {
         physicsWorld.setEntities(entities)
     }
     
-    private var shouldUpdatePhysics = false
-    
     override func doUpdate() {
         super.doUpdate()
         
         sidewinderMissile.rotateY(Float(GameTime.DeltaTime))
         aim120.rotateY(Float(GameTime.DeltaTime))
         
-        if GameTime.DeltaTime < 1.0 {
-            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
-        }
-        
-//        if GameTime.DeltaTime < 1.0 && shouldUpdatePhysics {
-//            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime) * 2.0)
-//        }
-//        
-//        shouldUpdatePhysics.toggle()
+        // Hitch clamping lives in the world's accumulator (at most 8 substeps
+        // per call); UpdateThread also caps DeltaTime at 100 ms.
+        physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
     }
 }

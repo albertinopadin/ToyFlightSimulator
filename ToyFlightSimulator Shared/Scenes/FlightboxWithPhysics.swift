@@ -303,11 +303,9 @@ final class FlightboxWithPhysics: GameScene {
         if let pending = pendingSwap.take() {
             applyAircraftSwap(pending)
         }
-
-        let fdTime = Float(GameTime.DeltaTime)
-
-        if GameTime.DeltaTime < 1.0 {
-            physicsWorld.update(deltaTime: fdTime)
-        }
+        
+        // Hitch clamping lives in the world's accumulator (at most 8 substeps
+        // per call); UpdateThread also caps DeltaTime at 100 ms.
+        physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
     }
 }

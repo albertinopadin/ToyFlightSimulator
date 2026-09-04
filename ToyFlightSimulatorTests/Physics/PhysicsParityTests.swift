@@ -38,6 +38,9 @@ enum ParityScenario: String, CaseIterable, CustomTestStringConvertible {
         }
     }
 
+    /// Per-update frame delta. Since B-timestep each update runs two 1/120 s
+    /// substeps (PhysicsWorld.fixedDelta); `steps` still counts updates, and
+    /// sampling and the JSON shape are unchanged.
     var dt: Float { 1.0 / 60.0 }
 
     /// Steps covered by the committed golden.
@@ -368,19 +371,19 @@ struct PhysicsParityTests {
     @Test("A-response behavior: resting keeps gravity on (the latch is gone)")
     func restingKeepsGravityOn() throws {
         let track = try ParityRunner.run(.restLatch).tracks[0]
-        // Support-cycle equilibrium: the e=0 impulse cancels each step's
+        // Support-cycle equilibrium: the e=0 impulse cancels each substep's
         // gravity, so the boundary-frame velocity is at most ~one gravity
-        // step (g·dt ≈ 0.163 m/s), and the ball floats within slop + β
-        // residual of touching. EXACT zeros would be dishonest now — that
-        // was the latch's signature.
+        // substep (g·fixedDelta ≈ 0.082 m/s), and the ball floats within
+        // slop + β residual of touching. EXACT zeros would be dishonest now —
+        // that was the latch's signature.
         #expect(track.finalShouldApplyGravity == true)
         let v = track.finalVelocity
         #expect(simd_length(float3(v[0], v[1], v[2])) <= 0.25)
-        // β-equilibrium depth ≈ slop + (per-step gravity sink)/β ≈ 1–2 cm at
-        // 60 Hz — the 0.03 bound is deliberately loose; observed at the
-        // 2026-08-31 regolden: y = 0.4882 (1.18 cm depth), |v| = 0.1635
-        // (exactly g·dt). Tighten toward those once Phase B's fixed step
-        // makes them dt-stable.
+        // β-equilibrium depth ≈ slop + (per-substep gravity sink)/β. The
+        // bounds are ceilings and stay loose on purpose. Observed at the
+        // 2026-09-03 regolden (B-timestep, 1/120 s substeps): y = 0.4933
+        // (0.67 cm depth), |v| = 0.0818 (exactly g·fixedDelta); at the
+        // 2026-08-31 regolden (60 Hz steps): y = 0.4882, |v| = 0.1635.
         let restingY = track.samples.last![1]
         #expect(abs(restingY - 0.5) <= 0.03)
     }

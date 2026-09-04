@@ -144,7 +144,9 @@ struct PhysicsWorldSmokeTests {
 
         let world = PhysicsWorld(entities: [rb, groundRB], updateType: .HeckerVerlet)
         world.useBroadPhase = false
-        world.update(deltaTime: 1.0 / 60.0)
+        // One fixedDelta is exactly one substep (B-timestep); a 1/60 s update
+        // runs two substeps of sustained contact and fires twice per side.
+        world.update(deltaTime: PhysicsWorld.fixedDelta)
 
         // Both sides observe the contact once, each expressed with itself as
         // A: the sphere sees the plane's up normal (B → A), the plane the

@@ -12,6 +12,7 @@
 
 ## Changelog
 
+- **2026-09-03** — B-timestep landed (B.3): fixed 1/120 s substeps behind a per-world accumulator (at most 8 per update); the four scenes drop their hitch guards. All six goldens regenerated and reviewed ("Observed" under B.3). `FixedTimestepTests` added; `ForceGeneratorTests` expectations flipped to substep values. Two review-table expectations were wrong: Verlet free fall is not step-independent (the solver bootstraps from a = 0 and runs h/2 late), and `head_on_pair`'s exact-tangency contact moved one substep later by float rounding. `PhysicsWorldSmokeTests.onContactFiresOnAttachedPath` needed one edit (it counted one contact per update; it now steps one `fixedDelta`).
 - **2026-09-03** — B-generators landed (B.1–B.2): `RigidBody.forceGenerator`, called by `PhysicsWorld` at the top of every step; `Aircraft.generateForces` computes the flight force inside the step from the input cached in `doUpdate`. `ForceGeneratorTests` added (plus a third test pinning that force does not persist between steps). Goldens byte-identical under the dry run.
 - **2026-09-03** — Phase A cleanup closed by owner. Still open for a later plumbing commit: the four deprecated `PhysicsWorld` update methods (C3, third item) and O1.
 - **2026-09-02** — Phase A cleanup landed (C1–C10) as one plumbing commit. Deviations: the four private `PhysicsWorld` update methods are kept as deprecated, unused code by owner decision (C3, third item); the two `*Original` bodies were rerouted through `appendAllPairs` so the O(n²) solver overloads C1/C2 delete could go. O1 not taken.
@@ -830,7 +831,7 @@ struct ForceGeneratorTests {
 
 Implements combined doc D4: physics must not change with the refresh rate, stiff suspension springs (B.4) want a small fixed step, and the rest jitter bound g·dt² becomes a constant (0.68 mm at 120 Hz, versus 2.7 mm at 60 and 10.9 mm at 30). Every golden regenerates, because halving the integration step changes every trajectory.
 
-- [ ] **Edit:** `Physics/World/PhysicsWorld.swift`. The existing `update(deltaTime:)` body moves unchanged into a private `step(deltaTime:)`; the new `update` is the accumulator:
+- [x] **Edit:** `Physics/World/PhysicsWorld.swift`. The existing `update(deltaTime:)` body moves unchanged into a private `step(deltaTime:)`; the new `update` is the accumulator:
 
 ```swift
     /// Fixed simulation step. Physics must not change with the menu's
@@ -872,7 +873,7 @@ Implements combined doc D4: physics must not change with the refresh rate, stiff
     }
 ```
 
-- [ ] **Edit (×4):** the scenes drop their hitch guards; the clamp lives in the world now, and `UpdateThread.maxDeltaTime` already caps the input at 100 ms.
+- [x] **Edit (×4):** the scenes drop their hitch guards; the clamp lives in the world now, and `UpdateThread.maxDeltaTime` already caps the input at 100 ms.
 
 `FlightboxWithPhysics.doUpdate` (lines 308–312):
 
@@ -901,12 +902,22 @@ The stress scene's printed per-call time now covers two substeps at 60 Hz, so it
 | `head_on_pair` | Contact at the same time (0.3 s = 36 substeps). Mirror symmetry exact, velocities swap to ±5, the Y column differs by the finer step. |
 | `ball_cluster_16`, `stress_grid_50` | Full regeneration. The invariants (finite, no tunneling, speed budgets) must pass unedited; a tripped budget is a timestep bug, not a budget to raise. |
 
-Suites that must stay green without edits, and why: `CollisionResponseTests` (every bound is a ceiling and the equilibrium tightens: |v| about 0.08 against a 0.25 ceiling, |y − 0.5| about 0.007 against 0.03; the 3:1 correction split holds per substep, so it holds per frame), `CompoundBodyTests` (settle at 1.05 ± 0.05 moves about 3 mm tighter; the banked test steps no world), `PhysicsParityTests.restingKeepsGravityOn` (same ceilings), `PhysicsWorldSmokeTests` (every call uses dt = 1/60, so exactly two substeps; nothing asserts step-count arithmetic).
+**Observed at the 2026-09-03 regeneration** (review script over old vs new JSON; the runner's invariants held on every step of every scenario):
 
-- [ ] `ForceGeneratorTests`: the two flagged expectations flip (10 calls; `fixedDelta`; `1.5 · 5 · fixedDelta`).
-- [ ] `PhysicsParityTests`: doc note only. `ParityScenario.dt` is still the per-update frame delta; each update now runs two substeps. Sampling and JSON shape are unchanged.
+| Scenario | Observed |
+|---|---|
+| `single_bounce_verlet` | First contact at sample 58 in both. Apexes 4.1444 / 3.4517 / 2.8904 → 4.1445 / 3.4514 / 2.8895, decreasing; sampled bounce penetration shallower (min y 0.4247 → 0.4561); gravity on. **The pre-contact column moved by up to 3.9 cm, and that is not rounding:** `VerletSolver` bootstraps from `acceleration = .zero`, so free fall runs exactly h/2 late (y = y₀ − ½·g·(t² − t·h)); old − new matched ½·g·t·(1/60 − 1/120) to 5e-6 over all 58 samples. The row above assumed a warm start. Halving the step halves the lag; removing it (bootstrap a(t) from the forces before the first integrate) is a separate behavior commit that regenerates the goldens. |
+| `single_bounce_euler` | Bias halves as predicted (old − new = −½·g·t/120 to 2e-6). First bounce at sample 57 in both; apexes 4.2795 / 3.6868 → 4.2121 / 3.5677, against the exact e = 0.9 values 4.145 / 3.4525, so the finer step is closer to the parabola. |
+| `rest_latch` | Final \|v\| 0.1635 → 0.0818 (= g/120), resting y 0.4882 → 0.4933, gravity on, first contact at sample 44 in both. As predicted. |
+| `head_on_pair` | Mirror symmetry exact; velocities swap to ±5; the Y column differs by the Verlet bootstrap lag (max 0.0818 = ½·g·2 s/120). **The contact landed at substep 37, not 36:** the scenario touches exactly at t = 0.3 s, and at 120 Hz the substep-36 gap rounds to just above 1.0, so the pair overlaps by one substep (0.0833 m) before responding; the 0.2·(0.0833 − 0.005)/2 = 7.8 mm position correction each is visible at sample 19 and carries through (final A.x −9.0000 → −8.9245). Exact tangency at a step boundary is a rounding coin flip; the scenario stays as designed. |
+| `ball_cluster_16`, `stress_grid_50` | Every track differs from sample 1 (the bootstrap lag alone exceeds 1e-4 by t = 0.05 s). Deepest penetration 0.201 → 0.068 m and 0.230 → 0.119 m; samples below touching 10 → 4 and 19 → 10; final speeds within budget (max 8.65 and 15.7 m/s); gravity on everywhere. |
 
-- [ ] **File (new):** `ToyFlightSimulatorTests/Physics/FixedTimestepTests.swift`
+Suites that must stay green without edits, and why: `CollisionResponseTests` (every bound is a ceiling and the equilibrium tightens: |v| about 0.08 against a 0.25 ceiling, |y − 0.5| about 0.007 against 0.03; the 3:1 correction split holds per substep, so it holds per frame), `CompoundBodyTests` (settle at 1.05 ± 0.05 moves about 3 mm tighter; the banked test steps no world), `PhysicsParityTests.restingKeepsGravityOn` (same ceilings), `PhysicsWorldSmokeTests` (every call uses dt = 1/60, so exactly two substeps). **Observed 2026-09-03:** one edit was needed after all — `onContactFiresOnAttachedPath` counted one `onContact` per update, and two substeps of sustained contact fire it twice per side; it now steps one `fixedDelta`.
+
+- [x] `ForceGeneratorTests`: the two flagged expectations flip (10 calls; `fixedDelta`; `1.5 · 5 · fixedDelta`).
+- [x] `PhysicsParityTests`: doc note only. `ParityScenario.dt` is still the per-update frame delta; each update now runs two substeps. Sampling and JSON shape are unchanged.
+
+- [x] **File (new):** `ToyFlightSimulatorTests/Physics/FixedTimestepTests.swift`
 
 ```swift
 import Foundation

@@ -68,22 +68,21 @@ final class BallPhysicsScene: GameScene {
     var accum: UInt64 = 0
     
     override func doUpdate() {
-        if GameTime.DeltaTime <= 1.0 {
-//            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
-            
-            let time = timeit {
-                physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
-            }
-            
-            accum += time
-            
-            if counter % 120 == 0 {
-                let avg = Double(accum) / Double(120) * 1e-9
-                accum = 0
-                print("[BallPhysiscsScene doUpdate] time: \(avg)")
-            }
-            
-            counter += 1
+        // Hitch clamping lives in the world's accumulator (at most 8 substeps
+        // per call); UpdateThread also caps DeltaTime at 100 ms. The timed
+        // call covers every substep of the frame (two at 60 Hz).
+        let time = timeit {
+            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
         }
+
+        accum += time
+
+        if counter % 120 == 0 {
+            let avg = Double(accum) / Double(120) * 1e-9
+            accum = 0
+            print("[BallPhysiscsScene doUpdate] time: \(avg)")
+        }
+
+        counter += 1
     }
 }

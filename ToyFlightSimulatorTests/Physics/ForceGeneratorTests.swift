@@ -3,7 +3,7 @@
 //  ToyFlightSimulatorTests
 //
 //  B.2 (B-generators): the per-body force hook PhysicsWorld calls at the top
-//  of every step. Metal-free — detached bodies in real PhysicsWorlds.
+//  of every substep. Metal-free — detached bodies in real PhysicsWorlds.
 //
 
 import Foundation
@@ -15,9 +15,9 @@ import simd
 struct ForceGeneratorTests {
     private static let dt: Float = 1.0 / 60.0
 
-    @Test("the hook runs once per update with the step delta, on both solvers",
+    @Test("the hook runs once per substep with fixedDelta, on both solvers",
           arguments: [PhysicsUpdateType.NaiveEuler, .HeckerVerlet])
-    func hookRunsOncePerUpdate(_ updateType: PhysicsUpdateType) {
+    func hookRunsOncePerSubstep(_ updateType: PhysicsUpdateType) {
         let body = RigidBody(detachedAt: .zero)
         body.shouldApplyGravity = false
         var calls = 0
@@ -28,11 +28,12 @@ struct ForceGeneratorTests {
         }
         let world = PhysicsWorld(entities: [body], updateType: updateType)
         for _ in 0..<5 { world.update(deltaTime: Self.dt) }
-        #expect(calls == 5)               // B.3: 10 (two substeps per update)
-        #expect(lastDelta == Self.dt)     // B.3: PhysicsWorld.fixedDelta
+        // A 1/60 s update is two 1/120 s substeps (B.3).
+        #expect(calls == 10)
+        #expect(lastDelta == PhysicsWorld.fixedDelta)
     }
 
-    @Test("a constant force accelerates the body through the Verlet half kick")
+    @Test("a constant force accelerates the body through the Verlet half kicks")
     func constantForceAccelerates() {
         let body = RigidBody(detachedAt: .zero)
         body.mass = 2
@@ -40,12 +41,13 @@ struct ForceGeneratorTests {
         body.forceGenerator = { body, _, _ in body.force += [10, 0, 0] }
         let world = PhysicsWorld(entities: [body], updateType: .HeckerVerlet)
         world.update(deltaTime: Self.dt)
-        // Velocity Verlet starts with a half kick: Δv = ½·(F/m)·dt.
-        #expect(approxEqual(body.velocity.x, 0.5 * 5 * Self.dt))   // B.3: 1.5 · 5 · fixedDelta
+        // Velocity Verlet bootstraps with a half kick: substep 1 gives
+        // ½·(F/m)·h, substep 2 the full (F/m)·h — 1.5 · 5 · h in total.
+        #expect(approxEqual(body.velocity.x, 1.5 * 5 * PhysicsWorld.fixedDelta))
         #expect(body.force == .zero, "forces are zeroed at the end of the step")
     }
 
-    @Test("force does not persist between steps: a hook that writes once kicks once")
+    @Test("force does not persist between substeps: a hook that writes once kicks once")
     func forceWrittenOnceKicksOnce() {
         let body = RigidBody(detachedAt: .zero)
         body.shouldApplyGravity = false
@@ -58,9 +60,9 @@ struct ForceGeneratorTests {
         }
         let world = PhysicsWorld(entities: [body], updateType: .HeckerVerlet)
         for _ in 0..<5 { world.update(deltaTime: Self.dt) }
-        // The one step that saw the force contributes its half kick, the next
-        // step the carried acceleration's other half, then nothing:
-        // Δv = (F/m)·dt, not five steps' worth.
-        #expect(approxEqual(body.velocity.x, 10 * Self.dt))   // B.3: 10 · fixedDelta
+        // The one substep that saw the force contributes its half kick, the
+        // next substep the carried acceleration's other half, then nothing:
+        // Δv = (F/m)·h, not 10 substeps' worth.
+        #expect(approxEqual(body.velocity.x, 10 * PhysicsWorld.fixedDelta))
     }
 }

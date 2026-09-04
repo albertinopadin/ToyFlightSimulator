@@ -133,54 +133,56 @@ final class PhysicsStressTestScene: GameScene {
     }
     
     override func doUpdate() {
-        if GameTime.DeltaTime <= 1.0 {
-            let time = timeit {
-                physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
-            }
-            
-            let timeInSeconds = Double(time) * 1e-9
-            timeAccumulator += time
-            minTime = min(minTime, timeInSeconds)
-            maxTime = max(maxTime, timeInSeconds)
-            
-            // Print statistics every 120 frames (2 seconds at 60fps)
-            if frameCounter % 120 == 0 && frameCounter > 0 {
-                let avgTime = Double(timeAccumulator) / Double(120) * 1e-9
-                
-                // Get broad-phase statistics if available
-                let stats = physicsWorld.getBroadPhaseStats()
-                
-                print("───────────────────────────────────────────────────")
-                print("Spheres: \(currentSphereCount) | Broad-phase: \(useBroadPhase)")
-                print("Avg: \(String(format: "%.6f", avgTime))s | Min: \(String(format: "%.6f", minTime))s | Max: \(String(format: "%.6f", maxTime))s")
-                
-                if useBroadPhase && stats.totalChecks > 0 {
-                    let reduction = Double(stats.checksSaved) / Double(stats.totalChecks + stats.checksSaved) * 100
-                    print("Broad-phase stats: \(stats.totalChecks) checks, \(stats.checksSaved) saved (\(String(format: "%.1f", reduction))% reduction)")
-                }
-                
-                // Store result and move to next test
-                testResults.append((
-                    count: currentSphereCount,
-                    broadPhase: useBroadPhase,
-                    avgTime: avgTime,
-                    minTime: minTime,
-                    maxTime: maxTime
-                ))
-                
-                // Reset for next measurement period
-                timeAccumulator = 0
-                minTime = Double.greatestFiniteMagnitude
-                maxTime = 0
-                
-                // After collecting enough samples, move to next test
-                if frameCounter >= 600 { // 10 seconds of data
-                    moveToNextTest()
-                }
-            }
-            
-            frameCounter += 1
+        // Hitch clamping lives in the world's accumulator (at most 8 substeps
+        // per call); UpdateThread also caps DeltaTime at 100 ms. The timed
+        // call covers every substep of the frame (two at 60 Hz), so compare
+        // per-substep cost against numbers printed before B-timestep.
+        let time = timeit {
+            physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
         }
+
+        let timeInSeconds = Double(time) * 1e-9
+        timeAccumulator += time
+        minTime = min(minTime, timeInSeconds)
+        maxTime = max(maxTime, timeInSeconds)
+
+        // Print statistics every 120 frames (2 seconds at 60fps)
+        if frameCounter % 120 == 0 && frameCounter > 0 {
+            let avgTime = Double(timeAccumulator) / Double(120) * 1e-9
+
+            // Get broad-phase statistics if available
+            let stats = physicsWorld.getBroadPhaseStats()
+
+            print("───────────────────────────────────────────────────")
+            print("Spheres: \(currentSphereCount) | Broad-phase: \(useBroadPhase)")
+            print("Avg: \(String(format: "%.6f", avgTime))s | Min: \(String(format: "%.6f", minTime))s | Max: \(String(format: "%.6f", maxTime))s")
+
+            if useBroadPhase && stats.totalChecks > 0 {
+                let reduction = Double(stats.checksSaved) / Double(stats.totalChecks + stats.checksSaved) * 100
+                print("Broad-phase stats: \(stats.totalChecks) checks, \(stats.checksSaved) saved (\(String(format: "%.1f", reduction))% reduction)")
+            }
+
+            // Store result and move to next test
+            testResults.append((
+                count: currentSphereCount,
+                broadPhase: useBroadPhase,
+                avgTime: avgTime,
+                minTime: minTime,
+                maxTime: maxTime
+            ))
+
+            // Reset for next measurement period
+            timeAccumulator = 0
+            minTime = Double.greatestFiniteMagnitude
+            maxTime = 0
+
+            // After collecting enough samples, move to next test
+            if frameCounter >= 600 { // 10 seconds of data
+                moveToNextTest()
+            }
+        }
+
+        frameCounter += 1
     }
     
     private func moveToNextTest() {
