@@ -78,6 +78,18 @@ extension float4x4 {
     }
 }
 
+extension float3x3 {
+    /// The columns of a rotation matrix are its basis axes in the parent
+    /// frame (left-handed: +X right, +Y up, +Z forward — what Node's
+    /// getRightVector/getUpVector/getFwdVector normalize out of the 4×4 model
+    /// matrix). Unit length only if the matrix is a pure rotation, which
+    /// RigidBody.pose().rotation is. Distinct from `float3.up`, which is
+    /// WORLD up: `rotation.up` is the body's own up.
+    var right: float3 { columns.0 }
+    var up: float3 { columns.1 }
+    var forward: float3 { columns.2 }
+}
+
 extension simd_quatf {
     func rotate(_ v: SIMD3<Float>) -> SIMD3<Float> {
         let u = imag

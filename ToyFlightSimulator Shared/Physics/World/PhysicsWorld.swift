@@ -26,7 +26,11 @@ final class PhysicsWorld {
     /// `GameTime.DeltaTime < 1.0` guards.
     public static let maxSubstepsPerUpdate = 8
     
-    public static let gravity: float3 = [0, -9.81, 0]
+    /// Standard gravity, m/s²: the one place 9.81 is written. `gravity` is
+    /// this magnitude along −Y; static-load sizing reads the scalar
+    /// (AircraftLandingGearSpec.staticStance).
+    public static let standardGravity: Float = 9.81
+    public static let gravity: float3 = [0, -standardGravity, 0]
     
     /// Frame time not yet simulated. Per instance (rule 1: tests run several
     /// worlds in one process). Always below fixedDelta after an update.
@@ -129,6 +133,23 @@ final class PhysicsWorld {
                 out.append((entities[i], entities[j]))
             }
         }
+    }
+
+    /// Distance to the nearest static plane along a ray, or nil. O(planes)
+    /// per call; every current scene has one.
+    public func raycastStaticPlanes(from origin: float3, direction: float3) -> Float? {
+        var nearest: Float? = nil
+        for case let plane as PlaneRigidBody in entities where plane.isStatic {
+            if let t = NarrowPhase.rayVsPlane(origin: origin,
+                                              direction: direction,
+                                              planePoint: plane.getPosition(),
+                                              planeNormal: plane.collisionNormal),
+               t < (nearest ?? .infinity) {
+                nearest = t
+            }
+        }
+        
+        return nearest
     }
 
     // MARK: - Deprecated update paths

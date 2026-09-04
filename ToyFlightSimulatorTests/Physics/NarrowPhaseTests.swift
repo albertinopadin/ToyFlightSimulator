@@ -325,4 +325,66 @@ struct NarrowPhaseTests {
         #expect(NarrowPhase.generateContacts(a, b, into: &contacts) == nil)
         #expect(contacts.isEmpty)
     }
+
+    // MARK: - Ray vs plane (B.4: the strut raycast)
+
+    @Test("ray vs translated plane: t is the distance along the ray, wherever the plane point sits")
+    func rayVsTranslatedPlane() throws {
+        // Straight down from y 5 onto the y = 2 plane: t = 3. The plane point's
+        // lateral offset is irrelevant (the plane is infinite), and so is the
+        // ray origin's.
+        let t = try #require(NarrowPhase.rayVsPlane(origin: [0, 5, 0], direction: [0, -1, 0],
+                                                    planePoint: [7, 2, -3], planeNormal: [0, 1, 0]))
+        #expect(approxEqual(t, 3))
+        let shifted = try #require(NarrowPhase.rayVsPlane(origin: [4, 5, 9], direction: [0, -1, 0],
+                                                          planePoint: [0, 2, 0], planeNormal: [0, 1, 0]))
+        #expect(approxEqual(shifted, 3))
+    }
+
+    @Test("ray vs tilted plane, and an oblique ray: the general dot(p − o, n) / dot(d, n) form")
+    func rayVsTiltedPlane() throws {
+        // 45° plane through the origin, n = (1,1,0)/√2. Straight down from
+        // [0, 2, 0]: dot(p − o, n) = −2/√2 over dot(d, n) = −1/√2 → t = 2, the
+        // hit is the origin. From [1, 2, 0]: −3/√2 over −1/√2 → t = 3, hit
+        // [1, −1, 0], which satisfies x + y = 0.
+        let n = normalize(float3(1, 1, 0))
+        let t0 = try #require(NarrowPhase.rayVsPlane(origin: [0, 2, 0], direction: [0, -1, 0],
+                                                     planePoint: .zero, planeNormal: n))
+        #expect(approxEqual(t0, 2))
+        let t1 = try #require(NarrowPhase.rayVsPlane(origin: [1, 2, 0], direction: [0, -1, 0],
+                                                     planePoint: .zero, planeNormal: n))
+        #expect(approxEqual(t1, 3))
+        // Oblique ray onto the flat plane: from [0, 1, 0] along (1, −1, 0)/√2,
+        // t = √2 and the hit is [1, 0, 0]. The axis-aligned cases only pin the
+        // sign of the divide by dot(d, n); this one pins its magnitude.
+        let d = normalize(float3(1, -1, 0))
+        let t2 = try #require(NarrowPhase.rayVsPlane(origin: [0, 1, 0], direction: d,
+                                                     planePoint: .zero, planeNormal: [0, 1, 0]))
+        #expect(approxEqual(t2, sqrtf(2)))
+        #expect(approxEqual(float3(0, 1, 0) + d * t2, [1, 0, 0]))
+    }
+
+    @Test("parallel, facing-away, and back-face approaches are nil")
+    func rayVsPlaneMisses() {
+        let n: float3 = [0, 1, 0]
+        #expect(NarrowPhase.rayVsPlane(origin: [0, 5, 0], direction: [1, 0, 0],
+                                       planePoint: .zero, planeNormal: n) == nil)   // parallel
+        #expect(NarrowPhase.rayVsPlane(origin: [0, 5, 0], direction: [0, 1, 0],
+                                       planePoint: .zero, planeNormal: n) == nil)   // away from the plane
+        // From below, moving up: the ray crosses the plane, but from the back —
+        // an inverted aircraft's struts must hit nothing.
+        #expect(NarrowPhase.rayVsPlane(origin: [0, -1, 0], direction: [0, 1, 0],
+                                       planePoint: .zero, planeNormal: n) == nil)
+    }
+
+    @Test("a plane behind the origin is nil; an origin exactly on the plane hits at t = 0")
+    func rayVsPlaneBehindAndOnPlane() {
+        let n: float3 = [0, 1, 0]
+        #expect(NarrowPhase.rayVsPlane(origin: [0, -1, 0], direction: [0, -1, 0],
+                                       planePoint: .zero, planeNormal: n) == nil)
+        // On the surface counts as a hit at 0: a wheel exactly at the ground
+        // is a contact with zero compression, not airborne.
+        #expect(NarrowPhase.rayVsPlane(origin: .zero, direction: [0, -1, 0],
+                                       planePoint: .zero, planeNormal: n) == 0)
+    }
 }

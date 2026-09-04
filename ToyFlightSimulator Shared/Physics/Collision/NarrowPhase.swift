@@ -190,6 +190,18 @@ enum NarrowPhase {
 
     // MARK: - Primitive helpers (pure — unit-testable without Metal)
 
+    /// Ray vs infinite plane: distance t ≥ 0 along `direction` (unit length)
+    /// to the plane through planePoint, or nil. Front face only: the ray must
+    /// approach against the normal, so an inverted aircraft's struts hit
+    /// nothing.
+    static func rayVsPlane(origin: float3, direction: float3,
+                           planePoint: float3, planeNormal n: float3) -> Float? {
+        let denominator = dot(direction, n)
+        guard denominator < -1e-6 else { return nil }   // parallel, or facing away
+        let t = dot(planePoint - origin, n) / denominator
+        return t >= 0 ? t : nil                          // plane behind the origin
+    }
+
     /// Squared compare: no sqrt on the reject path, and the same form as the
     /// legacy test, which the goldens cover. Coincident centers give a zero
     /// normal, as before.

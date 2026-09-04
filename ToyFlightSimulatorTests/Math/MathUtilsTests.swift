@@ -115,4 +115,18 @@ struct MathUtilsTests {
                            * SIMD4<Float>(v, 0)).xyz
         #expect(approxEqual(rotatedQuat, rotatedMat, tolerance: 1e-5))
     }
+
+    // MARK: - float3x3 basis axes
+
+    @Test("float3x3.right/up/forward are the rotated basis axes R·x̂, R·ŷ, R·ẑ")
+    func float3x3AxesAreRotatedBasis() {
+        let r = float3x3(simd_quatf(angle: 0.7, axis: normalize(float3(1, 2, 3))))
+        #expect(approxEqual(r.right, r * X_AXIS))
+        #expect(approxEqual(r.up, r * Y_AXIS))
+        #expect(approxEqual(r.forward, r * Z_AXIS))
+        #expect(matrix_identity_float3x3.up == Y_AXIS)
+        // Body up is not world up once the body rolls.
+        let rolled = float3x3(simd_quatf(angle: .halfPi, axis: Z_AXIS))
+        #expect(!approxEqual(rolled.up, float3.up))
+    }
 }
