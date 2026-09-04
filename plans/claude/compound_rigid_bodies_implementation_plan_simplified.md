@@ -12,6 +12,7 @@
 
 ## Changelog
 
+- **2026-09-03** — Phase A cleanup closed by owner. Still open for a later plumbing commit: the four deprecated `PhysicsWorld` update methods (C3, third item) and O1.
 - **2026-09-02** — Phase A cleanup landed (C1–C10) as one plumbing commit. Deviations: the four private `PhysicsWorld` update methods are kept as deprecated, unused code by owner decision (C3, third item); the two `*Original` bodies were rerouted through `appendAllPairs` so the O(n²) solver overloads C1/C2 delete could go. O1 not taken.
 - **2026-09-02** — Simplified rewrite. Phase 0 and Phase A summarized (both done). New "Phase A cleanup" section listing the code changes to make. Phase B re-planned with the design changes listed under "What changed from the original plan".
 - **2026-08-31** — Phase B planned (original doc). Phase A closed: all seven exit criteria met, CI green.
@@ -200,7 +201,7 @@ Implements combined doc §4.2. Landed as three commits: A-routing (plumbing, gol
 
 ---
 
-# Phase A cleanup — changes to make before Phase B
+# Phase A cleanup — changes to make before Phase B ✅ (closed 2026-09-03)
 
 These are the simplifications from the 2026-09-02 review. None changes behavior. Land them as one or two plumbing commits under rule 2: full serial suite green, regeneration dry run byte-identical, `FlightboxWithPhysics` plays the same. C5 (`pose()`) must land before Phase B; the rest can land in any order. Line numbers refer to the tree at `58dbd67`.
 
@@ -621,7 +622,7 @@ The rule: a comment says what the code does and why, in one to four lines. Resea
 
 - [x] `build-for-testing` green; full serial suite green against unchanged goldens (2026-09-02: 286 Swift Testing tests in 45 suites + 20 XCTest, all passed).
 - [x] Regeneration dry run byte-identical (`git diff --exit-code` on `Baselines/` empty; discard the designed failure; clean re-run green). Done 2026-09-02.
-- [ ] `FlightboxWithPhysics` and `BallPhysicsScene` play the same. (Owner verified the game runs after C1–C7; C8–C10 and the dead-code removal were not re-checked in-app.)
+- [x] `FlightboxWithPhysics` and `BallPhysicsScene` play the same. (Owner verified the game runs after C1–C7; C8–C10 and the dead-code removal were not re-checked in-app. Closed with the section, 2026-09-03.)
 - [x] Commit message names the commit as Phase A cleanup (plumbing).
 
 ---
