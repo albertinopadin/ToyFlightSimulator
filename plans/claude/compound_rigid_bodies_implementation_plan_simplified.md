@@ -12,6 +12,7 @@
 
 ## Changelog
 
+- **2026-09-04** — B-suspension part 1 landed (B.4, `86745d4`): `SuspensionStrut`/`SuspensionSolver`, `NarrowPhase.rayVsPlane`, `PhysicsWorld.raycastStaticPlanes`, `LandingGearSuspension`/`LandingGearEvent`, `AircraftLandingGearSpec` (owner's names; listings B.4–B.6 renamed), plus `PhysicsWorld.standardGravity` and `float3x3.right/up/forward` (owner suggestions from implementation). The hand-typed `rayVsPlane` had dropped the divide by dot(d, n); fixed to the listing. Tests per B.4 plus `LandingGearSuspensionTests` and a `MathUtilsTests` case; goldens byte-identical. B-suspension is now two commits (B.4, then B.5): Commits table, Decisions, criterion 6's count, and the implementation order updated. Follow-up `c1f26cc`: `Droppable` reads `standardGravity`.
 - **2026-09-04** — B-warmstart landed (B.3b, `151a370`): `VerletSolver` seeds a(t) from the step's forces on a body's first step (`RigidBody.accelerationIsWarm`, cleared while static). Five goldens regenerated and reviewed ("Observed" under B.3b); `single_bounce_euler` byte-identical. `VerletSolverTests` (two edited, one new) and `ForceGeneratorTests` (two flipped) per the listings; every other suite green unedited. Exit criterion 7 met; criteria 1–2 keep their in-app items open and 6 (CI) waits on the push.
 - **2026-09-03** — B.1–B.3 marked complete (`ccd2aaf`, `efb7957`; exit criteria 1–2 keep their in-app items open). New Step B.3b (B-warmstart) added between B.3 and B.4: `VerletSolver` seeds a(t) on a body's first step (`RigidBody.accelerationIsWarm`), removing the h/2 startup lag found at the B.3 regeneration; commit row, decision row, and exit criterion 7 added.
 - **2026-09-03** — B-timestep landed (B.3): fixed 1/120 s substeps behind a per-world accumulator (at most 8 per update); the four scenes drop their hitch guards. All six goldens regenerated and reviewed ("Observed" under B.3). `FixedTimestepTests` added; `ForceGeneratorTests` expectations flipped to substep values. Two review-table expectations were wrong: Verlet free fall is not step-independent (the solver bootstraps from a = 0 and runs h/2 late), and `head_on_pair`'s exact-tangency contact moved one substep later by float rounding. `PhysicsWorldSmokeTests.onContactFiresOnAttachedPath` needed one edit (it counted one contact per update; it now steps one `fixedDelta`).
@@ -654,7 +655,8 @@ No step straddles a commit boundary; each commit is one kind of change (rule 2).
 | **B-generators** ✅ `ccd2aaf` | B.1–B.2 | Plumbing. Goldens byte-identical (no harness body has a force hook). In-app: flight feels the same; throttle response at most one frame crisper. | `ForceGeneratorTests` (new) |
 | **B-timestep** ✅ `efb7957` | B.3 | Behavior. Regenerate all six goldens and review against the table in B.3. `CollisionResponseTests`, `CompoundBodyTests`, `restingKeepsGravityOn`, `PhysicsWorldSmokeTests` green unedited; the two flagged `ForceGeneratorTests` expectations flip to substep values. In-app: ball scenes settle the same at 30, 60, and 120 Hz. | `FixedTimestepTests` (new) |
 | **B-warmstart** ✅ `151a370` | B.3b | Behavior. Regenerate the goldens and review against the B.3b table: `single_bounce_euler` byte-identical, the five Verlet goldens move by the removed h/2 startup lag only. Every semantic suite green with the two edits listed in B.3b. In-app: nothing visible (a 1/240 s startup shift). | `VerletSolverTests` (two edited, one new), `ForceGeneratorTests` (two expectations flip) |
-| **B-suspension** | B.4–B.5 | Goldens untouched (no harness scenario has struts). In-app: the F-22 stands on its wheels at the logged ride height; gear up drops it to the belly rest; the cyan strut lines match the modeled gear. | `SuspensionSolverTests`, `AircraftGearSpecTests`, `GearSuspensionWorldTests` (new); additions to `NarrowPhaseTests` and `ColliderOverlayMappingTests` |
+| **B-suspension, part 1** ✅ `86745d4` | B.4 | Plumbing. Goldens byte-identical (nothing consumes the new types until B.5; the gravity vector is bit-identical). No in-app change. | `SuspensionSolverTests`, `AircraftLandingGearSpecTests`, `LandingGearSuspensionTests` (new); additions to `NarrowPhaseTests` and `MathUtilsTests` |
+| **B-suspension, part 2** | B.5 | Goldens untouched (no harness scenario has struts). In-app: the F-22 stands on its wheels at the logged ride height; gear up drops it to the belly rest; the cyan strut lines match the modeled gear. | `GearSuspensionWorldTests` (new); addition to `ColliderOverlayMappingTests` |
 | **B-classification** | B.6 | Goldens untouched (observers only). In-app: touchdown, gear-overload, scrape, and crash lines print as described in B.6. | `AirframeContactClassifierTests` (new); one addition to `GearSuspensionWorldTests` |
 
 ## Decisions that differ from the research docs or the original Phase B plan
@@ -675,6 +677,10 @@ No step straddles a commit boundary; each commit is one kind of change (rule 2).
 | Gear load split follows spring rates, not lever arms | Rotation is kinematic, so equal-reach struts share one compression and per-strut load is k·x (about 89/11 mains/nose here, not the geometric 85/15). Total force and ride height are exact; the split corrects itself when Phase D adds pitch. |
 | Sink rate is −v.y; strut force acts along body up | Level-runway simplifications, noted at the code sites. |
 | Warm start via `accelerationIsWarm` on `RigidBody`, not an `acceleration == .zero` test | A flag records what happened. A zero test would also fire for a body whose carried a(t) is exactly zero (gravity off, or a spring exactly balancing weight) and silently swap in a(t+dt). Written by `VerletSolver` only, cleared while a body is static. |
+| B-suspension lands as two commits: B.4 (plumbing, `86745d4`), then B.5 (wiring) | Owner implemented and committed B.4 on its own (2026-09-04). Both halves keep the goldens untouched; criterion 3 and the in-app checks stay with B.5. |
+| Names: `AircraftLandingGearSpec`, `LandingGearEvent`, `onLandingGearEvent`, `weightOnWheels` (planned as `AircraftGearSpec`, `GearEvent`, `onGearEvent`, `isWeightOnWheels`) | Owner's names at implementation: explicit over short, and `weightOnWheels` is the avionics signal's own name. Listings B.4–B.6 renamed 2026-09-04. |
+| `PhysicsWorld.standardGravity` (scalar) behind `PhysicsWorld.gravity` | Owner suggestion at B.4: one written 9.81. `staticStance` defaults to it; `Droppable` reads it (`c1f26cc`). |
+| `float3x3.right/up/forward` in `MathUtils` | Owner suggestion at B.4: a rotation matrix's basis columns by name (`pose.rotation.up` in the suspension). `float3.up` stays world up; the narrow phase's capsule-axis reads keep `columns.1`, where "axis", not "up", is meant. |
 
 ## Step B.1 — the force hook on `RigidBody` and the world call — B-generators ✅ (landed 2026-09-03, `ccd2aaf`)
 
@@ -1201,16 +1207,20 @@ Green without edits, and why: `FixedTimestepTests` (substep counts and the parti
 
 Gate: regenerate, review with a script as at B.3 (add the exact-parabola check and the Euler byte-identity check), commit the JSON, re-run without the variable, green. In-app: nothing visible (a 1/240 s startup shift). Commit as B-warmstart, a behavior commit on its own (rule 2). **Done 2026-09-04** (`151a370`): regenerated, reviewed (table above), JSON committed, clean re-run green.
 
-## Step B.4 — struts, solver, raycast, suspension state, gear specs — B-suspension
+## Step B.4 — struts, solver, raycast, suspension state, gear specs — B-suspension, part 1 ✅ (landed 2026-09-04, `86745d4`)
 
 The gear model both research docs converged on (combined doc §1, §4.3 B2): the aircraft stays one rigid body; each gear leg is a raycast spring-damper. A ray from a body-local attach point along body −Y finds the ground; the compression (how far the uncompressed wheel would sit below the surface) drives F = k·x + c·ẋ; the force pushes the body up along the strut. Animation keeps owning deployment (the gear meshes); physics owns support. Everything in this step is Metal-free; nothing runs in the game until B.5 wires it into `Aircraft`.
 
-- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/SuspensionStrut.swift` (new `Vehicle/` folder; target membership is automatic)
+**Landed 2026-09-04** (`86745d4`) as a plumbing commit on its own: B-suspension is two commits, B.4 then B.5 (Commits table). Found at implementation: the hand-typed `rayVsPlane` had dropped the divide by dot(direction, normal), so a straight-down ray onto level ground returned nil (t came out negative) and an oblique ray would have had the wrong magnitude; fixed to the listing, and the `NarrowPhaseTests` additions pin the sign (translated, tilted) and the magnitude (oblique). Names differ from the original listings by owner decision — `AircraftLandingGearSpec`, `LandingGearEvent`, `onLandingGearEvent`, `weightOnWheels` — and `StrutStep` is `Equatable` so tests compare against `.noContact`. Two owner suggestions from implementation landed with it: `PhysicsWorld.standardGravity` and `float3x3.right/up/forward` (items below). The listings below are the shipped code.
+
+- [x] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/SuspensionStrut.swift` (new `Vehicle/` folder; target membership is automatic)
 
 ```swift
 //
 //  SuspensionStrut.swift
 //  ToyFlightSimulator
+//
+//  Created by Albertino Padin on 9/4/26.
 //
 
 /// One landing-gear strut: a raycast spring-damper on the aircraft body. The
@@ -1252,15 +1262,18 @@ struct SuspensionStrut {
 
 /// Pure per-strut math, testable without bodies or a world.
 enum SuspensionSolver {
-    struct StrutStep {
+    struct StrutStep: Equatable {
         let compression: Float        // meters, 0...maxTravel·scale
         let compressionRate: Float    // m/s, positive while compressing
         let force: Float              // N along body up, never negative
         let bottomedOut: Bool
         let overloaded: Bool          // unclamped force ≥ maxSupportForce, or bottomed out
 
-        static let noContact = StrutStep(compression: 0, compressionRate: 0, force: 0,
-                                         bottomedOut: false, overloaded: false)
+        static let noContact = StrutStep(compression: 0,
+                                         compressionRate: 0,
+                                         force: 0,
+                                         bottomedOut: false,
+                                         overloaded: false)
     }
 
     /// `distanceToGround` is the raycast distance along −up from the attach
@@ -1293,13 +1306,16 @@ enum SuspensionSolver {
         let force = max(0, min(unclamped, strut.maxSupportForce))
         let overloaded = unclamped >= strut.maxSupportForce || bottomedOut
 
-        return StrutStep(compression: compression, compressionRate: rate, force: force,
-                         bottomedOut: bottomedOut, overloaded: overloaded)
+        return StrutStep(compression: compression,
+                         compressionRate: rate,
+                         force: force,
+                         bottomedOut: bottomedOut,
+                         overloaded: overloaded)
     }
 }
 ```
 
-- [ ] **Edit:** `Physics/Collision/NarrowPhase.swift`, with the other primitive helpers:
+- [x] **Edit:** `Physics/Collision/NarrowPhase.swift`, with the other primitive helpers:
 
 ```swift
     /// Ray vs infinite plane: distance t ≥ 0 along `direction` (unit length)
@@ -1315,7 +1331,7 @@ enum SuspensionSolver {
     }
 ```
 
-- [ ] **Edit:** `Physics/World/PhysicsWorld.swift`, the query the suspension uses (this is why the force hook passes the world):
+- [x] **Edit:** `Physics/World/PhysicsWorld.swift`, the query the suspension uses (this is why the force hook passes the world):
 
 ```swift
     /// Distance to the nearest static plane along a ray, or nil. O(planes)
@@ -1323,29 +1339,63 @@ enum SuspensionSolver {
     public func raycastStaticPlanes(from origin: float3, direction: float3) -> Float? {
         var nearest: Float? = nil
         for case let plane as PlaneRigidBody in entities where plane.isStatic {
-            if let t = NarrowPhase.rayVsPlane(origin: origin, direction: direction,
+            if let t = NarrowPhase.rayVsPlane(origin: origin,
+                                              direction: direction,
                                               planePoint: plane.getPosition(),
                                               planeNormal: plane.collisionNormal),
                t < (nearest ?? .infinity) {
                 nearest = t
             }
         }
+        
         return nearest
     }
 ```
 
-- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/LandingGearSuspension.swift`
+- [x] **Edit:** `Physics/World/PhysicsWorld.swift`, the scalar behind the gravity vector (owner suggestion at implementation: one written 9.81; `staticStance` defaults to it; the vector is bit-identical):
+
+```swift
+    /// Standard gravity, m/s²: the one place 9.81 is written. `gravity` is
+    /// this magnitude along −Y; static-load sizing reads the scalar
+    /// (AircraftLandingGearSpec.staticStance).
+    public static let standardGravity: Float = 9.81
+    public static let gravity: float3 = [0, -standardGravity, 0]
+```
+
+Follow-up (`c1f26cc`): `GameObjects/Droppable.swift` reads `-PhysicsWorld.standardGravity` instead of its own −9.8, closing that file's TODO. Dropped weapons fall 0.1 % faster; not a physics-world path, goldens unaffected.
+
+- [x] **Edit:** `Math/MathUtils.swift`, after the `float4x4` extension (owner suggestion: the body axes by name; `LandingGearSuspension` reads `pose.rotation.up`). The capsule-axis reads in the narrow phase keep `columns.1`, where "axis", not "up", is meant:
+
+```swift
+extension float3x3 {
+    /// The columns of a rotation matrix are its basis axes in the parent
+    /// frame (left-handed: +X right, +Y up, +Z forward — what Node's
+    /// getRightVector/getUpVector/getFwdVector normalize out of the 4×4 model
+    /// matrix). Unit length only if the matrix is a pure rotation, which
+    /// RigidBody.pose().rotation is. Distinct from `float3.up`, which is
+    /// WORLD up: `rotation.up` is the body's own up.
+    var right: float3 { columns.0 }
+    var up: float3 { columns.1 }
+    var forward: float3 { columns.2 }
+}
+```
+
+- [x] **Edit:** `CLAUDE.md`: a **Landing gear** paragraph in the Physics section (types, solver rules, events, spec, `standardGravity`, the `float3x3` axes).
+
+- [x] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/LandingGearSuspension.swift`
 
 ```swift
 //
 //  LandingGearSuspension.swift
 //  ToyFlightSimulator
 //
+//  Created by Albertino Padin on 9/4/26.
+//
 
 /// Gear/ground events. Fired on the UpdateThread inside the physics step;
 /// handlers must be cheap and must not change physics state (the onContact
 /// rule). Nobody is registered until B.6.
-enum GearEvent {
+enum LandingGearEvent {
     /// Weight on wheels went false → true. sinkRate is the body's downward
     /// speed at that substep, before the strut forces act on it (level-runway
     /// vertical rate).
@@ -1365,9 +1415,10 @@ final class LandingGearSuspension {
     /// Current compression per strut, meters; index-aligned with `struts`.
     private(set) var compressions: [Float]
     private var wasOverloaded: [Bool]
-    /// True while any strut carries compression.
-    private(set) var isWeightOnWheels = false
-    var onGearEvent: ((GearEvent) -> Void)?
+    /// True while any strut carries compression (the avionics WoW signal).
+    private(set) var weightOnWheels = false
+
+    var onLandingGearEvent: ((LandingGearEvent) -> Void)?
 
     init(struts: [SuspensionStrut]) {
         self.struts = struts
@@ -1377,17 +1428,16 @@ final class LandingGearSuspension {
 
     /// One substep. `gearDeployed` is the animation gate (Aircraft.isGearDown):
     /// retracted or moving gear produces no force and holds zero compression.
-    func accumulateForces(body: RigidBody,
-                          gearDeployed: Bool,
-                          world: PhysicsWorld,
-                          substepDelta: Float) {
+    func accumulateForces(body: RigidBody, gearDeployed: Bool, world: PhysicsWorld, substepDelta: Float) {
         guard gearDeployed else {
             resetToAirborne()
             return
         }
 
         let pose = body.pose()
-        let up = pose.rotation.columns.1   // strut axis: rays go down −up, force pushes +up
+        // Body up, the strut axis: rays go down −up, force pushes +up. Not
+        // float3.up, which is world up — a rolled aircraft's struts roll with it.
+        let up = pose.rotation.up
 
         for (i, strut) in struts.enumerated() {
             let attachWorld = pose.position + pose.rotation * (strut.attachLocal * pose.uniformScale)
@@ -1400,11 +1450,13 @@ final class LandingGearSuspension {
             compressions[i] = step.compression
             body.force += up * step.force
 
+            // Rising edge only: one event per exceedance, per strut.
             if step.overloaded && !wasOverloaded[i] {
-                onGearEvent?(.gearOverload(strutName: strut.name,
-                                           force: step.force,
-                                           bottomedOut: step.bottomedOut))
+                onLandingGearEvent?(.gearOverload(strutName: strut.name,
+                                                  force: step.force,
+                                                  bottomedOut: step.bottomedOut))
             }
+
             wasOverloaded[i] = step.overloaded
         }
 
@@ -1413,12 +1465,13 @@ final class LandingGearSuspension {
         // force phase runs before the collision response, so body.velocity is
         // still the incoming velocity here.
         let anyContact = compressions.contains { $0 > 0 }
-        if anyContact != isWeightOnWheels {
-            isWeightOnWheels = anyContact
+        if anyContact != weightOnWheels {
+            weightOnWheels = anyContact
             if anyContact {
-                onGearEvent?(.touchdown(sinkRate: max(0, -body.velocity.y), compressions: compressions))
+                let sinkRate = max(0, -body.velocity.y)
+                onLandingGearEvent?(.touchdown(sinkRate: sinkRate, compressions: compressions))
             } else {
-                onGearEvent?(.liftoff)
+                onLandingGearEvent?(.liftoff)
             }
         }
     }
@@ -1434,25 +1487,28 @@ final class LandingGearSuspension {
             compressions[i] = 0
             wasOverloaded[i] = false
         }
-        if isWeightOnWheels {
-            isWeightOnWheels = false
-            onGearEvent?(.liftoff)
+
+        if weightOnWheels {
+            weightOnWheels = false
+            onLandingGearEvent?(.liftoff)
         }
     }
 }
 ```
 
-- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/AircraftGearSpec.swift`
+- [x] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/AircraftLandingGearSpec.swift`
 
 ```swift
 //
-//  AircraftGearSpec.swift
+//  AircraftLandingGearSpec.swift
 //  ToyFlightSimulator
+//
+//  Created by Albertino Padin on 9/4/26.
 //
 
 /// Landing-gear strut specs per aircraft (the AircraftColliderSpec pattern).
 /// Geometry in post-import body-local meters; rates in absolute SI.
-enum AircraftGearSpec {
+enum AircraftLandingGearSpec {
     /// Exhaustive over AircraftType with no `default`: adding an aircraft
     /// forces an authored-or-empty decision. [] means no suspension; the
     /// aircraft rests on its collision geometry as in Phase A.
@@ -1471,33 +1527,44 @@ enum AircraftGearSpec {
     /// 6.1 m (about 6.0). All three struts share one reachBelowOrigin, 2.05 m,
     /// so a level aircraft touches all wheels together. Rate sizing is derived
     /// in the plan (Phase B, step B.4); the resulting ride height, 1.93 m at
-    /// 30 t, is asserted by AircraftGearSpecTests.
+    /// 30 t, is asserted by AircraftLandingGearSpecTests.
     private static let f22CGTrader: [SuspensionStrut] = [
         SuspensionStrut(name: "noseGear",
                         attachLocal: [0, -0.55, 5.2],
-                        restLength: 1.20, maxTravel: 0.40, wheelRadius: 0.30,
+                        restLength: 1.20,
+                        maxTravel: 0.40,
+                        wheelRadius: 0.30,
                         springRate: 268_000,
-                        compressionDamping: 34_000, reboundDamping: 51_000,
+                        compressionDamping: 34_000,
+                        reboundDamping: 51_000,
                         maxSupportForce: 100_000),
         SuspensionStrut(name: "mainGearLeft",
                         attachLocal: [-1.62, -0.55, -0.9],
-                        restLength: 1.05, maxTravel: 0.45, wheelRadius: 0.45,
+                        restLength: 1.05,
+                        maxTravel: 0.45,
+                        wheelRadius: 0.45,
                         springRate: 1_100_000,
-                        compressionDamping: 146_000, reboundDamping: 219_000,
+                        compressionDamping: 146_000,
+                        reboundDamping: 219_000,
                         maxSupportForce: 400_000),
         SuspensionStrut(name: "mainGearRight",
                         attachLocal: [1.62, -0.55, -0.9],
-                        restLength: 1.05, maxTravel: 0.45, wheelRadius: 0.45,
+                        restLength: 1.05,
+                        maxTravel: 0.45,
+                        wheelRadius: 0.45,
                         springRate: 1_100_000,
-                        compressionDamping: 146_000, reboundDamping: 219_000,
+                        compressionDamping: 146_000,
+                        reboundDamping: 219_000,
                         maxSupportForce: 400_000)
     ]
 
     /// Static stance for a level aircraft with equal-reach struts: every strut
     /// shares one compression x = m·g / Σk, and ride height = reach − x. nil
-    /// for an empty spec.
-    static func staticStance(struts: [SuspensionStrut], mass: Float, gravity: Float = 9.81)
-        -> (compression: Float, rideHeight: Float)? {
+    /// for an empty spec. `gravity` is the scalar magnitude; the default is
+    /// the world's (PhysicsWorld.gravity is the same value along −Y).
+    static func staticStance(struts: [SuspensionStrut],
+                             mass: Float,
+                             gravity: Float = PhysicsWorld.standardGravity) -> (compression: Float, rideHeight: Float)? {
         guard let first = struts.first else { return nil }
         let totalRate = struts.reduce(0) { $0 + $1.springRate }
         guard totalRate > 0 else { return nil }
@@ -1526,11 +1593,15 @@ enum AircraftGearSpec {
 
 ### Tests for this step (Metal-free, `.tags(.physics)`)
 
-- [ ] `SuspensionSolverTests` (new, pure): nil distance and out-of-reach distance give `.noContact`; static compression gives k·x at zero rate; compressing uses the compression damping, extending the rebound damping; fast rebound gives force exactly 0, never negative; `maxSupportForce` clamps and `overloaded` comes from the unclamped value; bottom-out caps compression at `maxTravel` and sets the flag; `uniformScale` doubles reach and travel and leaves rates alone; touchdown rate recovery (previous 0, penetration v·dt gives rate v).
-- [ ] `NarrowPhaseTests` additions: `rayVsPlane` for translated and tilted planes with hand-computed t; parallel gives nil; back-face approach gives nil; plane behind the origin gives nil.
-- [ ] `AircraftGearSpecTests` (new): `.f22_cgtrader` returns `noseGear`, `mainGearLeft`, `mainGearRight` with unique names and finite positive dimensions; other types return `[]`; all three `reachBelowOrigin` equal 2.05 m; `staticStance` at mass 30 000 gives compression ≈ 0.119 m and ride height ≈ 1.93 m.
+- [x] `SuspensionSolverTests` (new, pure; 9 tests): nil distance and out-of-reach distance give `.noContact` (exactly at reach is a zero-force contact); static compression gives k·x at zero rate; compressing uses the compression damping, extending the rebound damping; fast rebound gives force exactly 0, never negative; `maxSupportForce` clamps and `overloaded` comes from the unclamped value; bottom-out caps compression at `maxTravel` and sets the flag; `uniformScale` doubles reach and travel and leaves rates alone; touchdown rate recovery (previous 0, penetration v·dt gives rate v). Binary-exact inputs, so the pins are exact wherever no divide by the substep is involved.
+- [x] `NarrowPhaseTests` additions (4): `rayVsPlane` for translated and tilted planes with hand-computed t, plus an oblique ray (t = √2) that pins the magnitude of the divide; parallel gives nil; facing away and back-face approach give nil; plane behind the origin gives nil; an origin exactly on the plane hits at t = 0.
+- [x] `AircraftLandingGearSpecTests` (new; 6 tests): `.f22_cgtrader` returns `noseGear`, `mainGearLeft`, `mainGearRight` with unique names and finite positive dimensions; other types return `[]`; all three `reachBelowOrigin` equal 2.05 m; geometry anchors (3.24 m track, 6.1 m wheelbase, mirrored mains); `staticStance` at mass 30 000 gives compression ≈ 0.119 m and ride height ≈ 1.93 m; nil for an empty or rate-less spec, and the default gravity equals the world's.
+- [x] `LandingGearSuspensionTests` (new, beyond the original list; 6 tests): the state machine at the unit level with a posed detached-body double (`pose()` overridden) — touchdown edge carrying the incoming sink and the substep's complete compressions; force along body up for a 60° roll (slant distance); inverted and knife-edge bodies get no contact; the deploy gate's reset, single liftoff, and restart-from-rest on redeploy; per-strut overload rising edges (clamp and bottom-out); `PhysicsWorld.raycastStaticPlanes` (nearest static plane; dynamic planes, non-planes, and planes behind ignored). The stepped end-to-end settle stays in B.5's `GearSuspensionWorldTests`.
+- [x] `MathUtilsTests` addition (`.tags(.math)`): `float3x3.right/up/forward` are R·x̂, R·ŷ, R·ẑ, and a rolled body's up is not `float3.up`.
 
-## Step B.5 — aircraft, scene, and overlay wiring — completes B-suspension
+**Done 2026-09-04** (`86745d4`): build green; full serial suite green with every other suite unedited — 321 tests in 50 suites plus the 20 XCTest cases, `Physics parity` included; goldens byte-identical (nothing consumes the new types yet, and the gravity vector is bit-identical).
+
+## Step B.5 — aircraft, scene, and overlay wiring — B-suspension, part 2
 
 - [ ] **Edit:** `GameObjects/Aircraft.swift`. The property, next to `animator`:
 
@@ -1562,7 +1633,7 @@ and the call in `generateForces` at B.2's marked point:
 +
 +            // Gear suspension: authored struts or nothing. The old aircraft's
 +            // suspension goes away with the old aircraft.
-+            let gearStruts = AircraftGearSpec.spec(for: aircraft)
++            let gearStruts = AircraftLandingGearSpec.spec(for: aircraft)
 +            playerAircraft.gearSuspension = gearStruts.isEmpty ? nil : LandingGearSuspension(struts: gearStruts)
 ```
 
@@ -1595,7 +1666,7 @@ and the call in `generateForces` at B.2's marked point:
 -            buildVolumes(on: target, spec: spec)
 -            logWorldDimensions(spec, on: target)
 +            let spec = AircraftColliderSpec.spec(for: type)
-+            let gearSpec = AircraftGearSpec.spec(for: type)
++            let gearSpec = AircraftLandingGearSpec.spec(for: type)
 +            buildVolumes(on: target, spec: spec, gearSpec: gearSpec)
 +            logWorldDimensions(spec, gearSpec: gearSpec, on: target)
          }
@@ -1642,7 +1713,7 @@ The pure half gets the endpoint helper (tested in `ColliderOverlayMappingTests`)
 
 ```swift
         if !gearSpec.isEmpty, let mass = target.rigidBody?.mass,
-           let stance = AircraftGearSpec.staticStance(struts: gearSpec, mass: mass) {
+           let stance = AircraftLandingGearSpec.staticStance(struts: gearSpec, mass: mass) {
             for strut in gearSpec {
                 print("  \(strut.name): attach \(strut.attachLocal), reach below origin \(String(format: "%.2f m", strut.reachBelowOrigin))")
             }
@@ -1699,7 +1770,7 @@ struct GearSuspensionWorldTests {
         body.restitution = 0.2
         body.velocity = [0, velocityY, 0]
         body.colliders = AircraftColliderSpec.spec(for: .f22_cgtrader)
-        let rig = GearRig(body: body, struts: AircraftGearSpec.spec(for: .f22_cgtrader))
+        let rig = GearRig(body: body, struts: AircraftLandingGearSpec.spec(for: .f22_cgtrader))
         let plane = PlaneRigidBody(detachedAt: .zero)
         plane.isStatic = true
         let world = PhysicsWorld(entities: [body, plane], updateType: .HeckerVerlet)
@@ -1716,7 +1787,7 @@ struct GearSuspensionWorldTests {
         for _ in 0..<600 { world.update(deltaTime: Self.dt) }   // 10 s
 
         #expect(body.shouldApplyGravity)
-        #expect(rig.suspension.isWeightOnWheels)
+        #expect(rig.suspension.weightOnWheels)
         #expect(abs(body.getPosition().y - 1.93) <= 0.02,
                 "Σk·x = W gives x ≈ 0.119, ride height = 2.05 − x ≈ 1.93")
         #expect(abs(rig.suspension.compressions[0] - 0.119) <= 0.01,
@@ -1740,7 +1811,7 @@ struct GearSuspensionWorldTests {
         #expect(abs(body.getPosition().y - 1.05) <= 0.05,
                 "CompoundBodyTests' settle, with the suspension present but retracted")
         #expect(contactNames == ["fuselage"])
-        #expect(!rig.suspension.isWeightOnWheels)
+        #expect(!rig.suspension.weightOnWheels)
     }
 
     @Test("touchdown reports the incoming sink; a firm arrival overloads, a gentle one does not")
@@ -1750,7 +1821,7 @@ struct GearSuspensionWorldTests {
         let firm = makeF22OnGear(startY: 2.2, velocityY: -4)
         var firstSink: Float? = nil
         var overloadedStruts: Set<String> = []
-        firm.rig.suspension.onGearEvent = { event in
+        firm.rig.suspension.onLandingGearEvent = { event in
             switch event {
                 case .touchdown(let sinkRate, _):
                     if firstSink == nil { firstSink = sinkRate }
@@ -1767,10 +1838,10 @@ struct GearSuspensionWorldTests {
         // 0.5 m/s: damper about 73 kN and the spring peaks well under the clamp.
         let gentle = makeF22OnGear(startY: 2.2, velocityY: -0.5)
         var gentleOverloads = 0
-        gentle.rig.suspension.onGearEvent = { if case .gearOverload = $0 { gentleOverloads += 1 } }
+        gentle.rig.suspension.onLandingGearEvent = { if case .gearOverload = $0 { gentleOverloads += 1 } }
         for _ in 0..<300 { gentle.world.update(deltaTime: Self.dt) }
         #expect(gentleOverloads == 0)
-        #expect(gentle.rig.suspension.isWeightOnWheels)
+        #expect(gentle.rig.suspension.weightOnWheels)
     }
 
     @Test("a body pushed upward leaves cleanly: struts push, never pull")
@@ -1778,7 +1849,7 @@ struct GearSuspensionWorldTests {
         let (world, body, rig) = makeF22OnGear(startY: 2.5)
         for _ in 0..<600 { world.update(deltaTime: Self.dt) }   // settle first
         var sawLiftoff = false
-        rig.suspension.onGearEvent = { if case .liftoff = $0 { sawLiftoff = true } }
+        rig.suspension.onLandingGearEvent = { if case .liftoff = $0 { sawLiftoff = true } }
 
         body.velocity = [0, 4, 0]
         var maxY: Float = 0
@@ -1888,7 +1959,7 @@ final class TouchdownReporter {
         self.scrapeLogInterval = scrapeLogInterval
     }
 
-    func report(_ event: GearEvent) {
+    func report(_ event: LandingGearEvent) {
         switch event {
             case .touchdown(let sinkRate, let compressions):
                 let comps = compressions.map { String(format: "%.3f", $0) }.joined(separator: ", ")
@@ -1940,7 +2011,7 @@ final class TouchdownReporter {
 +            // contacts. Weak aircraft capture: the aircraft owns the body that
 +            // owns this closure.
 +            let reporter = TouchdownReporter(bodyLabel: playerAircraft.getName())
-+            playerAircraft.gearSuspension?.onGearEvent = { event in
++            playerAircraft.gearSuspension?.onLandingGearEvent = { event in
 +                reporter.report(event)
 +            }
 +            acRigidBody.onContact = { [weak playerAircraft] contact, other in
@@ -2037,10 +2108,10 @@ struct AirframeContactClassifierTests {
 
 1. - [ ] **B-generators changes nothing measurable**: full serial suite green against unchanged goldens; the regeneration dry run byte-identical; in-app flight feel unchanged; an F-22 → F-16 → F-22 swap shows no double thrust and the old aircraft still deallocates. *(`ccd2aaf`, 2026-09-03: suite green against unchanged goldens, dry run byte-identical. Open: the in-app swap check.)*
 2. - [ ] **Physics is refresh-rate independent**: `FixedTimestepTests` green with the partition case on exact equality; goldens regenerated, reviewed against the B.3 table, and committed; every semantic suite green without edits; in-app, ball scenes settle the same at 30, 60, and 120 Hz and `FlightboxWithPhysics` plays normally; stress-scene cost recorded before and after (about 2× per update call at 60 Hz is the substep count, not a regression). *(`efb7957`, 2026-09-03: `FixedTimestepTests` green, goldens regenerated and reviewed; one semantic-suite edit, noted under B.3. Open: the in-app 30/60/120 Hz settle check, the `FlightboxWithPhysics` play check, and the stress-scene cost before/after.)*
-3. - [ ] **The jet stands on its wheels**: `GearSuspensionWorldTests` green (settle at about 1.93 m with gravity on, weight on wheels, zero airframe contacts; gear up reproduces the 1.05 belly rest with a `fuselage` contact); in-app, the F-22 settles at the logged stance height, the gear toggle drops and raises it, and the cyan strut lines match the modeled gear (spec numbers tuned and the PLACEHOLDER comment updated, as for Phase 0 criterion 2).
+3. - [ ] **The jet stands on its wheels**: `GearSuspensionWorldTests` green (settle at about 1.93 m with gravity on, weight on wheels, zero airframe contacts; gear up reproduces the 1.05 belly rest with a `fuselage` contact); in-app, the F-22 settles at the logged stance height, the gear toggle drops and raises it, and the cyan strut lines match the modeled gear (spec numbers tuned and the PLACEHOLDER comment updated, as for Phase 0 criterion 2). *(`86745d4`, 2026-09-04: B.4 landed — types, solver, raycast, suspension state, and the F-22 spec, unit-tested. Open: B.5's wiring, `GearSuspensionWorldTests`, and the in-app checks.)*
 4. - [ ] **Touchdown is reported**: in-app, a landing prints `[Touchdown]` with a plausible sink rate and compressions; a firm arrival prints `[GearOverload]`; a gear-up belly touch prints `[CRASH] …fuselage`, a gentle one `[Scrape]`, both from pre-impact velocity. `AirframeContactClassifierTests` and the belly-crash world test green.
-5. - [ ] **No process-wide state**: parity determinism and partition tests green under Swift Testing's in-process concurrency; accumulator, hooks, and suspension state are per instance; review confirms no new static mutable state in the step path.
-6. - [ ] **CI green** on all five commits (serial app-hosted run, as configured).
+5. - [ ] **No process-wide state**: parity determinism and partition tests green under Swift Testing's in-process concurrency; accumulator, hooks, and suspension state are per instance; review confirms no new static mutable state in the step path. *(B.4, `86745d4`: `LandingGearSuspension` state is per instance; `standardGravity` is an immutable `let`.)*
+6. - [ ] **CI green** on all six commits (B-suspension is two; serial app-hosted run, as configured).
 7. - [x] **Verlet starts warm**: `VerletSolverTests` green with the seeded first step; at the B.3b regeneration `single_bounce_euler` is byte-identical, every Verlet free-fall column matches y₀ − ½·g·t² within 1e-4, `head_on_pair`'s X column is byte-identical and its final vertical speed is −g·2 s, and the rest equilibrium (g/120, y ≈ 0.4933) repeats. *(`151a370`, 2026-09-04: all four checks held — see the Observed table under B.3b.)*
 
-**Implementation order:** Phase A cleanup (C1–C10, one or two plumbing commits) → B.1–B.2 as one commit (B-generators, criterion 1) ✅ → B.3 (B-timestep, criterion 2) ✅ → B.3b (B-warmstart, criterion 7) ✅ → B.4–B.5 as one commit (B-suspension, criterion 3) → B.6 (B-classification, criterion 4). Tests land inside their commits. The order matters three times: the force hook must exist before the accumulator moves its call into the substep loop; the fixed step must precede the suspension, whose rates are sized against dt = 1/120; and the warm start lands before the suspension so B-suspension's goldens-untouched gate stays a real check (B.3b is Phase B's last golden regeneration).
+**Implementation order:** Phase A cleanup (C1–C10, one or two plumbing commits) → B.1–B.2 as one commit (B-generators, criterion 1) ✅ → B.3 (B-timestep, criterion 2) ✅ → B.3b (B-warmstart, criterion 7) ✅ → B.4 (B-suspension part 1, plumbing) ✅ → B.5 (B-suspension part 2, criterion 3) → B.6 (B-classification, criterion 4). Tests land inside their commits. The order matters three times: the force hook must exist before the accumulator moves its call into the substep loop; the fixed step must precede the suspension, whose rates are sized against dt = 1/120; and the warm start lands before the suspension so B-suspension's goldens-untouched gate stays a real check (B.3b is Phase B's last golden regeneration).
