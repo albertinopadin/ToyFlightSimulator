@@ -6,7 +6,9 @@
 //
 
 class Droppable: SubMeshGameObject {
-    let gravity: Float = -9.8  // TODO: This should probably go in a constants file somewhere...
+    /// World gravity along −Y, from the physics world's one written value.
+    /// This is the legacy kinematic drop path, not a RigidBody.
+    let gravity: Float = -PhysicsWorld.standardGravity
     var velocityVector: float3 = [0, 0, 0]
     var forwardVelocityComponent: Float = 0.0
     
