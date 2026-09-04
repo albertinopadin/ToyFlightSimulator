@@ -12,6 +12,7 @@
 
 ## Changelog
 
+- **2026-09-03** — B.1–B.3 marked complete (`ccd2aaf`, `efb7957`; exit criteria 1–2 keep their in-app items open). New Step B.3b (B-warmstart) added between B.3 and B.4: `VerletSolver` seeds a(t) on a body's first step (`RigidBody.accelerationIsWarm`), removing the h/2 startup lag found at the B.3 regeneration; commit row, decision row, and exit criterion 7 added.
 - **2026-09-03** — B-timestep landed (B.3): fixed 1/120 s substeps behind a per-world accumulator (at most 8 per update); the four scenes drop their hitch guards. All six goldens regenerated and reviewed ("Observed" under B.3). `FixedTimestepTests` added; `ForceGeneratorTests` expectations flipped to substep values. Two review-table expectations were wrong: Verlet free fall is not step-independent (the solver bootstraps from a = 0 and runs h/2 late), and `head_on_pair`'s exact-tangency contact moved one substep later by float rounding. `PhysicsWorldSmokeTests.onContactFiresOnAttachedPath` needed one edit (it counted one contact per update; it now steps one `fixedDelta`).
 - **2026-09-03** — B-generators landed (B.1–B.2): `RigidBody.forceGenerator`, called by `PhysicsWorld` at the top of every step; `Aircraft.generateForces` computes the flight force inside the step from the input cached in `doUpdate`. `ForceGeneratorTests` added (plus a third test pinning that force does not persist between steps). Goldens byte-identical under the dry run.
 - **2026-09-03** — Phase A cleanup closed by owner. Still open for a later plumbing commit: the four deprecated `PhysicsWorld` update methods (C3, third item) and O1.
@@ -635,7 +636,8 @@ The rule: a comment says what the code does and why, in one to four lines. Resea
 
 Implements combined doc §4.3 (B1–B3). At the end of this phase:
 
-- physics advances in fixed 1/120 s substeps behind an accumulator, so the menu's 30–120 Hz refresh selection no longer changes physics (today `update(deltaTime:)` consumes the raw frame delta);
+- physics advances in fixed 1/120 s substeps behind an accumulator, so the menu's 30–120 Hz refresh selection no longer changes physics (before B-timestep `update(deltaTime:)` consumed the raw frame delta);
+- the Verlet integrator starts warm: a body's first step is seeded from its forces, so constant-gravity free fall is exact from t = 0 instead of running h/2 late;
 - forces are computed inside the step by a per-body hook instead of one frame late in `Aircraft.doUpdate`;
 - the F-22 stands, taxis, and lands on three raycast suspension struts (spring and damper on the one aircraft body; no gear bodies, no joints), gated by the existing gear animation;
 - touchdown, gear overload, scrape, and crash are reported by name through a print-only reporter.
@@ -648,8 +650,9 @@ No step straddles a commit boundary; each commit is one kind of change (rule 2).
 
 | Commit | Steps | Gate | Tests |
 |---|---|---|---|
-| **B-generators** | B.1–B.2 | Plumbing. Goldens byte-identical (no harness body has a force hook). In-app: flight feels the same; throttle response at most one frame crisper. | `ForceGeneratorTests` (new) |
-| **B-timestep** | B.3 | Behavior. Regenerate all six goldens and review against the table in B.3. `CollisionResponseTests`, `CompoundBodyTests`, `restingKeepsGravityOn`, `PhysicsWorldSmokeTests` green unedited; the two flagged `ForceGeneratorTests` expectations flip to substep values. In-app: ball scenes settle the same at 30, 60, and 120 Hz. | `FixedTimestepTests` (new) |
+| **B-generators** ✅ `ccd2aaf` | B.1–B.2 | Plumbing. Goldens byte-identical (no harness body has a force hook). In-app: flight feels the same; throttle response at most one frame crisper. | `ForceGeneratorTests` (new) |
+| **B-timestep** ✅ `efb7957` | B.3 | Behavior. Regenerate all six goldens and review against the table in B.3. `CollisionResponseTests`, `CompoundBodyTests`, `restingKeepsGravityOn`, `PhysicsWorldSmokeTests` green unedited; the two flagged `ForceGeneratorTests` expectations flip to substep values. In-app: ball scenes settle the same at 30, 60, and 120 Hz. | `FixedTimestepTests` (new) |
+| **B-warmstart** | B.3b | Behavior. Regenerate the goldens and review against the B.3b table: `single_bounce_euler` byte-identical, the five Verlet goldens move by the removed h/2 startup lag only. Every semantic suite green with the two edits listed in B.3b. In-app: nothing visible (a 1/240 s startup shift). | `VerletSolverTests` (two edited, one new), `ForceGeneratorTests` (two expectations flip) |
 | **B-suspension** | B.4–B.5 | Goldens untouched (no harness scenario has struts). In-app: the F-22 stands on its wheels at the logged ride height; gear up drops it to the belly rest; the cyan strut lines match the modeled gear. | `SuspensionSolverTests`, `AircraftGearSpecTests`, `GearSuspensionWorldTests` (new); additions to `NarrowPhaseTests` and `ColliderOverlayMappingTests` |
 | **B-classification** | B.6 | Goldens untouched (observers only). In-app: touchdown, gear-overload, scrape, and crash lines print as described in B.6. | `AirframeContactClassifierTests` (new); one addition to `GearSuspensionWorldTests` |
 
@@ -670,8 +673,9 @@ No step straddles a commit boundary; each commit is one kind of change (rule 2).
 | Strut lengths scale with `uniformScale`; spring and damper rates do not | Rates are sized against the aircraft's mass, which scaling a model does not change. Scaled rates would make a scaled aircraft sit too low or be pushed up. |
 | Gear load split follows spring rates, not lever arms | Rotation is kinematic, so equal-reach struts share one compression and per-strut load is k·x (about 89/11 mains/nose here, not the geometric 85/15). Total force and ride height are exact; the split corrects itself when Phase D adds pitch. |
 | Sink rate is −v.y; strut force acts along body up | Level-runway simplifications, noted at the code sites. |
+| Warm start via `accelerationIsWarm` on `RigidBody`, not an `acceleration == .zero` test | A flag records what happened. A zero test would also fire for a body whose carried a(t) is exactly zero (gravity off, or a spring exactly balancing weight) and silently swap in a(t+dt). Written by `VerletSolver` only, cleared while a body is static. |
 
-## Step B.1 — the force hook on `RigidBody` and the world call — B-generators
+## Step B.1 — the force hook on `RigidBody` and the world call — B-generators ✅ (landed 2026-09-03, `ccd2aaf`)
 
 Why: the physics step runs at the top of the scene's `doUpdate`, before children traverse, so the aircraft's subtree (attached camera included) sees post-physics transforms in the same frame. That placement stays. But it means forces written in a child's `doUpdate` (the flight model, in `Aircraft`) reach the step one frame late. The fix is a hook the world calls at the top of each step.
 
@@ -698,7 +702,7 @@ Why: the physics step runs at the top of the scene's `doUpdate`, before children
 
 Goldens: no harness body sets `forceGenerator`, so the new line is a nil check. Byte-identical.
 
-## Step B.2 — `Aircraft` computes its flight force inside the step — completes B-generators
+## Step B.2 — `Aircraft` computes its flight force inside the step — completes B-generators ✅ (landed 2026-09-03, `ccd2aaf`)
 
 `doUpdate` keeps what belongs to the frame (input sampling, the attitude filter, animator, gear toggle) and only caches the sampled input; the force is computed by `generateForces`, which the body's hook calls at the top of every step. The remaining one-frame input latency (stick sampled in frame N−1 feeds frame N's steps) is standard for engines that decouple input from fixed steps and is far below the attitude filter's time constants.
 
@@ -827,7 +831,7 @@ struct ForceGeneratorTests {
 }
 ```
 
-## Step B.3 — fixed 1/120 s substeps — B-timestep
+## Step B.3 — fixed 1/120 s substeps — B-timestep ✅ (landed 2026-09-03, `efb7957`)
 
 Implements combined doc D4: physics must not change with the refresh rate, stiff suspension springs (B.4) want a small fixed step, and the rest jitter bound g·dt² becomes a constant (0.68 mm at 120 Hz, versus 2.7 mm at 60 and 10.9 mm at 30). Every golden regenerates, because halving the integration step changes every trajectory.
 
@@ -906,7 +910,7 @@ The stress scene's printed per-call time now covers two substeps at 60 Hz, so it
 
 | Scenario | Observed |
 |---|---|
-| `single_bounce_verlet` | First contact at sample 58 in both. Apexes 4.1444 / 3.4517 / 2.8904 → 4.1445 / 3.4514 / 2.8895, decreasing; sampled bounce penetration shallower (min y 0.4247 → 0.4561); gravity on. **The pre-contact column moved by up to 3.9 cm, and that is not rounding:** `VerletSolver` bootstraps from `acceleration = .zero`, so free fall runs exactly h/2 late (y = y₀ − ½·g·(t² − t·h)); old − new matched ½·g·t·(1/60 − 1/120) to 5e-6 over all 58 samples. The row above assumed a warm start. Halving the step halves the lag; removing it (bootstrap a(t) from the forces before the first integrate) is a separate behavior commit that regenerates the goldens. |
+| `single_bounce_verlet` | First contact at sample 58 in both. Apexes 4.1444 / 3.4517 / 2.8904 → 4.1445 / 3.4514 / 2.8895, decreasing; sampled bounce penetration shallower (min y 0.4247 → 0.4561); gravity on. **The pre-contact column moved by up to 3.9 cm, and that is not rounding:** `VerletSolver` bootstraps from `acceleration = .zero`, so free fall runs exactly h/2 late (y = y₀ − ½·g·(t² − t·h)); old − new matched ½·g·t·(1/60 − 1/120) to 5e-6 over all 58 samples. The row above assumed a warm start. Halving the step halves the lag; Step B.3b removes it. |
 | `single_bounce_euler` | Bias halves as predicted (old − new = −½·g·t/120 to 2e-6). First bounce at sample 57 in both; apexes 4.2795 / 3.6868 → 4.2121 / 3.5677, against the exact e = 0.9 values 4.145 / 3.4525, so the finer step is closer to the parabola. |
 | `rest_latch` | Final \|v\| 0.1635 → 0.0818 (= g/120), resting y 0.4882 → 0.4933, gravity on, first contact at sample 44 in both. As predicted. |
 | `head_on_pair` | Mirror symmetry exact; velocities swap to ±5; the Y column differs by the Verlet bootstrap lag (max 0.0818 = ½·g·2 s/120). **The contact landed at substep 37, not 36:** the scenario touches exactly at t = 0.3 s, and at 120 Hz the substep-36 gap rounds to just above 1.0, so the pair overlaps by one substep (0.0833 m) before responding; the 0.2·(0.0833 − 0.005)/2 = 7.8 mm position correction each is visible at sample 19 and carries through (final A.x −9.0000 → −8.9245). Exact tangency at a step boundary is a rounding coin flip; the scenario stays as designed. |
@@ -990,6 +994,201 @@ struct FixedTimestepTests {
     }
 }
 ```
+
+## Step B.3b — `VerletSolver` warm start — B-warmstart
+
+Found at the B.3 regeneration (the Observed table above). `VerletSolver` carries a(t) in `entity.acceleration`, and a new body carries `.zero`, so its first step drifts without the ½·a·h² term and kicks velocity by ½·a·h instead of a·h. Every Verlet trajectory therefore runs exactly h/2 late — y = y₀ − ½·g·(t² − t·h), a permanent ½·g·h velocity deficit — which is what moved every Verlet golden's free-fall column at B.3 and what starts a dropped aircraft or ball half a substep behind the parabola. The fix seeds a(t) from the forces on the body's first step: constant-gravity free fall is then exact at any step size, and the B.3 table's "matches within rounding" row becomes true.
+
+Scope: the startup only. After the first step the drift still uses the acceleration carried from the previous step and the kick averages it with this step's (½·(a(t−h) + a(t))·h), a one-substep force lag that is inherent to computing forces at the top of the step (B.1) and accepted in B.2's latency argument; not changed here. `EulerSolver` recomputes a(t) from the current forces every step and has no bootstrap, so it is untouched and `single_bounce_euler` must come back byte-identical.
+
+- [ ] **Edit:** `Physics/World/RigidBody.swift`, after `shouldApplyGravity`:
+
+```diff
+     var isStatic: Bool
+     var shouldApplyGravity: Bool
++
++    /// True once VerletSolver has stored a(t) for this body. Until then the
++    /// solver seeds a(t) from the current forces instead of integrating from
++    /// .zero, which ran every Verlet trajectory h/2 late (found at the B.3
++    /// regeneration). Written by VerletSolver only; cleared while the body is
++    /// static. EulerSolver does not carry acceleration and ignores it.
++    var accelerationIsWarm = false
+```
+
+- [ ] **Edit:** `Physics/Solver/VerletSolver.swift`, the whole file. a(t+dt) moves above the drift so the first step can use it; the arithmetic is otherwise unchanged and in the same order (the goldens must move by the removed lag only):
+
+```swift
+//
+//  VerletSolver.swift
+//  ToyFlightSimulator
+//
+//  Created by Albertino Padin on 10/26/24.
+//
+
+/// Velocity Verlet integrator:
+///   x(t+dt) = x(t) + v(t)·dt + ½·a(t)·dt²
+///   v(t+dt) = v(t) + ½·(a(t) + a(t+dt))·dt
+/// `entity.acceleration` carries a(t) across steps (it is NOT zeroed at the
+/// top of the step — an earlier implementation did, which dropped the
+/// ½·a·dt² curvature term and applied only half of each step's gravity to
+/// velocity, i.e. effective g/2 free-fall). A body's first step has no
+/// carried a(t), so it is seeded from that step's forces
+/// (`accelerationIsWarm`); integrating from .zero instead ran every
+/// trajectory exactly dt/2 late (found at the B.3 regeneration).
+final class VerletSolver: PhysicsSolver {
+    static func step(deltaTime: Float, gravity: float3, entities: [RigidBody]) {
+        for entity in entities {
+            guard !entity.isStatic else {
+                // Static bodies never integrate; keep their stored
+                // acceleration at zero (parity with the old per-step zeroing)
+                // and cold, so a body that later turns dynamic is seeded.
+                entity.acceleration = .zero
+                entity.accelerationIsWarm = false
+                continue
+            }
+
+            // a(t+dt) from the forces on the body, written at the top of the
+            // step from the state at t (the solver treats them as a(t+dt): a
+            // one-substep lag, accepted in B.2). Mass divides the applied
+            // force (a = F/m + g), matching EulerSolver.
+            let appliedGravity: float3 = entity.shouldApplyGravity ? gravity : .zero
+            let newAcc: float3 = entity.force / entity.mass + appliedGravity
+
+            let pos = entity.getPosition()
+            let velo = entity.velocity
+            // a(t): last step's acceleration, carried in entity.acceleration.
+            // On the body's first step there is none, so this step's is used.
+            let acc: float3 = entity.accelerationIsWarm ? entity.acceleration : newAcc
+
+            let nPos: float3 = pos + velo * deltaTime + 0.5 * acc * (deltaTime * deltaTime)
+
+            let veloDtHalf = velo + 0.5 * acc * deltaTime
+
+            let nVelo = veloDtHalf + 0.5 * newAcc * deltaTime
+
+            entity.setPosition(nPos)
+            entity.velocity = nVelo
+            entity.acceleration = newAcc
+            entity.accelerationIsWarm = true
+        }
+
+        zeroForces(entities: entities)
+    }
+}
+```
+
+- [ ] **Edit:** `CLAUDE.md`, the Physics paragraph's `VerletSolver` clause: add "first step seeded from the forces (`accelerationIsWarm`)".
+
+- [ ] **Edit:** `ToyFlightSimulatorTests/Physics/PhysicsSolverTests.swift`, `VerletSolverTests`. `accelerationCarriesAcrossSteps` pinned the cold half kick and now pins the seeded first step; `warmedStepMatchesConstantAccelerationKinematics` marks its body warm so it exercises the carried branch rather than the seed; one new test covers the static reset:
+
+```swift
+    @Test("Acceleration carries across steps; the first step is seeded, not half-kicked")
+    func accelerationCarriesAcrossSteps() {
+        let body = TestRigidBody(mass: 1.0)
+        let entities: [RigidBody] = [body]
+        let dt: Float = 0.1
+
+        // Step 1: no carried a(t) yet, so it is seeded from this step's forces
+        // (B.3b): a full gravity kick and the ½·g·dt² curvature term. The old
+        // cold start from a(t)=0 gave only 0.5·g·dt here.
+        VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
+        #expect(approxEqual(body.acceleration, Self.gravity),
+                "acceleration must persist as a(t) for the next step, not be zeroed")
+        #expect(body.accelerationIsWarm)
+        #expect(approxEqual(body.velocity, Self.gravity * dt))
+        #expect(approxEqual(body.getPosition(), 0.5 * Self.gravity * (dt * dt)))
+
+        // Step 2: carried a(t)=g plus new a(t+dt)=g → another full g·dt, and
+        // the position stays on the parabola: ½·g·(2·dt)².
+        VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
+        #expect(approxEqual(body.velocity, 2 * Self.gravity * dt))
+        #expect(approxEqual(body.getPosition(), 0.5 * Self.gravity * ((2 * dt) * (2 * dt))))
+    }
+
+    @Test("With warmed acceleration, one step matches constant-acceleration kinematics")
+    func warmedStepMatchesConstantAccelerationKinematics() {
+        let body = TestRigidBody(mass: 1.0)
+        body.acceleration = Self.gravity   // as if carried from a prior step
+        body.accelerationIsWarm = true     // take the carried branch, not the seed
+        let entities: [RigidBody] = [body]
+        let dt: Float = 0.1
+
+        VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
+
+        // x = ½·g·dt² (curvature term present), v = g·dt (both half-kicks).
+        #expect(approxEqual(body.getPosition(), 0.5 * Self.gravity * (dt * dt)))
+        #expect(approxEqual(body.velocity, Self.gravity * dt))
+    }
+
+    @Test("A body that starts static is cold, and seeded on its first dynamic step")
+    func staticBodyStaysColdThenSeeds() {
+        let body = TestRigidBody(mass: 1.0, isStatic: true)
+        let entities: [RigidBody] = [body]
+        let dt: Float = 0.1
+
+        VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
+        #expect(!body.accelerationIsWarm)
+        #expect(approxEqual(body.velocity, .zero))
+
+        body.isStatic = false
+        VerletSolver.step(deltaTime: dt, gravity: Self.gravity, entities: entities)
+        #expect(body.accelerationIsWarm)
+        #expect(approxEqual(body.velocity, Self.gravity * dt), "seeded: a full kick, not the cold half kick")
+    }
+```
+
+- [ ] **Edit:** `ToyFlightSimulatorTests/Physics/ForceGeneratorTests.swift`, two expectations flip:
+
+```swift
+    @Test("a constant force accelerates the body through two full Verlet kicks")
+    func constantForceAccelerates() {
+        let body = RigidBody(detachedAt: .zero)
+        body.mass = 2
+        body.shouldApplyGravity = false
+        body.forceGenerator = { body, _, _ in body.force += [10, 0, 0] }
+        let world = PhysicsWorld(entities: [body], updateType: .HeckerVerlet)
+        world.update(deltaTime: Self.dt)
+        // The first substep is seeded (B.3b), so both substeps kick the full
+        // (F/m)·h: 2 · 5 · h.
+        #expect(approxEqual(body.velocity.x, 2 * 5 * PhysicsWorld.fixedDelta))
+        #expect(body.force == .zero, "forces are zeroed at the end of the step")
+    }
+
+    @Test("force does not persist between substeps: a hook that writes once stops kicking")
+    func forceWrittenOnceKicksOnce() {
+        let body = RigidBody(detachedAt: .zero)
+        body.shouldApplyGravity = false
+        var written = false
+        body.forceGenerator = { body, _, _ in
+            if !written {
+                body.force += [10, 0, 0]
+                written = true
+            }
+        }
+        let world = PhysicsWorld(entities: [body], updateType: .HeckerVerlet)
+        world.update(deltaTime: Self.dt)   // substep 1 sees the force, substep 2 does not
+        // Trapezoid kicks: ½·(10 + 10)·h on the seeded substep that saw the
+        // force, then ½·(10 + 0)·h from the carried a(t): 15·h in total.
+        let kicked = body.velocity.x
+        #expect(approxEqual(kicked, 1.5 * 10 * PhysicsWorld.fixedDelta))
+        for _ in 0..<4 { world.update(deltaTime: Self.dt) }
+        #expect(body.velocity.x == kicked, "no force after the first substep, no further change")
+    }
+```
+
+Green without edits, and why: `FixedTimestepTests` (substep counts and the partition invariance do not depend on how a(t) starts), `CollisionResponseTests` (every bound is a ceiling; the sub-threshold impact rises from 0.73 to the exact 0.77 m/s, still under 1 m/s; the gravity-off cases have a = 0 either way; impact speeds are unchanged because the lag was a time shift), `CompoundBodyTests`, `PhysicsWorldSmokeTests` (contact counts and force zeroing are unaffected), `PhysicsParityTests.harnessIsDeterministic` and `restingKeepsGravityOn` (the support equilibrium is per substep and does not see the startup).
+
+### Regenerate the goldens and review the diff
+
+| Scenario | Expected diff |
+|---|---|
+| `single_bounce_euler` | **Byte-identical.** Any diff is a bug in the edit. |
+| `single_bounce_verlet` | Every pre-contact sample matches y = 5 − ½·g·t² within 1e-4 (Float accumulation over ~115 substeps). The contact resolves at the top of substep 116 (after substep 115 the ball is at 0.4952, depth 4.8 mm, under the 5 mm slop, so no position correction) instead of substep 117, so sample 58 already shows the ball rising (≈ 0.565) instead of penetrating (0.4561). Impact speed is unchanged (the lag was a time shift), so the apexes stay within a few mm of 4.1445 / 3.4514 / 2.8895 and keep decreasing; gravity on. |
+| `rest_latch` | Pre-contact column exact as above; the first sample at or below touching moves from 44 to 43 (substep 86 lands at 0.4807). Equilibrium unchanged: final \|v\| = 0.0818 (g/120), resting y = 0.4933 ± 1 mm, gravity on. |
+| `head_on_pair` | X column byte-identical to the B.3 golden (x carries no acceleration, so the substep-37 contact and its 7.8 mm correction repeat exactly); only Y moves, by up to ½·g·2 s/120 = 0.082 m, onto the exact parabola: final vertical speed −g·2 s = −19.62 (was −19.579). Mirror symmetry exact. |
+| `ball_cluster_16`, `stress_grid_50` | Full regeneration (every free-fall column shifts by the removed lag). Invariants unedited; deepest penetration and final speeds close to the B.3 values (0.068 / 0.119 m; 8.65 / 15.7 m/s). |
+
+Gate: regenerate, review with a script as at B.3 (add the exact-parabola check and the Euler byte-identity check), commit the JSON, re-run without the variable, green. In-app: nothing visible (a 1/240 s startup shift). Commit as B-warmstart, a behavior commit on its own (rule 2).
 
 ## Step B.4 — struts, solver, raycast, suspension state, gear specs — B-suspension
 
@@ -1825,11 +2024,12 @@ struct AirframeContactClassifierTests {
 
 ## Phase B exit criteria
 
-1. - [ ] **B-generators changes nothing measurable**: full serial suite green against unchanged goldens; the regeneration dry run byte-identical; in-app flight feel unchanged; an F-22 → F-16 → F-22 swap shows no double thrust and the old aircraft still deallocates.
-2. - [ ] **Physics is refresh-rate independent**: `FixedTimestepTests` green with the partition case on exact equality; goldens regenerated, reviewed against the B.3 table, and committed; every semantic suite green without edits; in-app, ball scenes settle the same at 30, 60, and 120 Hz and `FlightboxWithPhysics` plays normally; stress-scene cost recorded before and after (about 2× per update call at 60 Hz is the substep count, not a regression).
+1. - [ ] **B-generators changes nothing measurable**: full serial suite green against unchanged goldens; the regeneration dry run byte-identical; in-app flight feel unchanged; an F-22 → F-16 → F-22 swap shows no double thrust and the old aircraft still deallocates. *(`ccd2aaf`, 2026-09-03: suite green against unchanged goldens, dry run byte-identical. Open: the in-app swap check.)*
+2. - [ ] **Physics is refresh-rate independent**: `FixedTimestepTests` green with the partition case on exact equality; goldens regenerated, reviewed against the B.3 table, and committed; every semantic suite green without edits; in-app, ball scenes settle the same at 30, 60, and 120 Hz and `FlightboxWithPhysics` plays normally; stress-scene cost recorded before and after (about 2× per update call at 60 Hz is the substep count, not a regression). *(`efb7957`, 2026-09-03: `FixedTimestepTests` green, goldens regenerated and reviewed; one semantic-suite edit, noted under B.3. Open: the in-app 30/60/120 Hz settle check, the `FlightboxWithPhysics` play check, and the stress-scene cost before/after.)*
 3. - [ ] **The jet stands on its wheels**: `GearSuspensionWorldTests` green (settle at about 1.93 m with gravity on, weight on wheels, zero airframe contacts; gear up reproduces the 1.05 belly rest with a `fuselage` contact); in-app, the F-22 settles at the logged stance height, the gear toggle drops and raises it, and the cyan strut lines match the modeled gear (spec numbers tuned and the PLACEHOLDER comment updated, as for Phase 0 criterion 2).
 4. - [ ] **Touchdown is reported**: in-app, a landing prints `[Touchdown]` with a plausible sink rate and compressions; a firm arrival prints `[GearOverload]`; a gear-up belly touch prints `[CRASH] …fuselage`, a gentle one `[Scrape]`, both from pre-impact velocity. `AirframeContactClassifierTests` and the belly-crash world test green.
 5. - [ ] **No process-wide state**: parity determinism and partition tests green under Swift Testing's in-process concurrency; accumulator, hooks, and suspension state are per instance; review confirms no new static mutable state in the step path.
-6. - [ ] **CI green** on all four commits (serial app-hosted run, as configured).
+6. - [ ] **CI green** on all five commits (serial app-hosted run, as configured).
+7. - [ ] **Verlet starts warm**: `VerletSolverTests` green with the seeded first step; at the B.3b regeneration `single_bounce_euler` is byte-identical, every Verlet free-fall column matches y₀ − ½·g·t² within 1e-4, `head_on_pair`'s X column is byte-identical and its final vertical speed is −g·2 s, and the rest equilibrium (g/120, y ≈ 0.4933) repeats.
 
-**Implementation order:** Phase A cleanup (C1–C10, one or two plumbing commits) → B.1–B.2 as one commit (B-generators, criterion 1) → B.3 (B-timestep, criterion 2) → B.4–B.5 as one commit (B-suspension, criterion 3) → B.6 (B-classification, criterion 4). Tests land inside their commits. The order matters twice: the force hook must exist before the accumulator moves its call into the substep loop, and the fixed step must precede the suspension, whose rates are sized against dt = 1/120.
+**Implementation order:** Phase A cleanup (C1–C10, one or two plumbing commits) → B.1–B.2 as one commit (B-generators, criterion 1) ✅ → B.3 (B-timestep, criterion 2) ✅ → B.3b (B-warmstart, criterion 7) → B.4–B.5 as one commit (B-suspension, criterion 3) → B.6 (B-classification, criterion 4). Tests land inside their commits. The order matters three times: the force hook must exist before the accumulator moves its call into the substep loop; the fixed step must precede the suspension, whose rates are sized against dt = 1/120; and the warm start lands before the suspension so B-suspension's goldens-untouched gate stays a real check (B.3b is Phase B's last golden regeneration).
