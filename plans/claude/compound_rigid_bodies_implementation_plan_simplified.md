@@ -12,6 +12,7 @@
 
 ## Changelog
 
+- **2026-09-04** — B-warmstart landed (B.3b, `151a370`): `VerletSolver` seeds a(t) from the step's forces on a body's first step (`RigidBody.accelerationIsWarm`, cleared while static). Five goldens regenerated and reviewed ("Observed" under B.3b); `single_bounce_euler` byte-identical. `VerletSolverTests` (two edited, one new) and `ForceGeneratorTests` (two flipped) per the listings; every other suite green unedited. Exit criterion 7 met; criteria 1–2 keep their in-app items open and 6 (CI) waits on the push.
 - **2026-09-03** — B.1–B.3 marked complete (`ccd2aaf`, `efb7957`; exit criteria 1–2 keep their in-app items open). New Step B.3b (B-warmstart) added between B.3 and B.4: `VerletSolver` seeds a(t) on a body's first step (`RigidBody.accelerationIsWarm`), removing the h/2 startup lag found at the B.3 regeneration; commit row, decision row, and exit criterion 7 added.
 - **2026-09-03** — B-timestep landed (B.3): fixed 1/120 s substeps behind a per-world accumulator (at most 8 per update); the four scenes drop their hitch guards. All six goldens regenerated and reviewed ("Observed" under B.3). `FixedTimestepTests` added; `ForceGeneratorTests` expectations flipped to substep values. Two review-table expectations were wrong: Verlet free fall is not step-independent (the solver bootstraps from a = 0 and runs h/2 late), and `head_on_pair`'s exact-tangency contact moved one substep later by float rounding. `PhysicsWorldSmokeTests.onContactFiresOnAttachedPath` needed one edit (it counted one contact per update; it now steps one `fixedDelta`).
 - **2026-09-03** — B-generators landed (B.1–B.2): `RigidBody.forceGenerator`, called by `PhysicsWorld` at the top of every step; `Aircraft.generateForces` computes the flight force inside the step from the input cached in `doUpdate`. `ForceGeneratorTests` added (plus a third test pinning that force does not persist between steps). Goldens byte-identical under the dry run.
@@ -652,7 +653,7 @@ No step straddles a commit boundary; each commit is one kind of change (rule 2).
 |---|---|---|---|
 | **B-generators** ✅ `ccd2aaf` | B.1–B.2 | Plumbing. Goldens byte-identical (no harness body has a force hook). In-app: flight feels the same; throttle response at most one frame crisper. | `ForceGeneratorTests` (new) |
 | **B-timestep** ✅ `efb7957` | B.3 | Behavior. Regenerate all six goldens and review against the table in B.3. `CollisionResponseTests`, `CompoundBodyTests`, `restingKeepsGravityOn`, `PhysicsWorldSmokeTests` green unedited; the two flagged `ForceGeneratorTests` expectations flip to substep values. In-app: ball scenes settle the same at 30, 60, and 120 Hz. | `FixedTimestepTests` (new) |
-| **B-warmstart** | B.3b | Behavior. Regenerate the goldens and review against the B.3b table: `single_bounce_euler` byte-identical, the five Verlet goldens move by the removed h/2 startup lag only. Every semantic suite green with the two edits listed in B.3b. In-app: nothing visible (a 1/240 s startup shift). | `VerletSolverTests` (two edited, one new), `ForceGeneratorTests` (two expectations flip) |
+| **B-warmstart** ✅ `151a370` | B.3b | Behavior. Regenerate the goldens and review against the B.3b table: `single_bounce_euler` byte-identical, the five Verlet goldens move by the removed h/2 startup lag only. Every semantic suite green with the two edits listed in B.3b. In-app: nothing visible (a 1/240 s startup shift). | `VerletSolverTests` (two edited, one new), `ForceGeneratorTests` (two expectations flip) |
 | **B-suspension** | B.4–B.5 | Goldens untouched (no harness scenario has struts). In-app: the F-22 stands on its wheels at the logged ride height; gear up drops it to the belly rest; the cyan strut lines match the modeled gear. | `SuspensionSolverTests`, `AircraftGearSpecTests`, `GearSuspensionWorldTests` (new); additions to `NarrowPhaseTests` and `ColliderOverlayMappingTests` |
 | **B-classification** | B.6 | Goldens untouched (observers only). In-app: touchdown, gear-overload, scrape, and crash lines print as described in B.6. | `AirframeContactClassifierTests` (new); one addition to `GearSuspensionWorldTests` |
 
@@ -995,13 +996,13 @@ struct FixedTimestepTests {
 }
 ```
 
-## Step B.3b — `VerletSolver` warm start — B-warmstart
+## Step B.3b — `VerletSolver` warm start — B-warmstart ✅ (landed 2026-09-04, `151a370`)
 
 Found at the B.3 regeneration (the Observed table above). `VerletSolver` carries a(t) in `entity.acceleration`, and a new body carries `.zero`, so its first step drifts without the ½·a·h² term and kicks velocity by ½·a·h instead of a·h. Every Verlet trajectory therefore runs exactly h/2 late — y = y₀ − ½·g·(t² − t·h), a permanent ½·g·h velocity deficit — which is what moved every Verlet golden's free-fall column at B.3 and what starts a dropped aircraft or ball half a substep behind the parabola. The fix seeds a(t) from the forces on the body's first step: constant-gravity free fall is then exact at any step size, and the B.3 table's "matches within rounding" row becomes true.
 
 Scope: the startup only. After the first step the drift still uses the acceleration carried from the previous step and the kick averages it with this step's (½·(a(t−h) + a(t))·h), a one-substep force lag that is inherent to computing forces at the top of the step (B.1) and accepted in B.2's latency argument; not changed here. `EulerSolver` recomputes a(t) from the current forces every step and has no bootstrap, so it is untouched and `single_bounce_euler` must come back byte-identical.
 
-- [ ] **Edit:** `Physics/World/RigidBody.swift`, after `shouldApplyGravity`:
+- [x] **Edit:** `Physics/World/RigidBody.swift`, after `shouldApplyGravity`:
 
 ```diff
      var isStatic: Bool
@@ -1012,10 +1013,10 @@ Scope: the startup only. After the first step the drift still uses the accelerat
 +    /// .zero, which ran every Verlet trajectory h/2 late (found at the B.3
 +    /// regeneration). Written by VerletSolver only; cleared while the body is
 +    /// static. EulerSolver does not carry acceleration and ignores it.
-+    var accelerationIsWarm = false
++    var accelerationIsWarm: Bool = false
 ```
 
-- [ ] **Edit:** `Physics/Solver/VerletSolver.swift`, the whole file. a(t+dt) moves above the drift so the first step can use it; the arithmetic is otherwise unchanged and in the same order (the goldens must move by the removed lag only):
+- [x] **Edit:** `Physics/Solver/VerletSolver.swift`, the whole file. a(t+dt) moves above the drift so the first step can use it; the arithmetic is otherwise unchanged and in the same order (the goldens must move by the removed lag only):
 
 ```swift
 //
@@ -1077,9 +1078,9 @@ final class VerletSolver: PhysicsSolver {
 }
 ```
 
-- [ ] **Edit:** `CLAUDE.md`, the Physics paragraph's `VerletSolver` clause: add "first step seeded from the forces (`accelerationIsWarm`)".
+- [x] **Edit:** `CLAUDE.md`, the Physics paragraph's `VerletSolver` clause: add "first step seeded from the forces (`accelerationIsWarm`)".
 
-- [ ] **Edit:** `ToyFlightSimulatorTests/Physics/PhysicsSolverTests.swift`, `VerletSolverTests`. `accelerationCarriesAcrossSteps` pinned the cold half kick and now pins the seeded first step; `warmedStepMatchesConstantAccelerationKinematics` marks its body warm so it exercises the carried branch rather than the seed; one new test covers the static reset:
+- [x] **Edit:** `ToyFlightSimulatorTests/Physics/PhysicsSolverTests.swift`, `VerletSolverTests`. `accelerationCarriesAcrossSteps` pinned the cold half kick and now pins the seeded first step; `warmedStepMatchesConstantAccelerationKinematics` marks its body warm so it exercises the carried branch rather than the seed; one new test covers the static reset:
 
 ```swift
     @Test("Acceleration carries across steps; the first step is seeded, not half-kicked")
@@ -1137,7 +1138,7 @@ final class VerletSolver: PhysicsSolver {
     }
 ```
 
-- [ ] **Edit:** `ToyFlightSimulatorTests/Physics/ForceGeneratorTests.swift`, two expectations flip:
+- [x] **Edit:** `ToyFlightSimulatorTests/Physics/ForceGeneratorTests.swift`, two expectations flip:
 
 ```swift
     @Test("a constant force accelerates the body through two full Verlet kicks")
@@ -1176,7 +1177,7 @@ final class VerletSolver: PhysicsSolver {
     }
 ```
 
-Green without edits, and why: `FixedTimestepTests` (substep counts and the partition invariance do not depend on how a(t) starts), `CollisionResponseTests` (every bound is a ceiling; the sub-threshold impact rises from 0.73 to the exact 0.77 m/s, still under 1 m/s; the gravity-off cases have a = 0 either way; impact speeds are unchanged because the lag was a time shift), `CompoundBodyTests`, `PhysicsWorldSmokeTests` (contact counts and force zeroing are unaffected), `PhysicsParityTests.harnessIsDeterministic` and `restingKeepsGravityOn` (the support equilibrium is per substep and does not see the startup).
+Green without edits, and why: `FixedTimestepTests` (substep counts and the partition invariance do not depend on how a(t) starts), `CollisionResponseTests` (every bound is a ceiling; the sub-threshold impact rises from 0.73 to the exact 0.77 m/s, still under 1 m/s; the gravity-off cases have a = 0 either way; impact speeds are unchanged because the lag was a time shift), `CompoundBodyTests`, `PhysicsWorldSmokeTests` (contact counts and force zeroing are unaffected), `PhysicsParityTests.harnessIsDeterministic` and `restingKeepsGravityOn` (the support equilibrium is per substep and does not see the startup). **Observed 2026-09-04:** confirmed — every suite green unedited (295 tests in 47 suites, plus the 20 XCTest cases).
 
 ### Regenerate the goldens and review the diff
 
@@ -1188,7 +1189,17 @@ Green without edits, and why: `FixedTimestepTests` (substep counts and the parti
 | `head_on_pair` | X column byte-identical to the B.3 golden (x carries no acceleration, so the substep-37 contact and its 7.8 mm correction repeat exactly); only Y moves, by up to ½·g·2 s/120 = 0.082 m, onto the exact parabola: final vertical speed −g·2 s = −19.62 (was −19.579). Mirror symmetry exact. |
 | `ball_cluster_16`, `stress_grid_50` | Full regeneration (every free-fall column shifts by the removed lag). Invariants unedited; deepest penetration and final speeds close to the B.3 values (0.068 / 0.119 m; 8.65 / 15.7 m/s). |
 
-Gate: regenerate, review with a script as at B.3 (add the exact-parabola check and the Euler byte-identity check), commit the JSON, re-run without the variable, green. In-app: nothing visible (a 1/240 s startup shift). Commit as B-warmstart, a behavior commit on its own (rule 2).
+**Observed at the 2026-09-04 regeneration** (review script over old vs new JSON: Euler byte-identity, exact-parabola residuals up to each track's first contact, head-on X byte-identity and mirror symmetry; the runner's invariants held on every step of every scenario):
+
+| Scenario | Observed |
+|---|---|
+| `single_bounce_euler` | Byte-identical. |
+| `single_bounce_verlet` | Samples 0–57 on 5 − ½·g·t², max residual 9.7e-6 (the old golden lagged by up to 3.9 cm there). First contact resolves at the top of substep 116: sample 58 is already rising at 0.5654 (was penetrating at 0.4561). Apexes 4.1440 / 3.4506 / 2.8896, one sample earlier (109 / 208 / 297), decreasing; gravity on. As predicted. |
+| `rest_latch` | Samples 0–43 exact (3.3e-6); the first sample at or below touching moved from 44 to 43 (0.4807, as predicted). Equilibrium unchanged: final \|v\| 0.0818, resting y 0.4933, gravity on. |
+| `head_on_pair` | X and Z columns and final v_x byte-identical to the B.3 golden (contact at substep 37, final A.x −8.9245); Y moved by up to 0.0818 m onto the exact parabola (residual 4.9e-5); final v_y −19.6200 = −g·2 s (was −19.5792). Mirror symmetry exact. |
+| `ball_cluster_16`, `stress_grid_50` | Every track on its parabola until its first contact (max residual 2.3e-5 / 1.0e-4; 13 of 16 and 44 of 50 first contacts are the ground, the rest ball-ball). Deepest sampled penetration 0.068 → 0.101 m and 0.119 → 0.130 m — both within one substep of travel at that ball's impact speed (v·h = 0.102 / 0.159 m): the response acts at the top of the next substep, and the h/2 shift moved the sampling phase relative to the contacts, so this is sampling, not a solver change. Max final speeds 8.65 → 8.77 and 15.72 → 15.61 m/s; gravity on everywhere. |
+
+Gate: regenerate, review with a script as at B.3 (add the exact-parabola check and the Euler byte-identity check), commit the JSON, re-run without the variable, green. In-app: nothing visible (a 1/240 s startup shift). Commit as B-warmstart, a behavior commit on its own (rule 2). **Done 2026-09-04** (`151a370`): regenerated, reviewed (table above), JSON committed, clean re-run green.
 
 ## Step B.4 — struts, solver, raycast, suspension state, gear specs — B-suspension
 
@@ -2030,6 +2041,6 @@ struct AirframeContactClassifierTests {
 4. - [ ] **Touchdown is reported**: in-app, a landing prints `[Touchdown]` with a plausible sink rate and compressions; a firm arrival prints `[GearOverload]`; a gear-up belly touch prints `[CRASH] …fuselage`, a gentle one `[Scrape]`, both from pre-impact velocity. `AirframeContactClassifierTests` and the belly-crash world test green.
 5. - [ ] **No process-wide state**: parity determinism and partition tests green under Swift Testing's in-process concurrency; accumulator, hooks, and suspension state are per instance; review confirms no new static mutable state in the step path.
 6. - [ ] **CI green** on all five commits (serial app-hosted run, as configured).
-7. - [ ] **Verlet starts warm**: `VerletSolverTests` green with the seeded first step; at the B.3b regeneration `single_bounce_euler` is byte-identical, every Verlet free-fall column matches y₀ − ½·g·t² within 1e-4, `head_on_pair`'s X column is byte-identical and its final vertical speed is −g·2 s, and the rest equilibrium (g/120, y ≈ 0.4933) repeats.
+7. - [x] **Verlet starts warm**: `VerletSolverTests` green with the seeded first step; at the B.3b regeneration `single_bounce_euler` is byte-identical, every Verlet free-fall column matches y₀ − ½·g·t² within 1e-4, `head_on_pair`'s X column is byte-identical and its final vertical speed is −g·2 s, and the rest equilibrium (g/120, y ≈ 0.4933) repeats. *(`151a370`, 2026-09-04: all four checks held — see the Observed table under B.3b.)*
 
-**Implementation order:** Phase A cleanup (C1–C10, one or two plumbing commits) → B.1–B.2 as one commit (B-generators, criterion 1) ✅ → B.3 (B-timestep, criterion 2) ✅ → B.3b (B-warmstart, criterion 7) → B.4–B.5 as one commit (B-suspension, criterion 3) → B.6 (B-classification, criterion 4). Tests land inside their commits. The order matters three times: the force hook must exist before the accumulator moves its call into the substep loop; the fixed step must precede the suspension, whose rates are sized against dt = 1/120; and the warm start lands before the suspension so B-suspension's goldens-untouched gate stays a real check (B.3b is Phase B's last golden regeneration).
+**Implementation order:** Phase A cleanup (C1–C10, one or two plumbing commits) → B.1–B.2 as one commit (B-generators, criterion 1) ✅ → B.3 (B-timestep, criterion 2) ✅ → B.3b (B-warmstart, criterion 7) ✅ → B.4–B.5 as one commit (B-suspension, criterion 3) → B.6 (B-classification, criterion 4). Tests land inside their commits. The order matters three times: the force hook must exist before the accumulator moves its call into the substep loop; the fixed step must precede the suspension, whose rates are sized against dt = 1/120; and the warm start lands before the suspension so B-suspension's goldens-untouched gate stays a real check (B.3b is Phase B's last golden regeneration).
