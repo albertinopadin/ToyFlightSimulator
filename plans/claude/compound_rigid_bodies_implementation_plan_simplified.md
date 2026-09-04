@@ -12,6 +12,7 @@
 
 ## Changelog
 
+- **2026-09-03** — B-generators landed (B.1–B.2): `RigidBody.forceGenerator`, called by `PhysicsWorld` at the top of every step; `Aircraft.generateForces` computes the flight force inside the step from the input cached in `doUpdate`. `ForceGeneratorTests` added (plus a third test pinning that force does not persist between steps). Goldens byte-identical under the dry run.
 - **2026-09-03** — Phase A cleanup closed by owner. Still open for a later plumbing commit: the four deprecated `PhysicsWorld` update methods (C3, third item) and O1.
 - **2026-09-02** — Phase A cleanup landed (C1–C10) as one plumbing commit. Deviations: the four private `PhysicsWorld` update methods are kept as deprecated, unused code by owner decision (C3, third item); the two `*Original` bodies were rerouted through `appendAllPairs` so the O(n²) solver overloads C1/C2 delete could go. O1 not taken.
 - **2026-09-02** — Simplified rewrite. Phase 0 and Phase A summarized (both done). New "Phase A cleanup" section listing the code changes to make. Phase B re-planned with the design changes listed under "What changed from the original plan".
@@ -673,7 +674,7 @@ No step straddles a commit boundary; each commit is one kind of change (rule 2).
 
 Why: the physics step runs at the top of the scene's `doUpdate`, before children traverse, so the aircraft's subtree (attached camera included) sees post-physics transforms in the same frame. That placement stays. But it means forces written in a child's `doUpdate` (the flight model, in `Aircraft`) reach the step one frame late. The fix is a hook the world calls at the top of each step.
 
-- [ ] **Edit:** `Physics/World/RigidBody.swift`, next to `onContact`:
+- [x] **Edit:** `Physics/World/RigidBody.swift`, next to `onContact`:
 
 ```swift
     /// Per-substep force source, called by PhysicsWorld at the top of every
@@ -684,7 +685,7 @@ Why: the physics step runs at the top of the scene's `doUpdate`, before children
     var forceGenerator: ((_ body: RigidBody, _ substepDelta: Float, _ world: PhysicsWorld) -> Void)?
 ```
 
-- [ ] **Edit:** `Physics/World/PhysicsWorld.swift`, the start-of-step loop:
+- [x] **Edit:** `Physics/World/PhysicsWorld.swift`, the start-of-step loop:
 
 ```diff
          for entity in entities {
@@ -700,7 +701,7 @@ Goldens: no harness body sets `forceGenerator`, so the new line is a nil check. 
 
 `doUpdate` keeps what belongs to the frame (input sampling, the attitude filter, animator, gear toggle) and only caches the sampled input; the force is computed by `generateForces`, which the body's hook calls at the top of every step. The remaining one-frame input latency (stick sampled in frame N−1 feeds frame N's steps) is standard for engines that decouple input from fixed steps and is far below the attitude filter's time constants.
 
-- [ ] **Edit:** `GameObjects/Aircraft.swift`. The cached input, next to `flightModel`:
+- [x] **Edit:** `GameObjects/Aircraft.swift`. The cached input, next to `flightModel`:
 
 ```swift
     /// Control input sampled once per frame in doUpdate and read by
@@ -782,7 +783,7 @@ No scene changes. On an aircraft swap the old body leaves the entity list throug
 
 Goldens: no harness world contains an aircraft; nothing else on the step path changed. Byte-identical.
 
-- [ ] **File (new):** `ToyFlightSimulatorTests/Physics/ForceGeneratorTests.swift`
+- [x] **File (new):** `ToyFlightSimulatorTests/Physics/ForceGeneratorTests.swift`
 
 ```swift
 import Foundation

@@ -86,6 +86,12 @@ class Aircraft: GameObject {
         }
     }
     
+    /// Control input sampled once per frame in doUpdate and read by
+    /// generateForces on every physics substep. nil while the aircraft is
+    /// unfocused or not player-driven, so there is no flight force without
+    /// focus, as before.
+    private var latestControlInput: ControlInput?
+    
     override var rigidBody: RigidBody? {
         didSet {
             // Mass-sync mirror of `Aircraft.flightModel.didSet` — see there for
@@ -93,6 +99,12 @@ class Aircraft: GameObject {
             // converge regardless of assignment order.
             if let flightModel {
                 rigidBody?.mass = flightModel.mass
+            }
+            
+            // The world calls this from inside the physics step. Weak self:
+            // the aircraft owns the body, so a strong capture would be a cycle.
+            rigidBody?.forceGenerator = { [weak self] _, substepDelta, world in
+                self?.generateForces(substepDelta: substepDelta, world: world)
             }
         }
     }
@@ -134,13 +146,14 @@ class Aircraft: GameObject {
         if shouldUpdateOnPlayerInput && hasFocus {
             let controlInput = getControlInput()
             let deltaMove = dt * _moveSpeed
-
-            if let rigidBody,
-               let flightModel,
-               let rigidBodyState = rigidBody.getState() {
-                let force = flightModel.computeForce(state: rigidBodyState, input: controlInput)
-                rigidBody.force += force
-            } else {
+            
+            // Flight forces are computed in generateForces, inside the physics
+            // step. Here we only refresh the input it reads.
+            latestControlInput = controlInput
+            if rigidBody == nil || flightModel == nil {
+                // Kinematic fallback for aircraft without physics (the F-16
+                // wingman). Small change from before: a body whose getState()
+                // is nil now gets neither force nor kinematic motion.
                 moveAlongVector(getFwdVector(), distance: deltaMove * controlInput.throttle)
             }
 
@@ -148,6 +161,7 @@ class Aircraft: GameObject {
             applyPlayerSideMove(deltaMove: deltaMove)
             handleGearToggle()
         } else {
+            latestControlInput = nil
             // Lost control — bleed off accumulated rotation rate so resuming
             // control doesn't snap-resume a tumble. Continues to apply the
             // rotation, so a released stick damps out physically instead of
@@ -156,6 +170,22 @@ class Aircraft: GameObject {
         }
 
         animator?.update(deltaTime: dt)
+    }
+    
+    /// Called by the physics world at the top of each substep, on the
+    /// UpdateThread, from live body state. doUpdate runs later in the frame,
+    /// after the step, and only refreshes the cached input.
+    func generateForces(substepDelta: Float, world: PhysicsWorld) {
+        guard let rigidBody else { return }
+        
+        if let input = latestControlInput,
+           let flightModel,
+           let state = rigidBody.getState() {
+            rigidBody.force += flightModel.computeForce(state: state, input: input)
+        }
+
+        // B.5 adds the landing-gear suspension here, outside the input guard:
+        // a parked, unfocused aircraft must still be held up.
     }
     
     internal func getControlInput() -> ControlInput {

@@ -59,6 +59,13 @@ public class RigidBody: PhysicsEntity {
     /// not only the deepest. The Contact has self as A. Keep it cheap; do not
     /// change physics state here.
     var onContact: ((Contact, RigidBody) -> Void)?
+    
+    /// Per-substep force source, called by PhysicsWorld at the top of every
+    /// step before collision detection and integration, with this body as the
+    /// first argument. Add to `force`; it is zeroed at the end of each step,
+    /// so write it on every call. Do not move the body or change its velocity
+    /// here. nil for bodies that only feel gravity and contacts.
+    var forceGenerator: ((_ body: RigidBody, _ substepDelta: Float, _ world: PhysicsWorld) -> Void)?
 
     /// World-space collider cache behind a dirty flag. Invalidated by
     /// setPosition, by collider changes, and by the world at the start of

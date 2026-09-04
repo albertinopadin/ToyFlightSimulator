@@ -61,6 +61,8 @@ final class PhysicsWorld {
             // RigidBody.setPosition (attitude rotation), so every world-collider
             // cache is invalidated here. setPosition covers mid-step moves.
             entity.invalidateWorldColliders()
+            // Per-step forces (the flight model; the suspension after B.5).
+            entity.forceGenerator?(entity, deltaTime, self)
         }
 
         let pairs: [(RigidBody, RigidBody)]
