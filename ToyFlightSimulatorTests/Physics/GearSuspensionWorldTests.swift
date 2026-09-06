@@ -151,4 +151,38 @@ struct GearSuspensionWorldTests {
         // strut that pulled would remove most of the apex.
         #expect(maxY - 1.93 >= 0.5)
     }
+
+    @Test("a gear-up belly arrival classifies as a fuselage CRASH from pre-impact velocity")
+    func bellyImpactClassifiesAsCrash() {
+        // 5 m/s commanded at 2.0 m plus 0.95 m of free fall to the fuselage
+        // bottom (capsule center 0.3, radius 1.35): arrival ≈ 6.6 m/s. onContact
+        // fires after the pair's response, when the body already carries the
+        // 0.2-restitution bounce, so the callback-time velocity reads as a
+        // separating contact: a scrape. stepStartVelocity is the arrival.
+        let (world, body, rig) = makeF22OnGear(startY: 2.0, velocityY: -5)
+        rig.gearDeployed = false
+        var contacts: [(name: String, cls: AirframeContactClass, speed: Float, bounceCls: AirframeContactClass)] = []
+        body.onContact = { [unowned body] contact, _ in
+            let speed = AirframeContactClassifier.normalSpeed(contactNormal: contact.normal,
+                                                              preImpactVelocity: body.stepStartVelocity)
+            let bounceSpeed = AirframeContactClassifier.normalSpeed(contactNormal: contact.normal,
+                                                                    preImpactVelocity: body.velocity)
+            contacts.append((contact.colliderNameA ?? "?",
+                             AirframeContactClassifier.classification(forNormalSpeed: speed),
+                             speed,
+                             AirframeContactClassifier.classification(forNormalSpeed: bounceSpeed)))
+        }
+        for _ in 0..<120 { world.update(deltaTime: Self.dt) }   // 2 s
+
+        let first = contacts.first
+        #expect(first?.name == "fuselage")
+        #expect(first?.cls == .impact)
+        #expect(abs((first?.speed ?? 0) - 6.6) <= 0.25,
+                "classification must see the ≈6.6 m/s arrival, not the post-impulse bounce")
+        #expect(first?.bounceCls == .scrape,
+                "the body's velocity inside onContact is already the bounce; it would miss the crash")
+        // The 0.2 bounce comes back at ≈1.3 m/s, under the 2 m/s boundary:
+        // one crash, then scrapes while it settles on the belly.
+        #expect(contacts.filter { $0.cls == .impact }.count == 1)
+    }
 }

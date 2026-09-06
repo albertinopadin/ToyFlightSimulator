@@ -238,11 +238,19 @@ final class FlightboxWithPhysics: GameScene {
             let gearStruts = AircraftLandingGearSpec.spec(for: aircraft)
             playerAircraft.gearSuspension = gearStruts.isEmpty ? nil : LandingGearSuspension(struts: gearStruts)
 
-            // Debug scaffolding: named contact reporting, throttled so a
-            // resting aircraft doesn't spam 60 lines/s.
-            let contactLogger = ContactDebugLogger(bodyLabel: playerAircraft.getName())
-            acRigidBody.onContact = { contact, other in
-                contactLogger.log(contact, against: other)
+            // Flight-test telemetry: gear events and classified airframe
+            // contacts. Weak aircraft capture: the aircraft owns the body that
+            // owns this closure.
+            let reporter = TouchdownReporter(bodyLabel: playerAircraft.getName())
+            playerAircraft.gearSuspension?.onLandingGearEvent = { event in
+                reporter.report(event)
+            }
+            acRigidBody.onContact = { [weak playerAircraft] contact, other in
+                guard let playerAircraft, let body = playerAircraft.rigidBody else { return }
+                reporter.reportAirframeContact(contact,
+                                               preImpactVelocity: body.stepStartVelocity,
+                                               isGearDown: playerAircraft.isGearDown,
+                                               against: other)
             }
 
             entities = Self.swappedEntities(entities, removing: prevAcRigidBody, adding: acRigidBody)

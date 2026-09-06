@@ -9,6 +9,9 @@
 /// most once per interval per collider name. Installed into RigidBody.onContact
 /// (fires on the UpdateThread during the physics step — GameTime is owned by
 /// the same thread, so reading it here is safe), so keep it print-only.
+/// Kept for general contact cases (any body that only needs "what touched
+/// what"); the player aircraft's contacts go through TouchdownReporter,
+/// which classifies them (B.6).
 final class ContactDebugLogger {
     private let bodyLabel: String
     private let interval: Double

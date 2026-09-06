@@ -73,6 +73,12 @@ public class RigidBody: PhysicsEntity {
     /// so write it on every call. Do not move the body or change its velocity
     /// here. nil for bodies that only feel gravity and contacts.
     var forceGenerator: ((_ body: RigidBody, _ substepDelta: Float, _ world: PhysicsWorld) -> Void)?
+    
+    /// Velocity at the top of the current step, before this step's contact
+    /// impulses. Written by PhysicsWorld. onContact handlers run after the
+    /// response, when `velocity` is already the post-impact value, so impact
+    /// classification reads this instead.
+    var stepStartVelocity: float3 = .zero
 
     /// World-space collider cache behind a dirty flag. Invalidated by
     /// setPosition, by collider changes, and by the world at the start of

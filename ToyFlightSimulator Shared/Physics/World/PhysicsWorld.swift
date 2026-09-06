@@ -96,6 +96,7 @@ final class PhysicsWorld {
             // RigidBody.setPosition (attitude rotation), so every world-collider
             // cache is invalidated here. setPosition covers mid-step moves.
             entity.invalidateWorldColliders()
+            entity.stepStartVelocity = entity.velocity
             // Per-substep forces (the flight model and the landing-gear suspension).
             entity.forceGenerator?(entity, deltaTime, self)
         }
