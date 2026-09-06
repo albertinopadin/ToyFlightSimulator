@@ -12,6 +12,8 @@
 
 ## Changelog
 
+- **2026-09-06** — Phase B exit criteria 1–5 closed (7 closed at B.3b; 6 waits on the push of `b9d0754` and `a67cd5c` — CI is green through `cacf9bb`). The owner's in-app pass ("everything looks good in the game") covers the swap check, the refresh-rate settle and play checks, the stance / gear-toggle / strut-line checks, and the gear-up belly checks. Stress-scene cost recorded before (`ccd2aaf`) and after (`a67cd5c`) at 120 Hz: unchanged within noise with the broad phase; the 8-substep cap shows only in the 200-sphere no-broad-phase sweep (Observed under B.3). Static-state review of `Physics/` clean; full serial suite green. `AircraftLandingGearSpec`'s PLACEHOLDER comment and the `AircraftLandingGearSpecTests` header record the accepted, unchanged numbers.
+- **2026-09-06** — B-classification landed (B.6, `a67cd5c`): `RigidBody.stepStartVelocity` written by `PhysicsWorld.step` at the top of every substep; `AirframeContactClassifier` (pure, 2 m/s boundary on the pre-impact normal speed); `TouchdownReporter` on `onLandingGearEvent` and `onContact` in `applyAircraftSwap`. Review fix: the classifier's branches were swapped. Owner keeps `ContactDebugLogger` for general contact cases (Decisions). `AirframeContactClassifierTests` (5) and `bellyImpactClassifiesAsCrash` (6.6 ± 0.25 m/s band, bounce contrast, one impact; Decisions). 333 tests in 52 suites; goldens byte-identical. Smoke run: touchdown, overload, and crash lines print from the 100 m drop; the gear-up checks stay open under criterion 4. Listings updated to the shipped code.
 - **2026-09-05** — B-suspension part 2 landed (B.5, `b9d0754`): `Aircraft.gearSuspension` stepped from `generateForces` outside the input guard with `isGearDown` as the gate; `FlightboxWithPhysics.applyAircraftSwap` installs it from `AircraftLandingGearSpec`; the X-key overlay takes the `AircraftType`, draws cyan strut lines (`ColliderOverlayMapping.strutLineEndpoints`), and logs the static stance. Review fix: the strut lines had no `color:` (red by `Line.init`'s default). `GearSuspensionWorldTests` (4) and two `ColliderOverlayMappingTests` cases; the touchdown cases start 1 cm above strut contact (Decisions; listing updated). 327 tests in 51 suites; goldens byte-identical. Smoke run: the contact log goes quiet on the gear; the visual checks stay open under criterion 3. B.6's line numbers re-anchored to `b9d0754`.
 - **2026-09-05** — Line numbers added to every edit item in B.5 and B.6 (as of `cacf9bb`, the tree after B.4; each step says how earlier edits shift them). B.5 gains one item: the `PhysicsWorld.step` marker comment at line 99 loses its "after B.5". B.6's two diffs re-contexted to the current file text (`PhysicsWorld.step`'s comment lines; `FlightboxWithPhysics`'s two-line contact-logger comment). No code change.
 - **2026-09-04** — B-suspension part 1 landed (B.4, `86745d4`): `SuspensionStrut`/`SuspensionSolver`, `NarrowPhase.rayVsPlane`, `PhysicsWorld.raycastStaticPlanes`, `LandingGearSuspension`/`LandingGearEvent`, `AircraftLandingGearSpec` (owner's names; listings B.4–B.6 renamed), plus `PhysicsWorld.standardGravity` and `float3x3.right/up/forward` (owner suggestions from implementation). The hand-typed `rayVsPlane` had dropped the divide by dot(d, n); fixed to the listing. Tests per B.4 plus `LandingGearSuspensionTests` and a `MathUtilsTests` case; goldens byte-identical. B-suspension is now two commits (B.4, then B.5): Commits table, Decisions, criterion 6's count, and the implementation order updated. Follow-up `c1f26cc`: `Droppable` reads `standardGravity`.
@@ -659,7 +661,7 @@ No step straddles a commit boundary; each commit is one kind of change (rule 2).
 | **B-warmstart** ✅ `151a370` | B.3b | Behavior. Regenerate the goldens and review against the B.3b table: `single_bounce_euler` byte-identical, the five Verlet goldens move by the removed h/2 startup lag only. Every semantic suite green with the two edits listed in B.3b. In-app: nothing visible (a 1/240 s startup shift). | `VerletSolverTests` (two edited, one new), `ForceGeneratorTests` (two expectations flip) |
 | **B-suspension, part 1** ✅ `86745d4` | B.4 | Plumbing. Goldens byte-identical (nothing consumes the new types until B.5; the gravity vector is bit-identical). No in-app change. | `SuspensionSolverTests`, `AircraftLandingGearSpecTests`, `LandingGearSuspensionTests` (new); additions to `NarrowPhaseTests` and `MathUtilsTests` |
 | **B-suspension, part 2** ✅ `b9d0754` | B.5 | Goldens untouched (no harness scenario has struts; dry run byte-identical). In-app: the F-22 stands on its wheels at the logged ride height; gear up drops it to the belly rest; the cyan strut lines match the modeled gear. | `GearSuspensionWorldTests` (new, 4); two additions to `ColliderOverlayMappingTests` |
-| **B-classification** | B.6 | Goldens untouched (observers only). In-app: touchdown, gear-overload, scrape, and crash lines print as described in B.6. | `AirframeContactClassifierTests` (new); one addition to `GearSuspensionWorldTests` |
+| **B-classification** ✅ `a67cd5c` | B.6 | Goldens untouched (observers only; dry run byte-identical). In-app (smoke run, gear down): touchdown, gear-overload, and crash lines print from the 100 m drop; the gear-up scrape and crash checks need the keyboard (criterion 4). | `AirframeContactClassifierTests` (new, 5); one addition to `GearSuspensionWorldTests` |
 
 ## Decisions that differ from the research docs or the original Phase B plan
 
@@ -684,6 +686,8 @@ No step straddles a commit boundary; each commit is one kind of change (rule 2).
 | `PhysicsWorld.standardGravity` (scalar) behind `PhysicsWorld.gravity` | Owner suggestion at B.4: one written 9.81. `staticStance` defaults to it; `Droppable` reads it (`c1f26cc`). |
 | `float3x3.right/up/forward` in `MathUtils` | Owner suggestion at B.4: a rotation matrix's basis columns by name (`pose.rotation.up` in the suspension). `float3.up` stays world up; the narrow phase's capsule-axis reads keep `columns.1`, where "axis", not "up", is meant. |
 | `GearSuspensionWorldTests` touchdown cases start 1 cm above strut contact, not at the listed 2.2 m | The commanded velocity is then the arrival velocity (one substep of gravity, 0.08 m/s, aside). From 2.2 m the 0.15 m of free fall before the struts touch adds 0.4 m/s, so a "4 m/s" arrival reads 4.4 and misses the listed tolerance; the firm/gentle overload expectations were sized for the commanded speeds. |
+| `ContactDebugLogger` stays; `TouchdownReporter` takes over only the player aircraft's wiring | Owner's call at B.6: general contact reporting for any body that only needs "what touched what". Nothing in the app references it now; its doc comment says why it is kept. |
+| `bellyImpactClassifiesAsCrash` asserts a 6.6 ± 0.25 m/s band, the bounce contrast, and exactly one impact — not the listed `> 4.5` | The arrival is 5 m/s commanded plus 0.95 m of free fall to the fuselage bottom (≈6.6 m/s). The band pins the physics; the contrast (the body's velocity inside `onContact` classifies as a scrape) is the reason `stepStartVelocity` exists; the count checks that the 0.2 bounce (≈1.3 m/s) stays under the boundary. |
 
 ## Step B.1 — the force hook on `RigidBody` and the world call — B-generators ✅ (landed 2026-09-03, `ccd2aaf`)
 
@@ -905,6 +909,8 @@ Implements combined doc D4: physics must not change with the refresh rate, stiff
 `BallPhysicsScene.doUpdate` (line 71), `PhysicsStressTestScene.doUpdate` (line 136): remove the `if GameTime.DeltaTime <= 1.0 {` wrapper, keep the `timeit` block. `FreeCamFlightboxScene.doUpdate` (line 78): same, and delete the commented-out block below it.
 
 The stress scene's printed per-call time now covers two substeps at 60 Hz, so it roughly doubles. Compare per-substep cost, and expect about 1.3–1.9 ms per frame at 50 spheres.
+
+**Observed 2026-09-06** (stress scene, Debug builds of `ccd2aaf` vs `a67cd5c`, run at 120 Hz, so one substep per call on average and per-call numbers compare directly; the ≈1 µs minimums after are calls that ran no substep). Per-call averages with the broad phase, before → after: 50 spheres 0.57–0.76 → 0.61–0.78 ms; 100 spheres 1.30–1.55 → 1.43–1.64 ms; 200 spheres 1.60–2.01 → 1.72–2.14 ms — at most 12% apart, inside the run-to-run spread; the per-substep bookkeeping (accumulator, `invalidateWorldColliders`, `stepStartVelocity`) is small. Without the broad phase: 50 spheres 1.96–2.52 → 2.45–2.55 ms; 100 spheres 5.19–5.21 → 5.22–5.27 ms; 200 spheres 20.1–20.6 → 159 ms. The last is the cap: one O(n²) substep costs 20 ms, over the 8.3 ms frame, so each call's accumulator asks for more substeps than the last until `maxSubstepsPerUpdate` (8) bounds the work at 8 × 20 ms and the simulation runs slower than real time. Before B.3 the same overload stepped once per frame by the actual dt: real time, coarse step. Every real scene runs the broad phase (300 spheres: 1.3–1.8 ms per call before, not reached after within the run); the cap is the documented hitch policy, not a regression, and a lower cap is a one-line tuning if slow motion is ever preferred to a long frame.
 
 ### Regenerate the goldens and review the diff
 
@@ -1909,7 +1915,7 @@ The settle test's initial drop arrives at about 3 m/s and fires an overload duri
 
 **Done 2026-09-05** (`b9d0754`): build green; full serial suite green with every other suite unedited — 327 tests in 51 suites plus the 20 XCTest cases, `Physics parity` included; goldens byte-identical under the dry run; smoke run as in the landed note.
 
-## Step B.6 — touchdown and crash classification — B-classification
+## Step B.6 — touchdown and crash classification — B-classification ✅ (landed 2026-09-06, `a67cd5c`)
 
 Research §4.3 B3: gear support comes from strut compressions (no contact events involved); airframe contacts are classified scrape or impact by approach speed; the overload event is the hook crash scoring wants. Observers only: a pure classifier, one print-only reporter, and the wiring. No physics change; goldens untouched.
 
@@ -1917,7 +1923,9 @@ Research §4.3 B3: gear support comes from strut compressions (no contact events
 
 Line numbers in this step are as of `b9d0754`, the tree after B.5 landed, before any edit here. Edits in the same file shift the numbers below them: apply a file's edits bottom-up, or re-count after each one.
 
-- [ ] **Edit:** `Physics/World/RigidBody.swift`, inserted after line 75 (`var forceGenerator`), before the blank line and the world-collider cache comment at 77:
+**Landed 2026-09-06** (`a67cd5c`), goldens untouched (regeneration dry run byte-identical). Found at review: `classification(forNormalSpeed:)` had its branches swapped (`.scrape : .impact`), so every hard hit would have printed as a Scrape and every gentle touch as a CRASH; fixed to the listing — the classifier tests and the belly-arrival world test both fail on the swapped form. Owner's call: `ContactDebugLogger` stays, for general contact reporting on any body (its doc comment says so); only the player aircraft's wiring moved. The nameless-collider label is `aircraft body`. Test deviations: `bellyImpactClassifiesAsCrash` arrives at ≈6.6 m/s, not "≈5" (5 m/s commanded plus 0.95 m of free fall to the fuselage bottom), so it asserts a 6.6 ± 0.25 m/s band, that the body's own velocity inside `onContact` already classifies as a scrape (the bounce), and exactly one impact in 2 s (Decisions); `AirframeContactClassifierTests` has a fifth case, an impact along a tilted normal. In-app smoke run of the Debug build (`FlightboxWithPhysics`, 40 s, no keyboard, gear down from the 100 m drop): no `[Contact]` lines; `[GearOverload]` on all three struts at their clamps (nose 100 kN, mains 400 kN), `[Touchdown]` sink 43.82 m/s with 0.213 m on every strut, `[CRASH] F-22_CGTrader.fuselage hit Quad at 43.44 m/s (gear down)` as the struts bottom out, `[Liftoff]`, a second bounce (`[CRASH]` at 8.10 m/s), a 4.75 m/s touchdown with no airframe contact, a 0.85 m/s touchdown, then silence on the wheels. Each CRASH is followed by one `[Scrape] … at 0.00 m/s`: the next substep's contact while the capsule still overlaps, with `stepStartVelocity` already the bounce (separating, so the speed clamps to 0), throttled to 1/s — skipping zero-speed scrapes is a possible one-line refinement, not taken. Two B.4 semantics showed up in the log, noted for tuning: the overload line carries the clamped force (exactly the clamp), and the 44 m/s arrival never said "bottomed out" because the rising edge fires before the strut bottoms. The gear-up belly checks (a `[CRASH] …fuselage` and a gentle `[Scrape]` with the gear up) need the keyboard and stay the owner's under criterion 4. The listings below are the shipped code.
+
+- [x] **Edit:** `Physics/World/RigidBody.swift`, inserted after line 75 (`var forceGenerator`), before the blank line and the world-collider cache comment at 77:
 
 ```swift
     /// Velocity at the top of the current step, before this step's contact
@@ -1927,7 +1935,7 @@ Line numbers in this step are as of `b9d0754`, the tree after B.5 landed, before
     var stepStartVelocity: float3 = .zero
 ```
 
-- [ ] **Edit:** `Physics/World/PhysicsWorld.swift`, the start-of-step loop (93–101) in `step` (starts at 92): inserted after line 98 (`entity.invalidateWorldColliders()`), before the `// Per-substep forces` comment at 99:
+- [x] **Edit:** `Physics/World/PhysicsWorld.swift`, the start-of-step loop (93–101) in `step` (starts at 92): inserted after line 98 (`entity.invalidateWorldColliders()`), before the `// Per-substep forces` comment at 99:
 
 ```diff
          for entity in entities {
@@ -1944,12 +1952,14 @@ Line numbers in this step are as of `b9d0754`, the tree after B.5 landed, before
 
 With the Euler solver the response sees one gravity kick more than this value (about 0.08 m/s at 120 Hz); irrelevant against a 2 m/s threshold.
 
-- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/AirframeContactClassifier.swift`
+- [x] **File (new):** `ToyFlightSimulator Shared/Physics/Vehicle/AirframeContactClassifier.swift`
 
 ```swift
 //
 //  AirframeContactClassifier.swift
 //  ToyFlightSimulator
+//
+//  Created by Albertino Padin on 9/6/26.
 //
 
 /// Crash-vs-landing vocabulary for airframe ground contacts. Pure.
@@ -1965,43 +1975,46 @@ enum AirframeContactClassifier {
     /// gentle contact (under 1 m/s) and a hard landing (about 3 m/s sink, on
     /// the gear). Strictly greater; tunable.
     static let impactSpeedThreshold: Float = 2.0
-
+    
     /// Approach speed along the contact normal. `contactNormal` is the
     /// Contact's B→A normal with the aircraft as A, so approach is −dot(v, n);
     /// a separating velocity clamps to 0.
     static func normalSpeed(contactNormal: float3, preImpactVelocity: float3) -> Float {
         max(0, -dot(preImpactVelocity, contactNormal))
     }
-
+    
     static func classification(forNormalSpeed speed: Float) -> AirframeContactClass {
         speed > impactSpeedThreshold ? .impact : .scrape
     }
 }
 ```
 
-- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Debug/TouchdownReporter.swift`; **delete** `ToyFlightSimulator Shared/Physics/Debug/ContactDebugLogger.swift`, the whole 30-line file (nothing uses it once the wiring below lands).
+- [x] **File (new):** `ToyFlightSimulator Shared/Physics/Debug/TouchdownReporter.swift`. `ContactDebugLogger.swift` **stays** (owner's call at B.6, Decisions): general contact reporting for any body that only needs "what touched what"; its doc comment says so. Nothing in the app references it after the wiring below.
 
 ```swift
 //
 //  TouchdownReporter.swift
 //  ToyFlightSimulator
 //
+//  Created by Albertino Padin on 9/6/26.
+//
 
 import Foundation
 
 /// Print-only flight-test telemetry: gear events as they come, airframe
 /// contacts classified. Runs inside the physics step's callbacks on the
-/// UpdateThread, so it must stay print-only.
+/// UpdateThread, so it must stay print-only. The player aircraft's
+/// replacement for ContactDebugLogger, which stays for general contact cases.
 final class TouchdownReporter {
     private let bodyLabel: String
     private let scrapeLogInterval: Double
     private var lastScrapeLog: [String: Double] = [:]
-
+    
     init(bodyLabel: String, scrapeLogInterval: Double = 1.0) {
         self.bodyLabel = bodyLabel
         self.scrapeLogInterval = scrapeLogInterval
     }
-
+    
     func report(_ event: LandingGearEvent) {
         switch event {
             case .touchdown(let sinkRate, let compressions):
@@ -2014,34 +2027,30 @@ final class TouchdownReporter {
                       + (bottomedOut ? ", bottomed out" : ""))
         }
     }
-
+    
     /// Scrapes are throttled per collider name (a sliding fuselage re-contacts
     /// every step); impacts always print.
-    func reportAirframeContact(_ contact: Contact,
-                               preImpactVelocity: float3,
-                               isGearDown: Bool,
-                               against other: RigidBody) {
-        let speed = AirframeContactClassifier.normalSpeed(contactNormal: contact.normal,
-                                                          preImpactVelocity: preImpactVelocity)
+    func reportAirframeContact(_ contact: Contact, preImpactVelocity: float3, isGearDown: Bool, against other: RigidBody) {
+        let speed = AirframeContactClassifier.normalSpeed(contactNormal: contact.normal, preImpactVelocity: preImpactVelocity)
         let classification = AirframeContactClassifier.classification(forNormalSpeed: speed)
-        let name = contact.colliderNameA ?? "body"
-
+        let name = contact.colliderNameA ?? "aircraft body"
+        
         if classification == .scrape {
             let now = GameTime.TotalGameTime
             if let last = lastScrapeLog[name], now - last < scrapeLogInterval { return }
             lastScrapeLog[name] = now
         }
-
+        
         let otherLabel = other.gameObject?.getName() ?? "static geometry"
         let label = classification == .impact ? "CRASH" : "Scrape"
         print("[\(label)] \(bodyLabel).\(name) hit \(otherLabel) at "
-              + String(format: "%.2f m/s", speed)
-              + " (gear \(isGearDown ? "down" : "up"))")
+                      + String(format: "%.2f m/s", speed)
+                      + " (gear \(isGearDown ? "down" : "up"))")
     }
 }
 ```
 
-- [ ] **Edit:** `Scenes/FlightboxWithPhysics.swift`; replaces the `ContactDebugLogger` block in `applyAircraftSwap`, lines 241–246 (the comment at 241 through the `onContact` closure's closing brace at 246). The closures capture the reporter strongly (nothing else owns it) and the aircraft weakly: a strong aircraft capture would cycle aircraft → rigidBody → onContact → aircraft.
+- [x] **Edit:** `Scenes/FlightboxWithPhysics.swift`; replaces the `ContactDebugLogger` block in `applyAircraftSwap`, lines 241–246 (the comment at 241 through the `onContact` closure's closing brace at 246). The closures capture the reporter strongly (nothing else owns it) and the aircraft weakly: a strong aircraft capture would cycle aircraft → rigidBody → onContact → aircraft.
 
 ```diff
 -            // Debug scaffolding: named contact reporting, throttled so a
@@ -2066,11 +2075,22 @@ final class TouchdownReporter {
 +            }
 ```
 
-Spec-less aircraft get the same wiring: `gearSuspension` is nil, so only the contact leg is live, and their sphere bodies report `body` as the collider name, as before.
+Spec-less aircraft get the same wiring: `gearSuspension` is nil, so only the contact leg is live, and their sphere bodies report `aircraft body` as the collider name (the shipped label; `ContactDebugLogger` says `body`).
 
-- [ ] **File (new):** `ToyFlightSimulatorTests/Physics/AirframeContactClassifierTests.swift`
+- [x] **File (new):** `ToyFlightSimulatorTests/Physics/AirframeContactClassifierTests.swift` — shipped file, 5 tests: the listed four plus an impact along a tilted normal.
 
 ```swift
+//
+//  AirframeContactClassifierTests.swift
+//  ToyFlightSimulatorTests
+//
+//  B.6 (B-classification): the pure scrape-vs-impact vocabulary for airframe
+//  ground contacts — approach speed along the Contact's B→A normal from the
+//  PRE-impact velocity (RigidBody.stepStartVelocity), 2 m/s boundary, strictly
+//  greater. The end-to-end check that the wiring sees the arrival and not the
+//  bounce is GearSuspensionWorldTests.bellyImpactClassifiesAsCrash.
+//
+
 import Testing
 import simd
 @testable import ToyFlightSimulator
@@ -2110,29 +2130,53 @@ struct AirframeContactClassifierTests {
                                 velocity: [0, -AirframeContactClassifier.impactSpeedThreshold, 0])
         #expect(cls == .scrape)
     }
+
+    @Test("just past the threshold is an impact, on a tilted normal too")
+    func pastThresholdIsImpact() {
+        // A sloped surface: only the component along the normal counts.
+        let n = simd_normalize(float3(0, 1, 1))
+        let (cls, speed) = classify(normal: n, velocity: [0, -2.0, -2.0])
+        #expect(approxEqual(speed, 2 * (2 as Float).squareRoot()))
+        #expect(cls == .impact)
+    }
 }
 ```
 
-- [ ] **Addition to `GearSuspensionWorldTests`**, after `strutsNeverPull` (the last test; it ends at line 153), before the suite's closing brace at 154: the end-to-end check that classification sees the arrival, not the bounce:
+- [x] **Addition to `GearSuspensionWorldTests`**, after `strutsNeverPull` (the last test; it ends at line 153), before the suite's closing brace at 154: the end-to-end check that classification sees the arrival, not the bounce. Shipped test: the arrival is ≈6.6 m/s, asserted as a band, with the bounce contrast and the impact count (Decisions):
 
 ```swift
     @Test("a gear-up belly arrival classifies as a fuselage CRASH from pre-impact velocity")
     func bellyImpactClassifiesAsCrash() {
+        // 5 m/s commanded at 2.0 m plus 0.95 m of free fall to the fuselage
+        // bottom (capsule center 0.3, radius 1.35): arrival ≈ 6.6 m/s. onContact
+        // fires after the pair's response, when the body already carries the
+        // 0.2-restitution bounce, so the callback-time velocity reads as a
+        // separating contact: a scrape. stepStartVelocity is the arrival.
         let (world, body, rig) = makeF22OnGear(startY: 2.0, velocityY: -5)
         rig.gearDeployed = false
-        var classified: [(name: String, cls: AirframeContactClass, speed: Float)] = []
+        var contacts: [(name: String, cls: AirframeContactClass, speed: Float, bounceCls: AirframeContactClass)] = []
         body.onContact = { [unowned body] contact, _ in
             let speed = AirframeContactClassifier.normalSpeed(contactNormal: contact.normal,
                                                               preImpactVelocity: body.stepStartVelocity)
-            classified.append((contact.colliderNameA ?? "?",
-                               AirframeContactClassifier.classification(forNormalSpeed: speed),
-                               speed))
+            let bounceSpeed = AirframeContactClassifier.normalSpeed(contactNormal: contact.normal,
+                                                                    preImpactVelocity: body.velocity)
+            contacts.append((contact.colliderNameA ?? "?",
+                             AirframeContactClassifier.classification(forNormalSpeed: speed),
+                             speed,
+                             AirframeContactClassifier.classification(forNormalSpeed: bounceSpeed)))
         }
-        for _ in 0..<120 { world.update(deltaTime: Self.dt) }
-        let firstImpact = classified.first { $0.cls == .impact }
-        #expect(firstImpact?.name == "fuselage")
-        #expect((firstImpact?.speed ?? 0) > 4.5,
-                "classification must see the ≈5 m/s arrival, not the post-impulse bounce")
+        for _ in 0..<120 { world.update(deltaTime: Self.dt) }   // 2 s
+
+        let first = contacts.first
+        #expect(first?.name == "fuselage")
+        #expect(first?.cls == .impact)
+        #expect(abs((first?.speed ?? 0) - 6.6) <= 0.25,
+                "classification must see the ≈6.6 m/s arrival, not the post-impulse bounce")
+        #expect(first?.bounceCls == .scrape,
+                "the body's velocity inside onContact is already the bounce; it would miss the crash")
+        // The 0.2 bounce comes back at ≈1.3 m/s, under the 2 m/s boundary:
+        // one crash, then scrapes while it settles on the belly.
+        #expect(contacts.filter { $0.cls == .impact }.count == 1)
     }
 ```
 
@@ -2147,14 +2191,14 @@ struct AirframeContactClassifierTests {
 - Tilted-runway generalizations of the sink rate and the strut force direction: one-liners, noted at the code sites.
 - Force hooks on non-aircraft bodies (balls need none); weight-on-wheels UI or scoring beyond prints; CCD, box-box, exact capsule-box; iOS overlay and menu parity.
 
-## Phase B exit criteria
+## Phase B exit criteria (1–5 and 7 closed 2026-09-06; 6 waits on the push)
 
-1. - [ ] **B-generators changes nothing measurable**: full serial suite green against unchanged goldens; the regeneration dry run byte-identical; in-app flight feel unchanged; an F-22 → F-16 → F-22 swap shows no double thrust and the old aircraft still deallocates. *(`ccd2aaf`, 2026-09-03: suite green against unchanged goldens, dry run byte-identical. Open: the in-app swap check.)*
-2. - [ ] **Physics is refresh-rate independent**: `FixedTimestepTests` green with the partition case on exact equality; goldens regenerated, reviewed against the B.3 table, and committed; every semantic suite green without edits; in-app, ball scenes settle the same at 30, 60, and 120 Hz and `FlightboxWithPhysics` plays normally; stress-scene cost recorded before and after (about 2× per update call at 60 Hz is the substep count, not a regression). *(`efb7957`, 2026-09-03: `FixedTimestepTests` green, goldens regenerated and reviewed; one semantic-suite edit, noted under B.3. Open: the in-app 30/60/120 Hz settle check, the `FlightboxWithPhysics` play check, and the stress-scene cost before/after.)*
-3. - [ ] **The jet stands on its wheels**: `GearSuspensionWorldTests` green (settle at about 1.93 m with gravity on, weight on wheels, zero airframe contacts; gear up reproduces the 1.05 belly rest with a `fuselage` contact); in-app, the F-22 settles at the logged stance height, the gear toggle drops and raises it, and the cyan strut lines match the modeled gear (spec numbers tuned and the PLACEHOLDER comment updated, as for Phase 0 criterion 2). *(`86745d4`, 2026-09-04: B.4 landed — types, solver, raycast, suspension state, and the F-22 spec, unit-tested. `b9d0754`, 2026-09-05: B.5 landed — wiring, overlay, and `GearSuspensionWorldTests` green (settle 1.93 ± 0.02 m with weight on wheels and no airframe contact; gear up 1.05 ± 0.05 m with `fuselage` the only contact); smoke run: the contact log goes quiet on the gear. Open: the in-app visual checks — the logged stance height, the gear toggle, the cyan lines against the modeled gear — and the spec tuning with its PLACEHOLDER update.)*
-4. - [ ] **Touchdown is reported**: in-app, a landing prints `[Touchdown]` with a plausible sink rate and compressions; a firm arrival prints `[GearOverload]`; a gear-up belly touch prints `[CRASH] …fuselage`, a gentle one `[Scrape]`, both from pre-impact velocity. `AirframeContactClassifierTests` and the belly-crash world test green.
-5. - [ ] **No process-wide state**: parity determinism and partition tests green under Swift Testing's in-process concurrency; accumulator, hooks, and suspension state are per instance; review confirms no new static mutable state in the step path. *(B.4, `86745d4`: `LandingGearSuspension` state is per instance; `standardGravity` is an immutable `let`.)*
-6. - [ ] **CI green** on all six commits (B-suspension is two; serial app-hosted run, as configured).
+1. - [x] **B-generators changes nothing measurable**: full serial suite green against unchanged goldens; the regeneration dry run byte-identical; in-app flight feel unchanged; an F-22 → F-16 → F-22 swap shows no double thrust and the old aircraft still deallocates. *(`ccd2aaf`, 2026-09-03: suite green against unchanged goldens, dry run byte-identical. Closed 2026-09-06: owner's in-app pass — "everything looks good in the game" — the swap check included.)*
+2. - [x] **Physics is refresh-rate independent**: `FixedTimestepTests` green with the partition case on exact equality; goldens regenerated, reviewed against the B.3 table, and committed; every semantic suite green without edits; in-app, ball scenes settle the same at 30, 60, and 120 Hz and `FlightboxWithPhysics` plays normally; stress-scene cost recorded before and after (about 2× per update call at 60 Hz is the substep count, not a regression). *(`efb7957`, 2026-09-03: `FixedTimestepTests` green, goldens regenerated and reviewed; one semantic-suite edit, noted under B.3. Closed 2026-09-06: the in-app settle and play checks on the owner's pass; the stress-scene cost recorded before (`ccd2aaf`) and after (`a67cd5c`) — Observed under B.3: per-call cost with the broad phase unchanged within noise at 50/100/200 spheres (the app ran at 120 Hz, one substep per call on average); the one large change is 200 spheres WITHOUT the broad phase, 20 → 159 ms per call, the 8-substep cap engaging because a single 20 ms substep exceeds the frame budget — bounded work and slow motion where the old code took one coarse real-time step. Unreachable outside the stress sweep; the documented hitch policy, not a regression.)*
+3. - [x] **The jet stands on its wheels**: `GearSuspensionWorldTests` green (settle at about 1.93 m with gravity on, weight on wheels, zero airframe contacts; gear up reproduces the 1.05 belly rest with a `fuselage` contact); in-app, the F-22 settles at the logged stance height, the gear toggle drops and raises it, and the cyan strut lines match the modeled gear (spec numbers tuned and the PLACEHOLDER comment updated, as for Phase 0 criterion 2). *(`86745d4`, 2026-09-04: B.4 landed — types, solver, raycast, suspension state, and the F-22 spec, unit-tested. `b9d0754`, 2026-09-05: B.5 landed — wiring, overlay, and `GearSuspensionWorldTests` green (settle 1.93 ± 0.02 m with weight on wheels and no airframe contact; gear up 1.05 ± 0.05 m with `fuselage` the only contact); smoke run: the contact log goes quiet on the gear. Closed 2026-09-06: the visual checks on the owner's in-app pass; the spec accepted with its numbers unchanged, and the PLACEHOLDER comment in `AircraftLandingGearSpec` plus the `AircraftLandingGearSpecTests` header now say so.)*
+4. - [x] **Touchdown is reported**: in-app, a landing prints `[Touchdown]` with a plausible sink rate and compressions; a firm arrival prints `[GearOverload]`; a gear-up belly touch prints `[CRASH] …fuselage`, a gentle one `[Scrape]`, both from pre-impact velocity. `AirframeContactClassifierTests` and the belly-crash world test green. *(`a67cd5c`, 2026-09-06: `AirframeContactClassifierTests` (5) and the belly-crash world test green; smoke run (gear down from the 100 m drop): `[Touchdown]` sink 43.82 m/s with compressions 0.213 m, `[GearOverload]` on all three struts, `[CRASH] …fuselage … at 43.44 m/s` from the pre-impact velocity, then a 0.85 m/s final touchdown and silence. Closed 2026-09-06: the gear-up belly checks on the owner's in-app pass.)*
+5. - [x] **No process-wide state**: parity determinism and partition tests green under Swift Testing's in-process concurrency; accumulator, hooks, and suspension state are per instance; review confirms no new static mutable state in the step path. *(B.4, `86745d4`: `LandingGearSuspension` state is per instance; `standardGravity` is an immutable `let`. Closed 2026-09-06: `PhysicsParityTests` and `FixedTimestepTests` green in the full serial run (333 tests in 52 suites); a review of `Physics/` finds no `static var` at all — every `static` is a `let` of a value type (`maxSubstepsPerUpdate`, the two specs, `StrutStep.noContact`, the collision masks, the overlay colors); the accumulator, `forceGenerator`/`onContact`/`onLandingGearEvent`, the suspension, `stepStartVelocity`, and `TouchdownReporter` are per instance; `GameTime.TotalGameTime` is read, never written, by the reporter on its owning thread.)*
+6. - [ ] **CI green** on all six commits (B-suspension is two; serial app-hosted run, as configured). *(2026-09-06: green on the push head `cacf9bb` — Build and Tests, 2026-09-04 — which carries the first four: `ccd2aaf`, `efb7957`, `151a370`, `86745d4`. Open: `b9d0754` and `a67cd5c` are not pushed yet.)*
 7. - [x] **Verlet starts warm**: `VerletSolverTests` green with the seeded first step; at the B.3b regeneration `single_bounce_euler` is byte-identical, every Verlet free-fall column matches y₀ − ½·g·t² within 1e-4, `head_on_pair`'s X column is byte-identical and its final vertical speed is −g·2 s, and the rest equilibrium (g/120, y ≈ 0.4933) repeats. *(`151a370`, 2026-09-04: all four checks held — see the Observed table under B.3b.)*
 
-**Implementation order:** Phase A cleanup (C1–C10, one or two plumbing commits) → B.1–B.2 as one commit (B-generators, criterion 1) ✅ → B.3 (B-timestep, criterion 2) ✅ → B.3b (B-warmstart, criterion 7) ✅ → B.4 (B-suspension part 1, plumbing) ✅ → B.5 (B-suspension part 2, criterion 3) ✅ → B.6 (B-classification, criterion 4). Tests land inside their commits. The order matters three times: the force hook must exist before the accumulator moves its call into the substep loop; the fixed step must precede the suspension, whose rates are sized against dt = 1/120; and the warm start lands before the suspension so B-suspension's goldens-untouched gate stays a real check (B.3b is Phase B's last golden regeneration).
+**Implementation order:** Phase A cleanup (C1–C10, one or two plumbing commits) → B.1–B.2 as one commit (B-generators, criterion 1) ✅ → B.3 (B-timestep, criterion 2) ✅ → B.3b (B-warmstart, criterion 7) ✅ → B.4 (B-suspension part 1, plumbing) ✅ → B.5 (B-suspension part 2, criterion 3) ✅ → B.6 (B-classification, criterion 4) ✅. Tests land inside their commits. The order matters three times: the force hook must exist before the accumulator moves its call into the substep loop; the fixed step must precede the suspension, whose rates are sized against dt = 1/120; and the warm start lands before the suspension so B-suspension's goldens-untouched gate stays a real check (B.3b is Phase B's last golden regeneration).

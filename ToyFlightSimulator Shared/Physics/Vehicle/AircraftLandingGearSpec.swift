@@ -20,8 +20,9 @@ enum AircraftLandingGearSpec {
         }
     }
 
-    /// PLACEHOLDERS until checked against the modeled gear with the X-key
-    /// overlay's strut lines (B.5); tune, then update this comment.
+    /// Accepted in-app by the owner on 2026-09-06 (Phase B exit criterion 3)
+    /// with the numbers unchanged from the first authoring. Re-check against
+    /// the X-key overlay's strut lines after any edit.
     /// Geometry: wheel track 3.24 m (public F-22 data about 3.25), wheelbase
     /// 6.1 m (about 6.0). All three struts share one reachBelowOrigin, 2.05 m,
     /// so a level aircraft touches all wheels together. Rate sizing is derived

@@ -5,8 +5,8 @@
 //  B.4 (B-suspension): pins the authored F-22 CGTrader gear spec — names,
 //  sane dimensions, the shared 2.05 m reach that makes a level jet touch all
 //  three wheels together, and the static stance the in-app settle (B.5) must
-//  reproduce. The numbers are placeholders until tuned against the overlay;
-//  retune these pins with them.
+//  reproduce. The numbers were accepted in-app unchanged on 2026-09-06
+//  (Phase B criterion 3); retune these pins with the spec if it is ever tuned.
 //
 
 import Testing
