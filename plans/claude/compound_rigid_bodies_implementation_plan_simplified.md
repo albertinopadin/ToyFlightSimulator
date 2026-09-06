@@ -2,6 +2,7 @@
 
 **Started:** 2026-07-19 · **Rewritten:** 2026-09-02 (simplified; this is now the living plan)
 **Design source:** `research/claude/compound_rigid_bodies_research_combined.md` (§4 is the phase outline; §2–§3 hold the design decisions).
+**Continuation:** `plans/claude/compound_rigid_bodies_implementation_plan_simplified_cont.md` plans Phases C and D against `82f852b`.
 **Original plan:** `plans/claude/compound_rigid_bodies_implementation_plan_original.md` holds the full changelog, every landed listing, and the reasoning behind each Phase 0 / Phase A decision. This document restates what still matters in plain English, adds a Phase A cleanup list, and re-plans Phase B.
 
 ## How this document works
