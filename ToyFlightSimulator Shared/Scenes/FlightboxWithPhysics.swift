@@ -233,6 +233,11 @@ final class FlightboxWithPhysics: GameScene {
 
             acRigidBody.restitution = 0.2
 
+            // Gear suspension: authored struts or nothing. The old aircraft's
+            // suspension goes away with the old aircraft.
+            let gearStruts = AircraftLandingGearSpec.spec(for: aircraft)
+            playerAircraft.gearSuspension = gearStruts.isEmpty ? nil : LandingGearSuspension(struts: gearStruts)
+
             // Debug scaffolding: named contact reporting, throttled so a
             // resting aircraft doesn't spam 60 lines/s.
             let contactLogger = ContactDebugLogger(bodyLabel: playerAircraft.getName())
@@ -263,7 +268,7 @@ final class FlightboxWithPhysics: GameScene {
             // buildScene's initial call runs with the overlay off, so this
             // reduces to bookkeeping there.
             playerAircraftType = aircraft
-            colliderOverlay.hostWasReplaced(by: playerAircraft, spec: AircraftColliderSpec.spec(for: aircraft))
+            colliderOverlay.hostWasReplaced(by: playerAircraft, type: aircraft)
         }
     }
 

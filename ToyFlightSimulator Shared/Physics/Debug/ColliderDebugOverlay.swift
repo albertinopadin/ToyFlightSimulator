@@ -64,15 +64,24 @@ enum ColliderOverlayMapping {
         }
     }
 
+    /// Strut overlay line in the aircraft's local space (the Line is a child,
+    /// so the parent's scale composes): attach point to the uncompressed
+    /// wheel's contact patch along body −Y. With the gear down, the lower end
+    /// should sit at the modeled wheel's contact patch.
+    static func strutLineEndpoints(for strut: SuspensionStrut) -> (start: float3, end: float3) {
+        (strut.attachLocal, strut.attachLocal - float3(0, strut.reach, 0))
+    }
+
     private static func formatMeters(_ value: Float) -> String {
         String(format: "%.2f m", value)
     }
 }
 
 
-/// Render-only volumes visualizing an aircraft's collider spec (red) and its
-/// legacy physics sphere (yellow). Owns no physics state; update-thread only
-/// (all scene-graph mutation happens in doUpdate — same rule as CycleCamera).
+/// Render-only volumes visualizing an aircraft's collider spec (red), its
+/// legacy physics sphere (yellow), and its gear struts (cyan lines). Owns no
+/// physics state; update-thread only (all scene-graph mutation happens in
+/// doUpdate — same rule as CycleCamera).
 ///
 /// X cycles: off → volumesOverHull (translucent, catches OVERFIT via
 /// protrusion) → volumesOnly (hull hidden, catches UNDERFIT — end caps and
@@ -97,6 +106,9 @@ final class ColliderDebugOverlay {
     /// Register.
     static let specColor: float4    = [1, 0, 0, 0.3]
     static let legacyColor: float4  = [1, 1, 0, 0.25]
+    /// Opaque cyan: Line renders through the .lines collection, so the alpha
+    /// rule above does not apply.
+    static let strutColor: float4   = [0, 1, 1, 1]
 
     private(set) var mode: Mode = .off
     private var volumes: [GameObject] = []
@@ -106,21 +118,21 @@ final class ColliderDebugOverlay {
     /// The assert pins the wiring invariant: a host change while visible must
     /// arrive via hostWasReplaced, never via cycle — otherwise volumes would
     /// attach to a second aircraft while the first still holds the old set.
-    func cycle(on target: GameObject, spec: [LocalCollider]) {
+    func cycle(on target: GameObject, type: AircraftType) {
         assert(mode == .off || host === target,
                "[ColliderDebugOverlay] host changed without hostWasReplaced - swap wiring is missing")
-        apply(mode.next, on: target, spec: spec)
+        apply(mode.next, on: target, type: type)
     }
 
     /// Aircraft swap: SceneManager.RemoveObject already detached and
     /// unregistered the old subtree, volumes included. Drop the stale
     /// references (removeFromScene on them would be redundant) and re-apply
     /// the mode to the new host.
-    func hostWasReplaced(by newTarget: GameObject?, spec: [LocalCollider]) {
+    func hostWasReplaced(by newTarget: GameObject?, type: AircraftType) {
         let previousMode = mode
         reset()
         if previousMode != .off, let newTarget {
-            apply(previousMode, on: newTarget, spec: spec)
+            apply(previousMode, on: newTarget, type: type)
         }
     }
 
@@ -136,7 +148,7 @@ final class ColliderDebugOverlay {
     /// Single mutation point for mode transitions. Hull hidden-ness is
     /// applied LAST on the way in and FIRST on the way out, so no partial
     /// transition can strand a hidden aircraft.
-    private func apply(_ newMode: Mode, on target: GameObject, spec: [LocalCollider]) {
+    private func apply(_ newMode: Mode, on target: GameObject, type: AircraftType) {
         guard newMode != mode else { return }
 
         if newMode == .off {
@@ -153,8 +165,10 @@ final class ColliderDebugOverlay {
 
         if mode == .off {   // entering: build, attach, register, log
             host = target
-            buildVolumes(on: target, spec: spec)
-            logWorldDimensions(spec, on: target)
+            let acSpec = AircraftColliderSpec.spec(for: type)
+            let gearSpec = AircraftLandingGearSpec.spec(for: type)
+            buildVolumes(on: target, spec: acSpec, gearSpec: gearSpec)
+            logWorldDimensions(acSpec, gearSpec: gearSpec, on: target)
         }
 
         mode = newMode
@@ -163,11 +177,12 @@ final class ColliderDebugOverlay {
         SceneManager.SetRenderableHidden(target, newMode == .volumesOnly)
     }
 
-    /// One volume per enabled spec collider, plus the yellow legacy-sphere
-    /// ghost. Order: setColor before Register; target.addChild (plain Node
-    /// reparenting, since only GameScene.addChild auto-registers and the
-    /// volumes hang off the aircraft), then SceneManager.Register.
-    private func buildVolumes(on target: GameObject, spec: [LocalCollider]) {
+    /// One volume per enabled spec collider, a cyan line per strut, plus the
+    /// yellow legacy-sphere ghost. Order: setColor before Register;
+    /// target.addChild (plain Node reparenting, since only GameScene.addChild
+    /// auto-registers and the volumes hang off the aircraft), then
+    /// SceneManager.Register.
+    private func buildVolumes(on target: GameObject, spec: [LocalCollider], gearSpec: [SuspensionStrut]) {
         if spec.isEmpty {
             print("[ColliderDebugOverlay] no compound spec for \(target.getName()) yet - legacy sphere only")
         }
@@ -179,6 +194,15 @@ final class ColliderDebugOverlay {
             volume.setRotation(collider.localRotation)
             volume.setScale(ColliderOverlayMapping.childScale(for: collider.shape))
             attach(volume, to: target)
+        }
+        
+        // Cyan strut lines. Line is a GameObject in the .lines collection, so
+        // attach, register, and removeFromScene work as for the volumes. Line
+        // builds its vertex buffer at init, on the update thread, like the
+        // capsule mesh in makeVolume.
+        for strut in gearSpec {
+            let (start, end) = ColliderOverlayMapping.strutLineEndpoints(for: strut)
+            attach(Line(startPoint: start, endPoint: end, color: Self.strutColor), to: target)
         }
 
         // The legacy sphere sits at the body origin. collisionRadius is world
@@ -219,7 +243,10 @@ final class ColliderDebugOverlay {
 
     /// Units log, printed on every overlay show. Sanity anchor: the fuselage
     /// capsule must read about 18.90 m at scale 1.0 (real F-22: 18.92 m).
-    private func logWorldDimensions(_ spec: [LocalCollider], on target: GameObject) {
+    /// With a gear spec, also the strut geometry and the static stance the
+    /// in-app settle must reproduce (F-22: compression 0.119 m, ride height
+    /// 1.93 m at 30 t).
+    private func logWorldDimensions(_ spec: [LocalCollider], gearSpec: [SuspensionStrut], on target: GameObject) {
         guard !spec.isEmpty else { return }
 
         let scale = target.uniformScale
@@ -232,6 +259,18 @@ final class ColliderDebugOverlay {
 
         if let sphereBody = target.rigidBody as? SphereRigidBody {
             print("  legacy sphere: ø \(String(format: "%.2f m", 2 * sphereBody.collisionRadius)) (world)")
+        }
+        
+        // Gear stance from the body's live mass (synced from the flight model).
+        if !gearSpec.isEmpty,
+           let mass = target.rigidBody?.mass,
+           let stance = AircraftLandingGearSpec.staticStance(struts: gearSpec, mass: mass) {
+            for strut in gearSpec {
+                print("  \(strut.name): attach \(strut.attachLocal), reach below origin \(String(format: "%.2f m", strut.reachBelowOrigin))")
+            }
+            
+            print("  gear stance: static compression \(String(format: "%.3f m", stance.compression)), "
+                              + "ride height ≈ \(String(format: "%.2f m", stance.rideHeight))")
         }
     }
 }

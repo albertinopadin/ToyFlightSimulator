@@ -51,6 +51,11 @@ class Aircraft: GameObject {
     /// Subclasses with skeletal animation set this via `setupAnimator(_:)`.
     var animator: AircraftAnimator?
     
+    /// Raycast landing-gear suspension; nil for aircraft without a gear spec
+    /// (they rest on their collision geometry, as in Phase A). Installed by
+    /// the scene next to the rigid body.
+    var gearSuspension: LandingGearSuspension?
+    
     /// Optional flight model.
     ///
     /// Assigning this property keeps `rigidBody.mass` in sync. Combined with
@@ -184,8 +189,13 @@ class Aircraft: GameObject {
             rigidBody.force += flightModel.computeForce(state: state, input: input)
         }
 
-        // B.5 adds the landing-gear suspension here, outside the input guard:
-        // a parked, unfocused aircraft must still be held up.
+        // Outside the input guard: a parked, unfocused aircraft must still be
+        // held up. isGearDown is animator state written only in doUpdate, so
+        // it is stable across a frame's substeps.
+        gearSuspension?.accumulateForces(body: rigidBody,
+                                         gearDeployed: isGearDown,
+                                         world: world,
+                                         substepDelta: substepDelta)
     }
     
     internal func getControlInput() -> ControlInput {

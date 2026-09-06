@@ -84,4 +84,37 @@ struct ColliderOverlayMappingTests {
         #expect(approxEqual(longest, 37.8))
         #expect(dims == "capsule ø 5.40 m × 37.80 m end-to-end")
     }
+
+    // MARK: - strutLineEndpoints (B.5: the cyan gear lines)
+
+    @Test("strut line runs from the attach point down body −Y by the strut's reach")
+    func strutLineEndpoints() {
+        let strut = SuspensionStrut(name: "test",
+                                    attachLocal: [1, -0.5, 2],
+                                    restLength: 1.0,
+                                    maxTravel: 0.4,
+                                    wheelRadius: 0.25,
+                                    springRate: 1,
+                                    compressionDamping: 1,
+                                    reboundDamping: 1,
+                                    maxSupportForce: 1)
+        let (start, end) = ColliderOverlayMapping.strutLineEndpoints(for: strut)
+        #expect(approxEqual(start, float3(1, -0.5, 2)))
+        #expect(approxEqual(end, float3(1, -1.75, 2)))     // reach = 1.0 + 0.25
+        // The lower end sits reachBelowOrigin under the body origin — the
+        // number the units log prints and the modeled wheel should touch.
+        #expect(approxEqual(end.y, -strut.reachBelowOrigin))
+    }
+
+    @Test("F-22 strut lines all end 2.05 m below the origin, straight under their attach points")
+    func f22StrutLinesShareTheReach() {
+        let struts = AircraftLandingGearSpec.spec(for: .f22_cgtrader)
+        #expect(struts.count == 3)
+        for strut in struts {
+            let (start, end) = ColliderOverlayMapping.strutLineEndpoints(for: strut)
+            #expect(approxEqual(start, strut.attachLocal))
+            #expect(approxEqual(end.y, -2.05))
+            #expect(approxEqual(end.x, start.x) && approxEqual(end.z, start.z))
+        }
+    }
 }

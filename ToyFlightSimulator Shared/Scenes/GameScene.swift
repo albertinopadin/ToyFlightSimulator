@@ -175,7 +175,7 @@ class GameScene: Node {
         InputManager.HasDiscreteCommandDebounced(command: .CycleColliderOverlay) {
             // Update-thread scene-graph mutation, same rule as CycleCamera.
             guard let aircraft = playerAircraft, let type = playerAircraftType else { return }
-            colliderOverlay.cycle(on: aircraft, spec: AircraftColliderSpec.spec(for: type))
+            colliderOverlay.cycle(on: aircraft, type: type)
         }
 
         InputManager.HasMultiInputCommand(command: .ResetScene) {
