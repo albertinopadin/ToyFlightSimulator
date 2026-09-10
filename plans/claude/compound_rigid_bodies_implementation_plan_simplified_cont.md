@@ -14,6 +14,10 @@ Same as the parent: steps are edited in place to match the code, history goes in
 - **2026-09-08** — Revised after Codex's review of this document; every quantitative claim was reproduced before adoption, and no code has landed yet. Phase C: capsule-box becomes exact (a slab test, both end caps, the twelve box edges — the three sphere probes missed about one true hit in ten in a random sweep of overlapping pairs); the box-box contact point moves from the incident face's center to the overlap centroid (for C.2's own wing-over-wall case the face center was 8.5 m from the wing and on the wrong side of the origin, which flips D.3's yaw); the one-body-per-part rationale is corrected (the broad phase does test every dynamic body against every static one). Phase D: the §4.6 Jolt gate is recorded as held (native); angular velocity integrates with the forces and orientation with the positions; `rotate(by:)` composes through a normalised quaternion, with a 72 000-substep soak; D.1 keeps the deepest-contact impulse behind a linear fast path, and the per-pair manifold solve (accumulated impulses, eight iterations, gated to pairs with more than one contact) lands in D.3 — one pass left a two-cap belly rest rocking at 0.029 rad/s against the test's own 0.02 band, and a second pass on a single contact is not byte-identical in float32, so the gate is what keeps the goldens fixed; tires become holding friction with the strut load applied along the ground normal (the regularised form crept at 0.2 m/s from the −0.45° stance and under any thrust with the brakes on); crash classification reads the relative velocity at the contact point; `applyPlayerSideMove` is gated to the kinematic path; a nil flight model restores infinite inertia; the gear-visual note's sign is corrected (lengthen `restLength`, not shorten; the parent plan's B.5 note is corrected too). Test counts and the CLAUDE.md wording follow.
 - **2026-09-08, second review** — Codex reviewed the revision above; its four corrections and three wording fixes are adopted, each reproduced first. Phase C: the capsule-box inside branch becomes an exact separating-axis test over a segment's twelve candidate directions — the midpoint probe reported the probe sphere's depth, not the capsule's (a core through a unit box answered +x at 1.5 where 3.5 separates along x and 1.5 across the core does); the plan's own crossing case moves from `[1, 0, 0]` at 0.75 to `[0.894, −0.447, 0]` at 0.947 and the end-inside case from 0.75 to 1.0, and the tests gain a translation check. The box-box point becomes the centroid of the incident face clipped to the reference face, Box2D's construction reduced to one point: the projected-overlap midpoint sat 0.46 m outside a unit cube at 45° shifted 0.5 m along the face, and 5.3 m from the tip of a wing yawed 20° into a wall, on the wing's centerline — a yaw lever arm of zero; the D.4 clipping row is gone. Phase D: angular velocity integrates before the contact response in the Verlet path too (`PhysicsWorld.step`), orientation after; the tires are solved together as sequential impulses over the wheels against one predicted velocity, linear and angular — the fixed per-wheel share left the unbraked nose wheel's unmet demand to nobody once its rolling-resistance limit bound, so 89.8 kN opposed 100 kN of thrust with the brakes on and the jet crept 1.6 cm in 5 s against the test's own 1 cm, under either solver; the joint solve opposes all 100 and moves nothing — with the strut loads applied in the first pass so their torque is in the prediction, and `effectiveMass(atWorldPoint:along:)` leaves D.1 with nothing to call it. Wording: one body per part costs its AABB tests, not nothing (`StaticStructure`'s doc comment); "no dynamic box" becomes "no aircraft box rests flat on a face"; impact deduplication is described as what it is, once per frame per other body, with the reason a substep counter is not worth its plumbing.
 - **2026-09-08, third review** — Codex found two test expectations and one sentence to fix; all three reproduced. D.3's rig gives the brake-hold test a tensor, and the 100 kN step then pitches the nose from −0.48° to −1.80° and swings the origin 4.4 cm forward in about a second before it holds (a planar replay of the struts, the controller, and the joint tire solve: 0.2 mm of drift over the next 4 s), so D.2 keeps its strict bound for a body that cannot pitch and D.3 allows the transient, then asserts the hold. Case 3c's cube at exactly 45° tied its two lower faces to one ulp, and the two faces clip to different points; it is a 40° cube now. The dedupe comment calls once-per-frame a policy, not an impossibility.
+- **2026-09-09** — C.1's listings renamed for explicit identifiers ahead of transcription; no behavior change. In `capsuleVsBox` the capsule's world-space core ends and radius are `capsuleCoreStart`/`capsuleCoreEnd`/`capsuleRadius`, their box-local images `localCapsuleCoreStart`/`localCapsuleCoreEnd`, and the start-to-end vector `localCapsuleCoreDelta` — "core" stays in the names because the capsule's surface reaches a radius beyond each end, which is the distinction the inside and outside branches turn on; the signed candidate normal in `considerAxis` is `signedAxis`, the nearer end's projection in the depth formula gets its own line as `nearerEndProjection`, and the edge loop's closest point is `onCapsuleCore`. `segmentSpanInsideBox` stays generic: `segmentStart`/`segmentEnd`, `segmentDelta` (unnormalised, so `enter`/`exit` are fractions along the segment, which the contact point's reconstruction from the world-space ends relies on), `inverseDelta`, and `slabEnter`/`slabExit` for one axis's two crossings. `boxVsBox`'s center-to-center vector is `centerOffset`. The single letter `d` had meant three different things across the three functions.
+- **2026-09-09, tolerances** — C.1's six threshold literals become named `static let`s on `NarrowPhase` (`grazingRayCosine`, `parallelAxisSineSquared`, `perpendicularAxisCosine`, `coreAcrossNormalCosine`, `parallelSlabExtent`), each documented with what it compares and its unit; `rayVsPlane` gains an edit for its guard, value unchanged. One behavior change, reproduced first: `capsuleVsBox` normalises the core direction once, so its cross-product guard is the same squared sine as `overlaps` and the contact-point rule compares a cosine — the absolute 1e-6 m band it replaces was within 5% of the float32 rounding at the F-22's 16.2 m core (0.95e-6 m over 300 000 random pose-axis samples; 0.06e-6 at 1 m, 0.24e-6 at 5 m), and a core a metre longer would have reported a span end instead of the midpoint for a crossing on some frames. The five capsule-box cases are unaffected: their inside-branch cosines are zero up to rounding or far outside any band, and the depths do not involve the direction.
+- **2026-09-09, point names** — `capsuleVsBox`'s contact-point fraction `t` is `contactPointParameter` (0 at `capsuleCoreStart`, 1 at `capsuleCoreEnd`), and the edge loop's half-edge vector `along` is `halfEdge`; the projection `along` had already become `coreAlongNormal` with the tolerances. `overlaps(along:)` keeps its argument label; `clippedPoint`'s side-axis loop index `t` is `sideAxis`.
+- **2026-09-10** — C-narrowphase landed (C.1, `c6b4fba`): box-box and exact capsule-box per the listings. Found at review, before the tests ran: the edge-edge loop had been transcribed as `cross(a.rotation[i], b.rotation[i])`, so six of the nine edge axes were never tested (test 4 fails on it); fixed to `b.rotation[j]`. `boxVsBox` shipped without its listed comments; added. All fourteen listed cases green with the listed numbers, each reproduced first in a standalone harness; the suite also carries a pose self-check for the capsule test helper and a box-vs-far-box line. Dry run byte-identical; 346 tests in 52 suites. Exit criterion 1 closed.
 
 ## Where Phase B left the engine
 
@@ -44,7 +48,7 @@ Implements combined doc §4.4. At the end of this phase the airfield has things 
 
 | Commit | Steps | Gate | Tests |
 |---|---|---|---|
-| **C-narrowphase** | C.1 | Behavior on paths no golden covers: dry run byte-identical. Every existing suite green; the one test that pins box-box as not implemented is replaced. | `NarrowPhaseTests` additions (box-box ×9, capsule-box ×5) |
+| **C-narrowphase** ✅ `c6b4fba` | C.1 | Behavior on paths no golden covers: dry run byte-identical. Every existing suite green; the one test that pins box-box as not implemented is replaced. | `NarrowPhaseTests` additions (box-box ×9, capsule-box ×5) |
 | **C-structures** | C.2 | Dry run byte-identical. In-app: the structures render at their collider size, the wall stops the jet, contact lines name the part, the jet flies through the hangar opening clean. | `StaticStructureShapeTests` (new, pure), `StructureContactTests` (new, Metal-free world) |
 
 ## Decisions
@@ -61,26 +65,71 @@ Implements combined doc §4.4. At the end of this phase the airfield has things 
 | Struts see planes only | Landing on a roof is not a case. The airframe still collides with the roof (a crash). Ray-vs-box for a deck is a D.4 item. |
 | Static bodies keep the per-step world-collider invalidation | Correctness first: the world's start-of-step sweep is what keeps node rotation visible. Thirteen structures × one collider rebuilt per substep is noise. Skipping statics is a one-line optimization with a stated trigger (a scene with hundreds of trees) and a new rule (a static body's node must not move after its first step). Not taken. |
 | No overlay work | See "the mesh is the collider". The aircraft overlay is unchanged. |
+| Tolerances are named `static let`s on `NarrowPhase`, by what they compare and its unit | Six literals in the step compared three kinds of quantity: cosines and squared sines of unit vectors, and lengths in meters and square meters. One shared epsilon would be wrong, and two of the `1e-6`s meant different angles. The capsule-box point rule's band was absolute meters, and the rounding it must absorb scales with the core: at the F-22's 16.2 m the float32 noise reached 0.95e-6 against a 1e-6 band, so the core direction is normalised once and the band is a cosine (`coreAcrossNormalCosine` = 1e-5, 170× the measured noise). `considerAxis` then shares `parallelAxisSineSquared` with `overlaps`, the same angle for "parallel" in both. |
 
-## Step C.1 — box-box and capsule-box in the narrow phase — C-narrowphase
+## Step C.1 — box-box and capsule-box in the narrow phase — C-narrowphase ✅ (landed 2026-09-10, `c6b4fba`)
 
 Why first: the structures are boxes and the F-22's wings and empennage are boxes. Without box-box, a wing through a wall makes no contact at all; with the old capsule-box probe, the fuselage nose into a wall corner can miss.
 
-- [ ] **Edit:** `Physics/Collision/NarrowPhase.swift`, the `(.capsule, .box)` case (lines 174–179):
+**Landed 2026-09-10** (`c6b4fba`), goldens untouched (regeneration dry run byte-identical; no golden has a box or a capsule). Found at review: the edge-edge loop had been transcribed as `cross(a.rotation[i], b.rotation[i])`, so only the three i = j axes were tested and the six i ≠ j axes never — on the crossed-rods case (test 4) it reported A's own face axis at 0.78 with the point at the end of B's ridge, 1 m from the crossing, and a pair separated only along an i ≠ j axis would have reported a contact; fixed to the listed `b.rotation[j]`, and the edge-edge test fails on the transcribed form. `boxVsBox` had also shipped without its listed comments (added; the other listings were transcribed with theirs). Expectations: every listed number reproduced, first in a standalone harness (the file's pure functions under `swiftc` with type stubs) and then in the suite; no tolerance was widened. Shipped tests: 36 in `NarrowPhaseTests` (was 23) — the nine box-box cases as eight `@Test`s plus the metadata pair inside `A metadata stays on A in both argument orders` (which now checks groups too: the probe helper gained a `group:` parameter), the five capsule-box cases (case 1 includes the 90°-about-Y turn; case 5 iterates cases 1, 3, and 4), a sixth capsule-box test pinning the `capsuleAlong(from:to:radius:)` helper's pose against case 1's stated center, half height, axis, and core start, and one line in `every separated pair returns nil` for box vs far box. The capsule cases build their `WorldCollider` from the core endpoints through that helper (angle = atan2(−dir.x, dir.y) about Z) rather than from the center/half-height/angle literals; the pose test shows the two agree. Full serial suite: 346 Swift Testing tests in 52 suites (was 333) plus 20 XCTest cases. In the file the helpers are ordered `capsuleVsBox`, `boxVsBox`, `segmentSpanInsideBox` (the listing puts the slab test before the box pair); otherwise the listings below are the shipped code up to line breaks.
+
+- [x] **Edit:** `Physics/Collision/NarrowPhase.swift`, the `(.capsule, .box)` case (lines 174–179):
 
 ```swift
             case (.capsule, .box(halfExtents: let he)):
                 return capsuleVsBox(a, b, halfExtents: he)
 ```
 
-- [ ] **Edit:** the `(.box, .box)` case (lines 184–187):
+- [x] **Edit:** the `(.box, .box)` case (lines 184–187):
 
 ```swift
             case (.box(halfExtents: let ha), .box(halfExtents: let hb)):
                 return boxVsBox(a, halfExtentsA: ha, b, halfExtentsB: hb)
 ```
 
-- [ ] **Edit:** the new primitives, after `sphereVsBox` (its closing brace is line 261), before `capsuleSegment`. First the capsule pair:
+- [x] **Edit:** the tolerances, a new section at the top of `// MARK: - Primitive helpers` (line 191), before `rayVsPlane`. Named by what they compare, with the unit in the doc comment; none is a generic epsilon, and one shared value would be wrong because the units differ (cosines and squared sines of unit vectors, and one length). Internal, like `segmentSpanInsideBox`, so tests can name them:
+
+```swift
+    // MARK: - Tolerances
+    //
+    // Angles are compared as cosines or squared sines of unit vectors, so
+    // they do not scale with the scene; the one length is a division guard.
+
+    /// Ray vs plane: the cosine between the unit ray and the plane normal
+    /// must lie at least this far below zero. Grazing and receding rays
+    /// (an inverted aircraft's struts) hit nothing.
+    static let grazingRayCosine: Float = 1e-6
+
+    /// Separating axes from cross products: two unit directions whose cross
+    /// product is shorter than this (|sin θ| < 1e-3, 0.057°) are parallel
+    /// and give no new axis. Box edges against box edges in boxVsBox, the
+    /// core direction against box axes in capsuleVsBox.
+    static let parallelAxisSineSquared: Float = 1e-6
+
+    /// Support point: a box axis whose cosine against the direction is
+    /// within this of zero (0.006°) has no single farthest point and
+    /// contributes its center.
+    static let perpendicularAxisCosine: Float = 1e-4
+
+    /// Capsule-box contact point: a core whose cosine against the contact
+    /// normal is within this of zero runs across the normal, and the
+    /// clipped span's midpoint is the point rather than an end. The
+    /// cross-product normals are perpendicular to the core exactly; in
+    /// float32 their cosine carries up to 6e-8 of rounding (300 000 random
+    /// pose-axis samples of the F-22's 16.2 m core), so this is a 170×
+    /// margin. The absolute 1e-6 m band it replaces was within 5% of that
+    /// rounding at 16.2 m.
+    static let coreAcrossNormalCosine: Float = 1e-5
+
+    /// Segment vs slab: a segment whose extent along a box axis is under
+    /// this (meters) is parallel to the slab, which keeps 1 / extent
+    /// finite and the 0 × inf NaN out of the crossing parameters.
+    static let parallelSlabExtent: Float = 1e-8
+```
+
+- [x] **Edit:** `rayVsPlane` (line 200): the guard reads `guard denominator < -grazingRayCosine else { return nil }   // parallel, or facing away` — the same value, named.
+
+- [x] **Edit:** the new primitives, after `sphereVsBox` (its closing brace is line 261), before `capsuleSegment`. First the capsule pair:
 
 ```swift
     /// Capsule vs oriented box, exact. A core that touches or enters the box
@@ -97,12 +146,12 @@ Why first: the structures are boxes and the F-22's wings and empennage are boxes
     /// probed at the clipped span's midpoint (the second draft) reported that
     /// sphere's depth, not the capsule's.
     private static func capsuleVsBox(_ a: WorldCollider, _ b: WorldCollider, halfExtents he: float3) -> Contact? {
-        let (p0, p1, r) = capsuleSegment(a)
+        let (capsuleCoreStart, capsuleCoreEnd, capsuleRadius) = capsuleSegment(a)
 
-        // Core in box-local space (R orthonormal: inverse = transpose).
-        let local0 = b.rotation.transpose * (p0 - b.position)
-        let local1 = b.rotation.transpose * (p1 - b.position)
-        if let span = segmentSpanInsideBox(local0, local1, halfExtents: he) {
+        // Capsule core in box-local space (R orthonormal: inverse = transpose).
+        let localCapsuleCoreStart = b.rotation.transpose * (capsuleCoreStart - b.position)
+        let localCapsuleCoreEnd = b.rotation.transpose * (capsuleCoreEnd - b.position)
+        if let span = segmentSpanInsideBox(localCapsuleCoreStart, localCapsuleCoreEnd, halfExtents: he) {
             // Penetration depth of a segment in a box: the least, over the
             // Minkowski difference's face normals — the three face normals
             // and the core's cross product with each, in both senses — of
@@ -112,20 +161,29 @@ Why first: the structures are boxes and the F-22's wings and empennage are boxes
             // face and to the earlier sense. A shallow nose-first strike
             // comes out through the face at any yaw; a deep crossing slides
             // out past the nearest edge, as box-box would.
-            let core = local1 - local0
+            // The core's unit direction: its cross products with the box
+            // axes are then sines and its run along the normal a cosine, so
+            // both tolerances are angles and neither scales with the core.
+            // A zero-length core (a sphere) has no direction: no
+            // cross-product axes, and the point is the span's midpoint.
+            let localCapsuleCoreDelta = localCapsuleCoreEnd - localCapsuleCoreStart
+            let coreLength = simd_length(localCapsuleCoreDelta)
+            let localCapsuleCoreDirection = coreLength > 0 ? localCapsuleCoreDelta / coreLength : .zero
             var leastDepth = Float.infinity
             var localNormal = float3.zero
             func considerAxis(_ candidate: float3) {
                 let lengthSquared = simd_length_squared(candidate)
-                guard lengthSquared > 1e-6 else { return }   // core parallel to the axis: no new direction
+                guard lengthSquared > parallelAxisSineSquared else { return }   // core parallel to the axis: no new direction
                 let axis = candidate / lengthSquared.squareRoot()
                 let reach = he.x * abs(axis.x) + he.y * abs(axis.y) + he.z * abs(axis.z)
                 for sense in 0..<2 {
-                    let d = sense == 0 ? axis : -axis
-                    let depth = reach + r - min(dot(local0, d), dot(local1, d))
+                    let signedAxis = sense == 0 ? axis : -axis
+                    let nearerEndProjection = min(dot(localCapsuleCoreStart, signedAxis),
+                                                  dot(localCapsuleCoreEnd, signedAxis))
+                    let depth = reach + capsuleRadius - nearerEndProjection
                     if depth < leastDepth {
                         leastDepth = depth
-                        localNormal = d
+                        localNormal = signedAxis
                     }
                 }
             }
@@ -137,7 +195,7 @@ Why first: the structures are boxes and the F-22's wings and empennage are boxes
             for i in 0..<3 {
                 var axis = float3.zero
                 axis[i] = 1
-                considerAxis(cross(core, axis))
+                considerAxis(cross(localCapsuleCoreDirection, axis))
             }
 
             // The point: the clipped span's deepest point against the normal
@@ -145,11 +203,18 @@ Why first: the structures are boxes and the F-22's wings and empennage are boxes
             // runs across the normal (a core through the box, or past an
             // edge). Inside both shapes, as sphereVsBox's inside branch
             // reports the center.
-            let along = dot(core, localNormal)
-            let t: Float = along > 1e-6 ? span.enter : (along < -1e-6 ? span.exit : 0.5 * (span.enter + span.exit))
+            let coreAlongNormal = dot(localCapsuleCoreDirection, localNormal)   // a cosine
+            let contactPointParameter: Float   // along the core: 0 at capsuleCoreStart, 1 at capsuleCoreEnd
+            if coreAlongNormal > coreAcrossNormalCosine {
+                contactPointParameter = span.enter
+            } else if coreAlongNormal < -coreAcrossNormalCosine {
+                contactPointParameter = span.exit
+            } else {
+                contactPointParameter = 0.5 * (span.enter + span.exit)
+            }
             return Contact(normal: b.rotation * localNormal,
                            depth: leastDepth,
-                           point: p0 + (p1 - p0) * t,
+                           point: capsuleCoreStart + (capsuleCoreEnd - capsuleCoreStart) * contactPointParameter,
                            collider: a,
                            against: b)
         }
@@ -162,26 +227,27 @@ Why first: the structures are boxes and the F-22's wings and empennage are boxes
             if let current = best, current.depth >= candidate.depth { return }
             best = candidate
         }
-        consider(sphereVsBox(center: p0, radius: r, box: b, halfExtents: he, a: a, b: b))
-        consider(sphereVsBox(center: p1, radius: r, box: b, halfExtents: he, a: a, b: b))
+        consider(sphereVsBox(center: capsuleCoreStart, radius: capsuleRadius, box: b, halfExtents: he, a: a, b: b))
+        consider(sphereVsBox(center: capsuleCoreEnd, radius: capsuleRadius, box: b, halfExtents: he, a: a, b: b))
 
         for axis in 0..<3 {
             // The four edges parallel to this axis, one per corner of the
             // face it is normal to.
             let u = (axis + 1) % 3
             let v = (axis + 2) % 3
-            let along = b.rotation[axis] * he[axis]
+            let halfEdge = b.rotation[axis] * he[axis]
             for cornerU in 0..<2 {
                 for cornerV in 0..<2 {
                     let signU: Float = cornerU == 0 ? -1 : 1
                     let signV: Float = cornerV == 0 ? -1 : 1
                     let middle = b.position + b.rotation[u] * (signU * he[u]) + b.rotation[v] * (signV * he[v])
-                    let (onCore, onEdge) = closestPointsOnSegments(p0, p1, middle - along, middle + along)
-                    let delta = onCore - onEdge
+                    let (onCapsuleCore, onEdge) = closestPointsOnSegments(capsuleCoreStart, capsuleCoreEnd,
+                                                                          middle - halfEdge, middle + halfEdge)
+                    let delta = onCapsuleCore - onEdge
                     let distance = simd_length(delta)
-                    guard distance <= r, distance > 0 else { continue }   // 0 cannot happen: the slab test took it
+                    guard distance <= capsuleRadius, distance > 0 else { continue }   // 0 cannot happen: the slab test took it
                     consider(Contact(normal: delta / distance,
-                                     depth: r - distance,
+                                     depth: capsuleRadius - distance,
                                      point: onEdge,
                                      collider: a,
                                      against: b))
@@ -192,26 +258,27 @@ Why first: the structures are boxes and the F-22's wings and empennage are boxes
         return best
     }
 
-    /// The parameter span of the segment local0→local1 inside the
-    /// axis-aligned box of the given half extents, or nil where it passes
-    /// by. Ericson §5.3.3 (segment vs AABB by slabs); inclusive at the
-    /// boundary like every other gate, so a core touching a face is inside.
-    static func segmentSpanInsideBox(_ local0: float3, _ local1: float3,
+    /// The parameter span of the segment segmentStart→segmentEnd (t = 0 at
+    /// the start, 1 at the end; both ends box-local) inside the axis-aligned
+    /// box of the given half extents, or nil where it passes by. Ericson
+    /// §5.3.3 (segment vs AABB by slabs); inclusive at the boundary like
+    /// every other gate, so a segment touching a face is inside.
+    static func segmentSpanInsideBox(_ segmentStart: float3, _ segmentEnd: float3,
                                      halfExtents he: float3) -> (enter: Float, exit: Float)? {
-        let d = local1 - local0
+        let segmentDelta = segmentEnd - segmentStart
         var enter: Float = 0
         var exit: Float = 1
         for i in 0..<3 {
-            if abs(d[i]) < 1e-8 {
+            if abs(segmentDelta[i]) < parallelSlabExtent {
                 // Parallel to this slab: inside it or not at all.
-                guard abs(local0[i]) <= he[i] else { return nil }
+                guard abs(segmentStart[i]) <= he[i] else { return nil }
             } else {
-                let inverse = 1 / d[i]
-                var t1 = (-he[i] - local0[i]) * inverse
-                var t2 = (he[i] - local0[i]) * inverse
-                if t1 > t2 { swap(&t1, &t2) }
-                enter = max(enter, t1)
-                exit = min(exit, t2)
+                let inverseDelta = 1 / segmentDelta[i]
+                var slabEnter = (-he[i] - segmentStart[i]) * inverseDelta
+                var slabExit = (he[i] - segmentStart[i]) * inverseDelta
+                if slabEnter > slabExit { swap(&slabEnter, &slabExit) }
+                enter = max(enter, slabEnter)
+                exit = min(exit, slabExit)
                 guard enter <= exit else { return nil }
             }
         }
@@ -235,7 +302,7 @@ Then the box pair:
     private static func boxVsBox(_ a: WorldCollider, halfExtentsA ha: float3,
                                  _ b: WorldCollider, halfExtentsB hb: float3) -> Contact? {
         enum Feature { case faceOfA(Int), faceOfB(Int), edges(Int, Int) }
-        let d = a.position - b.position
+        let centerOffset = a.position - b.position
         var leastOverlap = Float.infinity
         var normal = float3.zero
         var feature = Feature.faceOfA(0)
@@ -244,11 +311,11 @@ Then the box pair:
         /// give a near-zero cross product and no new axis.
         func overlaps(along candidate: float3, _ candidateFeature: Feature) -> Bool {
             let lengthSquared = simd_length_squared(candidate)
-            guard lengthSquared > 1e-6 else { return true }
+            guard lengthSquared > parallelAxisSineSquared else { return true }
             let axis = candidate / lengthSquared.squareRoot()
             let reachA = ha.x * abs(dot(a.rotation[0], axis)) + ha.y * abs(dot(a.rotation[1], axis)) + ha.z * abs(dot(a.rotation[2], axis))
             let reachB = hb.x * abs(dot(b.rotation[0], axis)) + hb.y * abs(dot(b.rotation[1], axis)) + hb.z * abs(dot(b.rotation[2], axis))
-            let distance = dot(d, axis)
+            let distance = dot(centerOffset, axis)
             let overlap = reachA + reachB - abs(distance)
             guard overlap >= 0 else { return false }              // inclusive, like every other gate
             if overlap < leastOverlap {                           // strict: face axes win ties over edge axes
@@ -276,7 +343,7 @@ Then the box pair:
             var point = box.position
             for i in 0..<3 {
                 let alignment = dot(box.rotation[i], direction)
-                if abs(alignment) > 1e-4 {
+                if abs(alignment) > perpendicularAxisCosine {
                     point += box.rotation[i] * (h[i] * (alignment > 0 ? 1 : -1))
                 }
             }
@@ -329,12 +396,12 @@ Then the box pair:
                 input[3] = faceCenter - du + dv
                 var count = 4
 
-                for t in 0..<3 where t != referenceAxis {
+                for sideAxis in 0..<3 where sideAxis != referenceAxis {
                     for side in 0..<2 {
                         // Keep what lies within this side plane of the
                         // reference face: dot(p, n) ≤ dot(center, n) + h.
-                        let planeNormal = reference.rotation[t] * (side == 0 ? -1 : 1)
-                        let planeOffset = dot(reference.position, planeNormal) + hRef[t]
+                        let planeNormal = reference.rotation[sideAxis] * (side == 0 ? -1 : 1)
+                        let planeOffset = dot(reference.position, planeNormal) + hRef[sideAxis]
                         var kept = 0
                         for k in 0..<count {
                             let p = input[k]
@@ -399,11 +466,11 @@ Details that are easy to get wrong:
 - Sutherland–Hodgman keeps a vertex on the plane (`dp <= 0`) and adds the crossing point only for a strict crossing; a convex quad clipped by four planes has at most eight vertices, so the two eight-slot halves never overflow. The stack buffer is `withUnsafeTemporaryAllocation` (Swift 5.6): no allocation, and nothing static.
 - The slab test and the axis test run in box-local space; `capsuleVsBox` transforms only the two core endpoints and rotates the winning local normal back. The edge loop works in world space with the box's world axes.
 - `matrix_float3x3[i]` is column i, the box's i-th axis in world space. No arrays are built: the step path stays allocation-free.
-- Ericson's test skips a cross-product axis when the edges are parallel; so does `overlaps` (`lengthSquared > 1e-6`), returning "not separated" for that axis.
+- Ericson's test skips a cross-product axis when the edges are parallel; so does `overlaps` (`lengthSquared > parallelAxisSineSquared`), returning "not separated" for that axis.
 
 ### Tests for this step (`NarrowPhaseTests`, Metal-free)
 
-- [ ] Replace `box-box is pinned NOT IMPLEMENTED: nil even when overlapping` (line 138) with nine cases:
+- [x] Replace `box-box is pinned NOT IMPLEMENTED: nil even when overlapping` (line 138) with nine cases:
   1. **Aligned face overlap.** A: half extents 1 at `[1.5, 0, 0]`; B: half extents 1 at the origin. Normal `[1, 0, 0]`, depth 0.5, point `[1, 0, 0]` (A's x axis is tested first, ties keep it, so the feature is `faceOfA(0)`; B's support gives x = 1 and the overlap midpoints give y = z = 0). Also `boxVsBox` through `shapeVsShape(b, a)`: normal `[-1, 0, 0]`, same depth (the point may differ: it lies on the other box's face, which is also correct).
   1b. **Offset face overlap** (the first review's case). A at `[1.5, 1.5, 0]`, B at the origin: x and y overlap 0.5 each and the strict compare keeps x. Normal `[1, 0, 0]`, depth 0.5, point `[1, 0.75, 0]`: B's +x face clipped to A's y range is the strip y = 0.5…1 at x = 1, all of it 0.5 deep, and its centroid is inside the overlap (x 0.5…1, y 0.5…1). B's support alone gave `[1, 0, 0]`, outside A entirely.
   2. **Separated and touching.** A at `[2.5, 0, 0]` → nil; A at `[2, 0, 0]` → a contact with depth 0 (inclusive gate).
@@ -413,14 +480,14 @@ Details that are easy to get wrong:
   4. **Edge-edge.** A: half extents `[0.2, 0.2, 2]` (a rod along z) rotated 45° about Z, center `[1, 0.466, 0]`; B: half extents `[2, 0.2, 0.2]` (a rod along x) rotated 45° about X at the origin. The ridges cross at x = 1 with 0.1 m of overlap: normal `[0, 1, 0]` ± 1e-4, depth 0.1 ± 1e-3, point `[1, 0.233, 0]` ± 1e-3. The x = 1 pins the closest-points step: the edge midpoints alone would give x = 0.5.
   5. **Metadata.** Names and groups land on the right sides in both argument orders (extend `A metadata stays on A in both argument orders; normals mirror` at line 239 with a box-box pair).
   6. **Yawed wing tip into a wall.** A: the F-22 wing box, half extents `[6.6, 0.18, 2.7]`, rotated 0.3491 rad (20°) about Y, center `[5.279, 6, −4.495]`, which puts its leading tip edge (local x = −6.6, z = 2.7) at z = 0.3; B: a wall, half extents `[20, 6, 1.5]` at `[0, 6, 1.5]`, near face at z = 0. Normal `[0, 0, −1]` ± 1e-4, depth 0.3 ± 1e-3, point `[0, 6, 0.3]` ± 2e-3 — the tip edge's midpoint: the incident face is the wing's front face, and its trailing tip sits about 4 m in front of the wall and is dropped. The projected-overlap midpoint put the point at `[5.28, 6, 0.3]`, on the wing's centerline: with D.3's lever arms a wingtip strike would not have yawed the jet.
-- [ ] **Capsule-box, five cases**, the first three against slab B: half extents `[10, 1, 10]` at the origin. Each capsule is a `WorldCollider` whose axis (local +Y) is rotated about Z to run along the stated core; `p0 = center − axis·halfHeight`.
+- [x] **Capsule-box, five cases**, the first three against slab B: half extents `[10, 1, 10]` at the origin. Each capsule is a `WorldCollider` whose axis (local +Y) is rotated about Z to run along the stated core; `capsuleCoreStart = center − axis·halfHeight`.
   1. **Core crossing the slab between the old probes** (the first review's counterexample). Core `[8, −4, 0]` → `[12, 4, 0]`, radius 0.5: center `[10, 0, 0]`, half height 4.4721, rotation −0.4636 rad about Z (axis `[0.4472, 0.8944, 0]`). Both ends are 3 m clear and the point nearest the slab's center is the first end, but the core is inside the slab for t = 0.375…0.5, passing 0.447 m inside the corner edge at `[10, −1, z]`. Expected: normal `[0.8944, −0.4472, 0]` ± 1e-3 (the core's cross product with the z axis: the capsule slides out past that edge), depth 0.9472 ± 1e-3 (0.447 + the radius), point `[9.75, −0.5, 0]` ± 1e-3 (the clipped span's midpoint: the core runs across the normal). The face axes lose: +x needs 2.5, ±y 5.5. The second draft's midpoint probe answered `[1, 0, 0]` at 0.75, and a capsule moved 0.75 along x is still crossing the slab. Then the same pair with both colliders' positions and rotations turned 90° about Y (`simd_quatf(angle: .halfPi, axis: Y_AXIS)`, the slab's rotation included): normal `[0, −0.4472, −0.8944]` ± 1e-3, same depth — the box-local transform.
   2. **Core passing a corner at an angle.** Core `[12, 1.2, 0]` → `[8, 3, 0]`, radius 1.1: center `[10, 2.1, 0]`, half height 2.1932, rotation 1.1487 rad about Z (axis `[−0.9119, 0.4104, 0]`). Both ends are 2.0 m from the slab, and so is the center-nearest point (an end), but the core passes 1.0032 m from the corner `[10, 1, 0]`. Expected: normal `[0.4104, 0.9119, 0]` ± 1e-3, depth 0.0968 ± 1e-3, point `[10, 1, 0]` ± 1e-3 (the edge branch: the +x, +y edge along z). Three probes returned nil here.
   3. **End inside the slab** (the first draft's case). Core `[9.8, 0.5, 0]` → `[1.8, 6.5, 0]`, radius 0.5: center `[5.8, 3.5, 0]`, half height 5, rotation 0.9273 rad about Z (axis `[−0.8, 0.6, 0]`). The end sits 0.5 m below the top face: normal `[0, 1, 0]`, depth 1.0 ± 1e-3 (0.5 + the radius; the nearest cross axis, `[0.6, 0.8, 0]`, needs 1.02), point `[9.8, 0.5, 0]` ± 1e-3 (the span's end deepest against the normal). The first draft expected `[1, 0, 0]` at 0.7 and the second `[0, 1, 0]` at 0.75; neither depth frees the capsule.
   4. **Core through the box** (the second review's case). B: a unit box (half extents 1) at the origin; core `[−2, 0, 0]` → `[2, 0, 0]`, radius 0.5: center at the origin, half height 2, rotation −π/2 about Z (axis `[1, 0, 0]`). Every direction across the core needs 1.5 and the first tested wins: normal `[0, 1, 0]`, depth 1.5 ± 1e-4, point `[0, 0, 0]` ± 1e-4 (the span's midpoint). The midpoint probe answered `[1, 0, 0]` at 1.5, where 3.5 separates along x.
   5. **The depth frees the capsule** (the second review's response check), over cases 1, 3, and 4: with the capsule's `position` moved by `depth × normal` the pair reports nil or a depth ≤ 1e-4; moved by `(depth − 0.01) × normal` it reports depth 0.01 ± 1e-4 with the same normal within 1e-3 — through the outside branch each time (the corner edge for 1, an end cap for 3, a top-face edge for 4), so the two constructions agree at the boundary.
-- [ ] `capsule-box: contact where obviously overlapping, nil where obviously clear` (line 222) stays green unedited.
-- [ ] Gate: full serial suite green; dry run byte-identical (no golden has a box or a capsule).
+- [x] `capsule-box: contact where obviously overlapping, nil where obviously clear` (line 222) stays green unedited.
+- [x] Gate: full serial suite green; dry run byte-identical (no golden has a box or a capsule).
 
 ## Step C.2 — `StaticStructure` and the airfield — C-structures
 
@@ -585,7 +652,7 @@ No other wiring. `buildScene` installs `entities` once at the end (line 181), so
 
 ## Phase C exit criteria
 
-1. - [ ] **Narrow phase:** the nine box-box cases and the five capsule-box cases green; every other `NarrowPhaseTests` case green unedited; dry run byte-identical.
+1. - [x] **Narrow phase:** the nine box-box cases and the five capsule-box cases green; every other `NarrowPhaseTests` case green unedited; dry run byte-identical. *(`c6b4fba`, 2026-09-10: all green in the full serial run; the two pre-existing tests the listing extends — the metadata pair and the separated sweep — gained their box-box lines and nothing else changed; the dry run rewrote the six goldens byte-identical.)*
 2. - [ ] **Structures:** `StaticStructureShapeTests` and `StructureContactTests` green; in-app, the four expected behaviors above hold, including "through the opening: no line".
 3. - [ ] **Statics never move:** asserted by the wall-strike test with `==`, and visible in-app after repeated impacts.
 4. - [ ] **No process-wide state**; the stress scene's per-call cost is unchanged (structures exist only in `FlightboxWithPhysics`).
