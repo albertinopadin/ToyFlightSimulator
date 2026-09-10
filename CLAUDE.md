@@ -6,7 +6,9 @@ The working agreement below is imported from `AGENT_PROJECT_RULES.md` (shared by
 Gemini): project purpose, the research / plan / owner-implements / review workflow, explanation and
 naming rules, references, and the simple-then-optimized rule. Follow it before anything else in this
 file. Research docs start from `research/RESEARCH_TEMPLATE.md`; plans start from
-`plans/PLAN_TEMPLATE.md`, which also defines the pseudocode style.
+`plans/PLAN_TEMPLATE.md`, which also defines the pseudocode style; reviews start from
+`code_reviews/REVIEW_TEMPLATE.md`. The `tfs-research`, `tfs-plan`, and `tfs-review` skills run
+those three stages.
 
 @AGENT_PROJECT_RULES.md
 
@@ -36,7 +38,8 @@ tree for specifics; two conventions aren't visible from it:
 - `code_reviews/ debugging/ plans/ research/`: agent-authored review, debugging, plan, and research docs
   (`research/` is primarily deep web research done when implementing new systems or features). Each has a
   `claude/` subdir (some also `codex/`/`gemini/`); `debugging/screenshots/` holds visual artifacts.
-  New plans start from `plans/PLAN_TEMPLATE.md` and new research docs from `research/RESEARCH_TEMPLATE.md`.
+  New plans start from `plans/PLAN_TEMPLATE.md`, new research docs from `research/RESEARCH_TEMPLATE.md`,
+  and new reviews from `code_reviews/REVIEW_TEMPLATE.md`.
 
 ## Architecture
 
@@ -184,6 +187,11 @@ Shadow map storage: one `depth32Float` `texture2DArray`, 4096² × 4 slices. `Sh
 Step-by-step registration recipes for adding game objects, shaders, models, player-selectable aircraft,
 scenes, and renderers live in the **`extending-the-engine`** skill
 (`.claude/skills/extending-the-engine/SKILL.md`) — invoke it when doing any of those.
+
+The research, plan, and review stages of the working agreement are the `tfs-research`, `tfs-plan`, and
+`tfs-review` skills (`.claude/skills/`). Each points at its template, restricts edits to its output
+folder, and ends with a verification checklist. `tfs-research` runs in a forked context, so the full
+question goes in its argument; `tfs-review` runs only when the owner invokes it.
 
 ## Testing
 

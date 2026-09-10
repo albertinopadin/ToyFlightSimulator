@@ -3,7 +3,7 @@
 ## Read First: Project Rules and Templates
 
 - `AGENT_PROJECT_RULES.md` at the repo root is the working agreement for every agent. Read it before starting any task; it is short. It states the project purpose (a personal learning project where the owner writes the code), the workflow (research, explanation, planning, review, and implementation are separate requests; plans use pseudocode; only an explicit implementation request authorizes source edits), the explanation and naming rules, the references rule, and the simple-then-optimized rule.
-- Research docs start from `research/RESEARCH_TEMPLATE.md`. Plans start from `plans/PLAN_TEMPLATE.md`, which also defines the pseudocode style. Output goes to `research/<agent>/`, `plans/<agent>/`, or `code_reviews/<agent>/` (`codex` for Codex) with a dated snake_case file name.
+- Research docs start from `research/RESEARCH_TEMPLATE.md`. Plans start from `plans/PLAN_TEMPLATE.md`, which also defines the pseudocode style. Reviews start from `code_reviews/REVIEW_TEMPLATE.md`. Output goes to `research/<agent>/`, `plans/<agent>/`, or `code_reviews/<agent>/` (`codex` for Codex) with a dated snake_case file name.
 
 ## Scope and Current Defaults
 

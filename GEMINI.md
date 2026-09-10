@@ -2,7 +2,7 @@
 
 ## Read First: Project Rules and Templates
 
-`AGENT_PROJECT_RULES.md` at the repo root is the working agreement for every agent. It is imported below where the Gemini CLI supports `@file` imports; otherwise read it before starting any task. It states the project purpose (a personal learning project where the owner writes the code), the workflow (research, explanation, planning, review, and implementation are separate requests; plans use pseudocode; only an explicit implementation request authorizes source edits), the explanation and naming rules, the references rule, and the simple-then-optimized rule. Research docs start from `research/RESEARCH_TEMPLATE.md`; plans start from `plans/PLAN_TEMPLATE.md`, which also defines the pseudocode style. Output goes to `research/gemini/`, `plans/gemini/`, or `code_reviews/gemini/` with a dated snake_case file name.
+`AGENT_PROJECT_RULES.md` at the repo root is the working agreement for every agent. It is imported below where the Gemini CLI supports `@file` imports; otherwise read it before starting any task. It states the project purpose (a personal learning project where the owner writes the code), the workflow (research, explanation, planning, review, and implementation are separate requests; plans use pseudocode; only an explicit implementation request authorizes source edits), the explanation and naming rules, the references rule, and the simple-then-optimized rule. Research docs start from `research/RESEARCH_TEMPLATE.md`; plans start from `plans/PLAN_TEMPLATE.md`, which also defines the pseudocode style; reviews start from `code_reviews/REVIEW_TEMPLATE.md`. Output goes to `research/gemini/`, `plans/gemini/`, or `code_reviews/gemini/` with a dated snake_case file name.
 
 @./AGENT_PROJECT_RULES.md
 

@@ -35,7 +35,8 @@ understand their performance tradeoffs.
   Debugging notes and screenshots: `debugging/`. `<agent>` is `claude`, `codex`, or `gemini`.
 - File names are snake_case and end with the date: `topic_name_YYYY-MM-DD.md`.
 - Research documents follow `research/RESEARCH_TEMPLATE.md`. Plans follow
-  `plans/PLAN_TEMPLATE.md`, which also defines the pseudocode style.
+  `plans/PLAN_TEMPLATE.md`, which also defines the pseudocode style. Reviews follow
+  `code_reviews/REVIEW_TEMPLATE.md`.
 - Older documents are historical context. Verify them against the current source before
   following them. Plans started before this file existed (2026-09-10) carry Swift listings
   and keep their own conventions until they close; new plans follow the template.
