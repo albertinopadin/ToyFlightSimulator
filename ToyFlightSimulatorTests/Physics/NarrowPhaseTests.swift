@@ -8,6 +8,10 @@
 //  legacy-exact sphere-sphere boundary/degenerate pins the goldens rely on.
 //  Metal-free: WorldColliders are built directly; the two body-level tests use
 //  detached rigid bodies.
+//  C.1 (C-narrowphase): box-box by separating axes with one clipped contact
+//  point, and exact capsule-box (the slab test and twelve axes for a core
+//  inside the box; end caps and twelve edges outside). Every case is
+//  hand-computed against the plan's listing.
 //
 
 import Foundation
@@ -28,13 +32,41 @@ struct NarrowPhaseTests {
     private func collider(_ shape: ColliderShape,
                           at position: float3,
                           rotation: float3x3 = matrix_identity_float3x3,
-                          name: String? = nil) -> WorldCollider {
+                          name: String? = nil,
+                          group: ColliderGroup = .airframe) -> WorldCollider {
         WorldCollider(shape: shape,
                       position: position,
                       rotation: rotation,
                       sourceIndex: nil,
                       name: name,
-                      group: name == nil ? nil : .airframe)
+                      group: name == nil ? nil : group)
+    }
+
+    /// A capsule whose core runs from `start` to `end` (both in the XY
+    /// plane): the collider's axis (local +Y) is rotated about Z to the
+    /// core's direction, so position ∓ axis·halfHeight are `start` and
+    /// `end` — the (center, half height, angle) pose each capsule-box case
+    /// is stated in.
+    private func capsuleAlong(from start: float3, to end: float3, radius: Float) -> WorldCollider {
+        let delta = end - start
+        let direction = normalize(delta)
+        // Rotating ŷ about Z by θ gives (−sin θ, cos θ, 0).
+        let angle = atan2f(-direction.x, direction.y)
+        return collider(.capsule(radius: radius, halfHeight: 0.5 * length(delta)),
+                        at: 0.5 * (start + end),
+                        rotation: rotation(angle, about: Z_AXIS))
+    }
+
+    /// The same collider translated by `delta`.
+    private func moved(_ c: WorldCollider, by delta: float3) -> WorldCollider {
+        WorldCollider(shape: c.shape, position: c.position + delta, rotation: c.rotation,
+                      sourceIndex: c.sourceIndex, name: c.name, group: c.group)
+    }
+
+    /// The same collider with its pose turned by `turn` about the origin.
+    private func turned(_ c: WorldCollider, by turn: float3x3) -> WorldCollider {
+        WorldCollider(shape: c.shape, position: turn * c.position, rotation: turn * c.rotation,
+                      sourceIndex: c.sourceIndex, name: c.name, group: c.group)
     }
 
     // MARK: - Shape vs plane: translated AND tilted (the y=0 hardcode's grave)
@@ -131,18 +163,166 @@ struct NarrowPhaseTests {
         #expect(NarrowPhase.shapeVsShape(box, farSphere) == nil)
         #expect(NarrowPhase.shapeVsShape(capsule, farBox) == nil)
         #expect(NarrowPhase.shapeVsShape(box, farCapsule) == nil)
+        #expect(NarrowPhase.shapeVsShape(box, farBox) == nil)
         #expect(NarrowPhase.shapeVsPlane(collider(.sphere(radius: 1), at: [0, 5, 0]),
                                          planePoint: .zero, planeNormal: [0, 1, 0]) == nil)
     }
 
-    @Test("box-box is pinned NOT IMPLEMENTED: nil even when overlapping")
-    func boxBoxIsNilEvenOverlapping() {
-        // Documented Phase C/D upgrade path (SAT/GJK). If this ever produces
-        // a contact, that's a deliberate feature landing — retire this pin
-        // with it.
-        let a = collider(.box(halfExtents: [1, 1, 1]), at: .zero)
-        let b = collider(.box(halfExtents: [1, 1, 1]), at: [0.5, 0, 0])
-        #expect(NarrowPhase.shapeVsShape(a, b) == nil)
+    // MARK: - Box-box (C.1): separating axes, one clipped contact point
+
+    @Test("aligned face overlap: A's x axis wins the tie; the point is the clipped incident face's centroid")
+    func boxBoxAlignedFaceOverlap() throws {
+        // Unit cubes, A 1.5 along +X of B: x overlaps by 0.5 on A's axis and
+        // on B's alike; A's is tested first and the strict compare keeps it
+        // (faceOfA(0)). The reference face is A's −x face at x 0.5, the
+        // incident face B's +x face at x 1: all four of its vertices lie
+        // within A's y and z ranges and 0.5 below the face, so the centroid
+        // is that face's center.
+        let b = collider(.box(halfExtents: [1, 1, 1]), at: .zero)
+        let a = collider(.box(halfExtents: [1, 1, 1]), at: [1.5, 0, 0])
+        let contact = try #require(NarrowPhase.shapeVsShape(a, b))
+        #expect(approxEqual(contact.normal, [1, 0, 0]))
+        #expect(approxEqual(contact.depth, 0.5))
+        #expect(approxEqual(contact.point, [1, 0, 0]))
+
+        // The other argument order mirrors the normal at the same depth; the
+        // point lies on the other box's face (A's −x face at x 0.5), which is
+        // also where the boxes meet.
+        let reversed = try #require(NarrowPhase.shapeVsShape(b, a))
+        #expect(approxEqual(reversed.normal, [-1, 0, 0]))
+        #expect(approxEqual(reversed.depth, 0.5))
+        #expect(approxEqual(reversed.point, [0.5, 0, 0]))
+    }
+
+    @Test("offset face overlap: the point is the clipped strip's centroid, inside the overlap")
+    func boxBoxOffsetFaceOverlap() throws {
+        // A at [1.5, 1.5, 0]: x and y overlap 0.5 each and the strict compare
+        // keeps x. B's +x face clipped to A's y range is the strip y 0.5…1
+        // at x 1, all of it 0.5 deep, and its centroid is inside the overlap
+        // (x 0.5…1, y 0.5…1). B's support point alone gave [1, 0, 0],
+        // outside A entirely.
+        let b = collider(.box(halfExtents: [1, 1, 1]), at: .zero)
+        let a = collider(.box(halfExtents: [1, 1, 1]), at: [1.5, 1.5, 0])
+        let contact = try #require(NarrowPhase.shapeVsShape(a, b))
+        #expect(approxEqual(contact.normal, [1, 0, 0]))
+        #expect(approxEqual(contact.depth, 0.5))
+        #expect(approxEqual(contact.point, [1, 0.75, 0]))
+    }
+
+    @Test("separated boxes are nil; faces exactly touching are a depth-0 contact (inclusive gate)")
+    func boxBoxSeparatedAndTouching() throws {
+        let b = collider(.box(halfExtents: [1, 1, 1]), at: .zero)
+        let separated = collider(.box(halfExtents: [1, 1, 1]), at: [2.5, 0, 0])
+        #expect(NarrowPhase.shapeVsShape(separated, b) == nil)
+
+        // reach 1 + 1 against a center distance of 2: overlap exactly 0.
+        let touching = collider(.box(halfExtents: [1, 1, 1]), at: [2, 0, 0])
+        let contact = try #require(NarrowPhase.shapeVsShape(touching, b))
+        #expect(contact.depth == 0)
+        #expect(approxEqual(contact.normal, [1, 0, 0]))
+    }
+
+    @Test("rotated box on a face: the face beats its tying edge axis; the point is the bottom edge's midpoint")
+    func boxBoxRotatedOnFace() throws {
+        // A: a unit cube rotated 45° about Z with its bottom edge 0.1 into
+        // B's +y face (center y = 1 + √2 − 0.1). B's +y face overlaps by 0.1;
+        // A's own axes overlap by about 0.78, and the y edge-cross ties the
+        // face but loses to it (face axes first, strict compare). The
+        // incident face is one of A's two lower faces — a tie to one ulp,
+        // and either keeps the same bottom edge: its two low vertices are
+        // that edge at y 0.9, z ±1, its two high ones sit above the face and
+        // are dropped, and the centroid is the edge's midpoint.
+        let b = collider(.box(halfExtents: [1, 1, 1]), at: .zero)
+        let a = collider(.box(halfExtents: [1, 1, 1]),
+                         at: [0, 1 + sqrtf(2) - 0.1, 0],
+                         rotation: rotation(.pi / 4, about: Z_AXIS))
+        let contact = try #require(NarrowPhase.shapeVsShape(a, b))
+        #expect(approxEqual(contact.normal, [0, 1, 0]))
+        #expect(approxEqual(contact.depth, 0.1))
+        #expect(approxEqual(contact.point, [0, 0.9, 0]))
+    }
+
+    @Test("rotated box shifted along the face: the point follows the bottom edge")
+    func boxBoxRotatedShiftedAlongFace() throws {
+        // The case above with A moved 0.5 along the face: same normal and
+        // depth, and the point is the shifted bottom edge's midpoint. The
+        // projected-overlap midpoint (the second draft) gave [0.043, 0.9, 0],
+        // which in A's frame is 1.32 half extents out along one axis:
+        // outside A.
+        let b = collider(.box(halfExtents: [1, 1, 1]), at: .zero)
+        let a = collider(.box(halfExtents: [1, 1, 1]),
+                         at: [0.5, 1 + sqrtf(2) - 0.1, 0],
+                         rotation: rotation(.pi / 4, about: Z_AXIS))
+        let contact = try #require(NarrowPhase.shapeVsShape(a, b))
+        #expect(approxEqual(contact.normal, [0, 1, 0]))
+        #expect(approxEqual(contact.depth, 0.1))
+        #expect(approxEqual(contact.point, [0.5, 0.9, 0]))
+    }
+
+    @Test("rotated box over the side of the face: the clip adds vertices on the side plane")
+    func boxBoxRotatedOverFaceSide() throws {
+        // A: a unit cube rotated 40° about Z, placed so its bottom corner
+        // sits at x 0.93, y 0.9. At 40° the incident face is unambiguous —
+        // A's −y face, opposed to the reference normal by 0.766 against
+        // 0.643 for the other lower face (at 45° the two tie to one ulp and
+        // clip to different points) — and it rises toward +x, crossing B's
+        // x = 1 side plane 0.041 below the top face. Least axis B's +y at
+        // 0.1; A's own x axis is next at 0.118. The clip keeps four
+        // vertices, the bottom edge's two at [0.93, 0.9, ±1] and two new
+        // ones on the side plane at [1, 0.959, ±1], all below the face; the
+        // point is their mean.
+        let angle: Float = 40 * .pi / 180
+        let b = collider(.box(halfExtents: [1, 1, 1]), at: .zero)
+        let a = collider(.box(halfExtents: [1, 1, 1]),
+                         at: [0.93 + cosf(angle) - sinf(angle), 0.9 + cosf(angle) + sinf(angle), 0],
+                         rotation: rotation(angle, about: Z_AXIS))
+        let contact = try #require(NarrowPhase.shapeVsShape(a, b))
+        #expect(approxEqual(contact.normal, [0, 1, 0]))
+        #expect(approxEqual(contact.depth, 0.1))
+        #expect(approxEqual(contact.point, [0.965, 0.929, 0], tolerance: 1e-3))
+    }
+
+    @Test("edge-edge: crossed rods meet at their edges' closest points, not the edge midpoints")
+    func boxBoxEdgeEdge() throws {
+        // A: a rod along z (he [0.2, 0.2, 2]) rotated 45° about Z, its bottom
+        // ridge along z at x 1, y 0.466 − 0.2√2 = 0.183. B: a rod along x
+        // (he [2, 0.2, 0.2]) rotated 45° about X, its top ridge along x at
+        // z 0, y 0.2√2 = 0.283. The ridges cross at x 1 with 0.1 m of
+        // overlap along y = cross(A's z edge, B's x edge). The point is the
+        // midpoint of the two edges' closest points, [1, 0.183, 0] and
+        // [1, 0.283, 0]; the edge midpoints alone would give x 0.5.
+        let a = collider(.box(halfExtents: [0.2, 0.2, 2]),
+                         at: [1, 0.466, 0],
+                         rotation: rotation(.pi / 4, about: Z_AXIS))
+        let b = collider(.box(halfExtents: [2, 0.2, 0.2]),
+                         at: .zero,
+                         rotation: rotation(.pi / 4, about: X_AXIS))
+        let contact = try #require(NarrowPhase.shapeVsShape(a, b))
+        #expect(approxEqual(contact.normal, [0, 1, 0]))
+        #expect(approxEqual(contact.depth, 0.1, tolerance: 1e-3))
+        #expect(approxEqual(contact.point, [1, 0.233, 0], tolerance: 1e-3))
+    }
+
+    @Test("yawed wing tip into a wall: the point is the tip edge's midpoint, not the wing's centerline")
+    func boxBoxYawedWingTipIntoWall() throws {
+        // A: the F-22 wing box (he [6.6, 0.18, 2.7]) yawed 20° about Y and
+        // placed so its leading tip edge (local x −6.6, z 2.7) sits 0.3 m
+        // into the wall's near face at z 0, at x 0; its trailing tip is
+        // about 4 m in front of the wall. B: a 40 × 12 × 3 m wall. The least
+        // axis is the wall's z face at 0.3 (the y edge-cross ties it and
+        // loses); the incident face is the wing's front face, and the clip
+        // drops its two vertices in front of the wall, leaving the tip
+        // edge's ends at y 6 ± 0.18. The projected-overlap midpoint put the
+        // point at [5.28, 6, 0.3], on the wing's centerline: with D.3's
+        // lever arms a wingtip strike would not have yawed the jet.
+        let wall = collider(.box(halfExtents: [20, 6, 1.5]), at: [0, 6, 1.5])
+        let wing = collider(.box(halfExtents: [6.6, 0.18, 2.7]),
+                            at: [5.279, 6, -4.495],
+                            rotation: rotation(0.3491, about: Y_AXIS))
+        let contact = try #require(NarrowPhase.shapeVsShape(wing, wall))
+        #expect(approxEqual(contact.normal, [0, 0, -1]))
+        #expect(approxEqual(contact.depth, 0.3, tolerance: 1e-3))
+        #expect(approxEqual(contact.point, [0, 6, 0.3], tolerance: 2e-3))
     }
 
     // MARK: - Sphere-in-box: least-penetration axis + tie determinism
@@ -234,6 +414,131 @@ struct NarrowPhaseTests {
         #expect(NarrowPhase.shapeVsShape(capsule, clear) == nil)
     }
 
+    // MARK: - Capsule-box, exact (C.1): slab test and twelve axes inside; end caps and twelve edges outside
+
+    /// The slab the first three cases run against: half extents [10, 1, 10]
+    /// at the origin.
+    private var slab: WorldCollider { collider(.box(halfExtents: [10, 1, 10]), at: .zero) }
+
+    @Test("capsuleAlong reproduces the stated pose: center, half height, axis, and core start")
+    func capsulePoseHelperReproducesCore() throws {
+        // The crossing case's core, [8, −4, 0] → [12, 4, 0]: center
+        // [10, 0, 0], half height √20 = 4.4721, axis [1, 2, 0]/√5 (−0.4636 rad
+        // about Z), and center − axis·halfHeight is the start again — the
+        // world core capsuleSegment reads.
+        let cap = capsuleAlong(from: [8, -4, 0], to: [12, 4, 0], radius: 0.5)
+        guard case .capsule(radius: let radius, halfHeight: let halfHeight) = cap.shape else {
+            Issue.record("capsuleAlong built a non-capsule")
+            return
+        }
+        let axis = cap.rotation.columns.1
+        #expect(radius == 0.5)
+        #expect(approxEqual(cap.position, [10, 0, 0]))
+        #expect(approxEqual(halfHeight, sqrtf(20)))
+        #expect(approxEqual(axis, normalize(float3(1, 2, 0))))
+        #expect(approxEqual(cap.position - axis * halfHeight, [8, -4, 0]))
+        #expect(approxEqual(cap.position + axis * halfHeight, [12, 4, 0]))
+    }
+
+    @Test("capsule-box: a core crossing the slab between the old probes slides out past the corner edge")
+    func capsuleBoxCoreCrossingBetweenProbes() throws {
+        // Core [8, −4, 0] → [12, 4, 0], r 0.5 (center [10, 0, 0], half height
+        // 4.4721, −0.4636 rad about Z). Both ends are 3 m clear of the slab
+        // and the point nearest its center is the first end — the three
+        // sphere probes saw nothing — but the core is inside for
+        // t 0.375…0.5, passing 0.447 m inside the corner edge at [10, −1, z].
+        // The least of the twelve axes is the core's cross product with z,
+        // the capsule sliding out past that edge: the face axes need 2.5
+        // (+x) and 5.5 (±y). Depth 0.447 + r; the point is the clipped
+        // span's midpoint, since the core runs across the normal. The
+        // second draft's midpoint probe answered [1, 0, 0] at 0.75, and a
+        // capsule moved 0.75 along x is still crossing the slab.
+        let cap = capsuleAlong(from: [8, -4, 0], to: [12, 4, 0], radius: 0.5)
+        let contact = try #require(NarrowPhase.shapeVsShape(cap, slab))
+        #expect(approxEqual(contact.normal, [0.8944, -0.4472, 0], tolerance: 1e-3))
+        #expect(approxEqual(contact.depth, 0.9472, tolerance: 1e-3))
+        #expect(approxEqual(contact.point, [9.75, -0.5, 0], tolerance: 1e-3))
+
+        // The same pair turned 90° about Y, the slab's rotation included:
+        // the box-local transform. Same depth; the normal turns with it.
+        let turn = rotation(.halfPi, about: Y_AXIS)
+        let turnedContact = try #require(NarrowPhase.shapeVsShape(turned(cap, by: turn), turned(slab, by: turn)))
+        #expect(approxEqual(turnedContact.normal, [0, -0.4472, -0.8944], tolerance: 1e-3))
+        #expect(approxEqual(turnedContact.depth, 0.9472, tolerance: 1e-3))
+    }
+
+    @Test("capsule-box: a core passing a corner at an angle is found by the edge branch")
+    func capsuleBoxCorePassingCorner() throws {
+        // Core [12, 1.2, 0] → [8, 3, 0], r 1.1 (center [10, 2.1, 0], half
+        // height 2.1932, 1.1487 rad about Z). Both ends are 2.0 m from the
+        // slab, and so is the center-nearest point (an end), but the core
+        // passes 1.0032 m from the corner [10, 1, 0]: the +x, +y edge along
+        // z, whose closest point is the contact point. Three probes
+        // returned nil here.
+        let cap = capsuleAlong(from: [12, 1.2, 0], to: [8, 3, 0], radius: 1.1)
+        let contact = try #require(NarrowPhase.shapeVsShape(cap, slab))
+        #expect(approxEqual(contact.normal, [0.4104, 0.9119, 0], tolerance: 1e-3))
+        #expect(approxEqual(contact.depth, 0.0968, tolerance: 1e-3))
+        #expect(approxEqual(contact.point, [10, 1, 0], tolerance: 1e-3))
+    }
+
+    @Test("capsule-box: an end inside the slab comes out through the face, at the span's end")
+    func capsuleBoxEndInsideSlab() throws {
+        // Core [9.8, 0.5, 0] → [1.8, 6.5, 0], r 0.5 (center [5.8, 3.5, 0],
+        // half height 5, 0.9273 rad about Z). The first end sits 0.5 m below
+        // the top face: +y needs 0.5 + r = 1.0, and the nearest cross axis,
+        // [0.6, 0.8, 0], needs 1.02. The point is the span's end deepest
+        // against the normal — the end inside. The first draft expected
+        // [1, 0, 0] at 0.7 and the second [0, 1, 0] at 0.75; neither depth
+        // frees the capsule.
+        let cap = capsuleAlong(from: [9.8, 0.5, 0], to: [1.8, 6.5, 0], radius: 0.5)
+        let contact = try #require(NarrowPhase.shapeVsShape(cap, slab))
+        #expect(approxEqual(contact.normal, [0, 1, 0]))
+        #expect(approxEqual(contact.depth, 1.0, tolerance: 1e-3))
+        #expect(approxEqual(contact.point, [9.8, 0.5, 0], tolerance: 1e-3))
+    }
+
+    @Test("capsule-box: a core through a unit box exits across the core, not along it")
+    func capsuleBoxCoreThroughBox() throws {
+        // Unit box at the origin; core [−2, 0, 0] → [2, 0, 0], r 0.5 (half
+        // height 2, −π/2 about Z). Every direction across the core needs
+        // 1 + r = 1.5 and the first tested, +y, wins; along the core 3.5
+        // separates. The point is the span's midpoint, the origin. The
+        // midpoint probe answered [1, 0, 0] at 1.5.
+        let box = collider(.box(halfExtents: [1, 1, 1]), at: .zero)
+        let cap = capsuleAlong(from: [-2, 0, 0], to: [2, 0, 0], radius: 0.5)
+        let contact = try #require(NarrowPhase.shapeVsShape(cap, box))
+        #expect(approxEqual(contact.normal, [0, 1, 0]))
+        #expect(approxEqual(contact.depth, 1.5))
+        #expect(approxEqual(contact.point, .zero))
+    }
+
+    @Test("capsule-box: translating by depth × normal frees the capsule; 0.01 less leaves 0.01 through the outside branch")
+    func capsuleBoxDepthFreesTheCapsule() throws {
+        // Over the crossing, end-inside, and through-the-box cases: moved by
+        // the reported depth along the normal, the pair is nil or touching
+        // (depth ≤ 1e-4); moved 0.01 less, it reports 0.01 with the same
+        // normal — through the outside branch each time (the corner edge,
+        // an end cap, a top-face edge), so the inside and outside
+        // constructions agree at the boundary.
+        let unitBox = collider(.box(halfExtents: [1, 1, 1]), at: .zero)
+        let pairs: [(capsule: WorldCollider, box: WorldCollider)] = [
+            (capsuleAlong(from: [8, -4, 0], to: [12, 4, 0], radius: 0.5), slab),
+            (capsuleAlong(from: [9.8, 0.5, 0], to: [1.8, 6.5, 0], radius: 0.5), slab),
+            (capsuleAlong(from: [-2, 0, 0], to: [2, 0, 0], radius: 0.5), unitBox),
+        ]
+        for pair in pairs {
+            let contact = try #require(NarrowPhase.shapeVsShape(pair.capsule, pair.box))
+            let freed = NarrowPhase.shapeVsShape(moved(pair.capsule, by: contact.normal * contact.depth), pair.box)
+            #expect((freed?.depth ?? 0) <= 1e-4)
+
+            let almostFreed = try #require(NarrowPhase.shapeVsShape(
+                moved(pair.capsule, by: contact.normal * (contact.depth - 0.01)), pair.box))
+            #expect(approxEqual(almostFreed.depth, 0.01))
+            #expect(approxEqual(almostFreed.normal, contact.normal, tolerance: 1e-3))
+        }
+    }
+
     // MARK: - Flipped-pair metadata
 
     @Test("A metadata stays on A in both argument orders; normals mirror")
@@ -256,6 +561,26 @@ struct NarrowPhaseTests {
         #expect(ballFirst.colliderNameB == "cap")
         #expect(approxEqual(ballFirst.normal, [1, 0, 0]))   // B→A: toward the sphere
         #expect(approxEqual(ballFirst.depth, 0.2))
+
+        // Box-box (C.1) solves both orders directly, no flip path: names AND
+        // groups must still land on the caller's sides.
+        let wing = collider(.box(halfExtents: [1, 1, 1]), at: [1.5, 0, 0], name: "wing")
+        let wall = collider(.box(halfExtents: [1, 1, 1]), at: .zero, name: "wall", group: .structure)
+        let wingFirst = try #require(NarrowPhase.shapeVsShape(wing, wall))
+        #expect(wingFirst.colliderNameA == "wing")
+        #expect(wingFirst.colliderGroupA == .airframe)
+        #expect(wingFirst.colliderNameB == "wall")
+        #expect(wingFirst.colliderGroupB == .structure)
+        #expect(approxEqual(wingFirst.normal, [1, 0, 0]))   // B→A: toward the wing
+        #expect(approxEqual(wingFirst.depth, 0.5))
+
+        let wallFirst = try #require(NarrowPhase.shapeVsShape(wall, wing))
+        #expect(wallFirst.colliderNameA == "wall")
+        #expect(wallFirst.colliderGroupA == .structure)
+        #expect(wallFirst.colliderNameB == "wing")
+        #expect(wallFirst.colliderGroupB == .airframe)
+        #expect(approxEqual(wallFirst.normal, [-1, 0, 0]))  // B→A: toward the wall
+        #expect(approxEqual(wallFirst.depth, 0.5))
     }
 
     // MARK: - Legacy-exact sphere-sphere pins

@@ -172,23 +172,53 @@ enum NarrowPhase {
                 return shapeVsShape(b, a)?.flipped
                 
             case (.capsule, .box(halfExtents: let he)):
-                // Approximation: the capsule reduced to the sphere nearest the
-                // box center, then sphere-vs-box. Exact segment-OBB or GJK can
-                // replace it later.
-                let (p, r) = capsuleAsSphere(a, towards: b.position)
-                return sphereVsBox(center: p, radius: r, box: b, halfExtents: he, a: a, b: b)
+                return capsuleVsBox(a, b, halfExtents: he)
 
             case (.box, .capsule):
                 return shapeVsShape(b, a)?.flipped
 
-            case (.box, .box):
-                // Not implemented: no box-box pair exists yet. SAT or GJK/EPA
-                // when one does.
-                return nil
+            case (.box(halfExtents: let ha), .box(halfExtents: let hb)):
+                return boxVsBox(a, halfExtentsA: ha, b, halfExtentsB: hb)
         }
     }
 
     // MARK: - Primitive helpers (pure — unit-testable without Metal)
+
+    // MARK: - Tolerances
+    //
+    // Angles are compared as cosines or squared sines of unit vectors, so
+    // they do not scale with the scene; the one length is a division guard.
+
+    /// Ray vs plane: the cosine between the unit ray and the plane normal
+    /// must lie at least this far below zero. Grazing and receding rays
+    /// (an inverted aircraft's struts) hit nothing.
+    static let grazingRayCosine: Float = 1e-6
+
+    /// Separating axes from cross products: two unit directions whose cross
+    /// product is shorter than this (|sin θ| < 1e-3, 0.057°) are parallel
+    /// and give no new axis. Box edges against box edges in boxVsBox, the
+    /// core direction against box axes in capsuleVsBox.
+    static let parallelAxisSineSquared: Float = 1e-6
+
+    /// Support point: a box axis whose cosine against the direction is
+    /// within this of zero (0.006°) has no single farthest point and
+    /// contributes its center.
+    static let perpendicularAxisCosine: Float = 1e-4
+
+    /// Capsule-box contact point: a core whose cosine against the contact
+    /// normal is within this of zero runs across the normal, and the
+    /// clipped span's midpoint is the point rather than an end. The
+    /// cross-product normals are perpendicular to the core exactly; in
+    /// float32 their cosine carries up to 6e-8 of rounding (300 000 random
+    /// pose-axis samples of the F-22's 16.2 m core), so this is a 170×
+    /// margin. The absolute 1e-6 m band it replaces was within 5% of that
+    /// rounding at 16.2 m.
+    static let coreAcrossNormalCosine: Float = 1e-5
+
+    /// Segment vs slab: a segment whose extent along a box axis is under
+    /// this (meters) is parallel to the slab, which keeps 1 / extent
+    /// finite and the 0 × inf NaN out of the crossing parameters.
+    static let parallelSlabExtent: Float = 1e-8
 
     /// Ray vs infinite plane: distance t ≥ 0 along `direction` (unit length)
     /// to the plane through planePoint, or nil. Front face only: the ray must
@@ -197,7 +227,7 @@ enum NarrowPhase {
     static func rayVsPlane(origin: float3, direction: float3,
                            planePoint: float3, planeNormal n: float3) -> Float? {
         let denominator = dot(direction, n)
-        guard denominator < -1e-6 else { return nil }   // parallel, or facing away
+        guard denominator < -grazingRayCosine else { return nil }   // parallel, or facing away
         let t = dot(planePoint - origin, n) / denominator
         return t >= 0 ? t : nil                          // plane behind the origin
     }
@@ -260,6 +290,354 @@ enum NarrowPhase {
                        against: b)
     }
     
+    /// Capsule vs oriented box, exact. A core that touches or enters the box
+    /// (the slab test) gets the least translation that frees the capsule, by
+    /// separating axes over the twelve directions a segment and a box can
+    /// separate along. Otherwise the core's distance to the box is the least
+    /// of its two ends' distances (sphereVsBox: a face, an edge, or a corner)
+    /// and its distance to each of the twelve box edges
+    /// (closestPointsOnSegments): a core interior point nearest a face
+    /// interior means the core runs parallel to the face, and then an end or
+    /// a boundary edge is as close. The three sphere probes this replaces
+    /// (both caps and the point nearest the box center) missed a core
+    /// crossing a box between them, about one true hit in ten; a sphere
+    /// probed at the clipped span's midpoint (the second draft) reported that
+    /// sphere's depth, not the capsule's.
+    private static func capsuleVsBox(_ a: WorldCollider, _ b: WorldCollider, halfExtents he: float3) -> Contact? {
+        let (capsuleCoreStart, capsuleCoreEnd, capsuleRadius) = capsuleSegment(a)
+
+        // Capsule core in box-local space (R orthonormal: inverse = transpose).
+        let localCapsuleCoreStart = b.rotation.transpose * (capsuleCoreStart - b.position)
+        let localCapsuleCoreEnd = b.rotation.transpose * (capsuleCoreEnd - b.position)
+        if let span = segmentSpanInsideBox(localCapsuleCoreStart, localCapsuleCoreEnd, halfExtents: he) {
+            // Penetration depth of a segment in a box: the least, over the
+            // Minkowski difference's face normals — the three face normals
+            // and the core's cross product with each, in both senses — of
+            // the box's reach along the direction, plus the radius, minus the
+            // nearer end's projection: how far the capsule must move along it
+            // to be clear. Face axes first, strict compares: ties go to the
+            // face and to the earlier sense. A shallow nose-first strike
+            // comes out through the face at any yaw; a deep crossing slides
+            // out past the nearest edge, as box-box would.
+            // The core's unit direction: its cross products with the box
+            // axes are then sines and its run along the normal a cosine, so
+            // both tolerances are angles and neither scales with the core.
+            // A zero-length core (a sphere) has no direction: no
+            // cross-product axes, and the point is the span's midpoint.
+            let localCapsuleCoreDelta = localCapsuleCoreEnd - localCapsuleCoreStart
+            let coreLength = simd_length(localCapsuleCoreDelta)
+            let localCapsuleCoreDirection = coreLength > 0 ? localCapsuleCoreDelta / coreLength : .zero
+            var leastDepth = Float.infinity
+            var localNormal = float3.zero
+            func considerAxis(_ candidate: float3) {
+                let lengthSquared = simd_length_squared(candidate)
+                guard lengthSquared > parallelAxisSineSquared else { return }   // core parallel to the axis: no new direction
+                let axis = candidate / lengthSquared.squareRoot()
+                let reach = he.x * abs(axis.x) + he.y * abs(axis.y) + he.z * abs(axis.z)
+                for sense in 0..<2 {
+                    let signedAxis = sense == 0 ? axis : -axis
+                    let nearerEndProjection = min(dot(localCapsuleCoreStart, signedAxis),
+                                                  dot(localCapsuleCoreEnd, signedAxis))
+                    let depth = reach + capsuleRadius - nearerEndProjection
+                    if depth < leastDepth {
+                        leastDepth = depth
+                        localNormal = signedAxis
+                    }
+                }
+            }
+            for i in 0..<3 {
+                var axis = float3.zero
+                axis[i] = 1
+                considerAxis(axis)
+            }
+            for i in 0..<3 {
+                var axis = float3.zero
+                axis[i] = 1
+                considerAxis(cross(localCapsuleCoreDirection, axis))
+            }
+
+            // The point: the clipped span's deepest point against the normal
+            // (an end inside the box), or the span's midpoint when the core
+            // runs across the normal (a core through the box, or past an
+            // edge). Inside both shapes, as sphereVsBox's inside branch
+            // reports the center.
+            let coreAlongNormal = dot(localCapsuleCoreDirection, localNormal)   // a cosine
+            let contactPointParameter: Float   // along the core: 0 at capsuleCoreStart, 1 at capsuleCoreEnd
+            if coreAlongNormal > coreAcrossNormalCosine {
+                contactPointParameter = span.enter
+            } else if coreAlongNormal < -coreAcrossNormalCosine {
+                contactPointParameter = span.exit
+            } else {
+                contactPointParameter = 0.5 * (span.enter + span.exit)
+            }
+            return Contact(normal: b.rotation * localNormal,
+                           depth: leastDepth,
+                           point: capsuleCoreStart + (capsuleCoreEnd - capsuleCoreStart) * contactPointParameter,
+                           collider: a,
+                           against: b)
+        }
+
+        // Outside the box: the nearer end cap, then the twelve edges. Ties
+        // keep the earlier candidate, as everywhere else.
+        var best: Contact? = nil
+        func consider(_ candidate: Contact?) {
+            guard let candidate else { return }
+            if let current = best, current.depth >= candidate.depth { return }
+            best = candidate
+        }
+        consider(sphereVsBox(center: capsuleCoreStart, radius: capsuleRadius, box: b, halfExtents: he, a: a, b: b))
+        consider(sphereVsBox(center: capsuleCoreEnd, radius: capsuleRadius, box: b, halfExtents: he, a: a, b: b))
+
+        for axis in 0..<3 {
+            // The four edges parallel to this axis, one per corner of the
+            // face it is normal to.
+            let u = (axis + 1) % 3
+            let v = (axis + 2) % 3
+            let halfEdge = b.rotation[axis] * he[axis]
+            for cornerU in 0..<2 {
+                for cornerV in 0..<2 {
+                    let signU: Float = cornerU == 0 ? -1 : 1
+                    let signV: Float = cornerV == 0 ? -1 : 1
+                    let middle = b.position + b.rotation[u] * (signU * he[u]) + b.rotation[v] * (signV * he[v])
+                    let (onCapsuleCore, onEdge) = closestPointsOnSegments(capsuleCoreStart, capsuleCoreEnd,
+                                                                          middle - halfEdge, middle + halfEdge)
+                    let delta = onCapsuleCore - onEdge
+                    let distance = simd_length(delta)
+                    guard distance <= capsuleRadius, distance > 0 else { continue }   // 0 cannot happen: the slab test took it
+                    consider(Contact(normal: delta / distance,
+                                     depth: capsuleRadius - distance,
+                                     point: onEdge,
+                                     collider: a,
+                                     against: b))
+                }
+            }
+        }
+
+        return best
+    }
+    
+    /// Oriented box vs oriented box by separating axes: the six face normals
+    /// and the nine edge-edge cross products (Ericson §4.4.1 gives the test;
+    /// this keeps each axis's overlap). The contact normal is the axis of
+    /// least overlap, pointed from B toward A, and the depth is that overlap.
+    /// One contact point where the boxes meet: for a face axis, the centroid
+    /// of the incident face clipped to the reference face (Box2D's manifold,
+    /// reduced to one point); for an edge-edge axis the midpoint of the two
+    /// edges' closest points. Right for a strike; a box resting flat on
+    /// another box's face would rock on one point, and no aircraft box does
+    /// (the fuselage capsule sits below the wings and empennage).
+    private static func boxVsBox(_ a: WorldCollider, halfExtentsA ha: float3,
+                                 _ b: WorldCollider, halfExtentsB hb: float3) -> Contact? {
+        enum Feature { case faceOfA(Int), faceOfB(Int), edges(Int, Int) }
+        let centerOffset = a.position - b.position
+        var leastOverlap: Float = .infinity
+        var normal: float3 = .zero
+        var feature: Feature = .faceOfA(0)
+        
+        /// False when `candidate` separates the boxes. Near-parallel edges
+        /// give a near-zero cross product and no new axis.
+        func overlaps(along candidate: float3, _ candidateFeature: Feature) -> Bool {
+            let lengthSquared = simd_length_squared(candidate)
+            guard lengthSquared > parallelAxisSineSquared else { return true }
+            let axis = candidate / lengthSquared.squareRoot()
+            let reachA = ha.x * abs(dot(a.rotation[0], axis)) +
+                         ha.y * abs(dot(a.rotation[1], axis)) +
+                         ha.z * abs(dot(a.rotation[2], axis))
+            let reachB = hb.x * abs(dot(b.rotation[0], axis)) +
+                         hb.y * abs(dot(b.rotation[1], axis)) +
+                         hb.z * abs(dot(b.rotation[2], axis))
+            let distance = dot(centerOffset, axis)
+            let overlap = reachA + reachB - abs(distance)
+            guard overlap >= 0 else { return false }              // inclusive, like every other gate
+            if overlap < leastOverlap {                           // strict: face axes win ties over edge axes
+                leastOverlap = overlap
+                normal = distance >= 0 ? axis : -axis             // from B toward A
+                feature = candidateFeature
+            }
+            
+            return true
+        }
+        
+        for i in 0..<3 {
+            guard overlaps(along: a.rotation[i], .faceOfA(i)), overlaps(along: b.rotation[i], .faceOfB(i)) else {
+                return nil
+            }
+        }
+        
+        for i in 0..<3 {
+            for j in 0..<3 {
+                guard overlaps(along: cross(a.rotation[i], b.rotation[j]), .edges(i, j)) else { return nil }
+            }
+        }
+        
+        /// The box's farthest point in `direction`. An axis at right angles to
+        /// the direction has no single farthest point (a face or an edge), so
+        /// that axis contributes its center: a face gives its center, an edge
+        /// its midpoint, a corner itself.
+        func support(_ box: WorldCollider, _ h: float3, _ direction: float3) -> float3 {
+            var point = box.position
+            for i in 0..<3 {
+                let alignment = dot(box.rotation[i], direction)
+                if abs(alignment) > perpendicularAxisCosine {
+                    point += box.rotation[i] * (h[i] * (alignment > 0 ? 1 : -1))
+                }
+            }
+            return point
+        }
+        
+        /// One point where the boxes meet, for a face axis of `reference`
+        /// (Box2D's contact points, Catto GDC 2006, reduced to one): the
+        /// incident face — the other box's face most opposed to the
+        /// reference face — is clipped by the reference face's four side
+        /// planes (Sutherland–Hodgman), and the clipped vertices at or below
+        /// the face are averaged. Inside both boxes for any strike. The
+        /// second draft's projected-overlap midpoint was inside both
+        /// projections but not both boxes: a unit cube at 45° shifted 0.5 m
+        /// along the face got a point 0.46 m outside the cube, and a wing
+        /// yawed 20° with its tip 0.3 m into a wall got one 5.3 m from the
+        /// tip on the wing's centerline, a yaw lever arm of zero. A quad
+        /// clipped by four planes has at most eight vertices; the buffer is
+        /// on the stack. `fallback` (the support point) covers a clip that
+        /// keeps nothing, which no overlapping pair has produced.
+        func clippedPoint(reference: WorldCollider,
+                          _ hRef: float3,
+                          referenceAxis: Int,
+                          faceNormal: float3,
+                          incident: WorldCollider,
+                          _ hInc: float3,
+                          fallback: float3) -> float3 {
+            // The incident face: the incident axis most opposed to the
+            // reference face's outward normal, on that side.
+            var incidentAxis = 0
+            var incidentSign: Float = 1
+            var mostOpposed: Float = .infinity
+            for j in 0..<3 {
+                let alignment = dot(incident.rotation[j], faceNormal)
+                let sign: Float = alignment > 0 ? -1 : 1
+                if sign * alignment < mostOpposed {
+                    mostOpposed = sign * alignment
+                    incidentAxis = j
+                    incidentSign = sign
+                }
+            }
+            
+            let u = (incidentAxis + 1) % 3
+            let v = (incidentAxis + 2) % 3
+            let faceCenter = incident.position + incident.rotation[incidentAxis] * (incidentSign * hInc[incidentAxis])
+            let du = incident.rotation[u] * hInc[u]
+            let dv = incident.rotation[v] * hInc[v]
+            
+            return withUnsafeTemporaryAllocation(of: float3.self, capacity: 16) { buffer -> float3 in
+                // Two eight-slot halves, swapped after each clip plane.
+                var input = UnsafeMutableBufferPointer(rebasing: buffer[0..<8])
+                var output = UnsafeMutableBufferPointer(rebasing: buffer[8..<16])
+                input[0] = faceCenter + du + dv
+                input[1] = faceCenter + du - dv
+                input[2] = faceCenter - du - dv
+                input[3] = faceCenter - du + dv
+                var count = 4
+                
+                for sideAxis in 0..<3 where sideAxis != referenceAxis {
+                    for side in 0..<2 {
+                        // Keep what lies within this side plane of the
+                        // reference face: dot(p, n) ≤ dot(center, n) + h.
+                        let planeNormal = reference.rotation[sideAxis] * (side == 0 ? -1 : 1)
+                        let planeOffset = dot(reference.position, planeNormal) + hRef[sideAxis]
+                        var kept = 0
+                        for k in 0..<count {
+                            let p = input[k]
+                            let q = input[(k + 1) % count]
+                            let dp = dot(p, planeNormal) - planeOffset
+                            let dq = dot(q, planeNormal) - planeOffset
+                            if dp <= 0 {
+                                output[kept] = p
+                                kept += 1
+                            }
+                            if (dp < 0 && dq > 0) || (dp > 0 && dq < 0) {
+                                output[kept] = p + (q - p) * (dp / (dp - dq))
+                                kept += 1
+                            }
+                        }
+                        
+                        count = kept
+                        guard count > 0 else { return fallback }
+                        swap(&input, &output)
+                    }
+                }
+                
+                // The clipped vertices at or below the reference face.
+                let facePlane = dot(reference.position, faceNormal) + hRef[referenceAxis]
+                var sum: float3 = .zero
+                var below = 0
+                for k in 0..<count where dot(input[k], faceNormal) - facePlane <= 0 {
+                    sum += input[k]
+                    below += 1
+                }
+                
+                return below > 0 ? sum / Float(below) : fallback
+            }
+        }
+        
+        let point: float3
+        switch feature {
+            case .faceOfA(let i):
+                // The reference face is A's face toward B: its outward normal
+                // is −normal (the normal points from B toward A).
+                point = clippedPoint(reference: a,
+                                     ha,
+                                     referenceAxis: i,
+                                     faceNormal: -normal,
+                                     incident: b,
+                                     hb,
+                                     fallback: support(b, hb, normal))
+            case .faceOfB(let i):
+                point = clippedPoint(reference: b,
+                                     hb,
+                                     referenceAxis: i,
+                                     faceNormal: normal,
+                                     incident: a,
+                                     ha,
+                                     fallback: support(a, ha, -normal))
+            case .edges(let i, let j):
+                let midA = support(a, ha, -normal)
+                let midB = support(b, hb, normal)
+                let (pA, pB) = closestPointsOnSegments(midA - a.rotation[i] * ha[i],
+                                                       midA + a.rotation[i] * ha[i],
+                                                       midB - b.rotation[j] * hb[j],
+                                                       midB + b.rotation[j] * hb[j])
+                point = 0.5 * (pA + pB)
+        }
+        
+        return Contact(normal: normal, depth: leastOverlap, point: point, collider: a, against: b)
+    }
+
+    /// The parameter span of the segment segmentStart→segmentEnd (t = 0 at
+    /// the start, 1 at the end; both ends box-local) inside the axis-aligned
+    /// box of the given half extents, or nil where it passes by. Ericson
+    /// §5.3.3 (segment vs AABB by slabs); inclusive at the boundary like
+    /// every other gate, so a segment touching a face is inside.
+    static func segmentSpanInsideBox(_ segmentStart: float3, _ segmentEnd: float3,
+                                     halfExtents he: float3) -> (enter: Float, exit: Float)? {
+        let segmentDelta = segmentEnd - segmentStart
+        var enter: Float = 0
+        var exit: Float = 1
+        for i in 0..<3 {
+            if abs(segmentDelta[i]) < parallelSlabExtent {
+                // Parallel to this slab: inside it or not at all.
+                guard abs(segmentStart[i]) <= he[i] else { return nil }
+            } else {
+                let inverseDelta = 1 / segmentDelta[i]
+                var slabEnter = (-he[i] - segmentStart[i]) * inverseDelta
+                var slabExit = (he[i] - segmentStart[i]) * inverseDelta
+                if slabEnter > slabExit { swap(&slabEnter, &slabExit) }
+                enter = max(enter, slabEnter)
+                exit = min(exit, slabExit)
+                guard enter <= exit else { return nil }
+            }
+        }
+        return (enter, exit)
+    }
+
     /// The capsule's core segment endpoints and radius, in world space.
     private static func capsuleSegment(_ c: WorldCollider) -> (p0: float3, p1: float3, radius: Float) {
         guard case .capsule(radius: let r, halfHeight: let hh) = c.shape else {
