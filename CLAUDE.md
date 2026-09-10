@@ -2,6 +2,14 @@
 
 Guidance for Claude Code working with this Metal-based flight simulator for macOS/iOS/tvOS.
 
+The working agreement below is imported from `AGENT_PROJECT_RULES.md` (shared by Claude, Codex, and
+Gemini): project purpose, the research / plan / owner-implements / review workflow, explanation and
+naming rules, references, and the simple-then-optimized rule. Follow it before anything else in this
+file. Research docs start from `research/RESEARCH_TEMPLATE.md`; plans start from
+`plans/PLAN_TEMPLATE.md`, which also defines the pseudocode style.
+
+@AGENT_PROJECT_RULES.md
+
 ## Build Commands
 
 ```bash
@@ -28,6 +36,7 @@ tree for specifics; two conventions aren't visible from it:
 - `code_reviews/ debugging/ plans/ research/`: agent-authored review, debugging, plan, and research docs
   (`research/` is primarily deep web research done when implementing new systems or features). Each has a
   `claude/` subdir (some also `codex/`/`gemini/`); `debugging/screenshots/` holds visual artifacts.
+  New plans start from `plans/PLAN_TEMPLATE.md` and new research docs from `research/RESEARCH_TEMPLATE.md`.
 
 ## Architecture
 
