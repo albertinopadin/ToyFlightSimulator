@@ -18,6 +18,7 @@ Same as the parent: steps are edited in place to match the code, history goes in
 - **2026-09-09, tolerances** — C.1's six threshold literals become named `static let`s on `NarrowPhase` (`grazingRayCosine`, `parallelAxisSineSquared`, `perpendicularAxisCosine`, `coreAcrossNormalCosine`, `parallelSlabExtent`), each documented with what it compares and its unit; `rayVsPlane` gains an edit for its guard, value unchanged. One behavior change, reproduced first: `capsuleVsBox` normalises the core direction once, so its cross-product guard is the same squared sine as `overlaps` and the contact-point rule compares a cosine — the absolute 1e-6 m band it replaces was within 5% of the float32 rounding at the F-22's 16.2 m core (0.95e-6 m over 300 000 random pose-axis samples; 0.06e-6 at 1 m, 0.24e-6 at 5 m), and a core a metre longer would have reported a span end instead of the midpoint for a crossing on some frames. The five capsule-box cases are unaffected: their inside-branch cosines are zero up to rounding or far outside any band, and the depths do not involve the direction.
 - **2026-09-09, point names** — `capsuleVsBox`'s contact-point fraction `t` is `contactPointParameter` (0 at `capsuleCoreStart`, 1 at `capsuleCoreEnd`), and the edge loop's half-edge vector `along` is `halfEdge`; the projection `along` had already become `coreAlongNormal` with the tolerances. `overlaps(along:)` keeps its argument label; `clippedPoint`'s side-axis loop index `t` is `sideAxis`.
 - **2026-09-10** — C-narrowphase landed (C.1, `c6b4fba`): box-box and exact capsule-box per the listings. Found at review, before the tests ran: the edge-edge loop had been transcribed as `cross(a.rotation[i], b.rotation[i])`, so six of the nine edge axes were never tested (test 4 fails on it); fixed to `b.rotation[j]`. `boxVsBox` shipped without its listed comments; added. All fourteen listed cases green with the listed numbers, each reproduced first in a standalone harness; the suite also carries a pose self-check for the capsule test helper and a box-vs-far-box line. Dry run byte-identical; 346 tests in 52 suites. Exit criterion 1 closed.
+- **2026-09-11** — C-structures landed (C.2, `3aabb82`): `StaticStructure` and the airfield per the listings. The owner's transcription had no defects; the listings' comments had not been carried over and were added at review, with three small extensions folded back into the listings (the halfHeight-0 clamp in `Shape.collider`'s comment, `makeMesh`'s thread sentence, the airfield's centers-and-spans note plus a doc comment on `addStructure`). Tests as listed plus a fourth shape test (ModelIO bounds equal the collider's reach) and two deviations in `StructureContactTests`: the broad phase stays ON (the app's dynamic-vs-static path), and case 4's tree is centered at y 4.5 so its core spans a resting ball's center (at the scene's y 5 the normal tilts 0.4°, outside the 1e-3 band). Full serial suite 354 tests in 54 suites plus 20 XCTest; dry run byte-identical; a keyboard-free smoke run lists the thirteen structures and leaves the drop sequence unchanged. Exit criterion 2's test half and criterion 4 closed; the four keyboard checks (criteria 2 and 3) stay the owner's; 5 waits on the push.
 
 ## Where Phase B left the engine
 
@@ -49,7 +50,7 @@ Implements combined doc §4.4. At the end of this phase the airfield has things 
 | Commit | Steps | Gate | Tests |
 |---|---|---|---|
 | **C-narrowphase** ✅ `c6b4fba` | C.1 | Behavior on paths no golden covers: dry run byte-identical. Every existing suite green; the one test that pins box-box as not implemented is replaced. | `NarrowPhaseTests` additions (box-box ×9, capsule-box ×5) |
-| **C-structures** | C.2 | Dry run byte-identical. In-app: the structures render at their collider size, the wall stops the jet, contact lines name the part, the jet flies through the hangar opening clean. | `StaticStructureShapeTests` (new, pure), `StructureContactTests` (new, Metal-free world) |
+| **C-structures** ✅ `3aabb82` | C.2 | Dry run byte-identical. In-app: the structures render at their collider size, the wall stops the jet, contact lines name the part, the jet flies through the hangar opening clean. | `StaticStructureShapeTests` (new, pure), `StructureContactTests` (new, Metal-free world) |
 
 ## Decisions
 
@@ -489,11 +490,13 @@ Details that are easy to get wrong:
 - [x] `capsule-box: contact where obviously overlapping, nil where obviously clear` (line 222) stays green unedited.
 - [x] Gate: full serial suite green; dry run byte-identical (no golden has a box or a capsule).
 
-## Step C.2 — `StaticStructure` and the airfield — C-structures
+## Step C.2 — `StaticStructure` and the airfield — C-structures ✅ (landed 2026-09-11, `3aabb82`)
 
 Line numbers in this step are as of `82f852b`; C.1 touched only `NarrowPhase.swift`.
 
-- [ ] **Edit:** `AssetPipeline/Libraries/Meshes/BasicMeshes.swift`, `CubeMesh` (lines 38–60). The unit-cube init becomes a convenience over a full-extent init; the body is unchanged apart from the extent argument:
+**Landed 2026-09-11** (`3aabb82`), goldens untouched (regeneration dry run byte-identical; no golden has a structure). The owner transcribed the three listings and review found no defects: every name resolves with the listed signature, and the collider mapping, static-body setup, mask, restitution, positions, and call placement agree. The listings' comments had not been carried over, so they were added at review — both `CubeMesh` doc comments, `StaticStructure`'s class, case, init, and `makeMesh` comments, the airfield's doc comment and hangar note — with three small extensions, now in the listings below: `Shape.collider`'s comment states the halfHeight-0 clamp; `makeMesh`'s thread sentence reads "wherever `buildScene` runs (the update thread on a scene reset)", because at launch the view wrapper calls `SetScene` on the main thread and the point is that `MTKMesh` creation needs neither; the airfield's doc comment carries the centers-and-spans prose, a tower/trees note, and `addStructure` gets a doc comment. Shipped tests: 8 (4 + 4). `StaticStructureShapeTests` has the three listed mappings and a fourth, the mesh-is-the-collider check: ModelIO's box and capsule bounds with a nil allocator (`makeMesh`'s constructor arguments) equal the collider's reach, ±halfExtents and ±[r, halfHeight + r, r]. `StructureContactTests` runs with the broad phase ON, unlike the sibling world suites, so structures reach the narrow phase through the dynamic-vs-static loop the app uses and two statics (a tree and the ground) never pair. Two deviations from the cases as listed: the wall strike also pins exactly one impact — e = 0.2 on 30 m/s rebounds at 6 m/s, 5 cm per substep, so the nose clears the face on the next step (the first contact is at depth 0.05 m after 40 substeps) — and case 4's tree stands with its center at y 4.5 (core y 0…9) on a ground plane rather than at the scene's y 5, because a ball resting 7 mm into the ground meets a y-5 tree's core end 7 mm above its own center, a 0.4° tilt that is invisible in play but outside the 1e-3 band; the plan's "rolling" is a frictionless slide. Every expected value was reproduced by hand from the response and narrow-phase code before the tests ran, and all eight passed first run. Full serial suite: 354 Swift Testing tests in 54 suites (was 346 in 52) plus 20 XCTest cases. In-app: a 40 s keyboard-free smoke run of the Debug build lists the thirteen structures among the scene children and prints the B.6 drop sequence line for line (the structures are ahead of the drop point); the four keyboard checks under "Expected behavior" stay the owner's under exit criterion 2. The listings below are the shipped code.
+
+- [x] **Edit:** `AssetPipeline/Libraries/Meshes/BasicMeshes.swift`, `CubeMesh` (lines 38–60). The unit-cube init becomes a convenience over a full-extent init; the body is unchanged apart from the extent argument:
 
 ```diff
  class CubeMesh: Mesh {
@@ -515,14 +518,14 @@ Line numbers in this step are as of `82f852b`; C.1 touched only `NarrowPhase.swi
                                segments: [1, 1, 1],
 ```
 
-- [ ] **File (new):** `ToyFlightSimulator Shared/GameObjects/StaticStructure.swift`
+- [x] **File (new):** `ToyFlightSimulator Shared/GameObjects/StaticStructure.swift`
 
 ```swift
 //
 //  StaticStructure.swift
 //  ToyFlightSimulator
 //
-//  Created by Albertino Padin on 9/6/26.
+//  Created by Albertino Padin on 9/11/26.
 //
 
 /// Static scenery with collision: one box or one vertical capsule, rendered
@@ -535,10 +538,12 @@ final class StaticStructure: GameObject {
     enum Shape {
         /// Full extents in meters: a 40 × 12 × 3 m wall is [40, 12, 3].
         case box(size: float3)
-        /// Vertical, `height` cap to cap.
+        /// Vertical (axis +Y), `height` cap to cap.
         case capsule(radius: Float, height: Float)
 
-        /// The same solid as a collider. Pure, tested.
+        /// The same solid as a collider. Pure, tested. A capsule no taller
+        /// than its diameter has no core: halfHeight clamps to 0, the
+        /// sphere-equivalent LocalCollider accepts, never negative.
         var collider: ColliderShape {
             switch self {
                 case .box(let size):
@@ -565,20 +570,21 @@ final class StaticStructure: GameObject {
     }
 
     /// Bespoke mesh at the shape's size, so the node stays at scale 1 (the
-    /// units contract for a body's node). Built on the update thread like the
-    /// overlay's capsule volumes.
+    /// units contract for a body's node). Built wherever buildScene runs (the
+    /// update thread on a scene reset), like the overlay's capsule volumes:
+    /// MTKMesh creation does not need the main thread.
     private static func makeMesh(_ shape: Shape) -> Mesh {
         switch shape {
-            case .box(let size):
+            case .box(size: let size):
                 return CubeMesh(extent: size)
-            case .capsule(let radius, let height):
+            case .capsule(radius: let radius, height: let height):
                 return CapsuleMesh(radius: radius, length: height)
         }
     }
 }
 ```
 
-- [ ] **Edit:** `Scenes/FlightboxWithPhysics.swift`. The call goes after the ground-level cube (line 168), before the commented-out `makeRandomDispersedObjects` line at 170:
+- [x] **Edit:** `Scenes/FlightboxWithPhysics.swift`. The call goes after the ground-level cube (line 168), before the commented-out `makeRandomDispersedObjects` line at 170:
 
 ```swift
         addAirfieldStructures()
@@ -590,6 +596,9 @@ and the two helpers go after `makeRandomDispersedObjects` (its closing brace is 
     /// Phase C scenery, all ahead of the drop point (+Z is forward) and off
     /// the landing line: an open-front hangar facing the runway, a control
     /// tower, and a tree line either side of a 90 m wide taxi lane.
+    /// Positions are centers: a 12 m wall centered at y 6 stands on the
+    /// ground, the 2 m roof at y 13 sits on the walls (bottom at 12), and
+    /// the back wall at z 321.5 (320…323) closes the walls' 280…320 span.
     private func addAirfieldStructures() {
         let concrete: float4 = [0.6, 0.6, 0.6, 1]
         let bark: float4 = [0.35, 0.25, 0.15, 1]
@@ -597,20 +606,32 @@ and the two helpers go after `makeRandomDispersedObjects` (its closing brace is 
         // Hangar: 37 m wide opening toward −Z, 40 m deep, 12 m under the roof.
         // Walls are 3 m thick so a 300 m/s arrival (2.5 m per substep) cannot
         // pass through between two substeps; there is no continuous collision.
-        addStructure(StaticStructure(name: "Hangar_wallLeft",  shape: .box(size: [3, 12, 40]), color: concrete), at: [70, 6, 300])
-        addStructure(StaticStructure(name: "Hangar_wallRight", shape: .box(size: [3, 12, 40]), color: concrete), at: [110, 6, 300])
-        addStructure(StaticStructure(name: "Hangar_wallBack",  shape: .box(size: [43, 12, 3]), color: concrete), at: [90, 6, 321.5])
-        addStructure(StaticStructure(name: "Hangar_roof",      shape: .box(size: [43, 2, 40]), color: concrete), at: [90, 13, 300])
+        addStructure(StaticStructure(name: "Hangar_wallLeft", shape: .box(size: [3, 12, 40]), color: concrete),
+                     at: [70, 6, 300])
+        addStructure(StaticStructure(name: "Hangar_wallRight", shape: .box(size: [3, 12, 40]), color: concrete),
+                     at: [110, 6, 300])
+        addStructure(StaticStructure(name: "Hangar_wallBack", shape: .box(size: [43, 12, 3]), color: concrete),
+                     at: [90, 6, 321.5])
+        addStructure(StaticStructure(name: "Hangar_roof", shape: .box(size: [43, 2, 40]), color: concrete),
+                     at: [90, 13, 300])
 
-        addStructure(StaticStructure(name: "Tower", shape: .box(size: [8, 30, 8]), color: concrete), at: [-90, 15, 250])
+        // Control tower, left of the lane; the trees are 10 m capsules with a
+        // 1 m trunk, four a side at 50 m spacing, ±45 m off the centerline.
+        addStructure(StaticStructure(name: "Tower", shape: .box(size: [8, 30, 8]), color: concrete),
+                     at: [-90, 15, 250])
 
         for k in 0..<4 {
             let z: Float = 150 + 50 * Float(k)
-            addStructure(StaticStructure(name: "Tree_L\(k)", shape: .capsule(radius: 0.5, height: 10), color: bark), at: [-45, 5, z])
-            addStructure(StaticStructure(name: "Tree_R\(k)", shape: .capsule(radius: 0.5, height: 10), color: bark), at: [45, 5, z])
+            addStructure(StaticStructure(name: "Tree_L\(k)", shape: .capsule(radius: 0.5, height: 10), color: bark),
+                         at: [-45, 5, z])
+            addStructure(StaticStructure(name: "Tree_R\(k)", shape: .capsule(radius: 0.5, height: 10), color: bark),
+                         at: [45, 5, z])
         }
     }
 
+    /// Places one structure: the node into the scene graph (addChild registers
+    /// the renderable) and its static body into `entities`, which buildScene
+    /// installs once at the end.
     private func addStructure(_ structure: StaticStructure, at position: float3) {
         structure.setPosition(position)
         addChild(structure)
@@ -626,6 +647,8 @@ No other wiring. `buildScene` installs `entities` once at the end (line 181), so
 
 ### Expected behavior (checked in-app; written into the commit message)
 
+*(2026-09-11: the keyboard-free smoke run — the thirteen structures listed, the drop untouched — is in `3aabb82`'s message; the four checks below need the keyboard and stay the owner's under exit criterion 2.)*
+
 - The structures render at their collider size and cast shadows like any opaque object. A ball rests on the roof at roof top + its radius.
 - Taxi into a wall at 10–15 m/s: `[CRASH] F-22_CGTrader.fuselage hit Hangar_wallLeft at 12.30 m/s (gear down)`, then throttled `[Scrape]` lines while the nose stays pressed against it. The jet does not pass through and rebounds slightly (0.2).
 - A wingtip into a tree while taxiing: `wings hit Tree_L2`. A wing over a wall with the fuselage clear: `wings hit Hangar_wallLeft`, the box-box path.
@@ -633,13 +656,13 @@ No other wiring. `buildScene` installs `entities` once at the end (line 181), so
 
 ### Tests for this step
 
-- [ ] **File (new):** `ToyFlightSimulatorTests/GameObjects/StaticStructureShapeTests.swift` (pure, `.tags(.physics)`): box maps to half extents; capsule maps to `halfHeight = height/2 − radius`; a capsule with `height ≤ 2·radius` maps to `halfHeight 0` (a sphere-equivalent, which `LocalCollider` accepts).
-- [ ] **File (new):** `ToyFlightSimulatorTests/Physics/StructureContactTests.swift` (Metal-free: a static box is `RigidBody(detachedAt:)` with one `.structure` box collider, `isStatic = true`, `shouldApplyGravity = false`; the aircraft is the detached F-22 compound from `CompoundBodyTests`):
-  1. **Wall strike.** The F-22 at `[0, 5, -20]` flying +Z at 30 m/s into a 40 × 12 × 3 m wall centered at `[0, 6, 1.5]` (x from −20 to 20, its near face at z = 0), gravity off for a clean read. Within 60 updates: the first contact names `fuselage` against `wall`; `AirframeContactClassifier` on `stepStartVelocity` says `.impact` at 30 ± 0.5 m/s; the wall's position is `==` its start (statics never move); the aircraft ends on the near side (its origin's z below the fuselage's reach into the face) with `velocity.z ≤ 0` (stopped or rebounding at up to 0.2 × 30).
+- [x] **File (new):** `ToyFlightSimulatorTests/GameObjects/StaticStructureShapeTests.swift` (pure, `.tags(.physics, .gameObjects)`): box maps to half extents; capsule maps to `halfHeight = height/2 − radius` (and back: 2·(halfHeight + radius) = height); a capsule with `height ≤ 2·radius` maps to `halfHeight 0` (a sphere-equivalent, which `LocalCollider` accepts); and, beyond the three, the mesh is the collider: `MDLMesh(boxWithExtent:)` and `MDLMesh(capsuleWithExtent:)` with a nil allocator (`makeMesh`'s constructor arguments) have bounds ±halfExtents and ±[r, halfHeight + r, r].
+- [x] **File (new):** `ToyFlightSimulatorTests/Physics/StructureContactTests.swift` (Metal-free: a static box is `RigidBody(detachedAt:)` with one `.structure` box collider, `isStatic = true`, `shouldApplyGravity = false`, restitution 0.3; the aircraft is the detached F-22 compound from `CompoundBodyTests`; the broad phase stays ON, so the pairs come from its dynamic-vs-static loop as in the app):
+  1. **Wall strike.** The F-22 at `[0, 5, -20]` flying +Z at 30 m/s into a 40 × 12 × 3 m wall centered at `[0, 6, 1.5]` (x from −20 to 20, its near face at z = 0), gravity off for a clean read. Within 60 updates: the first contact names `fuselage` against `wall`; `AirframeContactClassifier` on `stepStartVelocity` says `.impact` at 30 ± 0.5 m/s; the wall's position is `==` its start (statics never move); the aircraft ends on the near side (its origin's z below the fuselage's reach into the face) with `velocity.z ≤ 0` (stopped or rebounding at up to 0.2 × 30). Also pinned: exactly one impact — the 6 m/s rebound moves 5 cm per substep, so the nose (first contact at depth 0.05 m, 40 substeps in) clears the face on the next step.
   2. **Wing over a wall.** A 3 × 12 × 40 m wall centered at `[13.5, 6, 0]` (x from 12 to 15, along z); the F-22 at 5 m/s with its origin at `[8.5, 5, -10]`, so the right wing (to x = 15.1) is inside the wall's slab and the fuselage (to x = 9.85) is clear: the first contact names `wings` (box-box), not `fuselage`, and its point is `[12, 5.15, −11.2]` ± 0.05 — the wall's inner face clipped to the wing's outline, centered on the wing box, inside both boxes. The first draft's face-center rule put it at `[12, 6, 0]`, 8.5 m from the wing and 10 m ahead of an origin the wing sits behind; with D.3's lever arms that flips the yaw.
   3. **Ball on a roof.** A `SphereRigidBody` radius 0.5, restitution 0.2, dropped from 3 m onto a box top at y = 1: rests at 1.5 ± 0.02 after 5 s with gravity on.
-  4. **Ball against a tree.** A sphere rolling at 3 m/s into a vertical capsule (radius 0.5, half height 4.5): a contact whose normal is horizontal (|n.y| < 1e-3) and whose B name is the tree's.
-- [ ] Gate: full serial suite green; dry run byte-identical; the four in-app checks above.
+  4. **Ball against a tree.** A sphere (radius 0.5, restitution 0.2) sliding along a ground plane at 3 m/s — no tangent force exists, so it keeps its speed — into a vertical capsule (radius 0.5, half height 4.5) centered at y 4.5, so its core (y 0…9) spans the resting ball's center and the closest core point is level with it: the first tree contact's normal is horizontal (|n.y| < 1e-3, ≈ `[−1, 0, 0]`), its B name is the tree's, and its A name is nil (a `SphereRigidBody`'s view). At the scene's y 5 the resting ball (7 mm into the ground) meets the core's lower end 7 mm above its own center, a 0.4° tilt outside the band.
+- [x] Gate: full serial suite green; dry run byte-identical; the four in-app checks above. *(2026-09-11: build green; full serial suite 354 Swift Testing tests in 54 suites plus 20 XCTest cases; the regeneration dry run rewrote all six goldens byte-identical and the clean parity re-run is green; the keyboard checks are the owner's under criterion 2.)*
 
 ## Phase C non-goals (deferred, with their homes)
 
@@ -653,9 +676,9 @@ No other wiring. `buildScene` installs `entities` once at the end (line 181), so
 ## Phase C exit criteria
 
 1. - [x] **Narrow phase:** the nine box-box cases and the five capsule-box cases green; every other `NarrowPhaseTests` case green unedited; dry run byte-identical. *(`c6b4fba`, 2026-09-10: all green in the full serial run; the two pre-existing tests the listing extends — the metadata pair and the separated sweep — gained their box-box lines and nothing else changed; the dry run rewrote the six goldens byte-identical.)*
-2. - [ ] **Structures:** `StaticStructureShapeTests` and `StructureContactTests` green; in-app, the four expected behaviors above hold, including "through the opening: no line".
-3. - [ ] **Statics never move:** asserted by the wall-strike test with `==`, and visible in-app after repeated impacts.
-4. - [ ] **No process-wide state**; the stress scene's per-call cost is unchanged (structures exist only in `FlightboxWithPhysics`).
+2. - [ ] **Structures:** `StaticStructureShapeTests` and `StructureContactTests` green; in-app, the four expected behaviors above hold, including "through the opening: no line". *(`3aabb82`, 2026-09-11: both suites green in the full serial run; the keyboard-free smoke run lists the thirteen structures and leaves the drop sequence unchanged. The four keyboard checks stay open for the owner's pass.)*
+3. - [ ] **Statics never move:** asserted by the wall-strike test with `==`, and visible in-app after repeated impacts. *(`3aabb82`: the wall-strike test asserts it with `==`, and the roof and tree cases pin their bodies' positions too; the in-app half stays open for the owner's pass.)*
+4. - [x] **No process-wide state**; the stress scene's per-call cost is unchanged (structures exist only in `FlightboxWithPhysics`). *(`3aabb82`, by inspection: `StaticStructure` holds no static state and each instance owns its mesh and body; `addAirfieldStructures` is private to `FlightboxWithPhysics`, so `PhysicsStressTestScene` is untouched.)*
 5. - [ ] **CI green** on both commits (serial app-hosted run, as configured).
 
 ---
