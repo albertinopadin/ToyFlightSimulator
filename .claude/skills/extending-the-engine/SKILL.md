@@ -16,6 +16,7 @@ touchpoints — missing one typically compiles but silently does nothing at runt
 4. SceneManager auto-registers for batched rendering (base `objectType` handles opaque/transparent/tessellatable; override it — and extend `GameObjectType` + both `add`/`remove` switches — only for a new side collection)
 5. For physics: construct a `SphereRigidBody`/`PlaneRigidBody` (self-attaches to the GameObject) and register it with the scene's `PhysicsWorld` via `addEntity()`
 6. Runtime despawns must use `removeFromScene()`, not bare `parent?.removeChild(self)` (see Scene Graph in CLAUDE.md)
+7. Static scenery with collision: `StaticStructure(name:shape:color:)` — a box (`.box(size:)`, full extents) or vertical capsule (`.capsule(radius:height:)`) rendered at exactly its collider's size, which creates its own static `.structure` `RigidBody` in its init — then `setPosition`, `addChild`, and append `structure.rigidBody!` to the scene's entity list (`FlightboxWithPhysics.addStructure(_:at:)` is that sequence)
 
 ## Adding New Shaders
 
