@@ -38,10 +38,17 @@ class PlaneMesh: Mesh {
 class CubeMesh: Mesh {
     private var _color: float4
     
-    init(size: Float = 1.0, color: float4 = GRABBER_BLUE_COLOR) {
+    /// Unit cube (the library's .Cube). Structures use init(extent:).
+    convenience init(size: Float = 1.0, color: float4 = GRABBER_BLUE_COLOR) {
+        self.init(extent: float3(repeating: size), color: color)
+    }
+    
+    /// Box of the given full extents: MDLMesh(boxWithExtent:) takes full
+    /// extents (measured by MeshBoundsTests).
+    init(extent: float3, color: float4 = GRABBER_BLUE_COLOR) {
         _color = color
         
-        let mdlCube = MDLMesh(boxWithExtent: [size, size, size],
+        let mdlCube = MDLMesh(boxWithExtent: extent,
                               segments: [1, 1, 1],
                               inwardNormals: false,
                               geometryType: .triangles,

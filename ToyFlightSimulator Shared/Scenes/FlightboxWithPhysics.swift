@@ -99,6 +99,53 @@ final class FlightboxWithPhysics: GameScene {
             }
         }
     }
+    
+    /// Phase C scenery, all ahead of the drop point (+Z is forward) and off
+    /// the landing line: an open-front hangar facing the runway, a control
+    /// tower, and a tree line either side of a 90 m wide taxi lane.
+    /// Positions are centers: a 12 m wall centered at y 6 stands on the
+    /// ground, the 2 m roof at y 13 sits on the walls (bottom at 12), and
+    /// the back wall at z 321.5 (320…323) closes the walls' 280…320 span.
+    private func addAirfieldStructures() {
+        let concrete: float4 = [0.6, 0.6, 0.6, 1]
+        let bark: float4 = [0.35, 0.25, 0.15, 1]
+        
+        // Hangar: 37 m wide opening toward −Z, 40 m deep, 12 m under the roof.
+        // Walls are 3 m thick so a 300 m/s arrival (2.5 m per substep) cannot
+        // pass through between two substeps; there is no continuous collision.
+        addStructure(StaticStructure(name: "Hangar_wallLeft", shape: .box(size: [3, 12, 40]), color: concrete),
+                     at: [70, 6, 300])
+        addStructure(StaticStructure(name: "Hangar_wallRight", shape: .box(size: [3, 12, 40]), color: concrete),
+                     at: [110, 6, 300])
+        addStructure(StaticStructure(name: "Hangar_wallBack", shape: .box(size: [43, 12, 3]), color: concrete),
+                     at: [90, 6, 321.5])
+        addStructure(StaticStructure(name: "Hangar_roof", shape: .box(size: [43, 2, 40]), color: concrete),
+                     at: [90, 13, 300])
+        
+        // Control tower, left of the lane; the trees are 10 m capsules with a
+        // 1 m trunk, four a side at 50 m spacing, ±45 m off the centerline.
+        addStructure(StaticStructure(name: "Tower", shape: .box(size: [8, 30, 8]), color: concrete),
+                     at: [-90, 15, 250])
+        
+        for k in 0..<4 {
+            let z: Float = 150 + 50 * Float(k)
+            addStructure(StaticStructure(name: "Tree_L\(k)", shape: .capsule(radius: 0.5, height: 10), color: bark),
+                         at: [-45, 5, z])
+            addStructure(StaticStructure(name: "Tree_R\(k)", shape: .capsule(radius: 0.5, height: 10), color: bark),
+                         at: [45, 5, z])
+        }
+    }
+    
+    /// Places one structure: the node into the scene graph (addChild registers
+    /// the renderable) and its static body into `entities`, which buildScene
+    /// installs once at the end.
+    private func addStructure(_ structure: StaticStructure, at position: float3) {
+        structure.setPosition(position)
+        addChild(structure)
+        if let body = structure.rigidBody {
+            entities.append(body)
+        }
+    }
 
     override func buildScene() {
         let (_, groundRigidBody) = addGround(scale: Float(groundSize))
@@ -167,6 +214,7 @@ final class FlightboxWithPhysics: GameScene {
         cube2.setColor(RED_COLOR)
         addChild(cube2)
 
+        addAirfieldStructures()
 //        makeRandomDispersedObjects(count: 1_000, clusterRadius: groundSize / 100)
         makeRandomDispersedObjects(count: 100, clusterRadius: groundSize / 1000, withRigidBodies: true)
 
