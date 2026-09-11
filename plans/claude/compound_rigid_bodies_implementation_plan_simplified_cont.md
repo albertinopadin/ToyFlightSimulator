@@ -19,6 +19,7 @@ Same as the parent: steps are edited in place to match the code, history goes in
 - **2026-09-09, point names** — `capsuleVsBox`'s contact-point fraction `t` is `contactPointParameter` (0 at `capsuleCoreStart`, 1 at `capsuleCoreEnd`), and the edge loop's half-edge vector `along` is `halfEdge`; the projection `along` had already become `coreAlongNormal` with the tolerances. `overlaps(along:)` keeps its argument label; `clippedPoint`'s side-axis loop index `t` is `sideAxis`.
 - **2026-09-10** — C-narrowphase landed (C.1, `c6b4fba`): box-box and exact capsule-box per the listings. Found at review, before the tests ran: the edge-edge loop had been transcribed as `cross(a.rotation[i], b.rotation[i])`, so six of the nine edge axes were never tested (test 4 fails on it); fixed to `b.rotation[j]`. `boxVsBox` shipped without its listed comments; added. All fourteen listed cases green with the listed numbers, each reproduced first in a standalone harness; the suite also carries a pose self-check for the capsule test helper and a box-vs-far-box line. Dry run byte-identical; 346 tests in 52 suites. Exit criterion 1 closed.
 - **2026-09-11** — C-structures landed (C.2, `3aabb82`): `StaticStructure` and the airfield per the listings. The owner's transcription had no defects; the listings' comments had not been carried over and were added at review, with three small extensions folded back into the listings (the halfHeight-0 clamp in `Shape.collider`'s comment, `makeMesh`'s thread sentence, the airfield's centers-and-spans note plus a doc comment on `addStructure`). Tests as listed plus a fourth shape test (ModelIO bounds equal the collider's reach) and two deviations in `StructureContactTests`: the broad phase stays ON (the app's dynamic-vs-static path), and case 4's tree is centered at y 4.5 so its core spans a resting ball's center (at the scene's y 5 the normal tilts 0.4°, outside the 1e-3 band). Full serial suite 354 tests in 54 suites plus 20 XCTest; dry run byte-identical; a keyboard-free smoke run lists the thirteen structures and leaves the drop sequence unchanged. Exit criterion 2's test half and criterion 4 closed; the four keyboard checks (criteria 2 and 3) stay the owner's; 5 waits on the push.
+- **2026-09-11** — D-angular-plumbing landed (D.1, `14c0bda`): angular state on `RigidBody`, forces at points, `AngularIntegration`'s two halves in both solvers, and the lever-arm impulse behind the linear fast path, per the listings. Found at review, before the tests ran: `EulerSolver.step` had been transcribed with the orientation half only, so under `.NaiveEuler` a torque never reached ω (inert with infinite inertia; the plan's one-substep and response-sees-the-torque tests fail on it for that solver) — fixed; `PhysicsEntity.zeroForce()` had not been deleted and the Euler solver's legacy comment still named `applyCollisionResponse` — both fixed; the listings' comments had not been carried over and were added. One deviation, the owner's, kept and folded into the listings: `getInverseMassStats` computes a pair's inverse masses once in `resolvePair` and passes them to `correctPosition` and `applyImpulse` (the `InverseMassStats` tuple typealias), which D.3's iterations reuse; D.3.5's `resolvePair` listing is synced to the signatures. Tests as listed (14: seven, five, two, and the torque assertion), every number reproduced first, all green first run; the 72 000-substep soak's discriminating claim reproduced too (the bare matrix product drifts to 4.7e-5 in column length and 9.1e-5 in determinant where the quaternion path holds 1.2e-7 and 4.8e-7). Full serial suite 368 tests in 55 suites plus 20 XCTest; dry run byte-identical. CLAUDE.md's Physics paragraph carries the D.1 entry. `PhysicsWorld.swift` grew by seven lines, not the one D.2 accounted for (comments), so D.2's `raycastStaticPlanes` note moves to 146–161. Exit criterion 1 closed; 4 and 5 hold for D.1 and stay open for D.2 and D.3; 6 waits on the push.
 
 ## Where Phase B left the engine
 
@@ -700,7 +701,7 @@ At the end of this phase:
 
 | Commit | Steps | Gate | Tests |
 |---|---|---|---|
-| **D-angular-plumbing** | D.1 | Plumbing. Every body keeps infinite inertia, so the impulse takes its linear fast path (the Phase A arithmetic verbatim) and the response still acts at the deepest contact only: dry run byte-identical, every existing suite green unedited (the `zeroForces` test gains one assertion). No in-app change. | `AngularIntegrationTests` (new, with the long-run orthonormality soak); additions to `RigidBodyTests`, `CollisionResponseTests`, `PhysicsSolverTests` |
+| **D-angular-plumbing** ✅ `14c0bda` | D.1 | Plumbing. Every body keeps infinite inertia, so the impulse takes its linear fast path (the Phase A arithmetic verbatim) and the response still acts at the deepest contact only: dry run byte-identical, every existing suite green unedited (the `zeroForces` test gains one assertion). No in-app change. | `AngularIntegrationTests` (new, with the long-run orthonormality soak); additions to `RigidBodyTests`, `CollisionResponseTests`, `PhysicsSolverTests` |
 | **D-tires** | D.2 | Behavior on the struts only: dry run byte-identical. In-app: brakes stop the jet from 40 m/s in about 200 m; it holds still on the runway, at idle and against thrust under the brake limit; a crab settles; Q/E turn it at taxi speed (the kinematic yaw filter is still in charge); gear-up belly slides as before (contacts have no friction). | `TireModelTests` (new, pure); six additions to `GearSuspensionWorldTests`; `LandingGearSuspensionTests` signature and force-direction edits |
 | **D-attitude** | D.3 | Behavior on the aircraft and on pairs with more than one contact: dry run byte-identical (a single-contact pair, so every sphere pair, keeps the one-pass path). In-app: flight feels the same; the parked jet does not creep; touchdown settles nose-last; a one-wheel arrival rolls level; braking dips the nose; steering works; a belly slap rests without rocking; a rotation-only wing strike prints `[CRASH]`. | `AttitudeRateControllerTests` (new); `GearSuspensionWorldTests` (seven additions, three edits, the controller in the rig); `CollisionResponseTests` (the pair solve); `StructureContactTests` (point-velocity classification); `NarrowPhaseTests` (capsule manifold); `CompoundBodyTests` and `NarrowPhaseTests` call-site edits for the appending `shapeVsPlane` |
 
@@ -732,13 +733,15 @@ At the end of this phase:
 | `applyPlayerSideMove` runs only on the kinematic path | It teleports the node sideways (A/D), bypassing the body's velocity; on the physics path it would slide the jet through its own tire model. Gated with the throttle move under `hasFlightPhysics`. One line to revert if the strafe is wanted as a debug control. |
 | A nil `flightModel` restores infinite inertia | `syncMassProperties` guarded on both being present, which left a finite tensor behind when a model was removed while `hasFlightPhysics` fell back to the kinematic filter: two writers to the rotation. Nothing sets it to nil today; the else branch costs three lines. |
 
-## Step D.1 — angular state, forces at points, lever-arm impulses — D-angular-plumbing
+## Step D.1 — angular state, forces at points, lever-arm impulses — D-angular-plumbing ✅ (landed 2026-09-11, `14c0bda`)
 
 Everything here is inert until a body gets a finite inertia tensor, which nothing does until D.3. The commit is plumbing: the argument for byte-identity is written into each listing, and the dry run checks it.
 
 Line numbers are as of `82f852b`; Phase C touches none of these files. D.1 touches `PhysicsWorld.swift` once (one line at 99), which D.2's line numbers account for.
 
-- [ ] **Edit:** `Physics/World/RigidBody.swift`, inserted after line 81 (`var stepStartVelocity`), before the world-collider cache comment at 83:
+**Landed 2026-09-11** (`14c0bda`), goldens untouched (regeneration dry run byte-identical: no body has finite inertia, so every pair took the fast path). The owner transcribed the listings and added one helper; review found one transcription defect and two loose ends, fixed before the tests ran: `EulerSolver.step` had the orientation half after `moveObjects` but not the angular-velocity half after `applyForces`, so under `.NaiveEuler` a torque never reached ω — inert today, but the one-substep and response-sees-the-torque tests below fail on it for that solver; `PhysicsEntity.zeroForce()` was still present with its only caller gone; and the Euler solver's legacy-code comment still named `applyCollisionResponse`. The listings' comments had not been carried over and were added throughout; beyond the listings, `Contact.point`'s doc comment no longer calls the point unused, `EulerSolver.step`'s doc comment names the angular halves, and the two Verlet-path call sites carry marker comments. The owner's deviation, kept and folded into the listings: `getInverseMassStats` computes the pair's inverse masses and their sum once in `resolvePair` and passes them to `correctPosition` and `applyImpulse` as the `InverseMassStats` tuple typealias — a per-pair fact that D.3's eight iterations would otherwise recompute (D.3.5's `resolvePair` listing is synced; its `solveManifold` still computes its own and can take the tuple at transcription). Tests as listed, every expected value reproduced in a scratch script first, all green first run: `AngularIntegrationTests` (7, the six world-stepping ones on both solvers), `RigidBodyTests` (5), `CollisionResponseTests` (2), and the `torque` assertion in `zeroForcesClearsAllForces`. The soak's discriminating claim was reproduced too: over 72 000 substeps the bare matrix product drifts to 4.7e-5 in column length, 3.4e-5 in the column dot products, and 9.1e-5 in determinant; the quaternion path to 1.2e-7, 7.7e-10, and 4.8e-7. Full serial suite 368 Swift Testing tests in 55 suites plus 20 XCTest cases; dry run byte-identical; clean parity re-run green. CLAUDE.md's Physics paragraph carries the D.1 entry from the list at the end of this document. Line shifts for later steps: `PhysicsWorld.swift` grew by seven lines (the snapshot line and the ω half, with their comments), not the one D.2 accounted for, so `raycastStaticPlanes` sits at 146–161 (D.2's note is corrected below); `RigidBody.swift` grew by 95 lines and `HeckerCollisionResponse.swift` by 79 — D.2 and D.3 locate their edits in those files by the text quoted. No in-app change: plumbing, and the owner ran the game before the review. The listings below are the shipped code.
+
+- [x] **Edit:** `Physics/World/RigidBody.swift`, inserted after line 81 (`var stepStartVelocity`), before the world-collider cache comment at 83:
 
 ```swift
     /// Angular state, world frame: angular velocity in rad/s and the torque
@@ -748,16 +751,16 @@ Line numbers are as of `82f852b`; Phase C touches none of these files. D.1 touch
     /// AircraftLandingGearSpecTests pins its 15/85 static load split).
     var angularVelocity: float3 = .zero
     var torque: float3 = .zero
-
+    
     /// Inverse inertia tensor in body axes. The default, the zero matrix, is
     /// infinite inertia: physics never rotates the body. That is every body
     /// before D.3 and every body not given a tensor after it (balls, debris,
     /// spec-less aircraft); with it the lever-arm terms of the response are
     /// exactly zero, so those bodies' arithmetic is unchanged.
-    var inverseInertiaLocal: float3x3 = RigidBody.infiniteInertia
     static let infiniteInertia = float3x3(diagonal: .zero)
+    var inverseInertiaLocal: float3x3 = RigidBody.infiniteInertia
     var hasFiniteInertia: Bool { inverseInertiaLocal != Self.infiniteInertia }
-
+    
     /// I⁻¹ in world axes, R · I⁻¹ · Rᵀ. The zero matrix for an
     /// infinite-inertia body, without reading the pose.
     func inverseInertiaWorld() -> float3x3 {
@@ -765,7 +768,7 @@ Line numbers are as of `82f852b`; Phase C touches none of these files. D.1 touch
         let rotation = pose().rotation
         return rotation * inverseInertiaLocal * rotation.transpose
     }
-
+    
     /// A force acting at a world point: the force itself plus its torque
     /// about the origin. Strut and tire forces use this (D.2), so they pitch
     /// and roll the body as soon as it has finite inertia (D.3).
@@ -778,12 +781,12 @@ Line numbers are as of `82f852b`; Phase C touches none of these files. D.1 touch
     func velocity(atWorldPoint point: float3) -> float3 {
         velocity + cross(angularVelocity, point - getPosition())
     }
-
+    
     /// Angular velocity at the top of the current step, next to
     /// stepStartVelocity and written with it by PhysicsWorld. Zero for every
     /// body until D.3.
     var stepStartAngularVelocity: float3 = .zero
-
+    
     /// Pre-response velocity of a world point: the step-start pair combined.
     /// Crash classification reads this at the contact point (D.3), where the
     /// origin's velocity alone misses a rotating wing.
@@ -792,13 +795,13 @@ Line numbers are as of `82f852b`; Phase C touches none of these files. D.1 touch
     }
 ```
 
-- [ ] **Edit:** the same file, rotation storage and writes, inserted after `getPosition()` (line 186), before `getAABB()` at 188:
+- [x] **Edit:** the same file, rotation storage and writes, inserted after `getPosition()` (line 186), before `getAABB()` at 188:
 
 ```swift
     /// Rotation of a detached body. Attached bodies keep theirs on the node,
     /// as with position.
     private var standaloneRotation: float3x3 = matrix_identity_float3x3
-
+    
     /// Rotates the body by the world-frame angular displacement ω·h (its
     /// direction is the axis, its length the angle). Attached bodies rotate
     /// their node, which dirties the subtree so the attached camera follows
@@ -809,7 +812,11 @@ Line numbers are as of `82f852b`; Phase C touches none of these files. D.1 touch
     /// product per substep for the life of the process drifts from
     /// orthonormal, and D.3 uses R.transpose as the inverse and R.up as a
     /// unit ray. Node.rotate's bare product stays for the kinematic path,
-    /// which stops writing once settled.
+    /// which stops writing once settled. The world-axis step multiplies on
+    /// the left, as Node.rotate(deltaAngle:axis:) composes its matrices. A
+    /// TestRigidBody (nil GameObject, nil standalonePosition) falls into the
+    /// node branch and does nothing, which is right: it never has finite
+    /// inertia.
     func rotate(by delta: float3) {
         let angle = simd_length(delta)
         guard angle > 0 else { return }
@@ -822,8 +829,9 @@ Line numbers are as of `82f852b`; Phase C touches none of these files. D.1 touch
             gameObject?.setRotation(simd_quatf(composed))
         }
     }
-
-    /// Absolute rotation, for authoring and tests.
+    
+    /// Absolute rotation, for authoring and tests. Node.setRotation(_:) goes
+    /// through the rotationMatrix setter, which dirty-flags like rotate.
     func setRotation(_ rotation: float3x3) {
         invalidateWorldColliders()
         if standalonePosition != nil {
@@ -836,7 +844,7 @@ Line numbers are as of `82f852b`; Phase C touches none of these files. D.1 touch
 
 Both branches compose the same quaternion product (the world-axis step on the left, as `Node.rotate(deltaAngle:axis:)` composes its matrices) and write the matrix rebuilt from its normalised form; `Node.setRotation(_:)` goes through the `rotationMatrix` setter, which dirty-flags like `rotate`. `TestRigidBody` (nil GameObject, nil `standalonePosition`) falls into the node branch and does nothing, which is right: it never has finite inertia.
 
-- [ ] **Edit:** `pose()` (lines 218–231): the detached branch returns the body's own rotation, and the doc comment's last sentence becomes "Detached bodies, and attached bodies whose GameObject was released, use their own rotation (identity until rotated) at getPosition()."
+- [x] **Edit:** `pose()` (lines 218–231): the detached branch returns the body's own rotation, and the doc comment's last sentence becomes "Detached bodies, and attached bodies whose GameObject was released, use their own rotation (identity until rotated) at getPosition()."
 
 ```diff
          guard let node = gameObject else {
@@ -845,7 +853,7 @@ Both branches compose the same quaternion product (the world-axis step on the le
          }
 ```
 
-- [ ] **Edit:** `Physics/Solver/PhysicsSolver.swift`, `zeroForces` (lines 15–21) clears torque too, and `PhysicsEntity.zeroForce()` (`PhysicsEntity.swift:43–45`), its only caller gone, is deleted:
+- [x] **Edit:** `Physics/Solver/PhysicsSolver.swift`, `zeroForces` (lines 15–21) clears torque too, and `PhysicsEntity.zeroForce()` (`PhysicsEntity.swift:43–45`), its only caller gone, is deleted:
 
 ```swift
 extension PhysicsSolver {
@@ -859,14 +867,14 @@ extension PhysicsSolver {
 }
 ```
 
-- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/Solver/AngularIntegration.swift`
+- [x] **File (new):** `ToyFlightSimulator Shared/Physics/Solver/AngularIntegration.swift`
 
 ```swift
 //
 //  AngularIntegration.swift
 //  ToyFlightSimulator
 //
-//  Created by Albertino Padin on 9/6/26.
+//  Created by Albertino Padin on 9/11/26.
 //
 
 /// Rotation step shared by both solvers: semi-implicit Euler in two halves,
@@ -882,7 +890,7 @@ enum AngularIntegration {
             entity.angularVelocity += entity.inverseInertiaWorld() * entity.torque * deltaTime
         }
     }
-
+    
     static func integrateOrientation(entities: [RigidBody], deltaTime: Float) {
         for entity in entities where !entity.isStatic && entity.hasFiniteInertia {
             entity.rotate(by: entity.angularVelocity * deltaTime)
@@ -891,7 +899,7 @@ enum AngularIntegration {
 }
 ```
 
-- [ ] **Edit:** `Physics/Solver/EulerSolver.swift`, the pair-consuming `step` (lines 23–33): the angular-velocity half goes right after `applyForces` (line 26), before the contact loop, and the orientation half right after `moveObjects` (line 31), before `zeroForces`:
+- [x] **Edit:** `Physics/Solver/EulerSolver.swift`, the pair-consuming `step` (lines 23–33): the angular-velocity half goes right after `applyForces` (line 26), before the contact loop, and the orientation half right after `moveObjects` (line 31), before `zeroForces`:
 
 ```swift
         applyForces(deltaTime: deltaTime, gravity: gravity, entities: entities)
@@ -909,6 +917,9 @@ and the Verlet path, whose response runs in `PhysicsWorld.step` before `VerletSo
 
 ```swift
             case .HeckerVerlet:
+                // ω from this substep's torques before the response, as
+                // EulerSolver orders it; VerletSolver.step rotates after its
+                // position update. Infinite-inertia bodies skip both halves.
                 AngularIntegration.integrateAngularVelocity(entities: entities, deltaTime: deltaTime)
                 HeckerCollisionResponse.resolveCollisions(collisionPairs: pairs,
                                                           contactsScratch: &contactsScratch)
@@ -916,18 +927,23 @@ and the Verlet path, whose response runs in `PhysicsWorld.step` before `VerletSo
 ```
 
 ```swift
+        // Orientation with the positions. The other half, ω from this
+        // substep's torques, ran in PhysicsWorld.step before the contact
+        // response, as EulerSolver orders it.
         AngularIntegration.integrateOrientation(entities: entities, deltaTime: deltaTime)
         zeroForces(entities: entities)
 ```
 
-- [ ] **Edit:** `Physics/World/PhysicsWorld.swift`, `step` (line 99), next to the linear snapshot:
+- [x] **Edit:** `Physics/World/PhysicsWorld.swift`, `step` (line 99), next to the linear snapshot:
 
 ```swift
+            // Step-start snapshot, linear and angular together: what the
+            // crash classifier reads (RigidBody.stepStartVelocity(atWorldPoint:)).
             entity.stepStartVelocity = entity.velocity
             entity.stepStartAngularVelocity = entity.angularVelocity
 ```
 
-- [ ] **Edit:** `Physics/CollisionResponse/HeckerCollisionResponse.swift`, `resolvePair` (lines 33–51) and `applyCollisionResponse` (lines 53–95). The response splits into a position half and an impulse half; the impulse gains lever arms behind a linear fast path and still runs once, at the deepest contact (D.3 iterates it over a pair's contacts):
+- [x] **Edit:** `Physics/CollisionResponse/HeckerCollisionResponse.swift`, `resolvePair` (lines 33–51) and `applyCollisionResponse` (lines 53–95). The response splits into a position half and an impulse half; the impulse gains lever arms behind a linear fast path and still runs once, at the deepest contact (D.3 iterates it over a pair's contacts). The pair's inverse masses and their sum are computed once by `getInverseMassStats` and passed to both halves as the `InverseMassStats` tuple — the owner's addition, kept:
 
 ```swift
     /// One narrow phase per pair: filter, generate contacts, mark the pair as
@@ -944,36 +960,54 @@ and the Verlet path, whose response runs in `PhysicsWorld.step` before `VerletSo
         entityB.collidedWith.insert(ObjectIdentifier(entityA))
         
         // Position, then impulse, at the deepest contact: the Phase A
-        // sequence, now in two functions so D.3 can iterate the impulse.
-        correctPosition(entityA, entityB, contact: contacts[deepest])
-        applyImpulse(entityA, entityB, contact: contacts[deepest])
+        // sequence, now in two functions so D.3 can iterate the impulse. The
+        // inverse masses are a property of the pair, computed once for both.
+        let invMassStats = getInverseMassStats(entityA, entityB)
+        correctPosition(entityA, entityB, contact: contacts[deepest], inverseMassStats: invMassStats)
+        applyImpulse(entityA, entityB, contact: contacts[deepest], inverseMassStats: invMassStats)
         
         for contact in contacts[firstNew...] {
             entityA.onContact?(contact, entityB)
             entityB.onContact?(contact.flipped, entityA)
         }
     }
-
-    /// Moves the bodies apart along the normal by β × (depth − slop), split by
-    /// inverse mass. Linear only: the angular share of position correction
-    /// belongs to a manifold solver (D.4), if one is ever built.
-    static func correctPosition(_ entityA: RigidBody, _ entityB: RigidBody, contact: Contact) {
-        let n = contact.normal                       // unit, from B toward A
+    
+    /// A pair's inverse masses and their sum: the split both halves of the
+    /// response use. A static body has inverse mass 0, so it neither moves
+    /// nor changes velocity; a zero sum (two statics) means nothing to do.
+    typealias InverseMassStats = (inverseMassA: Float, inverseMassB: Float, inverseMassSum: Float)
+    
+    /// Computed once per pair in resolvePair rather than in each half: D.3
+    /// iterates applyImpulse over a pair's contacts, and the masses do not
+    /// change between iterations.
+    static func getInverseMassStats(_ entityA: RigidBody, _ entityB: RigidBody) -> InverseMassStats {
         let invMassA: Float = entityA.isStatic ? 0 : 1 / entityA.mass
         let invMassB: Float = entityB.isStatic ? 0 : 1 / entityB.mass
         let invMassSum = invMassA + invMassB
-        guard invMassSum > 0 else { return }         // two statics: nothing to move
+        return (invMassA, invMassB, invMassSum)
+    }
+    
+    /// Moves the bodies apart along the normal by β × (depth − slop), split by
+    /// inverse mass: only the penetration beyond the slop, and only a
+    /// β-fraction of it per step. Linear only: the angular share of position
+    /// correction belongs to a manifold solver (D.4), if one is ever built.
+    static func correctPosition(_ entityA: RigidBody,
+                                _ entityB: RigidBody,
+                                contact: Contact,
+                                inverseMassStats: InverseMassStats) {
+        let n = contact.normal                       // unit, from B toward A
+        guard inverseMassStats.inverseMassSum > 0 else { return }         // two statics: nothing to move
 
-        let correction = positionCorrectionBeta * max(0, contact.depth - penetrationSlop) / invMassSum
+        let correction = positionCorrectionBeta * max(0, contact.depth - penetrationSlop) / inverseMassStats.inverseMassSum
         guard correction > 0 else { return }
         if !entityA.isStatic {
-            entityA.setPosition(entityA.getPosition() + n * (correction * invMassA))
+            entityA.setPosition(entityA.getPosition() + n * (correction * inverseMassStats.inverseMassA))
         }
         if !entityB.isStatic {
-            entityB.setPosition(entityB.getPosition() - n * (correction * invMassB))
+            entityB.setPosition(entityB.getPosition() - n * (correction * inverseMassStats.inverseMassB))
         }
     }
-
+    
     /// Normal impulse at the contact point, Hecker's full form: the relative
     /// velocity and the effective mass include the lever arms r = point −
     /// origin through each body's world inverse inertia. A pair with no
@@ -983,53 +1017,74 @@ and the Verlet path, whose response runs in `PhysicsWorld.step` before `VerletSo
     /// the fast path skips two position reads, eight cross products, and four
     /// matrix products per sphere contact, and makes the golden argument a
     /// reading exercise.) Symmetric in inverse mass: a static body neither
-    /// moves nor changes velocity.
-    static func applyImpulse(_ entityA: RigidBody, _ entityB: RigidBody, contact: Contact) {
-        let n = contact.normal
-        let invMassA: Float = entityA.isStatic ? 0 : 1 / entityA.mass
-        let invMassB: Float = entityB.isStatic ? 0 : 1 / entityB.mass
-        let invMassSum = invMassA + invMassB
-        guard invMassSum > 0 else { return }
-
+    /// moves nor changes velocity. In the general path the lever arms are
+    /// measured from the post-correction origins; the difference is the
+    /// β-fraction of a penetration, millimeters.
+    static func applyImpulse(_ entityA: RigidBody,
+                             _ entityB: RigidBody,
+                             contact: Contact,
+                             inverseMassStats: InverseMassStats) {
+        let n = contact.normal                       // unit, from B toward A
+        guard inverseMassStats.inverseMassSum > 0 else { return }
+        
         guard entityA.hasFiniteInertia || entityB.hasFiniteInertia else {
             // Linear fast path: every body before D.3, every ball after it.
-            let approach = dot(entityA.velocity - entityB.velocity, n)
+            // Impulse only when approaching (n points toward A, so approaching
+            // means relative velocity along −n); separating contacts are skipped.
+            let relativeVelocity = entityA.velocity - entityB.velocity
+            let approach = dot(relativeVelocity, n)
             guard approach < 0 else { return }
+
+            // Restitution only above the threshold; below it e = 0, so the
+            // normal velocity is cancelled exactly (the support impulse).
             let e = -approach > restitutionVelocityThreshold ? min(entityA.restitution, entityB.restitution) : 0
-            let j = -(1 + e) * approach / invMassSum
+
+            // Always applied: at rest this is the per-step support impulse
+            // (about m·g·dt), the normal force integrated over the step.
+            let j = -(1 + e) * approach / inverseMassStats.inverseMassSum
             if !entityA.isStatic {
-                entityA.velocity += n * (j * invMassA)
+                entityA.velocity += n * (j * inverseMassStats.inverseMassA)
             }
             if !entityB.isStatic {
-                entityB.velocity -= n * (j * invMassB)
+                entityB.velocity -= n * (j * inverseMassStats.inverseMassB)
             }
+            
             return
         }
-
-        // Impulse only when approaching at the point (n points toward A, so
-        // approaching means relative velocity along −n).
+        
+        // Lever arms from each origin to the contact point. Impulse only when
+        // approaching AT THE POINT: each body's velocity there is v + ω × r,
+        // so a body spinning into the contact counts even if its origin is
+        // still (n points toward A, so approaching means along −n).
         let rA = contact.point - entityA.getPosition()
         let rB = contact.point - entityB.getPosition()
         let approach = dot(entityA.velocity(atWorldPoint: contact.point) - entityB.velocity(atWorldPoint: contact.point), n)
         guard approach < 0 else { return }
-
+        
         // Restitution only above the threshold; below it e = 0 and the normal
-        // velocity is cancelled exactly (the support impulse).
+        // velocity at the point is cancelled exactly (the support impulse).
         let e = -approach > restitutionVelocityThreshold ? min(entityA.restitution, entityB.restitution) : 0
-
-        // Effective mass along n at the point.
+        
+        // Effective mass along n at the point: the inverse-mass sum plus each
+        // body's angular term ((I⁻¹ (r × n)) × r) · n — how much of a unit
+        // impulse at the point goes into spinning the body rather than
+        // pushing it. A static body contributes nothing on either count.
         let invInertiaA = entityA.isStatic ? RigidBody.infiniteInertia : entityA.inverseInertiaWorld()
         let invInertiaB = entityB.isStatic ? RigidBody.infiniteInertia : entityB.inverseInertiaWorld()
+        
         let angularA = dot(cross(invInertiaA * cross(rA, n), rA), n)
         let angularB = dot(cross(invInertiaB * cross(rB, n), rB), n)
-        let j = -(1 + e) * approach / (invMassSum + angularA + angularB)
-
+        let j = -(1 + e) * approach / (inverseMassStats.inverseMassSum + angularA + angularB)
+        
+        // Linear change j/m along n; angular change I⁻¹ (r × j n). B takes
+        // the opposite signs because n points toward A.
         if !entityA.isStatic {
-            entityA.velocity += n * (j * invMassA)
+            entityA.velocity += n * (j * inverseMassStats.inverseMassA)
             entityA.angularVelocity += invInertiaA * cross(rA, n * j)
         }
+        
         if !entityB.isStatic {
-            entityB.velocity -= n * (j * invMassB)
+            entityB.velocity -= n * (j * inverseMassStats.inverseMassB)
             entityB.angularVelocity -= invInertiaB * cross(rB, n * j)
         }
     }
@@ -1037,21 +1092,21 @@ and the Verlet path, whose response runs in `PhysicsWorld.step` before `VerletSo
 
 Why this is byte-identical for every current body: no body has finite inertia, so every pair takes the fast path, which is steps 2–4 of the old `applyCollisionResponse` with the same operands in the same order; `correctPosition` is its step 1 verbatim; and `resolvePair` still responds once, at the deepest contact, before the events. (The general path would also be exact for these bodies — x + 0 and 0 · x are exact for finite x, and a −0 where a +0 was cannot change a compare or a product — but the fast path makes that a reading exercise and saves the work.) In the general path the lever arms are measured from the post-correction origin; the difference is the β-fraction of a penetration, millimeters.
 
-The `applyCollisionResponse` name goes; nothing outside this file called it.
+The `applyCollisionResponse` name goes; nothing outside this file called it. Hoisting the inverse masses into `getInverseMassStats` computes the same three values once instead of twice, in the same order for each use; the dry run confirmed byte-identity with the helper in place.
 
 ### Tests for this step (Metal-free, `.tags(.physics)`)
 
-- [ ] `RigidBodyTests` additions (5): the default tensor is infinite and `hasFiniteInertia` is false; `addForce(_:atWorldPoint:)` on a detached body at the origin with force `[0, 10, 0]` at `[2, 0, 0]` gives torque `[0, 0, 20]` and the same force; `rotate(by: [0, .halfPi, 0])` on a detached body turns `pose().rotation.forward` to `[1, 0, 0]` within 1e-5 and marks the world colliders dirty (the rebuild-count discipline of `worldColliderCacheRebuildDiscipline`); `inverseInertiaWorld()` for `inverseInertiaLocal = diag(1, 2, 3)` after `setRotation` by 90° about Y is `diag(3, 2, 1)` within 1e-5; `stepStartVelocity(atWorldPoint:)` with `stepStartVelocity = [1, 0, 0]` and `stepStartAngularVelocity = [0, 1, 0]` at `[0, 0, 2]` from the origin is `[3, 0, 0]`.
-- [ ] **File (new):** `ToyFlightSimulatorTests/Physics/AngularIntegrationTests.swift` (7, parameterized over `.NaiveEuler` and `.HeckerVerlet` where a world is stepped): an infinite-inertia body with a constant torque hook never rotates and keeps `angularVelocity == .zero`; a detached body with `inverseInertiaLocal = diag(0.5)`, gravity off, and a hook adding torque `[2, 0, 0]` has `angularVelocity.x == fixedDelta` after one substep (`0.5 · 2 · h`) and has rotated about X by `h·h` rad; a static body with finite inertia and torque does not rotate; `torque` is zero after every step (`zeroForces`); the halves are separable — `integrateAngularVelocity` alone changes ω and not the pose, `integrateOrientation` alone the pose and not ω (the order the solvers rely on); **the response sees this substep's torque** (both solvers): a detached body with one sphere collider resting on a static plane body, `inverseInertiaLocal = diag(0.5)`, gravity off, a hook adding torque `[2, 0, 0]`, and an `onContact` handler that records `angularVelocity` as it fires — the record is `[fixedDelta, 0, 0]` (0.5 · 2 · h): a sphere's contact impulse has no lever arm, so the handler sees the torque's own half-step, which the second draft's Verlet order recorded as zero; **the orthonormality soak**: a detached body with `inverseInertiaLocal = diag(1)`, gravity off, `angularVelocity = [0.3, 0.5, 0.7]` and no torque, stepped for 72 000 substeps (ten minutes at 120 Hz, a few milliseconds of test time): every column of `pose().rotation` has unit length within 1e-5, the columns are pairwise orthogonal within 1e-5, and the determinant is 1 within 1e-5. The bare matrix product drifts past that; the quaternion path does not.
-- [ ] `PhysicsSolverTests.zeroForcesClearsAllForces` also sets and asserts `torque`.
-- [ ] `CollisionResponseTests` additions (2), through `HeckerCollisionResponse.applyImpulse` with a hand-built `Contact`: A is a detached body, mass 2, velocity `[0, −1, 0]`, against a static plane body, contact normal `[0, 1, 0]` at point `[1, 0, 0]` with A's origin at `[0, 0, 0]`. With `inverseInertiaLocal = diag(0.5)`: the angular term is 0.5, the denominator 1.0, j = 1 (e = 0 at exactly the threshold), so `velocity == [0, −0.5, 0]` and `angularVelocity == [0, 0, 0.5]` exactly. With infinite inertia the same call gives `velocity == .zero` and `angularVelocity == .zero`: the point-mass result, exact.
-- [ ] Gate: full serial suite green with no other edit; dry run byte-identical. Commit as D-angular-plumbing (plumbing, rule 2).
+- [x] `RigidBodyTests` additions (5), shipped as listed with extra pins per case — the default `inverseInertiaWorld()` is the zero matrix; a force through the origin adds no torque and the lever arm is measured from the body's position; the collider authored 1 m ahead lands 1 m right after the yaw, a zero displacement neither writes nor invalidates, and a second quarter turn about world Y brings forward to −Z (left composition); `velocity(atWorldPoint:)` is checked alongside the step-start form —: the default tensor is infinite and `hasFiniteInertia` is false; `addForce(_:atWorldPoint:)` on a detached body at the origin with force `[0, 10, 0]` at `[2, 0, 0]` gives torque `[0, 0, 20]` and the same force; `rotate(by: [0, .halfPi, 0])` on a detached body turns `pose().rotation.forward` to `[1, 0, 0]` within 1e-5 and marks the world colliders dirty (the rebuild-count discipline of `worldColliderCacheRebuildDiscipline`); `inverseInertiaWorld()` for `inverseInertiaLocal = diag(1, 2, 3)` after `setRotation` by 90° about Y is `diag(3, 2, 1)` within 1e-5; `stepStartVelocity(atWorldPoint:)` with `stepStartVelocity = [1, 0, 0]` and `stepStartAngularVelocity = [0, 1, 0]` at `[0, 0, 2]` from the origin is `[3, 0, 0]`.
+- [x] **File (new):** `ToyFlightSimulatorTests/Physics/AngularIntegrationTests.swift` (7, parameterized over `.NaiveEuler` and `.HeckerVerlet` where a world is stepped): an infinite-inertia body with a constant torque hook never rotates and keeps `angularVelocity == .zero`; a detached body with `inverseInertiaLocal = diag(0.5)`, gravity off, and a hook adding torque `[2, 0, 0]` has `angularVelocity.x == fixedDelta` after one substep (`0.5 · 2 · h`) and has rotated about X by `h·h` rad; a static body with finite inertia and torque does not rotate; `torque` is zero after every step (`zeroForces`); the halves are separable — `integrateAngularVelocity` alone changes ω and not the pose, `integrateOrientation` alone the pose and not ω (the order the solvers rely on); **the response sees this substep's torque** (both solvers): a detached body with one sphere collider resting on a static plane body, `inverseInertiaLocal = diag(0.5)`, gravity off, a hook adding torque `[2, 0, 0]`, and an `onContact` handler that records `angularVelocity` as it fires — the record is `[fixedDelta, 0, 0]` (0.5 · 2 · h): a sphere's contact impulse has no lever arm, so the handler sees the torque's own half-step, which the second draft's Verlet order recorded as zero; **the orthonormality soak**: a detached body with `inverseInertiaLocal = diag(1)`, gravity off, `angularVelocity = [0.3, 0.5, 0.7]` and no torque, stepped for 72 000 substeps (ten minutes at 120 Hz, a few milliseconds of test time): every column of `pose().rotation` has unit length within 1e-5, the columns are pairwise orthogonal within 1e-5, and the determinant is 1 within 1e-5. The bare matrix product drifts past that; the quaternion path does not. *(Shipped as listed. The rotation about X is checked against a hand-written R_x(h·h) with tolerance 1e-6; the torque-zeroed case also pins ω = n·h after n substeps; the response case uses a plain `RigidBody` with one sphere `LocalCollider` at y 0.499, broad phase off, and pins exactly one contact and no position change; the soak also asserts ω unchanged. The suite runs in 0.8 s, the soak included.)*
+- [x] `PhysicsSolverTests.zeroForcesClearsAllForces` also sets and asserts `torque`.
+- [x] `CollisionResponseTests` additions (2), through `getInverseMassStats` and `applyImpulse(_:_:contact:inverseMassStats:)` with a hand-built `Contact` (the finite-inertia case also pins the stats tuple and that the contact point is at rest along n afterward): A is a detached body, mass 2, velocity `[0, −1, 0]`, against a static plane body, contact normal `[0, 1, 0]` at point `[1, 0, 0]` with A's origin at `[0, 0, 0]`. With `inverseInertiaLocal = diag(0.5)`: the angular term is 0.5, the denominator 1.0, j = 1 (e = 0 at exactly the threshold), so `velocity == [0, −0.5, 0]` and `angularVelocity == [0, 0, 0.5]` exactly. With infinite inertia the same call gives `velocity == .zero` and `angularVelocity == .zero`: the point-mass result, exact.
+- [x] Gate: full serial suite green with no other edit; dry run byte-identical. Commit as D-angular-plumbing (plumbing, rule 2). *(2026-09-11: build green; full serial suite 368 Swift Testing tests in 55 suites plus 20 XCTest cases; the regeneration dry run rewrote all six goldens byte-identical and the clean parity re-run is green. Committed as `14c0bda`.)*
 
 ## Step D.2 — tires, brakes, and the ground normal — D-tires
 
 Why: since B.5 the jet stands on its wheels and slides on them. Every ground-handling gap (stopping, holding position, a crab, a turn that the velocity follows) is one tangent force at each loaded wheel. The forces need the normal loads (the struts have them), the body's predicted velocity at each patch (`velocity(atWorldPoint:)` and `inverseInertiaWorld()` from D.1), the ground normal (the raycast has the plane, not yet its normal), and a brake command. The wheels are solved together, because a wheel at its friction limit must hand the rest of the demand to the others. No angular state is involved yet: with infinite inertia every patch moves with the center, and the kinematic yaw filter still turns the nose. D.3 makes the same forces torque-correct without touching this step's code.
 
-Line numbers are as of `82f852b` for files D.1 did not touch (`ControlInput.swift`, `InputManager.swift`, `Aircraft.swift`, `SuspensionStrut.swift`, `AircraftLandingGearSpec.swift`, `LandingGearSuspension.swift`); `PhysicsWorld.swift` has D.1's one-line insert at 100, so `raycastStaticPlanes` sits at 140–155.
+Line numbers are as of `82f852b` for files D.1 did not touch (`ControlInput.swift`, `InputManager.swift`, `Aircraft.swift`, `SuspensionStrut.swift`, `AircraftLandingGearSpec.swift`, `LandingGearSuspension.swift`); `PhysicsWorld.swift` has D.1's seven inserted lines (the snapshot and the ω half, with their comments; `14c0bda`), so `raycastStaticPlanes` sits at 146–161.
 
 - [ ] **Edit:** `Physics/World/PhysicsWorld.swift`, `raycastStaticPlanes` (lines 140–155 after D.1) returns the hit's normal with its distance. The struct goes above `final class PhysicsWorld`, after the `PhysicsUpdateType` enum (line 13):
 
@@ -1667,7 +1722,7 @@ Call sites: `generateContacts`; `CompoundBodyTests.bankedPoseContactsWingsOnly`;
 
 ### D.3.5 — one solve per pair
 
-- [ ] **Edit:** `Physics/CollisionResponse/HeckerCollisionResponse.swift` (after D.1). `resolvePair` sends a pair with more than one contact to `solveManifold`; a single-contact pair keeps D.1's path, which is what keeps every sphere golden fixed:
+- [ ] **Edit:** `Physics/CollisionResponse/HeckerCollisionResponse.swift` (after D.1). `resolvePair` sends a pair with more than one contact to `solveManifold`; a single-contact pair keeps D.1's path, which is what keeps every sphere golden fixed. D.1 as shipped computes the pair's inverse masses once (`getInverseMassStats`) and passes them to both halves; `solveManifold` below computes its own and can take the same tuple at transcription:
 
 ```swift
     /// Iterations of the pair solve for a pair with more than one contact.
@@ -1690,11 +1745,12 @@ Call sites: `generateContacts`; `CompoundBodyTests.bankedPoseContactsWingsOnly`;
         entityA.collidedWith.insert(ObjectIdentifier(entityB))
         entityB.collidedWith.insert(ObjectIdentifier(entityA))
         
-        correctPosition(entityA, entityB, contact: contacts[deepest])
+        let invMassStats = getInverseMassStats(entityA, entityB)
+        correctPosition(entityA, entityB, contact: contacts[deepest], inverseMassStats: invMassStats)
         if contacts.count - firstNew == 1 {
             // One contact — every sphere pair, so every golden: the Phase A
             // sequence exactly.
-            applyImpulse(entityA, entityB, contact: contacts[deepest])
+            applyImpulse(entityA, entityB, contact: contacts[deepest], inverseMassStats: invMassStats)
         } else {
             solveManifold(entityA, entityB, contacts: contacts[firstNew...])
         }
@@ -1886,11 +1942,11 @@ Research §4.5 items 4–5 and §4.6. Not planned in code. Each row names what w
 
 ## Phase D exit criteria
 
-1. - [ ] **Plumbing changes nothing measurable:** D-angular-plumbing leaves the goldens byte-identical and every suite green unedited; the exact-value tests pin the point-mass result for infinite inertia.
+1. - [x] **Plumbing changes nothing measurable:** D-angular-plumbing leaves the goldens byte-identical and every suite green unedited; the exact-value tests pin the point-mass result for infinite inertia. *(`14c0bda`, 2026-09-11: dry run byte-identical; every existing suite green with only the listed `zeroForces` edit; the two `applyImpulse` cases pin the point-mass result exactly.)*
 2. - [ ] **The jet stops and steers:** `TireModelTests` and the six D.2 world tests green; in-app, brakes stop the jet from 40 m/s in about 200 m, it holds still at idle and against thrust under the brake limit, a crab settles, Q/E turn it at taxi speed.
 3. - [ ] **The jet rotates under physics, and flight feels the same:** `AttitudeRateControllerTests` green (the exponential response reproduced per axis); the seven D.3 world tests, the pair-solve cases, and the point-velocity classification cases green; in-app, the owner's circuit, the parked jet that does not creep, the nose-last touchdown, the one-wheel arrival, the braking dive, ground steering in the airborne yaw direction, the rock-free belly rest, and a wingtip swung into a wall printing `[CRASH]`.
-4. - [ ] **Goldens byte-identical after every commit** (Phase D regenerates nothing).
-5. - [ ] **No process-wide state:** `AttitudeRateController` and `TireModel` are pure; every new field is per body; determinism and partition tests green.
+4. - [ ] **Goldens byte-identical after every commit** (Phase D regenerates nothing). *(D.1 `14c0bda`: byte-identical.)*
+5. - [ ] **No process-wide state:** `AttitudeRateController` and `TireModel` are pure; every new field is per body; determinism and partition tests green. *(D.1 `14c0bda`: `AngularIntegration` is two pure static functions over the entity list; every new field — `angularVelocity`, `torque`, `inverseInertiaLocal`, `stepStartAngularVelocity`, `standaloneRotation` — is per body; `FixedTimestepTests` and the parity suite green in the full run.)*
 6. - [ ] **CI green** on all three commits.
 
 **Implementation order:** C.1 → C.2 → D.1 → D.2 → D.3. C.2 needs C.1 (a wing over a wall is box-box). D.2 needs D.1's `addForce(_:atWorldPoint:)` and `velocity(atWorldPoint:)`. D.3 needs both. Phase C and D.1 are independent of each other; C goes first because it is smaller and stands alone.
@@ -1900,6 +1956,6 @@ Research §4.5 items 4–5 and §4.6. Not planned in code. Each row names what w
 Land each with its commit, as the Phase B steps did.
 
 - **C.2:** the Physics paragraph gains "**Static structures (Phase C):** `StaticStructure` (GameObjects/) is one box or vertical capsule rendered at its collider's size with a static `.structure` `RigidBody` it creates in its init; scenes add the body to their world (`FlightboxWithPhysics.addStructure`). Box-box is a 15-axis separating-axis test with one contact point, the centroid of the incident face clipped to the reference face (`clippedPoint`: Box2D's manifold reduced to one point); capsule-box is exact (twelve separating axes for a core inside the box, else the end caps and the twelve edges)." The `extending-the-engine` skill's game-object recipe gains a line: "Static scenery with collision: `StaticStructure(name:shape:color:)`, then `entities.append(structure.rigidBody!)` or the scene's helper."
-- **D.1:** the Physics paragraph's composition sentence lists `angularVelocity`, `torque`, `inverseInertiaLocal` (infinite by default), `stepStartAngularVelocity`, `addForce(_:atWorldPoint:)`, `rotate(by:)` (quaternion-normalised); the response description becomes "position correction at the deepest contact, then an impulse with lever arms at the deepest contact — a linear fast path for pairs without finite inertia"; `AngularIntegration`'s two halves are named next to the solvers with their order (ω with the forces and before the contact response in both solvers, orientation with the positions).
+- **D.1** *(done in `14c0bda`)*: the Physics paragraph's composition sentence lists `angularVelocity`, `torque`, `inverseInertiaLocal` (infinite by default), `stepStartAngularVelocity`, `addForce(_:atWorldPoint:)`, `rotate(by:)` (quaternion-normalised); the response description becomes "position correction at the deepest contact, then an impulse with lever arms at the deepest contact — a linear fast path for pairs without finite inertia"; `AngularIntegration`'s two halves are named next to the solvers with their order (ω with the forces and before the contact response in both solvers, orientation with the positions).
 - **D.2:** the Landing gear paragraph replaces "No tangent friction, brakes, or steering yet (Phase D): the jet slides." with the tire model (holding friction solved over the wheels as sequential impulses, load along the ground normal), `RayHit`, and the B key; Debugging gains "**'B' key**: wheel brakes (mains)".
 - **D.3:** the Attitude paragraph is rewritten: "rotation is torque-driven for aircraft with flight physics: `AttitudeRateController` turns the stick's rate command into a body torque with the `AttitudeDynamics` time constants, gear and contact torques add, and `AngularIntegration` rotates the node from inside the step; aircraft without a body or flight model keep the kinematic lag filter." The Flight Model paragraph adds `inertia`; the Landing gear paragraph adds nosewheel steering and the geometric load split; the Physics paragraph notes the capsule two-cap manifold and the pair solve ("a pair with more than one contact is solved by `solveManifold`: eight sequential-impulse iterations with accumulated, non-negative impulses; single-contact pairs keep the one pass"); the Classification sentence says the reporter classifies the relative velocity at the contact point (`stepStartVelocity(atWorldPoint:)`), impacts deduped per frame per body.
