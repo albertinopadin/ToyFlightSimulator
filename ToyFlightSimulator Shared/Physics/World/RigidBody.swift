@@ -79,10 +79,61 @@ public class RigidBody: PhysicsEntity {
     /// response, when `velocity` is already the post-impact value, so impact
     /// classification reads this instead.
     var stepStartVelocity: float3 = .zero
+    
+    /// Angular state, world frame: angular velocity in rad/s and the torque
+    /// accumulated this substep in N·m about the body origin, zeroed with
+    /// `force`. The body origin is the center of mass: every lever arm is
+    /// measured from it (the F-22 strut spec was authored that way;
+    /// AircraftLandingGearSpecTests pins its 15/85 static load split).
+    var angularVelocity: float3 = .zero
+    var torque: float3 = .zero
+    
+    /// Inverse inertia tensor in body axes. The default, the zero matrix, is
+    /// infinite inertia: physics never rotates the body. That is every body
+    /// before D.3 and every body not given a tensor after it (balls, debris,
+    /// spec-less aircraft); with it the lever-arm terms of the response are
+    /// exactly zero, so those bodies' arithmetic is unchanged.
+    static let infiniteInertia = float3x3(diagonal: .zero)
+    var inverseInertiaLocal: float3x3 = RigidBody.infiniteInertia
+    var hasFiniteInertia: Bool { inverseInertiaLocal != Self.infiniteInertia }
+    
+    /// I⁻¹ in world axes, R · I⁻¹ · Rᵀ. The zero matrix for an
+    /// infinite-inertia body, without reading the pose.
+    func inverseInertiaWorld() -> float3x3 {
+        guard hasFiniteInertia else { return Self.infiniteInertia }
+        let rotation = pose().rotation
+        return rotation * inverseInertiaLocal * rotation.transpose
+    }
+    
+    /// A force acting at a world point: the force itself plus its torque
+    /// about the origin. Strut and tire forces use this (D.2), so they pitch
+    /// and roll the body as soon as it has finite inertia (D.3).
+    func addForce(_ force: float3, atWorldPoint point: float3) {
+        self.force += force
+        torque += cross(point - getPosition(), force)
+    }
 
+    /// Velocity of a world point on the body: v + ω × r.
+    func velocity(atWorldPoint point: float3) -> float3 {
+        velocity + cross(angularVelocity, point - getPosition())
+    }
+    
+    /// Angular velocity at the top of the current step, next to
+    /// stepStartVelocity and written with it by PhysicsWorld. Zero for every
+    /// body until D.3.
+    var stepStartAngularVelocity: float3 = .zero
+    
+    /// Pre-response velocity of a world point: the step-start pair combined.
+    /// Crash classification reads this at the contact point (D.3), where the
+    /// origin's velocity alone misses a rotating wing.
+    func stepStartVelocity(atWorldPoint point: float3) -> float3 {
+        stepStartVelocity + cross(stepStartAngularVelocity, point - getPosition())
+    }
+    
     /// World-space collider cache behind a dirty flag. Invalidated by
-    /// setPosition, by collider changes, and by the world at the start of
-    /// every step (node rotation does not go through setPosition). Code that
+    /// setPosition, by rotate(by:) and setRotation, by collider changes, and
+    /// by the world at the start of every step (the kinematic attitude path
+    /// rotates the node without going through the body). Code that
     /// moves a body outside a stepped world must call
     /// invalidateWorldColliders(). `worldCollidersScratch` is internal only so
     /// subclass rebuilds can write it.
@@ -185,6 +236,49 @@ public class RigidBody: PhysicsEntity {
         standalonePosition ?? gameObject?.getPosition() ?? .zero
     }
     
+    /// Rotation of a detached body. Attached bodies keep theirs on the node,
+    /// as with position.
+    private var standaloneRotation: float3x3 = matrix_identity_float3x3
+    
+    /// Rotates the body by the world-frame angular displacement ω·h (its
+    /// direction is the axis, its length the angle). Attached bodies rotate
+    /// their node, which dirties the subtree so the attached camera follows
+    /// within the frame; detached bodies rotate their own matrix. Invalidates
+    /// the world colliders like setPosition (the Phase A note: a rotation
+    /// written mid-step must invalidate). The composition goes through a
+    /// normalised quaternion and the matrix is rebuilt from it: a matrix
+    /// product per substep for the life of the process drifts from
+    /// orthonormal, and D.3 uses R.transpose as the inverse and R.up as a
+    /// unit ray. Node.rotate's bare product stays for the kinematic path,
+    /// which stops writing once settled. The world-axis step multiplies on
+    /// the left, as Node.rotate(deltaAngle:axis:) composes its matrices. A
+    /// TestRigidBody (nil GameObject, nil standalonePosition) falls into the
+    /// node branch and does nothing, which is right: it never has finite
+    /// inertia.
+    func rotate(by delta: float3) {
+        let angle = simd_length(delta)
+        guard angle > 0 else { return }
+        invalidateWorldColliders()
+        let step = simd_quatf(angle: angle, axis: delta / angle)
+        let composed = float3x3(simd_normalize(step * simd_quatf(pose().rotation)))
+        if standalonePosition != nil {
+            standaloneRotation = composed
+        } else {
+            gameObject?.setRotation(simd_quatf(composed))
+        }
+    }
+    
+    /// Absolute rotation, for authoring and tests. Node.setRotation(_:) goes
+    /// through the rotationMatrix setter, which dirty-flags like rotate.
+    func setRotation(_ rotation: float3x3) {
+        invalidateWorldColliders()
+        if standalonePosition != nil {
+            standaloneRotation = rotation
+        } else {
+            gameObject?.setRotation(simd_quatf(rotation))
+        }
+    }
+    
     func getAABB() -> AABB {
         // Compound bodies: union of the world colliders' bounds.
         let worlds = worldColliders()
@@ -218,10 +312,11 @@ public class RigidBody: PhysicsEntity {
     /// The body's world pose for collider and strut math. Attached bodies read
     /// their node's LOCAL transform, which is valid only for scene-root
     /// children (asserted). Detached bodies, and attached bodies whose
-    /// GameObject was released, get the identity rotation at getPosition().
+    /// GameObject was released, use their own rotation (identity until
+    /// rotated) at getPosition().
     func pose() -> (position: float3, rotation: float3x3, uniformScale: Float) {
         guard let node = gameObject else {
-            return (getPosition(), matrix_identity_float3x3, 1.0)
+            return (getPosition(), standaloneRotation, 1.0)
         }
         
         assert(node.parent == nil || node.parent is GameScene,

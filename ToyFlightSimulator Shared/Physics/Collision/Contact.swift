@@ -10,8 +10,9 @@ struct Contact {
     /// Unit length, from B toward A.
     let normal: float3
     let depth: Float
-    /// World-space contact point. Unused by the linear response; kept for
-    /// angular dynamics later.
+    /// World-space contact point. The lever arms of the impulse are measured
+    /// to it (HeckerCollisionResponse.applyImpulse, general path); the linear
+    /// fast path for pairs without finite inertia does not read it.
     let point: float3
     /// nil for a simple body: a SphereRigidBody's view or the infinite plane.
     let colliderNameA: String?

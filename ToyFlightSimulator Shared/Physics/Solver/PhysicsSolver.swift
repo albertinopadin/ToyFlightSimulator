@@ -13,9 +13,11 @@ protocol PhysicsSolver {
 }
 
 extension PhysicsSolver {
+    /// End of step: forces and torques are per-substep accumulators.
     public static func zeroForces(entities: [RigidBody]) {
         for entity in entities {
-            entity.zeroForce()
+            entity.force = .zero
+            entity.torque = .zero
         }
     }
 }

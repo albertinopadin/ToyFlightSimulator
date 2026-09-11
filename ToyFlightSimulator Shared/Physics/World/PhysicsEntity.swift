@@ -39,8 +39,4 @@ extension PhysicsEntity {
     func resetCollisions() {
         collidedWith.removeAll(keepingCapacity: true)
     }
-
-    func zeroForce() {
-        force = .zero
-    }
 }

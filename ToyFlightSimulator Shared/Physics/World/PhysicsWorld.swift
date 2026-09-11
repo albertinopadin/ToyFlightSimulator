@@ -96,7 +96,10 @@ final class PhysicsWorld {
             // RigidBody.setPosition (attitude rotation), so every world-collider
             // cache is invalidated here. setPosition covers mid-step moves.
             entity.invalidateWorldColliders()
+            // Step-start snapshot, linear and angular together: what the
+            // crash classifier reads (RigidBody.stepStartVelocity(atWorldPoint:)).
             entity.stepStartVelocity = entity.velocity
+            entity.stepStartAngularVelocity = entity.angularVelocity
             // Per-substep forces (the flight model and the landing-gear suspension).
             entity.forceGenerator?(entity, deltaTime, self)
         }
@@ -119,6 +122,10 @@ final class PhysicsWorld {
                                  contactsScratch: &contactsScratch)
                 
             case .HeckerVerlet:
+                // ω from this substep's torques before the response, as
+                // EulerSolver orders it; VerletSolver.step rotates after its
+                // position update. Infinite-inertia bodies skip both halves.
+                AngularIntegration.integrateAngularVelocity(entities: entities, deltaTime: deltaTime)
                 HeckerCollisionResponse.resolveCollisions(collisionPairs: pairs,
                                                           contactsScratch: &contactsScratch)
                 VerletSolver.step(deltaTime: deltaTime, gravity: Self.gravity, entities: entities)

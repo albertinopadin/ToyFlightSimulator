@@ -19,16 +19,21 @@ final class EulerSolver: PhysicsSolver {
     }
 
     /// Semi-implicit Euler: forces, then contacts on the candidate pairs,
-    /// then integration.
+    /// then integration. The angular halves (AngularIntegration) sit next to
+    /// their linear counterparts: ω with the forces and before the contact
+    /// loop, so the response sees this substep's torques; the orientation
+    /// with the positions. Both halves skip infinite-inertia bodies.
     public static func step(deltaTime: Float, gravity: float3, entities: [RigidBody],
                             collisionPairs: [(RigidBody, RigidBody)],
                             contactsScratch: inout [Contact]) {
         applyForces(deltaTime: deltaTime, gravity: gravity, entities: entities)
+        AngularIntegration.integrateAngularVelocity(entities: entities, deltaTime: deltaTime)
         contactsScratch.removeAll(keepingCapacity: true)
         for (a, b) in collisionPairs {
             HeckerCollisionResponse.resolvePair(a, b, contacts: &contactsScratch)
         }
         moveObjects(deltaTime: deltaTime, entities: entities)
+        AngularIntegration.integrateOrientation(entities: entities, deltaTime: deltaTime)
         zeroForces(entities: entities)
     }
 
@@ -55,7 +60,7 @@ final class EulerSolver: PhysicsSolver {
 
     /// Legacy per-axis response, unreferenced since A-response; kept as
     /// reference code. Nothing may call it: both solvers share
-    /// HeckerCollisionResponse.applyCollisionResponse.
+    /// HeckerCollisionResponse.resolvePair (correctPosition + applyImpulse).
     private static func applyLegacyEulerResponse(_ ei: RigidBody, _ ej: RigidBody, contact: Contact) {
         let collisionVector = contact.normal      // unit, from B toward A
         let restitution = min(ei.restitution, ej.restitution)

@@ -239,6 +239,100 @@ struct RigidBodyTests {
         #expect(approxEqual(aabb.min, .zero))
         #expect(approxEqual(aabb.max, .zero))
     }
+
+    // MARK: - Angular state (D.1, D-angular-plumbing)
+
+    @Test("the default inertia is infinite: the zero inverse tensor, hasFiniteInertia false, no angular state")
+    func defaultInertiaIsInfinite() {
+        let body = RigidBody(detachedAt: .zero)
+        #expect(body.inverseInertiaLocal == RigidBody.infiniteInertia)
+        #expect(!body.hasFiniteInertia)
+        #expect(body.inverseInertiaWorld() == RigidBody.infiniteInertia)
+        #expect(body.angularVelocity == .zero)
+        #expect(body.torque == .zero)
+        #expect(body.stepStartAngularVelocity == .zero)
+
+        // Opting in is one assignment (D.3 does it from the flight model).
+        body.inverseInertiaLocal = float3x3(diagonal: [0.5, 0.5, 0.5])
+        #expect(body.hasFiniteInertia)
+    }
+
+    @Test("addForce(_:atWorldPoint:) adds the force and its torque r × F about the origin")
+    func addForceAtPointAddsTorque() {
+        let body = RigidBody(detachedAt: .zero)
+        body.addForce([0, 10, 0], atWorldPoint: [2, 0, 0])
+        #expect(body.force == [0, 10, 0])
+        #expect(body.torque == [0, 0, 20])          // [2, 0, 0] × [0, 10, 0], exact
+
+        // Accumulates like force; a force through the origin adds no torque.
+        body.addForce([0, 10, 0], atWorldPoint: .zero)
+        #expect(body.force == [0, 20, 0])
+        #expect(body.torque == [0, 0, 20])
+
+        // The lever arm is measured from the body's position, not the world origin.
+        body.setPosition([2, 0, 0])
+        body.addForce([0, 10, 0], atWorldPoint: [2, 0, 0])
+        #expect(body.torque == [0, 0, 20])
+    }
+
+    @Test("rotate(by:) on a detached body turns its pose and marks the world colliders dirty")
+    func rotateByTurnsPoseAndInvalidates() throws {
+        let body = RebuildCountingBody(detachedAt: .zero)
+        body.colliders = [LocalCollider(name: "c", shape: .sphere(radius: 1), localPosition: [0, 0, 1])]
+        _ = body.worldColliders()
+        #expect(body.rebuilds == 1)
+
+        body.rotate(by: [0, .halfPi, 0])            // ω·h: axis +Y, angle π/2
+        #expect(approxEqual(body.pose().rotation.forward, [1, 0, 0], tolerance: 1e-5))
+        #expect(approxEqual(body.pose().position, .zero))
+
+        // Dirty, so the next read rebuilds with the new pose: the collider
+        // authored 1 m ahead now sits 1 m to the right.
+        let worlds = body.worldColliders()
+        #expect(body.rebuilds == 2)
+        try #require(worlds.count == 1)
+        #expect(approxEqual(worlds[0].position, [1, 0, 0], tolerance: 1e-5))
+
+        // A zero displacement is a no-op: no write, no invalidation.
+        body.rotate(by: .zero)
+        _ = body.worldColliders()
+        #expect(body.rebuilds == 2)
+
+        // Composition is on the left in world axes: a second quarter turn
+        // about world Y brings forward to −Z.
+        body.rotate(by: [0, .halfPi, 0])
+        #expect(approxEqual(body.pose().rotation.forward, [0, 0, -1], tolerance: 1e-5))
+    }
+
+    @Test("inverseInertiaWorld is R · I⁻¹ · Rᵀ: a 90° yaw swaps the x and z principal values")
+    func inverseInertiaWorldConjugates() {
+        let body = RigidBody(detachedAt: .zero)
+        body.inverseInertiaLocal = float3x3(diagonal: [1, 2, 3])
+        #expect(approxEqual(body.inverseInertiaWorld(), float3x3(diagonal: [1, 2, 3])), "identity pose: world = local")
+
+        body.setRotation(float3x3(simd_quatf(angle: .halfPi, axis: [0, 1, 0])))
+        #expect(approxEqual(body.inverseInertiaWorld(), float3x3(diagonal: [3, 2, 1]), tolerance: 1e-5))
+        // setRotation is absolute, and pose() reports it.
+        #expect(approxEqual(body.pose().rotation.forward, [1, 0, 0], tolerance: 1e-5))
+    }
+
+    @Test("point velocities: v + ω × r for the live pair and for the step-start pair")
+    func pointVelocities() {
+        let body = RigidBody(detachedAt: .zero)
+        body.stepStartVelocity = [1, 0, 0]
+        body.stepStartAngularVelocity = [0, 1, 0]
+        // [0, 1, 0] × [0, 0, 2] = [2, 0, 0], on top of the origin's 1 m/s.
+        #expect(body.stepStartVelocity(atWorldPoint: [0, 0, 2]) == [3, 0, 0])
+
+        body.velocity = [1, 0, 0]
+        body.angularVelocity = [0, 1, 0]
+        #expect(body.velocity(atWorldPoint: [0, 0, 2]) == [3, 0, 0])
+
+        // r is measured from the body's position: at the origin itself only v remains.
+        body.setPosition([0, 0, 2])
+        #expect(body.velocity(atWorldPoint: [0, 0, 2]) == [1, 0, 0])
+        #expect(body.stepStartVelocity(atWorldPoint: [0, 0, 2]) == [1, 0, 0])
+    }
 }
 
 /// Counts rebuilds so the dirty-flag cache is observable — the returned

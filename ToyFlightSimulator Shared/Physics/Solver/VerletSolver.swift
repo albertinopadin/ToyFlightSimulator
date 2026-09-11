@@ -52,6 +52,10 @@ final class VerletSolver: PhysicsSolver {
             entity.accelerationIsWarm = true
         }
 
+        // Orientation with the positions. The other half, ω from this
+        // substep's torques, ran in PhysicsWorld.step before the contact
+        // response, as EulerSolver orders it.
+        AngularIntegration.integrateOrientation(entities: entities, deltaTime: deltaTime)
         zeroForces(entities: entities)
     }
 }

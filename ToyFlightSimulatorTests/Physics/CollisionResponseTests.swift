@@ -138,4 +138,57 @@ struct CollisionResponseTests {
         #expect(abs(ball.getPosition().y - 0.5) <= 0.03)
         #expect(simd_length(ball.velocity) <= 0.25)
     }
+
+    // MARK: - Lever-arm impulse (D.1, D-angular-plumbing)
+
+    /// A hand-built contact straight into applyImpulse, no narrow phase: A at
+    /// the origin, mass 2, falling at 1 m/s onto a static plane, the contact
+    /// 1 m off-axis at [1, 0, 0] with the normal up. The lever arm
+    /// r = [1, 0, 0] is perpendicular to n, so with I⁻¹ = diag(0.5) the
+    /// angular term equals the linear one.
+    private func makeOffAxisContact() -> (a: RigidBody, plane: PlaneRigidBody, contact: Contact) {
+        let a = RigidBody(detachedAt: .zero)
+        a.mass = 2
+        a.velocity = [0, -1, 0]
+        let plane = PlaneRigidBody(detachedAt: .zero)
+        plane.isStatic = true
+        let contact = Contact(normal: [0, 1, 0], depth: 0, point: [1, 0, 0])
+        return (a, plane, contact)
+    }
+
+    @Test("finite inertia: the impulse splits between the origin and the spin — j = 1, v = [0, −0.5, 0], ω = [0, 0, 0.5], exact")
+    func leverArmImpulseSplitsLinearAndAngular() {
+        let (a, plane, contact) = makeOffAxisContact()
+        a.inverseInertiaLocal = float3x3(diagonal: [0.5, 0.5, 0.5])
+        let stats = HeckerCollisionResponse.getInverseMassStats(a, plane)
+        #expect(stats.inverseMassA == 0.5)
+        #expect(stats.inverseMassB == 0, "a static body has inverse mass 0")
+        #expect(stats.inverseMassSum == 0.5)
+
+        HeckerCollisionResponse.applyImpulse(a, plane, contact: contact, inverseMassStats: stats)
+
+        // approach = −1 m/s, at exactly the 1 m/s threshold ⇒ e = 0. Angular
+        // term ((I⁻¹ (r × n)) × r) · n = 0.5, denominator 0.5 + 0.5 = 1, so
+        // j = 1. Linear: j/m = 0.5 up. Angular: I⁻¹ (r × j n) = 0.5 · [0, 0, 1].
+        #expect(a.velocity == [0, -0.5, 0])
+        #expect(a.angularVelocity == [0, 0, 0.5])
+        #expect(plane.velocity == .zero)
+        #expect(plane.angularVelocity == .zero, "statics never change")
+        // The contact point itself is at rest along n: −0.5 from the origin,
+        // +0.5 from ω × r.
+        #expect(dot(a.velocity(atWorldPoint: contact.point), contact.normal) == 0)
+    }
+
+    @Test("infinite inertia: the same contact gives the point-mass result — the origin stops, nothing spins, exact")
+    func infiniteInertiaTakesThePointMassPath() {
+        let (a, plane, contact) = makeOffAxisContact()
+        let stats = HeckerCollisionResponse.getInverseMassStats(a, plane)
+
+        HeckerCollisionResponse.applyImpulse(a, plane, contact: contact, inverseMassStats: stats)
+
+        // Linear fast path: j = −(1 + 0)(−1) / 0.5 = 2; v += n · (2 · 0.5).
+        // The off-axis point is irrelevant: a point mass has no lever arm.
+        #expect(a.velocity == .zero)
+        #expect(a.angularVelocity == .zero)
+    }
 }

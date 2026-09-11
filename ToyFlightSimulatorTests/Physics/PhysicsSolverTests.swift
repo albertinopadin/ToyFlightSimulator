@@ -79,16 +79,21 @@ struct EulerSolverTests {
 
     // MARK: - zeroForces
 
-    @Test("zeroForces clears force on every entity (static or dynamic)")
+    @Test("zeroForces clears force and torque on every entity (static or dynamic)")
     func zeroForcesClearsAllForces() {
         let dynamic = TestRigidBody(force: [1, 2, 3])
+        dynamic.torque = [7, 8, 9]
         let staticBody = TestRigidBody(force: [4, 5, 6], isStatic: true)
+        staticBody.torque = [10, 11, 12]
         let entities: [RigidBody] = [dynamic, staticBody]
 
         EulerSolver.zeroForces(entities: entities)
 
         #expect(approxEqual(entities[0].force, .zero))
         #expect(approxEqual(entities[1].force, .zero))
+        // D.1: torque is the same kind of per-substep accumulator as force.
+        #expect(entities[0].torque == .zero)
+        #expect(entities[1].torque == .zero)
     }
 
     // MARK: - Full step semantics
