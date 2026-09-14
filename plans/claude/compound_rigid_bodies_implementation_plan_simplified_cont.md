@@ -20,6 +20,7 @@ Same as the parent: steps are edited in place to match the code, history goes in
 - **2026-09-10** — C-narrowphase landed (C.1, `c6b4fba`): box-box and exact capsule-box per the listings. Found at review, before the tests ran: the edge-edge loop had been transcribed as `cross(a.rotation[i], b.rotation[i])`, so six of the nine edge axes were never tested (test 4 fails on it); fixed to `b.rotation[j]`. `boxVsBox` shipped without its listed comments; added. All fourteen listed cases green with the listed numbers, each reproduced first in a standalone harness; the suite also carries a pose self-check for the capsule test helper and a box-vs-far-box line. Dry run byte-identical; 346 tests in 52 suites. Exit criterion 1 closed.
 - **2026-09-11** — C-structures landed (C.2, `3aabb82`): `StaticStructure` and the airfield per the listings. The owner's transcription had no defects; the listings' comments had not been carried over and were added at review, with three small extensions folded back into the listings (the halfHeight-0 clamp in `Shape.collider`'s comment, `makeMesh`'s thread sentence, the airfield's centers-and-spans note plus a doc comment on `addStructure`). Tests as listed plus a fourth shape test (ModelIO bounds equal the collider's reach) and two deviations in `StructureContactTests`: the broad phase stays ON (the app's dynamic-vs-static path), and case 4's tree is centered at y 4.5 so its core spans a resting ball's center (at the scene's y 5 the normal tilts 0.4°, outside the 1e-3 band). Full serial suite 354 tests in 54 suites plus 20 XCTest; dry run byte-identical; a keyboard-free smoke run lists the thirteen structures and leaves the drop sequence unchanged. Exit criterion 2's test half and criterion 4 closed; the four keyboard checks (criteria 2 and 3) stay the owner's; 5 waits on the push.
 - **2026-09-11** — D-angular-plumbing landed (D.1, `14c0bda`): angular state on `RigidBody`, forces at points, `AngularIntegration`'s two halves in both solvers, and the lever-arm impulse behind the linear fast path, per the listings. Found at review, before the tests ran: `EulerSolver.step` had been transcribed with the orientation half only, so under `.NaiveEuler` a torque never reached ω (inert with infinite inertia; the plan's one-substep and response-sees-the-torque tests fail on it for that solver) — fixed; `PhysicsEntity.zeroForce()` had not been deleted and the Euler solver's legacy comment still named `applyCollisionResponse` — both fixed; the listings' comments had not been carried over and were added. One deviation, the owner's, kept and folded into the listings: `getInverseMassStats` computes a pair's inverse masses once in `resolvePair` and passes them to `correctPosition` and `applyImpulse` (the `InverseMassStats` tuple typealias), which D.3's iterations reuse; D.3.5's `resolvePair` listing is synced to the signatures. Tests as listed (14: seven, five, two, and the torque assertion), every number reproduced first, all green first run; the 72 000-substep soak's discriminating claim reproduced too (the bare matrix product drifts to 4.7e-5 in column length and 9.1e-5 in determinant where the quaternion path holds 1.2e-7 and 4.8e-7). Full serial suite 368 tests in 55 suites plus 20 XCTest; dry run byte-identical. CLAUDE.md's Physics paragraph carries the D.1 entry. `PhysicsWorld.swift` grew by seven lines, not the one D.2 accounted for (comments), so D.2's `raycastStaticPlanes` note moves to 146–161. Exit criterion 1 closed; 4 and 5 hold for D.1 and stay open for D.2 and D.3; 6 waits on the push.
+- **2026-09-14, D.2 listing** — the `accumulateForces` listing used `wheels` and `tireForces` without declaring them. The prose below it described them (class scratch sized in `init(struts:)`), but the listings are the transcription contract, and a transcription stops at the first `wheels[i]`. The declarations and the `init(struts:)` sizing are now in the `LandingGearSuspension.swift` bullet, with the placeholder `TireModel.Wheel` the sizing needs (five non-optional fields, no default init) and a note that `resetToAirborne` need not clear the scratch, because pass 1 rewrites every entry before pass 2 reads. The prose below the listing points at the declarations instead of restating them. No number or behavior changed.
 
 ## Where Phase B left the engine
 
@@ -1332,7 +1333,39 @@ enum TireModel {
 }
 ```
 
-- [ ] **Edit:** `Physics/Vehicle/LandingGearSuspension.swift`, `accumulateForces` (lines 42–90). The signature gains `brake:`; the ray returns a hit; the step becomes two passes (every strut's spring-damper and its load first, then the tires solved together), and both the strut's load and the tire's tangent force are applied at the contact patch through `addForce(_:atWorldPoint:)`:
+- [ ] **Edit:** `Physics/Vehicle/LandingGearSuspension.swift`. The class gains two per-strut scratch arrays for the tire solve, after `private var wasOverloaded: [Bool]` (line 30): index-aligned with `struts` like `compressions`, and instance storage rather than locals so the two passes of `accumulateForces` allocate nothing per substep (the engine's scratch convention: the broad phase's reused arrays, `TireModel.solve`'s own `SIMD8` accumulators):
+
+```swift
+    /// Per-strut scratch for the tire solve, index-aligned with `struts` and
+    /// reused every substep so the two passes allocate nothing. An entry with
+    /// normalLoad 0 is a strut off the ground: TireModel skips it and its
+    /// force is zero. Pass 1 rewrites every entry before pass 2 reads them,
+    /// so nothing carries over between substeps and resetToAirborne need
+    /// not clear it.
+    private var wheels: [TireModel.Wheel]
+    private var tireForces: [float3]
+```
+
+`init(struts:)` (lines 36–40) sizes both like `compressions`. `TireModel.Wheel` has five non-optional fields and no default init, so the sizing spells out a placeholder whose `normalLoad` of 0 reads as "off the ground" until pass 1 writes the real wheel:
+
+```swift
+    init(struts: [SuspensionStrut]) {
+        self.struts = struts
+        self.compressions = Array(repeating: 0, count: struts.count)
+        self.wasOverloaded = Array(repeating: false, count: struts.count)
+        // Placeholders: normalLoad 0 reads as "off the ground" until pass 1
+        // writes the real wheel.
+        self.wheels = Array(repeating: TireModel.Wheel(patch: .zero,
+                                                       groundNormal: .zero,
+                                                       rollingDirection: .zero,
+                                                       normalLoad: 0,
+                                                       brake: 0),
+                            count: struts.count)
+        self.tireForces = Array(repeating: .zero, count: struts.count)
+    }
+```
+
+Then `accumulateForces` (lines 42–90): the signature gains `brake:`; the ray returns a hit; the step becomes two passes (every strut's spring-damper and its load first, then the tires solved together), and both the strut's load and the tire's tangent force are applied at the contact patch through `addForce(_:atWorldPoint:)`:
 
 ```swift
     /// One substep. `gearDeployed` is the animation gate (Aircraft.isGearDown):
@@ -1414,7 +1447,7 @@ enum TireModel {
     }
 ```
 
-`body.force += up * step.force` is gone: `addForce(_:atWorldPoint:)` applies the load along `hit.normal` at the patch and accumulates a torque that nothing integrates until D.3. For a level body on a level runway the direction is the one it was; for a pitched or rolled body it no longer has a runway component. The class gains two index-aligned scratch arrays, `wheels: [TireModel.Wheel]` (an unloaded entry carries `normalLoad` 0 and is skipped) and `tireForces: [float3]`, sized in `init(struts:)` like `compressions`, so the two passes allocate nothing. Until D.3 `inverseInertiaWorld()` is the zero matrix, so the angular prediction is zero and every patch moves with the origin: the first sweep is exact and the rest are no-ops. The sink rate stays `−velocity.y` (level runway; `hit.normal` is at hand when the tilted-runway one-liner is wanted).
+`body.force += up * step.force` is gone: `addForce(_:atWorldPoint:)` applies the load along `hit.normal` at the patch and accumulates a torque that nothing integrates until D.3. For a level body on a level runway the direction is the one it was; for a pitched or rolled body it no longer has a runway component. `wheels` and `tireForces` are the scratch declared above: `wheels` persists between substeps, which is why pass 1's `else` clears `normalLoad` instead of relying on a fresh array, and `tireForces` is already `struts.count` long, which `TireModel.solve` asserts (`forces.count == wheels.count`). Until D.3 `inverseInertiaWorld()` is the zero matrix, so the angular prediction is zero and every patch moves with the origin: the first sweep is exact and the rest are no-ops. The sink rate stays `−velocity.y` (level runway; `hit.normal` is at hand when the tilted-runway one-liner is wanted).
 
 ### Numbers (F-22 at 30 t, the same rig as B.4)
 
