@@ -194,6 +194,7 @@ class Aircraft: GameObject {
         // it is stable across a frame's substeps.
         gearSuspension?.accumulateForces(body: rigidBody,
                                          gearDeployed: isGearDown,
+                                         brake: latestControlInput?.brake ?? 0,
                                          world: world,
                                          substepDelta: substepDelta)
     }
@@ -202,7 +203,8 @@ class Aircraft: GameObject {
         return ControlInput(throttle: InputManager.ContinuousCommand(.MoveFwd),
                             pitch: InputManager.ContinuousCommand(.Pitch),
                             roll: InputManager.ContinuousCommand(.Roll),
-                            yaw: InputManager.ContinuousCommand(.Yaw))
+                            yaw: InputManager.ContinuousCommand(.Yaw),
+                            brake: InputManager.ContinuousCommand(.Brake))
     }
     
     /// Snap-to-target rotation: full stick → full rate in one frame.

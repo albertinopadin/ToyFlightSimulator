@@ -28,6 +28,16 @@ final class LandingGearSuspension {
     /// Current compression per strut, meters; index-aligned with `struts`.
     private(set) var compressions: [Float]
     private var wasOverloaded: [Bool]
+    
+    /// Per-strut scratch for the tire solve, index-aligned with `struts` and
+    /// reused every substep so the two passes allocate nothing. An entry with
+    /// normalLoad 0 is a strut off the ground: TireModel skips it and its
+    /// force is zero. Pass 1 rewrites every entry before pass 2 reads them,
+    /// so nothing carries over between substeps and resetToAirborne need
+    /// not clear it.
+    private var wheels: [TireModel.Wheel]
+    private var tireForces: [float3]
+    
     /// True while any strut carries compression (the avionics WoW signal).
     private(set) var weightOnWheels = false
 
@@ -37,31 +47,51 @@ final class LandingGearSuspension {
         self.struts = struts
         self.compressions = Array(repeating: 0, count: struts.count)
         self.wasOverloaded = Array(repeating: false, count: struts.count)
+        
+        // Placeholders: normalLoad 0 reads as "off the ground" until pass 1
+        // writes the real wheel.
+        self.wheels = Array(repeating: TireModel.Wheel(patch: .zero,
+                                                       groundNormal: .zero,
+                                                       rollingDirection: .zero,
+                                                       normalLoad: 0,
+                                                       brake: 0),
+                            count: struts.count)
+        self.tireForces = Array(repeating: .zero, count: struts.count)
     }
 
     /// One substep. `gearDeployed` is the animation gate (Aircraft.isGearDown):
     /// retracted or moving gear produces no force and holds zero compression.
-    func accumulateForces(body: RigidBody, gearDeployed: Bool, world: PhysicsWorld, substepDelta: Float) {
+    /// `brake` is 0…1 and acts on the struts that have brakes.
+    func accumulateForces(body: RigidBody, gearDeployed: Bool, brake: Float, world: PhysicsWorld, substepDelta: Float) {
         guard gearDeployed else {
             resetToAirborne()
             return
         }
 
         let pose = body.pose()
-        // Body up, the strut axis: rays go down −up, force pushes +up. Not
-        // float3.up, which is world up — a rolled aircraft's struts roll with it.
+        // Body up, the strut axis: rays go down −up. Not float3.up, which is
+        // world up — a rolled aircraft's struts roll with it.
         let up = pose.rotation.up
+        // Wheels roll along body forward; TireModel projects it onto the ground.
+        let forward = pose.rotation.forward
 
+        // Pass 1: every strut's spring-damper step, its overload edge, and
+        // its load — applied now, along the ground normal at the contact
+        // patch (Bullet's raycast vehicle applies its suspension impulse the
+        // same way), so a pitched or rolled stance pushes nothing along the
+        // runway and the load's torque is in the tire solve's prediction.
+        // The compression is still measured along the strut. A braking
+        // force at ground level pitches the nose down once the body can
+        // pitch (D.3).
         for (i, strut) in struts.enumerated() {
             let attachWorld = pose.position + pose.rotation * (strut.attachLocal * pose.uniformScale)
-            let distance = world.raycastStaticPlanes(from: attachWorld, direction: -up)
+            let hit = world.raycastStaticPlanes(from: attachWorld, direction: -up)
             let step = SuspensionSolver.solve(strut: strut,
                                               uniformScale: pose.uniformScale,
-                                              distanceToGround: distance,
+                                              distanceToGround: hit?.distance,
                                               previousCompression: compressions[i],
                                               substepDelta: substepDelta)
             compressions[i] = step.compression
-            body.force += up * step.force
 
             // Rising edge only: one event per exceedance, per strut.
             if step.overloaded && !wasOverloaded[i] {
@@ -71,6 +101,40 @@ final class LandingGearSuspension {
             }
 
             wasOverloaded[i] = step.overloaded
+            
+            if let hit, step.force > 0 {
+                let patch = attachWorld - up * hit.distance
+                body.addForce(hit.normal * step.force, atWorldPoint: patch)
+                wheels[i] = TireModel.Wheel(patch: patch,
+                                            groundNormal: hit.normal,
+                                            rollingDirection: forward,
+                                            normalLoad: step.force,
+                                            brake: strut.hasBrakes ? brake : 0)
+            } else {
+                wheels[i].normalLoad = 0
+            }
+        }
+        
+        // Pass 2: the tires, solved together against the body's velocities
+        // as this substep's other forces and torques would leave them — the
+        // flight model's force (Aircraft.generateForces adds it first), the
+        // strut loads above, and the solver's gravity. Their impulses come
+        // back as forces at the patches. I⁻¹ in world axes is read once and
+        // shared by the prediction and the solve.
+        let gravity: float3 = body.shouldApplyGravity ? PhysicsWorld.gravity : .zero
+        var velocity = body.velocity + (body.force / body.mass + gravity) * substepDelta
+        let bodyInverseInertiaWorld = body.inverseInertiaWorld()
+        var angularVelocity = body.angularVelocity + bodyInverseInertiaWorld * body.torque * substepDelta
+        TireModel.solve(wheels: wheels,
+                        body: TireModel.Body(origin: pose.position,
+                                             inverseMass: 1 / body.mass,
+                                             inverseInertiaWorld: bodyInverseInertiaWorld),
+                        velocity: &velocity,
+                        angularVelocity: &angularVelocity,
+                        substepDelta: substepDelta,
+                        forces: &tireForces)
+        for i in struts.indices where wheels[i].normalLoad > 0 {
+            body.addForce(tireForces[i], atWorldPoint: wheels[i].patch)
         }
 
         // Weight-on-wheels transitions after all struts updated, so a

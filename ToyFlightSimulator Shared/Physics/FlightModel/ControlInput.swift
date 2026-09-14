@@ -10,11 +10,13 @@ public struct ControlInput {
     public let pitch: Float     // -1...1
     public let roll: Float      // -1...1
     public let yaw: Float       // -1...1
+    public let brake: Float     //  0...1, wheel brakes on the braked struts
 
-    public init(throttle: Float, pitch: Float, roll: Float, yaw: Float) {
+    public init(throttle: Float, pitch: Float, roll: Float, yaw: Float, brake: Float = 0) {
         self.throttle = throttle
         self.pitch = pitch
         self.roll = roll
         self.yaw = yaw
+        self.brake = brake
     }
 }

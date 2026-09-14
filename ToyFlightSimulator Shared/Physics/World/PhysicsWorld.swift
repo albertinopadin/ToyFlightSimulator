@@ -12,6 +12,13 @@ enum PhysicsUpdateType {
     case HeckerVerlet
 }
 
+/// A static-plane raycast hit: distance along the ray, and the surface
+/// normal there (the plane's), which the tire model needs.
+struct RayHit {
+    let distance: Float
+    let normal: float3
+}
+
 final class PhysicsWorld {
     /// Fixed simulation step. Physics must not change with the menu's
     /// 30–120 Hz refresh selection; before B-timestep it did, because
@@ -143,17 +150,17 @@ final class PhysicsWorld {
         }
     }
 
-    /// Distance to the nearest static plane along a ray, or nil. O(planes)
-    /// per call; every current scene has one.
-    public func raycastStaticPlanes(from origin: float3, direction: float3) -> Float? {
-        var nearest: Float? = nil
+    /// Nearest static plane along a ray, or nil. O(planes) per call; every
+    /// current scene has one.
+    public func raycastStaticPlanes(from origin: float3, direction: float3) -> RayHit? {
+        var nearest: RayHit? = nil
         for case let plane as PlaneRigidBody in entities where plane.isStatic {
             if let t = NarrowPhase.rayVsPlane(origin: origin,
                                               direction: direction,
                                               planePoint: plane.getPosition(),
                                               planeNormal: plane.collisionNormal),
-               t < (nearest ?? .infinity) {
-                nearest = t
+               t < (nearest?.distance ?? .infinity) {
+                nearest = RayHit(distance: t, normal: plane.collisionNormal)
             }
         }
         

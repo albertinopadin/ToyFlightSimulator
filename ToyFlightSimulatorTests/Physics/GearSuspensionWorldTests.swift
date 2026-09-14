@@ -5,7 +5,11 @@
 //  B.5 (B-suspension, part 2): the B-phase counterpart of CompoundBodyTests —
 //  the real LandingGearSuspension driving the live F-22 gear spec through the
 //  body's force hook, over the compound colliders and corrected response, end
-//  to end and Metal-free (detached bodies, plan rule 3).
+//  to end and Metal-free (detached bodies, plan rule 3). D.2 adds the ground
+//  handling cases: the tire model's brakes, grip, rolling resistance, and
+//  holding, as physics numbers on the same rig (the plan keeps aircraft out
+//  of the parity goldens). Every band was reproduced in a scratch replay of
+//  the struts, the tire solve, and the Verlet step before the tests ran.
 //
 
 import Foundation
@@ -25,19 +29,28 @@ struct GearSuspensionWorldTests {
     /// Metal-free stand-in for Aircraft: drives the real LandingGearSuspension
     /// from the body's force hook. A detached body's pose has the identity
     /// rotation, i.e. a level aircraft. Node rotation and the animator gate
-    /// are B.5's in-app checks.
+    /// are B.5's in-app checks. `brake` is the B key (0…1); `extraForce` is
+    /// added to the body before the suspension runs, where the flight model's
+    /// thrust would be, so the tire solve's prediction includes it. The hook
+    /// captures the rig weakly: a test must keep its `rig` alive through the
+    /// run (use it afterwards), or the suspension silently stops and the jet
+    /// drops onto its frictionless belly.
     private final class GearRig {
         let body: RigidBody
         let suspension: LandingGearSuspension
         var gearDeployed = true
+        var brake: Float = 0
+        var extraForce: float3 = .zero
 
         init(body: RigidBody, struts: [SuspensionStrut]) {
             self.body = body
             self.suspension = LandingGearSuspension(struts: struts)
             body.forceGenerator = { [weak self] body, substepDelta, world in
                 guard let self else { return }
+                body.force += self.extraForce
                 self.suspension.accumulateForces(body: body,
                                                  gearDeployed: self.gearDeployed,
+                                                 brake: self.brake,
                                                  world: world,
                                                  substepDelta: substepDelta)
             }
@@ -184,5 +197,121 @@ struct GearSuspensionWorldTests {
         // The 0.2 bounce comes back at ≈1.3 m/s, under the 2 m/s boundary:
         // one crash, then scrapes while it settles on the belly.
         #expect(contacts.filter { $0.cls == .impact }.count == 1)
+    }
+
+    // MARK: - D.2: tires, brakes, and holding
+
+    /// The F-22 settled on its struts for 10 s: ride height 1.93 m, the
+    /// static loads on the wheels, no motion.
+    private func makeSettledF22() -> (world: PhysicsWorld, body: RigidBody, rig: GearRig) {
+        let rigged = makeF22OnGear(startY: 2.5)
+        for _ in 0..<600 { rigged.world.update(deltaTime: Self.dt) }
+        return rigged
+    }
+
+    @Test("the jet stops: full brakes from 40 m/s bring it under 0.5 m/s within 12 s, in 150…260 m")
+    func brakingStop() {
+        // μ = 0.02 + 0.5 = 0.52 on the mains, which carry 89% of the weight
+        // (a body that cannot pitch shares the struts' compression, so the
+        // load splits by spring rate): a ≈ 0.52 · 0.89 · g ≈ 4.5 m/s², a stop
+        // in about 9 s and 180 m. The replay gives 8.7 s and 175 m; the band
+        // also covers D.3's geometric split and braking pitch.
+        let (world, body, rig) = makeSettledF22()
+        let start = body.getPosition()
+        body.velocity = [0, 0, 40]
+        rig.brake = 1
+
+        var stopTime: Float? = nil
+        for i in 0..<(12 * 60) {
+            world.update(deltaTime: Self.dt)
+            if stopTime == nil && simd_length(body.velocity) < 0.5 {
+                stopTime = Float(i + 1) * Self.dt
+            }
+        }
+
+        #expect(stopTime != nil, "still moving after 12 s")
+        let distance = simd_length(body.getPosition() - start)
+        #expect(distance >= 150 && distance <= 260, "roll-out \(distance) m")
+        #expect(rig.suspension.weightOnWheels)
+    }
+
+    @Test("a crab settles: 5 m/s sideways is gone within 2 s, in under 3 m")
+    func crabSettles() {
+        // Lateral grip 0.8 × 294 kN ≈ 235 kN, up to 7.8 m/s² against the
+        // drift: about 0.65 s, the last centimetres per second held within
+        // one substep (the replay: 0.63 s, 1.6 m).
+        let (world, body, rig) = makeSettledF22()
+        let start = body.getPosition()
+        body.velocity = [5, 0, 0]
+
+        for _ in 0..<(2 * 60) { world.update(deltaTime: Self.dt) }
+
+        #expect(abs(body.velocity.x) < 0.1)
+        #expect(simd_length(body.getPosition() - start) < 3)
+        #expect(rig.suspension.weightOnWheels, "still on its wheels: the grip came from the tires")
+    }
+
+    @Test("coasting: rolling resistance alone takes 0.98 m/s off 20 m/s in 5 s")
+    func coasting() {
+        // 0.02 · g ≈ 0.196 m/s² for 5 s; a taxiing jet coasts a long way.
+        let (world, body, rig) = makeSettledF22()
+        body.velocity = [0, 0, 20]
+
+        for _ in 0..<(5 * 60) { world.update(deltaTime: Self.dt) }
+
+        #expect(abs(simd_length(body.velocity) - (20 - 0.98)) <= 0.2)
+        #expect(rig.suspension.weightOnWheels)
+    }
+
+    @Test("gear up: the belly slide keeps its speed — airframe contacts carry no friction")
+    func gearUpSlides() {
+        // Pins the boundary of this step: friction lives on the wheels only;
+        // contact friction is a D.4 item.
+        let (world, body, rig) = makeF22OnGear(startY: 2.5)
+        rig.gearDeployed = false
+        for _ in 0..<600 { world.update(deltaTime: Self.dt) }   // the belly rest
+        body.velocity = [0, 0, 5]
+
+        for _ in 0..<(2 * 60) { world.update(deltaTime: Self.dt) }
+
+        #expect(simd_length(body.velocity) >= 4.5)
+        #expect(!rig.suspension.weightOnWheels)
+    }
+
+    @Test("parked hold: a 4 kN push, under the 5.9 kN rolling-resistance limit, moves the jet less than 1 cm in 5 s")
+    func parkedHold() {
+        // Holding friction: the demand is the tangent velocity the push
+        // would add this substep, and the unbraked wheels carry up to
+        // 0.02 × W = 5.9 kN of it. A force proportional to slip speed (the
+        // plan's first draft) would have crept at 0.34 m/s: 1.7 m in 5 s.
+        let (world, body, rig) = makeSettledF22()
+        let start = body.getPosition()
+        rig.extraForce = [0, 0, 4_000]
+
+        for _ in 0..<(5 * 60) { world.update(deltaTime: Self.dt) }
+
+        #expect(simd_length(body.getPosition() - start) < 0.01)
+        #expect(simd_length(body.velocity) < 1e-3)
+    }
+
+    @Test("brake hold and release: 100 kN against the brakes moves nothing in 5 s; 200 kN, over the 137 kN capacity, slides more than 1 m")
+    func brakeHoldAndRelease() {
+        // Capacity with the brakes on: 0.52 × 262 kN on the mains plus the
+        // nose's 0.6 kN ≈ 137 kN. Under it the wheels are solved in strut
+        // order and each takes what the ones before it left (nose 0.6, mains
+        // 68.1 and 31.2 kN against 100 kN), so nothing moves — the plan's
+        // fixed-share draft left 10 kN unopposed and crept 1.6 cm. Over it
+        // every wheel is at its limit and the jet slides: 26 m in the replay.
+        let (world, body, rig) = makeSettledF22()
+        let start = body.getPosition()
+        rig.brake = 1
+        rig.extraForce = [0, 0, 100_000]
+        for _ in 0..<(5 * 60) { world.update(deltaTime: Self.dt) }
+        #expect(simd_length(body.getPosition() - start) < 0.01, "held")
+
+        let held = body.getPosition()
+        rig.extraForce = [0, 0, 200_000]
+        for _ in 0..<(5 * 60) { world.update(deltaTime: Self.dt) }
+        #expect(simd_length(body.getPosition() - held) > 1, "the wheels slide once the push exceeds the friction limit")
     }
 }

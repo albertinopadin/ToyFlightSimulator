@@ -46,7 +46,8 @@ enum AircraftLandingGearSpec {
                         springRate: 1_100_000,
                         compressionDamping: 146_000,
                         reboundDamping: 219_000,
-                        maxSupportForce: 400_000),
+                        maxSupportForce: 400_000,
+                        hasBrakes: true),
         SuspensionStrut(name: "mainGearRight",
                         attachLocal: [1.62, -0.55, -0.9],
                         restLength: 1.05,
@@ -55,7 +56,8 @@ enum AircraftLandingGearSpec {
                         springRate: 1_100_000,
                         compressionDamping: 146_000,
                         reboundDamping: 219_000,
-                        maxSupportForce: 400_000)
+                        maxSupportForce: 400_000,
+                        hasBrakes: true)
     ]
 
     /// Static stance for a level aircraft with equal-reach struts: every strut

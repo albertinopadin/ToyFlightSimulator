@@ -72,6 +72,12 @@ struct AircraftLandingGearSpecTests {
         #expect(left.compressionDamping == right.compressionDamping)
         #expect(left.reboundDamping == right.reboundDamping)
         #expect(left.maxSupportForce == right.maxSupportForce)
+        #expect(left.hasBrakes == right.hasBrakes)
+    }
+
+    @Test("brakes on the mains only (D.2): the nose wheel is never braked")
+    func brakesOnTheMainsOnly() {
+        #expect(Self.f22.map(\.hasBrakes) == [false, true, true])
     }
 
     @Test("static stance at 30 t: compression ≈ 0.119 m, ride height ≈ 1.93 m")

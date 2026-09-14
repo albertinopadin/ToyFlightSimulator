@@ -34,6 +34,10 @@ struct SuspensionStrut {
     var reboundDamping: Float
     /// Clamp on the strut force, N, and the gear-overload threshold (B.6).
     var maxSupportForce: Float
+    
+    /// Wheel brakes act on this strut (the mains; braking the nose wheel
+    /// would flat-spot it). Default off.
+    var hasBrakes: Bool = false
 
     /// Attach point to the uncompressed wheel's contact patch, along body −Y.
     var reach: Float { restLength + wheelRadius }
@@ -47,7 +51,7 @@ enum SuspensionSolver {
     struct StrutStep: Equatable {
         let compression: Float        // meters, 0...maxTravel·scale
         let compressionRate: Float    // m/s, positive while compressing
-        let force: Float              // N along body up, never negative
+        let force: Float              // N, the strut's axial load, never negative; LandingGearSuspension applies it along the ground normal (D.2)
         let bottomedOut: Bool
         let overloaded: Bool          // unclamped force ≥ maxSupportForce, or bottomed out
 

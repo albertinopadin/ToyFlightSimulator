@@ -33,6 +33,8 @@ enum ContinuousCommand {
     case Pitch
     case Roll
     case Yaw
+    
+    case Brake
 }
 
 enum SpecialUserCommand: CaseIterable {
@@ -106,7 +108,8 @@ final class InputManager {
         .Pitch: [KeycodeValue(keyCode: .upArrow, value: pitchAxisFlipped ? -1.0 : 1.0),
                  KeycodeValue(keyCode: .downArrow, value: pitchAxisFlipped ? 1.0 : -1.0)],
         .Roll: [KeycodeValue(keyCode: .rightArrow, value: 1.0), KeycodeValue(keyCode: .leftArrow, value: -1.0)],
-        .Yaw: [KeycodeValue(keyCode: .e, value: -1.0), KeycodeValue(keyCode: .q, value: 1.0)]
+        .Yaw: [KeycodeValue(keyCode: .e, value: -1.0), KeycodeValue(keyCode: .q, value: 1.0)],
+        .Brake: [KeycodeValue(keyCode: .b, value: 1.0)]
     ]
     
     nonisolated(unsafe) private static var keyboardMappingsDiscrete: [DiscreteCommand: Keycodes] = [
