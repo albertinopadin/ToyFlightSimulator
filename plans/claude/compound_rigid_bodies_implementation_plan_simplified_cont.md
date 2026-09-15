@@ -22,6 +22,7 @@ Same as the parent: steps are edited in place to match the code, history goes in
 - **2026-09-11** — D-angular-plumbing landed (D.1, `14c0bda`): angular state on `RigidBody`, forces at points, `AngularIntegration`'s two halves in both solvers, and the lever-arm impulse behind the linear fast path, per the listings. Found at review, before the tests ran: `EulerSolver.step` had been transcribed with the orientation half only, so under `.NaiveEuler` a torque never reached ω (inert with infinite inertia; the plan's one-substep and response-sees-the-torque tests fail on it for that solver) — fixed; `PhysicsEntity.zeroForce()` had not been deleted and the Euler solver's legacy comment still named `applyCollisionResponse` — both fixed; the listings' comments had not been carried over and were added. One deviation, the owner's, kept and folded into the listings: `getInverseMassStats` computes a pair's inverse masses once in `resolvePair` and passes them to `correctPosition` and `applyImpulse` (the `InverseMassStats` tuple typealias), which D.3's iterations reuse; D.3.5's `resolvePair` listing is synced to the signatures. Tests as listed (14: seven, five, two, and the torque assertion), every number reproduced first, all green first run; the 72 000-substep soak's discriminating claim reproduced too (the bare matrix product drifts to 4.7e-5 in column length and 9.1e-5 in determinant where the quaternion path holds 1.2e-7 and 4.8e-7). Full serial suite 368 tests in 55 suites plus 20 XCTest; dry run byte-identical. CLAUDE.md's Physics paragraph carries the D.1 entry. `PhysicsWorld.swift` grew by seven lines, not the one D.2 accounted for (comments), so D.2's `raycastStaticPlanes` note moves to 146–161. Exit criterion 1 closed; 4 and 5 hold for D.1 and stay open for D.2 and D.3; 6 waits on the push.
 - **2026-09-14, D.2 listing** — the `accumulateForces` listing used `wheels` and `tireForces` without declaring them. The prose below it described them (class scratch sized in `init(struts:)`), but the listings are the transcription contract, and a transcription stops at the first `wheels[i]`. The declarations and the `init(struts:)` sizing are now in the `LandingGearSuspension.swift` bullet, with the placeholder `TireModel.Wheel` the sizing needs (five non-optional fields, no default init) and a note that `resetToAirborne` need not clear the scratch, because pass 1 rewrites every entry before pass 2 reads. The prose below the listing points at the declarations instead of restating them. No number or behavior changed.
 - **2026-09-14** — D-tires landed (D.2, `9c59670`): `TireModel`, the two-pass `accumulateForces` with the load along the ground normal, `RayHit`, the brake channel and the B key, `hasBrakes` on the mains, per the listings. The owner's transcription matched the listings line for line; one deviation, kept and folded into the listing: I⁻¹ in world axes is read once into `bodyInverseInertiaWorld` and shared by the prediction and the solve. The listings' comments had not been carried over and were added throughout; beyond the listings, the strut-axis comment no longer says the force pushes along body up, `raycastStaticPlanes`' doc comment says nearest plane rather than distance, `StrutStep.force`'s comment says the load is applied along the ground normal, and `groundFrame`'s 1e-4 is explained as sin² of the rolling axis's angle from the normal (0.57°). Tests as listed, every number reproduced first in a scratch script over the shipped `TireModel` and `SuspensionSolver` sources (the world bands through a level-aircraft replay of the struts, the tire solve, and the Verlet step: stop in 8.7 s and 175 m, crab gone in 0.63 s and 1.6 m, coast to 19.02, holds at nanometres, 26.2 m slide at 200 kN); one wording fix, the friction-circle case's uncapped quadrature is 954 N, not 940. Found at the first run, in the tests rather than the code: the crab and coasting cases discarded the rig, whose force hook captures it weakly, so the suspension silently stopped and the jet dropped onto its frictionless belly (velocity untouched); both hold the rig now and assert it is still on its wheels, and `GearRig`'s doc comment carries the rule. Two extras: the raycast test also checks the hit's normal, and `AircraftLandingGearSpecTests` pins brakes on the mains only. Full serial suite 389 tests in 56 suites plus 20 XCTest; dry run byte-identical; clean parity re-run green. CLAUDE.md's Landing gear paragraph, Input commands, and Debugging list carry the D.2 entry. Line shifts for D.3: `LandingGearSuspension.swift` grew by 64 lines, `PhysicsWorld.swift` by 7 (`raycastStaticPlanes` now at 155–168), `Aircraft.swift` by 2, `SuspensionStrut.swift` by 4, `ControlInput.swift` by 2. Exit criterion 2's test half closed; 4 and 5 hold for D.2; the four keyboard checks stay the owner's; 6 waits on the push.
+- **2026-09-15** — D-attitude landed (D.3, `666afcf`): the inertia on the flight model, the rate controller inside the step, nosewheel steering, the two-cap capsule manifold, the pair solve, and classification at the contact point, per the listings. Found at review, before the tests ran: `noteDeepest` had been transcribed as `guard var deepest else { … }`, which shadows the inout parameter with a copy, so a deeper later contact never updated the index — fixed, and pinned by a new `NarrowPhaseTests` case that lists the deeper collider second on both dispatch paths (every existing multi-contact case listed it first). Two deviations, the owner's, kept and folded into the listings: `InverseMassStats` carries the pair's world inverse-inertia tensors, computed once in `getInverseMassStats` and read by `applyImpulse` and `solveManifold`; the steered rolling direction is `rollingDirection`. The listings' comments had not been carried over and were added throughout; beyond the listings, `reportAirframeContact`'s parameter is `preImpactRelativeVelocity` as listed, `FlightModel`'s doc comment no longer describes the kinematic path, `staticStance`'s doc comment carries the pitch-equilibrium note, and the D.2 `LandingGearSuspensionTests` pass `steer: 0` at thirteen call sites. Tests as listed, every number reproduced first in a scratch replay of the shipped strut solver, tire model, controller, gear spec, and suspension sources against a minimal body, the Verlet step, a two-cap plane narrow phase, and the pair solve: the static split 0.165/0.114 m at −0.48°, the nose 54 substeps after the mains, steering 16.5° in 2 s, the braking dive 0.145 m and a 10.6 s / 213 m stop, the belly rest still with eight passes and rocking at 0.028 rad/s with one (the Decisions' 0.029), the brake-hold transient 4.4 cm and −1.80° (the Numbers' own), the controller 0.632/0.999/0.854, the two-cap solve −0.517 after one pass and 0.002 after eight. Two test-design changes against the bullets, both geometric: the rotation-only strike uses a 0.6 m post behind the right wing's trailing corner (a wall along the whole edge puts the clipped centroid on the wing's centerline, 2.5 m/s), and the ball drops onto the fuselage top (beside it at y 0.3 it starts inside the 13 m wing box). Full serial suite 405 tests in 57 suites plus 20 XCTest; dry run byte-identical; clean parity re-run green. CLAUDE.md carries the D.3 entries. Exit criterion 3's test half closed; 4 and 5 hold for D.3; the in-app list stays the owner's; 6 waits on the push.
 
 ## Where Phase B left the engine
 
@@ -1489,9 +1490,11 @@ Aircraft without a body or without a flight model keep the kinematic path unchan
 
 Line numbers: `FlightModel.swift`, `F22SimpleFlightModel.swift`, and the `Aircraft.swift` property block are as of `82f852b`; `Aircraft.doUpdate`/`generateForces` and `LandingGearSuspension.accumulateForces` are after D.2 (locate by the text quoted); `NarrowPhase.shapeVsPlane` is after C.1 (locate by the `// MARK: - Shape vs plane` section); `HeckerCollisionResponse.resolvePair` and `applyImpulse` are after D.1; `TouchdownReporter` and the `applyAircraftSwap` wiring are as of `82f852b`.
 
+**Landed 2026-09-15** (`666afcf`), goldens untouched (regeneration dry run byte-identical: every sphere pair has one contact and takes the one pass, and no harness scenario has an aircraft). The owner transcribed the listings; review found one transcription defect, fixed before the tests ran: `noteDeepest` was written as `guard var deepest else { … }`, which shadows the inout parameter with a copy, so a deeper later contact never updated the index and position correction would have acted at a pair's first contact. The existing suites did not catch it because every multi-contact case listed its deepest collider first; `NarrowPhaseTests.deepestIndexFollowsLaterDeeperContact` now lists it second, on both dispatch paths. Two deviations, the owner's, kept and folded into the listings below: `InverseMassStats` carries the pair's world inverse-inertia tensors, computed once in `getInverseMassStats` and read by `applyImpulse` and `solveManifold` (which takes the tuple instead of computing its own); the steered rolling direction is named `rollingDirection`. The listings' comments had not been carried over and were added throughout (the controller's, `hasFlightPhysics`, `syncMassProperties`, the `doUpdate` and `generateForces` comments, `inertia` on the protocol and the F-22, `maxSteerAngle`, the steering comment, `shapeVsPlane`'s and the capsule's, `noteDeepest`'s, `ManifoldState`, `manifoldIterations`, `resolvePair`'s, `solveManifold`'s, the reporter's). Beyond the listings: `reportAirframeContact`'s parameter is `preImpactRelativeVelocity` as listed (the transcription had kept `preImpactVelocity`), `FlightModel`'s doc comment no longer describes the kinematic attitude path or its two follow-ups, `staticStance`'s doc comment carries the pitch-equilibrium note, and the D.2 `LandingGearSuspensionTests` pass `steer: 0` at thirteen call sites this step did not list. Tests as listed, every expected value reproduced first in a scratch replay — the shipped `SuspensionSolver`, `TireModel`, `AttitudeRateController`, `AircraftLandingGearSpec`, and `LandingGearSuspension` sources compiled verbatim against a minimal body, the Verlet step, a plane narrow phase with the two-cap capsule, and the pair solve: the static split lands at 0.165/0.114 m and −0.48° (the Numbers' 0.162 and −0.45° ignore the stance's own tilt; the bands hold), the nose touches 54 substeps after the mains, the one-wheel arrival ends level with the mains equal, steering swings the heading 16.5° in 2 s (peak yaw rate 0.18 rad/s against the kinematic 0.48), braking dips the nose 0.145 m and stops the jet in 10.6 s and 213 m (D.2's 8.7 s and 175 m for a body that cannot pitch; inside its band), the belly rest is still with eight passes and rocks at 0.028 rad/s with one and 0.009 with four (the Decisions' 0.029 and 0.008), the brake-hold transient is 4.4 cm and −1.80° (the Numbers' own), the controller gives 0.632 and 0.999 with 0.854 rad of roll (the discrete sum of the new ω each substep; the continuous integral is 0.850), and the two-cap solve leaves the first cap at −0.517 m/s after one pass and 0.002 after eight, with j₁ = 8038 and j₂ = 6934 N·s. Test design beyond the bullets: the controller's integration case runs on both solvers; the pair-solve case recovers the private accumulated impulses from the body's Δv and Δω (j₁ + j₂ = m·Δv_y and 7.5 j₁ − 8.7 j₂ = I_x·Δω_x); the rotation-only strike uses a 0.6 m post 1 cm behind the right wing's trailing corner rather than a wall — a wall along the whole trailing edge puts the clipped face's centroid on the wing's centerline and reads 2.5 m/s, the post's centroid at x 6.35 reads 3.2 (the bullet's 3.3 is the corner itself); the moving-object case drops the ball onto the fuselage top, because a ball beside the fuselage at y 0.3 starts inside the 13 m wing box; the rotated arrivals start 1 cm above the lowest patch's contact height for the rotation (`strutContactHeight(rotation:)`), where the level 2.05 + 0.01 would start a 4° nose-up body 5 cm into the ground. Found at the first run, in the tests rather than the code: the capsule case compared contact points with an exact `Set` equality (float feet at ±2 within rounding; tolerance-based now), and the moving-object case's first contact was the wings. Full serial suite 405 Swift Testing tests in 57 suites plus 20 XCTest cases; dry run byte-identical; clean parity re-run green. CLAUDE.md carries the D.3 entries from the list at the end of this document. In-app: the owner ran the game before the review; the "Expected behavior" list stays the owner's (Phase D exit criterion 3). The listings below are the shipped code.
+
 ### D.3.1 — inertia on the flight model, synced like mass
 
-- [ ] **Edit:** `Physics/FlightModel/FlightModel.swift`, after `var mass: Float { get }` (line 9):
+- [x] **Edit:** `Physics/FlightModel/FlightModel.swift`, after `var mass: Float { get }` (line 9):
 
 ```swift
     /// Principal moments of inertia about the body axes, kg·m²: x (pitch),
@@ -1503,7 +1506,7 @@ Line numbers: `FlightModel.swift`, `F22SimpleFlightModel.swift`, and the `Aircra
 
 and its doc comment's "Note" (lines 29–39) is replaced by: "Torque is not returned here. Attitude is a rate controller on the aircraft (`AttitudeRateController`) whose torque is added to the body inside the step; aerodynamic moments would be the next thing a flight model returns."
 
-- [ ] **Edit:** `Physics/FlightModel/Models/F22SimpleFlightModel.swift`, after `public let mass` (line 9):
+- [x] **Edit:** `Physics/FlightModel/Models/F22SimpleFlightModel.swift`, after `public let mass` (line 9):
 
 ```swift
     /// Estimate scaled from the public F-16 model (NASA TP-1538: 12 875 /
@@ -1514,7 +1517,7 @@ and its doc comment's "Note" (lines 29–39) is replaced by: "Torque is not retu
     public let inertia: float3 = [390_000, 440_000, 80_000]   // pitch, yaw, roll
 ```
 
-- [ ] **Edit:** `GameObjects/Aircraft.swift`. The two mass mirrors (`flightModel.didSet`, lines 86–92, and the first half of `rigidBody.didSet`, lines 102–107) become one call; the long "Fix 3" comment above `flightModel` shrinks to its first paragraph plus a pointer to the debugging note:
+- [x] **Edit:** `GameObjects/Aircraft.swift`. The two mass mirrors (`flightModel.didSet`, lines 86–92, and the first half of `rigidBody.didSet`, lines 102–107) become one call; the long "Fix 3" comment above `flightModel` shrinks to its first paragraph plus a pointer to the debugging note:
 
 ```swift
     var flightModel: FlightModel? {
@@ -1555,7 +1558,7 @@ and its doc comment's "Note" (lines 29–39) is replaced by: "Torque is not retu
 
 ### D.3.2 — the rate controller
 
-- [ ] **File (new):** `ToyFlightSimulator Shared/Physics/FlightModel/AttitudeRateController.swift`. `AttitudeDynamics` stays in `Aircraft.swift`; both paths read it.
+- [x] **File (new):** `ToyFlightSimulator Shared/Physics/FlightModel/AttitudeRateController.swift`. `AttitudeDynamics` stays in `Aircraft.swift`; both paths read it.
 
 ```swift
 //
@@ -1598,7 +1601,7 @@ enum AttitudeRateController {
 }
 ```
 
-- [ ] **Edit:** `GameObjects/Aircraft.swift`, `doUpdate` and `generateForces`. The kinematic rotation runs only without flight physics; the controller runs inside the step, outside the input guard:
+- [x] **Edit:** `GameObjects/Aircraft.swift`, `doUpdate` and `generateForces`. The kinematic rotation runs only without flight physics; the controller runs inside the step, outside the input guard:
 
 ```swift
     /// Aircraft with a body and a flight model fly by forces and torques in
@@ -1680,7 +1683,7 @@ The `currentPitchRate/RollRate/YawRate` fields and the two filter functions stay
 
 ### D.3.3 — nosewheel steering
 
-- [ ] **Edit:** `Physics/Vehicle/SuspensionStrut.swift`, after `var hasBrakes` (D.2):
+- [x] **Edit:** `Physics/Vehicle/SuspensionStrut.swift`, after `var hasBrakes` (D.2):
 
 ```swift
     /// Steering range of this strut's wheel, radians, driven by the yaw
@@ -1690,7 +1693,7 @@ The `currentPitchRate/RollRate/YawRate` fields and the two filter functions stay
 
 `AircraftLandingGearSpec`: the nose strut gets `maxSteerAngle: 0.35` (20°). Kinematic steering geometry gives ω = v·tan δ / wheelbase ≈ 0.48 rad/s at 8 m/s, about 27°/s, before the mains' side grip and the controller's rate damping slow it. Tune in-app.
 
-- [ ] **Edit:** `Physics/Vehicle/LandingGearSuspension.swift`, `accumulateForces` gains `steer: Float` (−1…1, the yaw command) after `brake:`, and the wheel's rolling direction per strut becomes:
+- [x] **Edit:** `Physics/Vehicle/LandingGearSuspension.swift`, `accumulateForces` gains `steer: Float` (−1…1, the yaw command) after `brake:`, and the wheel's rolling direction per strut becomes:
 
 ```swift
             // A steered wheel rolls along body forward turned about body up by
@@ -1698,16 +1701,16 @@ The `currentPitchRate/RollRate/YawRate` fields and the two filter functions stay
             // (−yaw × maxYawRate), so Q and E turn the nose the same way on
             // the ground as in the air. The nose tire's side grip at 5.2 m
             // ahead of the origin is the yaw torque.
-            let rolling = strut.maxSteerAngle == 0
+            let rollingDirection = strut.maxSteerAngle == 0
                 ? forward
                 : simd_quatf(angle: -steer * strut.maxSteerAngle, axis: up).act(forward)
 ```
 
-and `rollingDirection: rolling` where pass 1 builds the wheel.
+and `rollingDirection: rollingDirection` where pass 1 builds the wheel.
 
 ### D.3.4 — the capsule rests on both ends
 
-- [ ] **Edit:** `Physics/Collision/NarrowPhase.swift`, `shapeVsPlane`. It appends into the caller's array (none, one, or two contacts) instead of returning one, and the plane branch of `generateContacts` notes the deepest index per appended contact. Sphere and box bodies are unchanged apart from the `contacts.append`; the capsule case becomes:
+- [x] **Edit:** `Physics/Collision/NarrowPhase.swift`, `shapeVsPlane`. It appends into the caller's array (none, one, or two contacts) instead of returning one, and the plane branch of `generateContacts` notes the deepest index per appended contact. Sphere and box bodies are unchanged apart from the `contacts.append`; the capsule case becomes:
 
 ```swift
     /// Appends the contacts of one collider against the infinite plane
@@ -1756,13 +1759,44 @@ In `generateContacts`, the plane branch becomes:
             }
 ```
 
-with `append(_:to:deepest:)` split into the append and a `noteDeepest(_:in:deepest:)` that keeps the tie rule ("ties keep the earlier"). The volume-volume loop keeps using `append`.
+with `append(_:to:deepest:)` split into the append and a `noteDeepest(_:in:deepest:)` that keeps the tie rule ("ties keep the earlier"). The volume-volume loop keeps using `append`. As shipped (the comparison written against the inout parameter directly — a `guard var deepest` shadows it with a copy, and a deeper later contact is never recorded):
+
+```swift
+    private static func noteDeepest(_ candidateIndex: Int, in contacts: [Contact], deepest: inout Int?) {
+        if let current = deepest, contacts[current].depth >= contacts[candidateIndex].depth { return }
+        deepest = candidateIndex
+    }
+
+    private static func append(_ contact: Contact, to contacts: inout [Contact], deepest: inout Int?) {
+        contacts.append(contact)
+        noteDeepest(contacts.count - 1, in: contacts, deepest: &deepest)
+    }
+```
 
 Call sites: `generateContacts`; `CompoundBodyTests.bankedPoseContactsWingsOnly`; seven cases in `NarrowPhaseTests`. A three-line helper in each test file, `planeContacts(_:planePoint:planeNormal:) -> [Contact]`, keeps each edit to one line. A level belly slap now fires two `onContact`s per substep (both caps); `TouchdownReporter` prints one `[CRASH]` for them (D.3.6 dedupes impacts per frame per other body). With two contacts, the pair needs D.3.5's solve: one impulse pass leaves the first cap approaching again.
 
 ### D.3.5 — one solve per pair
 
-- [ ] **Edit:** `Physics/CollisionResponse/HeckerCollisionResponse.swift` (after D.1). `resolvePair` sends a pair with more than one contact to `solveManifold`; a single-contact pair keeps D.1's path, which is what keeps every sphere golden fixed. D.1 as shipped computes the pair's inverse masses once (`getInverseMassStats`) and passes them to both halves; `solveManifold` below computes its own and can take the same tuple at transcription:
+- [x] **Edit:** `Physics/CollisionResponse/HeckerCollisionResponse.swift` (after D.1). `resolvePair` sends a pair with more than one contact to `solveManifold`; a single-contact pair keeps D.1's path, which is what keeps every sphere golden fixed. D.1 as shipped computes the pair's inverse masses once (`getInverseMassStats`) and passes them to both halves; the owner's transcription extended that tuple with the pair's world inverse-inertia tensors, computed once per pair and read by `applyImpulse` and `solveManifold` (kept at review — `inverseInertiaWorld()` rebuilds R · I⁻¹ · Rᵀ from the pose on every call):
+
+```swift
+    typealias InverseMassStats = (inverseMassA: Float,
+                                  inverseMassB: Float,
+                                  inverseMassSum: Float,
+                                  inverseInertiaA: float3x3,
+                                  inverseInertiaB: float3x3)
+
+    static func getInverseMassStats(_ entityA: RigidBody, _ entityB: RigidBody) -> InverseMassStats {
+        let invMassA: Float = entityA.isStatic ? 0 : 1 / entityA.mass
+        let invMassB: Float = entityB.isStatic ? 0 : 1 / entityB.mass
+        let invMassSum = invMassA + invMassB
+        let invInertiaA = entityA.isStatic ? RigidBody.infiniteInertia : entityA.inverseInertiaWorld()
+        let invInertiaB = entityB.isStatic ? RigidBody.infiniteInertia : entityB.inverseInertiaWorld()
+        return (invMassA, invMassB, invMassSum, invInertiaA, invInertiaB)
+    }
+```
+
+`applyImpulse`'s general path reads `inverseMassStats.inverseInertiaA/B` where D.1's listing computed them locally; the arithmetic is the same. The rest:
 
 ```swift
     /// Iterations of the pair solve for a pair with more than one contact.
@@ -1792,7 +1826,7 @@ Call sites: `generateContacts`; `CompoundBodyTests.bankedPoseContactsWingsOnly`;
             // sequence exactly.
             applyImpulse(entityA, entityB, contact: contacts[deepest], inverseMassStats: invMassStats)
         } else {
-            solveManifold(entityA, entityB, contacts: contacts[firstNew...])
+            solveManifold(entityA, entityB, contacts: contacts[firstNew...], inverseMassStats: invMassStats)
         }
         
         for contact in contacts[firstNew...] {
@@ -1809,13 +1843,12 @@ Call sites: `generateContacts`; `CompoundBodyTests.bankedPoseContactsWingsOnly`;
     /// so one pass over two caps leaves the first approaching again at about
     /// the speed it arrived; eight passes converge. Position correction
     /// stays linear at the deepest contact (D.4 for the angular share).
-    static func solveManifold(_ entityA: RigidBody, _ entityB: RigidBody, contacts: ArraySlice<Contact>) {
+    static func solveManifold(_ entityA: RigidBody,
+                              _ entityB: RigidBody,
+                              contacts: ArraySlice<Contact>,
+                              inverseMassStats: InverseMassStats) {
         assert(contacts.count <= ManifoldState.capacity, "more contacts in one pair than the specs can produce")
-        let invMassA: Float = entityA.isStatic ? 0 : 1 / entityA.mass
-        let invMassB: Float = entityB.isStatic ? 0 : 1 / entityB.mass
-        guard invMassA + invMassB > 0 else { return }
-        let invInertiaA = entityA.isStatic ? RigidBody.infiniteInertia : entityA.inverseInertiaWorld()
-        let invInertiaB = entityB.isStatic ? RigidBody.infiniteInertia : entityB.inverseInertiaWorld()
+        guard inverseMassStats.inverseMassSum > 0 else { return }
         let positionA = entityA.getPosition()
         let positionB = entityB.getPosition()
 
@@ -1826,9 +1859,9 @@ Call sites: `generateContacts`; `CompoundBodyTests.bankedPoseContactsWingsOnly`;
             let rB = contact.point - positionB
             let approach = dot(entityA.velocity(atWorldPoint: contact.point) - entityB.velocity(atWorldPoint: contact.point), n)
             let e = -approach > restitutionVelocityThreshold ? min(entityA.restitution, entityB.restitution) : 0
-            let angularA = dot(cross(invInertiaA * cross(rA, n), rA), n)
-            let angularB = dot(cross(invInertiaB * cross(rB, n), rB), n)
-            state.effectiveMass[slot] = 1 / (invMassA + invMassB + angularA + angularB)
+            let angularA = dot(cross(inverseMassStats.inverseInertiaA * cross(rA, n), rA), n)
+            let angularB = dot(cross(inverseMassStats.inverseInertiaB * cross(rB, n), rB), n)
+            state.effectiveMass[slot] = 1 / (inverseMassStats.inverseMassSum + angularA + angularB)
             // Target normal velocity: −e × the incoming approach (0 below the
             // threshold), the same bounce the single impulse produces.
             state.target[slot] = approach < 0 ? -e * approach : 0
@@ -1846,12 +1879,12 @@ Call sites: `generateContacts`; `CompoundBodyTests.bankedPoseContactsWingsOnly`;
                 let j = state.accumulated[slot] - previous
                 guard j != 0 else { continue }
                 if !entityA.isStatic {
-                    entityA.velocity += n * (j * invMassA)
-                    entityA.angularVelocity += invInertiaA * cross(rA, n * j)
+                    entityA.velocity += n * (j * inverseMassStats.inverseMassA)
+                    entityA.angularVelocity += inverseMassStats.inverseInertiaA * cross(rA, n * j)
                 }
                 if !entityB.isStatic {
-                    entityB.velocity -= n * (j * invMassB)
-                    entityB.angularVelocity -= invInertiaB * cross(rB, n * j)
+                    entityB.velocity -= n * (j * inverseMassStats.inverseMassB)
+                    entityB.angularVelocity -= inverseMassStats.inverseInertiaB * cross(rB, n * j)
                 }
             }
         }
@@ -1873,7 +1906,7 @@ Why the goldens hold: every sphere pair has one contact and takes the first bran
 
 ### D.3.6 — crash classification at the contact point
 
-- [ ] **Edit:** `Physics/Debug/TouchdownReporter.swift`, `reportAirframeContact` (lines 37–55). The velocity it classifies is the relative velocity at the contact point, and impacts are printed once per frame per other body:
+- [x] **Edit:** `Physics/Debug/TouchdownReporter.swift`, `reportAirframeContact` (lines 37–55). The velocity it classifies is the relative velocity at the contact point, and impacts are printed once per frame per other body:
 
 ```swift
     /// Scrapes are throttled per collider name (a sliding fuselage re-contacts
@@ -1908,7 +1941,7 @@ Why the goldens hold: every sphere pair has one contact and takes the first bran
 
 with `private var lastImpactLog: [ObjectIdentifier: Double] = [:]` next to `lastScrapeLog`. `AirframeContactClassifier` is unchanged: it already takes a velocity and a normal; its doc comment says the velocity is now the relative point velocity.
 
-- [ ] **Edit:** `Scenes/FlightboxWithPhysics.swift`, the `onContact` wiring in `applyAircraftSwap` (lines 244–250):
+- [x] **Edit:** `Scenes/FlightboxWithPhysics.swift`, the `onContact` wiring in `applyAircraftSwap` (lines 244–250):
 
 ```swift
             acRigidBody.onContact = { [weak playerAircraft] contact, other in
@@ -1946,13 +1979,13 @@ with `private var lastImpactLog: [ObjectIdentifier: Double] = [:]` next to `last
 
 ### Tests for this step (Metal-free, `.tags(.physics)`)
 
-- [ ] **File (new):** `ToyFlightSimulatorTests/Physics/AttitudeRateControllerTests.swift` (3): `commandedRates` maps pitch/yaw/roll with the negations and nil to zero; `torque` equals `I·(ω_cmd − ω)·(1 − e^(−h/τ))/h` per axis for hand values; and the integration check, on a detached body with `inverseInertiaLocal = diag(1/I)`, gravity off, a hook adding the controller torque for a constant roll command of 1 rad/s with τ = 0.15 s: after 18 substeps (0.15 s) `angularVelocity.z` is 0.632 ± 0.01, after 120 (1 s) 0.999 ± 1e-3, and the accumulated roll angle `atan2(right.y, right.x)` is t − τ(1 − e^(−t/τ)) = 0.850 ± 0.01 rad. This is the "flight feels the same" test for one axis at a time; combined inputs are the owner's circuit.
-- [ ] `GearSuspensionWorldTests`: the rig sets `body.inverseInertiaLocal` from `F22SimpleFlightModel().inertia` and runs the controller from its hook (`AttitudeRateController.torque` with `AttitudeDynamics()` and the F-22's inertia, commanded rates zero unless a test sets them) — production has the controller on the ground too, and a rig without it tests a different system (the one-wheel arrival's 26°/s above assumes its damping). **Edits (3):** `settlesOnStruts` asserts the geometric split (nose 0.162 ± 0.01, mains 0.114 ± 0.01), pitch −0.45° ± 0.15° (from `pose().rotation.forward.y`), roll within 0.05°, origin height 1.93 ± 0.02 as before; `bellyImpactClassifiesAsCrash` counts substeps with an impact (1) instead of impact contacts (a level slap has two); the D.2 **brake hold and release** case allows the nose dive that pitch freedom adds — within 2 s of the 100 kN step the origin has moved 2…8 cm forward and the pitch is −1.3°…−2.3° (the replay in Numbers: 4.4 cm and −1.80°), then over the following 5 s `|velocity| < 1e-3` and less than 1 cm more, the hold; the 200 kN release still slides more than 1 m (D.2's strict 1 cm bound stays for the body that cannot pitch; the 4 kN parked case moves 1.8 mm under this rig and needs no change). **Additions (7):** **nose settles last** (start with 4° nose-up — the rotation about X whose sign lifts `pose().rotation.forward.y` — at strut-contact height + 1 cm, sink 1 m/s: the mains compress before the nose does, and after 4 s the pitch is −0.45° ± 0.2°); **one-wheel arrival rolls level** (3° of roll, sink 1 m/s: after 3 s |roll| < 0.3° and both mains carry load within 10% of each other); **steering** (settle, `velocity = [0, 0, 8]`, `steer = 1`: after 2 s `pose().rotation.forward.x < −0.05`, and the mirror for `steer = −1`; the yaw controller damps rates, not angles, so the turn holds against it); **braking dive** (settle, `velocity = [0, 0, 40]`, brake 1: within 1 s the nose compression exceeds its static value by at least 0.05 m, and the jet still stops within 12 s); **belly rest without rocking** (gear up from 2.0 m at −1 m/s: after 5 s |pitch rate| < 0.02 rad/s and |pitch| < 1° — the band one impulse pass fails at 0.029 and eight passes meet); **the parked jet holds** (settle 10 s at its −0.45° stance, then 10 s more: the origin moves less than 1 cm along the runway and `|velocity| < 1e-3` — the first draft's tire would have drifted 2 m); **partition invariance** (the settle from 2.5 m run as 1/30 s frames and as 1/120 s frames: `pose().position` and `pose().rotation` `==` at 5 s, the `FixedTimestepTests.partitioningInvariance` pattern, parameterized over both solvers — the aircraft's force hook and the pair solve are per substep, so nothing may depend on the frame).
-- [ ] `CollisionResponseTests` additions (2): **two caps converge** (a detached body of mass 30 000 with `inverseInertiaLocal = diag(1/390_000, 1/440_000, 1/80_000)` at `[0, 1.05, 0]`, velocity `[0, −0.5, 0]`, against a static plane body, two hand-built contacts with normal `[0, 1, 0]` at `[0, 0, −7.5]` and `[0, 0, 8.7]`, through `solveManifold`: afterwards both points' normal velocity is within 0.01 m/s of zero, where one pass leaves the first at −0.52, and no accumulated impulse is negative); **single-contact pairs are untouched** (a one-contact pair through `resolvePair` leaves the velocities `==` those of `correctPosition` + `applyImpulse` alone).
-- [ ] `StructureContactTests` additions (2, the classifier at the point): **rotation-only wing strike** (the F-22 with its tensor, `velocity = .zero`, `angularVelocity = [0, 0.5, 0]`, a wall 1 cm from the right wingtip: the first contact's relative point velocity classifies `.impact` at 3.3 ± 0.3 m/s, and `stepStartVelocity` alone would say scrape); **moving object into a parked jet** (a `SphereRigidBody` at 5 m/s into the resting F-22's fuselage: `.impact` at 5 ± 0.5 m/s from the relative velocity, where the aircraft's own is zero).
-- [ ] `NarrowPhaseTests` addition (1): a capsule lying along X at height r − 0.1 emits two contacts of depth 0.1 at its two end points, deeper-or-equal first; tilted so one end is clear, it emits one.
-- [ ] `CompoundBodyTests.f22CompoundSettlesOnFuselage` stays green unedited (its assertions are a settle band and a set of names); `PhysicsWorldSmokeTests` unedited (spheres).
-- [ ] Gate: full serial suite green; dry run byte-identical; the in-app list above, the owner's circuit included. Commit as D-attitude (behavior on the aircraft; goldens untouched).
+- [x] **File (new):** `ToyFlightSimulatorTests/Physics/AttitudeRateControllerTests.swift` (3): `commandedRates` maps pitch/yaw/roll with the negations and nil to zero; `torque` equals `I·(ω_cmd − ω)·(1 − e^(−h/τ))/h` per axis for hand values; and the integration check, on a detached body with `inverseInertiaLocal = diag(1/I)`, gravity off, a hook adding the controller torque for a constant roll command of 1 rad/s with τ = 0.15 s: after 18 substeps (0.15 s) `angularVelocity.z` is 0.632 ± 0.01, after 120 (1 s) 0.999 ± 1e-3, and the accumulated roll angle `atan2(right.y, right.x)` is t − τ(1 − e^(−t/τ)) = 0.850 ± 0.01 rad. This is the "flight feels the same" test for one axis at a time; combined inputs are the owner's circuit.
+- [x] `GearSuspensionWorldTests`: the rig sets `body.inverseInertiaLocal` from `F22SimpleFlightModel().inertia` and runs the controller from its hook (`AttitudeRateController.torque` with `AttitudeDynamics()` and the F-22's inertia, commanded rates zero unless a test sets them) — production has the controller on the ground too, and a rig without it tests a different system (the one-wheel arrival's 26°/s above assumes its damping). **Edits (3):** `settlesOnStruts` asserts the geometric split (nose 0.162 ± 0.01, mains 0.114 ± 0.01), pitch −0.45° ± 0.15° (from `pose().rotation.forward.y`), roll within 0.05°, origin height 1.93 ± 0.02 as before; `bellyImpactClassifiesAsCrash` counts substeps with an impact (1) instead of impact contacts (a level slap has two); the D.2 **brake hold and release** case allows the nose dive that pitch freedom adds — within 2 s of the 100 kN step the origin has moved 2…8 cm forward and the pitch is −1.3°…−2.3° (the replay in Numbers: 4.4 cm and −1.80°), then over the following 5 s `|velocity| < 1e-3` and less than 1 cm more, the hold; the 200 kN release still slides more than 1 m (D.2's strict 1 cm bound stays for the body that cannot pitch; the 4 kN parked case moves 1.8 mm under this rig and needs no change). **Additions (7):** **nose settles last** (start with 4° nose-up — the rotation about X whose sign lifts `pose().rotation.forward.y` — at strut-contact height + 1 cm, sink 1 m/s: the mains compress before the nose does, and after 4 s the pitch is −0.45° ± 0.2°); **one-wheel arrival rolls level** (3° of roll, sink 1 m/s: after 3 s |roll| < 0.3° and both mains carry load within 10% of each other); **steering** (settle, `velocity = [0, 0, 8]`, `steer = 1`: after 2 s `pose().rotation.forward.x < −0.05`, and the mirror for `steer = −1`; the yaw controller damps rates, not angles, so the turn holds against it); **braking dive** (settle, `velocity = [0, 0, 40]`, brake 1: within 1 s the nose compression exceeds its static value by at least 0.05 m, and the jet still stops within 12 s); **belly rest without rocking** (gear up from 2.0 m at −1 m/s: after 5 s |pitch rate| < 0.02 rad/s and |pitch| < 1° — the band one impulse pass fails at 0.029 and eight passes meet); **the parked jet holds** (settle 10 s at its −0.45° stance, then 10 s more: the origin moves less than 1 cm along the runway and `|velocity| < 1e-3` — the first draft's tire would have drifted 2 m); **partition invariance** (the settle from 2.5 m run as 1/30 s frames and as 1/120 s frames: `pose().position` and `pose().rotation` `==` at 5 s, the `FixedTimestepTests.partitioningInvariance` pattern, parameterized over both solvers — the aircraft's force hook and the pair solve are per substep, so nothing may depend on the frame).
+- [x] `CollisionResponseTests` additions (2): **two caps converge** (a detached body of mass 30 000 with `inverseInertiaLocal = diag(1/390_000, 1/440_000, 1/80_000)` at `[0, 1.05, 0]`, velocity `[0, −0.5, 0]`, against a static plane body, two hand-built contacts with normal `[0, 1, 0]` at `[0, 0, −7.5]` and `[0, 0, 8.7]`, through `solveManifold`: afterwards both points' normal velocity is within 0.01 m/s of zero, where one pass leaves the first at −0.52, and no accumulated impulse is negative); **single-contact pairs are untouched** (a one-contact pair through `resolvePair` leaves the velocities `==` those of `correctPosition` + `applyImpulse` alone).
+- [x] `StructureContactTests` additions (2, the classifier at the point): **rotation-only wing strike** (the F-22 with its tensor, `velocity = .zero`, `angularVelocity = [0, 0.5, 0]`, a wall 1 cm from the right wingtip: the first contact's relative point velocity classifies `.impact` at 3.3 ± 0.3 m/s, and `stepStartVelocity` alone would say scrape); **moving object into a parked jet** (a `SphereRigidBody` at 5 m/s into the resting F-22's fuselage: `.impact` at 5 ± 0.5 m/s from the relative velocity, where the aircraft's own is zero).
+- [x] `NarrowPhaseTests` addition (1): a capsule lying along X at height r − 0.1 emits two contacts of depth 0.1 at its two end points, deeper-or-equal first; tilted so one end is clear, it emits one.
+- [x] `CompoundBodyTests.f22CompoundSettlesOnFuselage` stays green unedited (its assertions are a settle band and a set of names); `PhysicsWorldSmokeTests` unedited (spheres). *(Landed: as listed, plus one case beyond the bullets — `NarrowPhaseTests.deepestIndexFollowsLaterDeeperContact`, the deeper collider listed second on both dispatch paths, which the transcription defect above would have failed; the D.2 `LandingGearSuspensionTests` pass `steer: 0` at thirteen call sites.)*
+- [x] Gate: full serial suite green; dry run byte-identical; the in-app list above, the owner's circuit included. Commit as D-attitude (behavior on the aircraft; goldens untouched).
 
 ## D.4 — gated: the manifold solver and beyond
 
@@ -1984,9 +2017,9 @@ Research §4.5 items 4–5 and §4.6. Not planned in code. Each row names what w
 
 1. - [x] **Plumbing changes nothing measurable:** D-angular-plumbing leaves the goldens byte-identical and every suite green unedited; the exact-value tests pin the point-mass result for infinite inertia. *(`14c0bda`, 2026-09-11: dry run byte-identical; every existing suite green with only the listed `zeroForces` edit; the two `applyImpulse` cases pin the point-mass result exactly.)*
 2. - [ ] **The jet stops and steers:** `TireModelTests` and the six D.2 world tests green; in-app, brakes stop the jet from 40 m/s in about 200 m, it holds still at idle and against thrust under the brake limit, a crab settles, Q/E turn it at taxi speed. *(`9c59670`, 2026-09-14: `TireModelTests` (14) and the six world tests green in the full serial run; the four keyboard checks stay open for the owner's pass.)*
-3. - [ ] **The jet rotates under physics, and flight feels the same:** `AttitudeRateControllerTests` green (the exponential response reproduced per axis); the seven D.3 world tests, the pair-solve cases, and the point-velocity classification cases green; in-app, the owner's circuit, the parked jet that does not creep, the nose-last touchdown, the one-wheel arrival, the braking dive, ground steering in the airborne yaw direction, the rock-free belly rest, and a wingtip swung into a wall printing `[CRASH]`.
-4. - [ ] **Goldens byte-identical after every commit** (Phase D regenerates nothing). *(D.1 `14c0bda`: byte-identical. D.2 `9c59670`: byte-identical.)*
-5. - [ ] **No process-wide state:** `AttitudeRateController` and `TireModel` are pure; every new field is per body; determinism and partition tests green. *(D.1 `14c0bda`: `AngularIntegration` is two pure static functions over the entity list; every new field — `angularVelocity`, `torque`, `inverseInertiaLocal`, `stepStartAngularVelocity`, `standaloneRotation` — is per body; `FixedTimestepTests` and the parity suite green in the full run. D.2 `9c59670`: `TireModel` is an enum of static functions and constants with no storage; the new fields — `wheels` and `tireForces` on `LandingGearSuspension`, `hasBrakes` on the strut, `brake` on `ControlInput` — are per instance; `FixedTimestepTests` and the parity suite green in the full run.)*
+3. - [ ] **The jet rotates under physics, and flight feels the same:** `AttitudeRateControllerTests` green (the exponential response reproduced per axis); the seven D.3 world tests, the pair-solve cases, and the point-velocity classification cases green; in-app, the owner's circuit, the parked jet that does not creep, the nose-last touchdown, the one-wheel arrival, the braking dive, ground steering in the airborne yaw direction, the rock-free belly rest, and a wingtip swung into a wall printing `[CRASH]`. *(`666afcf`, 2026-09-15: `AttitudeRateControllerTests` (3, the integration case on both solvers), the seven D.3 world cases (steering and partition parameterized), the two pair-solve cases, the two point-velocity cases, and the capsule manifold case green in the full serial run; the in-app list stays open for the owner's pass.)*
+4. - [ ] **Goldens byte-identical after every commit** (Phase D regenerates nothing). *(D.1 `14c0bda`: byte-identical. D.2 `9c59670`: byte-identical. D.3 `666afcf`: byte-identical.)*
+5. - [ ] **No process-wide state:** `AttitudeRateController` and `TireModel` are pure; every new field is per body; determinism and partition tests green. *(D.1 `14c0bda`: `AngularIntegration` is two pure static functions over the entity list; every new field — `angularVelocity`, `torque`, `inverseInertiaLocal`, `stepStartAngularVelocity`, `standaloneRotation` — is per body; `FixedTimestepTests` and the parity suite green in the full run. D.2 `9c59670`: `TireModel` is an enum of static functions and constants with no storage; the new fields — `wheels` and `tireForces` on `LandingGearSuspension`, `hasBrakes` on the strut, `brake` on `ControlInput` — are per instance; `FixedTimestepTests` and the parity suite green in the full run. D.3 `666afcf`: `AttitudeRateController` is an enum of two static functions with no storage; the new fields — `inertia` on the flight model, `maxSteerAngle` on the strut, `lastImpactLog` on the reporter, the tensor on the aircraft's body — are per instance; `FixedTimestepTests`, the gear partition case on both solvers, and the parity suite green in the full run.)*
 6. - [ ] **CI green** on all three commits.
 
 **Implementation order:** C.1 → C.2 → D.1 → D.2 → D.3. C.2 needs C.1 (a wing over a wall is box-box). D.2 needs D.1's `addForce(_:atWorldPoint:)` and `velocity(atWorldPoint:)`. D.3 needs both. Phase C and D.1 are independent of each other; C goes first because it is smaller and stands alone.
