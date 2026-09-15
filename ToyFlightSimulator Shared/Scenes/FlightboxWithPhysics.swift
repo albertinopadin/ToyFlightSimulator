@@ -295,8 +295,13 @@ final class FlightboxWithPhysics: GameScene {
             }
             acRigidBody.onContact = { [weak playerAircraft] contact, other in
                 guard let playerAircraft, let body = playerAircraft.rigidBody else { return }
+                // The relative velocity at the contact point, pre-response:
+                // a rotating wing strikes at ω × r while the origin is still,
+                // and a moving ball into a parked jet closes at its own speed.
+                let closing = body.stepStartVelocity(atWorldPoint: contact.point) -
+                                other.stepStartVelocity(atWorldPoint: contact.point)
                 reporter.reportAirframeContact(contact,
-                                               preImpactVelocity: body.stepStartVelocity,
+                                               preImpactRelativeVelocity: closing,
                                                isGearDown: playerAircraft.isGearDown,
                                                against: other)
             }

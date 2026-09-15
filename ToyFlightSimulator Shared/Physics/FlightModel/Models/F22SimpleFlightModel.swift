@@ -7,6 +7,12 @@
 
 public final class F22SimpleFlightModel: FlightModel {
     public let mass: Float = 30_000  // 30,000 kg, ~66,000 lbs
+    /// Estimate scaled from the public F-16 model (NASA TP-1538: 12 875 /
+    /// 75 674 / 85 552 kg·m² roll / pitch / yaw at 9 300 kg) by mass and by
+    /// span² for roll and length² for pitch and yaw, rounded. Order of
+    /// magnitude is what matters: it sets how hard gear and tire torques
+    /// turn the aircraft against the controller.
+    public let inertia: float3 = [390_000, 440_000, 80_000]  // pitch, yaw, roll
     let engineMaxThrust: Float = 31_751  // 31,751 kgf, 70,000 lbf, real F-22 afterburning thrust
     let throttlePower: Float = 10.0
     let liftPower: Float = 50.0

@@ -49,6 +49,14 @@ struct CompoundBodyTests {
                 "level settle touches the fuselage only — wings/empennage sit higher")
     }
 
+    /// shapeVsPlane appends into the caller's array since D.3 (a capsule
+    /// contributes both end caps); this reads a collider's contacts back.
+    private func planeContacts(_ collider: WorldCollider, planePoint: float3, planeNormal: float3) -> [Contact] {
+        var contacts: [Contact] = []
+        NarrowPhase.shapeVsPlane(collider, planePoint: planePoint, planeNormal: planeNormal, into: &contacts)
+        return contacts
+    }
+
     /// A 90°-banked pose contacts the plane with the WINGS alone — the
     /// wingtip-strike identity the 2 m sphere could never report. Pure
     /// geometry (WorldColliderBuilder + shapeVsPlane), no stepping: detached
@@ -67,9 +75,7 @@ struct CompoundBodyTests {
 
         var touching: [String] = []
         for collider in worlds {
-            if let contact = NarrowPhase.shapeVsPlane(collider,
-                                                      planePoint: .zero,
-                                                      planeNormal: [0, 1, 0]) {
+            if let contact = planeContacts(collider, planePoint: .zero, planeNormal: [0, 1, 0]).first {
                 touching.append(contact.colliderNameA ?? "?")
                 // Rolled wings: half-span 6.6 projects fully onto the plane
                 // normal → depth = 6.6 − (5 + rotated local offset) ≈ 1.6.

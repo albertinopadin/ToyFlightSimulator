@@ -37,7 +37,8 @@ enum AircraftLandingGearSpec {
                         springRate: 268_000,
                         compressionDamping: 34_000,
                         reboundDamping: 51_000,
-                        maxSupportForce: 100_000),
+                        maxSupportForce: 100_000,
+                        maxSteerAngle: 0.35),
         SuspensionStrut(name: "mainGearLeft",
                         attachLocal: [-1.62, -0.55, -0.9],
                         restLength: 1.05,
@@ -63,7 +64,11 @@ enum AircraftLandingGearSpec {
     /// Static stance for a level aircraft with equal-reach struts: every strut
     /// shares one compression x = m·g / Σk, and ride height = reach − x. nil
     /// for an empty spec. `gravity` is the scalar magnitude; the default is
-    /// the world's (PhysicsWorld.gravity is the same value along −Y).
+    /// the world's (PhysicsWorld.gravity is the same value along −Y). Ignores
+    /// the pitch equilibrium a body with finite inertia settles into (D.3:
+    /// the softer nose strut takes 0.165 m to the mains' 0.114, −0.48° of
+    /// pitch), a 2 mm difference at the origin; this is still the number the
+    /// overlay logs.
     static func staticStance(struts: [SuspensionStrut],
                              mass: Float,
                              gravity: Float = PhysicsWorld.standardGravity) -> (compression: Float, rideHeight: Float)? {

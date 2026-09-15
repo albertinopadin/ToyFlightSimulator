@@ -78,7 +78,7 @@ struct LandingGearSuspensionTests {
         suspension.onLandingGearEvent = { events.append($0) }
         let world = groundWorld()
 
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: world, substepDelta: Self.h)
 
         #expect(approxEqual(body.force, [0, 37.5, 0]))
         #expect(suspension.compressions == [0.125, 0.0625])
@@ -95,7 +95,7 @@ struct LandingGearSuspensionTests {
         // Same pose again: rate 0, spring only (12.5 + 6.25); still on wheels,
         // no new transition event.
         body.force = .zero
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(approxEqual(body.force, [0, 18.75, 0]))
         #expect(events.count == 1)
     }
@@ -115,7 +115,7 @@ struct LandingGearSuspensionTests {
         #expect(approxEqual(up, body.rotation * Y_AXIS))
 
         let suspension = LandingGearSuspension(struts: [Self.softStrut])
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: groundWorld(), substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: groundWorld(), substepDelta: Self.h)
 
         #expect(approxEqual(suspension.compressions[0], 0.25))
         #expect(approxEqual(body.force, [0, 50, 0]))
@@ -132,13 +132,13 @@ struct LandingGearSuspensionTests {
         // Level, this height would compress the strut by 0.5 m.
         let body = PosedTestRigidBody(position: [0, 0.5, 0])
         body.rotation = float3x3(simd_quatf(angle: .pi, axis: Z_AXIS))   // up = −ŷ: the ray goes up
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(body.force == .zero)
         #expect(suspension.compressions == [0])
         #expect(!suspension.weightOnWheels)
 
         body.rotation = float3x3(simd_quatf(angle: .halfPi, axis: Z_AXIS))   // up = ±x̂: the ray is parallel
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(body.force == .zero)
         #expect(!suspension.weightOnWheels)
         #expect(events == 0)
@@ -151,14 +151,14 @@ struct LandingGearSuspensionTests {
         let body = PosedTestRigidBody(position: [0, 0.875, 0])   // 0.125 m below reach
         let suspension = LandingGearSuspension(struts: [Self.softStrut])
         let world = groundWorld()
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(suspension.weightOnWheels)
         #expect(approxEqual(body.force, [0, 25, 0]))   // 12.5 spring + 12.5 damper
 
         var events: [LandingGearEvent] = []
         suspension.onLandingGearEvent = { events.append($0) }
         body.force = .zero
-        suspension.accumulateForces(body: body, gearDeployed: false, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: false, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(body.force == .zero, "retracted gear produces no force even below reach")
         #expect(suspension.compressions == [0])
         #expect(!suspension.weightOnWheels)
@@ -168,13 +168,13 @@ struct LandingGearSuspensionTests {
         }
 
         // Staying retracted is quiet.
-        suspension.accumulateForces(body: body, gearDeployed: false, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: false, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(events.count == 1)
 
         // Redeploying: the finite differences restart from 0, so the first
         // substep back reads the whole 0.125 m as this substep's penetration
         // (the documented quirk) and it is a fresh touchdown.
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(approxEqual(body.force, [0, 25, 0]))
         #expect(events.count == 2)
         if case .touchdown? = events.last {} else {
@@ -211,7 +211,7 @@ struct LandingGearSuspensionTests {
 
         // Press: weak 25 N unclamped → clamped 5, event; strong 25 N, fine;
         // stubby raw 0.125 → capped 0.0625, rate 0.625 → 12.5 N, bottomed, event.
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(overloads.map { $0.name } == ["weak", "stubby"])
         #expect(overloads.map { $0.bottomedOut } == [false, true])
         #expect(overloads.count == 2
@@ -222,21 +222,21 @@ struct LandingGearSuspensionTests {
         // Held: both exceedances continue (weak's spring-only 12.5 N ≥ 5 N,
         // stubby still bottomed) — no new events.
         body.force = .zero
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(overloads.count == 2)
 
         // Lift to 0.03125 m compression: weak and stubby both rebound to a
         // floored 0 N and stubby is off its stop, so every exceedance ends.
         body.setPosition([0, 0.96875, 0])
         body.force = .zero
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(overloads.count == 2)
         #expect(suspension.weightOnWheels)
 
         // Press again: new exceedances, new events, same order.
         body.setPosition([0, 0.875, 0])
         body.force = .zero
-        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, world: world, substepDelta: Self.h)
+        suspension.accumulateForces(body: body, gearDeployed: true, brake: 0, steer: 0, world: world, substepDelta: Self.h)
         #expect(overloads.map { $0.name } == ["weak", "stubby", "weak", "stubby"])
         #expect(overloads.map { $0.bottomedOut } == [false, true, false, true])
     }

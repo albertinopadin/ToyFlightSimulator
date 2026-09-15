@@ -191,4 +191,80 @@ struct CollisionResponseTests {
         #expect(a.velocity == .zero)
         #expect(a.angularVelocity == .zero)
     }
+
+    // MARK: - Pair solve (D.3, D-attitude)
+
+    @Test("two caps converge: eight passes bring both cap points to rest where one pass leaves the first approaching again, and no accumulated impulse is negative")
+    func twoCapsConverge() {
+        // The F-22 belly rest as two hand-built contacts: 30 t with its
+        // tensor at [0, 1.05, 0] sinking at 0.5 m/s, the fuselage capsule's
+        // cap feet at z −7.5 and 8.7. The lever arms dominate the effective
+        // mass (r²/I ≈ 1.4e-4 against 1/m ≈ 3.3e-5 per unit impulse), so the
+        // first cap's impulse pitches the second into the ground and the
+        // second's pitches the first back out: after one pass the first cap
+        // approaches at 0.517 m/s (replay of the shipped algorithm); after
+        // eight both are within 0.01. The accumulated impulses are private
+        // scratch, so they are recovered from what they did to the body:
+        // j₁ + j₂ = m·Δv_y and 7.5 j₁ − 8.7 j₂ = I_x·Δω_x (r × n = [−r_z, 0, r_x]).
+        let a = RigidBody(detachedAt: [0, 1.05, 0])
+        a.mass = 30_000
+        a.inverseInertiaLocal = float3x3(diagonal: 1 / float3(390_000, 440_000, 80_000))
+        a.velocity = [0, -0.5, 0]
+        let plane = PlaneRigidBody(detachedAt: .zero)
+        plane.isStatic = true
+        let contacts = [Contact(normal: [0, 1, 0], depth: 0, point: [0, 0, -7.5]),
+                        Contact(normal: [0, 1, 0], depth: 0, point: [0, 0, 8.7])]
+        let stats = HeckerCollisionResponse.getInverseMassStats(a, plane)
+
+        HeckerCollisionResponse.solveManifold(a, plane, contacts: contacts[...], inverseMassStats: stats)
+
+        for contact in contacts {
+            #expect(abs(dot(a.velocity(atWorldPoint: contact.point), contact.normal)) <= 0.01,
+                    "one pass leaves the first cap at −0.52 m/s; eight leave both within 0.01")
+        }
+        let impulseSum = 30_000 * (a.velocity.y + 0.5)          // j₁ + j₂, N·s
+        let impulseMoment = 390_000 * a.angularVelocity.x       // 7.5 j₁ − 8.7 j₂
+        let j2 = (7.5 * impulseSum - impulseMoment) / (7.5 + 8.7)
+        let j1 = impulseSum - j2
+        #expect(j1 >= 0 && j2 >= 0, "accumulated impulses are clamped non-negative")
+        #expect(abs(j1 - 8038) <= 100 && abs(j2 - 6934) <= 100, "the replay's split: 8038 and 6934 N·s")
+        #expect(plane.velocity == .zero && plane.angularVelocity == .zero, "statics never change")
+    }
+
+    @Test("a single-contact pair through resolvePair is exactly correctPosition + applyImpulse: the one pass every sphere golden took")
+    func singleContactPairKeepsTheOnePass() throws {
+        // A finite-inertia body with one off-center sphere collider 1 cm into
+        // a static plane, approaching: position correction and the general
+        // (lever-arm) impulse both act. Two identical set-ups, one through
+        // resolvePair and one through the two halves by hand, must agree
+        // bit-for-bit — a second impulse pass on a single contact would not.
+        func makePair() -> (body: RigidBody, plane: PlaneRigidBody) {
+            let body = RigidBody(detachedAt: [0, 0.49, 0])
+            body.mass = 2
+            body.inverseInertiaLocal = float3x3(diagonal: [0.5, 0.5, 0.5])
+            body.velocity = [0, -1.5, 0]
+            body.colliders = [LocalCollider(name: "ball", shape: .sphere(radius: 0.5), localPosition: [0.3, 0, 0])]
+            let plane = PlaneRigidBody(detachedAt: .zero)
+            plane.isStatic = true
+            return (body, plane)
+        }
+
+        let paired = makePair()
+        var contacts: [Contact] = []
+        HeckerCollisionResponse.resolvePair(paired.body, paired.plane, contacts: &contacts)
+        #expect(contacts.count == 1)
+
+        let manual = makePair()
+        var manualContacts: [Contact] = []
+        let deepest = try #require(NarrowPhase.generateContacts(manual.body, manual.plane, into: &manualContacts))
+        let stats = HeckerCollisionResponse.getInverseMassStats(manual.body, manual.plane)
+        HeckerCollisionResponse.correctPosition(manual.body, manual.plane, contact: manualContacts[deepest], inverseMassStats: stats)
+        HeckerCollisionResponse.applyImpulse(manual.body, manual.plane, contact: manualContacts[deepest], inverseMassStats: stats)
+
+        #expect(paired.body.getPosition() == manual.body.getPosition())
+        #expect(paired.body.velocity == manual.body.velocity)
+        #expect(paired.body.angularVelocity == manual.body.angularVelocity)
+        #expect(paired.body.velocity != [0, -1.5, 0], "the impulse acted")
+        #expect(paired.body.angularVelocity != .zero, "through the lever arm")
+    }
 }

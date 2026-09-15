@@ -15,6 +15,7 @@ final class TouchdownReporter {
     private let bodyLabel: String
     private let scrapeLogInterval: Double
     private var lastScrapeLog: [String: Double] = [:]
+    private var lastImpactLog: [ObjectIdentifier: Double] = [:]
     
     init(bodyLabel: String, scrapeLogInterval: Double = 1.0) {
         self.bodyLabel = bodyLabel
@@ -35,16 +36,29 @@ final class TouchdownReporter {
     }
     
     /// Scrapes are throttled per collider name (a sliding fuselage re-contacts
-    /// every step); impacts always print.
-    func reportAirframeContact(_ contact: Contact, preImpactVelocity: float3, isGearDown: Bool, against other: RigidBody) {
-        let speed = AirframeContactClassifier.normalSpeed(contactNormal: contact.normal, preImpactVelocity: preImpactVelocity)
+    /// every step); impacts print once per frame per other body, keyed on
+    /// GameTime.TotalGameTime, which a frame's substeps share. That is a
+    /// policy, not a proof: a level belly slap is two cap contacts in one
+    /// substep and one crash, and a tumbling airframe that strikes the same
+    /// body with a second collider inside the same frame also prints once —
+    /// one line for one event, which is the right amount of console.
+    /// `preImpactRelativeVelocity` is the aircraft's step-start velocity at
+    /// the contact point minus the other body's there: a rotating wing
+    /// strikes at ω × r while the origin is still, and a ball thrown at a
+    /// parked jet closes at its own speed.
+    func reportAirframeContact(_ contact: Contact, preImpactRelativeVelocity: float3, isGearDown: Bool, against other: RigidBody) {
+        let speed = AirframeContactClassifier.normalSpeed(contactNormal: contact.normal, preImpactVelocity: preImpactRelativeVelocity)
         let classification = AirframeContactClassifier.classification(forNormalSpeed: speed)
         let name = contact.colliderNameA ?? "aircraft body"
+        let now = GameTime.TotalGameTime
         
         if classification == .scrape {
-            let now = GameTime.TotalGameTime
             if let last = lastScrapeLog[name], now - last < scrapeLogInterval { return }
             lastScrapeLog[name] = now
+        } else {
+            let key = ObjectIdentifier(other)
+            if lastImpactLog[key] == now { return }
+            lastImpactLog[key] = now
         }
         
         let otherLabel = other.gameObject?.getName() ?? "static geometry"

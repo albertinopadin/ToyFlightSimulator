@@ -61,8 +61,15 @@ final class LandingGearSuspension {
 
     /// One substep. `gearDeployed` is the animation gate (Aircraft.isGearDown):
     /// retracted or moving gear produces no force and holds zero compression.
-    /// `brake` is 0…1 and acts on the struts that have brakes.
-    func accumulateForces(body: RigidBody, gearDeployed: Bool, brake: Float, world: PhysicsWorld, substepDelta: Float) {
+    /// `brake` is 0…1 and acts on the struts that have brakes. `steer` is
+    /// −1…1, the yaw command, and turns the wheels of the struts that have a
+    /// steering range (the nose gear).
+    func accumulateForces(body: RigidBody,
+                          gearDeployed: Bool,
+                          brake: Float,
+                          steer: Float,
+                          world: PhysicsWorld,
+                          substepDelta: Float) {
         guard gearDeployed else {
             resetToAirborne()
             return
@@ -72,7 +79,8 @@ final class LandingGearSuspension {
         // Body up, the strut axis: rays go down −up. Not float3.up, which is
         // world up — a rolled aircraft's struts roll with it.
         let up = pose.rotation.up
-        // Wheels roll along body forward; TireModel projects it onto the ground.
+        // Unsteered wheels roll along body forward; TireModel projects it
+        // onto the ground.
         let forward = pose.rotation.forward
 
         // Pass 1: every strut's spring-damper step, its overload edge, and
@@ -105,9 +113,17 @@ final class LandingGearSuspension {
             if let hit, step.force > 0 {
                 let patch = attachWorld - up * hit.distance
                 body.addForce(hit.normal * step.force, atWorldPoint: patch)
+                // A steered wheel rolls along body forward turned about body
+                // up by −steer × range: the same sign as the yaw rate command
+                // (−yaw × maxYawRate), so Q and E turn the nose the same way
+                // on the ground as in the air. The nose tire's side grip at
+                // 5.2 m ahead of the origin is the yaw torque.
+                let rollingDirection = strut.maxSteerAngle == 0
+                    ? forward
+                    : simd_quatf(angle: -steer * strut.maxSteerAngle, axis: up).act(forward)
                 wheels[i] = TireModel.Wheel(patch: patch,
                                             groundNormal: hit.normal,
-                                            rollingDirection: forward,
+                                            rollingDirection: rollingDirection,
                                             normalLoad: step.force,
                                             brake: strut.hasBrakes ? brake : 0)
             } else {

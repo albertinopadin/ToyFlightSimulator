@@ -58,37 +58,15 @@ class Aircraft: GameObject {
     
     /// Optional flight model.
     ///
-    /// Assigning this property keeps `rigidBody.mass` in sync. Combined with
-    /// `F22.rigidBody.didSet`, the rigid body's mass ends up correct regardless
-    /// of whether the scene assigns `flightModel` before or after constructing
-    /// the `RigidBody` — both orderings converge on `flightModel.mass`.
-    ///
-    /// ------------------------------------------------------------------
-    /// FUTURE: Fix 3 — eliminate the duplicate mass field.
-    /// ------------------------------------------------------------------
-    /// `RigidBody.mass` and `FlightModel.mass` are two stored properties for
-    /// the same physical quantity. They're kept in lockstep here and in
-    /// `F22.rigidBody.didSet`. That works, but it's two assignment sites for
-    /// one value, and it goes wrong silently if anyone mutates
-    /// `flightModel.mass` at runtime (today F-22 mass is a `let`, so that
-    /// can't happen — yet).
-    ///
-    /// The right long-term shape is for `RigidBody.mass` to be a *computed*
-    /// property that reads from a `MassSource`: the flight model for aircraft,
-    /// something else for non-aerodynamic bodies (spheres, ground planes,
-    /// projectiles). No shadow field, no order-of-init to get wrong, one
-    /// source of truth.
-    ///
-    /// Doing that requires designing the `MassSource` shape for non-aircraft
-    /// rigid bodies and is out of scope for this refactor. See
-    /// `debugging/claude/flight_model_refactor_mass_mismatch.md`
-    /// (section "Recommended fixes — Fix 3") for the longer write-up.
+    /// Assigning this property syncs the body's mass and inertia through
+    /// `syncMassProperties`, as does assigning `rigidBody`, so the body ends
+    /// up correct whether the scene sets the model before or after the body.
+    /// `RigidBody.mass` and `FlightModel.mass` are still two stored
+    /// properties for one quantity (FUTURE Fix 3, a computed mass reading a
+    /// source): see `debugging/claude/flight_model_refactor_mass_mismatch.md`
+    /// (section "Recommended fixes — Fix 3") for the write-up.
     var flightModel: FlightModel? {
-        didSet {
-            if let flightModel {
-                rigidBody?.mass = flightModel.mass
-            }
-        }
+        didSet { syncMassProperties() }
     }
     
     /// Control input sampled once per frame in doUpdate and read by
@@ -99,12 +77,7 @@ class Aircraft: GameObject {
     
     override var rigidBody: RigidBody? {
         didSet {
-            // Mass-sync mirror of `Aircraft.flightModel.didSet` — see there for
-            // the Fix 3 future-work note. Together these two didSets make mass
-            // converge regardless of assignment order.
-            if let flightModel {
-                rigidBody?.mass = flightModel.mass
-            }
+            syncMassProperties()
             
             // The world calls this from inside the physics step. Weak self:
             // the aircraft owns the body, so a strong capture would be a cycle.
@@ -113,6 +86,11 @@ class Aircraft: GameObject {
             }
         }
     }
+    
+    /// Aircraft with a body and a flight model fly by forces and torques in
+    /// generateForces. The rest move kinematically, as before: the F-16
+    /// wingman has no body, FreeCamFlightboxScene's jet has no flight model.
+    private var hasFlightPhysics: Bool { rigidBody != nil && flightModel != nil }
 
     /// Returns true if the landing gear is down.
     /// Aircraft without an animator are treated as having gear permanently down.
@@ -142,6 +120,24 @@ class Aircraft: GameObject {
         }
         animator = make(usdModel)
     }
+    
+    /// Mass and inertia come from the flight model. Both didSets call this,
+    /// so either assignment order converges. An aircraft without a flight
+    /// model has infinite inertia and the kinematic attitude path; removing
+    /// the model restores that (the tensor, and the angular state the
+    /// integrator would otherwise keep applying next to the kinematic
+    /// rotation). Mass is left where it was: nothing else authors it.
+    private func syncMassProperties() {
+        guard let rigidBody else { return }
+        guard let flightModel else {
+            rigidBody.inverseInertiaLocal = RigidBody.infiniteInertia
+            rigidBody.angularVelocity = .zero
+            rigidBody.torque = .zero
+            return
+        }
+        rigidBody.mass = flightModel.mass
+        rigidBody.inverseInertiaLocal = float3x3(diagonal: 1 / flightModel.inertia)
+    }
 
     override func doUpdate() {
         super.doUpdate()
@@ -152,26 +148,32 @@ class Aircraft: GameObject {
             let controlInput = getControlInput()
             let deltaMove = dt * _moveSpeed
             
-            // Flight forces are computed in generateForces, inside the physics
-            // step. Here we only refresh the input it reads.
+            // Flight forces and the attitude torque are computed in
+            // generateForces, inside the physics step. Here we only refresh
+            // the input it reads.
             latestControlInput = controlInput
-            if rigidBody == nil || flightModel == nil {
-                // Kinematic fallback for aircraft without physics (the F-16
-                // wingman). Small change from before: a body whose getState()
-                // is nil now gets neither force nor kinematic motion.
+            if !hasFlightPhysics {
+                // Kinematic path: the F-16 wingman, and a jet without a flight
+                // model. Throttle moves the node and the stick turns it
+                // through the damped rate filter.
                 moveAlongVector(getFwdVector(), distance: deltaMove * controlInput.throttle)
+                applyPlayerAttitudeInput(deltaTime: dt, controlInput: controlInput)
+                // The A/D strafe teleports the node; on the physics path it
+                // would slide the jet through its own tire model.
+                applyPlayerSideMove(deltaMove: deltaMove)
             }
-
-            applyPlayerAttitudeInput(deltaTime: dt, controlInput: controlInput)
-            applyPlayerSideMove(deltaMove: deltaMove)
+            
             handleGearToggle()
         } else {
             latestControlInput = nil
-            // Lost control — bleed off accumulated rotation rate so resuming
-            // control doesn't snap-resume a tumble. Continues to apply the
-            // rotation, so a released stick damps out physically instead of
-            // freezing in place.
-            decayAttitudeRates(deltaTime: dt)
+            if !hasFlightPhysics {
+                // Kinematic path: bleed off the carried rates so resuming
+                // control does not snap into a stale tumble. Keeps applying
+                // the rotation, so a released stick damps out instead of
+                // freezing in place. (On the physics path the controller
+                // does this inside the step, with the command at zero.)
+                decayAttitudeRates(deltaTime: dt)
+            }
         }
 
         animator?.update(deltaTime: dt)
@@ -183,10 +185,24 @@ class Aircraft: GameObject {
     func generateForces(substepDelta: Float, world: PhysicsWorld) {
         guard let rigidBody else { return }
         
-        if let input = latestControlInput,
-           let flightModel,
-           let state = rigidBody.getState() {
-            rigidBody.force += flightModel.computeForce(state: state, input: input)
+        if let flightModel {
+            if let input = latestControlInput, let state = rigidBody.getState() {
+                rigidBody.force += flightModel.computeForce(state: state, input: input)
+            }
+            
+            // Attitude by torque, outside the input guard: without focus the
+            // command is zero and the controller damps the body's rates, as
+            // the kinematic filter's decay did. The controller works in body
+            // axes (Rᵀ ω in, a body-frame torque out, R back to world), so
+            // its per-axis time constants stay attached to the airframe.
+            let rotation = rigidBody.pose().rotation
+            let commandedRates = AttitudeRateController.commandedRates(latestControlInput, attitudeDynamics)
+            let torqueBody = AttitudeRateController.torque(commandedRates: commandedRates,
+                                                           bodyRates: rotation.transpose * rigidBody.angularVelocity,
+                                                           inertia: flightModel.inertia,
+                                                           dynamics: attitudeDynamics,
+                                                           substepDelta: substepDelta)
+            rigidBody.torque += rotation * torqueBody
         }
 
         // Outside the input guard: a parked, unfocused aircraft must still be
@@ -195,6 +211,7 @@ class Aircraft: GameObject {
         gearSuspension?.accumulateForces(body: rigidBody,
                                          gearDeployed: isGearDown,
                                          brake: latestControlInput?.brake ?? 0,
+                                         steer: latestControlInput?.yaw ?? 0,
                                          world: world,
                                          substepDelta: substepDelta)
     }

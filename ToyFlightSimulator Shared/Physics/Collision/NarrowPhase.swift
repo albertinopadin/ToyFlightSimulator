@@ -41,8 +41,10 @@ enum NarrowPhase {
             let planeNormal = plane.collisionNormal
             var deepest: Int? = nil
             for collider in a.worldColliders() {
-                if let contact = shapeVsPlane(collider, planePoint: planePoint, planeNormal: planeNormal) {
-                    append(contact, to: &contacts, deepest: &deepest)
+                let before = contacts.count
+                shapeVsPlane(collider, planePoint: planePoint, planeNormal: planeNormal, into: &contacts)
+                for index in before..<contacts.count {
+                    noteDeepest(index, in: contacts, deepest: &deepest)
                 }
             }
             
@@ -64,44 +66,66 @@ enum NarrowPhase {
         return deepest
     }
     
+    /// Keeps `deepest` at the index of the deepest contact of this pair seen
+    /// so far; `candidateIndex` is a contact already in the array. The
+    /// comparison half of `append`, split out so the plane branch can note
+    /// the one or two contacts `shapeVsPlane` appends per collider. Ties keep
+    /// the earlier contact, as before. (Written against the inout parameter
+    /// directly: a `guard var deepest` here shadows it with a copy, and a
+    /// deeper later contact is never recorded — found at the D.3 review.)
+    private static func noteDeepest(_ candidateIndex: Int, in contacts: [Contact], deepest: inout Int?) {
+        if let current = deepest, contacts[current].depth >= contacts[candidateIndex].depth { return }
+        deepest = candidateIndex
+    }
+    
     /// Appends `contact` and keeps `deepest` at the index of the deepest
     /// contact appended so far. Ties keep the earlier contact, as before.
     private static func append(_ contact: Contact, to contacts: inout [Contact], deepest: inout Int?) {
         contacts.append(contact)
-        if let current = deepest, contacts[current].depth >= contact.depth { return }
-        deepest = contacts.count - 1
+        noteDeepest(contacts.count - 1, in: contacts, deepest: &deepest)
     }
     
     // MARK: - Shape vs plane
 
-    /// Sphere, capsule, or box against the infinite plane through planePoint.
-    /// Gates are inclusive (depth >= 0).
-    static func shapeVsPlane(_ collider: WorldCollider, planePoint: float3, planeNormal n: float3) -> Contact? {
+    /// Appends the contacts of one collider against the infinite plane
+    /// through planePoint: none, one, or two (a capsule's end caps). Gates are
+    /// inclusive (depth >= 0).
+    static func shapeVsPlane(_ collider: WorldCollider,
+                             planePoint: float3,
+                             planeNormal n: float3,
+                             into contacts: inout [Contact]) {
         switch collider.shape {
             case .sphere(radius: let r):
                 let signedDistance = dot(collider.position - planePoint, n)
                 let depth = r - signedDistance
-                guard depth >= 0 else { return nil }
-                return Contact(normal: n,
-                               depth: depth,
-                               point: collider.position - n * signedDistance,
-                               collider: collider)
+                guard depth >= 0 else { return }
+                contacts.append(Contact(normal: n,
+                                        depth: depth,
+                                        point: collider.position - n * signedDistance,
+                                        collider: collider))
 
             case .capsule(radius: let r, halfHeight: let hh):
-                // The deeper end-cap center decides. A capsule lying flat picks
-                // one end, which is enough for the linear response.
+                // Both end caps, deeper first. A capsule lying along the
+                // ground gets two points, so a body with pitch freedom rests
+                // on both ends instead of rocking between them (D.3). The
+                // first contact is the one the single-contact form produced.
                 let axis = collider.rotation.columns.1
                 let p0 = collider.position - axis * hh
                 let p1 = collider.position + axis * hh
                 let d0 = dot(p0 - planePoint, n)
                 let d1 = dot(p1 - planePoint, n)
-                let (endCenter, signedDistance) = d0 < d1 ? (p0, d0) : (p1, d1)
-                let depth = r - signedDistance
-                guard depth >= 0 else { return nil }
-                return Contact(normal: n,
-                               depth: depth,
-                               point: endCenter - n * signedDistance,
-                               collider: collider)
+                let (near, nearDistance, far, farDistance) = d0 < d1 ? (p0, d0, p1, d1) : (p1, d1, p0, d0)
+                guard r - nearDistance >= 0 else { return }
+                contacts.append(Contact(normal: n,
+                                        depth: r - nearDistance,
+                                        point: near - n * nearDistance,
+                                        collider: collider))
+                if r - farDistance >= 0 {
+                    contacts.append(Contact(normal: n,
+                                            depth: r - farDistance,
+                                            point: far - n * farDistance,
+                                            collider: collider))
+                }
             
             case .box(halfExtents: let he):
                 let c0 = collider.rotation.columns.0
@@ -114,7 +138,7 @@ enum NarrowPhase {
                                      + he.z * abs(dot(c2, n))
                 let signedDistance = dot(collider.position - planePoint, n)
                 let depth = projectionRadius - signedDistance
-                guard depth >= 0 else { return nil }
+                guard depth >= 0 else { return }
                 func axisSign(_ x: Float) -> Float { x >= 0 ? 1 : -1 }
                 // Deepest corner: the box's support point in direction −n,
                 // stepping each axis against the plane normal.
@@ -122,10 +146,10 @@ enum NarrowPhase {
                            - c0 * (he.x * axisSign(dot(c0, n)))
                            - c1 * (he.y * axisSign(dot(c1, n)))
                            - c2 * (he.z * axisSign(dot(c2, n)))
-                return Contact(normal: n,
-                               depth: depth,
-                               point: corner,
-                               collider: collider)
+                contacts.append(Contact(normal: n,
+                                        depth: depth,
+                                        point: corner,
+                                        collider: collider))
         }
     }
     

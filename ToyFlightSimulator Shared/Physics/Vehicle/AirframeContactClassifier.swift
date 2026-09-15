@@ -21,7 +21,10 @@ enum AirframeContactClassifier {
     
     /// Approach speed along the contact normal. `contactNormal` is the
     /// Contact's B→A normal with the aircraft as A, so approach is −dot(v, n);
-    /// a separating velocity clamps to 0.
+    /// a separating velocity clamps to 0. Since D.3 the velocity is the
+    /// relative velocity at the contact point (the aircraft's step-start
+    /// point velocity minus the other body's), so a rotating wing and a
+    /// moving object both classify by their closing speed.
     static func normalSpeed(contactNormal: float3, preImpactVelocity: float3) -> Float {
         max(0, -dot(preImpactVelocity, contactNormal))
     }

@@ -38,6 +38,10 @@ struct SuspensionStrut {
     /// Wheel brakes act on this strut (the mains; braking the nose wheel
     /// would flat-spot it). Default off.
     var hasBrakes: Bool = false
+    
+    /// Steering range of this strut's wheel, radians, driven by the yaw
+    /// command. 0 (default) for the mains.
+    var maxSteerAngle: Float = 0
 
     /// Attach point to the uncompressed wheel's contact patch, along body −Y.
     var reach: Float { restLength + wheelRadius }

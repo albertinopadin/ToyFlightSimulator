@@ -69,13 +69,21 @@ struct NarrowPhaseTests {
                       sourceIndex: c.sourceIndex, name: c.name, group: c.group)
     }
 
+    /// shapeVsPlane appends into the caller's array since D.3 (a capsule
+    /// contributes both end caps); the one-contact cases read `.first`.
+    private func planeContacts(_ collider: WorldCollider, planePoint: float3, planeNormal: float3) -> [Contact] {
+        var contacts: [Contact] = []
+        NarrowPhase.shapeVsPlane(collider, planePoint: planePoint, planeNormal: planeNormal, into: &contacts)
+        return contacts
+    }
+
     // MARK: - Shape vs plane: translated AND tilted (the y=0 hardcode's grave)
 
     @Test("sphere vs translated plane: depth and point measured from the plane, not y=0")
     func sphereVsTranslatedPlane() throws {
         // Plane at height 2; sphere r 1 centered 0.5 above it → depth 0.5.
         let s = collider(.sphere(radius: 1), at: [0, 2.5, 0])
-        let contact = try #require(NarrowPhase.shapeVsPlane(s, planePoint: [0, 2, 0], planeNormal: [0, 1, 0]))
+        let contact = try #require(planeContacts(s, planePoint: [0, 2, 0], planeNormal: [0, 1, 0]).first)
         #expect(approxEqual(contact.depth, 0.5))
         #expect(approxEqual(contact.normal, [0, 1, 0]))
         #expect(approxEqual(contact.point, [0, 2, 0]))   // foot of the center on the plane
@@ -87,7 +95,7 @@ struct NarrowPhaseTests {
         // normal → depth 0.2, contact point back at the origin.
         let n = normalize(float3(1, 1, 0))
         let s = collider(.sphere(radius: 1), at: n * 0.8)
-        let contact = try #require(NarrowPhase.shapeVsPlane(s, planePoint: .zero, planeNormal: n))
+        let contact = try #require(planeContacts(s, planePoint: .zero, planeNormal: n).first)
         #expect(approxEqual(contact.depth, 0.2))
         #expect(approxEqual(contact.normal, n))
         #expect(approxEqual(contact.point, .zero))
@@ -99,7 +107,7 @@ struct NarrowPhaseTests {
         // y 1: lower end center [0, 0.4, 0] is 0.6 BELOW the plane → depth
         // 0.5 − (−0.6) = 1.1, and the contact point is the end center's foot.
         let c = collider(.capsule(radius: 0.5, halfHeight: 1), at: [0, 1.4, 0])
-        let contact = try #require(NarrowPhase.shapeVsPlane(c, planePoint: [0, 1, 0], planeNormal: [0, 1, 0]))
+        let contact = try #require(planeContacts(c, planePoint: [0, 1, 0], planeNormal: [0, 1, 0]).first)
         #expect(approxEqual(contact.depth, 1.1))
         #expect(approxEqual(contact.normal, [0, 1, 0]))
         #expect(approxEqual(contact.point, [0, 1, 0]))
@@ -112,7 +120,7 @@ struct NarrowPhaseTests {
         // plane (signed distance 0) → depth = r = 0.5.
         let n = normalize(float3(1, 1, 0))
         let c = collider(.capsule(radius: 0.5, halfHeight: 1), at: [0.5, 0.5, 0])
-        let contact = try #require(NarrowPhase.shapeVsPlane(c, planePoint: .zero, planeNormal: n))
+        let contact = try #require(planeContacts(c, planePoint: .zero, planeNormal: n).first)
         #expect(approxEqual(contact.depth, 0.5))
         #expect(approxEqual(contact.normal, n))
         #expect(approxEqual(contact.point, [0.5, -0.5, 0]))
@@ -125,7 +133,7 @@ struct NarrowPhaseTests {
         // steps −he along every axis (axisSign(0) = +1 for the two
         // perpendicular axes — deterministic, pinned).
         let b = collider(.box(halfExtents: [1, 0.5, 2]), at: [0, 2.3, 0])
-        let contact = try #require(NarrowPhase.shapeVsPlane(b, planePoint: [0, 2, 0], planeNormal: [0, 1, 0]))
+        let contact = try #require(planeContacts(b, planePoint: [0, 2, 0], planeNormal: [0, 1, 0]).first)
         #expect(approxEqual(contact.depth, 0.2))
         #expect(approxEqual(contact.normal, [0, 1, 0]))
         #expect(approxEqual(contact.point, [-1, 1.8, -2]))
@@ -138,10 +146,35 @@ struct NarrowPhaseTests {
         // depth = 1/√2. Deepest corner steps against n: [−1, 0, −1].
         let n = normalize(float3(1, 1, 0))
         let b = collider(.box(halfExtents: [1, 1, 1]), at: [0, 1, 0])
-        let contact = try #require(NarrowPhase.shapeVsPlane(b, planePoint: .zero, planeNormal: n))
+        let contact = try #require(planeContacts(b, planePoint: .zero, planeNormal: n).first)
         #expect(approxEqual(contact.depth, 1 / sqrtf(2)))
         #expect(approxEqual(contact.normal, n))
         #expect(approxEqual(contact.point, [-1, 0, -1]))
+    }
+
+    @Test("capsule lying along the ground: both end caps, deeper-or-equal first; tilted so one end is clear, one contact")
+    func capsuleAlongPlaneEmitsBothCaps() throws {
+        // Core along X, r 0.5, at height r − 0.1: both cap centers sit 0.4
+        // above the plane, so each cap is 0.1 deep at its foot [∓2, 0, 0].
+        // D.3 (D-attitude): a body with pitch freedom rests on both ends
+        // instead of rocking between them.
+        let flat = capsuleAlong(from: [-2, 0.4, 0], to: [2, 0.4, 0], radius: 0.5)
+        let two = planeContacts(flat, planePoint: .zero, planeNormal: [0, 1, 0])
+        try #require(two.count == 2)
+        #expect(two[0].depth >= two[1].depth)
+        #expect(two.allSatisfy { approxEqual($0.depth, 0.1) })
+        #expect(two.allSatisfy { approxEqual($0.normal, [0, 1, 0]) })
+        let feetX = two.map { $0.point.x }.sorted()
+        #expect(approxEqual(feetX[0], -2) && approxEqual(feetX[1], 2))
+        #expect(two.allSatisfy { approxEqual($0.point.y, 0) })
+
+        // The +X end raised by 0.3: its cap center clears the plane by 0.2,
+        // and only the −X cap reports — the single contact the old form gave.
+        let tilted = capsuleAlong(from: [-2, 0.4, 0], to: [2, 0.7, 0], radius: 0.5)
+        let one = planeContacts(tilted, planePoint: .zero, planeNormal: [0, 1, 0])
+        try #require(one.count == 1)
+        #expect(approxEqual(one[0].depth, 0.1))
+        #expect(approxEqual(one[0].point, [-2, 0, 0]))
     }
 
     // MARK: - Separated ⇒ nil, for every pair the dispatch reaches
@@ -164,8 +197,8 @@ struct NarrowPhaseTests {
         #expect(NarrowPhase.shapeVsShape(capsule, farBox) == nil)
         #expect(NarrowPhase.shapeVsShape(box, farCapsule) == nil)
         #expect(NarrowPhase.shapeVsShape(box, farBox) == nil)
-        #expect(NarrowPhase.shapeVsPlane(collider(.sphere(radius: 1), at: [0, 5, 0]),
-                                         planePoint: .zero, planeNormal: [0, 1, 0]) == nil)
+        #expect(planeContacts(collider(.sphere(radius: 1), at: [0, 5, 0]),
+                              planePoint: .zero, planeNormal: [0, 1, 0]).isEmpty)
     }
 
     // MARK: - Box-box (C.1): separating axes, one clipped contact point
@@ -640,6 +673,38 @@ struct NarrowPhaseTests {
         #expect(approxEqual(flipped[deepestFlipped].depth, 0.2))
         #expect(flipped.allSatisfy { approxEqual($0.normal, [0, -1, 0]) })
         #expect(flipped.allSatisfy { $0.colliderNameA == nil })
+    }
+
+    @Test("the deepest index follows a deeper contact that is not the pair's first, on both dispatch paths")
+    func deepestIndexFollowsLaterDeeperContact() throws {
+        // The SHALLOW collider listed first: "high" exactly touches the floor
+        // (depth 0), "low" reaches 0.2 in. The plane branch notes the deepest
+        // per appended contact (D.3); a noteDeepest that lost its update kept
+        // index 0 and would have corrected position at the touching sphere
+        // (found at the D.3 review). Ties keep the earlier contact.
+        let body = RigidBody(detachedAt: [0, 0.5, 0])
+        body.colliders = [
+            LocalCollider(name: "high", shape: .sphere(radius: 0.5), localPosition: [0, 0, 0]),
+            LocalCollider(name: "low", shape: .sphere(radius: 0.5), localPosition: [0, -0.2, 0]),
+        ]
+        let plane = PlaneRigidBody(detachedAt: .zero)
+        plane.isStatic = true
+        var contacts: [Contact] = []
+        let deepest = try #require(NarrowPhase.generateContacts(body, plane, into: &contacts))
+        #expect(contacts.count == 2)
+        #expect(deepest == 1)
+        #expect(contacts[deepest].colliderNameA == "low")
+        #expect(approxEqual(contacts[deepest].depth, 0.2))
+
+        // The volume-volume path through `append`: the same compound against
+        // a sphere body just below it, "high" 0.01 deep and "low" 0.21.
+        let ball = SphereRigidBody(detachedAt: [0, -0.49, 0], collisionRadius: 0.5)
+        var volumeContacts: [Contact] = []
+        let volumeDeepest = try #require(NarrowPhase.generateContacts(body, ball, into: &volumeContacts))
+        #expect(volumeContacts.count == 2)
+        #expect(volumeDeepest == 1)
+        #expect(volumeContacts[volumeDeepest].colliderNameA == "low")
+        #expect(approxEqual(volumeContacts[volumeDeepest].depth, 0.21))
     }
 
     @Test("plane vs plane generates nothing")

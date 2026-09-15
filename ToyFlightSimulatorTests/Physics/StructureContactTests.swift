@@ -183,4 +183,80 @@ struct StructureContactTests {
         // e = min(0.2, 0.3) on 3 m/s sends the ball back at 0.6 m/s.
         #expect(ball.velocity.x < 0)
     }
+
+    // MARK: - Classification at the contact point (D.3, D-attitude)
+
+    /// The classifier as FlightboxWithPhysics wires it since D.3: the relative
+    /// velocity at the contact point from both bodies' step-start state.
+    private func closingSpeed(_ contact: Contact, of jet: RigidBody, against other: RigidBody) -> Float {
+        let closing = jet.stepStartVelocity(atWorldPoint: contact.point) - other.stepStartVelocity(atWorldPoint: contact.point)
+        return AirframeContactClassifier.normalSpeed(contactNormal: contact.normal, preImpactVelocity: closing)
+    }
+
+    @Test("rotation-only wing strike: a yawing jet's wingtip hits a post at ω × r, an impact, where the origin's velocity alone says scrape")
+    func rotationOnlyWingStrike() throws {
+        // The F-22 with its tensor, origin at rest, yawing at 0.5 rad/s about
+        // +Y: the right wing's trailing corner (x 6.6, z −3.9) moves −Z at
+        // 3.3 m/s. A 0.6 m post 1 cm behind it (x 6.1…6.7, face at z −3.91)
+        // takes the strike on its face; the contact point is the centroid of
+        // the wing's back face clipped to the post, x ≈ 6.35, so the closing
+        // speed reads ω × 6.35 ≈ 3.2 m/s. The empennage (|x| ≤ 3) never
+        // reaches the post.
+        let post = makeStructure("post", shape: .box(size: [0.6, 12, 3]), at: [6.4, 6, -3.91 - 1.5])
+        let jet = makeF22(at: .zero, velocity: .zero, gravity: false)
+        jet.inverseInertiaLocal = float3x3(diagonal: 1 / F22SimpleFlightModel().inertia)
+        jet.angularVelocity = [0, 0.5, 0]
+        let world = PhysicsWorld(entities: [jet, post], updateType: .HeckerVerlet)
+
+        var contacts: [(part: String, pointSpeed: Float, originSpeed: Float)] = []
+        jet.onContact = { [unowned jet] contact, other in
+            contacts.append((contact.colliderNameA ?? "?",
+                             self.closingSpeed(contact, of: jet, against: other),
+                             AirframeContactClassifier.normalSpeed(contactNormal: contact.normal,
+                                                                   preImpactVelocity: jet.stepStartVelocity)))
+        }
+
+        for _ in 0..<30 { world.update(deltaTime: Self.dt) }   // 0.5 s; the tip arrives on the second substep
+
+        let first = try #require(contacts.first)
+        #expect(first.part == "wings")
+        #expect(abs(first.pointSpeed - 3.3) <= 0.3)
+        #expect(AirframeContactClassifier.classification(forNormalSpeed: first.pointSpeed) == .impact)
+        #expect(first.originSpeed == 0)
+        #expect(AirframeContactClassifier.classification(forNormalSpeed: first.originSpeed) == .scrape,
+                "stepStartVelocity alone misses a rotating wing")
+        #expect(post.getPosition() == [6.4, 6, -5.41], "statics never move")
+    }
+
+    @Test("a moving object into a parked jet: a 5 m/s ball hits the resting fuselage as an impact at 5 m/s from the relative velocity")
+    func movingObjectIntoParkedJet() throws {
+        // The jet at rest, gravity off. The ball (radius 0.5) drops at 5 m/s
+        // onto the top of the fuselage capsule (y 1.65 above the capsule
+        // center's z 0.6; the wings' top is at 0.33, the empennage behind
+        // z −5.1) and meets it after about 20 substeps. The jet's own
+        // step-start velocity is zero — a scrape by the old read; the
+        // relative velocity at the point is the ball's 5 m/s.
+        let jet = makeF22(at: .zero, velocity: .zero, gravity: false)
+        let ball = SphereRigidBody(detachedAt: [0, 3, 0.6], collisionRadius: 0.5)
+        ball.velocity = [0, -5, 0]
+        ball.shouldApplyGravity = false
+        let world = PhysicsWorld(entities: [jet, ball], updateType: .HeckerVerlet)
+
+        var contacts: [(part: String, pointSpeed: Float, originSpeed: Float)] = []
+        jet.onContact = { [unowned jet] contact, other in
+            contacts.append((contact.colliderNameA ?? "?",
+                             self.closingSpeed(contact, of: jet, against: other),
+                             AirframeContactClassifier.normalSpeed(contactNormal: contact.normal,
+                                                                   preImpactVelocity: jet.stepStartVelocity)))
+        }
+
+        for _ in 0..<60 { world.update(deltaTime: Self.dt) }   // 1 s
+
+        let first = try #require(contacts.first)
+        #expect(first.part == "fuselage")
+        #expect(abs(first.pointSpeed - 5) <= 0.5)
+        #expect(AirframeContactClassifier.classification(forNormalSpeed: first.pointSpeed) == .impact)
+        #expect(first.originSpeed == 0)
+        #expect(AirframeContactClassifier.classification(forNormalSpeed: first.originSpeed) == .scrape)
+    }
 }
