@@ -440,6 +440,15 @@ enum NarrowPhase {
         return best
     }
     
+    /// The separating axis boxVsBox settles on: a face of A, a face of B, or
+    /// an edge pair (A's edge axis, B's edge axis), each with its axis index.
+    /// Declared at type scope on purpose. A type declared inside boxVsBox
+    /// keeps that body compiled in Xcode's emit-module job, which skips the
+    /// nested `overlaps` body and so never records its captures; the switch
+    /// on `feature` then looked constant and drew a spurious "switch
+    /// condition evaluates to a constant" warning (swiftlang/swift#83206).
+    private enum BoxVsBoxFeature { case faceOfA(Int), faceOfB(Int), edges(Int, Int) }
+
     /// Oriented box vs oriented box by separating axes: the six face normals
     /// and the nine edge-edge cross products (Ericson §4.4.1 gives the test;
     /// this keeps each axis's overlap). The contact normal is the axis of
@@ -452,15 +461,14 @@ enum NarrowPhase {
     /// (the fuselage capsule sits below the wings and empennage).
     private static func boxVsBox(_ a: WorldCollider, halfExtentsA ha: float3,
                                  _ b: WorldCollider, halfExtentsB hb: float3) -> Contact? {
-        enum Feature { case faceOfA(Int), faceOfB(Int), edges(Int, Int) }
         let centerOffset = a.position - b.position
         var leastOverlap: Float = .infinity
         var normal: float3 = .zero
-        var feature: Feature = .faceOfA(0)
+        var feature: BoxVsBoxFeature = .faceOfA(0)
         
         /// False when `candidate` separates the boxes. Near-parallel edges
         /// give a near-zero cross product and no new axis.
-        func overlaps(along candidate: float3, _ candidateFeature: Feature) -> Bool {
+        func overlaps(along candidate: float3, _ candidateFeature: BoxVsBoxFeature) -> Bool {
             let lengthSquared = simd_length_squared(candidate)
             guard lengthSquared > parallelAxisSineSquared else { return true }
             let axis = candidate / lengthSquared.squareRoot()
