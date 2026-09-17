@@ -102,8 +102,26 @@ class Aircraft: GameObject {
         [0, 10, -20]
     }
 
-    init(name: String, modelType: ModelType, scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
+    /// Which picker type this airframe is; nil for aircraft outside the
+    /// picker. Carried in every telemetry snapshot.
+    public let aircraftType: AircraftType?
+    /// The last snapshot built (UpdateThread only). While the nose is
+    /// vertical, heading and bank are undefined and hold these values.
+    private var lastTelemetrySnapshot: AircraftTelemetry
+    
+    init(name: String,
+         aircraftType: AircraftType? = nil,
+         modelType: ModelType,
+         scale: Float = 1.0,
+         shouldUpdateOnPlayerInput: Bool = true) {
+        self.aircraftType = aircraftType
         self.shouldUpdateOnPlayerInput = shouldUpdateOnPlayerInput
+        self.lastTelemetrySnapshot = AircraftTelemetry(aircraftType: aircraftType,
+                                                       heading: 0,
+                                                       altitudeInMeters: 0,
+                                                       forwardSpeedInMetersPerSecond: 0,
+                                                       pitchAngle: 0,
+                                                       rollAngle: 0)
         super.init(name: name, modelType: modelType)
         self.setScale(scale)
         print("[Aircraft init] name: \(name), scale: \(scale)")
@@ -177,6 +195,24 @@ class Aircraft: GameObject {
         }
 
         animator?.update(deltaTime: dt)
+    }
+    
+    /// This frame's pilot-facing flight data. UpdateThread only: it reads the
+    /// world matrix and the body's velocity (both final after the scene
+    /// traversal, which is where `GameScene.update` calls it) and keeps the
+    /// returned snapshot so heading and bank hold their last defined values
+    /// while the nose is vertical. The math is `AircraftTelemetry.make`, a
+    /// pure function tested without Metal.
+    public func getTelemetrySnapshot() -> AircraftTelemetry {
+        let snapshot = AircraftTelemetry.make(aircraftType: aircraftType,
+                                              forward: getFwdVector(),
+                                              right: getRightVector(),
+                                              up: getUpVector(),
+                                              velocity: rigidBody?.velocity ?? .zero,
+                                              worldPosition: getWorldPosition(),
+                                              previous: lastTelemetrySnapshot)
+        lastTelemetrySnapshot = snapshot
+        return snapshot
     }
     
     /// Called by the physics world at the top of each substep, on the

@@ -14,6 +14,7 @@ class F22_CGTrader: Aircraft {
 
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
         super.init(name: Self.NAME,
+                   aircraftType: .f22_cgtrader,
                    modelType: .CGTrader_F22,
                    scale: scale,
                    shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)

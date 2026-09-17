@@ -13,6 +13,10 @@ class F16: Aircraft {
     }
     
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
-        super.init(name: "F-16", modelType: .F16, scale: scale, shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
+        super.init(name: "F-16",
+                   aircraftType: .f16,
+                   modelType: .F16,
+                   scale: scale,
+                   shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
     }
 }

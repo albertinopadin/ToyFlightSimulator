@@ -14,6 +14,7 @@ class F35: Aircraft {
 
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
         super.init(name: Self.NAME,
+                   aircraftType: .f35,
                    modelType: .Sketchfab_F35,
                    scale: scale,
                    shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)

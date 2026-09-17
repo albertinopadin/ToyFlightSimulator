@@ -178,6 +178,9 @@ Shadow map storage: one `depth32Float` `texture2DArray`, 4096² × 4 slices. `Sh
 - **AudioThread**: Kicked after scene built (prevents crackling). Plays startup music if `Preferences.PlayMusicOnStartup`, otherwise calls `AudioManager.Prepare()` to build the lazy AVAudioEngine graph off-main so the first UI volume change doesn't stall the main thread. AVAudioEngine for MP3 playback
 - **Synchronization**: `OSAllocatedUnfairLock` (managers, caches, input state), `DispatchSemaphore` (`inFlightSemaphore` for max 3 frames in flight; `updateSemaphore` + `updateDoneSemaphore` for render↔update handshake within a frame)
 
+### Aircraft Telemetry (AircraftTelemetry/)
+Pilot-facing flight data for the UI as a value snapshot, never a live object: `AircraftTelemetry` (Sendable struct; SI and degrees stored, knots/mph/feet as computed properties) is built on the UpdateThread by `Aircraft.getTelemetrySnapshot()` and published by `GameScene.update()` after `super.update()` (the frame's transforms are final there) at `telemetryPublishInterval` through a `Task { @MainActor }` hop into `AircraftTelemetryStore` (`@Observable @MainActor` singleton). Views read `latestSnapshot` inside `body`; neither store nor view holds an engine object, so aircraft swaps and scene resets need no re-pointing. The math is the pure `AircraftTelemetry.make` / `attitudeAngles(forward:right:up:)` (Metal-free, `AircraftTelemetryTests`): pitch = atan2(fwd.y, |fwd.xz|), heading = atan2(fwd.x, fwd.z) wrapped to [0, 360), roll = atan2(−right.y, up.y); below a 1e-6 horizontal nose length heading and roll are undefined and the previous snapshot's values are held. Forward speed is dot(velocity, forward), zero for aircraft without a rigid body (the kinematic path). Each `Aircraft` subclass passes its `AircraftType` to the base init (`aircraftType`), which the panel shows.
+
 ### Platform Differences & Menus
 - **macOS**: NSViewRepresentable bridge (`MacMetalViewWrapper` in `Views/`), keyboard/mouse/HOTAS input, `GameViewController` captures key events. SwiftUI views (`MacGameUIView`, `GameStats`, `TFSMenu`) live in `ToyFlightSimulator macOS/Views/`.
 - **iOS**: UIViewRepresentable bridge (`IOSMetalViewWrapper`), touch controls overlay, CoreMotion input. Views live in `ToyFlightSimulator iOS/Views/` (`IOSGameUIView`, `TFSMenuMobile`, touch controls). Defaults to `TiledMSAATessellated` but supports runtime renderer switching like macOS (`updateUIView` mirrors `updateNSView`'s teardown + re-init flow). SinglePassDeferredLighting doesn't work on iOS (memory issue). iOS/tvOS deployment targets are 26.0.
@@ -207,6 +210,7 @@ CI (`.github/workflows/`): test runs must pass `-parallel-testing-enabled NO` �
 
 - **'C' key**: Cycle registered cameras in registration order (no-op in single-camera scenes). Debug: WASD + mouselook. Attached: follows aircraft
 - **'Y' key**: Toggle stats display (FPS + active renderer)
+- **'T' key** (macOS): Toggle the aircraft telemetry panel (`AircraftTelemetryView`: type, altitude, speed, heading, pitch, roll from `AircraftTelemetryStore`)
 - **'H' key** (macOS; menu toggle on both platforms): Toggle Apple's Metal Performance HUD
 - **'B' key**: Wheel brakes on the main gear, held = full (`ContinuousCommand.Brake` → `ControlInput.brake`; the tire model's longitudinal limit rises from 0.02·N to 0.52·N)
 - **'X' key**: Cycle the collider debug overlay (`ColliderDebugOverlay`: off → volumes over hull → volumes only): red spec volumes, yellow legacy sphere, cyan strut lines; prints collider world dimensions and the gear stance when shown

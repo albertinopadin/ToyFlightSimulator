@@ -27,6 +27,14 @@ class GameScene: Node {
     /// player-aircraft scene gets the cycle without per-scene wiring.
     let colliderOverlay = ColliderDebugOverlay()
     
+    /// Telemetry publish cadence, in game seconds: the player aircraft's
+    /// snapshot is copied to the main-actor `AircraftTelemetryStore` from
+    /// `update()` at most this often. Each publish re-renders the panel on
+    /// the main thread, which also renders frames, so a text panel could run
+    /// far below 60 Hz.
+    private let telemetryPublishInterval: Double = 1/60
+    private var lastTelemetryPublishTime: Double = 0
+    
     override init(name: String) {
         print("[Scene init] Initilizing scene named: \(name)")
         super.init(name: name)
@@ -199,6 +207,18 @@ class GameScene: Node {
         _sceneConstants.projectionMatrixInverse = camera.projectionMatrix.inverse
         _sceneConstants.totalGameTime = Float(GameTime.TotalGameTime)
         _sceneConstants.cameraPosition = CameraManager.GetCurrentCameraPosition()
+        
+        // Telemetry for the UI, after super.update() so this frame's transforms
+        // are final. The snapshot is a Sendable value: the Task hop is the only
+        // main-actor touch and carries no engine reference.
+        let timeSinceLastTelemetryPublish = GameTime.TotalGameTime - lastTelemetryPublishTime
+        if let playerAircraft, timeSinceLastTelemetryPublish >= telemetryPublishInterval {
+            let telemetrySnapshot = playerAircraft.getTelemetrySnapshot()
+            Task { @MainActor in
+                AircraftTelemetryStore.sharedInstance.latestSnapshot = telemetrySnapshot
+            }
+            lastTelemetryPublishTime = GameTime.TotalGameTime
+        }
     }
     
     func setSceneConstants(with renderEncoder: MTLRenderCommandEncoder) {

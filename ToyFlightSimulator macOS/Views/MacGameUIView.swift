@@ -13,6 +13,7 @@ struct MacGameUIView: View {
     @State private var viewSize: CGSize = .zero
     @State private var shouldDisplayMenu: Bool = false
     @State private var shouldDisplayGameStats: Bool = false
+    @State private var shouldDisplayAircraftTelemetry: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
 //    @State private var rendererType: RendererType = .OrderIndependentTransparency
     @State private var rendererType: RendererType = .TiledMSAATessellated
@@ -45,6 +46,10 @@ struct MacGameUIView: View {
                 if shouldDisplayGameStats {
                     GameStats(viewSize: viewSize)
                 }
+                
+                if shouldDisplayAircraftTelemetry {
+                    AircraftTelemetryView(viewSize: viewSize)
+                }
             }
             .onAppear {
                 viewSize = getViewSize(geometrySize: geometry.size)
@@ -70,6 +75,14 @@ struct MacGameUIView: View {
                     withAnimation {
                         MainActor.assumeIsolated {
                             shouldDisplayGameStats.toggle()
+                        }
+                    }
+                }
+                
+                InputManager.HandleKeyPressedDebounced(keyCode: .t) {
+                    withAnimation {
+                        MainActor.assumeIsolated {
+                            shouldDisplayAircraftTelemetry.toggle()
                         }
                     }
                 }

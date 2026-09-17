@@ -295,7 +295,11 @@ final class F18: Aircraft {
     }
     
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {
-        super.init(name: "F-18", modelType: .F18, scale: scale, shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
+        super.init(name: "F-18",
+                   aircraftType: .f18,
+                   modelType: .F18,
+                   scale: scale,
+                   shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
         setupControlSurfaces()
     }
     
