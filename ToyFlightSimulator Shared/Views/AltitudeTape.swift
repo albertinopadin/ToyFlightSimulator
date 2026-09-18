@@ -16,9 +16,9 @@ struct AltitudeTape: View {
     /// @Observable singleton: reading `latestSnapshot` inside `body` is tracked,
     /// so every telemetry publish (60 Hz from GameScene.update) redraws the tape.
     let aircraftTelemetryStore = AircraftTelemetryStore.sharedInstance
-    let visibleSpanFeet: Float = 1000
+    let visibleSpanFeet: Float = 5000
     let minorTickStepFeet: Int = 100
-    let labelStepFeet: Int = 100
+    let labelStepFeet: Int = 1000
     /// Room for a five-digit label: the 2-pt labeled tick, the 3-pt gap and
     /// five 14-pt monospaced digits (about 42 pt).
     let tapeWidth: CGFloat = 52
