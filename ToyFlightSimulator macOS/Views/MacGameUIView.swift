@@ -11,6 +11,7 @@ struct MacGameUIView: View {
     private let minViewSize = CGSize(width: 640, height: 480)
     
     @State private var viewSize: CGSize = .zero
+    @State private var shouldDisplayHeadingTape: Bool = true
     @State private var shouldDisplayMenu: Bool = false
     @State private var shouldDisplayGameStats: Bool = false
     @State private var shouldDisplayAircraftTelemetry: Bool = false
@@ -31,6 +32,10 @@ struct MacGameUIView: View {
                 MacMetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize),
                                     refreshRate: framesPerSecond,
                                     rendererType: rendererType)
+                
+                if shouldDisplayHeadingTape {
+                    HeadingTape(viewSize: viewSize)
+                }
                 
                 if shouldDisplayMenu {
                     TFSMenu(framesPerSecond: $framesPerSecond,
