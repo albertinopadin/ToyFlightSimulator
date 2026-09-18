@@ -12,6 +12,8 @@ struct MacGameUIView: View {
     
     @State private var viewSize: CGSize = .zero
     @State private var shouldDisplayHeadingTape: Bool = true
+    @State private var shouldDisplaySpeedTape: Bool = true
+    @State private var shouldDisplayAltitudeTape: Bool = true
     @State private var shouldDisplayMenu: Bool = false
     @State private var shouldDisplayGameStats: Bool = false
     @State private var shouldDisplayAircraftTelemetry: Bool = false
@@ -35,6 +37,14 @@ struct MacGameUIView: View {
                 
                 if shouldDisplayHeadingTape {
                     HeadingTape(viewSize: viewSize)
+                }
+                
+                if shouldDisplaySpeedTape {
+                    SpeedTape(viewSize: viewSize)
+                }
+                
+                if shouldDisplayAltitudeTape {
+                    AltitudeTape(viewSize: viewSize)
                 }
                 
                 if shouldDisplayMenu {
