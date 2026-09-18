@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct IOSGameUIView: View {
+    @State private var shouldDisplayHeadingTape: Bool = true
+    @State private var shouldDisplaySpeedTape: Bool = true
+    @State private var shouldDisplayAltitudeTape: Bool = true
     @State private var shouldDisplayMenu: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
     @State private var useMotionControl: Bool = false
@@ -36,6 +39,19 @@ struct IOSGameUIView: View {
                 .background(.white)
                 .clipShape(Capsule())
                 .position(x: 120, y: 70)
+                
+                if shouldDisplayHeadingTape {
+                    HeadingTape(viewSize: geometry.size)
+                }
+                
+                if shouldDisplaySpeedTape {
+                    SpeedTape(viewSize: geometry.size)
+                        .safeAreaPadding(.leading, 50)
+                }
+                
+                if shouldDisplayAltitudeTape {
+                    AltitudeTape(viewSize: geometry.size)
+                }
 
                 TFSTouchThrottle(viewSize: geometry.size)
                 

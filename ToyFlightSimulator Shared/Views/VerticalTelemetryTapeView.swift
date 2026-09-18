@@ -134,6 +134,7 @@ struct VerticalTelemetryTapeView: View {
     private func readoutBox(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 15, weight: .semibold, design: .monospaced))
+            .frame(width: 60, alignment: .trailing)
             .foregroundStyle(color)
             .padding(.vertical, 2)
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(color, lineWidth: 1))
