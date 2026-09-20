@@ -4,13 +4,14 @@
 **/*-diff.html
 
 # Claude Code harness state (per-developer scheduled-task locks, local
-# settings overrides) stays local. Skills under .claude/skills/ are
-# versioned guidance, like CLAUDE.md at the repo root, so they are
-# re-included below. Ignoring .claude/* (not .claude/) is what lets the
-# negation work: git cannot re-include a file whose parent directory is
-# itself excluded.
+# settings overrides) stays local. Skills under .claude/skills/ and
+# path-scoped rules under .claude/rules/ are versioned guidance, like
+# CLAUDE.md at the repo root, so they are re-included below. Ignoring
+# .claude/* (not .claude/) is what lets the negation work: git cannot
+# re-include a file whose parent directory is itself excluded.
 .claude/*
 !.claude/skills/
+!.claude/rules/
 
 **/TestResults
 
