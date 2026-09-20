@@ -15,6 +15,9 @@ using namespace metal;
 
 class Lighting {
 public:
+    constexpr static constant float DEFAULT_SPECULAR_STRENGTH = 0.0;
+    constexpr static constant float DEFAULT_SHININESS = 1.0;
+    
     static float3 GetPhongIntensity(MaterialProperties material,
                                     constant LightData *lightData,
                                     int lightCount,
@@ -59,7 +62,7 @@ public:
         return totalAmbient + totalDiffuse + totalSpecular;
     }
     
-    static float3 CalculateDirectionalLighting(constant LightData &light, float3 normal, MaterialProperties material) {
+    static float3 OG_CalculateDirectionalLighting(constant LightData &light, float3 normal, MaterialProperties material) {
         float4 baseColor = material.color;
         float3 metallic = material.shininess;
         float3 ambientOcclusion = material.ambient;
@@ -70,6 +73,42 @@ public:
         float nDotL = saturate(dot(normal, light.direction));
         float3 diffuse = float3(baseColor) * (1.0 - metallic);
         return diffuse * nDotL * ambientOcclusion * light.color;
+    }
+    
+    static float3 CalculateDirectionalLighting(constant LightData &light, float3 normal, MaterialProperties material) {
+        return ShadeDirectionalBlinnPhong(material.color.rgb,
+                                          normal,
+                                          light.direction,
+                                          normal,
+                                          light,
+                                          DEFAULT_SPECULAR_STRENGTH,
+                                          material.shininess,
+                                          1);
+    }
+    
+    static float3 ShadeDirectionalBlinnPhong(float3 albedo,
+                                             float3 normal,
+                                             float3 toLight,
+                                             float3 toCamera,
+                                             constant LightData &light,
+                                             float specularStrength,
+                                             float shininess,
+                                             float litFraction) {
+        float3 radiance = light.color * light.brightness;
+        float3 ambient = albedo * radiance * light.ambientIntensity;
+        float nDotL = max(dot(normal, toLight), 0.0);
+        float3 diffuse = albedo * radiance * light.diffuseIntensity * nDotL;
+        float3 specular = 0;
+        if (nDotL > 0 && dot(normal, toCamera) > 0 && specularStrength > 0) {
+            float3 halfSum = toLight + toCamera;
+            if (length(halfSum) > 1e-6) {
+                float3 halfVector = normalize(halfSum);
+                float nDotH = max(dot(normal, halfVector), 0.0);
+                specular = radiance * light.specularIntensity * specularStrength * pow(nDotH, max(shininess, 1.0));
+            }
+        }
+        
+        return ambient + litFraction * (diffuse + specular);
     }
     
     // Compute the NDC-space depth-compare epsilon from a world-space slack and
@@ -160,6 +199,56 @@ public:
     // depth, PCF-samples it, and cross-fades into the next cascade in the last
     // CASCADE_BLEND_FRACTION of the cascade's depth range to hide the
     // resolution-change seam at cascade boundaries.
+    static float LegacyCalculateShadow(float3 worldPosition,
+                                       float  fragViewSpaceDepth,
+                                       float3 worldNormal,
+                                       constant LightData &light,
+                                       depth2d_array<float> shadowArray) {
+        if (light.cascadeCount == 0) { return 1.0; }
+
+        uint cascadeIdx = SelectCascade(light, fragViewSpaceDepth);
+
+        bool inBounds = false;
+        float lit = SampleCascadePCF(worldPosition, worldNormal, light, shadowArray,
+                                     cascadeIdx, inBounds);
+
+        // Fallthrough: texel snap can nudge a fragment outside the depth-selected
+        // cascade's XY box. Try the next cascade before giving up (fully lit).
+        if (!inBounds) {
+            if (cascadeIdx + 1 < light.cascadeCount) {
+                cascadeIdx += 1;
+                lit = SampleCascadePCF(worldPosition, worldNormal, light, shadowArray,
+                                       cascadeIdx, inBounds);
+                if (!inBounds) { return 1.0; }
+            } else {
+                return 1.0;
+            }
+        }
+
+        // Cascade blending: ramp a blend weight over the last fraction of this
+        // cascade's depth range and cross-fade into the next cascade's PCF result.
+        if (cascadeIdx + 1 < light.cascadeCount) {
+            constexpr float CASCADE_BLEND_FRACTION = 0.1;
+            float cascadeFar  = light.cascadeSplitDepths[cascadeIdx];
+            float cascadeNear = (cascadeIdx > 0) ? light.cascadeSplitDepths[cascadeIdx - 1] : 0.0;
+            float span        = max(cascadeFar - cascadeNear, 1.0);
+            float blendStart  = cascadeFar - span * CASCADE_BLEND_FRACTION;
+            float blendWeight = saturate((fragViewSpaceDepth - blendStart)
+                                       / max(cascadeFar - blendStart, 1e-4));
+            if (blendWeight > 0.0) {
+                bool nextInBounds = false;
+                float litNext = SampleCascadePCF(worldPosition, worldNormal, light, shadowArray,
+                                                 cascadeIdx + 1, nextInBounds);
+                if (nextInBounds) {
+                    lit = mix(lit, litNext, blendWeight);
+                }
+            }
+        }
+
+        // Map [0, 1] PCF result to a [0.5, 1.0] shadow factor.
+        return 0.5 + 0.5 * lit;
+    }
+    
     static float CalculateShadow(float3 worldPosition,
                                  float  fragViewSpaceDepth,
                                  float3 worldNormal,
@@ -207,7 +296,7 @@ public:
         }
 
         // Map [0, 1] PCF result to a [0.5, 1.0] shadow factor.
-        return 0.5 + 0.5 * lit;
+        return clamp(lit, 0.0, 1.0);
     }
 
     static float3 CalculatePointLighting(constant LightData &light,

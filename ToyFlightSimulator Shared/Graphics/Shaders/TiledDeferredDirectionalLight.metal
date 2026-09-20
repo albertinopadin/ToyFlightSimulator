@@ -12,8 +12,9 @@ using namespace metal;
 #import "ShaderHelpers.h"
 #import "Lighting.metal"
 
+// Kept as reference for the future - the idea is to add materials and multiple directional lights:
 fragment float4
-tiled_deferred_directional_light_fragment(         FullScreenVertexOut  in         [[ stage_in ]],
+og_tiled_deferred_directional_light_fragment(         FullScreenVertexOut  in         [[ stage_in ]],
                                           constant LightData            &lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                                    GBufferOut           gBuffer) {
     float4 albedo = gBuffer.albedo;
@@ -34,5 +35,29 @@ tiled_deferred_directional_light_fragment(         FullScreenVertexOut  in      
     }
     
     color *= albedo.a;
+    return float4(color, 1);
+}
+
+
+fragment float4
+tiled_deferred_directional_light_fragment(
+                                          FullScreenVertexOut  in               [[ stage_in ]],
+                                 constant LightData            &lightData       [[ buffer(TFSBufferDirectionalLightData) ]],
+                                 constant SceneConstants       &sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
+                                          GBufferOut           gBuffer) {
+    float3 albedo = gBuffer.albedo.rgb;
+    float litFraction = gBuffer.albedo.a;
+    float3 normal = normalize(gBuffer.normal.xyz);
+    float3 worldPosition = gBuffer.position.xyz;
+    float3 toLight = lightData.direction;
+    float3 toCamera = normalize(sceneConstants.cameraPosition - worldPosition);
+    float3 color = Lighting::ShadeDirectionalBlinnPhong(albedo,
+                                                        normal,
+                                                        toLight,
+                                                        toCamera,
+                                                        lightData,
+                                                        Lighting::DEFAULT_SPECULAR_STRENGTH,
+                                                        Lighting::DEFAULT_SHININESS,
+                                                        litFraction);
     return float4(color, 1);
 }
