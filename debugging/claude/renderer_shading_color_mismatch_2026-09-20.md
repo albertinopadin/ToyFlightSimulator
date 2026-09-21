@@ -14,6 +14,11 @@ reads pixel values out of the screenshots.
 
 ## Changelog
 
+- **2026-09-21** — Step 5's closing note on `base_animated_vertex` tangent skinning and the
+  zero-light guard expanded, on request, into the full explanation: why T and B must be skinned
+  with the same blended matrix as N, a worked 90° flap example where the unskinned bitangent
+  collapses onto the normal, and why the guard both avoids an unbound-buffer read and keeps a
+  sunless scene from drawing black.
 - **2026-09-21** — Step 4 split into the two landing-order commits after implementing it literally
   turned every directly lit surface in the single-pass renderer almost white. The pseudocode read
   the G-buffer alpha as the specular strength, but that channel is a constant 1.0 until Step 6
@@ -709,10 +714,65 @@ finalColor.rgb *= finalColor.a                       // premultiply ONCE, after 
 insert into the image-block layers                   // unchanged
 ```
 
-Also in `base_animated_vertex` (`Base.metal:75-77`): skin the tangent and bitangent with the
-same joint matrix as the normal before multiplying by `normalMatrix` (secondary item 5). The
-zero-light guard matters because `LightManager.SetDirectionalLightData` binds nothing when the
-array is empty, and reading an unbound buffer is undefined **[codex]**.
+**Also in `base_animated_vertex`: skin the tangent and bitangent (secondary item 5).** A skinned
+mesh moves with a skeleton. For each vertex, `BlendJointMatrix` blends the joint matrices by the
+vertex's joint weights into one 4×4 skin matrix, and the position is multiplied by it to follow
+the bones. Every direction attached to the surface has to follow the same way, or it describes
+the unposed surface. Three directions matter for normal mapping: the normal N, the tangent T
+(along the texture's U axis) and the bitangent B (along V). A normal-map texel `(x, y, z)` is
+decoded as `x·T + y·B + z·N`, so if T and B lag behind N the bump is tilted in the wrong
+direction by the joint's rotation. At commit `8af20b4`, `Base.metal:60-62` and `:75-77` do this:
+
+```pseudocode
+skinMatrix       = blendJointMatrix(jointMatrices, joints, jointWeights)   // one 4x4 per vertex
+skinnedPosition  = skinMatrix * (modelPosition, w = 1)     // point: translation applies
+skinnedNormal    = skinMatrix * (modelNormal,   w = 0)     // direction: translation ignored
+
+rd.surfaceNormal    = normalMatrix * skinnedNormal.xyz     // follows the pose
+rd.surfaceTangent   = normalMatrix * modelTangent          // still in the bind pose
+rd.surfaceBitangent = normalMatrix * modelBitangent        // still in the bind pose
+```
+
+The fix is two extra lines using the same blended matrix, which is what the tiled animated
+vertex already does at `TiledDeferredGBuffer.metal:55-56`:
+
+```pseudocode
+skinnedTangent   = skinMatrix * (modelTangent,   w = 0)
+skinnedBitangent = skinMatrix * (modelBitangent, w = 0)
+rd.surfaceTangent   = normalMatrix * skinnedTangent.xyz
+rd.surfaceBitangent = normalMatrix * skinnedBitangent.xyz
+```
+
+Worked example: a flap with N = (0, 1, 0), T = (1, 0, 0), B = (0, 0, 1) in the bind pose,
+deflected 90° about its hinge, the X axis. The skinned N becomes (0, 0, 1). The unskinned B is
+still (0, 0, 1), now parallel to N, so the frame is degenerate. A texel tilted along V,
+`(0, 0.5, 0.87)`, decodes to `0.5·B + 0.87·N = (0, 0, 1.37)`, which normalizes back to the plain
+normal: the bump vanishes. With the fix B becomes (0, −1, 0) and the same texel decodes to
+(0, −0.5, 0.87), a real tilt. This is harmless while the OIT fragment's normal-map code is
+commented out, because only N is read; it becomes wrong the moment Step 5 re-enables it.
+
+**The zero-light guard [codex].** `LightManager.SetDirectionalLightData`
+(`LightManager.swift:78-102`) always binds the count, but binds the `LightData` array only inside
+an `if let base = buf.baseAddress` on the scratch array. With no directional light registered
+there is nothing to bind, and the shader's `lightData` parameter then points at whatever that
+buffer slot last held on this encoder, or at nothing. Reading it is undefined: the validation
+layer reports a missing binding, and the GPU reads garbage. At `8af20b4` `material_fragment`
+declares the parameters (`Base.metal:101-102`) but never reads them because the lighting block
+is commented out, so nothing goes wrong yet. Once Step 5 re-enables the loop, the fragment must
+consult the count before touching the array:
+
+```pseudocode
+if lightCount == 0 or not material.isLit
+    litColor = baseColor.rgb                 // unlit fallback, never indexes lightData
+else
+    for i in 0 ..< lightCount                // the bound is the only thing that makes lightData[i] safe
+        litColor += shade(..., lightData[i], ...)
+```
+
+The loop bound alone already prevents the out-of-bounds read. The explicit guard adds the second
+purpose: ambient lives inside the per-light call, so a scene with no sun would otherwise sum zero
+lights and draw every surface black. The guard makes it draw the base color instead, which is
+what the OIT path does at `8af20b4`.
 
 ### Step 5b — `TiledDeferredTransparency.metal` and `SinglePassDeferredTransparency.metal` [codex]
 
