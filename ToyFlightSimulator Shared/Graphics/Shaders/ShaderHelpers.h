@@ -39,6 +39,13 @@ inline float3 ApplyNormalMapWorld(half3 sampleRGB, float3 T, float3 B, float3 N)
     return normalize(tn.x * normalize(T) + tn.y * normalize(B) + tn.z * normalize(N));
 }
 
+// Same decode for a float sample: the OIT fragments bind texture2d<float> normal maps,
+// so this overload avoids narrowing the sample to half at every call site.
+inline float3 ApplyNormalMapWorld(float3 sampleRGB, float3 T, float3 B, float3 N) {
+    float3 tn = normalize(sampleRGB * 2.0 - 1.0);
+    return normalize(tn.x * normalize(T) + tn.y * normalize(B) + tn.z * normalize(N));
+}
+
 // Decode a [0,1]-encoded tangent-space normal-map sample and rotate it onto the
 // interpolated surface basis. Eye-space half-precision variant for the
 // single-pass deferred G-buffer, whose T/B/N interpolants are half3 in eye

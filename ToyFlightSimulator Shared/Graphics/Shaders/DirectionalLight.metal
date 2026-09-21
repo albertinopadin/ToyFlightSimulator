@@ -10,6 +10,7 @@ using namespace metal;
 
 #import "ShaderDefinitions.h"
 #import "ShaderHelpers.h"
+#import "Lighting.metal"
 
 struct QuadInOut
 {
@@ -43,56 +44,34 @@ deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_i
                                        constant LightData & lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                        GBufferData          GBuffer)
 {
-    float depth = GBuffer.depth;
-    half4 normal_shadow = GBuffer.normal_shadow;
-    half4 albedo_specular = GBuffer.albedo_specular;
-
-    // G-buffer normals are eye-space; LightManager recomputes lightEyeDirection
-    // (surface -> sun, eye space, unit length) from the live view matrix each frame.
-    half3 sun_eye_direction = half3(lightData.lightEyeDirection);
-    half sun_diffuse_intensity = saturate(dot(normal_shadow.xyz, sun_eye_direction));
-    half minimum_sun_diffuse_intensity = 0.4h;
-    sun_diffuse_intensity = max(sun_diffuse_intensity, minimum_sun_diffuse_intensity);
-    
-    half3 sun_color = half3(lightData.color.xyz);
-
-    half3 diffuse_contribution = albedo_specular.xyz * sun_diffuse_intensity * sun_color;
-
-    // Calculate specular contribution from directional light
-    
-    // Used eye_space depth to determine the position of the fragment in eye_space
-    float3 eye_space_fragment_pos = ReconstructEyePosition(in.eye_position, depth);
-
-    // Blinn-Phong halfway vector, eye space: H = normalize(L + V), V = toward camera
-    // (the camera sits at the eye-space origin, so V = -normalize(fragment_pos)).
-    float3 view_dir = -normalize(eye_space_fragment_pos);
-    float3 halfway_vector = normalize(float3(sun_eye_direction) + view_dir);
-
-    half specular_intensity = half(lightData.specularIntensity);
-    
-    half shininess = half(1.0);
-    
-    half specular_shininess = albedo_specular.w * shininess;
-
-    half specular_factor = powr(max(dot(half3(normal_shadow.xyz), half3(halfway_vector)), 0.0h), specular_intensity);
-
-    half3 specular_contribution = specular_factor * half3(albedo_specular.xyz) * specular_shininess * sun_color;
-
-    half3 color = diffuse_contribution + specular_contribution;
-    
-    // Shadow Contribution
-    half shadowSample = normal_shadow.w;
-
-    // Lighten the shadow to account for some ambience
-    shadowSample += .1h;
-
-    // Account for values greater than 1.0 (after lightening shadow)
-    shadowSample = saturate(shadowSample);
-
-    color *= shadowSample;
+    // Everything here is EYE space: the G-buffer stores the unit normal rotated by the
+    // view matrix, LightManager rotates the sun direction with the same matrix each frame
+    // (lightEyeDirection), and the camera sits at the origin. N, L and V must share one
+    // frame or the dot products are meaningless (root cause 2c in the shading doc).
+    float3 albedo = float3(GBuffer.albedo_specular.rgb);
+    // The rgba8Snorm normal target changes the length slightly; renormalize before use.
+    float3 eyeNormal = normalize(float3(GBuffer.normal_shadow.xyz));
+    // Raw PCF visibility, 0 (fully shadowed) .. 1 (unblocked), written by the G-buffer pass.
+    // It scales only the direct light inside the shared function; ambient is never shadowed.
+    half litFraction = GBuffer.normal_shadow.a;
+    float3 eyeToLight = lightData.lightEyeDirection;
+    float3 eyePosition = ReconstructEyePosition(in.eye_position, GBuffer.depth);
+    float3 eyeToCamera = -normalize(eyePosition);
+    // Landing-order step 1 (diffuse + ambient parity across renderers): specular off.
+    // Step 6 replaces DEFAULT_SPECULAR_STRENGTH with GBuffer.albedo_specular.a once the
+    // G-buffer writes material.specular.r there. Today that channel is a constant 1.0 for
+    // every untextured surface, which with exponent 1 clipped every lit surface to white.
+    float3 color = Lighting::ShadeDirectionalBlinnPhong(albedo,
+                                                        eyeNormal,
+                                                        eyeToLight,
+                                                        eyeToCamera,
+                                                        lightData,
+                                                        Lighting::DEFAULT_SPECULAR_STRENGTH,
+                                                        Lighting::DEFAULT_SHININESS,
+                                                        litFraction);
     
     AccumLightBuffer output = {
-        .lighting = half4(color, 1)
+        .lighting = half4(half3(color), 1)
     };
     
     return output;

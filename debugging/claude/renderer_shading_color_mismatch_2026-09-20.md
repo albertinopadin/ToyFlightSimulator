@@ -14,6 +14,10 @@ reads pixel values out of the screenshots.
 
 ## Changelog
 
+- **2026-09-21** — Steps 4, 5 and 5b landed at landing-order step 1 (review of the owner's
+  implementation). The Step 5 / 5b pseudocode and a new Step 6 bullet now say the forward
+  fragments pass `kDefaultSpecularStrength` until Step 6, with the numbers the current
+  material defaults would produce.
 - **2026-09-21** — Step 5's closing note on `base_animated_vertex` tangent skinning and the
   zero-light guard expanded, on request, into the full explanation: why T and B must be skinned
   with the same blended matrix as N, a worked 90° flap example where the unskinned bitangent
@@ -700,7 +704,7 @@ function materialFragment(rd, material, uvTransforms, lightCount, lights, textur
             else
                 unitToLight_world = normalize(light.position - rd.worldPosition)   // point lights, no attenuation yet
             litColor += shadeDirectionalBlinnPhong(baseColor.rgb, unitNormal_world, unitToLight_world, unitToCamera_world,
-                                                   light, material.specular.r, material.shininess, 1)   // OIT has no shadow map
+                                                   light, kDefaultSpecularStrength, material.shininess, 1)   // no shadow map; Step 6: material.specular.r
     output.color0 = (litColor, baseColor.a)
     output.color1 = (unitNormal_world, 1)
 ```
@@ -791,7 +795,7 @@ function deferredTransparencyFragment(in, material, uvTransforms, light, sceneCo
     litFraction = calculateShadow(in.worldPosition, fragViewSpaceDepth, in.worldNormal, light, shadowArray)
                   // or 1 if the transparency stage should stay shadow-free in a first version
     litColor = shadeDirectionalBlinnPhong(baseColor.rgb, unitNormal_world, light.direction, unitToCamera_world,
-                                          light, material.specular.r, material.shininess, litFraction)
+                                          light, kDefaultSpecularStrength, material.shininess, litFraction)   // Step 6: material.specular.r
     return (litColor, resolveOpacity(baseColor.a, material.opacity))   // straight alpha: the PSO blends sourceAlpha / oneMinusSourceAlpha
 ```
 
@@ -812,6 +816,13 @@ would apply the opacity twice **[codex]**.
   `albedo_specular.w` instead of the constant `1.0`, so Step 4 reads a sensible strength.
 - `GBuffer.metal:166-171`: pass `material.color` as the `ResolveBaseColor` fallback instead of
   `in.color` (secondary item 2).
+- The four forward fragments (`material_fragment` and `transparent_material_fragment` in the OIT
+  path, `single_pass_deferred_transparency_fragment`, `tiled_deferred_transparency_fragment`)
+  pass `kDefaultSpecularStrength` until this step lands, for the same reason as Step 4: with
+  today's defaults `material.specular.r` is 1.0 and `shininess` is 2, which adds a white `N·H²`
+  lobe to every lit surface (OIT ground → (239, 255, 216), jet skin → (255, 255, 255), camera
+  pitched 10° down). Switch them to `material.specular.r` here, together with Step 4's switch to
+  the G-buffer alpha.
 - **Scene light values: no change is required for the fix.** The existing 0.4 / 0.5 in
   `FlightboxWithPhysics` is a usable baseline: a lit top face stays at `0.9 × albedo`, exactly
   today's tiled lit pixel, and sides rise from black to `0.4 × albedo` **[codex]**. The

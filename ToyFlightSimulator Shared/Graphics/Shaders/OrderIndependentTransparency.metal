@@ -65,54 +65,77 @@ fragment TransparentFragmentStore transparent_fragment(RasterizerData rd [[ stag
 }
 
 fragment TransparentFragmentStore
-transparent_material_fragment(RasterizerData                     rd              [[ stage_in ]],
-                              constant MaterialProperties        &material       [[ buffer(TFSBufferIndexMaterial) ]],
-                              constant MaterialTextureTransforms &uvXforms       [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
-                              constant int                       &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
-                              constant LightData                 *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
-                              sampler                            sampler2d       [[ sampler(0) ]],
-                              texture2d<float>                   baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
-                              texture2d<float>                   normalMap       [[ texture(TFSTextureIndexNormal) ]],
-                              TransparentFragmentValues          fragmentValues  [[ imageblock_data ]]) {
-    float2 texCoord = rd.textureCoordinate;
+transparent_material_fragment(
+                RasterizerData                     rd              [[ stage_in ]],
+                constant MaterialProperties        &material       [[ buffer(TFSBufferIndexMaterial) ]],
+                constant MaterialTextureTransforms &uvXforms       [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
+                constant int                       &lightCount     [[ buffer(TFSBufferDirectionalLightsNum) ]],
+                constant LightData                 *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
+                sampler                            sampler2d       [[ sampler(0) ]],
+                texture2d<float>                   baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
+                texture2d<float>                   normalMap       [[ texture(TFSTextureIndexNormal) ]],
+                TransparentFragmentValues          fragmentValues  [[ imageblock_data ]]) {
+    // Per-slot UV transforms (glTF KHR_texture_transform): each texture has its own matrix,
+    // identity for slots without one, so both UVs start from the raw coordinate and the
+    // normal map is sampled with ITS transform, as in material_fragment (Base.metal).
+    float2 baseUV = rd.textureCoordinate;
+    float2 normalUV = rd.textureCoordinate;
     if (uvXforms.hasTextureTransforms) {
-        texCoord = ApplyUVTransform(rd.textureCoordinate, uvXforms.baseColorUVTransform);
+        baseUV = ApplyUVTransform(rd.textureCoordinate, uvXforms.baseColorUVTransform);
+        normalUV = ApplyUVTransform(rd.textureCoordinate, uvXforms.normalUVTransform);
     }
     
-    float4 color = ResolveBaseColor(rd.useObjectColor,
-                                    rd.objectColor,
-                                    rd.color,
-                                    baseColorMap,
-                                    sampler2d,
-                                    texCoord);
+    // material.color, not the interpolated vertex color, is the untextured fallback: the
+    // vertex color defaults to black (secondary item 2 in the shading doc).
+    float4 baseColor = ResolveBaseColor(rd.useObjectColor,
+                                        rd.objectColor,
+                                        material.color,
+                                        baseColorMap,
+                                        sampler2d,
+                                        baseUV);
     
-    // TODO: This darkens the transparent objects:
-//    float3 unitNormal;
-//    if (material.isLit) {
-//        unitNormal = normalize(rd.surfaceNormal);
-//        if (!rd.useObjectColor && !is_null_texture(normalMap)) {
-//            float3 sampleNormal = normalMap.sample(sampler2d, texCoord).rgb * 2 - 1;
-//            float3x3 TBN { rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal };
-//            unitNormal = TBN * sampleNormal;
-//        }
-//        
-//        float3 unitToCameraVector = normalize(rd.toCameraVector);
-//        
-//        float3 phongIntensity = Lighting::GetPhongIntensity(material,
-//                                                            lightData,
-//                                                            lightCount,
-//                                                            rd.worldPosition,
-//                                                            unitNormal,
-//                                                            unitToCameraVector);
-//        color *= float4(phongIntensity, 1.0);
-//    }
+    float3 unitNormal = normalize(rd.surfaceNormal);
+    
+    if (!is_null_texture(normalMap) && !rd.useObjectColor) {
+        float3 normalSample = normalMap.sample(sampler2d, normalUV).rgb;
+        unitNormal = ApplyNormalMapWorld(normalSample, rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal);
+    }
+    
+    // Same forward Blinn-Phong as material_fragment (Base.metal), which explains the
+    // lightCount guard, the unreachable point-light branch, litFraction = 1 (no shadow
+    // map here) and the specular-off parity step that Step 6 ends.
+    float3 litColor;
+    if (lightCount == 0 || !material.isLit) {
+        litColor = baseColor.rgb;
+    } else {
+        float3 toCamera = normalize(rd.toCameraVector);
+        litColor = 0;
+        for (int i = 0; i < lightCount; i++) {
+            constant LightData &light = lightData[i];
+            float3 toLight;
+            if (light.type == Directional) {
+                toLight = light.direction;
+            } else {
+                toLight = normalize(light.position - rd.worldPosition);
+            }
+            
+            litColor += Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
+                                                             unitNormal,
+                                                             toLight,
+                                                             toCamera,
+                                                             light,
+                                                             Lighting::DEFAULT_SPECULAR_STRENGTH,
+                                                             material.shininess,
+                                                             1.0);
+        }
+    }
     
     TransparentFragmentStore out;
-    half4 finalColor = half4(color);
+    // Light the straight color first, then premultiply by the opacity ONCE (next line):
+    // the image-block layers and their resolve expect premultiplied color, as before.
+    half4 finalColor = half4(half3(litColor), ResolveOpacity(baseColor.a, material.opacity));
     
-    finalColor.w = ResolveOpacity(finalColor.w, material.opacity);
-    
-    finalColor.xyz *= finalColor.w;
+    finalColor.rgb *= finalColor.a;
     
     // View-space depth as the sort key ([[position]].w = 1/clipW, and clipW is
     // view depth for both forward- and reverse-Z projections; the old
