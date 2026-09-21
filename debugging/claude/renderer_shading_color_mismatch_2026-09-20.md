@@ -14,6 +14,14 @@ reads pixel values out of the screenshots.
 
 ## Changelog
 
+- **2026-09-21** — Step 4 split into the two landing-order commits after implementing it literally
+  turned every directly lit surface in the single-pass renderer almost white. The pseudocode read
+  the G-buffer alpha as the specular strength, but that channel is a constant 1.0 until Step 6
+  lands and the parity-step `kDefaultShininess` is 1, so the highlight became `N·H` in white on
+  every sun-facing surface (root cause 2b again, untinted). The parity commit now passes
+  `kDefaultSpecularStrength`; the specular commit switches to the alpha. Landing order item 1
+  and verification item 7 say so explicitly. Numbers in the new table under Step 4 re-derived
+  with the shading formula of the worked example.
 - **2026-09-20** — Cross-checked against the Codex diagnosis. Adopted: the secondary inconsistencies
   section (deferred transparency unlit, fallback color, UV transforms, handedness, tangent skinning,
   zero-specular import), the world-space-then-rotate normal repair for the single-pass G-buffer, the
@@ -447,11 +455,14 @@ mix of the legacy Phong reflectance, imported emission and the tiled helper's "o
 ### Landing order
 
 1. **Diffuse + ambient parity.** Steps 1–5b with `specularStrength = 0` everywhere, no scene
-   value changes. Compare the three renderers on the deterministic objects; they should agree
-   to within 8-bit quantization. This isolates the ambient, frame and `half` fixes from any
-   specular tuning **[codex]**.
-2. **Specular.** Set the default strength and shininess (Step 6), confirm zero strength removes
-   the highlight and a larger exponent narrows it without changing its peak brightness.
+   value changes. "Everywhere" includes the single-pass fragment: Step 4 passes
+   `kDefaultSpecularStrength` in this step, never the G-buffer alpha, which is a constant 1.0
+   until Step 6 lands. Compare the three renderers on the deterministic objects; they should
+   agree to within 8-bit quantization. This isolates the ambient, frame and `half` fixes from
+   any specular tuning **[codex]**.
+2. **Specular.** Set the default strength and shininess (Step 6), then switch Step 4 to the
+   G-buffer alpha. Confirm zero strength removes the highlight and a larger exponent narrows it
+   without changing its peak brightness.
 3. **Secondary consistency.** Fallback color, UV transforms, handedness, tangent skinning, zero
    specular import (Steps 5 and 6).
 4. **Follow-ups** (not needed for the screenshots): the items under
@@ -597,12 +608,21 @@ instead of one.
 
 ### Step 4 — `DirectionalLight.metal` (single-pass lighting)
 
+Two commits, one per landing-order step. The G-buffer alpha is not a usable specular strength
+until Step 6 lands: `GBuffer.metal:186-190` writes a constant 1.0 into `albedo_specular.w` for
+every surface without a specular map (every `setColor` object), and the parity-step
+`kDefaultShininess` is 1 (commit `8af20b4` set it that low because `kDefaultSpecularStrength`
+is 0, which keeps the exponent inert). Reading the alpha before Step 6 therefore re-creates root
+cause 2b, in white rather than tinted by albedo; the numbers are in the table below.
+
 ```pseudocode
+// Landing order step 1 (diffuse + ambient parity). Specular off, exactly as the tiled fragment
+// does it: TiledDeferredDirectionalLight.metal:59 passes kDefaultSpecularStrength, not a G-buffer value.
 function deferredDirectionalLightingFragment(in, gBuffer, light) -> lighting
     albedo = gBuffer.albedo_specular.rgb
-    specularStrength = gBuffer.albedo_specular.a       // specular map sample, or the material default (Step 6)
+    specularStrength = kDefaultSpecularStrength        // 0 in this step; NOT gBuffer.albedo_specular.a yet
     unitNormal_eye = normalize(gBuffer.normal_shadow.xyz)   // renormalize: 8-bit storage changes the length slightly
-    litFraction = gBuffer.normal_shadow.a
+    litFraction = gBuffer.normal_shadow.a              // raw PCF lit fraction since Step 1
     unitToLight_eye = light.lightEyeDirection
     eyePosition = reconstructEyePosition(in.eyeRay, gBuffer.depth)
     unitToCamera_eye = -normalize(eyePosition)         // camera is at the eye-space origin
@@ -611,9 +631,40 @@ function deferredDirectionalLightingFragment(in, gBuffer, light) -> lighting
     return (color, 1)
 ```
 
+```pseudocode
+// Landing order step 2 (specular on). Only after Step 6 has landed, i.e. GBuffer.metal writes
+// material.specular.r (default 0.25) into albedo_specular.w and kDefaultShininess is 32.
+// The one line that changes:
+    specularStrength = gBuffer.albedo_specular.a       // specular map sample, or the Step 6 material default
+```
+
 Removed on purpose: `minimum_sun_diffuse_intensity = 0.4`, `shadowSample += 0.1`,
 `specular_intensity` used as the exponent, `shininess = 1.0`, and the `× albedo` tint on the
 highlight. The ambient term now does what those constants were approximating.
+
+**What the early switch to the alpha produced (observed 2026-09-21).** Implemented with
+`specularStrength = gBuffer.albedo_specular.a` after commit `8af20b4` and before Step 6, every
+directly lit object in the single-pass renderer read almost pure white. Inside
+`shadeDirectionalBlinnPhong` the three guards pass on any sun-facing, camera-facing surface, and
+with strength 1, `specularIntensity` 1 (the `LightData()` default, which the scene never sets)
+and exponent 1 the highlight collapses to `N·H` in the sun's white color, added on top of the
+`0.9 × albedo` that ambient + diffuse already produce. For a top face under an overhead sun
+`N·H = √((1 + sin θ) / 2)`, where θ is the camera's downward pitch, so the chase camera's usual
+4°–30° gives about 0.74–0.87 and nothing stays below 1.0. Shadowed ground is unaffected because
+the specular sits inside the `litFraction × (…)` term, which is why only the directly lit objects
+blew out. Existing 0.4 / 0.5 intensities, camera pitched 10° down, linear then sRGB8:
+
+| Surface | N·H | Alpha read early (strength 1, exponent 1) | `kDefaultSpecularStrength` (parity step) | Step 6 values (0.25, exponent 32) |
+|---|---|---|---|---|
+| Lit ground (0.3, 0.7, 0.1) | 0.77 | (1.04, 1.40, 0.86) → clips to (255, 255, 239) | (0.270, 0.630, 0.090) → (142, 208, 85) | specular 6 × 10⁻⁵, same (142, 208, 85) |
+| F-22 upper skin, albedo 0.578 | 0.77 | 1.29 → (255, 255, 255) | 0.520 → (191, 191, 191) | 0.520 → (191, 191, 191) |
+| Ground fully in the jet's shadow | — | (0.120, 0.280, 0.040) → (97, 144, 56) | same | same |
+
+Ruled out while diagnosing it: the eye-space `LightData` does carry the scene's intensities
+(`LightManager.GetDirectionalLightData` copies the live struct and overwrites only
+`lightEyeDirection`); the directional lighting pipeline has no blending and the G-buffer's
+designated initializer zeroes its `lighting` output, so nothing is lit twice; normal and light
+are both eye-space after Step 3.
 
 ### Step 5 — `Base.metal` and `OrderIndependentTransparency.metal` (OIT)
 
@@ -789,7 +840,9 @@ darker than tops, shadows are darker than today but not black, and nothing clips
 6. Tiled and single-pass: the shadow under the jet should read `ambientIntensity × albedo`,
    (97, 144, 56) for the ground at the baseline values.
 7. Landing order step 2: `specularStrength = 0` must remove the highlight entirely; raising
-   the exponent must narrow the spot without moving its peak.
+   the exponent must narrow the spot without moving its peak. Before Step 4 switches to the
+   G-buffer alpha, confirm `GBuffer.metal` writes `material.specular.r` and not the constant
+   1.0 (Step 6), or the single-pass lit surfaces clip to white (table under Step 4).
 8. Handedness (secondary item 4) **[codex]**: bind a diagnostic normal map. A flat sample
    `(0.5, 0.5, 1)` must reproduce the unmapped shading in every renderer; a sample tilted
    toward +bitangent must tilt the shading the same way in every renderer.
