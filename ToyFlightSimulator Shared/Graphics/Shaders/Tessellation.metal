@@ -9,6 +9,7 @@
 using namespace metal;
 
 #import "ShaderDefinitions.h"
+#import "Lighting.metal"
 
 float getCameraDistance(float3 pointA, float3 pointB, float3 cameraPosition, float4x4 modelMatrix) {
     float3 positionA = (modelMatrix * float4(pointA, 1)).xyz;
@@ -137,18 +138,22 @@ tessellation_gbuffer_fragment(
     // TODO:
 //    color.a = Lighting::CalculateShadowMSAA(in.shadowPosition, shadowTexture);
     
-    float4 normal = float4(0.0, 1.0, 0.0, 1.0);  // TODO
+    // No material is bound for the terrain, so the spare G-buffer channels get constants: a
+    // strength of 0 (matte; a 1.0 here washed the whole terrain with a 60°-wide highlight) and
+    // the default exponent. The flat up normal is a placeholder until the terrain derives one.
+    float4 normalSpecular = float4(0.0, 1.0, 0.0, Lighting::DEFAULT_SPECULAR_STRENGTH);  // TODO
     
     if (!is_null_texture(normalTexture)) {
-        normal = float4(normalTexture.sample(sample, in.uv));
+        normalSpecular = float4(normalTexture.sample(sample, in.uv));
+        normalSpecular.a = Lighting::DEFAULT_SPECULAR_STRENGTH;
     }
     
     GBufferOut out {
         .albedo = color,
-        .normal = normal,
+        .normalSpecular = normalSpecular,
         // World-space meters — the point-light pass reads this target as the fragment's
         // world position. ([[position]] at the fragment stage is the window coordinate.)
-        .position = float4(in.worldPosition, 1.0)
+        .positionShininess = float4(in.worldPosition, Lighting::DEFAULT_SHININESS)
     };
     return out;
 }

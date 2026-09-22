@@ -186,10 +186,9 @@ fragment GBufferData gbuffer_fragment_material(
     
     // Specular strength for the sun pass, carried in albedo_specular.w: the specular map's red
     // channel when one is bound (the Temple), else the material's untextured strength (MTL Ks,
-    // or the 0.25 default; setColor objects use their model's default material). Written since
-    // Step 6 so deferred_directional_lighting_fragment can read it as specularStrength
-    // (landing-order step 2). The exponent has no G-buffer channel: that pass uses
-    // Lighting::DEFAULT_SHININESS.
+    // or the 0.25 default; setColor objects use their model's default material).
+    // deferred_directional_lighting_fragment reads it as specularStrength. The exponent has no
+    // G-buffer channel here, so that pass uses Lighting::DEFAULT_SHININESS (32).
     half specular_contrib;
 
     if (!in.useObjectColor && !is_null_texture(specularMap)) {

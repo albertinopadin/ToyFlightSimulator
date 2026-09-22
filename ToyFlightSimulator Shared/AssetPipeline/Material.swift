@@ -26,13 +26,19 @@ struct Material: sizeable {
     
     init(_ mdlMaterial: MDLMaterial) {
         name = mdlMaterial.name
-        setProperties(with: mdlMaterial, semantics: [.emission, .baseColor, .specular, .specularExponent, .opacity])
+        setProperties(with: mdlMaterial, semantics: [.emission, .baseColor, .roughness, .specular, .specularExponent, .opacity])
         populateMaterial(with: mdlMaterial)
     }
     
     private mutating func populateMaterial(with material: MDLMaterial) {
+        // First property per semantic, on purpose. Model I/O lists an authored USD value (the
+        // Sketchfab F-22 canopy's `diffuseColor`) FIRST and its own scattering-function default
+        // (0.18 gray "baseColor") after it, so iterating `properties(with:)` let the default win.
+        // OBJ files carry one property per semantic (Kd and map_Kd are merged), so first-wins is
+        // right for both dialects. `scripts/inspect_mdl_materials.swift` prints MISMATCH when the
+        // two orders would disagree.
         for semantic in MDLMaterialSemantic.allCases {
-            for property in material.properties(with: semantic) {
+            if let property = material.property(with: semantic) {
                 switch property.type {
                     case .string:
                         if let stringValue = property.stringValue {
@@ -60,17 +66,8 @@ struct Material: sizeable {
                         populateTextureTransform(uvAffine, for: semantic)
 
                     case .color, .float3, .float4:
-                        // FIXME (2026-09-21 review): the LAST .baseColor value wins here, and Model I/O
-                        // lists the authored USD `diffuseColor` FIRST and its own scattering-function
-                        // default (0.18, 0.18, 0.18, named "baseColor") after it. Every untextured USD
-                        // material therefore ends up 0.18 gray: the Sketchfab F-22 canopy authors
-                        // (1.0, 0.44, 0.07) at opacity 0.6, the HUD glass (0.01, 0.29, 0.0), the landing
-                        // lights 0.8. OBJ files have one property per semantic (Kd and map_Kd are merged),
-                        // so "first wins" is right for both dialects; `MDLMaterial.property(with:)`
-                        // returns exactly that first one. Fix: call setBaseColor only for the first
-                        // .baseColor property. See research/claude/
-                        // modelio_material_semantics_blinn_phong_2026-09-21.md §2.2 and
-                        // scripts/inspect_mdl_materials.swift (prints MISMATCH for the affected materials).
+                        // Untextured albedo fallback (MTL `Kd`, USD `diffuseColor`), read by the shaders
+                        // through ResolveBaseColor.
                         if semantic == .baseColor {
                             setBaseColor(from: property)
                         }
@@ -198,44 +195,43 @@ struct Material: sizeable {
         for semantic in semantics {
             if let materialProp = mdlMaterial.property(with: semantic) {
                 switch semantic {
-                    case .emission:
-                        // Legacy: `ambient` is no longer read by the lighting path (ambient is
-                        // albedo × ambientIntensity in Lighting::ShadeDirectionalBlinnPhong). The slot is
-                        // also not an emissive color for OBJ files: Model I/O's OBJ importer stores the MTL
-                        // `Ka` line (ambient reflectivity; Blender writes 1 1 1) under .emission and drops
-                        // `Ke`, so treating it as emission would paint the F-16 white. For USD it is the
-                        // authored `emissiveColor` (the Sketchfab F-22 landing lights). A real emission
-                        // term needs a shader change first; see research/claude/
-                        // modelio_material_semantics_blinn_phong_2026-09-21.md §1.2.
-                        let ambient = materialProp.float3Value
-                        if ambient != .zero {
-                            properties.ambient = ambient
-                        }
+                    // TODO: `.emission` is still in the semantics list but has no case, so it falls to
+                    // `default` and logs "Unused semantic" once per material. Add the case when the
+                    // shaders get an emission term (`emission + ambient + litFraction × (diffuse +
+                    // specular)`), and only for the USD dialect: Model I/O's OBJ importer stores the MTL
+                    // `Ka` line (ambient reflectivity; Blender writes 1 1 1) under .emission and drops
+                    // `Ke`, so an OBJ "emission" would paint the F-16 white. For USD it is the authored
+                    // `emissiveColor` (the Sketchfab F-22 landing lights). The legacy `ambient` field it
+                    // used to fill is no longer read: ambient is albedo × ambientIntensity in
+                    // Lighting::ShadeDirectionalBlinnPhong. See research/claude/
+                    // modelio_material_semantics_blinn_phong_2026-09-21.md §1.2.
                     case .baseColor:
-                        // Legacy: `diffuse` is not read by the shading path. The albedo fallback the shaders
-                        // use is `properties.color`, set by populateMaterial. `property(with:)` returns the
-                        // FIRST .baseColor property, so this reads the authored value even for USD files.
-                        let diffuse = materialProp.float3Value
-                        if diffuse != .zero {
-                            properties.diffuse = diffuse
+                        // populateMaterial runs after this and sets `properties.color` from the same
+                        // first .baseColor property for the .color, .float3 and .float4 types, so this
+                        // case only pre-seeds the .float3 case and could be dropped.
+                        if materialProp.type == .float3 {
+                            let baseColor = materialProp.float3Value
+                            if baseColor != .zero {
+                                setBaseColor(from: materialProp)
+                            }
                         }
                     case .roughness:
-                        // FIXME (2026-09-21 review): this case never runs today because `.roughness` is
-                        // not in the semantics list passed from init, and it is not yet correct:
-                        // 1. The derived value is an EXPONENT and belongs in `properties.shininess`;
-                        //    `properties.specular` is the highlight strength.
-                        // 2. Karis 2013 is α = roughness², power = 2/α² − 2, i.e. 2 / roughness⁴ − 2.
-                        //    `2 / pow(roughness, 2) - 2` skips the α step (roughness 0.5 gives 6, not 30).
-                        // 3. Only derive when the file authored no `.specularExponent` (the USD dialect):
-                        //    Model I/O gives EVERY OBJ material a roughness of 0.9 that is not in the MTL
-                        //    file, which would replace an authored `Ns` with an exponent of about 1.
-                        // 4. Clamp to [1, 1024]: roughness 0 gives infinity, roughness 1 gives 0.
-                        // A texture-typed roughness (the F-22 and F-35 airframes) reads floatValue 0 and is
-                        // skipped by the guard, which is right: nothing samples roughnessTexture yet.
-                        // Numbers: scripts/blinn_phong_roughness_table.swift.
+                        // USD dialect: Blinn-Phong exponent from the authored roughness, Karis 2013:
+                        // α = roughness², exponent = 2/α² − 2 = 2 / roughness⁴ − 2 (0.5 gives 30, close to
+                        // the 32 default). The `.specularExponent` case below runs AFTER this one because
+                        // of the order in init's semantics list, so an authored MTL `Ns` overrides the
+                        // roughness of 0.9 that Model I/O adds to every OBJ material; keep that order.
+                        // A texture-typed roughness (the Sketchfab F-22 / F-35 airframes) reads
+                        // floatValue 0 and is skipped by the guard, which is right: nothing samples
+                        // roughnessTexture yet. Numbers: scripts/blinn_phong_roughness_table.swift.
+                        // FIXME (2026-09-22 review): clamp the result to [1, 1024]. The Sketchfab F-22's
+                        // `f22a_landingLights` authors roughness 0.05132, which gives 288,324; the tiled
+                        // G-buffer stores the exponent in an rgba16Float channel (max 65,504), so it
+                        // arrives as +inf, and pow(nDotH, inf) is NaN where nDotH is exactly 1. Any
+                        // roughness below 0.074 overflows that channel; below 0.21 exceeds 1024.
                         let roughness = materialProp.floatValue
                         if roughness != .zero {
-                            properties.specular = float3(repeating: (2 / pow(roughness, 2)) - 2)
+                            properties.shininess = (2 / pow(roughness, 4)) - 2
                         }
                     case .specular:
                         // MTL `Ks`. A texture-typed .specular (map_Ks) is loaded into specularTexture by
@@ -244,18 +240,22 @@ struct Material: sizeable {
                         // specularColor), which the non-zero guard skips so the 0.25 default survives. The
                         // same guard also skips an authored `Ks 0 0 0`, so a matte MTL material cannot
                         // switch its highlight off yet; checking `materialProp.type == .float3` instead
-                        // would allow that.
+                        // would allow that. The Temple authors `Ks 0 0 0` plus `map_Ks`: the merged
+                        // property is string-typed, so its untextured strength stays 0.25 and the map is
+                        // sampled only where a G-buffer fragment binds it (GBuffer.metal; the tiled
+                        // G-buffer fragments do not).
                         let specular = materialProp.float3Value
                         if specular != .zero {
                             properties.specular = specular
                         }
                     case .specularExponent:
                         // MTL `Ns` (0...1000). USD files have no exponent, so the property is absent and
-                        // the default 32 stays. `Ns 0` means "no highlight", not "exponent 0": the shader
-                        // clamps the exponent to at least 1, so an Ns below 1 should zero the strength.
-                        let shininess = materialProp.floatValue
-                        if shininess != .zero {
-                            properties.shininess = shininess
+                        // the roughness-derived value or the default 32 stays. `Ns 0` means "no
+                        // highlight", not "exponent 0": the shader clamps the exponent to at least 1 (a
+                        // 60° lobe), so an Ns below 1 should zero the strength instead. No MTL file in
+                        // the repo authors Ns below 10.
+                        if materialProp.type == .float {
+                            properties.shininess = materialProp.floatValue
                         }
                     case .opacity:
                         properties.opacity = materialProp.floatValue

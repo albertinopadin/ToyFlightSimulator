@@ -14,6 +14,23 @@ reads pixel values out of the screenshots.
 
 ## Changelog
 
+- **2026-09-22** — Landing-order step 2 closed (owner's implementation, reviewed): the tiled
+  G-buffer fragments (`TiledDeferredGBuffer.metal`, `TiledMSAAGBuffer.metal`) write
+  `material.specular.r` into `normalSpecular.a` and `material.shininess` into
+  `positionShininess.w` (both rgba16Float, fields renamed in `GBufferOut`), and the tiled sun
+  fragment reads them per pixel instead of the leftover `MaterialProperties` binding — that
+  binding was also nondeterministic, because `SceneManager.modelDatas` is a Dictionary and the
+  opaque draw order changes per launch. The single-pass sun fragment reads the strength from
+  `albedo_specular.a` and shades with `Lighting::DEFAULT_SHININESS`, now 32 (its G-buffer has no
+  exponent channel). The terrain writes strength 0 and the default exponent (a 1.0 in both
+  channels had washed it with a 60°-wide lobe). `Material.swift` takes the FIRST property per
+  semantic (`property(with:)`, fixing the 0.18-gray USD base colors) and derives the exponent
+  from a float USD roughness with `2 / roughness⁴ − 2`. `LightData()` now defaults
+  `specularIntensity` to 0.3: with ambient 0.4 + diffuse 0.5 the scenes leave no headroom, so at
+  1.0 the F-16's authored `Ks 1 1 1` clipped to white; no sRGB step was missing (textures decode
+  and the `_srgb` targets encode in hardware; strength and exponent are not colors). Remaining
+  FIXME in `Material.swift`: clamp the derived exponent to [1, 1024] — the Sketchfab F-22's
+  landing lights author roughness 0.05 → 288,324, which overflows the half-float channel to +inf.
 - **2026-09-21** — Step 6 landed (owner's implementation, reviewed): `MaterialProperties` defaults
   0.25 / 32, `GBuffer.metal` writes `material.specular.r` into `albedo_specular.w` and falls back to
   `material.color`, the four forward fragments and the tiled sun fragment pass `material.specular.r`

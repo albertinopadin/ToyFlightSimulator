@@ -47,8 +47,8 @@ tiled_deferred_point_light_fragment(         PointLightOut  in              [[ s
                                     constant LightData      *lightDatas     [[ buffer(TFSBufferPointLightsData) ]],
                                              GBufferOut     gBuffer)
 {
-    float3 normal = gBuffer.normal.xyz;
-    float3 worldPosition = gBuffer.position.xyz;
+    float3 normal = gBuffer.normalSpecular.xyz;
+    float3 worldPosition = gBuffer.positionShininess.xyz;
     
     // CalculatePointLighting reads only material.color; feeding it the G-buffer
     // albedo tints the light's contribution by the surface it hits.

@@ -18,7 +18,7 @@ og_tiled_deferred_directional_light_fragment(         FullScreenVertexOut  in   
                                           constant LightData            &lightData [[ buffer(TFSBufferDirectionalLightData) ]],
                                                    GBufferOut           gBuffer) {
     float4 albedo = gBuffer.albedo;
-    float3 normal = gBuffer.normal.xyz;
+    float3 normal = gBuffer.normalSpecular.xyz;
     
     MaterialProperties material;
     material.color = albedo;
@@ -39,31 +39,27 @@ og_tiled_deferred_directional_light_fragment(         FullScreenVertexOut  in   
 }
 
 
-// Sun pass for the three tiled renderers. Shading inputs come from the G-buffer (albedo, lit
-// fraction in albedo.a, world-space normal and position) and the camera position bound with
-// SceneConstants.
+// Sun pass for the three tiled renderers. Every shading input is per pixel and comes from the
+// G-buffer: albedo with the lit fraction in .a, the world-space normal with the material's
+// specular strength in normalSpecular.a, the world-space position with the material's exponent
+// in positionShininess.w (both rgba16Float, so the exponent is exact for integers up to 2048 and
+// overflows to +inf above 65,504), plus the camera position from SceneConstants.
 //
-// The MaterialProperties parameter is NOT a per-pixel material. This full-screen triangle is
-// encoded in the same render encoder right after the G-buffer stage, so the bytes at
-// TFSBufferIndexMaterial are whatever DrawManager.drawSubmeshes bound LAST for the opaque draw
-// order: every tiled pixel shares that one submesh's strength and exponent, and which submesh
-// it is depends on model registration order (an F-16 material gives 1.0 / 16, a setColor object
-// 0.25 / 32). The tiled G-buffer stores no strength or exponent (normal.w is written as 1.0 and
-// never read). Two ways to make this explicit, from the shading doc's Step 2: bind a known
-// MaterialProperties for this stage in each tiled renderer's encodeDirectionalLightStage, or
-// write material.specular.r into normal.w in the G-buffer pass and read it here (per-material
-// strength, still a shared exponent).
+// No material buffer is bound for this stage, on purpose: this full-screen triangle shares the
+// G-buffer stage's encoder, so a MaterialProperties parameter here would read whatever
+// DrawManager.drawSubmeshes bound LAST, and that draw order comes from iterating a Swift
+// Dictionary (SceneManager.modelDatas), which changes from launch to launch.
 fragment float4
-tiled_deferred_directional_light_fragment(
-                                          FullScreenVertexOut  in               [[ stage_in ]],
-                                 constant MaterialProperties   &material        [[ buffer(TFSBufferIndexMaterial) ]],
+tiled_deferred_directional_light_fragment(FullScreenVertexOut  in               [[ stage_in ]],
                                  constant LightData            &lightData       [[ buffer(TFSBufferDirectionalLightData) ]],
                                  constant SceneConstants       &sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                                           GBufferOut           gBuffer) {
     float3 albedo = gBuffer.albedo.rgb;
     float litFraction = gBuffer.albedo.a;
-    float3 normal = normalize(gBuffer.normal.xyz);
-    float3 worldPosition = gBuffer.position.xyz;
+    float specular = gBuffer.normalSpecular.a;
+    float shininess = gBuffer.positionShininess.w;
+    float3 normal = normalize(gBuffer.normalSpecular.xyz);
+    float3 worldPosition = gBuffer.positionShininess.xyz;
     float3 toLight = lightData.direction;
     float3 toCamera = normalize(sceneConstants.cameraPosition - worldPosition);
     float3 color = Lighting::ShadeDirectionalBlinnPhong(albedo,
@@ -71,8 +67,8 @@ tiled_deferred_directional_light_fragment(
                                                         toLight,
                                                         toCamera,
                                                         lightData,
-                                                        material.specular.r,
-                                                        material.shininess,
+                                                        specular,
+                                                        shininess,
                                                         litFraction);
     return float4(color, 1);
 }

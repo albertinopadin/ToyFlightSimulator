@@ -72,11 +72,15 @@ inline float2 ApplyUVTransform(float2 uv, float3x3 transform) {
     return (transform * float3(uv, 1.0)).xy;
 }
 
-// For Tiled Deferred Renderer:
+// For Tiled Deferred Renderer. Channel layout (formats in TiledDeferredGBufferTextures.swift):
+//   albedo.rgb            linear base color           albedo.a             lit fraction (shadow)
+//   normalSpecular.xyz    world-space unit normal     normalSpecular.a     specular strength
+//   positionShininess.xyz world-space position, m     positionShininess.w  specular exponent
+// normal and position are rgba16Float, so the exponent is exact for integers up to 2048.
 struct GBufferOut {
-    float4 albedo   [[ color(TFSRenderTargetAlbedo) ]];
-    float4 normal   [[ color(TFSRenderTargetNormal) ]];
-    float4 position [[ color(TFSRenderTargetPosition) ]];
+    float4 albedo               [[ color(TFSRenderTargetAlbedo) ]];
+    float4 normalSpecular       [[ color(TFSRenderTargetNormal) ]];
+    float4 positionShininess    [[ color(TFSRenderTargetPosition) ]];
 };
 
 struct VertexOut {

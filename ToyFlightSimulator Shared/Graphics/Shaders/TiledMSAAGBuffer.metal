@@ -50,12 +50,17 @@ depth2d_array<float>               shadowArray         [[ texture(TFSTextureInde
         N = ApplyNormalMapWorld(tangentSample, in.worldTangent, in.worldBitangent, in.worldNormal);
     }
     
-    float4 normal = float4(N, 1.0);
+    // Spare channels carry the material's specular inputs to the sun pass: the untextured
+    // strength (MTL Ks, or the 0.25 default; setColor objects use their model's default material)
+    // in normal.w and the exponent (MTL Ns, roughness-derived for USD, else 32) in position.w.
+    // Unlike GBuffer.metal this fragment binds no specular map, so the Temple's map_Ks is not
+    // sampled in the tiled renderers.
+    float4 normalSpecular = float4(N, material.specular.r);
     
     GBufferOut out {
         .albedo = color,
-        .normal = normal,
-        .position = float4(in.worldPosition, 1.0)
+        .normalSpecular = normalSpecular,
+        .positionShininess = float4(in.worldPosition, material.shininess)
     };
     return out;
 }

@@ -15,8 +15,11 @@ using namespace metal;
 
 class Lighting {
 public:
+    // Strength 0 switches the specular term off (the legacy CalculateDirectionalLighting wrapper
+    // and the terrain, which binds no material). Exponent 32 matches the MaterialProperties
+    // default; the single-pass sun pass uses it because its G-buffer has no exponent channel.
     constexpr static constant float DEFAULT_SPECULAR_STRENGTH = 0.0;
-    constexpr static constant float DEFAULT_SHININESS = 1.0;
+    constexpr static constant float DEFAULT_SHININESS = 32.0;
     
     static float3 GetPhongIntensity(MaterialProperties material,
                                     constant LightData *lightData,

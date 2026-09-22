@@ -140,7 +140,11 @@ extension LightData: sizeable {
                   attenuation: [0.5, 0.5, 0.5],
                   ambientIntensity: 1.0,
                   diffuseIntensity: 1.0,
-                  specularIntensity: 1.0,
+                  // Blinn-Phong adds specularIntensity × material strength at a highlight's peak on
+                  // top of ambient + diffuse, which the scenes tune to 0.9 × albedo, and the 8-bit
+                  // sRGB targets clip hard at 1.0. At 1.0 the F-16's and F-18's authored `Ks 1 1 1`
+                  // clipped to flat white; 0.3 keeps a mid-gray skin at linear 0.57 at the peak.
+                  specularIntensity: 0.3,
                   shadowWorldSlack: 0.25,
                   cascadeCount: 0,
                   cascadeViewProjectionMatrices: (identity, identity, identity, identity),
