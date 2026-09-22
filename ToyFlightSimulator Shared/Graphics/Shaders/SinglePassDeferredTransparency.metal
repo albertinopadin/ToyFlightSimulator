@@ -112,15 +112,17 @@ single_pass_deferred_transparency_fragment(
                                                   lightData,
                                                   shadowArray);
     
-    // Landing-order step 1: specular off. Step 6 switches DEFAULT_SPECULAR_STRENGTH to
-    // material.specular.r; with today's defaults (1.0, shininess 2) the canopy would get a
-    // white N.H^2 lobe, see material_fragment in Base.metal.
+    // Landing-order step 2 (Step 6 landed): material.specular.r is the strength and
+    // material.shininess the exponent, see material_fragment in Base.metal. This forward
+    // pass carries the canopy's own material; the opaque G-buffer pass around it stores only
+    // the strength (albedo_specular.w) and shades with Lighting::DEFAULT_SHININESS, so a
+    // canopy with an authored Ns can highlight differently from the skin it sits on.
     float3 litColor = Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
                                                            unitNormal,
                                                            lightData.direction,
                                                            toCamera,
                                                            lightData,
-                                                           Lighting::DEFAULT_SPECULAR_STRENGTH,
+                                                           material.specular.r,
                                                            material.shininess,
                                                            litFraction);
     

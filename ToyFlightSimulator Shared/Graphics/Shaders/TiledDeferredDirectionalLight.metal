@@ -39,9 +39,24 @@ og_tiled_deferred_directional_light_fragment(         FullScreenVertexOut  in   
 }
 
 
+// Sun pass for the three tiled renderers. Shading inputs come from the G-buffer (albedo, lit
+// fraction in albedo.a, world-space normal and position) and the camera position bound with
+// SceneConstants.
+//
+// The MaterialProperties parameter is NOT a per-pixel material. This full-screen triangle is
+// encoded in the same render encoder right after the G-buffer stage, so the bytes at
+// TFSBufferIndexMaterial are whatever DrawManager.drawSubmeshes bound LAST for the opaque draw
+// order: every tiled pixel shares that one submesh's strength and exponent, and which submesh
+// it is depends on model registration order (an F-16 material gives 1.0 / 16, a setColor object
+// 0.25 / 32). The tiled G-buffer stores no strength or exponent (normal.w is written as 1.0 and
+// never read). Two ways to make this explicit, from the shading doc's Step 2: bind a known
+// MaterialProperties for this stage in each tiled renderer's encodeDirectionalLightStage, or
+// write material.specular.r into normal.w in the G-buffer pass and read it here (per-material
+// strength, still a shared exponent).
 fragment float4
 tiled_deferred_directional_light_fragment(
                                           FullScreenVertexOut  in               [[ stage_in ]],
+                                 constant MaterialProperties   &material        [[ buffer(TFSBufferIndexMaterial) ]],
                                  constant LightData            &lightData       [[ buffer(TFSBufferDirectionalLightData) ]],
                                  constant SceneConstants       &sceneConstants  [[ buffer(TFSBufferIndexSceneConstants) ]],
                                           GBufferOut           gBuffer) {
@@ -56,8 +71,8 @@ tiled_deferred_directional_light_fragment(
                                                         toLight,
                                                         toCamera,
                                                         lightData,
-                                                        Lighting::DEFAULT_SPECULAR_STRENGTH,
-                                                        Lighting::DEFAULT_SHININESS,
+                                                        material.specular.r,
+                                                        material.shininess,
                                                         litFraction);
     return float4(color, 1);
 }

@@ -161,9 +161,12 @@ fragment GBufferData gbuffer_fragment_material(
         specularUV = ApplyUVTransform(in.tex_coord.xy, uvXforms.specularUVTransform);
     }
 
+    // material.color, not the interpolated vertex color, is the untextured fallback, so an
+    // untextured submesh shows its MTL Kd / USD diffuseColor (or the debug pink when the import
+    // found none) in this renderer exactly as in the forward and tiled paths.
     half4 base_color_sample = half4(ResolveBaseColor(in.useObjectColor,
                                                      in.objectColor,
-                                                     in.color,
+                                                     material.color,
                                                      baseColorMap,
                                                      sampler2d,
                                                      baseUV));
@@ -181,12 +184,18 @@ fragment GBufferData gbuffer_fragment_material(
         worldNormal = normalize(in.normal);
     }
     
+    // Specular strength for the sun pass, carried in albedo_specular.w: the specular map's red
+    // channel when one is bound (the Temple), else the material's untextured strength (MTL Ks,
+    // or the 0.25 default; setColor objects use their model's default material). Written since
+    // Step 6 so deferred_directional_lighting_fragment can read it as specularStrength
+    // (landing-order step 2). The exponent has no G-buffer channel: that pass uses
+    // Lighting::DEFAULT_SHININESS.
     half specular_contrib;
 
     if (!in.useObjectColor && !is_null_texture(specularMap)) {
         specular_contrib = specularMap.sample(sampler2d, specularUV).r;
     } else {
-        specular_contrib = 1.0;
+        specular_contrib = material.specular.r;
     }
     
     // Cascade-aware shadow. eye_position.z is true view-space depth, the metric

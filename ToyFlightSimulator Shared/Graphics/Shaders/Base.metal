@@ -168,9 +168,10 @@ material_fragment(          RasterizerData            rd              [[ stage_i
             }
             
             // The forward path has no shadow map, so litFraction is 1 (fully lit).
-            // Landing-order step 1: specular off. Step 6 switches DEFAULT_SPECULAR_STRENGTH
-            // to material.specular.r once the material defaults become 0.25 / shininess 32;
-            // today's defaults (1.0 / 2) would add a white N.H^2 lobe to every lit surface.
+            // Landing-order step 2 (Step 6 landed): material.specular.r is the untextured
+            // highlight strength (MTL Ks, default 0.25) and material.shininess the exponent
+            // (MTL Ns, default 32). The shared function skips the lobe when the strength is 0,
+            // which is how a matte material switches its highlight off.
             // Known limitation: each light adds its own ambient term, so with more than one
             // directional light the ambient is counted more than once.
             litColor += Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
@@ -178,7 +179,7 @@ material_fragment(          RasterizerData            rd              [[ stage_i
                                                              toLight,
                                                              toCamera,
                                                              light,
-                                                             Lighting::DEFAULT_SPECULAR_STRENGTH,
+                                                             material.specular.r,
                                                              material.shininess,
                                                              1.0);
         }

@@ -14,6 +14,17 @@ reads pixel values out of the screenshots.
 
 ## Changelog
 
+- **2026-09-21** — Step 6 landed (owner's implementation, reviewed): `MaterialProperties` defaults
+  0.25 / 32, `GBuffer.metal` writes `material.specular.r` into `albedo_specular.w` and falls back to
+  `material.color`, the four forward fragments and the tiled sun fragment pass `material.specular.r`
+  / `material.shininess`. Still open from the landing order: the single-pass sun fragment
+  (`DirectionalLight.metal`) has not switched to the G-buffer alpha and `kDefaultShininess` is still
+  1, so that renderer has no highlight yet; the tiled sun fragment reads the `MaterialProperties`
+  left bound by the last opaque submesh (same encoder), so its strength and exponent are shared and
+  draw-order dependent — Step 2's optional `normal.w` slot or an explicit per-stage binding fixes
+  that. The material-import findings (Model I/O maps the MTL `Ka` line to `.emission`; the authored
+  USD `diffuseColor` is overwritten by Model I/O's 0.18 default in `populateMaterial`) and the
+  Step 6 review are in `research/claude/modelio_material_semantics_blinn_phong_2026-09-21.md`.
 - **2026-09-21** — Steps 4, 5 and 5b landed at landing-order step 1 (review of the owner's
   implementation). The Step 5 / 5b pseudocode and a new Step 6 bullet now say the forward
   fragments pass `kDefaultSpecularStrength` until Step 6, with the numbers the current

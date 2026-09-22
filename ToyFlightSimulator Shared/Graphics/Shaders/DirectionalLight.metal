@@ -57,10 +57,14 @@ deferred_directional_lighting_fragment(QuadInOut            in        [[ stage_i
     float3 eyeToLight = lightData.lightEyeDirection;
     float3 eyePosition = ReconstructEyePosition(in.eye_position, GBuffer.depth);
     float3 eyeToCamera = -normalize(eyePosition);
-    // Landing-order step 1 (diffuse + ambient parity across renderers): specular off.
-    // Step 6 replaces DEFAULT_SPECULAR_STRENGTH with GBuffer.albedo_specular.a once the
-    // G-buffer writes material.specular.r there. Today that channel is a constant 1.0 for
-    // every untextured surface, which with exponent 1 clipped every lit surface to white.
+    // Landing-order step 1 (diffuse + ambient parity across renderers): specular still off
+    // HERE. Step 6 landed on 2026-09-21: GBuffer.metal now writes material.specular.r (default
+    // 0.25, or the specular map's red channel) into albedo_specular.a, so this pass can read
+    // that channel as the strength, and Lighting::DEFAULT_SHININESS should become 32 to match
+    // the material default (this G-buffer has no exponent channel). Until that switch lands
+    // the single-pass renderer draws no highlight while the tiled and OIT paths do. Before
+    // Step 6 the alpha was a constant 1.0, which with exponent 1 clipped every lit surface to
+    // white (the table under Step 4 in the shading doc).
     float3 color = Lighting::ShadeDirectionalBlinnPhong(albedo,
                                                         eyeNormal,
                                                         eyeToLight,

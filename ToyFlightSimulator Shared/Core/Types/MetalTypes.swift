@@ -68,12 +68,30 @@ extension ModelConstants: sizeable {}
 
 extension SceneConstants: sizeable {}
 
+/// Blinn-Phong material parameters, bound per submesh at `TFSBufferIndexMaterial`.
+///
+/// What the shaders read (`Lighting::ShadeDirectionalBlinnPhong` and the fragments that call it):
+/// - `color`: the untextured albedo fallback (`ResolveBaseColor`), the MTL `Kd` line or the USD
+///   `diffuseColor` input. PINK_DEBUG_COLOR makes a missing base color visible instead of silently gray.
+/// - `specular.r`: highlight strength (the MTL `Ks` line, or the specular map's red channel when one is
+///   bound). 0.25 is the shading doc's default for the unnormalized Blinn-Phong lobe: bright enough to
+///   read as a highlight, low enough that a fully lit surface plus its highlight does not clip.
+/// - `shininess`: highlight exponent (the MTL `Ns` line). 32 is a lobe about 12° wide at half brightness
+///   and corresponds to a UsdPreviewSurface roughness of 0.49 through Karis's power = 2/roughness⁴ − 2,
+///   so USD assets (which carry roughness, never an exponent) land near their own default of 0.5.
+/// - `opacity`, `isLit`: `ResolveOpacity` and the unlit early-out.
+///
+/// Legacy, not read by the shading path: `ambient` and `diffuse` fed the old per-light Phong
+/// (`Lighting::GetPhongIntensity`, kept as reference). The new ambient term is `albedo × ambientIntensity`
+/// and never multiplies a material value. `Material.setProperties` still fills both from the MDL import.
+/// See debugging/claude/renderer_shading_color_mismatch_2026-09-20.md (Step 6) and
+/// research/claude/modelio_material_semantics_blinn_phong_2026-09-21.md.
 extension MaterialProperties: sizeable {
     init(color: float4 = PINK_DEBUG_COLOR,
          ambient: float3 = [0.1, 0.1, 0.1],
          diffuse: float3 = [1, 1, 1],
-         specular: float3 = [1, 1, 1],
-         shininess: Float = 2.0,
+         specular: float3 = [0.25, 0.25, 0.25],
+         shininess: Float = 32.0,
          opacity: Float = 1.0,
          lit: Bool = true) {
         self.init(color: color,
@@ -89,8 +107,8 @@ extension MaterialProperties: sizeable {
         self.init(color: PINK_DEBUG_COLOR,
                   ambient: [0.1, 0.1, 0.1],
                   diffuse: [1, 1, 1],
-                  specular: [1, 1, 1],
-                  shininess: 2.0,
+                  specular: [0.25, 0.25, 0.25],
+                  shininess: 32.0,
                   opacity: 1.0,
                   isLit: true)
     }

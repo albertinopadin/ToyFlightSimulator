@@ -78,15 +78,17 @@ tiled_deferred_transparency_fragment(
                                                   lightData,
                                                   shadowArray);
     
-    // Landing-order step 1: specular off. Step 6 switches DEFAULT_SPECULAR_STRENGTH to
-    // material.specular.r; with today's defaults (1.0, shininess 2) the canopy would get a
-    // white N.H^2 lobe, see material_fragment in Base.metal.
+    // Landing-order step 2 (Step 6 landed): material.specular.r is the strength and
+    // material.shininess the exponent, see material_fragment in Base.metal. This forward
+    // pass carries the canopy's own material; the tiled sun pass has no per-pixel material
+    // (see tiled_deferred_directional_light_fragment), so a canopy can highlight differently
+    // from the opaque skin it sits on.
     float3 litColor = Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
                                                            unitNormal,
                                                            lightData.direction,
                                                            toCamera,
                                                            lightData,
-                                                           Lighting::DEFAULT_SPECULAR_STRENGTH,
+                                                           material.specular.r,
                                                            material.shininess,
                                                            litFraction);
     

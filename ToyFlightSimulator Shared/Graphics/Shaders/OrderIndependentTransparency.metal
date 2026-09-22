@@ -103,7 +103,8 @@ transparent_material_fragment(
     
     // Same forward Blinn-Phong as material_fragment (Base.metal), which explains the
     // lightCount guard, the unreachable point-light branch, litFraction = 1 (no shadow
-    // map here) and the specular-off parity step that Step 6 ends.
+    // map here) and the specular inputs: material.specular.r as the strength and
+    // material.shininess as the exponent since Step 6 landed.
     float3 litColor;
     if (lightCount == 0 || !material.isLit) {
         litColor = baseColor.rgb;
@@ -124,7 +125,7 @@ transparent_material_fragment(
                                                              toLight,
                                                              toCamera,
                                                              light,
-                                                             Lighting::DEFAULT_SPECULAR_STRENGTH,
+                                                             material.specular.r,
                                                              material.shininess,
                                                              1.0);
         }

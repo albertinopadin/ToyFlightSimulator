@@ -60,6 +60,17 @@ struct Material: sizeable {
                         populateTextureTransform(uvAffine, for: semantic)
 
                     case .color, .float3, .float4:
+                        // FIXME (2026-09-21 review): the LAST .baseColor value wins here, and Model I/O
+                        // lists the authored USD `diffuseColor` FIRST and its own scattering-function
+                        // default (0.18, 0.18, 0.18, named "baseColor") after it. Every untextured USD
+                        // material therefore ends up 0.18 gray: the Sketchfab F-22 canopy authors
+                        // (1.0, 0.44, 0.07) at opacity 0.6, the HUD glass (0.01, 0.29, 0.0), the landing
+                        // lights 0.8. OBJ files have one property per semantic (Kd and map_Kd are merged),
+                        // so "first wins" is right for both dialects; `MDLMaterial.property(with:)`
+                        // returns exactly that first one. Fix: call setBaseColor only for the first
+                        // .baseColor property. See research/claude/
+                        // modelio_material_semantics_blinn_phong_2026-09-21.md §2.2 and
+                        // scripts/inspect_mdl_materials.swift (prints MISMATCH for the affected materials).
                         if semantic == .baseColor {
                             setBaseColor(from: property)
                         }
@@ -188,21 +199,60 @@ struct Material: sizeable {
             if let materialProp = mdlMaterial.property(with: semantic) {
                 switch semantic {
                     case .emission:
+                        // Legacy: `ambient` is no longer read by the lighting path (ambient is
+                        // albedo × ambientIntensity in Lighting::ShadeDirectionalBlinnPhong). The slot is
+                        // also not an emissive color for OBJ files: Model I/O's OBJ importer stores the MTL
+                        // `Ka` line (ambient reflectivity; Blender writes 1 1 1) under .emission and drops
+                        // `Ke`, so treating it as emission would paint the F-16 white. For USD it is the
+                        // authored `emissiveColor` (the Sketchfab F-22 landing lights). A real emission
+                        // term needs a shader change first; see research/claude/
+                        // modelio_material_semantics_blinn_phong_2026-09-21.md §1.2.
                         let ambient = materialProp.float3Value
                         if ambient != .zero {
                             properties.ambient = ambient
                         }
                     case .baseColor:
+                        // Legacy: `diffuse` is not read by the shading path. The albedo fallback the shaders
+                        // use is `properties.color`, set by populateMaterial. `property(with:)` returns the
+                        // FIRST .baseColor property, so this reads the authored value even for USD files.
                         let diffuse = materialProp.float3Value
                         if diffuse != .zero {
                             properties.diffuse = diffuse
                         }
+                    case .roughness:
+                        // FIXME (2026-09-21 review): this case never runs today because `.roughness` is
+                        // not in the semantics list passed from init, and it is not yet correct:
+                        // 1. The derived value is an EXPONENT and belongs in `properties.shininess`;
+                        //    `properties.specular` is the highlight strength.
+                        // 2. Karis 2013 is α = roughness², power = 2/α² − 2, i.e. 2 / roughness⁴ − 2.
+                        //    `2 / pow(roughness, 2) - 2` skips the α step (roughness 0.5 gives 6, not 30).
+                        // 3. Only derive when the file authored no `.specularExponent` (the USD dialect):
+                        //    Model I/O gives EVERY OBJ material a roughness of 0.9 that is not in the MTL
+                        //    file, which would replace an authored `Ns` with an exponent of about 1.
+                        // 4. Clamp to [1, 1024]: roughness 0 gives infinity, roughness 1 gives 0.
+                        // A texture-typed roughness (the F-22 and F-35 airframes) reads floatValue 0 and is
+                        // skipped by the guard, which is right: nothing samples roughnessTexture yet.
+                        // Numbers: scripts/blinn_phong_roughness_table.swift.
+                        let roughness = materialProp.floatValue
+                        if roughness != .zero {
+                            properties.specular = float3(repeating: (2 / pow(roughness, 2)) - 2)
+                        }
                     case .specular:
+                        // MTL `Ks`. A texture-typed .specular (map_Ks) is loaded into specularTexture by
+                        // populateMaterial; float3Value is meaningful only for the .float3 type. USD
+                        // materials arrive with a scalar float 0 placeholder here (metallic workflow, no
+                        // specularColor), which the non-zero guard skips so the 0.25 default survives. The
+                        // same guard also skips an authored `Ks 0 0 0`, so a matte MTL material cannot
+                        // switch its highlight off yet; checking `materialProp.type == .float3` instead
+                        // would allow that.
                         let specular = materialProp.float3Value
                         if specular != .zero {
                             properties.specular = specular
                         }
                     case .specularExponent:
+                        // MTL `Ns` (0...1000). USD files have no exponent, so the property is absent and
+                        // the default 32 stays. `Ns 0` means "no highlight", not "exponent 0": the shader
+                        // clamps the exponent to at least 1, so an Ns below 1 should zero the strength.
                         let shininess = materialProp.floatValue
                         if shininess != .zero {
                             properties.shininess = shininess
