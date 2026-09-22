@@ -36,7 +36,7 @@ struct AltitudeTape: View {
         // nothing rather than a confident 0.
         if telemetry.aircraftType != nil {
             // viewSize is .zero on the first body pass, hence the clamp.
-            VerticalTelemetryTapeView(tapeLength: max(0, viewSize.height - 2 * topAndBottomInset),
+            VerticalTelemetryTapeView(tapeLength: max(0, (viewSize.height * 0.8) - 2 * topAndBottomInset),
                                       tapeWidth: tapeWidth,
                                       visibleSpanUnits: visibleSpanFeet,
                                       minorTickStep: minorTickStepFeet,

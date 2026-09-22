@@ -117,7 +117,12 @@ struct VerticalTelemetryTapeView: View {
             }
             .frame(width: tapeWidth, height: tapeLength)
             .clipped()
-            .background(Rectangle().fill(.black.opacity(0.50)))
+            .background(Rectangle().fill(.black.opacity(0.35)))
+            .mask {
+                LinearGradient(colors: [.clear, .green, .green, .clear],
+                               startPoint: .top,
+                               endPoint: .bottom)
+            }
             
             if readoutPlacement == .right {
                 readout

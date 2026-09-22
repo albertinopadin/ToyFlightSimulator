@@ -114,7 +114,12 @@ struct HorizontalTelemetryTapeView: View {
             }
             .frame(width: tapeLength, height: tapeHeight)
             .clipped()
-            .background(Rectangle().fill(.black.opacity(0.50)))
+            .background(Rectangle().fill(.black.opacity(0.35)))
+            .mask {
+                LinearGradient(colors: [.clear, .green, .green, .clear],
+                               startPoint: .leading,
+                               endPoint: .trailing)
+            }
             
             if readoutPlacement == .below {
                 readout

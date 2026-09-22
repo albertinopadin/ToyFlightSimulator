@@ -29,7 +29,7 @@ struct HeadingTape: View {
         // without a player aircraft (only FlightboxWithPhysics sets one): draw
         // nothing rather than a confident 000.
         if telemetry.aircraftType != nil {
-            HorizontalTelemetryTapeView(tapeLength: viewSize.width,
+            HorizontalTelemetryTapeView(tapeLength: viewSize.width * 0.8,
                                         tapeHeight: tapeHeight,
                                         visibleSpanUnits: visibleSpanDegrees,
                                         minorTickStep: minorTickStepDegrees,
