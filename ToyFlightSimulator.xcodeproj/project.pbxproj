@@ -58,6 +58,7 @@
 		CEA8DF602F0F8E9F0058B5EA /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				AssetPipeline/AppIcon.icon,
 				Core/Engine.swift,
 				Core/Input/HIDDevice.swift,
 				Core/Input/HotasConfig.swift,
@@ -109,6 +110,7 @@
 		CEA8DF642F0F8E9F0058B5EA /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				AssetPipeline/AppIcon.icon,
 				AssetPipeline/Assets.xcassets,
 				Core/Resources/Audio/Music/LightningSpeed.mp3,
 				Core/Resources/Audio/Music/SunsetGlow.mp3,
