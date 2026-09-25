@@ -72,4 +72,74 @@ struct BasisConjugationTests {
         let (left0, right0) = Transform.basisConjugationMatrices(for: b0)
         #expect(approxEqual(left * rotation * right, left0 * rotation * right0, tolerance: 1e-4))
     }
+
+    // MARK: - Translation-bearing import transforms (center-of-mass recentering)
+
+    /// Bake a native point into the body frame the way `Mesh.transformMeshBasis` does (row vector).
+    private func bake(_ nativePoint: SIMD3<Float>, _ importTransform: float4x4) -> SIMD3<Float> {
+        simd_mul(simd_float4(nativePoint, 1), importTransform).xyz
+    }
+
+    private func randomUnitAxis(_ random: inout SplitMix64) -> SIMD3<Float> {
+        while true {
+            let candidate = SIMD3<Float>(random.float(in: -1...1), random.float(in: -1...1), random.float(in: -1...1))
+            if simd_length(candidate) > 0.1 { return simd_normalize(candidate) }
+        }
+    }
+
+    @Test("recentered import transforms: moving then baking equals baking then moving by the conjugated delta")
+    func translationBearingBasisConjugatesExactly() {
+        // P = Bᵀ·J·(Bᵀ)⁻¹ assumes nothing about B having no translation, so skinning and node
+        // animation stay exact after recentering, as long as they get the FULL import transform.
+        let rotate180AroundY = Transform.rotationMatrix(radians: Float(180).toRadians, axis: [0, 1, 0])
+        let importTransforms: [(name: String, transform: float4x4)] = [
+            ("F-18", Model.ComposeImportTransform(basisTransform: rotate180AroundY,
+                                                  scaleCorrectionFactor: nil,
+                                                  centerOfMassInImportFrame: F18.centerOfMassInImportFrame)),
+            ("F-35", Model.ComposeImportTransform(basisTransform: nil,
+                                                  scaleCorrectionFactor: 0.5431731,
+                                                  centerOfMassInImportFrame: F35.centerOfMassInImportFrame)),
+            ("CGTrader-like, off-axis c", Model.ComposeImportTransform(basisTransform: Transform.transformXMinusZYToXYZ,
+                                                                       scaleCorrectionFactor: 2.1961696,
+                                                                       centerOfMassInImportFrame: [0.1, -0.7, 0.4])),
+        ]
+        var random = SplitMix64(seed: 0x00C0_FFEE)
+        for (name, importTransform) in importTransforms {
+            let (left, right) = Transform.basisConjugationMatrices(for: importTransform)
+            var worstErrorMeters: Float = 0
+            for _ in 0..<200 {
+                let jointDelta = Transform.translationMatrix([random.float(in: -3...3),
+                                                              random.float(in: -3...3),
+                                                              random.float(in: -3...3)])
+                    * Transform.rotationMatrix(radians: random.float(in: -Float.pi...Float.pi),
+                                               axis: randomUnitAxis(&random))
+                let nativePoint = SIMD3<Float>(random.float(in: -10...10),
+                                               random.float(in: -10...10),
+                                               random.float(in: -10...10))
+                let movedThenBaked = bake(simd_mul(jointDelta, simd_float4(nativePoint, 1)).xyz, importTransform)
+                let bakedThenMoved = simd_mul(left * jointDelta * right, simd_float4(bake(nativePoint, importTransform), 1)).xyz
+                worstErrorMeters = max(worstErrorMeters, simd_length(movedThenBaked - bakedThenMoved))
+            }
+            #expect(worstErrorMeters < 1e-4, "\(name): worst \(worstErrorMeters) m")
+        }
+    }
+
+    @Test("a skeleton given the basis WITHOUT the translation misplaces skinned vertices by |(I − R)·c|")
+    func basisWithoutTheTranslationMisplacesSkinnedVertices() {
+        // The failure mode if recentering were a separate vertex pass: the vertices move by −c,
+        // the joint conjugation does not. For a 90° rotation about X and c = (0, 1.845, 0) the
+        // error is 1.845·√2 = 2.609 m for every vertex.
+        let rotate180AroundY = Transform.rotationMatrix(radians: Float(180).toRadians, axis: [0, 1, 0])
+        let fullImportTransform = Model.ComposeImportTransform(basisTransform: rotate180AroundY,
+                                                               scaleCorrectionFactor: nil,
+                                                               centerOfMassInImportFrame: [0, 1.845, 0])
+        let (staleLeft, staleRight) = Transform.basisConjugationMatrices(for: rotate180AroundY)
+        let jointRotation = Transform.rotationMatrix(radians: Float(90).toRadians, axis: [1, 0, 0])
+        for nativePoint: SIMD3<Float> in [[0, 0, 0], [1, 2, 3], [-4, 0.5, 7]] {
+            let correct = bake(simd_mul(jointRotation, simd_float4(nativePoint, 1)).xyz, fullImportTransform)
+            let stale = simd_mul(staleLeft * jointRotation * staleRight,
+                                 simd_float4(bake(nativePoint, fullImportTransform), 1)).xyz
+            #expect(approxEqual(simd_length(correct - stale), 2.609, tolerance: 1e-3))
+        }
+    }
 }

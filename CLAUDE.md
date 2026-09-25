@@ -144,7 +144,7 @@ CI (`.github/workflows/`): test runs must pass `-parallel-testing-enabled NO` �
 - **'T' key** (macOS): Toggle the aircraft telemetry panel (`AircraftTelemetryView`: type, altitude, speed, heading, pitch, roll from `AircraftTelemetryStore`)
 - **'H' key** (macOS; menu toggle on both platforms): Toggle Apple's Metal Performance HUD
 - **'B' key**: Wheel brakes on the main gear, held = full (`ContinuousCommand.Brake` → `ControlInput.brake`; the tire model's longitudinal limit rises from 0.02·N to 0.52·N)
-- **'X' key**: Cycle the collider debug overlay (`ColliderDebugOverlay`: off → volumes over hull → volumes only): red spec volumes, yellow legacy sphere, cyan strut lines; prints collider world dimensions and the gear stance when shown
+- **'X' key**: Cycle the collider debug overlay (`ColliderDebugOverlay`: off → volumes over hull → volumes only): red spec volumes, yellow legacy sphere, cyan strut lines, and body axes crossing at the rotation pivot (blue roll, red pitch, green yaw); prints collider world dimensions and the gear stance when shown
 - **ESC**: Toggle menu (pauses the game while open)
 - **Cmd+R**: Reset scene (deferred to the update thread via `PendingSceneReset`; applies on the next unpaused tick)
 - All textures are labeled for GPU debugger identification

@@ -31,7 +31,11 @@ class Model: Hashable {
     public let mdlMeshes: [MDLMesh]
     public var meshes: [Mesh] = []
     
-    /// Stored basis transform for coordinate system conversion (passed to Skeleton for animation)
+    /// The full import transform baked into the vertices, `S · B₀ · T_row(−c)` (see
+    /// `ComposeImportTransform`): meterization scale, axis basis, and center-of-mass
+    /// recentering. `UsdModel` hands it to every `Skeleton` so joint deltas are conjugated
+    /// by the same matrix the vertices were baked with, translation included — a basis
+    /// without the translation would misplace skinned vertices by `(I − R)·c`.
     public let basisTransform: float4x4
 
     static func == (lhs: Model, rhs: Model) -> Bool {
@@ -123,10 +127,111 @@ class Model: Hashable {
         return unionMax - unionMin
     }
     
-    /// `basisTransform` stays optional end-to-end: `nil` means "no basis conversion",
-    /// which lets `Mesh.init` skip the per-vertex transform pass entirely instead of
-    /// multiplying every vertex by identity.
-    init(_ modelName: String, fileExtension: ModelExtension, basisTransform: float4x4? = nil, realWorldLength: Float? = nil) {
+    /// Uniform scale that makes the model `realWorldLength` meters long along engine +Z:
+    /// `realWorldLength / nativeLength`. Measured through `basisTransform` alone — the
+    /// center-of-mass translation cannot change a length (`GetLengthAxisExtent` uses w = 0).
+    static func GetMeterizationScaleFactor(modelName: String,
+                                           asset: MDLAsset,
+                                           mdlMeshes: [MDLMesh],
+                                           realWorldLength: Float,
+                                           basisTransform: float4x4? = nil) -> Float {
+        // Draw-space, NOT loadedAsset.boundingBox (stage space): the renderer strips
+        // node-hierarchy scale, so calibration must measure what is actually drawn.
+        let nativeExtent = Self.DrawSpaceNativeExtent(asset: asset, mdlMeshes: mdlMeshes)
+        let nativeLength = Self.GetLengthAxisExtent(nativeExtent: nativeExtent, basisTransform: basisTransform)
+        precondition(nativeLength > 0.001,
+                     "[Model init] \(modelName): degenerate native length \(nativeLength) — cannot meterize")
+        let scaleCorrection: Float = realWorldLength / nativeLength
+        DebugLog("[Model init] Model \(modelName) is \(realWorldLength)m long (native: \(nativeLength)m, scale correction: \(scaleCorrection)), result: \(nativeLength * scaleCorrection)", true)
+        return scaleCorrection
+    }
+    
+    /// The one matrix the import bake applies to every vertex, `B = S · B₀ · T_row(−c)`,
+    /// in the bake's row-vector convention (`p_body = p_native · B`), where the LEFTMOST
+    /// factor applies first:
+    /// 1. `S`: the uniform meterization scale (native units → meters).
+    /// 2. `B₀`: `basisTransform` (native axes → engine axes). The result is the IMPORT
+    ///    frame: engine axes and meters, origin wherever the artist put it. Every authored
+    ///    offset (camera offsets, collider and gear specs, child positions) was measured in it.
+    /// 3. `T_row(−c)`: subtract `centerOfMassInImportFrame`. The result is the BODY frame,
+    ///    whose origin — the node's rotation pivot — is the center of mass, as `RigidBody`
+    ///    assumes. Offsets authored in the import frame become `old − c`.
+    ///
+    /// The translation must be composed last: `T_row(−c) · S · B₀` would read `c` in
+    /// native units and native axes. Pure simd, so Metal-free and unit-tested
+    /// (CenterOfMassImportTests). `SingleSubmeshMeshLibrary` calls it directly because its
+    /// extraction path bypasses `Model.init`; the `Model.init` overload below delegates here,
+    /// so both F-18 import paths are composed by the same code.
+    /// See plans/claude/aircraft_center_of_mass_recentering_2026-09-25.md.
+    static func ComposeImportTransform(basisTransform: float4x4?,
+                                       scaleCorrectionFactor: Float?,
+                                       centerOfMassInImportFrame: float3?) -> float4x4 {
+        var importTransform: float4x4 = basisTransform ?? .identity
+
+        if let scaleCorrectionFactor {
+            // Uniform scale: det(s·B) = s³·det(B) keeps the sign, so the winding decision in
+            // Mesh.transformMeshBasis is unchanged; shaders renormalize the scaled normals.
+            let scaleCorrectionTransform = Transform.scaleMatrix(float3(repeating: scaleCorrectionFactor))
+            importTransform = scaleCorrectionTransform * importTransform
+        }
+
+        if let centerOfMassInImportFrame {
+            // Row-vector form: the column-vector Transform.translationMatrix would be dropped
+            // by the bake. The translation also leaves the winding determinant (3×3 block) and
+            // GetLengthAxisExtent (w = 0) unchanged.
+            let centerOfMassCorrectionTransform = Transform.rowVectorTranslationMatrix(offset: -centerOfMassInImportFrame)
+            importTransform = importTransform * centerOfMassCorrectionTransform
+        }
+
+        return importTransform
+    }
+
+    /// `Model.init`'s import transform: measures the meterization scale from the asset when
+    /// `realWorldLength` is given, then composes with the pure overload above.
+    ///
+    /// Returns `nil` only when there is nothing to apply (no basis, no length, no center of
+    /// mass), so `Mesh.init` can skip the per-vertex pass for plain assets (sphere, quad,
+    /// skysphere, Temple). A model with only a scale or only a center of mass (the F-35 has
+    /// no basis) still gets a matrix.
+    static func ComposeImportTransform(modelName: String,
+                                       asset: MDLAsset,
+                                       mdlMeshes: [MDLMesh],
+                                       basisTransform: float4x4?,
+                                       realWorldLength: Float?,
+                                       centerOfMassInImportFrame: float3?) -> float4x4? {
+        if basisTransform == nil && realWorldLength == nil && centerOfMassInImportFrame == nil {
+            return nil
+        }
+
+        let scaleCorrectionFactor: Float? = realWorldLength.map { realWorldLength in
+            Self.GetMeterizationScaleFactor(modelName: modelName,
+                                            asset: asset,
+                                            mdlMeshes: mdlMeshes,
+                                            realWorldLength: realWorldLength,
+                                            basisTransform: basisTransform)
+        }
+
+        if let centerOfMassInImportFrame {
+            DebugLog("[Model init] \(modelName) recentered: center of mass \(centerOfMassInImportFrame) m (import frame) is the new origin", true)
+        }
+
+        return Self.ComposeImportTransform(basisTransform: basisTransform,
+                                           scaleCorrectionFactor: scaleCorrectionFactor,
+                                           centerOfMassInImportFrame: centerOfMassInImportFrame)
+    }
+
+    /// The import transform stays optional end-to-end: `nil` (no basis, no
+    /// `realWorldLength`, no `centerOfMassInImportFrame`) lets `Mesh.init` skip the
+    /// per-vertex transform pass entirely instead of multiplying every vertex by identity.
+    ///
+    /// `centerOfMassInImportFrame` (meters, engine axes, measured with
+    /// `scripts/measure_center_of_mass.swift`) becomes the model's origin, and so the pivot
+    /// the aircraft rolls, pitches and yaws about.
+    init(_ modelName: String,
+         fileExtension: ModelExtension,
+         basisTransform: float4x4? = nil,
+         realWorldLength: Float? = nil,
+         centerOfMassInImportFrame: float3? = nil) {
         let descriptor = Mesh.createMdlVertexDescriptor()
 
         let loadedAsset = Self.LoadAsset(modelName, fileExtension: fileExtension, descriptor: descriptor)
@@ -135,24 +240,13 @@ class Model: Hashable {
         
         let mdlMeshes = loadedAsset.childObjects(of: MDLMesh.self) as? [MDLMesh] ?? []
 
-        let meterizedBasisTransform: float4x4?
-
-        if let realWorldLength {
-            // Draw-space, NOT loadedAsset.boundingBox (stage space): the renderer strips
-            // node-hierarchy scale, so calibration must measure what is actually drawn.
-            let nativeExtent = Self.DrawSpaceNativeExtent(asset: loadedAsset, mdlMeshes: mdlMeshes)
-            let nativeLength = Self.GetLengthAxisExtent(nativeExtent: nativeExtent, basisTransform: basisTransform)
-            precondition(nativeLength > 0.001,
-                         "[Model init] \(modelName): degenerate native length \(nativeLength) — cannot meterize")
-            let scaleCorrection = realWorldLength / nativeLength
-            // Uniform scale: det(s·B) = s³·det(B) keeps the sign, so the winding decision in
-            // Mesh.transformMeshBasis is unchanged; shaders renormalize the scaled normals.
-            let scaleCorrectionTransform = Transform.scaleMatrix(float3(repeating: scaleCorrection))
-            meterizedBasisTransform = scaleCorrectionTransform * (basisTransform ?? .identity)
-            DebugLog("[Model init] Model \(modelName) is \(realWorldLength)m long (native: \(nativeLength)m, scale correction: \(scaleCorrection)), result: \(nativeLength * scaleCorrection)", true)
-        } else {
-            meterizedBasisTransform = basisTransform
-        }
+        let meterizedCenteredBasisTransform: float4x4? = Self.ComposeImportTransform(
+                                                                    modelName: modelName,
+                                                                    asset: loadedAsset,
+                                                                    mdlMeshes: mdlMeshes,
+                                                                    basisTransform: basisTransform,
+                                                                    realWorldLength: realWorldLength,
+                                                                    centerOfMassInImportFrame: centerOfMassInImportFrame)
 
         Self.InspectMeshes(mdlMeshes: mdlMeshes)
 
@@ -161,11 +255,11 @@ class Model: Hashable {
         self.meshes = Self.GetMeshes(asset: loadedAsset,
                                      mdlMeshes: mdlMeshes,
                                      descriptor: descriptor,
-                                     basisTransform: meterizedBasisTransform)
+                                     basisTransform: meterizedCenteredBasisTransform)
 
         self.id = UUID().uuidString
         self.name = modelName
-        self.basisTransform = meterizedBasisTransform ?? .identity
+        self.basisTransform = meterizedCenteredBasisTransform ?? .identity
         meshes.forEach { $0.parentModel = self }
     }
     

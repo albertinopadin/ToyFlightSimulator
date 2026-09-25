@@ -28,8 +28,13 @@ final class UsdModel: Model {
     override init(_ modelName: String,
                   fileExtension: ModelExtension = .USDZ,
                   basisTransform: float4x4? = nil,
-                  realWorldLength: Float? = nil) {
-        super.init(modelName, fileExtension: fileExtension, basisTransform: basisTransform, realWorldLength: realWorldLength)
+                  realWorldLength: Float? = nil,
+                  centerOfMassInImportFrame: float3? = nil) {
+        super.init(modelName,
+                   fileExtension: fileExtension,
+                   basisTransform: basisTransform,
+                   realWorldLength: realWorldLength,
+                   centerOfMassInImportFrame: centerOfMassInImportFrame)
 
         guard let asset else {
             fatalError("[UsdModel init] \(modelName) has no source MDLAsset — cannot load skeletons/skins/animations.")

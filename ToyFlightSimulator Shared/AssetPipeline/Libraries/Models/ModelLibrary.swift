@@ -72,13 +72,22 @@ final class ModelLibrary: LazyLibrary<ModelType, Model>, @unchecked Sendable {
 
         // realWorldLength (meters, nose-to-tail) drives import-time meterization — see
         // Model.init and plans/claude/meter_scale_implementation_plan_2026-07-23.md.
+        // centerOfMassInImportFrame (meters, engine axes) becomes the model's origin, the
+        // pivot it rotates about; each aircraft class holds its measured value — see
+        // Model.ComposeImportTransform and
+        // plans/claude/aircraft_center_of_mass_recentering_2026-09-25.md. The F-16 (0.14 m
+        // above its nose→nozzle line) and the CGTrader F-22 (on it, with collider and gear
+        // specs authored against its origin) pass none.
         // OBJ has no unit metadata; F-16C native length 2.253.
         register(.F16) { ObjModel("f16r", basisTransform: rotate180AroundY, realWorldLength: 15.06) }
         // F18: native units are already meters (measured 18.267 vs 18.31 real, −0.2%), so it is
         // deliberately NOT meterized: SingleSubmeshMeshLibrary extracts its weapons and control
         // surfaces through a path that bypasses Model.init, and skipping both keeps the fuselage
-        // and the extracted parts exactly congruent.
-        register(.F18) { ObjModel("FA-18F", basisTransform: rotate180AroundY) }
+        // and the extracted parts exactly congruent. The center of mass is recentered on both
+        // paths from the one F18 constant (SingleSubmeshMeshLibrary composes the same matrix).
+        register(.F18) { ObjModel("FA-18F",
+                                  basisTransform: rotate180AroundY,
+                                  centerOfMassInImportFrame: F18.centerOfMassInImportFrame) }
 
 //        register(.RC_F18) { UsdModel("FA-18F") }
 
@@ -92,13 +101,19 @@ final class ModelLibrary: LazyLibrary<ModelType, Model>, @unchecked Sendable {
 
         // Declared MPU=0.01 (cm) would give 4.34 m — 28% of real. Draw-space native length
         // 28.85 on Z (stage 433.6 ÷ the ×15.03 'Meshes' node scale, which the renderer strips).
-        register(.Sketchfab_F35) { UsdModel("F-35A_Lightning_II", realWorldLength: 15.67) }
+        // No basis, but the scale and the center of mass still compose: S · T_row(−c).
+        register(.Sketchfab_F35) { UsdModel("F-35A_Lightning_II",
+                                            realWorldLength: 15.67,
+                                            centerOfMassInImportFrame: F35.centerOfMassInImportFrame) }
 
         // Declared MPU=0.01 (cm) would give 10.98 m — 58% of real. Draw-space native length
         // 189.95 on X (stage 1098.2 ÷ the ×5.78 root node scale; this asset's time range is
         // empty, so its node transforms never apply at draw and vertices render mesh-local).
         register(.Sketchfab_F22) {
-            UsdModel("F-22_Raptor", basisTransform: Transform.transformYMinusZXToXYZ, realWorldLength: 18.92)
+            UsdModel("F-22_Raptor",
+                     basisTransform: Transform.transformYMinusZXToXYZ,
+                     realWorldLength: 18.92,
+                     centerOfMassInImportFrame: F22.centerOfMassInImportFrame)
         }
 
         register(.Plane)       { Model(name: "Plane", mesh: PlaneMesh()) }

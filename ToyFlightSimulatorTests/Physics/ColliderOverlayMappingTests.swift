@@ -117,4 +117,23 @@ struct ColliderOverlayMappingTests {
             #expect(approxEqual(end.x, start.x) && approxEqual(end.z, start.z))
         }
     }
+
+    // MARK: - bodyAxisLineEndpoints (the RGB pivot axes)
+
+    @Test("body-axis lines cross at the origin: blue roll ±15 m on z, red pitch ±3 on x, green yaw ±3 on y")
+    func bodyAxisLinesCrossAtTheOrigin() {
+        let lines = ColliderOverlayMapping.bodyAxisLineEndpoints()
+        #expect(lines.count == 3)
+        for line in lines {
+            #expect(approxEqual((line.startPoint + line.endPoint) / 2, .zero))
+        }
+
+        let (roll, pitch, yaw) = (lines[0], lines[1], lines[2])
+        #expect(approxEqual(roll.startPoint, [0, 0, -15]) && approxEqual(roll.endPoint, [0, 0, 15]))
+        #expect(approxEqual(pitch.startPoint, [-3, 0, 0]) && approxEqual(pitch.endPoint, [3, 0, 0]))
+        #expect(approxEqual(yaw.startPoint, [0, -3, 0]) && approxEqual(yaw.endPoint, [0, 3, 0]))
+        #expect(approxEqual(roll.color, BLUE_COLOR))
+        #expect(approxEqual(pitch.color, RED_COLOR))
+        #expect(approxEqual(yaw.color, GREEN_COLOR))
+    }
 }

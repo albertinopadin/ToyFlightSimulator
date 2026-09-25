@@ -71,6 +71,24 @@ enum ColliderOverlayMapping {
     static func strutLineEndpoints(for strut: SuspensionStrut) -> (start: float3, end: float3) {
         (strut.attachLocal, strut.attachLocal - float3(0, strut.reach, 0))
     }
+    
+    /// Longer than any aircraft's reach from its origin to nose or tail, so both ends stick out.
+    static let rollAxisHalfLengthInMeters: Float = 15
+    /// Short arms, so the pitch and yaw axes do not hide the wings.
+    static let crossAxisHalfLengthInMeters: Float = 3
+    typealias AxisLine = (startPoint: float3, endPoint: float3, color: float4)
+    
+    /// Body axes in the aircraft's local space: roll along +Z (blue), pitch along +X
+    /// (red), yaw along +Y (green). The lines are children of the aircraft, so they turn
+    /// with it, and their crossing point is the node origin — the rotation pivot, which
+    /// `RigidBody` treats as the center of mass. The roll line should run through the
+    /// fuselage from nose tip to nozzles (plans/claude/aircraft_center_of_mass_recentering_2026-09-25.md).
+    static func bodyAxisLineEndpoints() -> [AxisLine] {
+        let rollAxis: AxisLine = ([0, 0, -rollAxisHalfLengthInMeters], [0, 0, rollAxisHalfLengthInMeters], BLUE_COLOR)
+        let pitchAxis: AxisLine = ([-crossAxisHalfLengthInMeters, 0, 0], [crossAxisHalfLengthInMeters, 0, 0], RED_COLOR)
+        let yawAxis: AxisLine = ([0, -crossAxisHalfLengthInMeters, 0], [0, crossAxisHalfLengthInMeters, 0], GREEN_COLOR)
+        return [rollAxis, pitchAxis, yawAxis]
+    }
 
     private static func formatMeters(_ value: Float) -> String {
         String(format: "%.2f m", value)
@@ -79,7 +97,8 @@ enum ColliderOverlayMapping {
 
 
 /// Render-only volumes visualizing an aircraft's collider spec (red), its
-/// legacy physics sphere (yellow), and its gear struts (cyan lines). Owns no
+/// legacy physics sphere (yellow), its gear struts (cyan lines), and its body
+/// axes crossing at the rotation pivot (blue roll, red pitch, green yaw). Owns no
 /// physics state; update-thread only (all scene-graph mutation happens in
 /// doUpdate — same rule as CycleCamera).
 ///
@@ -177,8 +196,8 @@ final class ColliderDebugOverlay {
         SceneManager.SetRenderableHidden(target, newMode == .volumesOnly)
     }
 
-    /// One volume per enabled spec collider, a cyan line per strut, plus the
-    /// yellow legacy-sphere ghost. Order: setColor before Register;
+    /// One volume per enabled spec collider, a cyan line per strut, the three
+    /// body-axis lines, plus the yellow legacy-sphere ghost. Order: setColor before Register;
     /// target.addChild (plain Node reparenting, since only GameScene.addChild
     /// auto-registers and the volumes hang off the aircraft), then
     /// SceneManager.Register.
@@ -203,6 +222,10 @@ final class ColliderDebugOverlay {
         for strut in gearSpec {
             let (start, end) = ColliderOverlayMapping.strutLineEndpoints(for: strut)
             attach(Line(startPoint: start, endPoint: end, color: Self.strutColor), to: target)
+        }
+        
+        for (start, end, color) in ColliderOverlayMapping.bodyAxisLineEndpoints() {
+            attach(Line(startPoint: start, endPoint: end, color: color), to: target)
         }
 
         // The legacy sphere sits at the body origin. collisionRadius is world

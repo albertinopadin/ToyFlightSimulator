@@ -18,7 +18,19 @@ import MetalKit
 //}
 
 final class F18: Aircraft {
-    
+    /// Center of mass in the import frame (meters, engine axes, origin as authored — on
+    /// the ground between the wheels). Station: where the nose wheel would carry 12 % of
+    /// the weight (Raymer: 8–15 %; at the authored origin it carried 41 %). Height: the
+    /// nose→nozzle line at that station.
+    ///
+    /// Read by BOTH F-18 import paths — `ModelLibrary` (fuselage, through `Model.init`) and
+    /// `SingleSubmeshMeshLibrary` (control surfaces and stores, which bypass it). If only
+    /// one path gets it, every control surface and store floats 1.9 m off its slot.
+    /// `setupControlSurfaces` needs no change: the recentering cancels in each extracted
+    /// submesh's own vertices, and only its centroid (the node position) moves by −c.
+    /// Re-measure with `swift scripts/measure_center_of_mass.swift --model f18`.
+    public static let centerOfMassInImportFrame: float3 = [0, 1.928, -1.761]
+
     final class Store {
         var remaining: Int
         var modelTypes: [ModelType]
@@ -290,8 +302,9 @@ final class F18: Aircraft {
     var landingGearBeganRetracting: Bool = false
     var landingGearFinishedRetracting: Bool = false
     
+    // Authored against the file's origin; re-expressed in the body frame (old − c).
     override var cameraOffset: float3 {
-        [0, 9, -20]
+        [0, 9, -20] - F18.centerOfMassInImportFrame
     }
     
     init(scale: Float = 1.0, shouldUpdateOnPlayerInput: Bool = true) {

@@ -69,4 +69,44 @@ struct SingleMeshVertexMetadataTests {
 
         #expect(approxEqual(t.initialPositionInParentMesh, float3(6, 2, 3)))
     }
+
+    // MARK: - Center-of-mass recentering (the F-18 submesh import transform)
+
+    /// Same construction as SingleSubmeshMeshLibrary.makeLibrary.
+    private func f18SubmeshImportTransform(centerOfMass: float3) -> float4x4 {
+        Model.ComposeImportTransform(basisTransform: Transform.rotationMatrix(radians: Float(180).toRadians, axis: Y_AXIS),
+                                     scaleCorrectionFactor: nil,
+                                     centerOfMassInImportFrame: centerOfMass)
+    }
+
+    @Test("centroid carries the recentering (c at the original station)")
+    func centroidCarriesRecentering() {
+        let m = makeMetadata(centroid: float3(-5.462, 2.084, 3.773))
+        let t = m.transformingCentroid(by: f18SubmeshImportTransform(centerOfMass: [0, 1.845, 0]))
+        #expect(approxEqual(t.initialPositionInParentMesh, float3(5.462, 0.239, -3.773), tolerance: 1e-3))
+    }
+
+    @Test("centroid carries the registered F-18 center of mass")
+    func centroidCarriesFinalF18Recentering() {
+        let m = makeMetadata(centroid: float3(-5.462, 2.084, 3.773))
+        let t = m.transformingCentroid(by: f18SubmeshImportTransform(centerOfMass: F18.centerOfMassInImportFrame))
+        #expect(approxEqual(t.initialPositionInParentMesh, float3(5.462, 0.156, -2.012), tolerance: 1e-3))
+    }
+
+    @Test("recentering cancels in submesh-local vertices; only the centroid moves, by −c")
+    func recenteringCancelsInSubmeshLocalVertices() {
+        // SingleSubmeshMesh.init subtracts the baked centroid from its baked vertices, so a
+        // vertex relative to its centroid is the same with or without c. That is why
+        // F18.setupControlSurfaces (hinge offsets from each centroid) needs no change.
+        let bareBasis = Transform.rotationMatrix(radians: Float(180).toRadians, axis: Y_AXIS)
+        let recentered = f18SubmeshImportTransform(centerOfMass: F18.centerOfMassInImportFrame)
+        let nativeVertex = float3(-5.0, 2.3, 4.1)
+        let nativeCentroid = float3(-5.462, 2.084, 3.773)
+        func bake(_ point: float3, _ transform: float4x4) -> float3 { simd_mul(float4(point, 1), transform).xyz }
+
+        #expect(approxEqual(bake(nativeVertex, recentered) - bake(nativeCentroid, recentered),
+                            bake(nativeVertex, bareBasis) - bake(nativeCentroid, bareBasis), tolerance: 1e-5))
+        #expect(approxEqual(bake(nativeCentroid, recentered) - bake(nativeCentroid, bareBasis),
+                            -F18.centerOfMassInImportFrame, tolerance: 1e-5))
+    }
 }

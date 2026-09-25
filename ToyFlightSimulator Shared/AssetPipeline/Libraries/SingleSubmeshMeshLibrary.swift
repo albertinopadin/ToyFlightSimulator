@@ -36,13 +36,20 @@ enum SingleSMMeshType {
 final class SingleSubmeshMeshLibrary: LazyLibrary<SingleSMMeshType, SingleSubmeshMesh>, @unchecked Sendable {
     override func makeLibrary() {
         let rotate180AroundY = Transform.rotationMatrix(radians: Float(180).toRadians, axis: Y_AXIS)
+        // This path bypasses Model.init, so it composes the fuselage's import transform
+        // itself: the same basis, no meterization (see ModelLibrary's .F18), and the same
+        // center of mass. With the bare rotate180AroundY every part would float 1.9 m above
+        // its slot on the recentered fuselage.
+        let f18SubmeshImportTransform = Model.ComposeImportTransform(basisTransform: rotate180AroundY,
+                                                                     scaleCorrectionFactor: nil,
+                                                                     centerOfMassInImportFrame: F18.centerOfMassInImportFrame)
 
-        // Every submesh comes from the same "FA-18F" model with the same basis;
+        // Every submesh comes from the same "FA-18F" model with the same import transform;
         // only the submesh name varies.
         func factory(_ submeshName: String) -> () -> SingleSubmeshMesh {
             { SingleSubmeshMesh.createSingleSMMeshFromModel(modelName: "FA-18F",
                                                             submeshName: submeshName,
-                                                            basisTransform: rotate180AroundY) }
+                                                            basisTransform: f18SubmeshImportTransform) }
         }
 
         register(.F18_Sidewinder_Left,  factory("AIM-9XL_Paint"))

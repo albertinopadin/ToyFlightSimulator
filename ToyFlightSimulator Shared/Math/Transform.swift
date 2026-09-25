@@ -239,6 +239,23 @@ enum Transform {
         )
         return matrixFromTR(translation: normalizedTranslation, rotation: rotation)
     }
+
+    /// Translation by `offset` in the ROW-vector convention (`p' = p · M`) that the import
+    /// bake uses (`Mesh.transformMeshBasis`, `SingleMeshVertexMetadata.transformingCentroid`).
+    /// Equals `translationMatrix(offset).transpose`.
+    ///
+    /// With row vectors, output component j is `dot(p, column j)`, so the offset must sit in
+    /// the `w` of columns 0–2 where a point's `w = 1` picks it up; directions (`w = 0`:
+    /// normals, tangents, extents) pass through unchanged. The column-vector
+    /// `translationMatrix` put inside a bake basis is silently dropped: its offset lands in
+    /// the output's `w`, which `.xyz` discards.
+    static func rowVectorTranslationMatrix(offset: float3) -> float4x4 {
+        var m: float4x4 = .identity
+        m.columns.0.w = offset.x
+        m.columns.1.w = offset.y
+        m.columns.2.w = offset.z
+        return m
+    }
 }
 
 extension float4x4 {
