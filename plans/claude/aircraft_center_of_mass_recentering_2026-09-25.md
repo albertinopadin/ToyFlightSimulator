@@ -5,7 +5,7 @@
 measurement of the five aircraft models with `scripts/measure_center_of_mass.swift`. The matrix math and
 every derived number are checked by `scripts/verify_center_of_mass_math.swift`. The references at the
 end cover the rigid-body and matrix-convention background.
-**Status:** draft
+**Status:** landed (Milestones 1–6, 2026-09-25, eec81cb)
 **Related plans:** `plans/claude/meter_scale_implementation_plan_2026-07-23.md` (the meterization scale
 this plan composes with), `plans/claude/reindex_on_import_winding_fix.md` (the basis bake and the winding
 flip), `plans/claude/compound_rigid_bodies_implementation_plan_simplified.md` (the "body origin is the
@@ -23,6 +23,22 @@ center of mass" contract used by colliders and landing gear)
 
 ## Changelog
 
+- **2026-09-25**: All six milestones landed (eec81cb): the owner's implementation, plus fixes from the
+  agent's review, all in that commit. The review found three defects, now fixed:
+  - `F35.cameraOffset` was not re-expressed.
+  - The Sketchfab F-22's afterburner positions were not re-expressed, so the plumes started 2.5 m
+    ahead of the nozzles.
+  - `Model.init`'s import transform was never `nil`, so plain assets (sphere, quad, skysphere,
+    Temple) lost the skip of the per-vertex pass.
+
+  Other changes:
+  - The `Model.init` overload of `ComposeImportTransform` now delegates to the pure one. It adds
+    the "recentered" `DebugLog` line from Milestone 3.
+  - The F-35's `c` moved to `F35.centerOfMassInImportFrame`.
+  - Tests added as listed. The API names below were updated to the code as built. Every test
+    expectation was reproduced by `scripts/verify_center_of_mass_math.swift` (all checks pass) and
+    by a scratch script, which covered the line height at the pivot station, the submesh
+    cancellation and the stale-basis error.
 - **2026-09-25**: Milestone 6 made required for the F-18 and the Sketchfab F-22 (owner request). The
   scratch probes became two commented scripts, `scripts/measure_center_of_mass.swift` and
   `scripts/verify_center_of_mass_math.swift` (all checks pass), and every number in the plan was
@@ -282,8 +298,9 @@ column-vector everything else, and the "body origin is the center of mass" contr
   `.F18` and `.Sketchfab_F22` registrations pass their `c`.
 - `ToyFlightSimulator Shared/AssetPipeline/Libraries/SingleSubmeshMeshLibrary.swift`: the F-18
   factory passes the composed F-18 import transform instead of the bare `rotate180AroundY`.
-- One shared home for the F-18 constant, because two libraries need it (a small enum next to
-  `ModelLibrary`, or a static on it; the owner decides).
+- One shared home for each constant. As built, each aircraft class holds a static
+  `centerOfMassInImportFrame` (`F18`, `F22`, `F35`), which the registration and the class's own
+  offsets both read. For the F-18, both libraries read it.
 - `ToyFlightSimulator Shared/GameObjects/F18.swift`, `F35.swift`, `F22.swift`: `cameraOffset`
   re-expressed, and in `F22.init` the two afterburner `setPosition` calls. `F18.setupControlSurfaces`
   needs **no** change (Milestone 5 explains why). The Sketchfab F-22 is also used by
@@ -377,7 +394,7 @@ xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulat
 
 ## Milestones
 
-### Milestone 1: Make the pivot visible
+### Milestone 1: Make the pivot visible ✅ (landed 2026-09-25, eec81cb)
 
 - **Learning objective:** see that the node origin is the rotation pivot, and where it sits in each
   model, before changing anything.
@@ -406,7 +423,7 @@ for each (start_m, end_m, color) in bodyAxisLineEndpoints()
 ```
 
 - **Tests** (Metal-free):
-  - [ ] `ColliderOverlayMappingTests.bodyAxisLinesCrossAtTheOrigin`: every line's midpoint is
+  - [x] `ColliderOverlayMappingTests.bodyAxisLinesCrossAtTheOrigin`: every line's midpoint is
     `(0, 0, 0)`; the roll line runs from `(0, 0, −15)` to `(0, 0, 15)`, pitch ±3 on x, yaw ±3 on y.
 - **Observable completion criteria:** press X with each aircraft.
   - F-18: the blue roll line runs along the runway under the jet, level with the wheel bottoms, about
@@ -418,7 +435,7 @@ for each (start_m, end_m, color) in bodyAxisLineEndpoints()
   - Aircraft swap while the overlay is on → `hostWasReplaced` rebuilds the lines on the new aircraft.
   - Overlay off → the lines are removed with the volumes (`removeFromScene`), with no frozen ghosts.
 
-### Milestone 2: Row-vector translation and the composed import transform (pure math)
+### Milestone 2: Row-vector translation and the composed import transform (pure math) ✅ (landed 2026-09-25, eec81cb)
 
 - **Learning objective:** homogeneous coordinates, the row-vector against the column-vector
   convention, composition order, and why conjugation survives a translation.
@@ -426,6 +443,14 @@ for each (start_m, end_m, color) in bodyAxisLineEndpoints()
 - **Engine integration points:** `Transform.swift` (new helper); `Model.swift` (new static function);
   a new Swift Testing suite, `CenterOfMassImportTests` (tag `.assetPipeline`); additions to
   `BasisConjugationTests` and `SingleMeshVertexMetadataTests`.
+- **As built:**
+  - `Transform.rowVectorTranslationMatrix(offset:)`.
+  - Two `Model.ComposeImportTransform` overloads:
+    - The pure `(basisTransform:scaleCorrectionFactor:centerOfMassInImportFrame:)` returns a
+      matrix, the identity when there are no inputs. `SingleSubmeshMeshLibrary` calls it.
+    - The `Model.init` overload `(modelName:asset:mdlMeshes:basisTransform:realWorldLength:centerOfMassInImportFrame:)`
+      measures the scale with `GetMeterizationScaleFactor` and delegates to the pure one. It returns
+      `nil` only when all three inputs are absent, which is the pseudocode's "none" case below.
 - **Algorithm:**
 
 Why the existing `translationMatrix` does nothing in the bake. The row-vector product computes output
@@ -469,40 +494,48 @@ vertices were shifted by `c`, the skinned vertex comes out off by `(I − R)·c`
 joint's rotation.
 
 - **Tests** (Metal-free; expected values from `scripts/verify_center_of_mass_math.swift`, sections A–H):
-  - [ ] `CenterOfMassImportTests.rowVectorTranslationMovesPoints`: the point `(1, 2, 3)` through
+  - [x] `CenterOfMassImportTests.rowVectorTranslationMovesPoints`: the point `(1, 2, 3)` through
     `rowVectorTranslationMatrix((0, −1.845, 0))` → `(1, 0.155, 3)`.
-  - [ ] `…rowVectorTranslationLeavesDirections`: the direction `(0, 1, 0)` with `w = 0` →
+  - [x] `…rowVectorTranslationLeavesDirections`: the direction `(0, 1, 0)` with `w = 0` →
     `(0, 1, 0)`.
-  - [ ] `…columnTranslationIsDroppedByTheBake` (documents the trap): the point `(1, 2, 3)` through
+  - [x] `…columnTranslationIsDroppedByTheBake` (documents the trap): the point `(1, 2, 3)` through
     `rotate180AroundY · Transform.translationMatrix((0, −1.845, 0))` → `(−1, 2, −3)`, the same as
     without the translation.
-  - [ ] `…composeOrderPutsCenterOfMassInEngineMeters`: `s = 2.1961696`,
+  - [x] `…composeOrderPutsCenterOfMassInEngineMeters`: `s = 2.1961696`,
     `B₀ = transformXMinusZYToXYZ`, `c = (0, 1, 0)`, point `(1, 2, 3)`: composed →
     `(2.1961696, 5.5885086, −4.392339)`. The wrong order, `T_row(−c)·S·B₀`, gives
     `(2.1961696, 6.5885086, −2.1961696)`, because it subtracts native z.
-  - [ ] `…f18WorkedExample`: `composeImportTransform(rotate180AroundY, none, (0, 1.845, 0))` maps the
+  - [x] `…f18WorkedExample`: `composeImportTransform(rotate180AroundY, none, (0, 1.845, 0))` maps the
     native nose tip `(0, 1.418, −9.085)` → `(0, −0.427, 9.085)` and the native nozzle center
     `(0, 2.205, 7.648)` → `(0, 0.360, −7.648)`.
-  - [ ] `…allNoneReturnsNone`, and `…centerOfMassAloneStillBakes` (identity basis, no scale,
-    `c = (0, 1, 0)` → a non-none matrix that moves points by −1 in y).
-  - [ ] `…recenteringKeepsWindingSign`: the 3×3 determinant of `s·B₀·T_row(−c)` has the same sign
+  - [x] `…rowVectorTranslationIsTransposedColumnForm`: `rowVectorTranslationMatrix(t)` equals
+    `translationMatrix(t).transpose` exactly.
+  - [x] `…noInputsAndZeroCenterOfMass` (the pure overload with no inputs is the identity; `c = 0`
+    gives the same matrix as no `c`), `…modelPathReturnsNilWithNothingToApply` (the `Model.init`
+    overload returns none, with an empty `MDLAsset`, which is Metal-free),
+    `…modelPathComposesCenterOfMassWithoutBasis`, and `…centerOfMassAloneStillBakes` (identity
+    basis, no scale, `c = (0, 1, 0)` → a matrix that moves points by −1 in y).
+  - [x] `…recenteringKeepsWindingSign`: the 3×3 determinant of `s·B₀·T_row(−c)` has the same sign
     as that of `B₀` (the verify script prints 10.59 = 2.196³ for the CGTrader basis). `det3x3` is
     `private` to `ModelMeterizationTests`, so either copy it or put these tests in that suite.
-  - [ ] `…recenteringKeepsLengthExtent`: `Model.GetLengthAxisExtent` of `(13.654, 5.149, 18.267)`
+  - [x] `…recenteringKeepsLengthExtent`: `Model.GetLengthAxisExtent` of `(13.654, 5.149, 18.267)`
     through the F-18 import transform = 18.267. (`ModelMeterizationTests.translationDoesNotOffsetExtent`
     already checks the same property with a hand-built matrix.)
-  - [ ] `BasisConjugationTests.translationBearingBasisConjugatesExactly`: with `SplitMix64`
+  - [x] `BasisConjugationTests.translationBearingBasisConjugatesExactly`: with `SplitMix64`
     (`TestSupport/SeededRandom.swift`), 200
     random joint deltas (rotation up to ±π about a random axis, translation up to ±3 m) and native
     points up to ±10 m, `bake(J · p, B)` and `conj(J) · bake(p, B)` agree within 1e-4 m, for the F-18,
     F-35 (`s = 0.5431731`, `c = (0, 1.003, 0)`) and CGTrader-like (`c = (0.1, −0.7, 0.4)`) transforms.
     The verify script's worst case over 2,000 samples per transform is 3.9e-6 m.
-  - [ ] `BasisConjugationTests.basisWithoutTheTranslationMisplacesSkinnedVertices`: a 90° joint
+  - [x] `BasisConjugationTests.basisWithoutTheTranslationMisplacesSkinnedVertices`: a 90° joint
     rotation about X, with `c = (0, 1.845, 0)` missing from the skeleton's basis → error
     `|(I − R)·c| = 2.609 m`.
-  - [ ] `SingleMeshVertexMetadataTests.centroidCarriesRecentering`: the native centroid
+  - [x] `SingleMeshVertexMetadataTests.centroidCarriesRecentering`: the native centroid
     `(−5.462, 2.084, 3.773)` through the F-18 import transform → `(5.462, 0.239, −3.773)`. Without
     `c` it would be `(5.462, 2.084, −3.773)`.
+  - [x] `SingleMeshVertexMetadataTests.recenteringCancelsInSubmeshLocalVertices`: a vertex minus its
+    centroid is the same with or without `c`, and the centroid alone moves by `−c`. This is the
+    reason `F18.setupControlSurfaces` needs no change.
 - **Observable completion criteria:** the tests pass; the app is unchanged, because nothing calls
   the new code yet.
 - **Edge cases and expected results:**
@@ -511,7 +544,7 @@ joint's rotation.
   - `c.x ≠ 0` → an off-center roll axis. The airframes are symmetric, so the probe reports
     `x ≈ 0.000`; treat anything above a few centimeters as a measurement mistake.
 
-### Milestone 3: Thread the center of mass through `Model.init`
+### Milestone 3: Thread the center of mass through `Model.init` ✅ (landed 2026-09-25, eec81cb)
 
 - **Learning objective:** one matrix, four consumers. The vertex bake, the winding check, `Skeleton`
   and `TransformComponent` all read the same `basisTransform`, so composing it in one place keeps
@@ -550,7 +583,7 @@ function modelInit(modelName, fileExtension, basisTransform or none, realWorldLe
     inputs are none.
   - The F-18: a basis, no scale, `c` → `B₀·T_row(−c)`.
 
-### Milestone 4: Measure and recenter the F-35
+### Milestone 4: Measure and recenter the F-35 ✅ (landed 2026-09-25, eec81cb)
 
 - **Learning objective:** estimate a CoM from geometry, and watch the translation survive skinning and
   animated node transforms. The F-35 goes first because it has one import path, skinned gear, and
@@ -594,7 +627,7 @@ so the line height is **1.003**, giving `c = (0, 1.003, 0)`. `F35.cameraOffset`:
 `[0, 4.997, −18]`.
 
 - **Tests:**
-  - [ ] `CenterOfMassImportTests.f35ImportTransform`: `composeImportTransform(none, 0.5431731,
+  - [x] `CenterOfMassImportTests.f35ImportTransform`: `composeImportTransform(none, 0.5431731,
     (0, 1.003, 0))` maps the native nose tip `(0, 1.690069, 14.4245)` → `(0, −0.085, 7.835)` and the
     native nozzle center `(−0.0073641, 1.9570189, −10.169871)` → `(−0.004, 0.060, −5.524)`, both
     within 1e-3.
@@ -616,7 +649,7 @@ so the line height is **1.003**, giving `c = (0, 1.003, 0)`. `F35.cameraOffset`:
   - Aircraft swap to the F-35 and back: the model is cached, so the bake happens once, with no
     accumulation.
 
-### Milestone 5: Recenter the F-18 (two import paths, one constant)
+### Milestone 5: Recenter the F-18 (two import paths, one constant) ✅ (landed 2026-09-25, eec81cb)
 
 - **Learning objective:** keep two import paths congruent. The fuselage comes through `Model.init`,
   while its ailerons, elevons, flaps, rudders, missiles, bombs and tanks come through
@@ -652,10 +685,12 @@ they do not change. Weapon release (`weaponReleaseSetup`) places the store at
 `rotation · centroid + aircraftPosition` and follows the body-frame centroid the same way.
 
 - **Tests:**
-  - [ ] `SingleMeshVertexMetadataTests.centroidCarriesRecentering` (Milestone 2) covers the centroid
+  - [x] `SingleMeshVertexMetadataTests.centroidCarriesRecentering` (Milestone 2) covers the centroid
     path.
-  - The two paths cannot be compared in a Metal-free test, because both construct meshes. They are
-    kept congruent by construction: both read the one shared constant. Check it by eye in the app.
+  - [x] `CenterOfMassImportTests.f18ImportPathsAreCongruent`: the `Model.init` overload (given an
+    empty `MDLAsset`, since the F-18 is not meterized) and the pure overload that
+    `SingleSubmeshMeshLibrary` calls return the identical matrix for `F18.centerOfMassInImportFrame`.
+    Building the meshes themselves still needs Metal, so check the parts by eye in the app.
 - **Observable completion criteria:**
   - X overlay: the roll line runs through the fuselage, 0.43 m above the nose tip and 0.36 m below
     the nozzle center.
@@ -669,7 +704,7 @@ they do not change. Weapon release (`weaponReleaseSetup`) places the store at
   - Repeated swaps F-18 → F-22 → F-18 → the extracted meshes are library-cached and baked once, and
     `setSubmeshOrigin` stays idempotent, so nothing accumulates.
 
-### Milestone 6: Move the F-18's and the Sketchfab F-22's station (the pitch and yaw pivot)
+### Milestone 6: Move the F-18's and the Sketchfab F-22's station (the pitch and yaw pivot) ✅ (landed 2026-09-25, eec81cb)
 
 - **Learning objective:** the station does not change the roll axis, but it decides where the aircraft
   pitches and yaws. Static balance on a tricycle landing gear gives a physical way to choose it. The
@@ -740,15 +775,18 @@ does today. After this milestone the origin is the CoM, 1.8 cm below the old one
 effect is unchanged.
 
 - **Tests** (Metal-free):
-  - [ ] `CenterOfMassImportTests.f18FinalImportTransform`: `composeImportTransform(rotate180AroundY,
+  - [x] `CenterOfMassImportTests.f18FinalImportTransform`: `composeImportTransform(rotate180AroundY,
     none, (0, 1.928, −1.761))` maps the native nose tip `(0, 1.418, −9.085)` → `(0, −0.510, 10.846)`
-    and the native nozzle center `(0, 2.205, 7.648)` → `(0, 0.277, −5.887)`.
-  - [ ] `CenterOfMassImportTests.sketchfabF22ImportTransform`:
+    and the native nozzle center `(0, 2.205, 7.648)` → `(0, 0.277, −5.887)`. As built, this test and
+    the F-35 and Sketchfab F-22 tests read the registered class constants. Each also checks that the
+    nose→nozzle line passes within 1 mm of the pivot at body z = 0. The scratch script measured at
+    most 0.26 mm, left over from rounding `c` to 3 decimals.
+  - [x] `CenterOfMassImportTests.sketchfabF22ImportTransform`:
     `composeImportTransform(transformYMinusZXToXYZ, 0.0996041, (0, −0.018, 2.512))` maps the native
     nose tip `(135.4261, 0, 0.5221)` → `(0, −0.034, 10.977)` and the native nozzle-pair center
     `(−31.8561, 0, 0)` → `(0, 0.018, −5.685)`, within 1e-3; the 3×3 determinant stays negative, so the
     winding flip still happens.
-  - [ ] `SingleMeshVertexMetadataTests.centroidCarriesFinalF18Recentering`: the native centroid
+  - [x] `SingleMeshVertexMetadataTests.centroidCarriesFinalF18Recentering`: the native centroid
     `(−5.462, 2.084, 3.773)` → `(5.462, 0.156, −2.012)`.
   - The station arithmetic itself is offline: `swift scripts/verify_center_of_mass_math.swift` must
     print "All checks passed."
