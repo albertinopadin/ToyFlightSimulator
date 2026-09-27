@@ -86,6 +86,11 @@ class Skeleton {
         localPoses = restTransforms
         jointIndexByPath = Dictionary(jointPaths.enumerated().map { ($1, $0) },
                                       uniquingKeysWith: { first, _ in first })
+
+        // currentPose is valid (the rest pose) from construction. A rig with no animation
+        // clip (e.g. the procedurally driven F-22 cockpit) is otherwise never evaluated
+        // before Skin.updatePalette reads it, which indexed an empty array.
+        evaluateWorldPoses()
     }
 
     static func getParentIndices(jointPaths: [String]) -> [Int?] {
