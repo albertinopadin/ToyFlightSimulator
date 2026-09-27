@@ -5,7 +5,7 @@
 `~/Desktop/BlenderProjects/ToyFlightSimulator/F22_Cockpit/README.md` (sources for the cockpit
 layout, the frame conventions, the rig, and how to rebuild or re-export the asset). No research
 document: this is asset integration through existing engine paths, small enough to plan from the code.
-**Status:** draft
+**Status:** in progress (Milestones 1–3 implemented by the owner, reviewed and tested)
 **Related plans:** `plans/claude/c_key_camera_toggle.md` (camera registry and slot selection),
 `plans/claude/procedural-animation-plan.md` (procedural channels),
 `plans/claude/aircraft_center_of_mass_recentering_2026-09-25.md` (the F-22 body frame used for the eye point)
@@ -22,6 +22,8 @@ document: this is asset integration through existing engine paths, small enough 
 
 ## Changelog
 
+- **2026-09-27** — Review of the owner's Milestones 1–3 code, with fixes, and the M1–M3 tests. Fixed in `CockpitCamera`: `setRotationX(headYaw)` then `setRotationY(headPitch)` swapped the axes (yaw is about Y), and each call replaces the whole rotation, so only the second survived; both also turned about world-frame axes (`getRightVector`/`getUpVector` read the world matrix), wrong once the jet banks. Now `turnHead` builds one local rotation, Ry(yaw)·Rx(−pitch), through the pure `turnedHead`/`headRotation` helpers. The limits (150°, 70° up, 80° down; the owner's values, the plan had 60/70) were degrees used as radians, so they never clamped; the mouse Y sign was inverted. `attach(to:)` now recentres the head and returns false, leaving the camera unparented, for a jet without a cockpit; `applyAircraftSwap` attaches for every aircraft type, keeps the cockpit view across a swap to a jet that has one, and takes the camera out of the registry otherwise (`CameraManager.UnregisterCamera`, new), so 'C' no longer cycles to a camera left behind in the removed jet. `Aircraft.cockpitNativeToBody` became static and the M3 filter a static `F22.shouldRenderExteriorSubmesh`, both for Metal-free tests. Numbers re-checked with the scratch script `cockpit_test_numbers.swift` (stick pivot (0.3635, 0.5390, 7.2330) and (0.3635, 0.4990, 5.7330), basis det −1, yaw +90° → (1, 0, 0), pitch +30° → (0, 0.5, 0.8660), yaw 90° + pitch 30° keeps the right axis level). 29 tests in 7 suites pass; full suite 474 + 20 XCTest pass.
+- **2026-09-27** — Asset fix (owner report: the cockpit view showed only light brown, `debugging/screenshots/F22Cockpit_CantSeeOut.png`): `Canopy_Glass` had exported with `opacity = 1`, so the engine drew the gold-tinted glass opaque. Blender 5.2.2's USD exporter writes opacity 1 for any Principled Alpha that no image texture feeds (reproduced headless with Alpha 0.07 and 0.5, Dithered, and a Value node). `export_usdz.py` now registers a `ScalarAlphaToOpacity` export hook, and `verify_cockpit_usdz.swift` fails when a material other than `Canopy_Glass`/`HUD_Combiner` would be drawn transparent, or either of those opaque (it flags the old file). Re-exported and prim-compared with the old file (only authored change: that opacity, 1 → 0.07; textures byte-identical); verify RESULT: OK, `usdchecker` Success.
 - **2026-09-26** — Milestone 1: added the app-hosted test `CockpitModelTests.restPosePaletteIsIdentity`, the regression test for the empty-`currentPose` crash in `Skin.updatePalette` (clip-less rig; fixed in `dd36871`). Identity result reproduced with the scratch script `cockpit_rest_palette.swift` (Model I/O, world rest × inverse bind per joint): max |palette − I| = 0.0 for all 8 joints.
 - **2026-09-25** — Asset revision 3 (owner review of r2): HUD anti-glare tabs now jut forward (away from the pilot) instead of aft; ICP brought aft to the HUD glass plane (key faces at y ≈ 0.51–0.52 m, the glass spans 0.509–0.532 m), tucked under the glareshield lip and 9 mm shorter so the whole ICP face and every display stay visible from the DEP (ray-cast check: no display sample hidden by the ICP); stick-head hypotenuse kinked outward 11 mm so the red button sits fully on the thumb face. HUD glass, calibration and joint pivots unchanged. 42,560 triangles, 30 meshes, 77 submeshes. Re-verified with `verify_cockpit_usdz.swift` (RESULT: OK) and `usdchecker` (Success), no vertex outside the Sketchfab skin.
 - **2026-09-25** — Asset revision 2 (owner review against photos): squat barrel-shaped HUD combiner (0.180 x 0.165 m, top 3.7° above the DEP line) with a frame thin across and deep fore-aft plus anti-glare tabs; all displays flat and vertical, ICP 3–5 cm proud of them; glareshield hood juts 11 cm aft and side glare shields splay aft to the sills; right-triangle stick head; D-shaped throttle grips. Joint pivots unchanged. HUD calibration re-derived and reproduced with the scratch script `hud_v2_numbers.py` (inputs: half extents 0.090/0.0825 m, bottom centre (0, 0.532, −0.130), 8° tilt, 1024 x 939 px): boresight uv (0.500, 0.7956), 51.01 / 51.41 px/deg. Re-verified with `verify_cockpit_usdz.swift` (RESULT: OK) and `usdchecker` (Success), no vertex outside the Sketchfab skin.
@@ -270,21 +272,27 @@ function attachCockpit(aircraft)
 // F22: cockpitModelType = F22_Cockpit, eye point (0, 1.12, 7.00)
 // F22_CGTrader: cockpitModelType = F22_Cockpit, eye point (0, 1.08, 5.50)
 
-// Pure helper for the test below: where a native cockpit point lands in the body frame.
+// Pure static helper (Aircraft.cockpitNativeToBody) for the tests below: where a native
+// cockpit point lands in the body frame.
 function cockpitNativeToBody(nativePoint_m, eyePointInBodyFrame_m) -> bodyPoint_m
     engineLocal = (nativePoint_m.x, nativePoint_m.z, nativePoint_m.y)   // transformXZYToXYZ, row-vector
     return engineLocal + eyePointInBodyFrame_m
 ```
 
 - **Tests** (Metal-free where possible):
-  - [ ] `CockpitGeometryTests.stickPivotLandsOnRightConsole` — native (0.3635, 0.2330, −0.5810)
+  - [x] `CockpitGeometryTests.stickPivotLandsOnRightConsole` — native (0.3635, 0.2330, −0.5810)
     with eye (0, 1.12, 7.00) → (0.3635, 0.5390, 7.2330) within 1e-4 m; x > 0 (right side).
-  - [ ] `CockpitGeometryTests.basisIsAReflection` — determinant of the 3x3 part of
+  - [x] `CockpitGeometryTests.stickPivotInTheCGTraderF22` — same pivot, eye (0, 1.08, 5.50) →
+    (0.3635, 0.4990, 5.7330).
+  - [x] `CockpitGeometryTests.helperMatchesTheImportBasis` — for five native points (stick, left
+    throttle, gear handle, right pedal pivots and (1, 2, 3)) the helper equals v · `Transform.transformXZYToXYZ`,
+    so the hand-written axis swap is the basis the model is actually baked with.
+  - [x] `CockpitGeometryTests.basisIsAReflection` — determinant of the 3x3 part of
     `Transform.transformXZYToXYZ` is −1.
-  - [ ] App-hosted: `CockpitModelTests.skeletonHasTheRigJoints` — `Assets.Models[.F22_Cockpit]` is a
+  - [x] App-hosted: `CockpitModelTests.skeletonHasTheRigJoints` — `Assets.Models[.F22_Cockpit]` is a
     `UsdModel` with one skeleton whose `jointPaths` contain the eight paths in the joint table, and six
     meshes with a `skin`.
-  - [ ] App-hosted: `CockpitModelTests.restPosePaletteIsIdentity` — build a fresh
+  - [x] App-hosted: `CockpitModelTests.restPosePaletteIsIdentity` — build a fresh
     `UsdModel("F22_Cockpit", fileExtension: USDZ, basisTransform: Transform.transformXZYToXYZ)` in the
     test, not `Assets.Models[.F22_Cockpit]`: the host app's scene shares that instance, and from
     Milestone 4 its animator rewrites the palettes (the IDLE throttle sits at +5.74°, not at rest). Then
@@ -320,26 +328,41 @@ function cockpitNativeToBody(nativePoint_m, eyePointInBodyFrame_m) -> bodyPoint_
 ```pseudocode
 // CockpitCamera: sits at the eye point, rotates only (head look), never translates.
 // yaw and pitch are head angles relative to the aircraft's nose; clamps keep the head human.
-constant maxHeadYaw_rad = 150°   ;  maxHeadPitchUp_rad = 60°  ;  maxHeadPitchDown_rad = 70°
+// headYaw_rad: + looks right. headPitch_rad: + looks up.
+constant maxHeadYaw_rad = 150°   ;  maxHeadPitchUp_rad = 70°  ;  maxHeadPitchDown_rad = 80°
+
+// Pure helpers (static on CockpitCamera), so the tests need no camera.
+function turnedHead(yaw_rad, pitch_rad, yawDelta_rad, pitchDelta_rad) -> (yaw_rad, pitch_rad)
+    return (clamp(yaw_rad + yawDelta_rad, -maxHeadYaw_rad, maxHeadYaw_rad),
+            clamp(pitch_rad + pitchDelta_rad, -maxHeadPitchDown_rad, maxHeadPitchUp_rad))
+function headRotation(yaw_rad, pitch_rad) -> rotation
+    // Yaw about the cockpit's up axis, then pitch about the turned head's right axis:
+    // Ry(yaw) · Rx(−pitch) with column vectors. This order never rolls the head. A positive
+    // angle about +X tips +Z (forward) down, hence −pitch for "+ looks up".
+    return rotationY(yaw_rad) * rotationX(-pitch_rad)
 
 function cockpitCameraDoUpdate(camera, deltaTime_s)
     if not camera.isActiveCamera
         return                                              // parented: runs even when not current
     if right mouse button held
-        camera.headYaw_rad   = clamp(camera.headYaw_rad + mouseDX * lookRate * deltaTime_s, -maxHeadYaw_rad, maxHeadYaw_rad)
-        camera.headPitch_rad = clamp(camera.headPitch_rad + mouseDY * lookRate * deltaTime_s, -maxHeadPitchDown_rad, maxHeadPitchUp_rad)
-    if middle mouse button clicked
-        camera.headYaw_rad = 0 ; camera.headPitch_rad = 0   // recentre on the HUD
-    camera.localRotation = rotationY(headYaw_rad) then rotationX(headPitch_rad)
+        turnPerPixel = deltaTime_s * turnSpeed              // as AttachedCamera
+        // NSEvent's deltaY is + for a downward move, so dragging down looks down.
+        (camera.headYaw_rad, camera.headPitch_rad) = turnedHead(camera.headYaw_rad, camera.headPitch_rad,
+                                                                mouseDX * turnPerPixel, -mouseDY * turnPerPixel)
+        camera.localRotation = headRotation(camera.headYaw_rad, camera.headPitch_rad)
+    if middle mouse button or the 0 key held
+        recenterHead(camera)                                // yaw = pitch = 0, identity rotation
     // position stays (0, 0, 0) relative to the cockpit node = the eye point
 
 // Attach: parent to the cockpit node at zero offset, so the camera and the cockpit share one origin.
-function attachCockpitCamera(camera, aircraft)
+function attachCockpitCamera(camera, aircraft) -> Bool
+    camera.detachFromParent()                               // always leave the previous jet
     if aircraft.cockpit is none
-        return
-    camera.detachFromParent()
-    camera.position = (0, 0, 0) ; camera.headYaw_rad = 0 ; camera.headPitch_rad = 0
+        return false                                        // left unparented
+    camera.position = (0, 0, 0) ; recenterHead(camera)
     aircraft.cockpit.addChild(camera)
+    aircraft.cockpitCamera = camera
+    return true
 
 // InputManager: two new discrete commands.
 engine: DiscreteCommand.CockpitView -> Keycodes.one
@@ -351,18 +374,28 @@ engine: InputManager.HasDiscreteCommandDebounced(command: CockpitView) ->
 engine: InputManager.HasDiscreteCommandDebounced(command: ChaseView) ->
             CameraManager.SetCamera(attachedCamera)
 
-// FlightboxWithPhysics.applyAircraftSwap, after the chase camera is re-attached:
-addCamera(cockpitCamera, isCurrent: false)          // registered once; SetCamera dedupes
-attachCockpitCamera(cockpitCamera, playerAircraft)
-if the new aircraft has no cockpit and cockpitCamera is current
-    CameraManager.SetCamera(attachedCamera)          // never leave the view on a detached camera
+// FlightboxWithPhysics.applyAircraftSwap, for every aircraft type:
+wasInCockpitView = cockpitCamera.isActiveCamera     // read before the chase camera is made current
+addCamera(attachedCamera) ; re-attach it            // makes the chase camera current
+if attachCockpitCamera(cockpitCamera, playerAircraft)
+    addCamera(cockpitCamera, isCurrent: wasInCockpitView)   // registration dedupes
+else
+    engine: CameraManager.UnregisterCamera(cockpitCamera)   // 'C' must not reach a camera left in the old jet
 ```
 
 - **Tests** (Metal-free where possible):
-  - [ ] `CockpitCameraTests.headAnglesClamp` — 10 s of full right-drag leaves yaw at 150°, pitch
-    inside [−70°, +60°] (pure clamp helper).
-  - [ ] `CockpitCameraTests.positionNeverMoves` — after any input sequence the local position is (0, 0, 0).
-  - [ ] Existing `CameraManagerCycleTests` still pass (they test the pure `nextCameraIndex` rule).
+  - [x] `CockpitCameraHeadLookTests.headAnglesClamp` — 10 s at 60 Hz of a hard drag (0.83 rad per
+    tick) leaves yaw at +150° and pitch at +70°; the reverse drag leaves −150° and −80° (pure `turnedHead`).
+  - [x] `CockpitCameraHeadLookTests.headRotationDirections` — yaw +90° maps forward (0, 0, 1) to (1, 0, 0);
+    pitch +30° maps it to (0, 0.5, 0.8660).
+  - [x] `CockpitCameraHeadLookTests.combinedTurnKeepsTheHorizonLevel` — yaw 90° + pitch 30° looks at
+    (0.8660, 0.5, 0) with the head's right axis level (y = 0).
+  - [x] App-hosted: `CockpitCameraAttachTests.positionNeverMoves` — after 200 head turns and a recentre
+    the local position is (0, 0, 0) and the rotation matches `headRotation`.
+  - [x] App-hosted: `CockpitCameraAttachTests` attach cases — attach parents the camera to the cockpit
+    node at zero offset and recentres the head; re-attaching leaves the old cockpit; a jet without a
+    cockpit returns false and leaves the camera unparented.
+  - [x] Existing `CameraManagerCycleTests` still pass (they test the pure `nextCameraIndex` rule).
     With the cockpit camera registered inside `applyAircraftSwap`, the 'C' order becomes
     chase → cockpit → debug (registration order).
 - **Observable completion criteria:** press 1: the view matches the Blender render
@@ -374,6 +407,9 @@ if the new aircraft has no cockpit and cockpitCamera is current
   - Press 1 in the F-35 → no-op (no cockpit), the view stays on chase.
   - Swap aircraft while in the cockpit view → the view stays in the new jet's cockpit if it has
     one, else falls back to chase.
+  - Swap F-22 → F-35 → F-22 → the F-35 takes the cockpit camera out of the registry, and the F-22
+    re-registers it at the end: the 'C' order becomes chase → debug → cockpit. The 1 key selects it
+    by instance, so only the cycle order changes.
   - Near plane: 0.01 m (as the chase camera) is enough; the closest cockpit geometry in the forward
     view (the combiner's top edge) is about 0.50 m from the eye, the headrest pad about 0.21 m behind it.
 
@@ -390,15 +426,21 @@ if the new aircraft has no cockpit and cockpitCamera is current
 //   Object_2 "f22a_cockpit"  (1,468 tris, crude interior)   -> hide: it intersects the new cockpit
 //   Object_3 "HudGlass"      (16 tris)                       -> hide: the new HUD has its own combiner
 //   Object_1 "Glass"         (canopy, faces outward)         -> keep: culled from inside, seen from outside
-function f22ShouldRenderSubmesh(submesh) -> Bool
-    if cockpitModelType is none
+// Pure static helper (F22.shouldRenderExteriorSubmesh); the override passes the submesh's
+// material name and whether this jet has a cockpit.
+function shouldRenderExteriorSubmesh(materialName, hasCockpit) -> Bool
+    if not hasCockpit or materialName is none
         return true
-    return submesh.material.name not in {"f22a_cockpit", "HudGlass"}
+    return materialName not in {"f22a_cockpit", "HudGlass"}   // F22.materialsReplacedByCockpit
 ```
 
 - **Tests** (Metal-free where possible):
-  - [ ] `F22SubmeshFilterTests.hidesInteriorOnlyWhenCockpitPresent` — pure helper over material names:
-    {"f22a_cockpit", "HudGlass"} → false; "f22a_airframe", "Glass", "f22a_landingLights" → true.
+  - [x] `F22SubmeshFilterTests.hidesInteriorOnlyWhenCockpitPresent` — pure helper over material names:
+    {"f22a_cockpit", "HudGlass"} → false with a cockpit, true without; "f22a_airframe", "Glass",
+    "f22a_landingLights" and a missing material → true (`keepsTheExterior`, `keepsASubmeshWithoutAMaterial`).
+  - [x] App-hosted: `F22SubmeshFilterTests.sketchfabModelHasTheReplacedMaterials` — the loaded
+    Sketchfab model's submesh materials include both hidden names and `Glass`, so a rename cannot
+    turn the filter into a silent no-op.
 - **Observable completion criteria:** in the cockpit view there is no flickering gray geometry
   through the consoles or a second small HUD glass behind the combiner.
 - **Edge cases and expected results:**
@@ -563,6 +605,7 @@ cockpit HUD_Combiner material: baseColorTexture = hudTarget ; emissionTexture = 
 
 | Symptom | Likely cause | How to check |
 |---|---|---|
+| Cockpit view is a flat light brown above the glareshield | `Canopy_Glass` exported with opacity 1 (Blender drops a scalar Alpha) | `verify_cockpit_usdz.swift` flags it; re-export with `export_usdz.py` (its hook writes the 0.07) |
 | Cockpit invisible or only its back faces show | basis without the reflection, or winding not reversed | log the basis determinant (must be −1); `Mesh.reverseTriangleWinding` must run |
 | Throttle on the right, stick on the left | a det +1 basis mirrored the cockpit | use `transformXZYToXYZ`, not the CGTrader basis |
 | Cockpit 7 m ahead or below the jet | eye point in the wrong frame (import vs body) | the Sketchfab eye point is in the recentered body frame |

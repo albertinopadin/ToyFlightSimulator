@@ -19,6 +19,10 @@ class F22_CGTrader: Aircraft {
                    scale: scale,
                    shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
         setupAnimator(F22Animator.init)
+        // Eye point chosen so this jet's canopy crown sits within 1 cm of the Sketchfab one above
+        // the eye (0.304 vs 0.301 m). The cockpit's canopy glass pokes a few cm outside this
+        // narrower canopy near its aft end; hide `Canopy_Glass` here if it shows from outside.
+        self.attachCockpit(named: "F22_Cockpit", modelType: .F22_Cockpit, eyePointInBodyFrame: [0, 1.08, 5.50])
     }
 
     override func doUpdate() {

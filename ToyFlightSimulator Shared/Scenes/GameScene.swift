@@ -180,6 +180,22 @@ class GameScene: Node {
             CameraManager.CycleCamera()
         }
         
+        // 1 / 2 select camera instances directly (not 'C' slots), so the chase view stays the
+        // default and the cycle order is unchanged. Same update-thread rule as CycleCamera.
+        // An aircraft without a cockpit (or a scene that never attached the cockpit camera)
+        // makes 1 a no-op.
+        InputManager.HasDiscreteCommandDebounced(command: .CockpitView) {
+            if playerAircraft?.cockpit != nil, let cockpitCamera = playerAircraft?.cockpitCamera {
+                CameraManager.SetCamera(cockpitCamera)
+            }
+        }
+        
+        InputManager.HasDiscreteCommandDebounced(command: .ChaseView) {
+            if let chaseCamera = playerAircraft?.chaseCamera {
+                CameraManager.SetCamera(chaseCamera)
+            }
+        }
+        
         InputManager.HasDiscreteCommandDebounced(command: .CycleColliderOverlay) {
             // Update-thread scene-graph mutation, same rule as CycleCamera.
             guard let aircraft = playerAircraft, let type = playerAircraftType else { return }

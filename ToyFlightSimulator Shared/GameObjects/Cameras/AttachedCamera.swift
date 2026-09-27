@@ -7,7 +7,7 @@
 
 import simd
 
-class AttachedCamera: Camera {
+final class AttachedCamera: Camera {
     private var _moveSpeed: Float = 4.0
     private var _turnSpeed: Float = 1.0
     private static let NAME: String = "AttachedCamera"

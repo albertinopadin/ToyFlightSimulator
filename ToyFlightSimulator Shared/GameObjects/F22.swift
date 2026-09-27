@@ -38,6 +38,13 @@ class F22: Aircraft {
                    scale: scale,
                    shouldUpdateOnPlayerInput: shouldUpdateOnPlayerInput)
         
+        // Eye point measured, not published: the cockpit's canopy was fitted to this jet's
+        // canopy, in the recentered body frame (so it already includes −centerOfMassInImportFrame).
+        self.attachCockpit(named: "F22_Cockpit", modelType: .F22_Cockpit, eyePointInBodyFrame: [0, 1.12, 7])
+        self.attachAfterburners()
+    }
+    
+    private func attachAfterburners() {
         // Mechanical ×s rescale (s = 0.09960, the draw-space meterization factor) of the
         // old native-unit offsets — same model-relative placement as before.
         // TODO(meterization): eyeball against the actual nozzles in meters.
@@ -77,5 +84,24 @@ class F22: Aircraft {
                 afterburnerRight.off()
             }
         }
+    }
+    
+    /// The Sketchfab model's own interior (`f22a_cockpit`, 1,468 triangles) and HUD glass
+    /// (`HudGlass`, 16 triangles), which sit inside the cockpit model and would poke through it.
+    /// The canopy (`Glass`) stays: the jet needs it from outside.
+    static let materialsReplacedByCockpit: Set<String> = ["f22a_cockpit", "HudGlass"]
+
+    /// Pure form of `shouldRenderSubmesh`, so tests can check it without a Metal-backed F22.
+    static func shouldRenderExteriorSubmesh(materialName: String?, hasCockpit: Bool) -> Bool {
+        guard hasCockpit, let materialName else { return true }
+        return !materialsReplacedByCockpit.contains(materialName)
+    }
+
+    /// Evaluated once per submesh when SceneManager builds this model's draw lists (at the
+    /// first registration), so it hides the interior in every view. Every F22 instance shares
+    /// that one ModelData, and every F22 has a cockpit.
+    override func shouldRenderSubmesh(_ submesh: Submesh) -> Bool {
+        Self.shouldRenderExteriorSubmesh(materialName: submesh.material?.name,
+                                         hasCockpit: cockpitModelType != nil)
     }
 }

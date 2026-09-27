@@ -34,6 +34,7 @@ final class FlightboxWithTerrain: GameScene {
         
         addCamera(attachedCamera)
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)
+        jet.chaseCamera = attachedCamera
         jet.setPosition(0, 100, 0)
         addChild(jet)
         let jetPos = jet.getPosition()

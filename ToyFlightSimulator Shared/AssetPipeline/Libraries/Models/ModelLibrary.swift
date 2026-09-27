@@ -30,6 +30,8 @@ enum ModelType {
     case Sketchfab_F35
     case Sketchfab_F22
     
+    case F22_Cockpit
+    
     case Plane
     case Icosahedron
     case Temple
@@ -99,12 +101,11 @@ final class ModelLibrary: LazyLibrary<ModelType, Model>, @unchecked Sendable {
                      realWorldLength: 18.92)
         }
 
-        // Declared MPU=0.01 (cm) would give 4.34 m — 28% of real. Draw-space native length
-        // 28.85 on Z (stage 433.6 ÷ the ×15.03 'Meshes' node scale, which the renderer strips).
-        // No basis, but the scale and the center of mass still compose: S · T_row(−c).
-        register(.Sketchfab_F35) { UsdModel("F-35A_Lightning_II",
-                                            realWorldLength: 15.67,
-                                            centerOfMassInImportFrame: F35.centerOfMassInImportFrame) }
+        // Authored in meters with its origin at the design eye point, so no realWorldLength and
+        // no centerOfMassInImportFrame: the basis only permutes Blender's (x right, y forward,
+        // z up) into the engine's axes. Its determinant is −1 (a reflection, so the winding is
+        // reindexed), which keeps the throttles on the left and the stick on the right.
+        register(.F22_Cockpit, { UsdModel("F22_Cockpit", fileExtension: .USDZ, basisTransform: Transform.transformXZYToXYZ) })
 
         // Declared MPU=0.01 (cm) would give 10.98 m — 58% of real. Draw-space native length
         // 189.95 on X (stage 1098.2 ÷ the ×5.78 root node scale; this asset's time range is
@@ -115,6 +116,13 @@ final class ModelLibrary: LazyLibrary<ModelType, Model>, @unchecked Sendable {
                      realWorldLength: 18.92,
                      centerOfMassInImportFrame: F22.centerOfMassInImportFrame)
         }
+        
+        // Declared MPU=0.01 (cm) would give 4.34 m — 28% of real. Draw-space native length
+        // 28.85 on Z (stage 433.6 ÷ the ×15.03 'Meshes' node scale, which the renderer strips).
+        // No basis, but the scale and the center of mass still compose: S · T_row(−c).
+        register(.Sketchfab_F35) { UsdModel("F-35A_Lightning_II",
+                                            realWorldLength: 15.67,
+                                            centerOfMassInImportFrame: F35.centerOfMassInImportFrame) }
 
         register(.Plane)       { Model(name: "Plane", mesh: PlaneMesh()) }
         register(.Icosahedron) { Model(name: "Icosahedron", mesh: IcosahedronMesh()) }

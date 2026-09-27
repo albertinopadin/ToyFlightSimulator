@@ -5,6 +5,7 @@
 //  Created by Albertino Padin on 9/25/22.
 //
 
+// TODO: Add codes for dot/period, comma
 enum Keycodes: UInt16, CaseIterable {
     //Special Chars
     case space             = 0x31

@@ -27,6 +27,7 @@ final class FlightboxScene: GameScene {
 
         addCamera(attachedCamera)
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)
+        jet.chaseCamera = attachedCamera
         jet.setPosition(0, 10, 4)
         
         capsule.setPosition(-8, 10, -10)

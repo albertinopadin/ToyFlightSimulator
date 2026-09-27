@@ -10,6 +10,7 @@ import simd
 enum CameraType {
     case Debug
     case Attached
+    case Cockpit
 }
 
 class Camera: GameObject {

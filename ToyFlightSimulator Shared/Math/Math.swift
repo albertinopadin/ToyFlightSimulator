@@ -36,3 +36,15 @@ extension Float {
     }
 }
 
+extension Comparable {
+    /// This value limited to `limits`: the nearer bound when it lies outside.
+    func clamped(to limits: ClosedRange<Self>) -> Self {
+        min(max(self, limits.lowerBound), limits.upperBound)
+    }
+
+    /// Same as `clamped(to: min...max)`; traps if `min > max` (an invalid ClosedRange).
+    func clamp(min: Self, max: Self) -> Self {
+        clamped(to: min...max)
+    }
+}
+

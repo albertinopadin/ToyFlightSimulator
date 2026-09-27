@@ -24,6 +24,11 @@ enum DiscreteCommand {
 
     case Pause
     case ClickSelect
+
+    /// First-person view from the player aircraft's cockpit (1 key); no-op without a cockpit.
+    case CockpitView
+    /// Back to the chase camera behind the player aircraft (2 key).
+    case ChaseView
 }
 
 enum ContinuousCommand {
@@ -122,7 +127,9 @@ final class InputManager {
         .ToggleFlaps: .f,
         .ToggleGear: .g,
         .CycleCamera: .c,
-        .CycleColliderOverlay: .x
+        .CycleColliderOverlay: .x,
+        .CockpitView: .one,
+        .ChaseView: .two
     ]
     
     nonisolated(unsafe) private static var multiKeyInputMappings: [SpecialUserCommand: [Keycodes]] = [

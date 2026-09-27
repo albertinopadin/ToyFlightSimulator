@@ -19,6 +19,13 @@ final class CameraManager {
         }
     }
 
+    /// Takes a camera out of the registry, and so out of the 'C' cycle. CurrentCamera is left
+    /// alone: select a replacement first. Re-registering later appends it at the end of the
+    /// cycle order. Update-thread only.
+    public static func UnregisterCamera(_ camera: Camera) {
+        _cameras.removeAll { $0 === camera }
+    }
+
     /// Makes a camera current (registering it first if needed — cannot miss
     /// and nil out CurrentCamera like the old set-by-type lookup could).
     public static func SetCamera(_ camera: Camera) {

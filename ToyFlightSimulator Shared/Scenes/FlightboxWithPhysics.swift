@@ -13,6 +13,13 @@ final class FlightboxWithPhysics: GameScene {
     private enum CapsuleAxis: CaseIterable {
         case x, z
     }
+    
+    /// First-person camera (1 key), re-attached to each player aircraft that has a cockpit.
+    /// Near 0.01 m is enough: the closest geometry ahead, the HUD combiner's top edge, is
+    /// about 0.5 m from the eye.
+    let cockpitCamera = CockpitCamera(fieldOfView: 75.0,
+                                      near: 0.01,
+                                      far: 1_000_000.0)
 
     var attachedCamera = AttachedCamera(fieldOfView: 75.0,
                                         near: 0.01,
@@ -311,8 +318,24 @@ final class FlightboxWithPhysics: GameScene {
                 physicsWorld.setEntities(entities)
             }
 
+            // Read before addCamera(attachedCamera), which makes the chase camera current.
+            let wasInCockpitView = cockpitCamera.isActiveCamera
+
             addCamera(attachedCamera)
             attachedCamera.attach(to: playerAircraft, offset: playerAircraft.cameraOffset)
+            playerAircraft.chaseCamera = attachedCamera
+
+            // First-person view at the design eye point, for aircraft that carry a cockpit (the
+            // two F-22s). Registered after the chase camera, so 'C' cycles chase → cockpit → free.
+            // A swap keeps the cockpit view when the new jet has a cockpit. A jet without one
+            // takes the camera out of the registry: 'C' would otherwise cycle to a camera left
+            // behind with the old jet. Coming back re-registers it at the end of the 'C' order.
+            if cockpitCamera.attach(to: playerAircraft) {
+                addCamera(cockpitCamera, wasInCockpitView)
+            } else {
+                CameraManager.UnregisterCamera(cockpitCamera)
+            }
+
             playerAircraft.setPosition(aircraftStartPosition)
 
             if let prevAc {

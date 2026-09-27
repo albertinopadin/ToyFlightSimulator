@@ -109,6 +109,22 @@ class Aircraft: GameObject {
     /// vertical, heading and bank are undefined and hold these values.
     private var lastTelemetrySnapshot: AircraftTelemetry
     
+    /// The interior model drawn inside this airframe; nil for aircraft without a cockpit
+    /// (the F-16, F-18 and F-35 for now). Set by `attachCockpit`.
+    var cockpitModelType: ModelType? = nil
+    /// The design eye point (DEP) in this aircraft's body frame, in meters: +X right, +Y up,
+    /// +Z nose, origin = the recentered center of mass. The cockpit model's origin is the DEP,
+    /// so the cockpit node sits here and the cockpit camera sits on the cockpit node.
+    var cockpitEyePointInBodyFrame: float3 = .zero
+    /// The cockpit node, a child of this aircraft. It registers with SceneManager through
+    /// GameScene's subtree registration when the aircraft is added to the scene.
+    var cockpit: GameObject? = nil
+    /// The scene's first-person camera while it rides in this aircraft (set by
+    /// `CockpitCamera.attach(to:)`); the 1 key selects it.
+    var cockpitCamera: CockpitCamera? = nil
+    /// The scene's chase camera while it follows this aircraft; the 2 key selects it.
+    var chaseCamera: AttachedCamera? = nil
+
     init(name: String,
          aircraftType: AircraftType? = nil,
          modelType: ModelType,
@@ -126,6 +142,30 @@ class Aircraft: GameObject {
         self.setScale(scale)
         print("[Aircraft init] name: \(name), scale: \(scale)")
         self.hasFocus = true  // TODO: This doesn't look right...
+    }
+    
+    /// Mounts a cockpit model inside this airframe. Call once, from the subclass's init.
+    /// The model is authored in meters with its origin at the design eye point, and its
+    /// `ModelLibrary` registration only permutes the axes, so a translation to the eye point
+    /// is the whole placement: no rotation, no scale.
+    func attachCockpit(named name: String, modelType: ModelType, eyePointInBodyFrame: float3) {
+        cockpitModelType = modelType
+        cockpitEyePointInBodyFrame = eyePointInBodyFrame
+        let cockpit = GameObject(name: name, modelType: modelType)
+        cockpit.setPosition(cockpitEyePointInBodyFrame)
+        self.addChild(cockpit)
+        self.cockpit = cockpit
+    }
+
+    /// Where a point stored in the cockpit file lands in the aircraft's body frame, in meters.
+    /// The file's native axes are Blender's (+X right, +Y forward, +Z up), so the import basis
+    /// `Transform.transformXZYToXYZ` swaps y and z (row-vector v · B), then the cockpit node's
+    /// position adds the eye point. Pure and static so tests can check the placement without
+    /// Metal. Example: the stick pivot, native (0.3635, 0.2330, −0.5810), with the Sketchfab eye
+    /// point (0, 1.12, 7.00) lands at (0.3635, 0.5390, 7.2330), on the right console.
+    static func cockpitNativeToBody(nativePoint: float3, eyePointInBodyFrame: float3) -> float3 {
+        let engineLocal: float3 = [nativePoint.x, nativePoint.z, nativePoint.y]
+        return engineLocal + eyePointInBodyFrame
     }
 
     /// Convenience for subclasses that use skeletal animation.

@@ -140,6 +140,7 @@ CI (`.github/workflows/`): test runs must pass `-parallel-testing-enabled NO` â€
 ## Debugging
 
 - **'C' key**: Cycle registered cameras in registration order (no-op in single-camera scenes). Debug: WASD + mouselook. Attached: follows aircraft
+- **'1' / '2' keys**: Cockpit (first-person, F-22s only; right-drag looks, middle button or 0 recentres) / chase view
 - **'Y' key**: Toggle stats display (FPS + active renderer)
 - **'T' key** (macOS): Toggle the aircraft telemetry panel (`AircraftTelemetryView`: type, altitude, speed, heading, pitch, roll from `AircraftTelemetryStore`)
 - **'H' key** (macOS; menu toggle on both platforms): Toggle Apple's Metal Performance HUD
