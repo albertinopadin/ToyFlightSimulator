@@ -16,6 +16,7 @@ struct IOSGameUIView: View {
     @State private var useMotionControl: Bool = false
     @State private var volume: Float = 15.0
     @State private var aircraftType: AircraftType = .f22_cgtrader
+    @State private var cameraType: CameraType = .Attached
     @State private var hudEnabled: Bool = false
     @State private var rendererType: RendererType = .TiledMSAATessellated
     @State private var maxAnisotropy: MaxAnisotropy = Preferences.SelectedMaxAnisotropy
@@ -62,6 +63,7 @@ struct IOSGameUIView: View {
                                   useMotionControl: $useMotionControl,
                                   volume: $volume,
                                   aircraftType: $aircraftType,
+                                  cameraType: $cameraType,
                                   hudEnabled: $hudEnabled,
                                   rendererType: $rendererType,
                                   maxAnisotropy: $maxAnisotropy,

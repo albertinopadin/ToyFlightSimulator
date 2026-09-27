@@ -12,11 +12,15 @@ struct TFSMenuMobile: View {
     @Binding var useMotionControl: Bool
     @Binding var volume: Float
     @Binding var aircraftType: AircraftType
+    @Binding var cameraType: CameraType
     @Binding var hudEnabled: Bool
     @Binding var rendererType: RendererType
     @Binding var maxAnisotropy: MaxAnisotropy
 
     let thumbnailStore: AircraftThumbnailStore
+    
+    let narrowWidthScale: CGFloat = 0.35
+    let wideWidthScale: CGFloat = 0.80
 
     var viewSize: CGSize
     var onClose: () -> Void
@@ -37,32 +41,35 @@ struct TFSMenuMobile: View {
                                 .font(.largeTitle)
                             
                             RefreshRatePicker(framesPerSecond: $framesPerSecond)
-                                .frame(maxWidth: geometry.size.width * 0.80)
+                                .frame(maxWidth: geometry.size.width * wideWidthScale)
                             
                             Toggle("Use Motion Control", isOn: $useMotionControl)
-                                .frame(maxWidth: geometry.size.width * 0.35)
+                                .frame(maxWidth: geometry.size.width * narrowWidthScale)
                                 .padding()
                                 .onChange(of: useMotionControl) { oldValue, newValue in
                                     InputManager.useMotion = newValue
                                 }
 
                             MetalHUDToggle(hudEnabled: $hudEnabled)
-                                .frame(maxWidth: geometry.size.width * 0.35)
+                                .frame(maxWidth: geometry.size.width * narrowWidthScale)
                             
                             VolumeSlider(volume: $volume)
-                                .frame(maxWidth: geometry.size.width * 0.80)
+                                .frame(maxWidth: geometry.size.width * wideWidthScale)
+                            
+                            CameraPicker(cameraType: $cameraType)
+                                .frame(maxWidth: geometry.size.width * wideWidthScale)
 
                             RendererPicker(rendererType: $rendererType)
-                                .frame(maxWidth: geometry.size.width * 0.80)
+                                .frame(maxWidth: geometry.size.width * wideWidthScale)
 
                             AnisotropyPicker(maxAnisotropy: $maxAnisotropy)
-                                .frame(maxWidth: geometry.size.width * 0.80)
+                                .frame(maxWidth: geometry.size.width * wideWidthScale)
 
                             // Explicit height: the grid's internal ScrollView needs a
                             // bounded viewport inside this outer ScrollView.
                             AircraftGridPicker(selection: $aircraftType,
                                                thumbnailStore: thumbnailStore)
-                                .frame(maxWidth: geometry.size.width * 0.80)
+                                .frame(maxWidth: geometry.size.width * wideWidthScale)
                                 .frame(height: geometry.size.height * 0.55)
                                 .onChange(of: aircraftType) {
                                     SceneManager.SetPlayerAircraft(aircraftType)
@@ -106,6 +113,7 @@ struct TFSMenuMobile: View {
                   useMotionControl: Binding<Bool>.constant(false),
                   volume: Binding<Float>.constant(15.0),
                   aircraftType: Binding<AircraftType>.constant(.f22),
+                  cameraType: .constant(.Attached),
                   hudEnabled: Binding<Bool>.constant(false),
                   rendererType: Binding<RendererType>.constant(.TiledMSAATessellated),
                   maxAnisotropy: Binding<MaxAnisotropy>.constant(.x8),

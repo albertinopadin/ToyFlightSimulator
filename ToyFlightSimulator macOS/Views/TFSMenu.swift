@@ -12,10 +12,12 @@ struct TFSMenu: View {
     @Binding var rendererType: RendererType
     @Binding var volume: Float
     @Binding var aircraftType: AircraftType
+    @Binding var cameraType: CameraType
     @Binding var hudEnabled: Bool
     @Binding var maxAnisotropy: MaxAnisotropy
 
     let thumbnailStore: AircraftThumbnailStore
+    let widthScale: CGFloat = 0.35
 
     var viewSize: CGSize
     
@@ -35,19 +37,22 @@ struct TFSMenu: View {
                             .font(.largeTitle)
                         
                         RefreshRatePicker(framesPerSecond: $framesPerSecond)
-                            .frame(maxWidth: geometry.size.width * 0.35)
+                            .frame(maxWidth: geometry.size.width * widthScale)
                         
                         VolumeSlider(volume: $volume)
-                            .frame(maxWidth: geometry.size.width * 0.35)
+                            .frame(maxWidth: geometry.size.width * widthScale)
+                        
+                        CameraPicker(cameraType: $cameraType)
+                            .frame(maxWidth: geometry.size.width * widthScale)
                         
                         RendererPicker(rendererType: $rendererType)
-                            .frame(maxWidth: geometry.size.width * 0.35)
+                            .frame(maxWidth: geometry.size.width * widthScale)
                         
                         AnisotropyPicker(maxAnisotropy: $maxAnisotropy)
-                            .frame(maxWidth: geometry.size.width * 0.35)
+                            .frame(maxWidth: geometry.size.width * widthScale)
                         
                         MetalHUDToggle(hudEnabled: $hudEnabled)
-                            .frame(maxWidth: geometry.size.width * 0.35)
+                            .frame(maxWidth: geometry.size.width * widthScale)
                         
                         AircraftGridPicker(selection: $aircraftType,
                                            thumbnailStore: thumbnailStore)
@@ -86,6 +91,7 @@ struct TFSMenu: View {
             rendererType: Binding<RendererType>.constant(.TiledDeferred),
             volume: Binding<Float>.constant(15.0),
             aircraftType: Binding<AircraftType>.constant(.f22),
+            cameraType: .constant(.Attached),
             hudEnabled: Binding<Bool>.constant(false),
             maxAnisotropy: Binding<MaxAnisotropy>.constant(.x8),
             thumbnailStore: AircraftThumbnailStore(),

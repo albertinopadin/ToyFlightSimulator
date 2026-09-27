@@ -7,10 +7,12 @@
 
 import simd
 
-enum CameraType {
-    case Debug
-    case Attached
-    case Cockpit
+enum CameraType: String, CaseIterable, Identifiable {
+    case Debug = "Debug"
+    case Attached = "Chase"
+    case Cockpit = "Cockpit"
+    
+    var id: String { rawValue }
 }
 
 class Camera: GameObject {

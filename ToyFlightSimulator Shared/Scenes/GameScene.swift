@@ -185,15 +185,11 @@ class GameScene: Node {
         // An aircraft without a cockpit (or a scene that never attached the cockpit camera)
         // makes 1 a no-op.
         InputManager.HasDiscreteCommandDebounced(command: .CockpitView) {
-            if playerAircraft?.cockpit != nil, let cockpitCamera = playerAircraft?.cockpitCamera {
-                CameraManager.SetCamera(cockpitCamera)
-            }
+            setCockpitCamera()
         }
         
         InputManager.HasDiscreteCommandDebounced(command: .ChaseView) {
-            if let chaseCamera = playerAircraft?.chaseCamera {
-                CameraManager.SetCamera(chaseCamera)
-            }
+            setChaseCamera()
         }
         
         InputManager.HasDiscreteCommandDebounced(command: .CycleColliderOverlay) {
@@ -234,6 +230,18 @@ class GameScene: Node {
                 AircraftTelemetryStore.sharedInstance.latestSnapshot = telemetrySnapshot
             }
             lastTelemetryPublishTime = GameTime.TotalGameTime
+        }
+    }
+    
+    func setCockpitCamera() {
+        if playerAircraft?.cockpit != nil, let cockpitCamera = playerAircraft?.cockpitCamera {
+            CameraManager.SetCamera(cockpitCamera)
+        }
+    }
+    
+    func setChaseCamera() {
+        if let chaseCamera = playerAircraft?.chaseCamera {
+            CameraManager.SetCamera(chaseCamera)
         }
     }
     

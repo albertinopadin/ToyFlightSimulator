@@ -168,6 +168,18 @@ final class SceneManager {
         }
     }
     
+    public static func SetCamera(_ cameraType: CameraType) {
+        switch cameraType {
+            case .Attached:
+                CurrentScene?.setChaseCamera()
+            case .Cockpit:
+                CurrentScene?.setCockpitCamera()
+            case .Debug:
+                // TODO: doing this for now but in future ideally actually set the Debug cam:
+                CurrentScene?.setChaseCamera()
+        }
+    }
+    
     /// UI → update-thread hand-off for scene resets (see PendingSceneReset).
     private static let _pendingReset = PendingSceneReset()
 

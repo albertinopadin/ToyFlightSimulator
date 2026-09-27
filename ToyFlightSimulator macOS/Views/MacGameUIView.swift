@@ -22,6 +22,7 @@ struct MacGameUIView: View {
     @State private var rendererType: RendererType = .TiledMSAATessellated
     @State private var volume: Float = 15.0
     @State private var aircraftType: AircraftType = .f22_cgtrader
+    @State private var cameraType: CameraType = .Attached
     @State private var hudEnabled: Bool = false
     @State private var maxAnisotropy: MaxAnisotropy = Preferences.SelectedMaxAnisotropy
     // Owned here (not in TFSMenu) so thumbnails survive menu close/reopen.
@@ -52,6 +53,7 @@ struct MacGameUIView: View {
                             rendererType: $rendererType,
                             volume: $volume,
                             aircraftType: $aircraftType,
+                            cameraType: $cameraType,
                             hudEnabled: $hudEnabled,
                             maxAnisotropy: $maxAnisotropy,
                             thumbnailStore: thumbnailStore,
