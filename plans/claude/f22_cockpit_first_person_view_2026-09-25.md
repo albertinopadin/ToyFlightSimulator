@@ -22,6 +22,7 @@ document: this is asset integration through existing engine paths, small enough 
 
 ## Changelog
 
+- **2026-09-26** — Milestone 1: added the app-hosted test `CockpitModelTests.restPosePaletteIsIdentity`, the regression test for the empty-`currentPose` crash in `Skin.updatePalette` (clip-less rig; fixed in `dd36871`). Identity result reproduced with the scratch script `cockpit_rest_palette.swift` (Model I/O, world rest × inverse bind per joint): max |palette − I| = 0.0 for all 8 joints.
 - **2026-09-25** — Asset revision 3 (owner review of r2): HUD anti-glare tabs now jut forward (away from the pilot) instead of aft; ICP brought aft to the HUD glass plane (key faces at y ≈ 0.51–0.52 m, the glass spans 0.509–0.532 m), tucked under the glareshield lip and 9 mm shorter so the whole ICP face and every display stay visible from the DEP (ray-cast check: no display sample hidden by the ICP); stick-head hypotenuse kinked outward 11 mm so the red button sits fully on the thumb face. HUD glass, calibration and joint pivots unchanged. 42,560 triangles, 30 meshes, 77 submeshes. Re-verified with `verify_cockpit_usdz.swift` (RESULT: OK) and `usdchecker` (Success), no vertex outside the Sketchfab skin.
 - **2026-09-25** — Asset revision 2 (owner review against photos): squat barrel-shaped HUD combiner (0.180 x 0.165 m, top 3.7° above the DEP line) with a frame thin across and deep fore-aft plus anti-glare tabs; all displays flat and vertical, ICP 3–5 cm proud of them; glareshield hood juts 11 cm aft and side glare shields splay aft to the sills; right-triangle stick head; D-shaped throttle grips. Joint pivots unchanged. HUD calibration re-derived and reproduced with the scratch script `hud_v2_numbers.py` (inputs: half extents 0.090/0.0825 m, bottom centre (0, 0.532, −0.130), 8° tilt, 1024 x 939 px): boresight uv (0.500, 0.7956), 51.01 / 51.41 px/deg. Re-verified with `verify_cockpit_usdz.swift` (RESULT: OK) and `usdchecker` (Success), no vertex outside the Sketchfab skin.
 - **2026-09-25** — Plan created. The asset `F22_Cockpit.usdz` is already in
@@ -283,6 +284,17 @@ function cockpitNativeToBody(nativePoint_m, eyePointInBodyFrame_m) -> bodyPoint_
   - [ ] App-hosted: `CockpitModelTests.skeletonHasTheRigJoints` — `Assets.Models[.F22_Cockpit]` is a
     `UsdModel` with one skeleton whose `jointPaths` contain the eight paths in the joint table, and six
     meshes with a `skin`.
+  - [ ] App-hosted: `CockpitModelTests.restPosePaletteIsIdentity` — build a fresh
+    `UsdModel("F22_Cockpit", fileExtension: USDZ, basisTransform: Transform.transformXZYToXYZ)` in the
+    test, not `Assets.Models[.F22_Cockpit]`: the host app's scene shares that instance, and from
+    Milestone 4 its animator rewrites the palettes (the IDLE throttle sits at +5.74°, not at rest). Then
+    the skeleton's `currentPose.count` is 8, and for each of the six skinned meshes every matrix in
+    `skin.jointMatrixPaletteBuffer` (`skin.jointPaths.count` of them) equals the identity within
+    `defaultTolerance` (1e-4). Why identity: each joint's composed rest transform equals its bind
+    transform, so world rest × inverse bind = I, and conjugating I by the basis leaves I. This is the
+    regression test for the empty-`currentPose` crash: the rig ships with no animation clip, so before
+    `dd36871` (`Skeleton.init?` evaluates the rest pose) nothing filled the pose before
+    `Skin.updatePalette` read it.
 - **Observable completion criteria:** in the chase view, the cockpit is visible through the canopy:
   gray consoles, the HUD hoop above the glareshield, the seat headbox under the canopy crown, the
   side-stick on the right. Nothing pokes through the fuselage skin. The log shows
