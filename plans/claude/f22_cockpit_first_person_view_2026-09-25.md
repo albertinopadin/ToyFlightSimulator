@@ -5,7 +5,7 @@
 `~/Desktop/BlenderProjects/ToyFlightSimulator/F22_Cockpit/README.md` (sources for the cockpit
 layout, the frame conventions, the rig, and how to rebuild or re-export the asset). No research
 document: this is asset integration through existing engine paths, small enough to plan from the code.
-**Status:** in progress (Milestones 1–3 implemented by the owner, reviewed and tested)
+**Status:** in progress (Milestones 1–3 landed in 25f61c9)
 **Related plans:** `plans/claude/c_key_camera_toggle.md` (camera registry and slot selection),
 `plans/claude/procedural-animation-plan.md` (procedural channels),
 `plans/claude/aircraft_center_of_mass_recentering_2026-09-25.md` (the F-22 body frame used for the eye point)
@@ -241,7 +241,7 @@ swift ~/Desktop/BlenderProjects/ToyFlightSimulator/F22_Cockpit/Tools/verify_cock
 
 ## Milestones
 
-### Milestone 1 — Register the cockpit model and mount it in the F-22
+### Milestone 1 — Register the cockpit model and mount it in the F-22 ✅ (landed 2026-09-27, 25f61c9)
 
 - **Learning objective:** place a child model in a parent's body frame through a basis permutation
   plus a translation, and see why the reflection matters for an asymmetric object.
@@ -315,7 +315,7 @@ function cockpitNativeToBody(nativePoint_m, eyePointInBodyFrame_m) -> bodyPoint_
     outside that jet's narrower canopy near the aft end (measured: 401 of 700 glass vertices outside
     the CGTrader skin). Acceptable from inside; hide `Canopy_Glass` for that jet if it shows outside.
 
-### Milestone 2 — Cockpit camera and the 1 / 2 keys
+### Milestone 2 — Cockpit camera and the 1 / 2 keys ✅ (landed 2026-09-27, 25f61c9)
 
 - **Learning objective:** why the camera must be at the DEP with look-only freedom, and how camera
   selection stays on the UpdateThread.
@@ -413,7 +413,7 @@ else
   - Near plane: 0.01 m (as the chase camera) is enough; the closest cockpit geometry in the forward
     view (the combiner's top edge) is about 0.50 m from the eye, the headrest pad about 0.21 m behind it.
 
-### Milestone 3 — Hide the exterior's interior and HUD glass
+### Milestone 3 — Hide the exterior's interior and HUD glass ✅ (landed 2026-09-27, 25f61c9)
 
 - **Learning objective:** how `shouldRenderSubmesh` shapes a model's draw lists at registration.
 - **Prerequisites:** Milestone 1.
