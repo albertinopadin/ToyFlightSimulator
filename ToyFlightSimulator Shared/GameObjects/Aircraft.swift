@@ -51,6 +51,12 @@ class Aircraft: GameObject {
     /// Subclasses with skeletal animation set this via `setupAnimator(_:)`.
     var animator: AircraftAnimator?
     
+    /// Moves the cockpit's stick, throttles, pedals and gear handle. Built by `attachCockpit`,
+    /// driven in `doUpdate`; nil for aircraft without a cockpit. Concrete type because the F-22
+    /// cockpit is the only one.
+    // TODO: extract a CockpitAnimator base class
+    var cockpitAnimator: F22CockpitAnimator?
+    
     /// Raycast landing-gear suspension; nil for aircraft without a gear spec
     /// (they rest on their collision geometry, as in Phase A). Installed by
     /// the scene next to the rigid body.
@@ -155,6 +161,14 @@ class Aircraft: GameObject {
         cockpit.setPosition(cockpitEyePointInBodyFrame)
         self.addChild(cockpit)
         self.cockpit = cockpit
+
+        // One animator per aircraft over the model every F-22 shares. Its init writes the rest
+        // pose into that shared model; see Aircraft.updateCockpitControls for who drives it.
+        if cockpit.model is UsdModel {
+            self.cockpitAnimator = F22CockpitAnimator(model: cockpit.model as! UsdModel)
+        } else {
+            print("[Aircraft attachCockpit] WARNING: cockpit model for \(self.getName()) is not a USD model.")
+        }
     }
 
     /// Where a point stored in the cockpit file lands in the aircraft's body frame, in meters.
@@ -222,6 +236,8 @@ class Aircraft: GameObject {
             }
             
             handleGearToggle()
+            // After the toggle, so the gear handle moves in the same tick as the gear command.
+            updateCockpitControls(input: controlInput)
         } else {
             latestControlInput = nil
             if !hasFlightPhysics {
@@ -235,6 +251,23 @@ class Aircraft: GameObject {
         }
 
         animator?.update(deltaTime: dt)
+        // Outside the input guard, like the exterior animator: parts still moving when focus
+        // drops finish their travel. Writes the cockpit's skin palettes.
+        cockpitAnimator?.update(deltaTime: dt)
+    }
+
+    /// Sets the cockpit controls' targets from this tick's input, the same `ControlInput` the
+    /// flight model reads, so the stick shows what the jet is commanded. Called only for the
+    /// player-controlled aircraft: the cockpit model, and so its pose, is shared by every F-22.
+    func updateCockpitControls(input: ControlInput) {
+        guard let cockpitAnimator else { return }
+        cockpitAnimator.setSideStick(pitch: input.pitch, roll: input.roll)
+        cockpitAnimator.setThrottles(input: input.throttle)
+        cockpitAnimator.setRudderPedals(input: input.yaw)
+        // No exterior animator (the Sketchfab F22 never calls setupAnimator) means the gear is
+        // fixed down: G does nothing and isGearDown is always true, so the handle stays DN.
+        let gearDown = F22CockpitAnimator.gearHandleCommandedDown(exteriorGearState: animator?.gearState ?? .down)
+        cockpitAnimator.setGearHandle(gearDown: gearDown)
     }
     
     /// This frame's pilot-facing flight data. UpdateThread only: it reads the

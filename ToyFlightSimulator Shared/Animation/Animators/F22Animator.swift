@@ -9,7 +9,7 @@ final class F22Animator: AircraftAnimator {
     override init(model: UsdModel) {
         super.init(model: model)
 
-        // Register all F-35 specific layers
+        // Register all F-22 specific layers
         setupLayers()
 
         // Force initial pose update to ensure model starts in correct state

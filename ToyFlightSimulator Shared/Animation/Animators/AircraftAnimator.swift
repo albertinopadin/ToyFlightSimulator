@@ -24,6 +24,11 @@ enum AnimationLayerID: String, CaseIterable {
     case aileron
     case horizontalStabilizer
     case rudder
+    
+    case cockpitStick
+    case cockpitThrottle
+    case cockpitRudderPedals
+    case cockpitGearHandle
 }
 
 /// Aircraft-specific animation controller that manages landing gear and other aircraft animations.

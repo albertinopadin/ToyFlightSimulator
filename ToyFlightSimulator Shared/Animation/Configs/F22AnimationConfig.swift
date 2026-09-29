@@ -11,67 +11,8 @@ struct F22AnimationConfig {
     // static let weaponBayLayerID = "weaponBay"
     // static let canopyLayerID = "canopy"
     // static let flapsLayerID = "flaps"
-
-    /// Creates the landing gear layer (group of channels) for F-35
-    /// - Parameter model: The UsdModel containing animation data
-    /// - Returns: A configured AnimationLayer grouping all landing gear channels
-    static func createLandingGearLayer(for model: UsdModel) -> AnimationLayer {
-        var channels: [AnimationChannel] = []
-
-        print("[F22 createLandingGearLayer] model meshSkeletonMap: \(model.meshSkeletonMap)")
-        print("[F22 createLandingGearLayer] model skeletonAnimationMap: \(model.skeletonAnimationMap)")
-        print("[F22 createLandingGearLayer] model skeleton: \(model.skeletons["/root/Armature/Armature"]!.jointPaths)")
-
-        // For now using all animation clips since the F-35 model only has landing gear animations:
-        for (i, animationClip) in model.animationClips.values.enumerated() {
-            guard let skeletonAnimation = model.skeletonAnimationMap.first(where: {
-                $0.value == animationClip.name
-            }) else {
-                fatalError("F-22 model has no animation clip named: \(animationClip.name)")
-            }
-
-            let meshIndices = model.meshSkeletonMap.filter { $0.value == skeletonAnimation.key }.map { $0.key }
-
-            print("[F22 createLandingGearLayer] meshIndices: \(meshIndices) for animationClip: \(animationClip.name)")
-
-            guard !meshIndices.isEmpty else {
-                fatalError("F-22 model has no mesh indices for animation clip: \(animationClip.name)")
-            }
-
-            // Filter to only landing gear joints — the clip contains keyframes for ALL
-            // skeleton joints, but we must not write to joints owned by other channels
-            // (e.g. flaperons), or we'll overwrite their procedural poses with rest pose.
-            let landingGearBoneNames: Set<String> = [
-                "RightMainBayBone", "LeftMainBayBone",
-                "FrontWheelBayLeftBone", "FrontWheelBayRightBone", "FrontWheelBone",
-                "LeftSideBayTopBone", "LeftSideBayBottomBone",
-                "RightSideBayTopBone", "RightSideBayBottomBone",
-                "RightWheelBone", "LeftWheelBone",
-                "LeftWheelBayBottom", "LeftWheelBayTop",
-                "RightWheelBayTop", "RightWheelBayBottom",
-            ]
-            let gearJointPaths = animationClip.jointPaths.filter { path in
-                let name = path.split(separator: "/").last.map(String.init) ?? path
-                return landingGearBoneNames.contains(name)
-            }
-            let mask = AnimationMask(jointPaths: gearJointPaths, meshIndices: meshIndices)
-
-            let channel = BinaryAnimationChannel(
-                id: "landingGear_\(i)",
-                mask: mask,
-                transitionDuration: animationClip.duration,
-                initialState: .active,  // Start with gear down
-                animationClip: animationClip,
-                timeRange: (start: 0, end: animationClip.duration)
-            )
-
-            channels.append(channel)
-        }
-
-        return AnimationLayer(id: AnimationLayerID.landingGear.rawValue, channels: channels)
-    }
-
-    /// Creates all animation layers for the F-35
+    
+    /// Creates all animation layers for the F-22 (CGTrader model)
     /// - Parameter model: The UsdModel containing animation data
     /// - Returns: Array of configured animation layers
     static func createLayers(for model: UsdModel) -> [AnimationLayer] {
@@ -89,6 +30,65 @@ struct F22AnimationConfig {
         // layers.append(createCanopyLayer(for: model))
 
         return layers
+    }
+
+    /// Creates the landing gear layer (group of channels) for F-35
+    /// - Parameter model: The UsdModel containing animation data
+    /// - Returns: A configured AnimationLayer grouping all landing gear channels
+    static func createLandingGearLayer(for model: UsdModel) -> AnimationLayer {
+        var channels: [AnimationChannel] = []
+        
+        print("[F22 createLandingGearLayer] model meshSkeletonMap: \(model.meshSkeletonMap)")
+        print("[F22 createLandingGearLayer] model skeletonAnimationMap: \(model.skeletonAnimationMap)")
+        print("[F22 createLandingGearLayer] model skeleton: \(model.skeletons["/root/Armature/Armature"]!.jointPaths)")
+        
+        // For now using all animation clips since the F-35 model only has landing gear animations:
+        for (i, animationClip) in model.animationClips.values.enumerated() {
+            guard let skeletonAnimation = model.skeletonAnimationMap.first(where: {
+                $0.value == animationClip.name
+            }) else {
+                fatalError("F-22 model has no animation clip named: \(animationClip.name)")
+            }
+            
+            let meshIndices = model.meshSkeletonMap.filter { $0.value == skeletonAnimation.key }.map { $0.key }
+            
+            print("[F22 createLandingGearLayer] meshIndices: \(meshIndices) for animationClip: \(animationClip.name)")
+            
+            guard !meshIndices.isEmpty else {
+                fatalError("F-22 model has no mesh indices for animation clip: \(animationClip.name)")
+            }
+            
+            // Filter to only landing gear joints — the clip contains keyframes for ALL
+            // skeleton joints, but we must not write to joints owned by other channels
+            // (e.g. flaperons), or we'll overwrite their procedural poses with rest pose.
+            let landingGearBoneNames: Set<String> = [
+                "RightMainBayBone", "LeftMainBayBone",
+                "FrontWheelBayLeftBone", "FrontWheelBayRightBone", "FrontWheelBone",
+                "LeftSideBayTopBone", "LeftSideBayBottomBone",
+                "RightSideBayTopBone", "RightSideBayBottomBone",
+                "RightWheelBone", "LeftWheelBone",
+                "LeftWheelBayBottom", "LeftWheelBayTop",
+                "RightWheelBayTop", "RightWheelBayBottom",
+            ]
+            let gearJointPaths = animationClip.jointPaths.filter { path in
+                let name = path.split(separator: "/").last.map(String.init) ?? path
+                return landingGearBoneNames.contains(name)
+            }
+            let mask = AnimationMask(jointPaths: gearJointPaths, meshIndices: meshIndices)
+            
+            let channel = BinaryAnimationChannel(
+                id: "landingGear_\(i)",
+                mask: mask,
+                transitionDuration: animationClip.duration,
+                initialState: .active,  // Start with gear down
+                animationClip: animationClip,
+                timeRange: (start: 0, end: animationClip.duration)
+            )
+            
+            channels.append(channel)
+        }
+        
+        return AnimationLayer(id: AnimationLayerID.landingGear.rawValue, channels: channels)
     }
     
     /// Maximum flaperon deflection angle in radians (~25 degrees)

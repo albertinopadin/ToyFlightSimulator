@@ -14,4 +14,5 @@ extension Tag {
     @Tag static var gameObjects: Self
     @Tag static var scenes: Self
     @Tag static var graphics: Self
+    @Tag static var animation: Self
 }

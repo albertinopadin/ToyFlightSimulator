@@ -17,6 +17,11 @@ class F22: Aircraft {
     /// Re-measure with `swift scripts/measure_center_of_mass.swift --model "f22 sketchfab"`.
     static let centerOfMassInImportFrame: float3 = [0, -0.018, 2.512]
 
+    /// The MIL (maximum power without afterburner) throttle setting, 0…1. Above it the
+    /// afterburners light (`doUpdate`); the cockpit throttle levers sit on the MIL detent here
+    /// (`F22CockpitAnimationConfig.throttleLeverAngle`). One constant keeps the two in step.
+    static let milPowerThrottleThreshold: Float = 0.8
+
     let afterburnerLeft = Afterburner(name: "F-22 Left Afterburner")
     let afterburnerRight = Afterburner(name: "F-22 Right Afterburner")
 
@@ -76,7 +81,7 @@ class F22: Aircraft {
         if hasFocus {
             let fwdValue = InputManager.ContinuousCommand(.MoveFwd)
             
-            if fwdValue > 0.8 {
+            if fwdValue > Self.milPowerThrottleThreshold {
                 afterburnerLeft.on()
                 afterburnerRight.on()
             } else {

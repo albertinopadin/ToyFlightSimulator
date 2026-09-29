@@ -22,6 +22,7 @@ document: this is asset integration through existing engine paths, small enough 
 
 ## Changelog
 
+- **2026-09-28** — Review of the owner's Milestone 4 code, with fixes, and the M4 tests. The owner's `inverted` flags are right and the plan's were wrong: all seven were reversed, because `float4x4(rotateAbout:byAngle:)` is the transpose of the right-handed axis-angle matrix (a positive angle turns clockwise seen from the axis tip) and the plan had derived them with the right-hand rule. Data table, pseudocode and Pitfalls corrected. Fixed in `F22CockpitAnimator`: the five channel properties were implicitly unwrapped (`!`), so a joint missing from the model (the config only warns) would crash the first setter; now optional, and a missing channel's setter does nothing. `gearHandleCommandedDown` became static, for a Metal-free test (the caller passes `.down` when there is no exterior animator). The threshold keeps the owner's name, `F22.milPowerThrottleThreshold`. Tests: `CockpitControlMappingTests` (Metal-free) and `CockpitAnimatorTests` (app-hosted; reads each skinned mesh's palette and checks where the stick, both levers, both pedals and the gear knob move). Expected positions reproduced with the scratch script `cockpit_m4_directions.swift` (inputs: the engine's rotateAbout matrix, the import basis, the joint pivots, the owner's flags). The 13 new tests pass; full suite 487 Swift Testing tests in 67 suites + 20 XCTest pass.
 - **2026-09-28** — Milestone 4 revised to match the owner's in-progress `F22CockpitAnimator` and `F22CockpitAnimationConfig`: layer IDs `cockpitStick`/`cockpitThrottle`/`cockpitRudderPedals`/`cockpitGearHandle`, channel IDs `sideStickRoll`/`sideStickPitch`/`cockpitThrottle`/`rudderPedals`/`gearHandle`, joint lookup `findJointPaths`. Placement settled: only the layer IDs go in `AircraftAnimator.swift`; the throttle mapping is static on the config; the setters and the cached channels are on the cockpit animator; `Aircraft` builds the animator in `attachCockpit` and drives it in `doUpdate`; the 0.8 MIL/afterburner threshold is named once (`F22.afterburnerThrottleThreshold`). Found: the Sketchfab `F22` has no exterior animator, so G does nothing there and its gear handle stays DOWN. Added the pure `gearHandleCommandedDown` rule and its test, and the G check now names the CGTrader F-22. Numbers re-checked with the scratch script `cockpit_m4_numbers.swift` (inputs: the owner's rounded constants 5.74°, 17.46°, 33.40°, threshold 0.8, channel speeds 8/3/4/3 per s): lever angles and channel values as listed (the exact asin values differ by < 0.003°), IDLE → AB in 0.44 s, gear knob UP 16.70° above the slot centre, and the rotation directions for the stick, levers, pedals and yaw key.
 - **2026-09-27** — Review of the owner's Milestones 1–3 code, with fixes, and the M1–M3 tests. Fixed in `CockpitCamera`: `setRotationX(headYaw)` then `setRotationY(headPitch)` swapped the axes (yaw is about Y), and each call replaces the whole rotation, so only the second survived; both also turned about world-frame axes (`getRightVector`/`getUpVector` read the world matrix), wrong once the jet banks. Now `turnHead` builds one local rotation, Ry(yaw)·Rx(−pitch), through the pure `turnedHead`/`headRotation` helpers. The limits (150°, 70° up, 80° down; the owner's values, the plan had 60/70) were degrees used as radians, so they never clamped; the mouse Y sign was inverted. `attach(to:)` now recentres the head and returns false, leaving the camera unparented, for a jet without a cockpit; `applyAircraftSwap` attaches for every aircraft type, keeps the cockpit view across a swap to a jet that has one, and takes the camera out of the registry otherwise (`CameraManager.UnregisterCamera`, new), so 'C' no longer cycles to a camera left behind in the removed jet. `Aircraft.cockpitNativeToBody` became static and the M3 filter a static `F22.shouldRenderExteriorSubmesh`, both for Metal-free tests. Numbers re-checked with the scratch script `cockpit_test_numbers.swift` (stick pivot (0.3635, 0.5390, 7.2330) and (0.3635, 0.4990, 5.7330), basis det −1, yaw +90° → (1, 0, 0), pitch +30° → (0, 0.5, 0.8660), yaw 90° + pitch 30° keeps the right axis level). 29 tests in 7 suites pass; full suite 474 + 20 XCTest pass.
 - **2026-09-27** — Asset fix (owner report: the cockpit view showed only light brown, `debugging/screenshots/F22Cockpit_CantSeeOut.png`): `Canopy_Glass` had exported with `opacity = 1`, so the engine drew the gold-tinted glass opaque. Blender 5.2.2's USD exporter writes opacity 1 for any Principled Alpha that no image texture feeds (reproduced headless with Alpha 0.07 and 0.5, Dithered, and a Value node). `export_usdz.py` now registers a `ScalarAlphaToOpacity` export hook, and `verify_cockpit_usdz.swift` fails when a material other than `Canopy_Glass`/`HUD_Combiner` would be drawn transparent, or either of those opaque (it flags the old file). Re-exported and prim-compared with the old file (only authored change: that opacity, 1 → 0.07; textures byte-identical); verify RESULT: OK, `usdchecker` Success.
@@ -148,14 +149,14 @@ line, on the right console; full throttle shows the lever 17.46° forward.
 |---|---|---|---|---|---|
 | Eye point of an aircraft | e | `cockpitEyePointInBodyFrame` | m | aircraft body | Sketchfab (0, 1.12, 7.00); CGTrader (0, 1.08, 5.50) |
 | Cockpit basis | B | `Transform.transformXZYToXYZ` | — | native → engine | row-vector, det −1 (winding reindexed) |
-| Joint rotation | θ | `angle_rad` | rad | joint-local = native axes | right-hand rule in the native Z-up frame |
+| Joint rotation | θ | `angle_rad` | rad | joint-local = native axes | `float4x4(rotateAbout:byAngle:)`: + turns clockwise seen from the axis tip (left-hand rule); about +X, + tips a part's top forward |
 | Stick roll | θ_r | `stickRoll_rad` | rad | about native +Y | + = stick right; ±12° |
 | Stick pitch | θ_p | `stickPitch_rad` | rad | about native +X | + = stick aft (pull); ±12°; the down arrow gives + (`pitchAxisFlipped` default) |
 | Throttle lever | θ_t | `throttleLever_rad` | rad | about native +X | − = forward; IDLE +5.74°, MIL −5.74°, AB −17.46° |
 | Gear handle | θ_g | `gearHandle_rad` | rad | about native +X | 0 = DOWN (rest), −33.40° = UP |
 | Rudder pedal | θ_y | `pedal_rad` | rad | about native +X | + = pedal pushed forward; ±10°; yaw + (Q, nose left) pushes the left pedal forward |
 | Throttle input | t | `ControlInput.throttle` / `.MoveFwd` | 0…1 | — | as read in `Aircraft.getControlInput()`; keyboard W = 1, S = −1 (clamped to IDLE) |
-| MIL throttle setting | t_MIL | `F22.afterburnerThrottleThreshold` | 0…1 | — | 0.8; the afterburners light above it |
+| MIL throttle setting | t_MIL | `F22.milPowerThrottleThreshold` | 0…1 | — | 0.8; the afterburners light above it |
 
 Joint table (from the file; paths as `MDLSkeleton.jointPaths` prints them):
 
@@ -223,8 +224,7 @@ ownership of the scene graph, lazy `ModelLibrary` factories (first access off th
   needs a `SetRenderableHidden` round trip to rebuild the model's draw lists.
 - [design] Throttle lever mapping puts MIL at throttle 0.8, the same threshold `F22.doUpdate` uses
   to light the afterburners, so the lever crosses the MIL gate when the plumes appear. The value is
-  named once, `F22.afterburnerThrottleThreshold`, and both read it; today `F22.doUpdate` compares
-  against a bare `0.8`.
+  named once, `F22.milPowerThrottleThreshold`, and both read it.
 - [design] The cockpit setters live on `F22CockpitAnimator`, not on the `AircraftAnimator` base. A
   base-class setter would also exist on `F22Animator` and `F35Animator`, where no cockpit layer is
   registered, so it could only print "No … layer registered" there. Rejected: the base class, as
@@ -500,13 +500,16 @@ function shouldRenderExteriorSubmesh(materialName, hasCockpit) -> Bool
     has one setter per layer, and the pure gear-handle rule.
   - `GameObjects/Aircraft.swift` — a `cockpitAnimator` property, built in `attachCockpit`, driven
     in `doUpdate`.
-  - `GameObjects/F22.swift` — `afterburnerThrottleThreshold`, read by `doUpdate` and by the mapping.
+  - `GameObjects/F22.swift` — `milPowerThrottleThreshold`, read by `doUpdate` and by the mapping.
   - Thread: UpdateThread (the aircraft's `doUpdate`), as for the exterior animator.
 - **Algorithm:**
 
 Symbols: θ = joint angle (rad), v = channel value, θ_max = `maxDeflection`; the channel computes
 θ = v · θ_max (sign flipped when `inverted`), applied as `restTransform * rotation(axis, θ)`.
-t = throttle input after clamping to 0…1; t_MIL = `F22.afterburnerThrottleThreshold` = 0.8.
+`rotation` is the engine's `float4x4(rotateAbout:byAngle:)`, the transpose of the right-handed
+axis-angle matrix: a positive θ turns a part clockwise seen from the tip of its axis (left-hand
+rule). About native +X, a positive θ tips a part's top forward.
+t = throttle input after clamping to 0…1; t_MIL = `F22.milPowerThrottleThreshold` = 0.8.
 
 ```pseudocode
 // F22CockpitAnimationConfig — constants, named as in the code
@@ -522,23 +525,27 @@ constant gearHandleChannelID = "gearHandle"
 
 // findJointPaths(model, suffixes...) -> one joint path (or none) per suffix, in the same order.
 // A parameter pack; its doc comment in the config explains the pack and cites SE-0393.
+// Each inverted flag makes a positive input move the part in its positive direction.
 layer cockpitStick:
-    channel sideStickRollChannelID:  range (-1, 1), speed 8/s, joint StickRoll,  axis (0, 1, 0), max sideStickMaxDeflection
-    channel sideStickPitchChannelID: range (-1, 1), speed 8/s, joint StickPitch, axis (1, 0, 0), max sideStickMaxDeflection
+    channel sideStickRollChannelID:  range (-1, 1), speed 8/s, joint StickRoll,  axis (0, 1, 0),
+                                     max sideStickMaxDeflection, inverted true      // + = stick right
+    channel sideStickPitchChannelID: range (-1, 1), speed 8/s, joint StickPitch, axis (1, 0, 0),
+                                     max sideStickMaxDeflection, inverted true      // + = stick aft
 layer cockpitThrottle:
     channel throttleChannelID: range (-1, 1), speed 3/s, joints ThrottleLeft and ThrottleRight,
-                               axis (1, 0, 0), max throttleMaxDeflection, inverted false
+                               axis (1, 0, 0), max throttleMaxDeflection, inverted true   // v = -1 -> lever forward (AB)
 layer cockpitRudderPedals:
     channel rudderPedalsChannelID: range (-1, 1), speed 4/s, axis (1, 0, 0), max rudderPedalsMaxDeflection,
-                                   joints PedalLeft (inverted false) and PedalRight (inverted true)
+                                   joints PedalLeft (inverted true) and PedalRight (inverted false)
+                                   // each pedal hangs from its top hinge: + θ swings its foot aft
 layer cockpitGearHandle:
     channel gearHandleChannelID: range (0, 1), speed 3/s, joint GearHandle, axis (1, 0, 0),
-                                 max gearLeverDeflection, inverted true     // v = 1 -> -33.40 deg = UP
+                                 max gearLeverDeflection, inverted false    // v = 1 -> +33.40 deg = UP
 
 // F22CockpitAnimationConfig — the pure throttle mapping (static, Metal-free)
 function throttleLeverAngle(throttleInput) -> leverAngle_rad
     t = clamp(throttleInput, 0, 1)                         // keyboard S gives -1, which clamps to IDLE
-    milSetting = F22.afterburnerThrottleThreshold          // 0.8
+    milSetting = F22.milPowerThrottleThreshold             // 0.8
     if t <= milSetting
         return idleThrottleSpace + (milThrottleSpace - idleThrottleSpace) * (t / milSetting)       // IDLE .. MIL
     return milThrottleSpace + (afterburnerThrottleSpace - milThrottleSpace)
@@ -546,24 +553,20 @@ function throttleLeverAngle(throttleInput) -> leverAngle_rad
 function throttleChannelValue(throttleInput) -> channelValue
     return throttleLeverAngle(throttleInput) / throttleMaxDeflection    // the channel multiplies back
 
-// F22CockpitAnimator — at init, after setupLayers, look each channel up once by its ID and keep it:
-//   engine: channel(sideStickRollChannelID, as: ProceduralAnimationChannel), and the same for the other four.
+// F22CockpitAnimator — in setupLayers, keep each channel as it is registered, matched by its ID.
 // Per-tick setters then do no string lookups. A channel that is missing stays none and its setter does nothing.
-function setSideStick(rollInput, pitchInput)
-    sideStickRollChannel.setValue(rollInput)                // + = stick right (right arrow)
+function setSideStick(pitchInput, rollInput)
     sideStickPitchChannel.setValue(pitchInput)              // + = stick aft (down arrow)
+    sideStickRollChannel.setValue(rollInput)                // + = stick right (right arrow)
 function setThrottles(throttleInput)
     throttleChannel.setValue(throttleChannelValue(throttleInput))
 function setRudderPedals(yawInput)
     rudderPedalsChannel.setValue(yawInput)                  // + (Q, nose left) = left pedal forward, right pedal aft
-function setGearHandle(gearCommandedDown)
-    gearHandleChannel.setValue(gearCommandedDown ? 0 : 1)
+function setGearHandle(gearDown)
+    gearHandleChannel.setValue(gearDown ? 0 : 1)
 
 // F22CockpitAnimator — pure static rule: which way the handle points.
-// exteriorGearState is the aircraft's own animator's gearState, or none when it has no animator.
 function gearHandleCommandedDown(exteriorGearState) -> Bool
-    if exteriorGearState is none
-        return true                                         // no exterior animator: the gear is fixed down
     return exteriorGearState is down or extending           // the handle leads the gear, like the real lever
 
 // Aircraft.attachCockpit (existing) — after the cockpit node is added:
@@ -587,32 +590,48 @@ cockpitAnimator.update(deltaTime_s)                         // NEW, outside the 
 function updateCockpitControls(aircraft, controlInput)
     if aircraft.cockpitAnimator is none
         return
-    cockpitAnimator.setSideStick(controlInput.roll, controlInput.pitch)
+    cockpitAnimator.setSideStick(controlInput.pitch, controlInput.roll)
     cockpitAnimator.setThrottles(controlInput.throttle)
     cockpitAnimator.setRudderPedals(controlInput.yaw)
-    cockpitAnimator.setGearHandle(gearHandleCommandedDown(aircraft.animator's gearState, or none))
+    // No exterior animator (the Sketchfab F22) means the gear is fixed down: pass down.
+    exteriorGearState = aircraft.animator's gearState, or down when it has no animator
+    cockpitAnimator.setGearHandle(gearHandleCommandedDown(exteriorGearState))
 
-// F22.doUpdate: compare against F22.afterburnerThrottleThreshold instead of the literal 0.8.
+// F22.doUpdate: lights the afterburners above F22.milPowerThrottleThreshold (was the literal 0.8).
 ```
 
 - **Tests** (Metal-free where possible), in `ToyFlightSimulatorTests/Animation/`:
-  - [ ] `CockpitControlMappingTests.throttleWorkedExample` — throttle 0.0, 0.4, 0.8, 0.9, 1.0 →
+  - [x] `CockpitControlMappingTests.throttleWorkedExample` — throttle 0.0, 0.4, 0.8, 0.9, 1.0 →
     +5.74°, 0.00°, −5.74°, −11.60°, −17.46° (±0.01°); `throttleChannelValue` +0.329, 0.000,
     −0.329, −0.664, −1.000 (±0.001).
-  - [ ] `CockpitControlMappingTests.throttleClamps` — −0.5 and −1.0 (keyboard S) → IDLE (+5.74°);
-    1.7 → AB (−17.46°).
-  - [ ] `CockpitControlMappingTests.milDetentSitsAtTheAfterburnerThreshold` —
-    `throttleLeverAngle(F22.afterburnerThrottleThreshold)` equals `milThrottleSpace` within 1e-6 rad,
+  - [x] `CockpitControlMappingTests.throttleBelowZeroIsIdle` — −0.5 and −1.0 (keyboard S) → exactly
+    `idleThrottleSpace`; `throttleAboveOneIsAfterburner` — 1.7 → `afterburnerThrottleSpace` (1e-6 rad).
+  - [x] `CockpitControlMappingTests.milDetentSitsAtTheAfterburnerThreshold` —
+    `throttleLeverAngle(F22.milPowerThrottleThreshold)` equals `milThrottleSpace` within 1e-6 rad,
     so the lever reaches the MIL gate exactly when the plumes light.
-  - [ ] `CockpitControlMappingTests.gearHandleFollowsTheGearCommand` —
-    `F22CockpitAnimator.gearHandleCommandedDown`: none → true; `.down`, `.extending` → true;
-    `.up`, `.retracting` → false.
-  - [ ] App-hosted: `CockpitAnimatorTests.registersSevenJointConfigs` — build a fresh
+  - [x] `CockpitControlMappingTests.gearHandleDownWhileGearCommandedDown` (`.down`, `.extending` →
+    true) and `gearHandleUpWhileGearCommandedUp` (`.up`, `.retracting` → false).
+  - [x] App-hosted: `CockpitAnimatorTests.registersSevenJointConfigs` — build a fresh
     `UsdModel("F22_Cockpit", fileExtension: USDZ, basisTransform: Transform.transformXZYToXYZ)` (as
     `restPosePaletteIsIdentity` does, so the host app's shared model is untouched), then an
-    `F22CockpitAnimator` on it: `channelCount` is 5; each of the five channel IDs resolves to a
-    `ProceduralAnimationChannel`; their `jointConfigs` hold seven joint paths in total, each one in
-    the skeleton's `jointPaths`.
+    `F22CockpitAnimator` on it: `channelCount` is 5, the four cockpit layers are registered, all five
+    channel properties are set, and their `jointConfigs` hold the seven rig joints below the root,
+    each one in the skeleton's `jointPaths`.
+  - [x] App-hosted direction tests, `CockpitAnimatorTests`. Each sets one input through the
+    animator's setter, updates for 1 s (longer than any channel's travel), reads the joint's matrix
+    from the skinned mesh's palette buffer (what the GPU skins with), and checks where it moves a
+    probe point, as a displacement from the joint's pivot in the cockpit's engine frame (+X right,
+    +Y up, +Z forward), within 1e-4 m:
+    - `stickPitchPullsAft` — pitch +1, a point 0.15 m up the stick → (0, 0.14672, −0.03119).
+    - `stickRollGoesRight` — roll +1 → (0.03119, 0.14672, 0) (the `Stick` mesh is bound to
+      `StickPitch`, the child of `StickRoll`).
+    - `fullThrottleReachesAfterburnerDetent` — throttle 1, 0.20 m up each lever → (0, 0.19079,
+      0.06000): 0.06 m forward, on the printed AB detent.
+    - `zeroThrottleSitsAtIdleDetent` — throttle 0 → (0, 0.19900, −0.02000), on the IDLE detent.
+    - `leftYawPushesLeftPedal` — yaw +1, 0.15 m below each hinge → left (0, −0.14772, +0.02605),
+      right (0, −0.14772, −0.02605).
+    - `gearHandleUpRaisesTheKnob` — the knob (0.10 m aft of the pivot, 0.030 m below the slot
+      centre) at rest (0, −0.030, −0.10), after gear UP (0, 0.030, −0.10).
 - **Observable completion criteria:** the log shows `[F22CockpitAnimator] Initialized with 5
   channels` and no `joint not found` warning. In the cockpit view (1): the right arrow tilts the
   stick right; the down arrow pulls it aft; holding W runs both throttle grips forward past the MIL
@@ -621,10 +640,10 @@ function updateCockpitControls(aircraft, controlInput)
   G swings the gear handle UP (knob 16.7° above the slot centre) ahead of the gear animation, and G
   again brings it DN. In the Sketchfab F-22, G does nothing and the handle stays DN.
 - **Edge cases and expected results:**
-  - A part moves the wrong way → flip that joint's `inverted` (the reflection in the basis makes
-    signs easy to get wrong; see Pitfalls). The directions above were derived from the rig's axes
-    and the key map with a scratch script, not yet seen in the app.
-  - Sketchfab F-22 → no exterior animator, so `gearHandleCommandedDown(none)` is true and the handle
+  - A part moves the wrong way → a direction test in `CockpitAnimatorTests` fails first; flip that
+    joint's `inverted`. Derive flags from the engine's rotation sign (Symbols above), not from the
+    right-hand rule: the first version of this plan did that and had all seven backwards.
+  - Sketchfab F-22 → no exterior animator, so `updateCockpitControls` passes `.down` and the handle
     stays DN, matching that jet's fixed-down gear. Check G in the CGTrader F-22.
   - Before the first player tick the throttle channel sits at its initial value 0: levers vertical,
     between IDLE and MIL (the rest pose). The first tick moves them to IDLE in about 0.11 s.
@@ -726,11 +745,11 @@ cockpit HUD_Combiner material: baseColorTexture = hudTarget ; emissionTexture = 
 | Cockpit invisible or only its back faces show | basis without the reflection, or winding not reversed | log the basis determinant (must be −1); `Mesh.reverseTriangleWinding` must run |
 | Throttle on the right, stick on the left | a det +1 basis mirrored the cockpit | use `transformXZYToXYZ`, not the CGTrader basis |
 | Cockpit 7 m ahead or below the jet | eye point in the wrong frame (import vs body) | the Sketchfab eye point is in the recentered body frame |
-| A part rotates the wrong way | sign convention across the reflection | flip `inverted` for that joint config |
+| A part rotates the wrong way | `inverted` derived with the right-hand rule; `float4x4(rotateAbout:byAngle:)` turns the other way (the basis reflection does not flip it: conjugation keeps the motion) | the direction tests in `CockpitAnimatorTests`; flip `inverted` for that joint config |
 | No cockpit control moves | `cockpitAnimator` is none (the cockpit model is not a `UsdModel`), or `update` is not called | `[F22CockpitAnimator] Initialized with 5 channels` in the log; a `joint not found` warning means a suffix no longer matches |
 | One control dead, the others move | its channel ID in the animator differs from the one the layer was built with | use the config's channel-ID constants on both sides; `CockpitAnimatorTests` |
 | Gear handle never moves | Sketchfab F-22: no exterior animator, gear fixed down (expected) | try G in the CGTrader F-22 |
-| Levers reach AB before or after the plumes light | the mapping and `F22.doUpdate` use different thresholds | `milDetentSitsAtTheAfterburnerThreshold`; both must read `F22.afterburnerThrottleThreshold` |
+| Levers reach AB before or after the plumes light | the mapping and `F22.doUpdate` use different thresholds | `milDetentSitsAtTheAfterburnerThreshold`; both must read `F22.milPowerThrottleThreshold` |
 | Stick parts explode or collapse to the origin | skeleton not found / palette not updated | `[UsdModel loadSkins] ... Created skin with skeleton` for all six meshes |
 | Gray shapes flicker through the consoles | Sketchfab `f22a_cockpit` still drawn | Milestone 3 filter |
 | Displays black in shadow | no emission term yet | Milestone 5 |
