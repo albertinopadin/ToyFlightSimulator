@@ -5,7 +5,7 @@
 `~/Desktop/BlenderProjects/ToyFlightSimulator/F22_Cockpit/README.md` (sources for the cockpit
 layout, the frame conventions, the rig, and how to rebuild or re-export the asset). No research
 document: this is asset integration through existing engine paths, small enough to plan from the code.
-**Status:** in progress (Milestones 1–3 landed in 25f61c9)
+**Status:** in progress (Milestones 1–3 landed in 25f61c9, Milestone 4 in be87bfd)
 **Related plans:** `plans/claude/c_key_camera_toggle.md` (camera registry and slot selection),
 `plans/claude/procedural-animation-plan.md` (procedural channels),
 `plans/claude/aircraft_center_of_mass_recentering_2026-09-25.md` (the F-22 body frame used for the eye point)
@@ -483,7 +483,7 @@ function shouldRenderExteriorSubmesh(materialName, hasCockpit) -> Bool
     cockpit, so no toggling is needed.
   - Two F-22s in one scene share one `ModelData` → both hide the interior (intended).
 
-### Milestone 4 — Animate stick, throttles, pedals and gear handle
+### Milestone 4 — Animate stick, throttles, pedals and gear handle ✅ (landed 2026-09-28, be87bfd)
 
 - **Learning objective:** turn an input value into a joint rotation with a procedural channel, and
   map a nonlinear lever travel (detents) with a pure, testable function.
