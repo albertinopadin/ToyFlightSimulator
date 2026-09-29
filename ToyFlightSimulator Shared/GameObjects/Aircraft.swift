@@ -164,8 +164,8 @@ class Aircraft: GameObject {
 
         // One animator per aircraft over the model every F-22 shares. Its init writes the rest
         // pose into that shared model; see Aircraft.updateCockpitControls for who drives it.
-        if cockpit.model is UsdModel {
-            self.cockpitAnimator = F22CockpitAnimator(model: cockpit.model as! UsdModel)
+        if let usdModel = cockpit.model as? UsdModel {
+            self.cockpitAnimator = F22CockpitAnimator(model: usdModel)
         } else {
             print("[Aircraft attachCockpit] WARNING: cockpit model for \(self.getName()) is not a USD model.")
         }
