@@ -177,7 +177,7 @@ final class FlightboxWithPhysics: GameScene {
 
         sun.setPosition(0, jetPos.y + 100, 4)
         sun.setLightBrightness(1.0)
-//        sun.setLightBrightness(0.2)
+//        sun.setLightBrightness(0.1)
         sun.setLightColor(1, 1, 1)
         sun.setLightAmbientIntensity(0.4)
         sun.setLightDiffuseIntensity(0.5)
