@@ -82,8 +82,8 @@ inline float2 ApplyUVTransform(float2 uv, float3x3 transform) {
 // `lighting` is the renderer's color target (MainPixelFormat), not a G-buffer texture. The
 // three G-buffer targets have no spare channel for emission, so the G-buffer stage writes each
 // surface's emission straight into the lighting target (0 for surfaces that give off no
-// light, replacing the clear color), and the sun pass reads it back as the `emission` input of
-// Lighting::ShadeDirectionalBlinnPhong before overwriting it with the lit color. A nearer
+// light, replacing the clear color), and the sun pass reads it back and overwrites it with
+// emission + the sun's Lighting::ShadeDirectionalBlinnPhong term. A nearer
 // surface drawn later overwrites a farther one's emission, exactly as it does its albedo.
 // The same idea as a base pass writing emissive into scene color before deferred lighting.
 struct GBufferOut {

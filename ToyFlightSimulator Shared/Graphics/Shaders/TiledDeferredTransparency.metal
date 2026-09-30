@@ -89,15 +89,14 @@ tiled_deferred_transparency_fragment(
     // pass carries the canopy's own material; the tiled sun pass has no per-pixel material
     // (see tiled_deferred_directional_light_fragment), so a canopy can highlight differently
     // from the opaque skin it sits on.
-    float3 litColor = Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
-                                                           unitNormal,
-                                                           emission,
-                                                           lightData.direction,
-                                                           toCamera,
-                                                           lightData,
-                                                           material.specular.r,
-                                                           material.shininess,
-                                                           litFraction);
+    float3 litColor = emission + Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
+                                                                      unitNormal,
+                                                                      lightData.direction,
+                                                                      toCamera,
+                                                                      lightData,
+                                                                      material.specular.r,
+                                                                      material.shininess,
+                                                                      litFraction);
     
     // Straight alpha, NOT premultiplied: this PSO blends with sourceAlpha /
     // oneMinusSourceAlpha (RenderPipelineState.enableBlending), so the hardware applies the

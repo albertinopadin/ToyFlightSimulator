@@ -107,13 +107,14 @@ transparent_material_fragment(
     // Same forward Blinn-Phong as material_fragment (Base.metal), which explains the
     // lightCount guard, the unreachable point-light branch, litFraction = 1 (no shadow
     // map here) and the specular inputs: material.specular.r as the strength and
-    // material.shininess as the exponent since Step 6 landed.
+    // material.shininess as the exponent since Step 6 landed, and the emission added once,
+    // before the sum over lights.
     float3 litColor;
     if (lightCount == 0 || !material.isLit) {
         litColor = baseColor.rgb;
     } else {
         float3 toCamera = normalize(rd.toCameraVector);
-        litColor = 0;
+        litColor = emission;
         for (int i = 0; i < lightCount; i++) {
             constant LightData &light = lightData[i];
             float3 toLight;
@@ -122,10 +123,9 @@ transparent_material_fragment(
             } else {
                 toLight = normalize(light.position - rd.worldPosition);
             }
-            
+
             litColor += Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
                                                              unitNormal,
-                                                             emission,
                                                              toLight,
                                                              toCamera,
                                                              light,

@@ -68,15 +68,14 @@ deferred_directional_lighting_fragment(QuadInOut            in         [[ stage_
     // the MaterialProperties default; the tiled path stores the per-material exponent instead.
     // Before Step 6 the alpha was a constant 1.0, which with exponent 1 clipped every lit
     // surface to white (the table under Step 4 in the shading doc).
-    float3 color = Lighting::ShadeDirectionalBlinnPhong(albedo,
-                                                        eyeNormal,
-                                                        emission,
-                                                        eyeToLight,
-                                                        eyeToCamera,
-                                                        lightData,
-                                                        specular,
-                                                        Lighting::DEFAULT_SHININESS,
-                                                        litFraction);
+    float3 color = emission + Lighting::ShadeDirectionalBlinnPhong(albedo,
+                                                                   eyeNormal,
+                                                                   eyeToLight,
+                                                                   eyeToCamera,
+                                                                   lightData,
+                                                                   specular,
+                                                                   Lighting::DEFAULT_SHININESS,
+                                                                   litFraction);
     
     AccumLightBuffer output = {
         .lighting = half4(half3(color), 1)

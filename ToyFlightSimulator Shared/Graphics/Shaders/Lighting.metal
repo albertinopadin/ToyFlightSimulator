@@ -78,12 +78,9 @@ public:
         return diffuse * nDotL * ambientOcclusion * light.color;
     }
     
-    // Emission is 0 here: the only caller, og_tiled_deferred_directional_light_fragment, fills
-    // a partial MaterialProperties whose `emissive` is never set.
     static float3 CalculateDirectionalLighting(constant LightData &light, float3 normal, MaterialProperties material) {
         return ShadeDirectionalBlinnPhong(material.color.rgb,
                                           normal,
-                                          0.0,
                                           light.direction,
                                           normal,
                                           light,
@@ -91,17 +88,19 @@ public:
                                           material.shininess,
                                           1);
     }
-    
-    // One directional light's Blinn-Phong shading plus the surface's own emission:
-    //   emission + ambient + litFraction * (diffuse + specular)
-    // `emission` is linear RGB the surface gives off by itself (ResolveEmission in the forward
-    // and transparency fragments; the deferred sun passes read it back from the lighting
-    // attachment, where the G-buffer stage wrote it). It is added after lighting and outside
-    // litFraction, so a display stays bright in shadow and at night. Like ambient, it is added
-    // once per call, so a caller that loops over several lights counts it once per light.
+
+    // One directional light's Blinn-Phong contribution: ambient + litFraction * (diffuse + specular).
+    //
+    // Emission is deliberately not an input. It is light the surface gives off by itself, so it
+    // does not depend on how many lights shine on it: a caller adds it ONCE, outside any sum
+    // over lights and outside litFraction,
+    //   color = emission + sum over lights of ShadeDirectionalBlinnPhong(light)
+    // which is the OpenGL fixed-function lighting equation (OpenGL 2.1 spec, section 2.14.1:
+    // the material emission e_cm sits outside the sum over lights i, each light's ambient inside
+    // it) and the single emitted-radiance term L_e of the rendering equation (Kajiya 1986).
+    // Adding it inside this function would count it once per light.
     static float3 ShadeDirectionalBlinnPhong(float3 albedo,
                                              float3 normal,
-                                             float3 emission,
                                              float3 toLight,
                                              float3 toCamera,
                                              constant LightData &light,
@@ -122,7 +121,7 @@ public:
             }
         }
         
-        return emission + ambient + litFraction * (diffuse + specular);
+        return ambient + litFraction * (diffuse + specular);
     }
     
     // Compute the NDC-space depth-compare epsilon from a world-space slack and

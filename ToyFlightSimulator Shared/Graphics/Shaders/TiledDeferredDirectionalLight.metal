@@ -66,14 +66,13 @@ tiled_deferred_directional_light_fragment(FullScreenVertexOut  in               
     // The G-buffer stage left this pixel's emission in the lighting target (see GBufferOut).
     // The return value below replaces it with emission + ambient + direct light.
     float3 emission = gBuffer.lighting.rgb;
-    float3 color = Lighting::ShadeDirectionalBlinnPhong(albedo,
-                                                        normal,
-                                                        emission,
-                                                        toLight,
-                                                        toCamera,
-                                                        lightData,
-                                                        specular,
-                                                        shininess,
-                                                        litFraction);
+    float3 color = emission + Lighting::ShadeDirectionalBlinnPhong(albedo,
+                                                                   normal,
+                                                                   toLight,
+                                                                   toCamera,
+                                                                   lightData,
+                                                                   specular,
+                                                                   shininess,
+                                                                   litFraction);
     return float4(color, 1);
 }

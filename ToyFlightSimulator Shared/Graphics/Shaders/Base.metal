@@ -152,12 +152,15 @@ material_fragment(          RasterizerData            rd              [[ stage_i
     // pointer refers to an unbound slot and must not be read. And ambient lives inside the
     // per-light call, so a sunless scene would otherwise sum zero lights and draw black;
     // the guard draws the base color unlit instead.
+    // An unlit material or a sunless scene shows the base color without emission.
     float3 litColor;
     if (lightCount == 0 || !material.isLit) {
         litColor = baseColor.rgb;
     } else {
         float3 toCamera = normalize(rd.toCameraVector);
-        litColor = 0;
+        // Emission once, before the sum over lights: it does not depend on how many lights
+        // shine on the surface (see Lighting::ShadeDirectionalBlinnPhong).
+        litColor = emission;
         for (int i = 0; i < lightCount; i++) {
             constant LightData &light = lightData[i];
             // Only directional lights are bound at this index today (LightManager keeps
@@ -175,12 +178,10 @@ material_fragment(          RasterizerData            rd              [[ stage_i
             // highlight strength (MTL Ks, default 0.25) and material.shininess the exponent
             // (MTL Ns, default 32). The shared function skips the lobe when the strength is 0,
             // which is how a matte material switches its highlight off.
-            // Known limitation: each light adds its own ambient and emission terms, so with more
-            // than one directional light both are counted more than once. An unlit material or a
-            // sunless scene (the branch above) shows the base color without emission.
+            // Known limitation: each light adds its own ambient term, so with more than one
+            // directional light the ambient is counted more than once.
             litColor += Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
                                                              unitNormal,
-                                                             emission,
                                                              toLight,
                                                              toCamera,
                                                              light,

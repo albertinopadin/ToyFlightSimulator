@@ -123,15 +123,14 @@ single_pass_deferred_transparency_fragment(
     // pass carries the canopy's own material; the opaque G-buffer pass around it stores only
     // the strength (albedo_specular.w) and shades with Lighting::DEFAULT_SHININESS, so a
     // canopy with an authored Ns can highlight differently from the skin it sits on.
-    float3 litColor = Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
-                                                           unitNormal,
-                                                           emission,
-                                                           lightData.direction,
-                                                           toCamera,
-                                                           lightData,
-                                                           material.specular.r,
-                                                           material.shininess,
-                                                           litFraction);
+    float3 litColor = emission + Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
+                                                                      unitNormal,
+                                                                      lightData.direction,
+                                                                      toCamera,
+                                                                      lightData,
+                                                                      material.specular.r,
+                                                                      material.shininess,
+                                                                      litFraction);
     
     // Straight alpha, NOT premultiplied: this PSO blends with sourceAlpha /
     // oneMinusSourceAlpha (RenderPipelineState.enableBlending), so the hardware applies the

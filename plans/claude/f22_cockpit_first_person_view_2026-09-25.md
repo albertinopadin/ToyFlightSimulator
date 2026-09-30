@@ -22,6 +22,7 @@ document: this is asset integration through existing engine paths, small enough 
 
 ## Changelog
 
+- **2026-09-30** — Emission added once, outside the sum over lights (owner question: with several lights, wasn't it multiplied by their number?). It was: `ShadeDirectionalBlinnPhong` took `emission` and returned it in every call, and `material_fragment` / `transparent_material_fragment` sum that call over `lightCount`, so N suns gave N × emission (invisible today: every scene has one sun). The per-light function no longer takes emission; the forward loops start from `emission`, and the transparency fragments and both sun passes add it to their one light's term. Source: the OpenGL 2.1 lighting equation (§2.14.1, p. 62, checked in the extracted PDF text: `e_cm` outside `Σ_i`) and the rendering equation (Kajiya 1986). Algorithm, edge cases, design decisions and References updated. One sun gives the same image as before.
 - **2026-09-30** — Renamed `parentModelType` to `sourceFileFormat` (owner request): it holds a `ModelExtension` (the file format), and the old name read like the unrelated `ModelType` enum. `Model.GetMeshes`'s `modelType:` label, the same value, is renamed too.
 - **2026-09-30** — Review of the owner's Milestone 5 code, with fixes, and the M5 tests. Two defects kept the displays dark. (1) `Material.init` took `parentModelType` but passed nothing to `setProperties`/`populateMaterial`, whose `= nil` defaults let that compile, so `.emission` was never read; the defaults are gone and the USD-only rule is one static `Material.readsEmission(from:)`. (2) The deferred renderers (TiledMSAATessellated is the macOS default) passed emission 0 in the sun pass, because no G-buffer channel carried it; the G-buffer stage now writes emission into the lighting target (`GBufferOut.lighting`, `GBufferData.lighting`) and the sun pass reads it back. Also fixed: `CalculateDirectionalLighting` had the new 0 in the toCamera slot, so the light direction went in as emission (only the reference `og_` fragment calls it); the texture-slot comments in the transparency fragments (shadow array now slot 4). New `ResolveEmission` helper: a `setColor` object gives off no light. Emission texture loading now happens once, in `populateMaterial`. Milestone rewritten to match the code; Pitfalls updated. Numbers (the lens colors; the OBJ `Ka` arriving as the float3 (1, 1, 1) under `.emission`, the same type as a USD `emissiveColor`) reproduced with the scratch probes `probe_emission.swift` and `probe_synthetic.swift`. The 8 new tests pass (the cockpit and synthetic-USD cases fail with defect (1) put back); full suite 495 Swift Testing tests in 68 suites + 20 XCTest pass. Checked in the app in the cockpit view, under Metal API validation, with the TiledMSAATessellated, SinglePassDeferredLighting and OIT renderers.
 - **2026-09-28** — Review of the owner's Milestone 4 code, with fixes, and the M4 tests. The owner's `inverted` flags are right and the plan's were wrong: all seven were reversed, because `float4x4(rotateAbout:byAngle:)` is the transpose of the right-handed axis-angle matrix (a positive angle turns clockwise seen from the axis tip) and the plan had derived them with the right-hand rule. Data table, pseudocode and Pitfalls corrected. Fixed in `F22CockpitAnimator`: the five channel properties were implicitly unwrapped (`!`), so a joint missing from the model (the config only warns) would crash the first setter; now optional, and a missing channel's setter does nothing. `gearHandleCommandedDown` became static, for a Metal-free test (the caller passes `.down` when there is no exterior animator). The threshold keeps the owner's name, `F22.milPowerThrottleThreshold`. Tests: `CockpitControlMappingTests` (Metal-free) and `CockpitAnimatorTests` (app-hosted; reads each skinned mesh's palette and checks where the stick, both levers, both pedals and the gear knob move). Expected positions reproduced with the scratch script `cockpit_m4_directions.swift` (inputs: the engine's rotateAbout matrix, the import basis, the joint pivots, the owner's flags). The 13 new tests pass; full suite 487 Swift Testing tests in 67 suites + 20 XCTest pass.
@@ -253,6 +254,14 @@ ownership of the scene graph, lazy `ModelLibrary` factories (first access off th
   = DN) and stays DN for an aircraft without an exterior animator. The Sketchfab `F22` never calls
   `setupAnimator`, so its `handleGearToggle` does nothing and `isGearDown` is always true: its gear
   is fixed down, and a handle that stays DN tells the truth.
+- [source: OpenGL 2.1 specification §2.14.1; Kajiya 1986] Emission is added once per fragment,
+  outside the sum over lights: `color = emission + Σ ShadeDirectionalBlinnPhong(light)`, and the
+  per-light function takes no emission input. Rejected: an `emission` input on the per-light
+  function (the first Milestone 5 version), which the forward loop added once per light, so two
+  suns doubled every display.
+- [design] Deferred renderers carry emission in the lighting target: the G-buffer stage writes it
+  there, the sun pass reads it back. Rejected: a fourth G-buffer target (more tile memory and
+  bandwidth for a term most pixels leave at 0).
 - [design] HUD symbology is baked for now (pitch 2.5°, heading 119°) and calibrated from the DEP;
   Milestone 6 replaces the texture.
 - [source: owner's reference photos] Display faces flat and vertical (no tilt, no cant), ICP proud of
@@ -677,21 +686,25 @@ function updateCockpitControls(aircraft, controlInput)
   - `TFSCommon.h` — `MaterialProperties.emissive`; `TFSTextureIndexEmissive = 3` (the shadow array and
     every later index move up by one). `DrawManager.applyMaterialTextures` binds the map per submesh.
   - `ShaderHelpers.h` — `ResolveEmission`, the cascade every fragment uses.
-  - `Lighting::ShadeDirectionalBlinnPhong` — takes `emission` and returns
-    `emission + ambient + litFraction · (diffuse + specular)`.
+  - `Lighting::ShadeDirectionalBlinnPhong` — one light's `ambient + litFraction · (diffuse + specular)`,
+    with no emission input; every caller adds the emission once, outside its sum over lights.
   - Forward and transparent fragments (`material_fragment`, `transparent_material_fragment`,
-    `single_pass_deferred_transparency_fragment`, `tiled_deferred_transparency_fragment`) pass
-    `ResolveEmission` to it.
+    `single_pass_deferred_transparency_fragment`, `tiled_deferred_transparency_fragment`) add
+    `ResolveEmission` to the lit color.
   - Deferred renderers: the G-buffer fragments (`gbuffer_fragment_material`,
     `tiled_deferred_gbuffer_fragment`; the terrain writes 0) write emission into the lighting
     target (`GBufferData.lighting`, `GBufferOut.lighting`), and the sun passes
     (`deferred_directional_lighting_fragment`, `tiled_deferred_directional_light_fragment`) read it back.
 - **Algorithm:**
 
-Symbols: e = emission (linear RGB, 0…1 from the file) = `emission`; the other terms as in
-`Lighting::ShadeDirectionalBlinnPhong`. e is added after lighting and outside the lit fraction, so
-it stays bright in shadow and at night. No emission strength: UsdPreviewSurface has none, the
-exporter bakes it into `emissiveColor`.
+Symbols: e = emission (linear RGB, 0…1 from the file) = `emission`; L_i = light i's term from
+`Lighting::ShadeDirectionalBlinnPhong`, ambient_i + litFraction · (diffuse_i + specular_i).
+color = e + Σ_i L_i: e is added once, outside the sum over lights and outside the lit fraction, so
+it stays bright in shadow and at night and does not grow with the number of lights. This is the
+structure of the OpenGL lighting equation (material emission `e_cm` outside the sum over lights,
+each light's ambient inside it) and the single emitted term of the rendering equation; see
+References. No emission strength: UsdPreviewSurface has none, the exporter bakes it into
+`emissiveColor`.
 
 ```pseudocode
 // Import (Material). sourceFileFormat is the format of the file the material came from.
@@ -707,17 +720,22 @@ function resolveEmission(useObjectColor, materialEmission, emissionMap, baseColo
     if emissionMap is bound: return sample(emissionMap, baseColorUV)   // no emission UV-transform slot
     return materialEmission
 
-// The shared shading function:
-color = emission + ambient + litFraction * (diffuse + specular)
+// The shared per-light function (no emission input, so a loop cannot count emission twice):
+function shadeDirectional(albedo, normal, light, ...) -> linearRGB
+    return ambient + litFraction * (diffuse + specular)
 
-// Forward and transparent passes: emission = resolveEmission(...), passed to the shared function.
+// Forward pass, several lights:
+color = resolveEmission(...)                    // once, before the sum
+for each light: color += shadeDirectional(albedo, normal, light, ...)
+
+// Transparent passes (one sun): color = resolveEmission(...) + shadeDirectional(...)
 
 // Deferred renderers. The G-buffer targets have no free channel, so the lighting target carries it.
 G-buffer stage, each opaque fragment (depth-tested, not blended):
     lightingTarget = (resolveEmission(...), 1)  // replaces the clear color; 0 where nothing glows
 Sun pass, each covered pixel (reads the tile's attachments):
     emission = lightingTarget.rgb
-    lightingTarget = shadeDirectional(albedo, normal, emission, ...)   // overwrites it
+    lightingTarget = emission + shadeDirectional(albedo, normal, sun, ...)   // overwrites it
 Point lights then add to it; transparent surfaces add their own emission in their forward pass.
 ```
 
@@ -742,8 +760,9 @@ Point lights then add to it; transparent surfaces add their own emission in thei
   - The Sketchfab F-22's `f22a_landingLights` author `emissiveColor` (1, 1, 1), so they now glow
     white. The other USD aircraft author 0 (the unregistered CGTrader F-35 has real emission maps).
   - A `setColor` object gives off no light, even on a model with emissive materials.
-  - Forward path: with several directional lights emission is added once per light, as ambient is;
-    an unlit material or a sunless scene shows the base color without emission.
+  - Forward path with two directional lights: emission is still added once (e, not 2e); each
+    light's ambient is added, as in the OpenGL equation. An unlit material or a sunless scene shows
+    the base color without emission.
   - Every G-buffer fragment must write the lighting target (0 when it does not glow); a fragment that
     left it alone would pass the clear color to the sun pass as emission. The unused
     `SinglePassDeferredGBufferBase` pipeline blends that target additively, so it would.
@@ -816,7 +835,7 @@ cockpit HUD_Combiner material: baseColorTexture = hudTarget ; emissionTexture = 
 | Stick parts explode or collapse to the origin | skeleton not found / palette not updated | `[UsdModel loadSkins] ... Created skin with skeleton` for all six meshes |
 | Gray shapes flicker through the consoles | Sketchfab `f22a_cockpit` still drawn | Milestone 3 filter |
 | Displays and lenses dark in every renderer | `Material` got no file format (`sourceFileFormat` nil), so `readsEmission` is false | `MaterialEmissionTests` cockpit cases |
-| Displays glow in the OIT renderer but not in a deferred one | the G-buffer stage does not write the lighting target, or the sun pass passes 0 instead of reading it back | `GBufferOut.lighting` / `GBufferData.lighting`; the sun pass's `emission` argument |
+| Displays glow in the OIT renderer but not in a deferred one | the G-buffer stage does not write the lighting target, or the sun pass does not add it back | `GBufferOut.lighting` / `GBufferData.lighting`; the sun pass's `emission + ShadeDirectionalBlinnPhong(...)` |
 | The F-16 turns white | an OBJ's `Ka` read as emission | `objKaIsNotEmission`, `f16ObjReadsNoEmission` |
 | HUD symbology off the horizon | camera not at the DEP (offset, zoom) or head look | camera local position must be (0,0,0); recentre with middle click |
 | tvOS bundle grows 3 MB | new file joins every target | add the usdz to the tvOS membership exceptions like `F-22_Raptor.usdz` |
@@ -830,7 +849,16 @@ cockpit HUD_Combiner material: baseColorTexture = hudTarget ; emissionTexture = 
    - Pixar, OpenUSD "UsdSkel" schema (https://openusd.org/release/api/usd_skel_page_front.html) —
      skeleton, joint paths, rest/bind transforms, skinning primvars; read "UsdSkel Introduction" and
      "Schemas In-Depth".
+   - J. T. Kajiya, "The Rendering Equation", SIGGRAPH 1986 (Computer Graphics 20(4), 143–150) — the
+     outgoing light is the surface's own emitted light plus the reflected incoming light, and the
+     emitted term appears once. The physical reason Milestone 5 adds emission outside the sum over lights.
 2. **Detailed explanation:**
+   - M. Segal and K. Akeley, *The OpenGL Graphics System: A Specification*, version 2.1 (2006),
+     section 2.14.1 "Lighting", equation on p. 62 (https://registry.khronos.org/OpenGL/specs/gl/glspec21.pdf).
+     The fixed-function lighting equation, `c_pri = e_cm + a_cm·a_cs + Σ_i att_i·spot_i·[a_cm·a_cli
+     + diffuse_i + specular_i]`: the material emission `e_cm` and the scene ambient sit outside the
+     sum over lights, each light's own ambient inside it. Table 2.10 lists the terms. Checked by
+     extracting the PDF text. The engine's forward loop has the same shape.
    - Kodeco, *Metal by Tutorials* v5, character animation chapters
      (https://www.kodeco.com/books/metal-by-tutorials/v5.0) — the engine's `Skeleton` is based on it;
      read the skinning and joint-palette sections.
