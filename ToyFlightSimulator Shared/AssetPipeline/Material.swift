@@ -8,6 +8,15 @@
 import MetalKit
 
 struct Material: sizeable {
+    public static let IMPLEMENTED_SEMANTICS: [MDLMaterialSemantic] = [
+        .emission,
+        .baseColor,
+        .roughness,
+        .specular,
+        .specularExponent,
+        .opacity
+    ]
+    
     public var name: String = "material"
     public var properties = MaterialProperties()
     public var textureTransforms = MaterialTextureTransforms()
@@ -19,18 +28,33 @@ struct Material: sizeable {
     public var metallicTexture: MTLTexture?
     public var ambientOcclusionTexture: MTLTexture?
     public var opacityTexture: MTLTexture?
+    public var emissiveTexture: MTLTexture?
     
     public var isTransparent: Bool {
         return opacityTexture != nil || properties.opacity < 1.0 || properties.color.w < 1.0
     }
     
-    init(_ mdlMaterial: MDLMaterial) {
+    /// `parentModelType` is the file format the material came from. It decides whether the
+    /// `.emission` semantic is read at all (see `readsEmission`); nil (procedural meshes,
+    /// hand-built materials) reads no emission.
+    init(_ mdlMaterial: MDLMaterial, parentModelType: ModelExtension? = nil) {
         name = mdlMaterial.name
-        setProperties(with: mdlMaterial, semantics: [.emission, .baseColor, .roughness, .specular, .specularExponent, .opacity])
-        populateMaterial(with: mdlMaterial)
+        setProperties(with: mdlMaterial, semantics: Self.IMPLEMENTED_SEMANTICS, parentModelType: parentModelType)
+        populateMaterial(with: mdlMaterial, parentModelType: parentModelType)
     }
-    
-    private mutating func populateMaterial(with material: MDLMaterial) {
+
+    /// Whether `.emission` means emission for this file format. For USD it is the authored
+    /// UsdPreviewSurface `emissiveColor` (a constant or a texture: the cockpit's displays, HUD
+    /// and lenses, the Sketchfab F-22's landing lights). Model I/O's OBJ importer stores the MTL
+    /// `Ka` line (ambient reflectivity; Blender writes `Ka 1 1 1`) under `.emission` and drops
+    /// `Ke`, so reading it would paint the F-16 white. Both arrive as the same float3 property,
+    /// so the file format is the only way to tell them apart. See
+    /// research/claude/modelio_material_semantics_blinn_phong_2026-09-21.md §1.2.
+    static func readsEmission(from parentModelType: ModelExtension?) -> Bool {
+        return parentModelType == .USDC || parentModelType == .USDZ
+    }
+
+    private mutating func populateMaterial(with material: MDLMaterial, parentModelType: ModelExtension?) {
         // First property per semantic, on purpose. Model I/O lists an authored USD value (the
         // Sketchfab F-22 canopy's `diffuseColor`) FIRST and its own scattering-function default
         // (0.18 gray "baseColor") after it, so iterating `properties(with:)` let the default win.
@@ -44,26 +68,19 @@ struct Material: sizeable {
                         if let stringValue = property.stringValue {
                             let texture = TextureLoader.Texture(name: stringValue,
                                                                 srgb: Self.isSRGBSemantic(semantic))
-                            populateTexture(texture, for: semantic)
+                            populateTexture(texture, for: semantic, parentModelType: parentModelType)
                         }
 
                     case .URL:
                         if let textureURL = property.urlValue {
                             let texture = TextureLoader.Texture(url: textureURL,
                                                                 srgb: Self.isSRGBSemantic(semantic))
-                            populateTexture(texture, for: semantic)
+                            populateTexture(texture, for: semantic, parentModelType: parentModelType)
                         }
 
                     case .texture:
-                        guard let sampler = property.textureSamplerValue,
-                              let sourceTexture = sampler.texture else { break }
-
-                        let texture = TextureLoader.Texture(mdlTexture: sourceTexture,
-                                                            srgb: Self.isSRGBSemantic(semantic))
-                        populateTexture(texture, for: semantic)
-
-                        let uvAffine = Self.uvAffine(from: sampler.transform, materialName: name)
-                        populateTextureTransform(uvAffine, for: semantic)
+                        // Every texture-typed semantic, the USD emission map included, loads here.
+                        self.populateTexture(from: property, semantic: semantic, parentModelType: parentModelType)
 
                     case .color, .float3, .float4:
                         // Untextured albedo fallback (MTL `Kd`, USD `diffuseColor`), read by the shaders
@@ -125,7 +142,9 @@ struct Material: sizeable {
         }
     }
 
-    private mutating func populateTexture(_ texture: MTLTexture?, for semantic: MDLMaterialSemantic) {
+    private mutating func populateTexture(_ texture: MTLTexture?,
+                                          for semantic: MDLMaterialSemantic,
+                                          parentModelType: ModelExtension?) {
         switch semantic {
             case .baseColor:
                 baseColorTexture = texture
@@ -142,8 +161,11 @@ struct Material: sizeable {
             case .opacity:
                 opacityTexture = texture
             case .emission:
-                // TODO
-                print("[Material populateTexture] Emission not implemented!")
+                // No UV-transform slot exists for this map (populateTextureTransform ignores
+                // .emission), so the shaders sample it with the base color's UV.
+                if Self.readsEmission(from: parentModelType) {
+                    emissiveTexture = texture
+                }
             default:
                 print("Got string for semantic \(semantic.toString())")
 
@@ -191,20 +213,27 @@ struct Material: sizeable {
                abs(m.columns.2.x)     < eps && abs(m.columns.2.y)     < eps
     }
     
-    private mutating func setProperties(with mdlMaterial: MDLMaterial, semantics: [MDLMaterialSemantic]) {
+    /// Loads a texture-typed property (USD's connected UsdUVTexture) and its UV transform.
+    private mutating func populateTexture(from materialProperty: MDLMaterialProperty,
+                                          semantic: MDLMaterialSemantic,
+                                          parentModelType: ModelExtension?) {
+        guard let sampler = materialProperty.textureSamplerValue,
+              let sourceTexture = sampler.texture else { return }
+
+        let texture = TextureLoader.Texture(mdlTexture: sourceTexture,
+                                            srgb: Self.isSRGBSemantic(semantic))
+        populateTexture(texture, for: semantic, parentModelType: parentModelType)
+
+        let uvAffine = Self.uvAffine(from: sampler.transform, materialName: name)
+        populateTextureTransform(uvAffine, for: semantic)
+    }
+    
+    private mutating func setProperties(with mdlMaterial: MDLMaterial,
+                                        semantics: [MDLMaterialSemantic],
+                                        parentModelType: ModelExtension?) {
         for semantic in semantics {
             if let materialProp = mdlMaterial.property(with: semantic) {
                 switch semantic {
-                    // TODO: `.emission` is still in the semantics list but has no case, so it falls to
-                    // `default` and logs "Unused semantic" once per material. Add the case when the
-                    // shaders get an emission term (`emission + ambient + litFraction × (diffuse +
-                    // specular)`), and only for the USD dialect: Model I/O's OBJ importer stores the MTL
-                    // `Ka` line (ambient reflectivity; Blender writes 1 1 1) under .emission and drops
-                    // `Ke`, so an OBJ "emission" would paint the F-16 white. For USD it is the authored
-                    // `emissiveColor` (the Sketchfab F-22 landing lights). The legacy `ambient` field it
-                    // used to fill is no longer read: ambient is albedo × ambientIntensity in
-                    // Lighting::ShadeDirectionalBlinnPhong. See research/claude/
-                    // modelio_material_semantics_blinn_phong_2026-09-21.md §1.2.
                     case .baseColor:
                         // populateMaterial runs after this and sets `properties.color` from the same
                         // first .baseColor property for the .color, .float3 and .float4 types, so this
@@ -214,6 +243,20 @@ struct Material: sizeable {
                             if baseColor != .zero {
                                 setBaseColor(from: materialProp)
                             }
+                        }
+                    case .emission:
+                        // The untextured emission color (USD `emissiveColor` authored as a constant:
+                        // the cockpit's red, amber and green lenses). A texture-typed emissiveColor
+                        // (the displays and the HUD) is loaded by populateMaterial with the other
+                        // maps, and the shaders use the map instead of this color. The shaders add
+                        // it after lighting: emission + ambient + litFraction × (diffuse + specular).
+                        // Model I/O's own default ("emission", (0, 0, 0)) comes back when the file
+                        // authors none, so such a material keeps zero. Never read for OBJ (see
+                        // readsEmission). The legacy `ambient` field this semantic used to fill is
+                        // no longer read: ambient is albedo × ambientIntensity in
+                        // Lighting::ShadeDirectionalBlinnPhong.
+                        if Self.readsEmission(from: parentModelType) && materialProp.type == .float3 {
+                            properties.emissive = materialProp.float3Value
                         }
                     case .roughness:
                         // USD dialect: Blinn-Phong exponent from the authored roughness, Karis 2013:

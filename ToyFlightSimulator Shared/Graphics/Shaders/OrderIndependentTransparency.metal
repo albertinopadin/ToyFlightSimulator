@@ -74,6 +74,7 @@ transparent_material_fragment(
                 sampler                            sampler2d       [[ sampler(0) ]],
                 texture2d<float>                   baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
                 texture2d<float>                   normalMap       [[ texture(TFSTextureIndexNormal) ]],
+                texture2d<float>                   emissiveTexture [[ texture(TFSTextureIndexEmissive) ]],
                 TransparentFragmentValues          fragmentValues  [[ imageblock_data ]]) {
     // Per-slot UV transforms (glTF KHR_texture_transform): each texture has its own matrix,
     // identity for slots without one, so both UVs start from the raw coordinate and the
@@ -101,6 +102,8 @@ transparent_material_fragment(
         unitNormal = ApplyNormalMapWorld(normalSample, rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal);
     }
     
+    float3 emission = ResolveEmission(rd.useObjectColor, material.emissive, emissiveTexture, sampler2d, baseUV);
+
     // Same forward Blinn-Phong as material_fragment (Base.metal), which explains the
     // lightCount guard, the unreachable point-light branch, litFraction = 1 (no shadow
     // map here) and the specular inputs: material.specular.r as the strength and
@@ -122,6 +125,7 @@ transparent_material_fragment(
             
             litColor += Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
                                                              unitNormal,
+                                                             emission,
                                                              toLight,
                                                              toCamera,
                                                              light,

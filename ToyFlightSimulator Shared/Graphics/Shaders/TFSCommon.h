@@ -44,6 +44,7 @@ typedef struct {
     simd_float3 ambient;
     simd_float3 diffuse;
     simd_float3 specular;
+    simd_float3 emissive;
 
     float shininess;
     float opacity;
@@ -169,15 +170,16 @@ typedef enum {
     TFSTextureIndexBaseColor = 0,
     TFSTextureIndexSpecular  = 1,
     TFSTextureIndexNormal    = 2,
-    TFSTextureIndexShadow    = 3,
-    TFSTextureIndexAlpha     = 4,
-    TFSTextureIndexParticle  = 5,
-    TFSTextureIndexSkyBox    = 6,
+    TFSTextureIndexEmissive  = 3,
+    TFSTextureIndexShadow    = 4,
+    TFSTextureIndexAlpha     = 5,
+    TFSTextureIndexParticle  = 6,
+    TFSTextureIndexSkyBox    = 7,
     
-    TFSTextureIndexGrass     = 7,
-    TFSTextureIndexCliff     = 8,
-    TFSTextureIndexSnow      = 9,
-    TFSTextureIndexHeightMap = 10
+    TFSTextureIndexGrass     = 8,
+    TFSTextureIndexCliff     = 9,
+    TFSTextureIndexSnow      = 10,
+    TFSTextureIndexHeightMap = 11
 } TFSTextureIndices;
 
 typedef enum {

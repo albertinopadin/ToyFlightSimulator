@@ -607,6 +607,7 @@ final class DrawManager {
         renderEncoder.setFragmentTexture(material.baseColorTexture, index: TFSTextureIndexBaseColor.index)
         renderEncoder.setFragmentTexture(material.normalMapTexture, index: TFSTextureIndexNormal.index)
         renderEncoder.setFragmentTexture(material.specularTexture,  index: TFSTextureIndexSpecular.index)
+        renderEncoder.setFragmentTexture(material.emissiveTexture,  index: TFSTextureIndexEmissive.index)
 
         var textureTransforms = material.textureTransforms
         renderEncoder.setFragmentBytes(&textureTransforms,

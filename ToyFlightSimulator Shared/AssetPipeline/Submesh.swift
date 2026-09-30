@@ -36,7 +36,7 @@ final class Submesh: @unchecked Sendable {
         createIndexBuffer()
     }
     
-    init(mtkSubmesh: MTKSubmesh, mdlSubmesh: MDLSubmesh) {
+    init(mtkSubmesh: MTKSubmesh, mdlSubmesh: MDLSubmesh, parentModelType: ModelExtension? = nil) {
         _indexBuffer = mtkSubmesh.indexBuffer.buffer
         _indexBufferOffset = mtkSubmesh.indexBuffer.offset
         _indexCount = mtkSubmesh.indexCount
@@ -47,7 +47,7 @@ final class Submesh: @unchecked Sendable {
         
         print("[Submesh init] Creating textures and material for \(self.name)")
         if let submeshMaterial = mdlSubmesh.material {
-            material = Material(submeshMaterial)
+            material = Material(submeshMaterial, parentModelType: parentModelType)
         }
     }
     

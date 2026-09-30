@@ -45,13 +45,15 @@ tiled_deferred_transparency_fragment(
                 constant MaterialTextureTransforms &uvXforms         [[ buffer(TFSBufferIndexMaterialTextureTransforms) ]],
                 sampler                            sampler2d         [[ sampler(0) ]],
                 texture2d<half>                    baseColorTexture  [[ texture(TFSTextureIndexBaseColor) ]],
+                texture2d<float>                   emissiveTexture   [[ texture(TFSTextureIndexEmissive) ]],
                 depth2d_array<float>               shadowArray       [[ texture(TFSTextureIndexShadow) ]]) {
     // Forward-lit transparency (Step 5b of the shading doc) so the F-22 canopy shades like
     // the fuselage the G-buffer + sun pass lit. Serves all three tiled renderers: the MSAA pipelines bind this fragment too.
     // Every extra binding comes from earlier in the SAME encoder: SceneManager sets the
     // scene constants and the first sun's LightData for the fragment stage at the start
-    // of the pass, and the G-buffer stage binds the shadow array at texture slot 3.
-    // DrawManager's per-submesh material textures use slots 0-2, so none is clobbered.
+    // of the pass, and the G-buffer stage binds the shadow array at texture slot 4 (TFSTextureIndexShadow).
+    // DrawManager's per-submesh material textures use slots 0-3 (base color, specular,
+    // normal, emission), so none is clobbered.
     float2 baseUV = in.uv;
     if (uvXforms.hasTextureTransforms) {
         baseUV = ApplyUVTransform(in.uv, uvXforms.baseColorUVTransform);
@@ -78,6 +80,10 @@ tiled_deferred_transparency_fragment(
                                                   lightData,
                                                   shadowArray);
     
+    // Transparent surfaces are drawn after the sun pass, so this pass adds their emission
+    // itself (the HUD combiner's symbology); the blend then scales it by the opacity.
+    float3 emission = ResolveEmission(in.useObjectColor, material.emissive, emissiveTexture, sampler2d, baseUV);
+
     // Landing-order step 2 (Step 6 landed): material.specular.r is the strength and
     // material.shininess the exponent, see material_fragment in Base.metal. This forward
     // pass carries the canopy's own material; the tiled sun pass has no per-pixel material
@@ -85,6 +91,7 @@ tiled_deferred_transparency_fragment(
     // from the opaque skin it sits on.
     float3 litColor = Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
                                                            unitNormal,
+                                                           emission,
                                                            lightData.direction,
                                                            toCamera,
                                                            lightData,

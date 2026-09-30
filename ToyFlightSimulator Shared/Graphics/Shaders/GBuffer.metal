@@ -130,7 +130,9 @@ fragment GBufferData gbuffer_fragment_base(ColorInOut           in             [
     // Store shadow with albedo in unused fourth channel;
     // Store the specular contribution with the normal in unused fourth channel.
 
-    // Fill in on-chip geometry buffer data
+    // Fill in on-chip geometry buffer data. `lighting` is left 0, but this fragment's pipeline
+    // (GBufferGenerationBaseRenderPipelineState, which no renderer binds today) blends it
+    // additively, so the clear color would survive and the sun pass would read it as emission.
     GBufferData gBuffer = {
         .albedo_specular = half4(base_color.xyz, specularContribution),
         .normal_shadow = half4(half3(eye_normal.xyz), shadow_sample),
@@ -150,6 +152,7 @@ fragment GBufferData gbuffer_fragment_material(
                     texture2d<half>                     baseColorMap   [[ texture(TFSTextureIndexBaseColor) ]],
                     texture2d<half>                     normalMap      [[ texture(TFSTextureIndexNormal) ]],
                     texture2d<half>                     specularMap    [[ texture(TFSTextureIndexSpecular) ]],
+                    texture2d<half>                     emissiveTexture [[ texture(TFSTextureIndexEmissive) ]],
                     depth2d_array<float>                shadowArray    [[ texture(TFSTextureIndexShadow) ]])
 {
     float2 baseUV     = in.tex_coord.xy;
@@ -211,8 +214,16 @@ fragment GBufferData gbuffer_fragment_material(
 
     float3x3 viewRotation = upperLeft3x3(sceneConstants.viewMatrix);
     float3 eye_normal = normalize(viewRotation * worldNormal);
+
+    // Emission has no G-buffer channel either, so it goes straight into the lighting target;
+    // deferred_directional_lighting_fragment reads it back and adds the sun's light to it.
+    // This pipeline does not blend, so the write replaces the clear color, and 0 for a
+    // surface that gives off no light.
+    float3 emission = ResolveEmission(in.useObjectColor, material.emissive, emissiveTexture, sampler2d, baseUV);
+
     // Fill in on-chip geometry buffer data
     GBufferData gBuffer = {
+        .lighting = half4(half3(emission), 1),
         .albedo_specular = half4(base_color_sample.xyz, specular_contrib),
         .normal_shadow = half4(half3(eye_normal), shadow_sample),
         .depth = in.eye_position.z

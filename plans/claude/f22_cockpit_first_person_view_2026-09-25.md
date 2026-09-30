@@ -22,6 +22,7 @@ document: this is asset integration through existing engine paths, small enough 
 
 ## Changelog
 
+- **2026-09-30** — Review of the owner's Milestone 5 code, with fixes, and the M5 tests. Two defects kept the displays dark. (1) `Material.init` took `parentModelType` but passed nothing to `setProperties`/`populateMaterial`, whose `= nil` defaults let that compile, so `.emission` was never read; the defaults are gone and the USD-only rule is one static `Material.readsEmission(from:)`. (2) The deferred renderers (TiledMSAATessellated is the macOS default) passed emission 0 in the sun pass, because no G-buffer channel carried it; the G-buffer stage now writes emission into the lighting target (`GBufferOut.lighting`, `GBufferData.lighting`) and the sun pass reads it back. Also fixed: `CalculateDirectionalLighting` had the new 0 in the toCamera slot, so the light direction went in as emission (only the reference `og_` fragment calls it); the texture-slot comments in the transparency fragments (shadow array now slot 4). New `ResolveEmission` helper: a `setColor` object gives off no light. Emission texture loading now happens once, in `populateMaterial`. Milestone rewritten to match the code; Pitfalls updated. Numbers (the lens colors; the OBJ `Ka` arriving as the float3 (1, 1, 1) under `.emission`, the same type as a USD `emissiveColor`) reproduced with the scratch probes `probe_emission.swift` and `probe_synthetic.swift`. The 8 new tests pass (the cockpit and synthetic-USD cases fail with defect (1) put back); full suite 495 Swift Testing tests in 68 suites + 20 XCTest pass. Checked in the app in the cockpit view, under Metal API validation, with the TiledMSAATessellated, SinglePassDeferredLighting and OIT renderers.
 - **2026-09-28** — Review of the owner's Milestone 4 code, with fixes, and the M4 tests. The owner's `inverted` flags are right and the plan's were wrong: all seven were reversed, because `float4x4(rotateAbout:byAngle:)` is the transpose of the right-handed axis-angle matrix (a positive angle turns clockwise seen from the axis tip) and the plan had derived them with the right-hand rule. Data table, pseudocode and Pitfalls corrected. Fixed in `F22CockpitAnimator`: the five channel properties were implicitly unwrapped (`!`), so a joint missing from the model (the config only warns) would crash the first setter; now optional, and a missing channel's setter does nothing. `gearHandleCommandedDown` became static, for a Metal-free test (the caller passes `.down` when there is no exterior animator). The threshold keeps the owner's name, `F22.milPowerThrottleThreshold`. Tests: `CockpitControlMappingTests` (Metal-free) and `CockpitAnimatorTests` (app-hosted; reads each skinned mesh's palette and checks where the stick, both levers, both pedals and the gear knob move). Expected positions reproduced with the scratch script `cockpit_m4_directions.swift` (inputs: the engine's rotateAbout matrix, the import basis, the joint pivots, the owner's flags). The 13 new tests pass; full suite 487 Swift Testing tests in 67 suites + 20 XCTest pass.
 - **2026-09-28** — Milestone 4 revised to match the owner's in-progress `F22CockpitAnimator` and `F22CockpitAnimationConfig`: layer IDs `cockpitStick`/`cockpitThrottle`/`cockpitRudderPedals`/`cockpitGearHandle`, channel IDs `sideStickRoll`/`sideStickPitch`/`cockpitThrottle`/`rudderPedals`/`gearHandle`, joint lookup `findJointPaths`. Placement settled: only the layer IDs go in `AircraftAnimator.swift`; the throttle mapping is static on the config; the setters and the cached channels are on the cockpit animator; `Aircraft` builds the animator in `attachCockpit` and drives it in `doUpdate`; the 0.8 MIL/afterburner threshold is named once (`F22.afterburnerThrottleThreshold`). Found: the Sketchfab `F22` has no exterior animator, so G does nothing there and its gear handle stays DOWN. Added the pure `gearHandleCommandedDown` rule and its test, and the G check now names the CGTrader F-22. Numbers re-checked with the scratch script `cockpit_m4_numbers.swift` (inputs: the owner's rounded constants 5.74°, 17.46°, 33.40°, threshold 0.8, channel speeds 8/3/4/3 per s): lever angles and channel values as listed (the exact asin values differ by < 0.003°), IDLE → AB in 0.44 s, gear knob UP 16.70° above the slot centre, and the rotation directions for the stick, levers, pedals and yaw key.
 - **2026-09-27** — Review of the owner's Milestones 1–3 code, with fixes, and the M1–M3 tests. Fixed in `CockpitCamera`: `setRotationX(headYaw)` then `setRotationY(headPitch)` swapped the axes (yaw is about Y), and each call replaces the whole rotation, so only the second survived; both also turned about world-frame axes (`getRightVector`/`getUpVector` read the world matrix), wrong once the jet banks. Now `turnHead` builds one local rotation, Ry(yaw)·Rx(−pitch), through the pure `turnedHead`/`headRotation` helpers. The limits (150°, 70° up, 80° down; the owner's values, the plan had 60/70) were degrees used as radians, so they never clamped; the mouse Y sign was inverted. `attach(to:)` now recentres the head and returns false, leaving the camera unparented, for a jet without a cockpit; `applyAircraftSwap` attaches for every aircraft type, keeps the cockpit view across a swap to a jet that has one, and takes the camera out of the registry otherwise (`CameraManager.UnregisterCamera`, new), so 'C' no longer cycles to a camera left behind in the removed jet. `Aircraft.cockpitNativeToBody` became static and the M3 filter a static `F22.shouldRenderExteriorSubmesh`, both for Metal-free tests. Numbers re-checked with the scratch script `cockpit_test_numbers.swift` (stick pivot (0.3635, 0.5390, 7.2330) and (0.3635, 0.4990, 5.7330), basis det −1, yaw +90° → (1, 0, 0), pitch +30° → (0, 0.5, 0.8660), yaw 90° + pitch 30° keeps the right axis level). 29 tests in 7 suites pass; full suite 474 + 20 XCTest pass.
@@ -157,6 +158,7 @@ line, on the right console; full throttle shows the lever 17.46° forward.
 | Rudder pedal | θ_y | `pedal_rad` | rad | about native +X | + = pedal pushed forward; ±10°; yaw + (Q, nose left) pushes the left pedal forward |
 | Throttle input | t | `ControlInput.throttle` / `.MoveFwd` | 0…1 | — | as read in `Aircraft.getControlInput()`; keyboard W = 1, S = −1 (clamped to IDLE) |
 | MIL throttle setting | t_MIL | `F22.milPowerThrottleThreshold` | 0…1 | — | 0.8; the afterburners light above it |
+| Emission | e | `MaterialProperties.emissive`, `Material.emissiveTexture` | linear RGB, 0…1 | — | added after lighting, outside the lit fraction; USD files only |
 
 Joint table (from the file; paths as `MDLSkeleton.jointPaths` prints them):
 
@@ -192,7 +194,8 @@ ownership of the scene graph, lazy `ModelLibrary` factories (first access off th
 - `Animation/Animators/F22CockpitAnimator.swift` (next to `F22Animator`) and
   `Animation/Configs/F22CockpitAnimationConfig.swift` — the cockpit layers, the throttle mapping,
   and the per-layer setters (Milestone 4).
-- `AssetPipeline/Material.swift` and the lighting shaders — emission (Milestone 5).
+- `AssetPipeline/Material.swift`, the lighting shaders, and the deferred G-buffer and sun passes —
+  emission (Milestone 5).
 - Thread: all scene-graph, camera, and animator mutation on the UpdateThread.
 
 ## Design decisions and where they came from
@@ -659,31 +662,90 @@ function updateCockpitControls(aircraft, controlInput)
 
 ### Milestone 5 — Emission term for displays, HUD and indicator lenses
 
-- **Learning objective:** why emissive surfaces bypass lighting, and why only the USD dialect may
-  read `.emission` (Model I/O stores an OBJ's `Ka` there).
-- **Prerequisites:** `research/claude/modelio_material_semantics_blinn_phong_2026-09-21.md` §1.2; the
-  TODO in `Material.setProperties`.
-- **Engine integration points:** `Material` (`populateTexture` `.emission` case, a new
-  `emissionTexture` and `emissionColor`), `MaterialProperties` in `TFSCommon.h`, and the lighting
-  function every renderer shares (`Lighting::ShadeDirectionalBlinnPhong`), plus the G-buffer paths.
+- **Learning objective:** why emissive surfaces bypass lighting, why only the USD dialect may
+  read `.emission` (Model I/O stores an OBJ's `Ka` there), and how a deferred renderer carries a
+  per-pixel term that has no G-buffer channel.
+- **Prerequisites:** `research/claude/modelio_material_semantics_blinn_phong_2026-09-21.md` §1.2;
+  Term "Emission".
+- **Engine integration points:**
+  - `AssetPipeline/Material.swift` — `readsEmission(from:)` (USD only), `properties.emissive` (a
+    constant `emissiveColor`, read in `setProperties`) and `emissiveTexture` (a texture-typed
+    `emissiveColor`, loaded sRGB by `populateMaterial` with the other maps). The file format
+    reaches `Material` as `parentModelType`: `Model.GetMeshes` → `Mesh` → `Submesh` → `Material`;
+    `SingleSubmeshMesh.createSingleSMMeshFromModel` maps its extension string.
+  - `TFSCommon.h` — `MaterialProperties.emissive`; `TFSTextureIndexEmissive = 3` (the shadow array and
+    every later index move up by one). `DrawManager.applyMaterialTextures` binds the map per submesh.
+  - `ShaderHelpers.h` — `ResolveEmission`, the cascade every fragment uses.
+  - `Lighting::ShadeDirectionalBlinnPhong` — takes `emission` and returns
+    `emission + ambient + litFraction · (diffuse + specular)`.
+  - Forward and transparent fragments (`material_fragment`, `transparent_material_fragment`,
+    `single_pass_deferred_transparency_fragment`, `tiled_deferred_transparency_fragment`) pass
+    `ResolveEmission` to it.
+  - Deferred renderers: the G-buffer fragments (`gbuffer_fragment_material`,
+    `tiled_deferred_gbuffer_fragment`; the terrain writes 0) write emission into the lighting
+    target (`GBufferData.lighting`, `GBufferOut.lighting`), and the sun passes
+    (`deferred_directional_lighting_fragment`, `tiled_deferred_directional_light_fragment`) read it back.
 - **Algorithm:**
 
+Symbols: e = emission (linear RGB, 0…1 from the file) = `emission`; the other terms as in
+`Lighting::ShadeDirectionalBlinnPhong`. e is added after lighting and outside the lit fraction, so
+it stays bright in shadow and at night. No emission strength: UsdPreviewSurface has none, the
+exporter bakes it into `emissiveColor`.
+
 ```pseudocode
-// Import: USD models only (UsdModel), never ObjModel.
-if model is USD and material has .emission
-    if texture: material.emissionTexture = load(texture, srgb: true)
-    else:       material.emissionColor = float3 value
-// Shading, after lighting:
-finalColor = emission + ambient + litFraction * (diffuse + specular)
-emission   = emissionTexture sample (or emissionColor) * emissionStrength   // 1.0 from the file
+// Import (Material). parentModelType is the format of the file the material came from.
+function readsEmission(parentModelType) -> Bool
+    return parentModelType is USDC or USDZ      // OBJ: .emission holds the MTL Ka line (Blender writes 1 1 1)
+if readsEmission(parentModelType)
+    if .emission is a texture: material.emissiveTexture = load(texture, srgb: true)
+    else if .emission is a float3: material.emissive = that value   // Model I/O's default when none is authored: 0 0 0
+
+// Shaders: the emission of one fragment.
+function resolveEmission(useObjectColor, materialEmission, emissionMap, baseColorUV) -> linearRGB
+    if useObjectColor: return 0                 // a setColor object shows a flat color, like its normal map
+    if emissionMap is bound: return sample(emissionMap, baseColorUV)   // no emission UV-transform slot
+    return materialEmission
+
+// The shared shading function:
+color = emission + ambient + litFraction * (diffuse + specular)
+
+// Forward and transparent passes: emission = resolveEmission(...), passed to the shared function.
+
+// Deferred renderers. The G-buffer targets have no free channel, so the lighting target carries it.
+G-buffer stage, each opaque fragment (depth-tested, not blended):
+    lightingTarget = (resolveEmission(...), 1)  // replaces the clear color; 0 where nothing glows
+Sun pass, each covered pixel (reads the tile's attachments):
+    emission = lightingTarget.rgb
+    lightingTarget = shadeDirectional(albedo, normal, emission, ...)   // overwrites it
+Point lights then add to it; transparent surfaces add their own emission in their forward pass.
 ```
 
-- **Tests** (Metal-free where possible):
-  - [ ] `MaterialEmissionTests.objKaIsNotEmission` — an OBJ material with `Ka 1 1 1` keeps emission 0.
-  - [ ] App-hosted: the cockpit's `Display_PMFD` material has an emission texture after import.
+- **Tests** (Metal-free where possible), `ToyFlightSimulatorTests/AssetPipeline/MaterialEmissionTests.swift`:
+  - [x] `readsEmissionOnlyForUSD` — USDZ, USDC → true; OBJ, none → false.
+  - [x] `objKaIsNotEmission` — an OBJ + MTL written by the test with `Ka 1 1 1`: Model I/O's
+    `.emission` is the float3 (1, 1, 1), and the `Material` keeps emission 0 and no map.
+  - [x] `usdEmissiveColorIsRead` — a USDA written by the test with `emissiveColor` (0.8, 0.02, 0.01)
+    → `properties.emissive` the same within 1e-4; `usdWithoutEmissiveColorKeepsZero` — none authored → 0.
+  - [x] App-hosted: `cockpitDisplaysHaveEmissionMaps` — the six displays, the ICP and `HUD_Combiner`
+    have an emission map.
+  - [x] App-hosted: `cockpitLensesHaveEmissionColors` — `Lens_Red` (0.8, 0.02, 0.01), `Lens_Amber`
+    (0.9, 0.35, 0.02), `Lens_Green` (0.05, 0.6, 0.1); `cockpitStructureGivesOffNoLight` — every other
+    cockpit material 0 and no map.
+  - [x] App-hosted: `f16ObjReadsNoEmission` — the F-16's source materials carry (1, 1, 1) under
+    `.emission` (its `Ka`), and its `Material`s all keep 0.
 - **Observable completion criteria:** with the jet in shadow or at night, the six displays, the HUD
   symbology, the ICP text and the red/amber/green lenses stay bright; the rest of the cockpit is dark.
-- **Edge cases and expected results:** the F-16/F-18 OBJs look unchanged (their `Ka` is ignored).
+  The same in every renderer (the deferred ones through the lighting target).
+- **Edge cases and expected results:**
+  - The F-16/F-18 OBJs look unchanged (their `Ka` is ignored; the F-16 authors `Ka 1 1 1`).
+  - The Sketchfab F-22's `f22a_landingLights` author `emissiveColor` (1, 1, 1), so they now glow
+    white. The other USD aircraft author 0 (the unregistered CGTrader F-35 has real emission maps).
+  - A `setColor` object gives off no light, even on a model with emissive materials.
+  - Forward path: with several directional lights emission is added once per light, as ambient is;
+    an unlit material or a sunless scene shows the base color without emission.
+  - Every G-buffer fragment must write the lighting target (0 when it does not glow); a fragment that
+    left it alone would pass the clear color to the sun pass as emission. The unused
+    `SinglePassDeferredGBufferBase` pipeline blends that target additively, so it would.
 
 ### Milestone 6 — Replaceable HUD / display textures (hook for live symbology)
 
@@ -752,7 +814,9 @@ cockpit HUD_Combiner material: baseColorTexture = hudTarget ; emissionTexture = 
 | Levers reach AB before or after the plumes light | the mapping and `F22.doUpdate` use different thresholds | `milDetentSitsAtTheAfterburnerThreshold`; both must read `F22.milPowerThrottleThreshold` |
 | Stick parts explode or collapse to the origin | skeleton not found / palette not updated | `[UsdModel loadSkins] ... Created skin with skeleton` for all six meshes |
 | Gray shapes flicker through the consoles | Sketchfab `f22a_cockpit` still drawn | Milestone 3 filter |
-| Displays black in shadow | no emission term yet | Milestone 5 |
+| Displays and lenses dark in every renderer | `Material` got no file format (`parentModelType` nil), so `readsEmission` is false | `MaterialEmissionTests` cockpit cases |
+| Displays glow in the OIT renderer but not in a deferred one | the G-buffer stage does not write the lighting target, or the sun pass passes 0 instead of reading it back | `GBufferOut.lighting` / `GBufferData.lighting`; the sun pass's `emission` argument |
+| The F-16 turns white | an OBJ's `Ka` read as emission | `objKaIsNotEmission`, `f16ObjReadsNoEmission` |
 | HUD symbology off the horizon | camera not at the DEP (offset, zoom) or head look | camera local position must be (0,0,0); recentre with middle click |
 | tvOS bundle grows 3 MB | new file joins every target | add the usdz to the tvOS membership exceptions like `F-22_Raptor.usdz` |
 

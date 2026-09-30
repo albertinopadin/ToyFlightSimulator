@@ -112,7 +112,8 @@ material_fragment(          RasterizerData            rd              [[ stage_i
                   constant  LightData                 *lightData      [[ buffer(TFSBufferDirectionalLightData) ]],
                             sampler                   sampler2d       [[ sampler(0) ]],
                             texture2d<float>          baseColorMap    [[ texture(TFSTextureIndexBaseColor) ]],
-                            texture2d<float>          normalMap       [[ texture(TFSTextureIndexNormal) ]]) {
+                            texture2d<float>          normalMap       [[ texture(TFSTextureIndexNormal) ]],
+                            texture2d<float>          emissiveTexture [[ texture(TFSTextureIndexEmissive) ]]) {
     // Per-slot UV transforms (glTF KHR_texture_transform): each texture has its own matrix,
     // identity for slots without one, so both UVs start from the raw coordinate and the
     // normal map is sampled with ITS transform, as in every deferred G-buffer fragment.
@@ -141,6 +142,8 @@ material_fragment(          RasterizerData            rd              [[ stage_i
         unitNormal = ApplyNormalMapWorld(normalSample, rd.surfaceTangent, rd.surfaceBitangent, rd.surfaceNormal);
     }
     
+    float3 emission = ResolveEmission(rd.useObjectColor, material.emissive, emissiveTexture, sampler2d, baseUV);
+
     // Forward Blinn-Phong through the shared function: ambient + litFraction * (diffuse
     // + specular), the same math the deferred sun passes use, so the renderers agree.
     //
@@ -172,10 +175,12 @@ material_fragment(          RasterizerData            rd              [[ stage_i
             // highlight strength (MTL Ks, default 0.25) and material.shininess the exponent
             // (MTL Ns, default 32). The shared function skips the lobe when the strength is 0,
             // which is how a matte material switches its highlight off.
-            // Known limitation: each light adds its own ambient term, so with more than one
-            // directional light the ambient is counted more than once.
+            // Known limitation: each light adds its own ambient and emission terms, so with more
+            // than one directional light both are counted more than once. An unlit material or a
+            // sunless scene (the branch above) shows the base color without emission.
             litColor += Lighting::ShadeDirectionalBlinnPhong(baseColor.rgb,
                                                              unitNormal,
+                                                             emission,
                                                              toLight,
                                                              toCamera,
                                                              light,

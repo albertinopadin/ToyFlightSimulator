@@ -91,6 +91,7 @@ extension MaterialProperties: sizeable {
          ambient: float3 = [0.1, 0.1, 0.1],
          diffuse: float3 = [1, 1, 1],
          specular: float3 = [0.25, 0.25, 0.25],
+         emissive: float3 = .zero,
          shininess: Float = 32.0,
          opacity: Float = 1.0,
          lit: Bool = true) {
@@ -98,6 +99,7 @@ extension MaterialProperties: sizeable {
                   ambient: ambient,
                   diffuse: diffuse,
                   specular: specular,
+                  emissive: emissive,
                   shininess: shininess,
                   opacity: opacity,
                   isLit: lit)
@@ -108,6 +110,7 @@ extension MaterialProperties: sizeable {
                   ambient: [0.1, 0.1, 0.1],
                   diffuse: [1, 1, 1],
                   specular: [0.25, 0.25, 0.25],
+                  emissive: .zero,
                   shininess: 32.0,
                   opacity: 1.0,
                   isLit: true)

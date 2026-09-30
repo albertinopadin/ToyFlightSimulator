@@ -22,6 +22,7 @@ constant LightData                 &lightData          [[ buffer(TFSBufferDirect
 sampler                            sampler2d           [[ sampler(0) ]],
 texture2d<half>                    baseColorTexture    [[ texture(TFSTextureIndexBaseColor) ]],
 texture2d<half>                    normalTexture       [[ texture(TFSTextureIndexNormal) ]],
+texture2d<half>                    emissiveTexture     [[ texture(TFSTextureIndexEmissive) ]],
 depth2d_array<float>               shadowArray         [[ texture(TFSTextureIndexShadow) ]]) {
     float2 baseUV   = in.uv;
     float2 normalUV = in.uv;
@@ -56,8 +57,12 @@ depth2d_array<float>               shadowArray         [[ texture(TFSTextureInde
     // Unlike GBuffer.metal this fragment binds no specular map, so the Temple's map_Ks is not
     // sampled in the tiled renderers.
     float4 normalSpecular = float4(N, material.specular.r);
-    
+
+    // Emission rides in the lighting target, as in tiled_deferred_gbuffer_fragment.
+    float3 emission = ResolveEmission(in.useObjectColor, material.emissive, emissiveTexture, sampler2d, baseUV);
+
     GBufferOut out {
+        .lighting = float4(emission, 1),
         .albedo = color,
         .normalSpecular = normalSpecular,
         .positionShininess = float4(in.worldPosition, material.shininess)

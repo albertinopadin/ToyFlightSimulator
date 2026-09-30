@@ -100,6 +100,34 @@ inline float4 ResolveBaseColor(bool useObjectColor,
     return fallbackColor;
 }
 
+// Emission: light a surface gives off by itself (the cockpit displays, HUD symbology and
+// indicator lenses), added after lighting so it stays bright in shadow and at night. The
+// cascade mirrors ResolveBaseColor: a setColor object shows a flat color and gives off
+// nothing (it skips the normal and specular maps the same way), else the emission map, else
+// the material's constant emission (zero unless a USD file authors emissiveColor; Material
+// never reads it from an OBJ). Pass the base-color UV: MaterialTextureTransforms has no
+// emission slot. Linear RGB: the map is loaded sRGB, so sampling decodes it.
+inline float3 ResolveEmission(bool useObjectColor,
+                              float3 materialEmission,
+                              texture2d<half> emissionMap,
+                              sampler s,
+                              float2 uv) {
+    if (useObjectColor)                { return float3(0); }
+    if (!is_null_texture(emissionMap)) { return float3(emissionMap.sample(s, uv).rgb); }
+    return materialEmission;
+}
+
+// Same cascade for float-element textures (Base.metal and the forward transparency fragments).
+inline float3 ResolveEmission(bool useObjectColor,
+                              float3 materialEmission,
+                              texture2d<float> emissionMap,
+                              sampler s,
+                              float2 uv) {
+    if (useObjectColor)                { return float3(0); }
+    if (!is_null_texture(emissionMap)) { return emissionMap.sample(s, uv).rgb; }
+    return materialEmission;
+}
+
 // Recover the eye-space position of a G-buffer fragment: scale the interpolated
 // view ray so its z equals the stored eye-space depth. The depth is a
 // z-coordinate, not a radial distance — normalize(eyeRay) * depth lands off the

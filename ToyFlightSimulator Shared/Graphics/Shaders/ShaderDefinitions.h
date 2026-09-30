@@ -73,11 +73,21 @@ inline float2 ApplyUVTransform(float2 uv, float3x3 transform) {
 }
 
 // For Tiled Deferred Renderer. Channel layout (formats in TiledDeferredGBufferTextures.swift):
+//   lighting.rgb          emission (G-buffer stage), then the lit color (sun pass onward)
 //   albedo.rgb            linear base color           albedo.a             lit fraction (shadow)
 //   normalSpecular.xyz    world-space unit normal     normalSpecular.a     specular strength
 //   positionShininess.xyz world-space position, m     positionShininess.w  specular exponent
 // normal and position are rgba16Float, so the exponent is exact for integers up to 2048.
+//
+// `lighting` is the renderer's color target (MainPixelFormat), not a G-buffer texture. The
+// three G-buffer targets have no spare channel for emission, so the G-buffer stage writes each
+// surface's emission straight into the lighting target (0 for surfaces that give off no
+// light, replacing the clear color), and the sun pass reads it back as the `emission` input of
+// Lighting::ShadeDirectionalBlinnPhong before overwriting it with the lit color. A nearer
+// surface drawn later overwrites a farther one's emission, exactly as it does its albedo.
+// The same idea as a base pass writing emissive into scene color before deferred lighting.
 struct GBufferOut {
+    float4 lighting             [[ color(TFSRenderTargetLighting) ]];
     float4 albedo               [[ color(TFSRenderTargetAlbedo) ]];
     float4 normalSpecular       [[ color(TFSRenderTargetNormal) ]];
     float4 positionShininess    [[ color(TFSRenderTargetPosition) ]];

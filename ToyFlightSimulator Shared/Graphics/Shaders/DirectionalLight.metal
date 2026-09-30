@@ -58,6 +58,9 @@ deferred_directional_lighting_fragment(QuadInOut            in         [[ stage_
     float3 eyeToLight = lightData.lightEyeDirection;
     float3 eyePosition = ReconstructEyePosition(in.eye_position, GBuffer.depth);
     float3 eyeToCamera = -normalize(eyePosition);
+    // gbuffer_fragment_material left this pixel's emission in the lighting target; the
+    // output below replaces it with emission + ambient + direct light.
+    float3 emission = float3(GBuffer.lighting.rgb);
     // Landing-order step 2 (landed 2026-09-22): the strength is the per-pixel value GBuffer.metal
     // writes into albedo_specular.a (the specular map's red channel, else material.specular.r,
     // 0.25 by default). This G-buffer has no free channel for the exponent (normal_shadow.a is
@@ -67,6 +70,7 @@ deferred_directional_lighting_fragment(QuadInOut            in         [[ stage_
     // surface to white (the table under Step 4 in the shading doc).
     float3 color = Lighting::ShadeDirectionalBlinnPhong(albedo,
                                                         eyeNormal,
+                                                        emission,
                                                         eyeToLight,
                                                         eyeToCamera,
                                                         lightData,

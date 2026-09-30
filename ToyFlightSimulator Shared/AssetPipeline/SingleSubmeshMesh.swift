@@ -57,7 +57,12 @@ class SingleSubmeshMesh: Mesh {
     // one cached mesh, and re-applying the same origin must not accumulate.
     private var _appliedOrigin: float3 = .zero
 
-    init(asset: MDLAsset, mtkMesh: MTKMesh, mdlMesh: MDLMesh, submesh: Submesh, basisTransform: float4x4 = .identity) {
+    init(asset: MDLAsset,
+         mtkMesh: MTKMesh,
+         mdlMesh: MDLMesh,
+         submesh: Submesh,
+         basisTransform: float4x4 = .identity,
+         parentModelType: ModelExtension) {
         // Centralize vertices:
         let vertBuf = mtkMesh.vertexBuffers[0].buffer
         // Metadata must be captured before super.init (vertexMetadata is a `let`), but
@@ -73,7 +78,11 @@ class SingleSubmeshMesh: Mesh {
         // copyVertexBuffer: true — this MTKMesh's vertex buffer may be shared with
         // sibling submeshes from the same cached parent asset, so let super.init hand
         // us a private copy that translateSubmeshVertices(...) can recenter in place.
-        super.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform, copyVertexBuffer: true)
+        super.init(mdlMesh: mdlMesh,
+                   mtkMesh: mtkMesh,
+                   basisTransform: basisTransform,
+                   copyVertexBuffer: true,
+                   parentModelType: parentModelType)
 
         name = submesh.name
 
@@ -216,7 +225,8 @@ class SingleSubmeshMesh: Mesh {
     private static func makeSingleSMMeshWithSubmeshNamed(_ submeshName: String,
                                                          asset: MDLAsset,
                                                          object: MDLObject,
-                                                         basisTransform: float4x4) -> SingleSubmeshMesh? {
+                                                         basisTransform: float4x4,
+                                                         parentModelType: ModelExtension) -> SingleSubmeshMesh? {
         if let mdlMesh = object as? MDLMesh {
             if let mdlSubmesh = getMdlSubmeshNamed(submeshName, mdlMesh: mdlMesh) {
                 mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
@@ -230,12 +240,13 @@ class SingleSubmeshMesh: Mesh {
                 let metalKitMesh = try! MTKMesh(mesh: mdlMesh, device: Engine.Device)
                 let mtkSubmesh = metalKitMesh.submeshes.filter({ $0.name == submeshName })[0]
                 print("[SingleSubmeshMesh makeSingleSMMeshWithSubmeshNamed] Creating Submesh...")
-                let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh)
+                let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh, parentModelType: parentModelType)
                 return SingleSubmeshMesh(asset: asset,
                                          mtkMesh: metalKitMesh,
                                          mdlMesh: mdlMesh,
                                          submesh: submesh,
-                                         basisTransform: basisTransform)
+                                         basisTransform: basisTransform,
+                                         parentModelType: parentModelType)
             }
         }
 
@@ -244,7 +255,8 @@ class SingleSubmeshMesh: Mesh {
                 if let mesh = makeSingleSMMeshWithSubmeshNamed(submeshName,
                                                                asset: asset,
                                                                object: child,
-                                                               basisTransform: basisTransform) {
+                                                               basisTransform: basisTransform,
+                                                               parentModelType: parentModelType) {
                     return mesh
                 }
             }
@@ -261,10 +273,24 @@ class SingleSubmeshMesh: Mesh {
 
         let (asset, root) = loadParentModel(modelName: modelName, ext: ext)
 
+        // The file format decides whether Material reads `.emission` (USD only, see
+        // Material.readsEmission). An unknown extension counts as OBJ, so it reads none.
+        let parentModelType: ModelExtension
+        switch ext {
+            case "obj":
+                parentModelType = .OBJ
+            case "usdc":
+                parentModelType = .USDC
+            case "usd", "usdz":
+                parentModelType = .USDZ
+            default:
+                parentModelType = .OBJ
+        }
         guard let cMesh = SingleSubmeshMesh.makeSingleSMMeshWithSubmeshNamed(submeshName,
                                                                              asset: asset,
                                                                              object: root,
-                                                                             basisTransform: basisTransform) else {
+                                                                             basisTransform: basisTransform,
+                                                                             parentModelType: parentModelType) else {
             fatalError("[SingleSubmeshMesh makeMeshWithSubmeshNamed] Could not find any submesh named \(submeshName)")
         }
 

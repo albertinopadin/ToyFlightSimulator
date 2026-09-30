@@ -37,7 +37,11 @@ class Mesh {
         createBuffer()
     }
     
-    init(mdlMesh: MDLMesh, mtkMesh: MTKMesh, basisTransform: float4x4? = nil, copyVertexBuffer: Bool = false) {
+    init(mdlMesh: MDLMesh,
+         mtkMesh: MTKMesh,
+         basisTransform: float4x4? = nil,
+         copyVertexBuffer: Bool = false,
+         parentModelType: ModelExtension? = nil) {
         print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
         name = mdlMesh.name
         self.mdlMesh = mdlMesh
@@ -68,7 +72,8 @@ class Mesh {
             let mtkSubmesh = mtkMesh.submeshes[i]
             let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
             let submesh = Submesh(mtkSubmesh: mtkSubmesh,
-                                  mdlSubmesh: mdlSubmesh)
+                                  mdlSubmesh: mdlSubmesh,
+                                  parentModelType: parentModelType)
             addSubmesh(submesh)
         }
 
@@ -86,7 +91,7 @@ class Mesh {
                      mdlMesh: MDLMesh,
                      vertexDescriptor: MDLVertexDescriptor,
                      addTangentBases: Bool = true,
-                     basisTransform: float4x4? = nil) {
+                     basisTransform: float4x4? = nil, parentModelType: ModelExtension) {
         do {
             if addTangentBases {
                 mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
@@ -105,7 +110,7 @@ class Mesh {
             print("[Mesh init] instantiating MTKMesh...")
             let mtkMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
             print("[Mesh init] MTKMesh: \(String(describing: mtkMesh))")
-            self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform)
+            self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform, parentModelType: parentModelType)
         } catch {
             fatalError("ERROR::LOADING_MDLMESH::__::\(error.localizedDescription)")
         }
@@ -121,8 +126,8 @@ class Mesh {
     convenience init(asset: MDLAsset,
                      mtkMesh: MTKMesh,
                      mdlMesh: MDLMesh,
-                     basisTransform: float4x4? = nil) {
-        self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform)
+                     basisTransform: float4x4? = nil, parentModelType: ModelExtension) {
+        self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform, parentModelType: parentModelType)
         
         if mdlMesh.transform != nil {
             transform = TransformComponent(object: mdlMesh,

@@ -149,6 +149,9 @@ tessellation_gbuffer_fragment(
     }
     
     GBufferOut out {
+        // The terrain gives off no light: 0 replaces the clear color in the lighting target,
+        // so the sun pass reads no emission here (see GBufferOut).
+        .lighting = float4(0, 0, 0, 1),
         .albedo = color,
         .normalSpecular = normalSpecular,
         // World-space meters — the point-light pass reads this target as the fragment's

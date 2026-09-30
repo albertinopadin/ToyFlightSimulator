@@ -43,7 +43,8 @@ og_tiled_deferred_directional_light_fragment(         FullScreenVertexOut  in   
 // G-buffer: albedo with the lit fraction in .a, the world-space normal with the material's
 // specular strength in normalSpecular.a, the world-space position with the material's exponent
 // in positionShininess.w (both rgba16Float, so the exponent is exact for integers up to 2048 and
-// overflows to +inf above 65,504), plus the camera position from SceneConstants.
+// overflows to +inf above 65,504), the emission the G-buffer stage wrote into the lighting
+// target, plus the camera position from SceneConstants.
 //
 // No material buffer is bound for this stage, on purpose: this full-screen triangle shares the
 // G-buffer stage's encoder, so a MaterialProperties parameter here would read whatever
@@ -62,8 +63,12 @@ tiled_deferred_directional_light_fragment(FullScreenVertexOut  in               
     float3 worldPosition = gBuffer.positionShininess.xyz;
     float3 toLight = lightData.direction;
     float3 toCamera = normalize(sceneConstants.cameraPosition - worldPosition);
+    // The G-buffer stage left this pixel's emission in the lighting target (see GBufferOut).
+    // The return value below replaces it with emission + ambient + direct light.
+    float3 emission = gBuffer.lighting.rgb;
     float3 color = Lighting::ShadeDirectionalBlinnPhong(albedo,
                                                         normal,
+                                                        emission,
                                                         toLight,
                                                         toCamera,
                                                         lightData,
