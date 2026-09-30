@@ -5,7 +5,7 @@
 `~/Desktop/BlenderProjects/ToyFlightSimulator/F22_Cockpit/README.md` (sources for the cockpit
 layout, the frame conventions, the rig, and how to rebuild or re-export the asset). No research
 document: this is asset integration through existing engine paths, small enough to plan from the code.
-**Status:** in progress (Milestones 1–3 landed in 25f61c9, Milestone 4 in be87bfd)
+**Status:** in progress (Milestones 1–3 landed in 25f61c9, Milestone 4 in be87bfd, Milestone 5 in 56dbe0d)
 **Related plans:** `plans/claude/c_key_camera_toggle.md` (camera registry and slot selection),
 `plans/claude/procedural-animation-plan.md` (procedural channels),
 `plans/claude/aircraft_center_of_mass_recentering_2026-09-25.md` (the F-22 body frame used for the eye point)
@@ -660,7 +660,7 @@ function updateCockpitControls(aircraft, controlInput)
   - Aircraft swap → the old jet's animator leaves with the old aircraft; the new jet builds its own
     in `attachCockpit` on the UpdateThread (`applyAircraftSwap` constructs the aircraft there).
 
-### Milestone 5 — Emission term for displays, HUD and indicator lenses
+### Milestone 5 — Emission term for displays, HUD and indicator lenses ✅ (landed 2026-09-30, 56dbe0d)
 
 - **Learning objective:** why emissive surfaces bypass lighting, why only the USD dialect may
   read `.emission` (Model I/O stores an OBJ's `Ka` there), and how a deferred renderer carries a
