@@ -46,12 +46,12 @@ class Model: Hashable {
                           mdlMeshes: [MDLMesh],
                           descriptor: MDLVertexDescriptor,
                           basisTransform: float4x4? = nil,
-                          modelType: ModelExtension) -> [Mesh] {
+                          sourceFileFormat: ModelExtension) -> [Mesh] {
         return mdlMeshes.map { Mesh(asset: asset,
                                     mdlMesh: $0,
                                     vertexDescriptor: descriptor,
                                     basisTransform: basisTransform,
-                                    parentModelType: modelType) }
+                                    sourceFileFormat: sourceFileFormat) }
     }
     
     static func LoadAsset(_ modelName: String,
@@ -258,7 +258,7 @@ class Model: Hashable {
                                      mdlMeshes: mdlMeshes,
                                      descriptor: descriptor,
                                      basisTransform: meterizedCenteredBasisTransform,
-                                     modelType: fileExtension)
+                                     sourceFileFormat: fileExtension)
 
         self.id = UUID().uuidString
         self.name = modelName

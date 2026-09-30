@@ -34,13 +34,12 @@ struct Material: sizeable {
         return opacityTexture != nil || properties.opacity < 1.0 || properties.color.w < 1.0
     }
     
-    /// `parentModelType` is the file format the material came from. It decides whether the
-    /// `.emission` semantic is read at all (see `readsEmission`); nil (procedural meshes,
-    /// hand-built materials) reads no emission.
-    init(_ mdlMaterial: MDLMaterial, parentModelType: ModelExtension? = nil) {
+    /// `sourceFileFormat` (OBJ, USDC, USDZ) decides whether the `.emission` semantic is read at
+    /// all (see `readsEmission`); nil (procedural meshes, hand-built materials) reads no emission.
+    init(_ mdlMaterial: MDLMaterial, sourceFileFormat: ModelExtension? = nil) {
         name = mdlMaterial.name
-        setProperties(with: mdlMaterial, semantics: Self.IMPLEMENTED_SEMANTICS, parentModelType: parentModelType)
-        populateMaterial(with: mdlMaterial, parentModelType: parentModelType)
+        setProperties(with: mdlMaterial, semantics: Self.IMPLEMENTED_SEMANTICS, sourceFileFormat: sourceFileFormat)
+        populateMaterial(with: mdlMaterial, sourceFileFormat: sourceFileFormat)
     }
 
     /// Whether `.emission` means emission for this file format. For USD it is the authored
@@ -50,11 +49,11 @@ struct Material: sizeable {
     /// `Ke`, so reading it would paint the F-16 white. Both arrive as the same float3 property,
     /// so the file format is the only way to tell them apart. See
     /// research/claude/modelio_material_semantics_blinn_phong_2026-09-21.md §1.2.
-    static func readsEmission(from parentModelType: ModelExtension?) -> Bool {
-        return parentModelType == .USDC || parentModelType == .USDZ
+    static func readsEmission(from sourceFileFormat: ModelExtension?) -> Bool {
+        return sourceFileFormat == .USDC || sourceFileFormat == .USDZ
     }
 
-    private mutating func populateMaterial(with material: MDLMaterial, parentModelType: ModelExtension?) {
+    private mutating func populateMaterial(with material: MDLMaterial, sourceFileFormat: ModelExtension?) {
         // First property per semantic, on purpose. Model I/O lists an authored USD value (the
         // Sketchfab F-22 canopy's `diffuseColor`) FIRST and its own scattering-function default
         // (0.18 gray "baseColor") after it, so iterating `properties(with:)` let the default win.
@@ -68,19 +67,19 @@ struct Material: sizeable {
                         if let stringValue = property.stringValue {
                             let texture = TextureLoader.Texture(name: stringValue,
                                                                 srgb: Self.isSRGBSemantic(semantic))
-                            populateTexture(texture, for: semantic, parentModelType: parentModelType)
+                            populateTexture(texture, for: semantic, sourceFileFormat: sourceFileFormat)
                         }
 
                     case .URL:
                         if let textureURL = property.urlValue {
                             let texture = TextureLoader.Texture(url: textureURL,
                                                                 srgb: Self.isSRGBSemantic(semantic))
-                            populateTexture(texture, for: semantic, parentModelType: parentModelType)
+                            populateTexture(texture, for: semantic, sourceFileFormat: sourceFileFormat)
                         }
 
                     case .texture:
                         // Every texture-typed semantic, the USD emission map included, loads here.
-                        self.populateTexture(from: property, semantic: semantic, parentModelType: parentModelType)
+                        self.populateTexture(from: property, semantic: semantic, sourceFileFormat: sourceFileFormat)
 
                     case .color, .float3, .float4:
                         // Untextured albedo fallback (MTL `Kd`, USD `diffuseColor`), read by the shaders
@@ -144,7 +143,7 @@ struct Material: sizeable {
 
     private mutating func populateTexture(_ texture: MTLTexture?,
                                           for semantic: MDLMaterialSemantic,
-                                          parentModelType: ModelExtension?) {
+                                          sourceFileFormat: ModelExtension?) {
         switch semantic {
             case .baseColor:
                 baseColorTexture = texture
@@ -163,7 +162,7 @@ struct Material: sizeable {
             case .emission:
                 // No UV-transform slot exists for this map (populateTextureTransform ignores
                 // .emission), so the shaders sample it with the base color's UV.
-                if Self.readsEmission(from: parentModelType) {
+                if Self.readsEmission(from: sourceFileFormat) {
                     emissiveTexture = texture
                 }
             default:
@@ -216,13 +215,13 @@ struct Material: sizeable {
     /// Loads a texture-typed property (USD's connected UsdUVTexture) and its UV transform.
     private mutating func populateTexture(from materialProperty: MDLMaterialProperty,
                                           semantic: MDLMaterialSemantic,
-                                          parentModelType: ModelExtension?) {
+                                          sourceFileFormat: ModelExtension?) {
         guard let sampler = materialProperty.textureSamplerValue,
               let sourceTexture = sampler.texture else { return }
 
         let texture = TextureLoader.Texture(mdlTexture: sourceTexture,
                                             srgb: Self.isSRGBSemantic(semantic))
-        populateTexture(texture, for: semantic, parentModelType: parentModelType)
+        populateTexture(texture, for: semantic, sourceFileFormat: sourceFileFormat)
 
         let uvAffine = Self.uvAffine(from: sampler.transform, materialName: name)
         populateTextureTransform(uvAffine, for: semantic)
@@ -230,7 +229,7 @@ struct Material: sizeable {
     
     private mutating func setProperties(with mdlMaterial: MDLMaterial,
                                         semantics: [MDLMaterialSemantic],
-                                        parentModelType: ModelExtension?) {
+                                        sourceFileFormat: ModelExtension?) {
         for semantic in semantics {
             if let materialProp = mdlMaterial.property(with: semantic) {
                 switch semantic {
@@ -255,7 +254,7 @@ struct Material: sizeable {
                         // readsEmission). The legacy `ambient` field this semantic used to fill is
                         // no longer read: ambient is albedo × ambientIntensity in
                         // Lighting::ShadeDirectionalBlinnPhong.
-                        if Self.readsEmission(from: parentModelType) && materialProp.type == .float3 {
+                        if Self.readsEmission(from: sourceFileFormat) && materialProp.type == .float3 {
                             properties.emissive = materialProp.float3Value
                         }
                     case .roughness:

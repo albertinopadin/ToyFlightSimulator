@@ -64,7 +64,7 @@ struct MaterialEmissionTests {
         #expect(emissionProperty.type == .float3)
         #expect(approxEqual(emissionProperty.float3Value, [1, 1, 1]))
 
-        let material = Material(mdlMaterial, parentModelType: .OBJ)
+        let material = Material(mdlMaterial, sourceFileFormat: .OBJ)
         #expect(material.properties.emissive == .zero)
         #expect(material.emissiveTexture == nil)
     }
@@ -77,7 +77,7 @@ struct MaterialEmissionTests {
                                                        writing: [("lens.usda", Self.lensUSDA(emissiveColor: "(0.8, 0.02, 0.01)"))],
                                                        in: directory)
 
-        let material = Material(mdlMaterial, parentModelType: .USDZ)
+        let material = Material(mdlMaterial, sourceFileFormat: .USDZ)
         #expect(approxEqual(material.properties.emissive, [0.8, 0.02, 0.01]))
         #expect(material.emissiveTexture == nil)
     }
@@ -91,7 +91,7 @@ struct MaterialEmissionTests {
                                                        in: directory)
 
         // Model I/O's own default ("emission", 0 0 0) is what property(with:) returns here.
-        let material = Material(mdlMaterial, parentModelType: .USDZ)
+        let material = Material(mdlMaterial, sourceFileFormat: .USDZ)
         #expect(material.properties.emissive == .zero)
     }
 

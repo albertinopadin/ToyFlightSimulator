@@ -41,7 +41,7 @@ class Mesh {
          mtkMesh: MTKMesh,
          basisTransform: float4x4? = nil,
          copyVertexBuffer: Bool = false,
-         parentModelType: ModelExtension? = nil) {
+         sourceFileFormat: ModelExtension? = nil) {
         print("[Mesh init] mdlMesh name: \(mdlMesh.name)")
         name = mdlMesh.name
         self.mdlMesh = mdlMesh
@@ -73,7 +73,7 @@ class Mesh {
             let mdlSubmesh = mdlMesh.submeshes![i] as! MDLSubmesh
             let submesh = Submesh(mtkSubmesh: mtkSubmesh,
                                   mdlSubmesh: mdlSubmesh,
-                                  parentModelType: parentModelType)
+                                  sourceFileFormat: sourceFileFormat)
             addSubmesh(submesh)
         }
 
@@ -91,7 +91,7 @@ class Mesh {
                      mdlMesh: MDLMesh,
                      vertexDescriptor: MDLVertexDescriptor,
                      addTangentBases: Bool = true,
-                     basisTransform: float4x4? = nil, parentModelType: ModelExtension) {
+                     basisTransform: float4x4? = nil, sourceFileFormat: ModelExtension) {
         do {
             if addTangentBases {
                 mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
@@ -110,7 +110,7 @@ class Mesh {
             print("[Mesh init] instantiating MTKMesh...")
             let mtkMesh = try MTKMesh(mesh: mdlMesh, device: Engine.Device)
             print("[Mesh init] MTKMesh: \(String(describing: mtkMesh))")
-            self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform, parentModelType: parentModelType)
+            self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform, sourceFileFormat: sourceFileFormat)
         } catch {
             fatalError("ERROR::LOADING_MDLMESH::__::\(error.localizedDescription)")
         }
@@ -126,8 +126,8 @@ class Mesh {
     convenience init(asset: MDLAsset,
                      mtkMesh: MTKMesh,
                      mdlMesh: MDLMesh,
-                     basisTransform: float4x4? = nil, parentModelType: ModelExtension) {
-        self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform, parentModelType: parentModelType)
+                     basisTransform: float4x4? = nil, sourceFileFormat: ModelExtension) {
+        self.init(mdlMesh: mdlMesh, mtkMesh: mtkMesh, basisTransform: basisTransform, sourceFileFormat: sourceFileFormat)
         
         if mdlMesh.transform != nil {
             transform = TransformComponent(object: mdlMesh,

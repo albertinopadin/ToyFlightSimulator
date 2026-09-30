@@ -62,7 +62,7 @@ class SingleSubmeshMesh: Mesh {
          mdlMesh: MDLMesh,
          submesh: Submesh,
          basisTransform: float4x4 = .identity,
-         parentModelType: ModelExtension) {
+         sourceFileFormat: ModelExtension) {
         // Centralize vertices:
         let vertBuf = mtkMesh.vertexBuffers[0].buffer
         // Metadata must be captured before super.init (vertexMetadata is a `let`), but
@@ -82,7 +82,7 @@ class SingleSubmeshMesh: Mesh {
                    mtkMesh: mtkMesh,
                    basisTransform: basisTransform,
                    copyVertexBuffer: true,
-                   parentModelType: parentModelType)
+                   sourceFileFormat: sourceFileFormat)
 
         name = submesh.name
 
@@ -226,7 +226,7 @@ class SingleSubmeshMesh: Mesh {
                                                          asset: MDLAsset,
                                                          object: MDLObject,
                                                          basisTransform: float4x4,
-                                                         parentModelType: ModelExtension) -> SingleSubmeshMesh? {
+                                                         sourceFileFormat: ModelExtension) -> SingleSubmeshMesh? {
         if let mdlMesh = object as? MDLMesh {
             if let mdlSubmesh = getMdlSubmeshNamed(submeshName, mdlMesh: mdlMesh) {
                 mdlMesh.addTangentBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
@@ -240,13 +240,13 @@ class SingleSubmeshMesh: Mesh {
                 let metalKitMesh = try! MTKMesh(mesh: mdlMesh, device: Engine.Device)
                 let mtkSubmesh = metalKitMesh.submeshes.filter({ $0.name == submeshName })[0]
                 print("[SingleSubmeshMesh makeSingleSMMeshWithSubmeshNamed] Creating Submesh...")
-                let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh, parentModelType: parentModelType)
+                let submesh = Submesh(mtkSubmesh: mtkSubmesh, mdlSubmesh: mdlSubmesh, sourceFileFormat: sourceFileFormat)
                 return SingleSubmeshMesh(asset: asset,
                                          mtkMesh: metalKitMesh,
                                          mdlMesh: mdlMesh,
                                          submesh: submesh,
                                          basisTransform: basisTransform,
-                                         parentModelType: parentModelType)
+                                         sourceFileFormat: sourceFileFormat)
             }
         }
 
@@ -256,7 +256,7 @@ class SingleSubmeshMesh: Mesh {
                                                                asset: asset,
                                                                object: child,
                                                                basisTransform: basisTransform,
-                                                               parentModelType: parentModelType) {
+                                                               sourceFileFormat: sourceFileFormat) {
                     return mesh
                 }
             }
@@ -275,22 +275,22 @@ class SingleSubmeshMesh: Mesh {
 
         // The file format decides whether Material reads `.emission` (USD only, see
         // Material.readsEmission). An unknown extension counts as OBJ, so it reads none.
-        let parentModelType: ModelExtension
+        let sourceFileFormat: ModelExtension
         switch ext {
             case "obj":
-                parentModelType = .OBJ
+                sourceFileFormat = .OBJ
             case "usdc":
-                parentModelType = .USDC
+                sourceFileFormat = .USDC
             case "usd", "usdz":
-                parentModelType = .USDZ
+                sourceFileFormat = .USDZ
             default:
-                parentModelType = .OBJ
+                sourceFileFormat = .OBJ
         }
         guard let cMesh = SingleSubmeshMesh.makeSingleSMMeshWithSubmeshNamed(submeshName,
                                                                              asset: asset,
                                                                              object: root,
                                                                              basisTransform: basisTransform,
-                                                                             parentModelType: parentModelType) else {
+                                                                             sourceFileFormat: sourceFileFormat) else {
             fatalError("[SingleSubmeshMesh makeMeshWithSubmeshNamed] Could not find any submesh named \(submeshName)")
         }
 
