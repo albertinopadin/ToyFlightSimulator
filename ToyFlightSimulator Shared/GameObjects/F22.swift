@@ -67,17 +67,6 @@ class F22: Aircraft {
     override func doUpdate() {
         super.doUpdate()
         
-        // TODO(flight-model): replace with proper ground-plane collision response.
-        // Without zeroing downward velocity, the position resets every frame but
-        // the downward velocity keeps accumulating, so the clamp pins harder and
-        // harder each step.
-        if getPositionY() < 0 {
-            setPositionY(0.0)
-            if let rigidBody, rigidBody.velocity.y < 0 {
-                rigidBody.velocity.y = 0
-            }
-        }
-        
         if hasFocus {
             let fwdValue = InputManager.ContinuousCommand(.MoveFwd)
             

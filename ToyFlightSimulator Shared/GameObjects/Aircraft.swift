@@ -277,12 +277,13 @@ class Aircraft: GameObject {
     /// while the nose is vertical. The math is `AircraftTelemetry.make`, a
     /// pure function tested without Metal.
     public func getTelemetrySnapshot() -> AircraftTelemetry {
+        let worldPosition = (getWorldPosition().toDouble3() + SceneManager.floatingOriginOffset).toFloat3()
         let snapshot = AircraftTelemetry.make(aircraftType: aircraftType,
                                               forward: getFwdVector(),
                                               right: getRightVector(),
                                               up: getUpVector(),
                                               velocity: rigidBody?.velocity ?? .zero,
-                                              worldPosition: getWorldPosition(),
+                                              worldPosition: worldPosition,
                                               previous: lastTelemetrySnapshot)
         lastTelemetrySnapshot = snapshot
         return snapshot

@@ -11,6 +11,8 @@ public typealias float2 = SIMD2<Float>
 public typealias float3 = SIMD3<Float>
 public typealias float4 = SIMD4<Float>
 
+public typealias double3 = SIMD3<Double>
+
 protocol sizeable {}
 
 extension sizeable {
@@ -28,6 +30,30 @@ extension sizeable {
     
     static func stride(_ count: Int) -> Int {
         return MemoryLayout<Self>.stride * count
+    }
+}
+
+extension Float {
+    public func toDouble() -> Double {
+        Double(self)
+    }
+}
+
+extension Double {
+    public func toFloat() -> Float {
+        Float(self)
+    }
+}
+
+extension float3 {
+    public func toDouble3() -> double3 {
+        [self.x.toDouble(), self.y.toDouble(), self.z.toDouble()]
+    }
+}
+
+extension double3 {
+    public func toFloat3() -> float3 {
+        [self.x.toFloat(), self.y.toFloat(), self.z.toFloat()]
     }
 }
 

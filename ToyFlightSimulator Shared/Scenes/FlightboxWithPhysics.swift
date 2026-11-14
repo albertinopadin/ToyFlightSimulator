@@ -336,7 +336,7 @@ final class FlightboxWithPhysics: GameScene {
                 CameraManager.UnregisterCamera(cockpitCamera)
             }
 
-            playerAircraft.setPosition(aircraftStartPosition)
+            playerAircraft.setPosition(aircraftStartPosition - SceneManager.floatingOriginOffset.toFloat3())
 
             if let prevAc {
                 SceneManager.RemoveObject(prevAc)

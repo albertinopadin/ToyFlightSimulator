@@ -94,4 +94,10 @@ final class CameraManager {
     public static func GetCurrentCameraPosition() -> float3 {
         CurrentCamera?.modelMatrix.columns.3.xyz ?? .zero
     }
+    
+    public static func ShiftUnparentedCameras(by offset: float3) {
+        for camera in _cameras where camera.parent == nil {
+            camera.setPosition(camera.getPosition() - offset)
+        }
+    }
 }

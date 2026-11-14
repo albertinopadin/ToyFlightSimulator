@@ -296,6 +296,7 @@ class Node: ClickSelectable {
         let world = modelMatrix.columns.3
         return float3(world.x, world.y, world.z)
     }
+    
     func getPositionZ() -> Float { return self._position.z }
     
     //Rotating
