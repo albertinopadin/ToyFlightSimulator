@@ -68,7 +68,40 @@ class Model: Hashable {
         asset.loadTextures()
         return asset
     }
-    
+
+    /// The message `Model.init` stops with when a model file yields no meshes.
+    ///
+    /// A model with no meshes cannot be drawn or measured, and without this check the
+    /// failure surfaces later and points at the wrong system: a meterized aircraft trips
+    /// "degenerate native length 0.0 — cannot meterize" (an empty mesh list has a zero
+    /// extent), and a model without `realWorldLength` loads silently and draws nothing.
+    ///
+    /// The file's byte count separates the two causes:
+    /// - 0 bytes: the bundled copy is empty. Xcode copies an evicted iCloud placeholder
+    ///   (a "dataless" file, which reports its full size but holds no data on disk) as an
+    ///   empty file with no build error, and a later incremental build does not copy it again.
+    /// - more than 0 bytes: the file has content that Model I/O could not read as meshes.
+    ///
+    /// Pure string building, so Metal-free and unit-tested (ModelAssetLoadFailureTests).
+    static func NoMeshesFailureMessage(modelName: String,
+                                       assetFilePath: String?,
+                                       assetFileByteCount: Int?) -> String {
+        let failure = "[Model init] \(modelName): no meshes loaded from \(assetFilePath ?? "an unknown file path")"
+
+        guard let assetFileByteCount else {
+            return failure + " (file size unavailable)."
+        }
+
+        if assetFileByteCount == 0 {
+            return failure + " (0 bytes). The bundled file is empty. Its source was probably an evicted "
+                + "iCloud placeholder when Xcode copied it: download the source file, then Clean Build "
+                + "Folder and rebuild."
+        }
+
+        return failure + " (\(assetFileByteCount) bytes). The file has content, but Model I/O read no "
+            + "meshes from it: check that it is a valid model file."
+    }
+
     /// Extent of the model along the engine's forward axis (+Z) after `basisTransform`.
     /// Aircraft bases map the model's nose-to-tail axis onto ±Z (aircraft face +Z in
     /// this engine), so this is the aircraft's length. Row-vector `v * B`, matching
@@ -241,6 +274,19 @@ class Model: Hashable {
         DebugLog("[Model init] \(modelName) asset has \(loadedAsset.count) top level objects.", true)
         
         let mdlMeshes = loadedAsset.childObjects(of: MDLMesh.self) as? [MDLMesh] ?? []
+
+        // Checked before the import transform is composed: with no meshes the measured
+        // length is 0, and the failure would be reported as a meterization problem.
+        // fatalError rather than precondition, like the missing-file case in LoadAsset,
+        // so the message also prints in Release builds.
+        guard !mdlMeshes.isEmpty else {
+            let assetFileByteCount: Int? = loadedAsset.url.flatMap { assetFileURL in
+                try? assetFileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize
+            }
+            fatalError(Self.NoMeshesFailureMessage(modelName: modelName,
+                                                   assetFilePath: loadedAsset.url?.path,
+                                                   assetFileByteCount: assetFileByteCount))
+        }
 
         let meterizedCenteredBasisTransform: float4x4? = Self.ComposeImportTransform(
                                                                     modelName: modelName,
