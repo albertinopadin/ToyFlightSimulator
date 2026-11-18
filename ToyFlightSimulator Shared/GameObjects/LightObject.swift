@@ -27,6 +27,10 @@ class LightObject: GameObject {
     private var _shadowMaxDistance: Float = 500       // decouple shadow reach from cam.far
     private var _cascadeZPad:       Float = 100       // additive ortho z-padding (world units)
     private var _shadowWorldSlack:  Float = 0.25      // base slack; per-cascade scaled in shader
+    
+    private var _cascadeSnapPhases: [double2] = []     // per cascade: where the texel grid sits along the light's
+                                                       // X and Y axes, meters, each in [0, texel size)
+    private var _cascadeTexelSizes: [Float] = []       // per cascade: texel size the last fit used, meters
 
     // Explicit world-space direction (from surfaces TOWARD the sun). If nil,
     // direction is derived from `getPosition()` for backward compatibility with
@@ -104,21 +108,22 @@ class LightObject: GameObject {
         let ys = proj.columns.1.y
         let aspect = (xs != 0) ? (ys / xs) : Renderer.AspectRatio
 
-        let snapshot = ShadowCascadeFitting.CameraSnapshot(
-            viewMatrix: cam.viewMatrix,
-            near:       cam.near,
-            far:        cam.far,
-            fovY:       fovY,
-            aspect:     aspect)
+        let snapshot = ShadowCascadeFitting.CameraSnapshot(viewMatrix: cam.viewMatrix,
+                                                           near:       cam.near,
+                                                           far:        cam.far,
+                                                           fovY:       fovY,
+                                                           aspect:     aspect)
 
-        let fit = ShadowCascadeFitting.fitCascades(
-            camera:              snapshot,
-            lightDirection:      self.direction,
-            shadowMapResolution: _shadowMapRes,
-            cascadeCount:        _cascadeCount,
-            lambda:              _cascadeLambda,
-            shadowMaxDistance:   _shadowMaxDistance,
-            zPaddingWorldUnits:  _cascadeZPad)
+        let fit = ShadowCascadeFitting.fitCascades(camera:              snapshot,
+                                                   lightDirection:      self.direction,
+                                                   shadowMapResolution: _shadowMapRes,
+                                                   cascadeCount:        _cascadeCount,
+                                                   lambda:              _cascadeLambda,
+                                                   shadowMaxDistance:   _shadowMaxDistance,
+                                                   zPaddingWorldUnits:  _cascadeZPad,
+                                                   cascadeSnapPhases:   _cascadeSnapPhases)
+        
+        _cascadeTexelSizes = fit.texelSizes
 
         // Split-far depths are in view-space (scaled) units; convert to world
         // units for shader consumption (the fragment computes fragViewSpaceDepth
@@ -134,6 +139,14 @@ class LightObject: GameObject {
                            from: fit.splitFars.map { $0 * cameraScale })
         writeCascadeFloats(into: &lightData.cascadeDepthRanges,
                            from: fit.cascades.map { $0.depthRange })
+    }
+    
+    public func shiftShadowSnapPhases(by shiftOffset: float3) {
+        guard lightType == Directional && !_cascadeTexelSizes.isEmpty /* no fit has run yet */ else { return }
+        _cascadeSnapPhases = ShadowCascadeFitting.snapPhasesAfterOriginShift(cascadeSnapPhases: _cascadeSnapPhases,
+                                                                             texelSizes: _cascadeTexelSizes,
+                                                                             lightDirection: self.direction,
+                                                                             shiftOffset: shiftOffset)
     }
 }
 

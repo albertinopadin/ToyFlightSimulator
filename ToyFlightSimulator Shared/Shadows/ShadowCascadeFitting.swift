@@ -11,7 +11,6 @@
 import simd
 
 enum ShadowCascadeFitting {
-
     /// Minimal value-type snapshot of what `fitCascades` reads from the camera.
     /// Avoids coupling the Shadows folder to the `Camera` class.
     struct CameraSnapshot {
@@ -25,6 +24,7 @@ enum ShadowCascadeFitting {
     struct CascadeFit {
         let cascades:  [ShadowCamera]
         let splitFars: [Float]   // per-cascade far depth, view-space (scaled) units
+        let texelSizes: [Float]
     }
 
     // MARK: - PSSM "Practical Split Scheme" (Microsoft / Engel ShaderX5)
@@ -89,28 +89,8 @@ enum ShadowCascadeFitting {
         let centerWorld4 = cameraInverse * float4(0, 0, midZ, 1)
         return (float3(centerWorld4.x, centerWorld4.y, centerWorld4.z), radius)
     }
-
-    // MARK: - Per-cascade fit (sphere + world-space snap)
-    static func fitCascades(camera: CameraSnapshot,
-                            lightDirection: float3,
-                            shadowMapResolution: Int,
-                            cascadeCount: Int,
-                            lambda: Float,
-                            shadowMaxDistance: Float,
-                            zPaddingWorldUnits: Float) -> CascadeFit {
-        precondition(cascadeCount >= 1)
-
-        // Cap the cascade-fitting far. The flight-sim camera has `far` in the
-        // millions to render the horizon; running PSSM over [near, far] collapses
-        // cascade 0 to hundreds of thousands of world units wide. Decouple shadow
-        // reach from sky reach.
-        let near = camera.near
-        let far  = min(camera.far, shadowMaxDistance)
-        let splitFars = computeSplits(near: near, far: far,
-                                      cascadeCount: cascadeCount, lambda: lambda)
-
-        let cameraInverse = camera.viewMatrix.inverse
-
+    
+    static func lightBasis(lightDirection: float3) -> (xWorld: float3, yWorld: float3, zWorld: float3) {
         // World-space light basis. Stable across frames: depends only on the
         // (constant) light direction and global up. The light looks toward the
         // focus along -direction. Degenerate when the light is exactly overhead;
@@ -122,11 +102,60 @@ enum ShadowCascadeFitting {
         }
         let xWorld = simd_normalize(xCandidate)
         let yWorld = simd_cross(zWorld, xWorld)
+        return (xWorld, yWorld, zWorld)
+    }
+    
+    static func positiveRemainder(value: Double, modulus: Double) -> Double {
+        var remainder = value.truncatingRemainder(dividingBy: modulus)  // Keeps the sign of the value
+        if remainder < 0 { remainder = remainder + modulus }
+        return remainder  // in [0, modulus)
+    }
+    
+    static func snapPhasesAfterOriginShift(cascadeSnapPhases: [double2],
+                                           texelSizes: [Float],
+                                           lightDirection: float3, shiftOffset: float3) -> [double2] {
+        let lightBasis = lightBasis(lightDirection: lightDirection)
+        let offsetAlongLightX = dot(lightBasis.xWorld.toDouble3(), shiftOffset.toDouble3())
+        let offsetAlongLightY = dot(lightBasis.yWorld.toDouble3(), shiftOffset.toDouble3())
+        var newPhases: [double2] = []
+        for cascadeIdx in 0..<texelSizes.count {
+            let oldPhase = cascadeIdx < cascadeSnapPhases.count ? cascadeSnapPhases[cascadeIdx] : [0, 0]
+            let texelSize = texelSizes[cascadeIdx].toDouble()
+            newPhases.append(double2(positiveRemainder(value: oldPhase.x - offsetAlongLightX, modulus: texelSize),
+                                     positiveRemainder(value: oldPhase.y - offsetAlongLightY, modulus: texelSize)))
+        }
+        return newPhases
+    }
+
+    // MARK: - Per-cascade fit (sphere + world-space snap)
+    static func fitCascades(camera: CameraSnapshot,
+                            lightDirection: float3,
+                            shadowMapResolution: Int,
+                            cascadeCount: Int,
+                            lambda: Float,
+                            shadowMaxDistance: Float,
+                            zPaddingWorldUnits: Float,
+                            cascadeSnapPhases: [double2] = []) -> CascadeFit {
+        precondition(cascadeCount >= 1)
+
+        // Cap the cascade-fitting far. The flight-sim camera has `far` in the
+        // millions to render the horizon; running PSSM over [near, far] collapses
+        // cascade 0 to hundreds of thousands of world units wide. Decouple shadow
+        // reach from sky reach.
+        let near = camera.near
+        let far  = min(camera.far, shadowMaxDistance)
+        let splitFars = computeSplits(near: near, far: far, cascadeCount: cascadeCount, lambda: lambda)
+
+        let cameraInverse = camera.viewMatrix.inverse
+
+        let (xWorld, yWorld, zWorld) = lightBasis(lightDirection: lightDirection)
 
         var cascades: [ShadowCamera] = []
         cascades.reserveCapacity(cascadeCount)
 
         var prevFar = near
+        var texelSizes: [Float] = []
+        
         for i in 0..<cascadeCount {
             let sliceFar = splitFars[i]
             let (sphereCenter, radius) = boundingSphereForSlice(
@@ -144,14 +173,23 @@ enum ShadowCascadeFitting {
             // the snap's frame of reference is itself derived from the value being
             // snapped.
             let texelSize = (2 * radius) / Float(shadowMapResolution)
-            let projX = simd_dot(xWorld, sphereCenter)
-            let projY = simd_dot(yWorld, sphereCenter)
-            let snappedProjX = floor(projX / texelSize) * texelSize
-            let snappedProjY = floor(projY / texelSize) * texelSize
-            let shift = (snappedProjX - projX) * xWorld
-                      + (snappedProjY - projY) * yWorld
-            let snappedCenter = sphereCenter + shift
+            texelSizes.append(texelSize)
+            
+            let snapPhase = i < cascadeSnapPhases.count ? cascadeSnapPhases[i] : [0, 0]
+            
+            let centerAlongLightX = simd_dot(xWorld, sphereCenter)  // current frame
+            let snappedAlongLightX = floor((centerAlongLightX.toDouble() - snapPhase.x) / texelSize.toDouble())
+                                     * texelSize.toDouble() + snapPhase.x
+            let snapShiftAlongLightX = Float(snappedAlongLightX - centerAlongLightX.toDouble())  // in (-texelSize, 0]
+            
+            let centerAlongLightY = simd_dot(yWorld, sphereCenter)  // current frame
+            let snappedAlongLightY = floor((centerAlongLightY.toDouble() - snapPhase.y) / texelSize.toDouble())
+                                     * texelSize.toDouble() + snapPhase.y
+            let snapShiftAlongLightY = Float(snappedAlongLightY - centerAlongLightY.toDouble())  // in (-texelSize, 0]
 
+            let snappedCenter = sphereCenter + snapShiftAlongLightX * xWorld
+                                             + snapShiftAlongLightY * yWorld
+            
             // Light view: eye at center + lightDirection (looking back down
             // toward surfaces), target the snapped center. Build it directly
             // from the degenerate-safe (xWorld, yWorld, zWorld) basis computed
@@ -186,6 +224,6 @@ enum ShadowCascadeFitting {
                 orthoNearZ: nearZ,      orthoFarZ: farZ))
         }
 
-        return CascadeFit(cascades: cascades, splitFars: splitFars)
+        return CascadeFit(cascades: cascades, splitFars: splitFars, texelSizes: texelSizes)
     }
 }

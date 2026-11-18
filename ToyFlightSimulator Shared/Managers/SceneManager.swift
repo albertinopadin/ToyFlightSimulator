@@ -271,8 +271,7 @@ final class SceneManager {
         let camWorldPosition = CameraManager.CurrentCamera?.getWorldPosition() ?? .zero
         
         if camWorldPosition.magnitude > ORIGIN_OFFSET_MAX_DISTANCE {
-            // TODO: do this with the proper logger:
-            print("Updating floating origin; camWorldPosition was:", camWorldPosition)
+            DebugLog("Updating floating origin; camWorldPosition was: \(camWorldPosition)", DEBUG_FLOATING_ORIGIN)
             for rootChildNode in CurrentScene?.children ?? [] {
                 if nodeIsDirectionalLightOrSky(node: rootChildNode) { continue }
                 rootChildNode.setPosition(rootChildNode.getPosition() - camWorldPosition)
@@ -281,7 +280,11 @@ final class SceneManager {
             // Unparented cameras (DebugCamera) hold a world position but are
             // not in the scene's children, so the loop above misses them.
             CameraManager.ShiftUnparentedCameras(by: camWorldPosition)
-
+            
+            for directionalLight in LightManager.GetLightObjects(lightType: Directional) {
+                directionalLight.shiftShadowSnapPhases(by: camWorldPosition)
+            }
+            
             floatingOriginOffset += camWorldPosition.toDouble3()
         }
     }
