@@ -24,7 +24,7 @@ enum ShadowCascadeFitting {
     struct CascadeFit {
         let cascades:  [ShadowCamera]
         let splitFars: [Float]   // per-cascade far depth, view-space (scaled) units
-        let texelSizes: [Float]
+        let texelSizes: [Float]  // per-cascade shadow-map texel size, world meters (ortho width / resolution)
     }
 
     // MARK: - PSSM "Practical Split Scheme" (Microsoft / Engel ShaderX5)
@@ -108,7 +108,13 @@ enum ShadowCascadeFitting {
     static func positiveRemainder(value: Double, modulus: Double) -> Double {
         var remainder = value.truncatingRemainder(dividingBy: modulus)  // Keeps the sign of the value
         if remainder < 0 { remainder = remainder + modulus }
-        return remainder  // in [0, modulus)
+        // In [0, modulus), with one rounding exception: when the remainder is
+        // negative and tiny next to the modulus (value -1e-20, modulus 0.05),
+        // adding the modulus rounds to exactly the modulus, so 0.05 comes back.
+        // A negative exact multiple (value -4, modulus 2) returns -0.0, which
+        // compares equal to 0. Both are harmless for a snap phase: phase and
+        // phase + texelSize name the same grid, and fitCascades accepts any phase.
+        return remainder
     }
     
     static func snapPhasesAfterOriginShift(cascadeSnapPhases: [double2],
@@ -167,10 +173,17 @@ enum ShadowCascadeFitting {
             prevFar = sliceFar
 
             // World-space texel snap. Project the sphere center onto the light
-            // basis axes, snap those scalar projections to integer multiples of
-            // the texel size, reapply as a world-space shift. The snap MUST be in
-            // world space — doing it in light view evaluates to a no-op because
-            // the snap's frame of reference is itself derived from the value being
+            // basis axes and snap each scalar projection down to the cascade's
+            // texel grid: the positions snapPhase + k * texelSize along that
+            // axis, k any whole number. floor() picks the grid position at or
+            // below the projection, so the center moves back by less than one
+            // texel. A missing phase counts as (0, 0), which is a grid through
+            // the current origin; after a floating-origin shift the phase is
+            // what keeps the grid in the same place under the world (see
+            // snapPhasesAfterOriginShift). The snapped projections are then
+            // reapplied as a world-space shift. The snap MUST be in world
+            // space — doing it in light view evaluates to a no-op because the
+            // snap's frame of reference is itself derived from the value being
             // snapped.
             let texelSize = (2 * radius) / Float(shadowMapResolution)
             texelSizes.append(texelSize)
