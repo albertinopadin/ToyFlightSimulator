@@ -547,8 +547,9 @@ struct ShadowCascadeFittingTests {
     // point must keep its sub-texel position in every cascade.
 
     /// One shift, with three kinds of offset: the raw camera position (what
-    /// `updateFloatingOrigin` subtracts today), the same rounded to whole
-    /// meters, and a vector unrelated to the camera.
+    /// `updateFloatingOrigin` subtracted before `FloatingOrigin.getOffset`
+    /// rounded it), the same rounded to whole meters (what it subtracts now),
+    /// and a vector unrelated to the camera.
     /// Scratch run: phases carried, the point moves at most 0.0027 texel;
     /// phases not carried, it moves 0.14 to 0.49 texel.
     @Test("an origin shift leaves a static point on the same sub-texel position when the phases are carried",

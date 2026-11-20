@@ -95,12 +95,16 @@ class LightObject: GameObject {
         self.lightData.position         = self.getPosition()
         self.lightData.direction        = self.direction
         self.lightData.shadowWorldSlack = _shadowWorldSlack
-
-        if self.lightType == Directional {
-            updateShadowCascades()
-        }
+        // The shadow cascades are not fitted here: GameScene.update() fits them after the whole
+        // traversal (fitShadowCascades). At this point a camera parented to a node that comes
+        // later in the scene's direct children still has last tick's world matrix.
     }
 
+    /// Deprecated and unused. `shadowCameraSnapshot(of:)` and `fitShadowCascades(to:)` below
+    /// replace it; `GameScene.update()` calls them after the scene traversal. This is the old
+    /// path, which `update()` called in the middle of the traversal and which read
+    /// `CameraManager.CurrentCamera` itself, so it could fit to last tick's camera.
+    ///
     /// Fit the cascades against the active main camera and stash their matrices
     /// in `lightData`. No-ops if no camera is active yet (matrices keep their
     /// last-good values, which is fine before SceneManager.SetScene registers
@@ -140,6 +144,68 @@ class LightObject: GameObject {
         // in world units via distance(worldPos, cameraPos)). Same scale
         // extraction as in boundingSphereForSlice.
         let c0 = cam.viewMatrix.inverse.columns.0
+        let cameraScale = simd_length(simd_float3(c0.x, c0.y, c0.z))
+
+        lightData.cascadeCount = UInt32(_cascadeCount)
+        writeCascadeMatrices(into: &lightData.cascadeViewProjectionMatrices,
+                             from: fit.cascades.map { $0.viewProjectionMatrix })
+        writeCascadeFloats(into: &lightData.cascadeSplitDepths,
+                           from: fit.splitFars.map { $0 * cameraScale })
+        writeCascadeFloats(into: &lightData.cascadeDepthRanges,
+                           from: fit.cascades.map { $0.depthRange })
+    }
+    
+    /// What `ShadowCascadeFitting.fitCascades` needs from a camera, copied out as a value.
+    /// Take it after the scene traversal (`GameScene.update()` does, after `super.update()`):
+    /// a parented camera receives its parent's world matrix only when the parent updates, so
+    /// earlier in the tick its view matrix can still be last tick's.
+    static func shadowCameraSnapshot(of camera: Camera) -> ShadowCascadeFitting.CameraSnapshot {
+        // Derive vertical FOV and aspect from the live camera. fieldOfView is
+        // stored in degrees; aspect is read off the projection matrix
+        // (columns.1.y = 1/tan(fovY/2); columns.0.x = that / aspect) so it always
+        // matches what the camera is actually rendering with, reverse-Z or not.
+        let fovY = camera.fieldOfView.toRadians
+        let proj = camera.projectionMatrix
+        let xs = proj.columns.0.x
+        let ys = proj.columns.1.y
+        let aspect = (xs != 0) ? (ys / xs) : Renderer.AspectRatio
+
+        return ShadowCascadeFitting.CameraSnapshot(viewMatrix: camera.viewMatrix,
+                                                   near:       camera.near,
+                                                   far:        camera.far,
+                                                   fovY:       fovY,
+                                                   aspect:     aspect)
+    }
+    
+    /// Fits this light's shadow cascades to `cameraSnapshot` and writes the result into
+    /// `lightData`: cascade count, view-projection matrices, split depths and depth ranges. It
+    /// also records the texel sizes the fit used, which `shiftShadowSnapPhases` needs. Does
+    /// nothing for a point light. The camera is a parameter, not `CameraManager.CurrentCamera`,
+    /// so the caller decides which camera state is fitted and a test can pass any snapshot.
+    ///
+    /// Order within a tick: `GameScene.update()` calls this after the traversal, and
+    /// `SceneManager.updateFloatingOrigin` runs after that. The fit must come first. On a shift
+    /// tick it then pairs the camera and the snap phases from before the shift, and the next
+    /// tick's fit pairs the shifted camera with the shifted phases.
+    public func fitShadowCascades(to cameraSnapshot: ShadowCascadeFitting.CameraSnapshot) {
+        guard self.lightType == Directional else { return }
+        
+        let fit = ShadowCascadeFitting.fitCascades(camera:              cameraSnapshot,
+                                                   lightDirection:      self.direction,
+                                                   shadowMapResolution: _shadowMapRes,
+                                                   cascadeCount:        _cascadeCount,
+                                                   lambda:              _cascadeLambda,
+                                                   shadowMaxDistance:   _shadowMaxDistance,
+                                                   zPaddingWorldUnits:  _cascadeZPad,
+                                                   cascadeSnapPhases:   _cascadeSnapPhases)
+        
+        _cascadeTexelSizes = fit.texelSizes
+
+        // Split-far depths are in view-space (scaled) units; convert to world
+        // units for shader consumption (the fragment computes fragViewSpaceDepth
+        // in world units via distance(worldPos, cameraPos)). Same scale
+        // extraction as in boundingSphereForSlice.
+        let c0 = cameraSnapshot.viewMatrix.inverse.columns.0
         let cameraScale = simd_length(simd_float3(c0.x, c0.y, c0.z))
 
         lightData.cascadeCount = UInt32(_cascadeCount)

@@ -6,8 +6,9 @@
 //  live engine state (SceneManager, CameraManager, LightManager) that
 //  SceneManager.updateFloatingOrigin reads in the running app: every list is passed in.
 //
-//  Every coordinate below is a multiple of 0.25 m, so the Float subtractions are exact
-//  and the stored positions can be compared with ==.
+//  In the applyOffset tests every coordinate is a multiple of 0.25 m, so the Float
+//  subtractions are exact and the stored positions can be compared with ==. The tests
+//  under "Many shifts" use a fractional coordinate on purpose and say what it may lose.
 //
 
 import Testing
@@ -48,12 +49,29 @@ struct FloatingOriginTests {
         #expect(FloatingOrigin.getOffset(cameraWorldPosition: [0, 0, 50], thresholdDistance: 50) == nil)
     }
 
-    @Test("the offset is the camera's world position")
-    func offsetIsCameraWorldPosition() {
-        // Today's rule. Plan step 4 (whole-meter offsets) rounds each component; the
-        // expected value here then becomes (640, 310, -721).
-        let cameraWorldPosition = float3(640.37, 310.12, -720.59)
-        #expect(FloatingOrigin.getOffset(cameraWorldPosition: cameraWorldPosition) == cameraWorldPosition)
+    @Test("the offset is the camera's world position rounded to whole meters")
+    func offsetIsCameraWorldPositionInWholeMeters() {
+        #expect(FloatingOrigin.getOffset(cameraWorldPosition: [640.37, 310.12, -720.59]) == float3(640, 310, -721))
+    }
+
+    @Test("every offset is in whole meters and within half a meter of the camera on each axis")
+    func offsetIsWholeAndWithinHalfAMeterOfTheCamera() throws {
+        // The last two have components exactly halfway between two whole numbers. The very
+        // last one is the worst case: half a meter is left over on all three axes.
+        let cameraWorldPositions: [float3] = [[640.37, 310.12, -720.59],
+                                              [-999.99, 45.5, 3.49],
+                                              [0.2, -1000.5, 0.25],
+                                              [1001.5, -0.5, 2.5]]
+        for cameraWorldPosition in cameraWorldPositions {
+            let offset = try #require(FloatingOrigin.getOffset(cameraWorldPosition: cameraWorldPosition))
+            #expect(offset == offset.rounded(.towardZero), "\(offset) has a fractional part")
+
+            // What the shift leaves of the camera's position. Half a meter on each axis is
+            // sqrt(3)/2 = 0.866 m in length, so the camera ends within 0.87 m of the origin.
+            let cameraPositionAfterShift = cameraWorldPosition - offset
+            #expect(simd_reduce_max(simd_abs(cameraPositionAfterShift)) <= 0.5, "camera at \(cameraWorldPosition)")
+            #expect(cameraPositionAfterShift.magnitude <= 0.87, "camera at \(cameraWorldPosition)")
+        }
     }
 
     // MARK: - applyOffset
@@ -173,9 +191,116 @@ struct FloatingOriginTests {
                                    directionalLights: [])
         scene.update()
 
-        // Within 1 m, not exactly zero, so this also holds once the offset is rounded
-        // to whole meters (plan step 4).
-        #expect(chaseCamera.getWorldPosition().magnitude < 1)
+        // Not exactly zero: the offset is in whole meters, so up to half a meter is left
+        // on each axis. Here the camera was at (640.25, 315.5, -720.75), the offset is
+        // (640, 316, -721) and the camera ends at (0.25, -0.5, 0.25).
+        #expect(offsetForThisTick == float3(640, 316, -721))
+        #expect(approxEqual(chaseCamera.getWorldPosition(), [0.25, -0.5, 0.25]))
         #expect(FloatingOrigin.getOffset(cameraWorldPosition: chaseCamera.getWorldPosition()) == nil)
+    }
+
+    // MARK: - Many shifts
+
+    /// Camera world position on the tick the outbound shift number `shiftIndex` fires: just
+    /// past 1 km from the origin (1,000.77 m at the least), with a different fractional part
+    /// from one shift to the next.
+    private func outboundCameraWorldPosition(shiftIndex: Int) -> float3 {
+        float3(600.37 + 0.61 * Float(shiftIndex % 97),
+               12.25 - 0.53 * Float(shiftIndex % 41),
+               800.59 + 0.47 * Float(shiftIndex % 89))
+    }
+
+    private struct OutAndBackResult {
+        /// SceneManager.floatingOriginOffset as it would stand after the 1,000 outbound shifts.
+        var floatingOriginOffsetAtTheTurn = double3(repeating: 0)
+        /// The same total after the 1,000 return shifts.
+        var floatingOriginOffsetAtTheEnd = double3(repeating: 0)
+        /// Stored position + total - start, at the turn: how far the wall is from where the
+        /// scene put it, in the scene's original frame. Meters, per axis.
+        var hangarWallErrorAtTheTurn = double3(repeating: 0)
+        var hangarWallStoredPositionAtTheEnd = float3(repeating: 0)
+        /// Stored position + total - start, at the end, for the node at a fractional coordinate.
+        var settledBodyErrorAtTheEnd = double3(repeating: 0)
+        /// Per axis, the largest absolute coordinate the settled body ever stored.
+        var farthestSettledBodyCoordinate = float3(repeating: 0)
+    }
+
+    private let hangarWallStart = float3(90, 6, 321.5)          // authored: whole and half meters
+    private let settledBodyStart = float3(12.34, 0.57, -7.91)   // wherever physics left it
+
+    /// Flies 1,000 shifts away from the scene's starting point and the same 1,000 back (the
+    /// return leg replays the outbound camera positions in reverse order with the sign
+    /// flipped), and tracks two static nodes. `offsetForCameraAt` turns a camera position
+    /// into the offset to subtract: `FloatingOrigin.getOffset`, or a stand-in for the control.
+    private func flyOutAndBack(offsetForCameraAt: (float3) -> float3?) throws -> OutAndBackResult {
+        let hangarWall = Node(name: "hangarWall")
+        let settledBody = Node(name: "settledBody")
+        hangarWall.setPosition(hangarWallStart)
+        settledBody.setPosition(settledBodyStart)
+
+        var result = OutAndBackResult()
+        var floatingOriginOffset = double3(repeating: 0)    // the Double total SceneManager keeps
+        for shiftIndex in 0..<2000 {
+            let cameraWorldPosition = shiftIndex < 1000
+                ? outboundCameraWorldPosition(shiftIndex: shiftIndex)
+                : -outboundCameraWorldPosition(shiftIndex: 1999 - shiftIndex)
+            let offset = try #require(offsetForCameraAt(cameraWorldPosition), "no shift was due at shift \(shiftIndex)")
+            FloatingOrigin.applyOffset(offset,
+                                       directChildrenOfScene: [hangarWall, settledBody],
+                                       cameras: [],
+                                       directionalLights: [])
+            floatingOriginOffset += offset.toDouble3()
+            result.farthestSettledBodyCoordinate = simd_max(result.farthestSettledBodyCoordinate,
+                                                            simd_abs(settledBody.getPosition()))
+            if shiftIndex == 999 {
+                result.floatingOriginOffsetAtTheTurn = floatingOriginOffset
+                result.hangarWallErrorAtTheTurn = hangarWall.getPosition().toDouble3() + floatingOriginOffset
+                                                - hangarWallStart.toDouble3()
+            }
+        }
+        result.floatingOriginOffsetAtTheEnd = floatingOriginOffset
+        result.hangarWallStoredPositionAtTheEnd = hangarWall.getPosition()
+        result.settledBodyErrorAtTheEnd = settledBody.getPosition().toDouble3() + floatingOriginOffset
+                                        - settledBodyStart.toDouble3()
+        return result
+    }
+
+    @Test("1,000 shifts out and back: a whole-meter coordinate comes back exact, a fractional one loses under one float gap")
+    func outAndBackWithWholeMeterOffsets() throws {
+        let result = try flyOutAndBack { FloatingOrigin.getOffset(cameraWorldPosition: $0) }
+
+        // The flight is real: the turn is about 1,034 km from the start (629 km in x, 821 km in z).
+        #expect(simd_length(result.floatingOriginOffsetAtTheTurn) > 1_000_000)
+
+        // Whole numbers add exactly in Double, and the return leg mirrors the outbound one.
+        #expect(result.floatingOriginOffsetAtTheEnd == double3(repeating: 0))
+
+        // The wall's coordinates are multiples of 0.5 m, and the float gap is never larger
+        // than 0.0625 m on this flight, so no subtraction ever rounds it.
+        #expect(result.hangarWallErrorAtTheTurn == double3(repeating: 0))
+        #expect(result.hangarWallStoredPositionAtTheEnd == hangarWallStart)
+
+        // The settled body is rounded when a shift carries it into a larger float gap, and at
+        // no other time. Each such rounding is at most half the new gap, and the gaps double
+        // on the way out, so the total stays under one gap at the farthest point reached
+        // (0.5 + 0.25 + 0.125 + ... < 1). On the way back nothing more is lost.
+        // Measured in the scratch run: 0.035 m in x and in z, 0.00007 m in y.
+        let farthest = result.farthestSettledBodyCoordinate
+        #expect(farthest.x.ulp == 0.0625 && farthest.z.ulp == 0.0625, "x and z reach the 524 km to 1,049 km range")
+        #expect(abs(result.settledBodyErrorAtTheEnd.x) < Double(farthest.x.ulp))
+        #expect(abs(result.settledBodyErrorAtTheEnd.y) < Double(farthest.y.ulp))
+        #expect(abs(result.settledBodyErrorAtTheEnd.z) < Double(farthest.z.ulp))
+    }
+
+    @Test("control: the same flight with the raw camera position as the offset moves the wall")
+    func outAndBackWithRawOffsetsDrifts() throws {
+        // What getOffset returned before it rounded: the camera position itself. Only the
+        // rounding is left out, so this shows the test above can tell the difference.
+        let result = try flyOutAndBack { cameraWorldPosition in cameraWorldPosition }
+
+        // Measured in the scratch run: the wall is 0.20 m off at the turn and 0.018 m off
+        // back home (the mirrored return leg cancels part of the error).
+        #expect(simd_length(result.hangarWallErrorAtTheTurn) > 0.1)
+        #expect(result.hangarWallStoredPositionAtTheEnd != hangarWallStart)
     }
 }

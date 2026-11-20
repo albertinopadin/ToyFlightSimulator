@@ -219,6 +219,19 @@ class GameScene: Node {
         _sceneConstants.projectionMatrixInverse = camera.projectionMatrix.inverse
         _sceneConstants.totalGameTime = Float(GameTime.TotalGameTime)
         _sceneConstants.cameraPosition = CameraManager.GetCurrentCameraPosition()
+
+        // Fit the shadow cascades here, after super.update() has traversed the whole scene, from
+        // the same camera state the view matrix above was read from. LightObject.update() used
+        // to fit in the middle of the traversal, where a camera parented to an aircraft that
+        // comes later in `children` (the order after a runtime aircraft swap) still had last
+        // tick's world matrix: the fit was one tick of flight behind the drawn camera (4.17 m at
+        // 250 m/s and 60 Hz), and about 1 km off on the tick after a floating-origin shift.
+        // Keep this before SceneManager.updateFloatingOrigin, which runs after update() returns:
+        // the snap phases must be shifted after this tick's fit, not before it.
+        let shadowCameraSnapshot = LightObject.shadowCameraSnapshot(of: camera)
+        for directionalLight in LightManager.GetLightObjects(lightType: Directional) {
+            directionalLight.fitShadowCascades(to: shadowCameraSnapshot)
+        }
         
         // Telemetry for the UI, after super.update() so this frame's transforms
         // are final. The snapshot is a Sendable value: the Task hop is the only

@@ -8,8 +8,9 @@
 //
 //  A LightObject is a GameObject, so it needs a Model and a Metal device: these run
 //  app-hosted, like the tests that build Sphere() and AttachedCamera(). No light here
-//  is added to LightManager or to the running scene, and update() is never called on
-//  one, so no cascade fit runs and CameraManager.CurrentCamera is never read.
+//  is added to LightManager or to the running scene, and none is fitted
+//  (fitShadowCascades is never called), so applyOffset leaves each light's shadow snap
+//  phases alone: shiftShadowSnapPhases does nothing before the first fit.
 //
 
 import Testing

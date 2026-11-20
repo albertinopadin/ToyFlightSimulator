@@ -19,11 +19,26 @@ enum FloatingOrigin {
 
     /// The offset to subtract from every stored position, or nil when no shift is due.
     /// A shift is due when the camera is farther than `thresholdDistance` (meters) from the
-    /// origin; a camera exactly at the threshold does not shift. The offset is the camera's
-    /// world position, so the shift puts the camera back at the origin.
+    /// origin; a camera exactly at the threshold does not shift.
+    ///
+    /// The offset is the camera's world position rounded to whole meters (each component to the
+    /// nearest whole number, a tie to the even one). The shift therefore leaves the camera
+    /// within 0.5 m of the origin on each axis (0.87 m at most), not exactly at it.
+    ///
+    /// Why whole meters: a stored Float coordinate is a multiple of its float gap (`ulp`, the
+    /// distance to the next representable value). Below 16,777 km every gap is 1 m or 1 m
+    /// divided by a power of two, so a whole number is a multiple of every gap. Subtracting one
+    /// is therefore exact, unless the result lands farther from the origin, where the gap is
+    /// larger; then it is rounded once to that gap. Over any number of shifts a coordinate
+    /// loses less than one gap at the farthest distance it reached (0.0625 m between 524 km and
+    /// 1,049 km), and a coordinate in whole meters loses nothing. A raw camera position has a
+    /// fractional part, so it rounded every node on every shift and the errors added up.
+    ///
+    /// Keep `thresholdDistance` above 1 m: right after a shift the camera can still be 0.87 m
+    /// from the origin, so with a smaller threshold a shift would be due on every tick.
     static func getOffset(cameraWorldPosition: float3, thresholdDistance: Float = ORIGIN_OFFSET_MAX_DISTANCE) -> float3? {
         guard cameraWorldPosition.magnitude > thresholdDistance else { return nil }
-        return cameraWorldPosition
+        return cameraWorldPosition.rounded(.toNearestOrEven)
     }
 
     /// Subtracts `offset` from everything that stores a position in the current frame, so all
