@@ -40,7 +40,6 @@ enum FloatingOrigin {
                             directChildrenOfScene: [Node],
                             cameras: [Node],
                             directionalLights: [LightObject]) {
-        DebugLog("Applying offset to floating origin; offset: \(offset)", DEBUG_FLOATING_ORIGIN)
         // setPosition (not a direct write) so each node's dirty flags reach its children.
         for node in directChildrenOfScene where node.shiftsWithFloatingOrigin {
             node.setPosition(node.getPosition() - offset)

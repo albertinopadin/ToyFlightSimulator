@@ -273,6 +273,7 @@ final class SceneManager {
     private static func updateFloatingOrigin() {
         let camWorldPosition = CameraManager.CurrentCamera?.getWorldPosition() ?? .zero
         if let offset = FloatingOrigin.getOffset(cameraWorldPosition: camWorldPosition) {
+            DebugLog("Applying offset to floating origin; offset: \(offset)", DEBUG_FLOATING_ORIGIN)
             FloatingOrigin.applyOffset(offset,
                                        directChildrenOfScene: CurrentScene?.children ?? [],
                                        cameras: CameraManager.RegisteredCameras,

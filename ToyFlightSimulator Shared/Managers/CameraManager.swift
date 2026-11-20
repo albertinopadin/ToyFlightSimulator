@@ -14,7 +14,7 @@ final class CameraManager {
     nonisolated(unsafe) public static var CurrentCamera: Camera?
     /// Read-only copy of the registry, in registration order. `SceneManager.updateFloatingOrigin`
     /// hands it to `FloatingOrigin.applyOffset`, which moves the unparented cameras.
-    nonisolated(unsafe) public static var RegisteredCameras: [Camera] { _cameras }
+    public static var RegisteredCameras: [Camera] { _cameras }
 
     public static func RegisterCamera(camera: Camera) {
         if !_cameras.contains(where: { $0 === camera }) {
