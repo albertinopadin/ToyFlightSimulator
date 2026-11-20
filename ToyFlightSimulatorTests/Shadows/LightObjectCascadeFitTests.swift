@@ -12,8 +12,8 @@
 //  the running scene, and nothing reads CameraManager.CurrentCamera, so the tests do not
 //  depend on what the host app is doing.
 //
-//  Not covered here: the call in GameScene.update() itself (it reads the live managers),
-//  and the snap phases across a floating-origin shift through a fitted light.
+//  Not covered here: the call in GameScene.update() itself (it reads the live managers).
+//  The snap phases across a floating-origin shift are in LightObjectSnapPhaseTests.
 //
 
 import Testing
@@ -69,11 +69,7 @@ struct LightObjectCascadeFitTests {
     }
 
     // LightData's C arrays arrive in Swift as four-element tuples; these read them as arrays.
-    private func cascadeViewProjectionMatrices(of light: LightObject) -> [float4x4] {
-        let matrices = light.lightData.cascadeViewProjectionMatrices
-        return [matrices.0, matrices.1, matrices.2, matrices.3]
-    }
-
+    // (cascadeViewProjectionMatrices(of:) does the same and is in TestSupport/ShadowTexelSupport.swift.)
     private func cascadeSplitDepths(of light: LightObject) -> [Float] {
         let depths = light.lightData.cascadeSplitDepths
         return [depths.0, depths.1, depths.2, depths.3]
