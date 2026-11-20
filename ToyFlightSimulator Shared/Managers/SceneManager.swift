@@ -131,7 +131,6 @@ final class SceneManager {
         }
     }
     
-    private static let ORIGIN_OFFSET_MAX_DISTANCE: Float = 1_000  // 1 km
     nonisolated(unsafe) private(set) static var floatingOriginOffset: double3 = .zero
     
     // uniformsLock removed: ring buffer snapshots eliminate shared mutable state between threads.
@@ -267,33 +266,19 @@ final class SceneManager {
         }
     }
     
+    /// Shifts the world when the current camera is more than 1 km from the origin. Runs on the
+    /// update thread after `CurrentScene.update()` and before `writeFrameSnapshot`. The decision
+    /// and the shift itself are in `FloatingOrigin` (no engine state, so tests can call them);
+    /// this function supplies the live scene, cameras and lights, and keeps the running total.
     private static func updateFloatingOrigin() {
         let camWorldPosition = CameraManager.CurrentCamera?.getWorldPosition() ?? .zero
-        
-        if camWorldPosition.magnitude > ORIGIN_OFFSET_MAX_DISTANCE {
-            DebugLog("Updating floating origin; camWorldPosition was: \(camWorldPosition)", DEBUG_FLOATING_ORIGIN)
-            for rootChildNode in CurrentScene?.children ?? [] {
-                if nodeIsDirectionalLightOrSky(node: rootChildNode) { continue }
-                rootChildNode.setPosition(rootChildNode.getPosition() - camWorldPosition)
-            }
-
-            // Unparented cameras (DebugCamera) hold a world position but are
-            // not in the scene's children, so the loop above misses them.
-            CameraManager.ShiftUnparentedCameras(by: camWorldPosition)
-            
-            for directionalLight in LightManager.GetLightObjects(lightType: Directional) {
-                directionalLight.shiftShadowSnapPhases(by: camWorldPosition)
-            }
-            
-            floatingOriginOffset += camWorldPosition.toDouble3()
+        if let offset = FloatingOrigin.getOffset(cameraWorldPosition: camWorldPosition) {
+            FloatingOrigin.applyOffset(offset,
+                                       directChildrenOfScene: CurrentScene?.children ?? [],
+                                       cameras: CameraManager.RegisteredCameras,
+                                       directionalLights: LightManager.GetLightObjects(lightType: Directional))
+            floatingOriginOffset += offset.toDouble3()
         }
-    }
-    
-    private static func nodeIsDirectionalLightOrSky(node: Node) -> Bool {
-        if node is SkyBox || node is SkySphere { return true }
-        if let light = node as? LightObject,
-           light.lightType == Directional { return true }
-        return false
     }
 
     /// Write all ModelConstants directly into the ring buffer for the given frame slot.

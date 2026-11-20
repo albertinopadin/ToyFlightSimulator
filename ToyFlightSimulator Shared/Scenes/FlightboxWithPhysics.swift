@@ -176,6 +176,10 @@ final class FlightboxWithPhysics: GameScene {
         setupDefaultSky()
 
         sun.setPosition(0, jetPos.y + 100, 4)
+        // Explicit direction: the sun node then shifts with the floating origin like any other
+        // node, so its stored position stays equal to sunBall's. The sun node itself is not
+        // drawn (sunBall is its visible marker). Must come after setPosition: it reads the position.
+        sun.setLightDirection(sun.getPosition())
         sun.setLightBrightness(1.0)
 //        sun.setLightBrightness(0.1)
         sun.setLightColor(1, 1, 1)

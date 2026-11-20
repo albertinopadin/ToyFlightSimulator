@@ -10,6 +10,13 @@ import MetalKit
 class LightObject: GameObject {
     // Lights live in LightManager, not in SceneManager's batched collections.
     override var objectType: GameObjectType { .none }
+    
+    // A directional light with no explicit direction derives it from its position,
+    // so moving the node would turn the light. With an explicit direction (setLightDirection)
+    // it is an ordinary node. A point light always is: its position is where it shines from.
+    override var shiftsWithFloatingOrigin: Bool {
+        lightType != Directional || _explicitDirection != nil
+    }
 
     var lightType: LightType
     var lightData = LightData()
@@ -49,6 +56,9 @@ class LightObject: GameObject {
     /// Override the world-space direction the light shines from. Pass a vector
     /// pointing FROM lit surfaces TO the sun (gets normalized internally).
     /// If never called, direction is inferred from `getPosition()`.
+    /// Side effect on a directional light: from this call on the node's position no longer aims
+    /// the light, so the node shifts with the floating origin (`shiftsWithFloatingOrigin`) and a
+    /// later `setPosition` changes nothing in the lighting. A point light ignores the direction.
     func setLightDirection(_ dir: float3) { _explicitDirection = normalize(dir) }
 
     /// Number of cascades (clamped to 1...TFS_MAX_SHADOW_CASCADES).

@@ -9,6 +9,9 @@ import MetalKit
 
 class SkyBox: GameObject, SkyEntity {
     override var objectType: GameObjectType { .sky }
+    
+    // Drawn with the rotation-only skyViewMatrix, so it must stay centred on the camera:
+    override var shiftsWithFloatingOrigin: Bool { false }
 
     public var textureType: TextureType {
         didSet { texture = Assets.Textures[textureType] }

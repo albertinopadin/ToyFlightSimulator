@@ -50,6 +50,12 @@ class Node: ClickSelectable {
     weak var parent: Node? = nil
     var children: [Node] = []
     
+    /// False for a node that must keep its stored position when the floating origin moves.
+    /// `FloatingOrigin.applyOffset` asks this of every direct child of the scene. A deeper node
+    /// is never asked: it follows its parent. Computed, so a subclass can override it
+    /// (`SkyBox`, `SkySphere`, `LightObject`).
+    var shiftsWithFloatingOrigin: Bool { true }
+    
     var modelMatrix: matrix_float4x4 {
         set {
             // Caller supplies the LOCAL matrix directly (existing semantics);
