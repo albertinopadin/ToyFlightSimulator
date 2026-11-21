@@ -149,6 +149,40 @@ struct RigidBodyTests {
         #expect(aabb.min.z <= -9999 && aabb.max.z >= 9999)
     }
 
+    @Test("a plane whose node is 50 km away still bounds a body resting on it near the origin",
+          arguments: [0, 1, 2])
+    func farPlaneAABBReachesTheOrigin(normalAxis: Int) {
+        // The floating origin moves the ground's node on every shift, so after
+        // a long flight the node can be far from the aircraft. Here the plane
+        // is 3,000 m from the origin along its normal and 30 km and 40 km away
+        // along the two in-plane axes (50 km in all), well past the 10 km
+        // either side of the node that the box used to reach. One case per
+        // getAABB branch: normal along x, y, or z.
+        var normal = float3.zero
+        normal[normalAxis] = 1
+        let inPlaneAxes = (0..<3).filter { $0 != normalAxis }
+        var planePosition = normal * -3000
+        planePosition[inPlaneAxes[0]] = -30_000
+        planePosition[inPlaneAxes[1]] = -40_000
+        let aabb = PlaneRigidBody(detachedAt: planePosition, collisionNormal: normal).getAABB()
+
+        // Two radius-2 boxes at 0 on both in-plane axes. The first rests on
+        // the plane (its near face at −3000, inside the ±1 m slab); the
+        // second's near face is 40 m off the plane.
+        let restingOnPlane = AABB(center: normal * (-3000 + 2), radius: 2)
+        let fortyMetersOff = AABB(center: normal * (-3000 + 42), radius: 2)
+        #expect(aabb.overlaps(restingOnPlane))
+        #expect(!aabb.overlaps(fortyMetersOff))
+        // ±unboundedExtent, not ±.infinity: (−∞ + ∞) / 2 would be NaN.
+        #expect(allFinite(aabb.center))
+
+        // The node's in-plane coordinates do not move the box: it equals the
+        // box of the same plane with its node on the normal axis.
+        let nodeOnNormalAxis = PlaneRigidBody(detachedAt: normal * -3000, collisionNormal: normal).getAABB()
+        #expect(aabb.min == nodeOnNormalAxis.min)
+        #expect(aabb.max == nodeOnNormalAxis.max)
+    }
+
     // MARK: - F22 didSet overrides
 
     @Test("F22.rigidBody didSet stamps F22.mass and restitution=0.1")

@@ -44,6 +44,25 @@ public final class SphereRigidBody: RigidBody {
 }
 
 public final class PlaneRigidBody: RigidBody {
+    /// Reach of the plane's broad-phase box along its two in-plane axes, in
+    /// meters: the box runs from −unboundedExtent to +unboundedExtent in world
+    /// coordinates there, wherever the plane's node is.
+    ///
+    /// Not centred on the node: the ground is a direct child of the scene, so
+    /// the floating origin moves its node on every shift, and after a long
+    /// flight the node can be any distance from the aircraft. A box centred on
+    /// the node (it used to reach 10 km either side) then stops pairing the
+    /// airframe with the ground. Only the offset along the normal locates the
+    /// plane, and that one stays on the node (the 1 m slab in getAABB).
+    ///
+    /// Not .infinity: AABB.center is (min + max) / 2, and −∞ + ∞ is NaN.
+    /// The value is Bullet's BT_LARGE_FLOAT for single precision
+    /// (src/LinearMath/btScalar.h), chosen there so its square, 1e36, stays
+    /// below Float.greatestFiniteMagnitude (3.4e38). Bullet's
+    /// btStaticPlaneShape::getAabb returns ±BT_LARGE_FLOAT on all three axes;
+    /// getAABB here keeps a thin slab along the normal instead, so a body far
+    /// above the ground is not paired with it.
+    static let unboundedExtent: Float = 1e18
     var collisionNormal: float3 = [0, 1, 0]
     
     init(gameObject: GameObject, collisionNormal: float3 = [0, 1, 0]) {
@@ -58,30 +77,35 @@ public final class PlaneRigidBody: RigidBody {
         self.collisionNormal = collisionNormal.normalize()
     }
     
-    // Default AABB implementation for planes
-    // Using a large box to represent an "infinite" plane
+    /// Broad-phase box of the infinite plane: ±unboundedExtent along the two
+    /// in-plane axes, and a 2 m slab (the node's coordinate ± 1 m) along the
+    /// axis the normal is closest to.
+    ///
+    /// Known limitation: the slab is exact only for an axis-aligned normal.
+    /// A tilted plane leaves its slab away from the node, and a normal with no
+    /// component above 0.9 lands in the last (±Z) branch. Every scene's ground
+    /// uses (0, 1, 0).
     override func getAABB() -> AABB {
         let position = getPosition()
-        let largeExtent: Float = 10000.0  // Large enough to cover the game world
         
         // Create a thin but wide AABB based on the plane's normal
         if abs(collisionNormal.y) > 0.9 {
             // Horizontal plane (normal points up/down)
             return AABB(
-                min: float3(position.x - largeExtent, position.y - 1.0, position.z - largeExtent),
-                max: float3(position.x + largeExtent, position.y + 1.0, position.z + largeExtent)
+                min: float3(-Self.unboundedExtent, position.y - 1.0, -Self.unboundedExtent),
+                max: float3(Self.unboundedExtent, position.y + 1.0, Self.unboundedExtent)
             )
         } else if abs(collisionNormal.x) > 0.9 {
             // Vertical plane (normal points left/right)
             return AABB(
-                min: float3(position.x - 1.0, position.y - largeExtent, position.z - largeExtent),
-                max: float3(position.x + 1.0, position.y + largeExtent, position.z + largeExtent)
+                min: float3(position.x - 1.0, -Self.unboundedExtent, -Self.unboundedExtent),
+                max: float3(position.x + 1.0, Self.unboundedExtent, Self.unboundedExtent)
             )
         } else {
             // Vertical plane (normal points forward/back)
             return AABB(
-                min: float3(position.x - largeExtent, position.y - largeExtent, position.z - 1.0),
-                max: float3(position.x + largeExtent, position.y + largeExtent, position.z + 1.0)
+                min: float3(-Self.unboundedExtent, -Self.unboundedExtent, position.z - 1.0),
+                max: float3(Self.unboundedExtent, Self.unboundedExtent, position.z + 1.0)
             )
         }
     }

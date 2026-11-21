@@ -112,12 +112,16 @@ enum ParityScenario: String, CaseIterable, CustomTestStringConvertible {
 
     /// All bodies via the 0.6 detached inits — no GameObject, no Metal.
     /// Masses stay at the RigidBody default (1), matching the table.
-    func build() -> Built {
+    /// `groundPlanePosition` is where the floor plane's node sits (ignored by
+    /// head_on_pair, which has none). Its y must stay 0: the goldens and the
+    /// floorY invariant assume a floor at height 0. Only x and z may move;
+    /// see floorPlane.
+    func build(groundPlanePosition: float3 = .zero) -> Built {
         switch self {
             case .singleBounceVerlet, .singleBounceEuler:
                 let ball = SphereRigidBody(detachedAt: [0, 5, 0], collisionRadius: 0.5)
                 ball.restitution = 0.9
-                return Built(world: makeWorld([ball, floorPlane(restitution: 0.9)]),
+                return Built(world: makeWorld([ball, floorPlane(restitution: 0.9, at: groundPlanePosition)]),
                              spheres: [ball])
 
             case .restLatch:
@@ -131,7 +135,7 @@ enum ParityScenario: String, CaseIterable, CustomTestStringConvertible {
                 // threshold froze the ball with gravity off.)
                 let ball = SphereRigidBody(detachedAt: [0, 3, 0], collisionRadius: 0.5)
                 ball.restitution = 0.2
-                return Built(world: makeWorld([ball, floorPlane(restitution: 1.0)]),
+                return Built(world: makeWorld([ball, floorPlane(restitution: 1.0, at: groundPlanePosition)]),
                              spheres: [ball])
 
             case .headOnPair:
@@ -161,7 +165,7 @@ enum ParityScenario: String, CaseIterable, CustomTestStringConvertible {
                     ball.restitution = 0.9
                     balls.append(ball)
                 }
-                return Built(world: makeWorld(balls + [floorPlane(restitution: 1.0)]),
+                return Built(world: makeWorld(balls + [floorPlane(restitution: 1.0, at: groundPlanePosition)]),
                              spheres: balls)
 
             case .stressGrid50:
@@ -183,19 +187,24 @@ enum ParityScenario: String, CaseIterable, CustomTestStringConvertible {
                     ball.velocity = [rng.float(in: -2...2), 0, rng.float(in: -2...2)]
                     balls.append(ball)
                 }
-                return Built(world: makeWorld(balls + [floorPlane(restitution: 0.9)]),
+                return Built(world: makeWorld(balls + [floorPlane(restitution: 0.9, at: groundPlanePosition)]),
                              spheres: balls)
         }
     }
 
-    private func floorPlane(restitution: Float) -> PlaneRigidBody {
-        // Position .zero + up normal is load-bearing: the goldens were
-        // captured under the legacy y=0 plane hardcode (the deleted
+    private func floorPlane(restitution: Float, at position: float3) -> PlaneRigidBody {
+        // Height 0 + up normal is load-bearing: the goldens were captured
+        // under the legacy y=0 plane hardcode (the deleted
         // PhysicsWorld.getPenetrationDepth(ball:plane:)), and A-routing's
         // bit-exactness vs those goldens needs NarrowPhase's general form
         // dot(c − planePos, n) to reduce to c.y exactly — which it does only
-        // for planePos = .zero, n = [0, 1, 0] (original plan, A.5 argument 3).
-        let plane = PlaneRigidBody(detachedAt: .zero, collisionNormal: [0, 1, 0])
+        // for planePos.y = 0, n = [0, 1, 0] (original plan, A.5 argument 3).
+        // planePos.x and .z are free: n's zero components multiply them away
+        // exactly, and since the plane's broad-phase box stopped being
+        // centred on its node (PlaneRigidBody.unboundedExtent) they no longer
+        // decide which pairs exist either. farGroundPlaneMatchesGroundAtOrigin
+        // relies on both.
+        let plane = PlaneRigidBody(detachedAt: position, collisionNormal: [0, 1, 0])
         plane.restitution = restitution
         plane.isStatic = true
         return plane
@@ -235,8 +244,9 @@ enum ParityRunner {
     /// final state at goldenSteps, and #requires the chaos-policy invariants
     /// on EVERY step (fail-fast: one readable failure, not a cascade of
     /// thousands once a body blows up).
-    static func run(_ scenario: ParityScenario) throws -> PhysicsBaseline {
-        let built = scenario.build()
+    static func run(_ scenario: ParityScenario,
+                    groundPlanePosition: float3 = .zero) throws -> PhysicsBaseline {
+        let built = scenario.build(groundPlanePosition: groundPlanePosition)
         var samples: [[[Float]]] = built.spheres.map { [flat($0.getPosition())] }
         var finalVelocity: [[Float]] = []
         var finalGravity: [Bool] = []
@@ -366,6 +376,24 @@ struct PhysicsParityTests {
         let first  = try ParityRunner.run(.ballCluster16)
         let second = try ParityRunner.run(.ballCluster16)
         #expect(first == second)
+    }
+
+    @Test("a ground plane whose node is 50 km away changes nothing under the broad phase",
+          arguments: [ParityScenario.ballCluster16, .stressGrid50])
+    func farGroundPlaneMatchesGroundAtOrigin(_ scenario: ParityScenario) throws {
+        // The floating origin moves the ground's node on every shift, so in
+        // FlightboxWithPhysics the node can end up any distance from the
+        // aircraft. Only the plane's height may matter. With the node 30 km
+        // and 40 km away in x and z (50 km in all) every ball must still be
+        // paired with the ground, and the run must equal the golden scenario
+        // bit for bit (matchesGolden pins that run to the committed file).
+        // A box centred on the node, 10 km either side as it used to be,
+        // pairs no ball with the ground: each one falls through it and the
+        // tunneling #require in run() fails.
+        try #require(scenario.useBroadPhase, "the plane's box only matters to the broad phase")
+        let groundAtOrigin = try ParityRunner.run(scenario)
+        let groundFarAway = try ParityRunner.run(scenario, groundPlanePosition: [-30_000, 0, -40_000])
+        #expect(groundFarAway == groundAtOrigin)
     }
 
     @Test("A-response behavior: resting keeps gravity on (the latch is gone)")
