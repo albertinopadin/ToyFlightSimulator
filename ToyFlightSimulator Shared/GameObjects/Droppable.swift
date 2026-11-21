@@ -6,11 +6,19 @@
 //
 
 class Droppable: SubMeshGameObject {
+    /// Distance traveled after which the store removes itself, meters. Nothing stops the
+    /// fall at the ground, so most of this distance is below it.
+    static let MAX_DISTANCE_BEFORE_REAP: Float = 100_000  // 100 km
+
     /// World gravity along −Y, from the physics world's one written value.
     /// This is the legacy kinematic drop path, not a RigidBody.
     let gravity: Float = -PhysicsWorld.standardGravity
     var velocityVector: float3 = [0, 0, 0]
     var forwardVelocityComponent: Float = 0.0
+    /// Distance traveled since release. Counted from the steps doUpdate applies
+    /// (velocityVector, meters per tick), not from the position, so a floating-origin shift
+    /// neither reaps the store nor keeps it alive.
+    var travelLimit = TravelDistanceLimit(maxDistance: Droppable.MAX_DISTANCE_BEFORE_REAP)
     
     init(name: String, modelType: ModelType, meshType: SingleSMMeshType) {
         super.init(name: name, modelType: modelType, meshType: meshType)
@@ -21,8 +29,7 @@ class Droppable: SubMeshGameObject {
     }
     
     override func doUpdate() {
-        let currentPos = self.getPosition()
-        if abs(currentPos.x) > 1000 || abs(currentPos.y) > 1000 || abs(currentPos.z) > 1000 {
+        if travelLimit.reachedLimit {
             // Reap from scene (graph + SceneManager collections)
             print("Removing self {\(self.getName()), \(self.getID())} from scene.")
             self.removeFromScene()
@@ -40,8 +47,9 @@ class Droppable: SubMeshGameObject {
                 velocityVector = float3(x: 0.0, y: gravityInc, z: -forwardVelocityComponent)
             }
             
-            let newPos = currentPos + velocityVector
+            let newPos = self.getPosition() + velocityVector
             self.setPosition(newPos)
+            travelLimit.move(by: velocityVector)
         }
     }
 }

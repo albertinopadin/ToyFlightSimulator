@@ -6,8 +6,15 @@
 //
 
 class Missile: SubMeshGameObject {
+    /// Distance flown after which the missile removes itself, meters.
+    static let MAX_DISTANCE_BEFORE_REAP: Float = 100_000  // 100 km
+
     var direction: float3 = [0, 0, 0]
+    /// Meters moved per update tick (not per second).
     var speed: Float = 0.0
+    /// Distance flown since release. Counted from the steps doUpdate applies, not from the
+    /// position, so a floating-origin shift neither reaps the missile nor keeps it alive.
+    var travelLimit = TravelDistanceLimit(maxDistance: Missile.MAX_DISTANCE_BEFORE_REAP)
     
     init(name: String, modelType: ModelType, meshType: SingleSMMeshType) {
         super.init(name: name, modelType: modelType, meshType: meshType)
@@ -19,18 +26,16 @@ class Missile: SubMeshGameObject {
     }
     
     override func doUpdate() {
-        let currentPos = self.getPosition()
-//        print("[Missile doUpdate] currentPos: \(currentPos)")
-        // TODO: This is hardcoded from scene origin
-        if abs(currentPos.x) > 1000 || abs(currentPos.y) > 1000 || abs(currentPos.z) > 1000 {
+        if travelLimit.reachedLimit {
             // Reap from scene (graph + SceneManager collections)
             print("Removing self {\(self.getName()), \(self.getID())} from scene.")
             self.removeFromScene()
         } else {
             super.doUpdate()
             let delta = direction * speed
-            let newPos = currentPos + delta
+            let newPos = self.getPosition() + delta
             self.setPosition(newPos)
+            travelLimit.move(by: delta)
         }
     }
 }
