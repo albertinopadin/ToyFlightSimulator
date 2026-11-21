@@ -99,61 +99,6 @@ class LightObject: GameObject {
         // traversal (fitShadowCascades). At this point a camera parented to a node that comes
         // later in the scene's direct children still has last tick's world matrix.
     }
-
-    /// Deprecated and unused. `shadowCameraSnapshot(of:)` and `fitShadowCascades(to:)` below
-    /// replace it; `GameScene.update()` calls them after the scene traversal. This is the old
-    /// path, which `update()` called in the middle of the traversal and which read
-    /// `CameraManager.CurrentCamera` itself, so it could fit to last tick's camera.
-    ///
-    /// Fit the cascades against the active main camera and stash their matrices
-    /// in `lightData`. No-ops if no camera is active yet (matrices keep their
-    /// last-good values, which is fine before SceneManager.SetScene registers
-    /// the camera — the renderer also needs a current camera to draw).
-    private func updateShadowCascades() {
-        guard let cam = CameraManager.CurrentCamera else { return }
-
-        // Derive vertical FOV and aspect from the live camera. fieldOfView is
-        // stored in degrees; aspect is read off the projection matrix
-        // (columns.1.y = 1/tan(fovY/2); columns.0.x = that / aspect) so it always
-        // matches what the camera is actually rendering with, reverse-Z or not.
-        let fovY = cam.fieldOfView.toRadians
-        let proj = cam.projectionMatrix
-        let xs = proj.columns.0.x
-        let ys = proj.columns.1.y
-        let aspect = (xs != 0) ? (ys / xs) : Renderer.AspectRatio
-
-        let snapshot = ShadowCascadeFitting.CameraSnapshot(viewMatrix: cam.viewMatrix,
-                                                           near:       cam.near,
-                                                           far:        cam.far,
-                                                           fovY:       fovY,
-                                                           aspect:     aspect)
-
-        let fit = ShadowCascadeFitting.fitCascades(camera:              snapshot,
-                                                   lightDirection:      self.direction,
-                                                   shadowMapResolution: _shadowMapRes,
-                                                   cascadeCount:        _cascadeCount,
-                                                   lambda:              _cascadeLambda,
-                                                   shadowMaxDistance:   _shadowMaxDistance,
-                                                   zPaddingWorldUnits:  _cascadeZPad,
-                                                   cascadeSnapPhases:   _cascadeSnapPhases)
-        
-        _cascadeTexelSizes = fit.texelSizes
-
-        // Split-far depths are in view-space (scaled) units; convert to world
-        // units for shader consumption (the fragment computes fragViewSpaceDepth
-        // in world units via distance(worldPos, cameraPos)). Same scale
-        // extraction as in boundingSphereForSlice.
-        let c0 = cam.viewMatrix.inverse.columns.0
-        let cameraScale = simd_length(simd_float3(c0.x, c0.y, c0.z))
-
-        lightData.cascadeCount = UInt32(_cascadeCount)
-        writeCascadeMatrices(into: &lightData.cascadeViewProjectionMatrices,
-                             from: fit.cascades.map { $0.viewProjectionMatrix })
-        writeCascadeFloats(into: &lightData.cascadeSplitDepths,
-                           from: fit.splitFars.map { $0 * cameraScale })
-        writeCascadeFloats(into: &lightData.cascadeDepthRanges,
-                           from: fit.cascades.map { $0.depthRange })
-    }
     
     /// What `ShadowCascadeFitting.fitCascades` needs from a camera, copied out as a value.
     /// Take it after the scene traversal (`GameScene.update()` does, after `super.update()`):
