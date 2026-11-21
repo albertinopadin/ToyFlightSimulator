@@ -98,6 +98,13 @@ class Aircraft: GameObject {
     /// wingman has no body, FreeCamFlightboxScene's jet has no flight model.
     private var hasFlightPhysics: Bool { rigidBody != nil && flightModel != nil }
 
+    /// Lowest height the kinematic path lets the aircraft's origin (its node position, not
+    /// its lowest point) reach, in meters, in the scene's ORIGINAL frame (before any floating-origin
+    /// shift). nil = no floor. A flat floor, not ground contact: nothing on the CPU knows the
+    /// terrain's height. Only valid for an aircraft that is a direct child of the scene,
+    /// because the clamp compares it with the stored (parent-relative) position.
+    var kinematicFloorHeightInOriginalFrame: Float? = nil
+
     /// Returns true if the landing gear is down.
     /// Aircraft without an animator are treated as having gear permanently down.
     var isGearDown: Bool {
@@ -211,6 +218,21 @@ class Aircraft: GameObject {
         rigidBody.inverseInertiaLocal = float3x3(diagonal: 1 / flightModel.inertia)
     }
 
+    /// The height, in the current floating-origin frame, raised to the floor if it is below it.
+    ///
+    /// `floatingOriginOffsetY` is `SceneManager.floatingOriginOffset.y`: where the current
+    /// origin sits in the original frame. A height in the original frame is the same height
+    /// in the current frame plus that offset, so the floor in the current frame is
+    /// floor − offset. The subtraction is in Double, where the offset is kept; the result is
+    /// exact for a whole-meter floor, because the offset is in whole meters too.
+    /// Pure and Metal-free (`KinematicFloorTests`).
+    static func heightAtOrAboveKinematicFloor(heightInCurrentFrame: Float,
+                                              floorHeightInOriginalFrame: Float,
+                                              floatingOriginOffsetY: Double) -> Float {
+        let floorHeightInCurrentFrame = (floorHeightInOriginalFrame.toDouble() - floatingOriginOffsetY).toFloat()
+        return max(heightInCurrentFrame, floorHeightInCurrentFrame)
+    }
+    
     override func doUpdate() {
         super.doUpdate()
 
@@ -233,6 +255,17 @@ class Aircraft: GameObject {
                 // The A/D strafe teleports the node; on the physics path it
                 // would slide the jet through its own tire model.
                 applyPlayerSideMove(deltaMove: deltaMove)
+                
+                // After every move of this tick, so none of them can leave the jet below the
+                // floor. Writes the transform only when it clamps.
+                if let kinematicFloorHeightInOriginalFrame {
+                    let posY = getPositionY()
+                    let clampedHeight = Self.heightAtOrAboveKinematicFloor(
+                        heightInCurrentFrame: posY,
+                        floorHeightInOriginalFrame: kinematicFloorHeightInOriginalFrame,
+                        floatingOriginOffsetY: SceneManager.floatingOriginOffset.y)
+                    if clampedHeight != posY { setPositionY(clampedHeight) }
+                }
             }
             
             handleGearToggle()

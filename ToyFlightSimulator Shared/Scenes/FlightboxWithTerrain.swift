@@ -36,6 +36,10 @@ final class FlightboxWithTerrain: GameScene {
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)
         jet.chaseCamera = attachedCamera
         jet.setPosition(0, 100, 0)
+        // A flat floor at the terrain's centre height, in the frame this scene is built in.
+        // The terrain is tilted and displaced on the GPU, so the jet can still pass under its
+        // high side and stops above its low side; the floor only keeps it from falling forever.
+        jet.kinematicFloorHeightInOriginalFrame = 0
         addChild(jet)
         let jetPos = jet.getPosition()
         
