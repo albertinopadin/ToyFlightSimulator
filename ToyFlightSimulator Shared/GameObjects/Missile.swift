@@ -5,10 +5,7 @@
 //  Created by Albertino Padin on 4/21/23.
 //
 
-class Missile: SubMeshGameObject {
-    /// Distance flown after which the missile removes itself, meters.
-    static let MAX_DISTANCE_BEFORE_REAP: Float = 100_000  // 100 km
-
+class Missile: SubMeshGameObject, AircraftStore {
     var direction: float3 = [0, 0, 0]
     /// Meters moved per update tick (not per second).
     var speed: Float = 0.0

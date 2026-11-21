@@ -5,11 +5,7 @@
 //  Created by Albertino Padin on 5/2/23.
 //
 
-class Droppable: SubMeshGameObject {
-    /// Distance traveled after which the store removes itself, meters. Nothing stops the
-    /// fall at the ground, so most of this distance is below it.
-    static let MAX_DISTANCE_BEFORE_REAP: Float = 100_000  // 100 km
-
+class Droppable: SubMeshGameObject, AircraftStore {
     /// World gravity along −Y, from the physics world's one written value.
     /// This is the legacy kinematic drop path, not a RigidBody.
     let gravity: Float = -PhysicsWorld.standardGravity
@@ -17,7 +13,8 @@ class Droppable: SubMeshGameObject {
     var forwardVelocityComponent: Float = 0.0
     /// Distance traveled since release. Counted from the steps doUpdate applies
     /// (velocityVector, meters per tick), not from the position, so a floating-origin shift
-    /// neither reaps the store nor keeps it alive.
+    /// neither reaps the store nor keeps it alive. Nothing stops the fall at the ground, so
+    /// most of the 100 km (`AircraftStore`) is below it.
     var travelLimit = TravelDistanceLimit(maxDistance: Droppable.MAX_DISTANCE_BEFORE_REAP)
     
     init(name: String, modelType: ModelType, meshType: SingleSMMeshType) {
