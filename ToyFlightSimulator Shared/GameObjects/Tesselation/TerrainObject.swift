@@ -94,7 +94,10 @@ final class TerrainObject: GameObject, Tessellatable {
     
     func computeUpdate(_ computeEncoder: any MTLComputeCommandEncoder) {
         computeEncoder.setBuffer(tessellationFactorsBuffer, offset: 0, index: 2)
-        computeEncoder.setBytes(&self.modelMatrix, length: float4x4.stride, index: 4)
+        // The world matrix cached by GameObject.update(), which DrawTessellatables also
+        // binds, not the live self.modelMatrix: a floating-origin shift after the traversal
+        // changes the live one before this pass is encoded (see TessellationRendering).
+        computeEncoder.setBytes(&modelConstants.modelMatrix, length: float4x4.stride, index: 4)
         computeEncoder.setBuffer(controlPointsBuffer, offset: 0, index: 5)
         computeEncoder.setBytes(&terrain, length: Terrain.stride, index: TFSBufferIndexTerrain.index)
         

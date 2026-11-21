@@ -21,7 +21,13 @@ extension TessellationRendering {
             computeEncoder.setBytes(self.edgeFactors, length: Float.size * self.edgeFactors.count, index: 0)
             computeEncoder.setBytes(self.insideFactors, length: Float.size * self.insideFactors.count, index: 1)
             
-            var cameraPosition = float4(CameraManager.GetCurrentCameraPosition(), 0)
+            // The camera position the draw uses, paired with the terrain matrix that
+            // TerrainObject.computeUpdate binds (also cached by update()). On a floating-origin
+            // shift tick the live pair would move the already-shifted terrain at least 1 km
+            // away from the not-yet-shifted camera, so the patch under the camera would get the
+            // minimum factor (4) for that frame instead of its real one (6.4 with the camera
+            // 10 m above it).
+            var cameraPosition = float4(SceneManager.CurrentScene?.cameraPositionOfLastUpdate ?? .zero, 0)
             computeEncoder.setBytes(&cameraPosition, length: float4.stride, index: 3)
             
             ComputeManager.ComputeTerrainTessellation(with: computeEncoder)

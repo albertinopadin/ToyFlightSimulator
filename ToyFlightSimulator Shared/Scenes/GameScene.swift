@@ -35,6 +35,14 @@ class GameScene: Node {
     private let telemetryPublishInterval: Double = 1/60
     private var lastTelemetryPublishTime: Double = 0
     
+    /// The current camera's world position as cached by the last `update()`: the same value
+    /// the draw passes receive in the scene constants. A render-thread pass reads this, not
+    /// `CameraManager.GetCurrentCameraPosition()`. On a floating-origin shift tick the live
+    /// value is wrong: a camera parented to an aircraft is not yet shifted (its parent's
+    /// matrix is pushed down only in the next `update()`), while every direct child of the
+    /// scene already is.
+    var cameraPositionOfLastUpdate: float3 { _sceneConstants.cameraPosition }
+
     override init(name: String) {
         print("[Scene init] Initilizing scene named: \(name)")
         super.init(name: name)
