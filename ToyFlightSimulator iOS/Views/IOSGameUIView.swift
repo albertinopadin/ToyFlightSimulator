@@ -19,6 +19,7 @@ struct IOSGameUIView: View {
     @State private var cameraType: CameraType = .Attached
     @State private var hudEnabled: Bool = false
     @State private var rendererType: RendererType = .TiledMSAATessellated
+    @State private var sceneType: SceneType = Preferences.StartingSceneType
     @State private var maxAnisotropy: MaxAnisotropy = Preferences.SelectedMaxAnisotropy
     // Owned here (not in TFSMenuMobile) so thumbnails survive menu close/reopen.
     // @State (not @StateObject) because the store is @Observable.
@@ -29,7 +30,8 @@ struct IOSGameUIView: View {
             ZStack {
                 IOSMetalViewWrapper(viewSize: geometry.size,
                                     refreshRate: framesPerSecond,
-                                    rendererType: rendererType)
+                                    rendererType: rendererType,
+                                    sceneType: sceneType)
                 
                 Button("Zero Motion Device") {
                     print("Pressed Zero")
@@ -66,6 +68,7 @@ struct IOSGameUIView: View {
                                   cameraType: $cameraType,
                                   hudEnabled: $hudEnabled,
                                   rendererType: $rendererType,
+                                  sceneType: $sceneType,
                                   maxAnisotropy: $maxAnisotropy,
                                   thumbnailStore: thumbnailStore,
                                   viewSize: geometry.size,

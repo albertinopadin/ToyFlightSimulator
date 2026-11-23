@@ -42,8 +42,8 @@ final class BallPhysicsScene: GameScene {
         sun.setPosition(0, 100, 4)
         sun.setLightBrightness(1.0)
         sun.setLightColor(1, 1, 1)
-        sun.setLightAmbientIntensity(0.04)
-        sun.setLightDiffuseIntensity(0.15)
+        sun.setLightAmbientIntensity(0.4)
+        sun.setLightDiffuseIntensity(0.5)
         addLight(sun)
     }
     

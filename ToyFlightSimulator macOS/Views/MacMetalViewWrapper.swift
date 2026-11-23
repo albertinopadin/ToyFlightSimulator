@@ -13,12 +13,11 @@ struct MacMetalViewWrapper: NSViewRepresentable {
     var viewSize: CGSize
     var refreshRate: FPS
     var rendererType: RendererType
+    var sceneType: SceneType
     
     func makeCoordinator() -> Void {
         Engine.Start(rendererType: rendererType)
     }
-    
-    
     
     func makeNSView(context: Context) -> GameView {
         guard let rendererType = Engine.renderer?.rendererType else {
@@ -35,8 +34,7 @@ struct MacMetalViewWrapper: NSViewRepresentable {
 //        gameView.sampleCount = 4  // TODO
         
         Engine.MetalView = gameView
-        SceneManager.SetScene(Preferences.StartingSceneType,
-                              rendererType: rendererType)
+        SceneManager.SetScene(sceneType, rendererType: rendererType)
 
         // The Metal Performance HUD subsystem is armed by the MTL_HUD_ENABLED=1
         // scheme env var (Debug). Start it hidden so the 'H' key toggles it from off.
@@ -46,15 +44,13 @@ struct MacMetalViewWrapper: NSViewRepresentable {
     }
     
     func updateNSView(_ nsView: NSViewType, context: Context) {
-        print("[updateNSView] renderer type: \(rendererType)")
-        if rendererType != Engine.renderer!.rendererType {
-//            nsView.isPaused = true
+        print("[updateNSView] renderer type: \(rendererType), scene type: \(sceneType)")
+        if rendererType != Engine.renderer!.rendererType || sceneType != SceneManager.sceneType {
             SceneManager.TeardownScene()
             let newRenderer = Engine.InitRenderer(type: rendererType)
             newRenderer.metalView = nsView
             Engine.renderer = newRenderer
-            SceneManager.SetScene(Preferences.StartingSceneType,
-                                  rendererType: rendererType)
+            SceneManager.SetScene(sceneType, rendererType: rendererType)
             SceneManager.Paused = true
         }
         
@@ -69,6 +65,9 @@ struct MacMetalViewWrapper: NSViewRepresentable {
 struct MacMetalViewWrapper_Previews: PreviewProvider {
     static var previewSize = CGSize(width: 1920, height: 1080)
     static var previews: some View {
-        MacMetalViewWrapper(viewSize: previewSize, refreshRate: .FPS_120, rendererType: .TiledDeferred)
+        MacMetalViewWrapper(viewSize: previewSize,
+                            refreshRate: .FPS_120,
+                            rendererType: .TiledDeferred,
+                            sceneType: .BallPhysics)
     }
 }

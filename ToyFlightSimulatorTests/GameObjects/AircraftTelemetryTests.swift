@@ -186,4 +186,19 @@ struct AircraftTelemetryTests {
         #expect(approxEqual(snapshot.speedInMph, 223.694, tolerance: 0.01))
         #expect(approxEqual(snapshot.altitudeInFeet, 3280.84, tolerance: 0.01))
     }
+
+    // MARK: - Store placeholder
+
+    /// The HUD tapes draw nothing while `aircraftType == nil`, and
+    /// `SceneManager.TeardownScene` writes this value back to the store so that a
+    /// scene without a player aircraft does not keep showing the previous scene's
+    /// jet. Read-only: the test never touches `sharedInstance`, which the host app
+    /// publishes to, and it does not cover the write in `TeardownScene` itself
+    /// (calling that from a test would tear down the host app's scene).
+    @MainActor
+    @Test("The store's no-aircraft snapshot names no aircraft, so the HUD tapes hide")
+    func noAircraftSnapshotNamesNoAircraft() {
+        #expect(AircraftTelemetryStore.noAircraftSnapshot.aircraftType == nil)
+        #expect(AircraftTelemetryStore.noAircraftSnapshot == Self.zeroSnapshot)
+    }
 }

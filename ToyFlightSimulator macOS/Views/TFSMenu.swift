@@ -10,6 +10,7 @@ import SwiftUI
 struct TFSMenu: View {
     @Binding var framesPerSecond: FPS
     @Binding var rendererType: RendererType
+    @Binding var sceneType: SceneType
     @Binding var volume: Float
     @Binding var aircraftType: AircraftType
     @Binding var cameraType: CameraType
@@ -46,6 +47,9 @@ struct TFSMenu: View {
                             .frame(maxWidth: geometry.size.width * widthScale)
                         
                         RendererPicker(rendererType: $rendererType)
+                            .frame(maxWidth: geometry.size.width * widthScale)
+                        
+                        ScenePicker(sceneType: $sceneType)
                             .frame(maxWidth: geometry.size.width * widthScale)
                         
                         AnisotropyPicker(maxAnisotropy: $maxAnisotropy)
@@ -89,6 +93,7 @@ struct TFSMenu: View {
 #Preview {
     TFSMenu(framesPerSecond: Binding<FPS>.constant(.FPS_120),
             rendererType: Binding<RendererType>.constant(.TiledDeferred),
+            sceneType: .constant(.BallPhysics),
             volume: Binding<Float>.constant(15.0),
             aircraftType: Binding<AircraftType>.constant(.f22),
             cameraType: .constant(.Attached),

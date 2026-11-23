@@ -14,6 +14,7 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
     var refreshRate: FPS
     // TODO: SinglePassDeferredLighting doesn't work on iOS due to a memory issue.
     var rendererType: RendererType
+    var sceneType: SceneType
     
     func makeCoordinator() -> Void {
         Engine.Start(rendererType: rendererType)
@@ -29,8 +30,7 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
         gameView.drawableSize = viewSize
         
         Engine.MetalView = gameView
-        SceneManager.SetScene(Preferences.StartingSceneType,
-                              rendererType: Engine.renderer!.rendererType)
+        SceneManager.SetScene(sceneType, rendererType: Engine.renderer!.rendererType)
 
         // The Metal Performance HUD subsystem is armed by the MTL_HUD_ENABLED=1
         // scheme env var (Debug). Start it hidden so the toggle button reveals it.
@@ -41,13 +41,12 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
     
     func updateUIView(_ nsView: UIViewType, context: Context) {
         // Runtime renderer switching, mirroring MacMetalViewWrapper.updateNSView.
-        if rendererType != Engine.renderer!.rendererType {
+        if rendererType != Engine.renderer!.rendererType || sceneType != SceneManager.sceneType {
             SceneManager.TeardownScene()
             let newRenderer = Engine.InitRenderer(type: rendererType)
             newRenderer.metalView = nsView
             Engine.renderer = newRenderer
-            SceneManager.SetScene(Preferences.StartingSceneType,
-                                  rendererType: rendererType)
+            SceneManager.SetScene(sceneType, rendererType: rendererType)
             SceneManager.Paused = true
         }
 
@@ -67,7 +66,10 @@ struct IOSMetalViewWrapper: UIViewRepresentable {
 struct IOSMetalViewWrapper_Previews: PreviewProvider {
     static var previewSize = CGSize(width: 1920, height: 1080)
     static var previews: some View {
-        IOSMetalViewWrapper(viewSize: previewSize, refreshRate: .FPS_120, rendererType: .TiledMSAATessellated)
+        IOSMetalViewWrapper(viewSize: previewSize,
+                            refreshRate: .FPS_120,
+                            rendererType: .TiledMSAATessellated,
+                            sceneType: .BallPhysics)
     }
 }
 

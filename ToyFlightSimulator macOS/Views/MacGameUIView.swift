@@ -18,8 +18,8 @@ struct MacGameUIView: View {
     @State private var shouldDisplayGameStats: Bool = false
     @State private var shouldDisplayAircraftTelemetry: Bool = false
     @State private var framesPerSecond: FPS = .FPS_120
-//    @State private var rendererType: RendererType = .OrderIndependentTransparency
     @State private var rendererType: RendererType = .TiledMSAATessellated
+    @State private var sceneType: SceneType = Preferences.StartingSceneType
     @State private var volume: Float = 15.0
     @State private var aircraftType: AircraftType = .f22_cgtrader
     @State private var cameraType: CameraType = .Attached
@@ -34,7 +34,8 @@ struct MacGameUIView: View {
             ZStack {
                 MacMetalViewWrapper(viewSize: getViewSize(geometrySize: viewSize),
                                     refreshRate: framesPerSecond,
-                                    rendererType: rendererType)
+                                    rendererType: rendererType,
+                                    sceneType: sceneType)
                 
                 if shouldDisplayHeadingTape {
                     HeadingTape(viewSize: viewSize)
@@ -51,6 +52,7 @@ struct MacGameUIView: View {
                 if shouldDisplayMenu {
                     TFSMenu(framesPerSecond: $framesPerSecond,
                             rendererType: $rendererType,
+                            sceneType: $sceneType,
                             volume: $volume,
                             aircraftType: $aircraftType,
                             cameraType: $cameraType,

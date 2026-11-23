@@ -8,14 +8,16 @@
 import MetalKit
 import os
 
-enum SceneType {
-    case Sandbox
-    case Flightbox
-    case FreeCamFlightbox
-    case FlightboxWithTerrain
-    case FlightboxWithPhysics
-    case BallPhysics
-    case PhysicsStressTest
+enum SceneType: String, CaseIterable, Identifiable {
+    case Sandbox                = "Sandbox"
+    case Flightbox              = "Flightbox"
+    case FreeCamFlightbox       = "FreeCamFlightbox"
+    case FlightboxWithTerrain   = "FlightboxWithTerrain"
+    case FlightboxWithPhysics   = "FlightboxWithPhysics"
+    case BallPhysics            = "BallPhysics"
+    case PhysicsStressTest      = "PhysicsStressTest"
+    
+    var id: String { rawValue }
 }
 
 // Good Idea ... ?
@@ -96,7 +98,7 @@ struct TransparentUniformsData: Sendable {
 
 final class SceneManager {
     nonisolated(unsafe) public static var CurrentScene: GameScene?
-    nonisolated(unsafe) private static var _sceneType: SceneType?
+    nonisolated(unsafe) public static var sceneType: SceneType?
     nonisolated(unsafe) private static var _rendererType: RendererType?
     
     // TODO -> wrap this in a thread safe container (?):
@@ -136,7 +138,7 @@ final class SceneManager {
     // uniformsLock removed: ring buffer snapshots eliminate shared mutable state between threads.
     
     public static func SetScene(_ sceneType: SceneType, rendererType: RendererType) {
-        _sceneType = sceneType
+        Self.sceneType = sceneType
         _rendererType = rendererType
 
         // Warm models so the lazy library doesn't build them under its lock at
@@ -202,7 +204,7 @@ final class SceneManager {
     /// leaks the whole previous scene as frozen ghost renderables. The scene
     /// type and renderer are captured first because TeardownScene nils them.
     private static func ResetScene() {
-        guard let sceneType = _sceneType, let rendererType = _rendererType else { return }
+        guard let sceneType = sceneType, let rendererType = _rendererType else { return }
         TeardownScene()
         SetScene(sceneType, rendererType: rendererType)
     }
@@ -235,8 +237,21 @@ final class SceneManager {
         SingleSubmeshMesh.clearCachedSourceModels()
 
         floatingOriginOffset = .zero
-        
-        _sceneType = nil
+
+        // The HUD tapes and the telemetry panel show the store's last snapshot
+        // until another one replaces it, and only a scene with a player aircraft
+        // publishes one. Without this, switching to a scene that has no aircraft
+        // (ScenePicker) leaves the tapes on screen, frozen at the old aircraft's
+        // last heading, speed and altitude. The store is main-actor state and
+        // this function also runs on the update thread (ResetScene), so the
+        // write hops like the publish in GameScene.update(). A scene that has a
+        // player aircraft publishes on its first update tick, which is enqueued
+        // after this write, so its tapes come straight back (scene reset).
+        Task { @MainActor in
+            AircraftTelemetryStore.sharedInstance.latestSnapshot = AircraftTelemetryStore.noAircraftSnapshot
+        }
+
+        sceneType = nil
         _rendererType = nil
     }
     
@@ -273,7 +288,8 @@ final class SceneManager {
     private static func updateFloatingOrigin() {
         let camWorldPosition = CameraManager.CurrentCamera?.getWorldPosition() ?? .zero
         if let offset = FloatingOrigin.getOffset(cameraWorldPosition: camWorldPosition) {
-            DebugLog("Applying offset to floating origin; offset: \(offset)", DEBUG_FLOATING_ORIGIN)
+            DebugLog("Applying offset to floating origin; offset: \(offset), camera world position: \(camWorldPosition)",
+                     DEBUG_FLOATING_ORIGIN)
             FloatingOrigin.applyOffset(offset,
                                        directChildrenOfScene: CurrentScene?.children ?? [],
                                        cameras: CameraManager.RegisteredCameras,

@@ -37,7 +37,7 @@ struct Preferences {
     
 //    public static let StartingSceneType: SceneType = .Sandbox
 //    public static let StartingSceneType: SceneType = .FreeCamFlightbox
-//    public static let StartingSceneType: SceneType = .Flightbox
+//    public static let StartingSceneType: SceneType = .Flightbox  // CRASH
 //    public static let StartingSceneType: SceneType = .BallPhysics
 //    public static let StartingSceneType: SceneType = .PhysicsStressTest
 //    public static let StartingSceneType: SceneType = .FlightboxWithTerrain

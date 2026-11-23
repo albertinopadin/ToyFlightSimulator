@@ -15,6 +15,7 @@ struct TFSMenuMobile: View {
     @Binding var cameraType: CameraType
     @Binding var hudEnabled: Bool
     @Binding var rendererType: RendererType
+    @Binding var sceneType: SceneType
     @Binding var maxAnisotropy: MaxAnisotropy
 
     let thumbnailStore: AircraftThumbnailStore
@@ -60,6 +61,9 @@ struct TFSMenuMobile: View {
                                 .frame(maxWidth: geometry.size.width * wideWidthScale)
 
                             RendererPicker(rendererType: $rendererType)
+                                .frame(maxWidth: geometry.size.width * wideWidthScale)
+                            
+                            ScenePicker(sceneType: $sceneType)
                                 .frame(maxWidth: geometry.size.width * wideWidthScale)
 
                             AnisotropyPicker(maxAnisotropy: $maxAnisotropy)
@@ -116,6 +120,7 @@ struct TFSMenuMobile: View {
                   cameraType: .constant(.Attached),
                   hudEnabled: Binding<Bool>.constant(false),
                   rendererType: Binding<RendererType>.constant(.TiledMSAATessellated),
+                  sceneType: .constant(.BallPhysics),
                   maxAnisotropy: Binding<MaxAnisotropy>.constant(.x8),
                   thumbnailStore: AircraftThumbnailStore(),
                   viewSize: CGSize(width: 1920, height: 1080),

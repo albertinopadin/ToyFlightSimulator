@@ -17,14 +17,20 @@ import Observation
 final class AircraftTelemetryStore {
     public static let sharedInstance = AircraftTelemetryStore()
     
-    /// Zeroed placeholder until the first publish. `aircraftType` nil reads
-    /// as "Undefined" rather than naming a jet that is not there yet.
-    var latestSnapshot = AircraftTelemetry(aircraftType: nil,
-                                           heading: 0,
-                                           altitudeInMeters: 0,
-                                           forwardSpeedInMetersPerSecond: 0,
-                                           pitchAngle: 0,
-                                           rollAngle: 0)
-    
+    /// What the store holds while no player aircraft is publishing: before the
+    /// first publish, and again from every scene teardown
+    /// (`SceneManager.TeardownScene`) until the next scene's first publish,
+    /// which never comes in a scene without a player aircraft. `aircraftType`
+    /// nil reads as "Undefined" in the panel rather than naming a jet that is
+    /// not there, and hides the HUD tapes.
+    static let noAircraftSnapshot = AircraftTelemetry(aircraftType: nil,
+                                                      heading: 0,
+                                                      altitudeInMeters: 0,
+                                                      forwardSpeedInMetersPerSecond: 0,
+                                                      pitchAngle: 0,
+                                                      rollAngle: 0)
+
+    var latestSnapshot = AircraftTelemetryStore.noAircraftSnapshot
+
     private init() {}
 }
