@@ -390,6 +390,9 @@ final class FlightboxWithPhysics: GameScene {
     
     override func doUpdate() {
         super.doUpdate()
+        
+        // Test: Move the sun
+        moveSun()
 
         // Apply any UI-requested aircraft swap here, on the update thread,
         // before stepping physics so the new rigid body is part of this step.
@@ -400,5 +403,14 @@ final class FlightboxWithPhysics: GameScene {
         // Hitch clamping lives in the world's accumulator (at most 8 substeps
         // per call); UpdateThread also caps DeltaTime at 100 ms.
         physicsWorld.update(deltaTime: Float(GameTime.DeltaTime))
+    }
+    
+    func moveSun() {
+        let totalTime = GameTime.TotalGameTime.toFloat()
+        let x = sin(totalTime * 0.25) * 2
+        let z = cos(totalTime * 0.25) * 2
+        sun.moveX(x)
+        sun.moveZ(z)
+        sun.setLightDirection(sun.getPosition())
     }
 }
