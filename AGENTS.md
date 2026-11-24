@@ -210,7 +210,7 @@ xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulat
 # macOS release build
 xcodebuild build -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulator macOS" -sdk macosx -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
-# macOS tests (serial execution matches CI and avoids app-host/drawable deadlocks)
+# macOS tests (one test at a time: the suite deadlocks when Swift Testing runs tests in parallel inside the host app; see Testing in CLAUDE.md)
 xcodebuild test -project ToyFlightSimulator.xcodeproj -scheme "ToyFlightSimulator macOS" -sdk macosx -configuration Debug -parallel-testing-enabled NO CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
 # iOS simulator build
