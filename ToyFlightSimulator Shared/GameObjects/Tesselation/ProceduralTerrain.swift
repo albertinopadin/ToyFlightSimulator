@@ -58,6 +58,10 @@ struct ProceduralTerrainParameters {
 /// 4. `fractalNoise` adds several of those surfaces (octaves), each narrower and lower than
 ///    the one before, so that large hills carry smaller bumps.
 ///
+/// `bakeHeightSamples`, below `heightInMeters`, evaluates the generator on a square grid of
+/// samples and returns the heights as an array of Floats. That array is what a height texture
+/// is later made from.
+///
 /// Every function is pure: the result depends only on the arguments. The same position and
 /// seed give the same height on every call, in any order, with no state to keep. Positions are
 /// Double, in meters, in the scene's original frame (a stored position plus
@@ -65,7 +69,7 @@ struct ProceduralTerrainParameters {
 /// shifts. There is no engine state and no Metal here: a test can call every function.
 ///
 /// Plan, worked example and references:
-/// plans/claude/procedural_terrain_generation_2026-11-22.md (Milestone 1).
+/// plans/claude/procedural_terrain_generation_2026-11-22.md (Milestones 1 and 2).
 enum ProceduralTerrain {
     /// Scrambles the 32 bits of `value`, so that two inputs that differ in one bit give
     /// unrelated outputs. This is the "lowbias32" hash (Chris Wellons, "Prospecting for Hash
@@ -212,5 +216,61 @@ enum ProceduralTerrain {
         let noiseX = xInOriginalFrame / params.baseCellSize
         let noiseZ = zInOriginalFrame / params.baseCellSize
         return params.heightAmplitude * fractalNoise(x: noiseX, z: noiseZ, params: params)
+    }
+    
+    /// Bakes a square grid of height samples: evaluates `heightInMeters` at every sample of
+    /// the grid and stores the results, in meters, as 32-bit floats.
+    ///
+    /// The grid is a window onto one grid of samples that covers the whole world. A sample is
+    /// named by two whole numbers, its sample indices. The sample with index `i` along X and
+    /// `k` along Z is at x = `i * sampleSpacing` and z = `k * sampleSpacing`, in the scene's
+    /// original frame, for every bake. With 100 m spacing, sample index 5 along X is at 500 m
+    /// and sample index -64 is at -6,400 m.
+    ///
+    /// - Parameters:
+    ///   - firstSampleIndexX: the X sample index of column 0 of the grid. May be negative.
+    ///   - firstSampleIndexZ: the Z sample index of row 0 of the grid. May be negative.
+    ///   - samplesPerSide: how many samples one side of the grid has. Use an odd number, so
+    ///     that the grid has a middle sample. A grid centred on the sample with index `center`
+    ///     starts at `center - (samplesPerSide - 1) / 2`: with 129 samples, at `center - 64`.
+    ///   - sampleSpacing: the distance between neighbouring samples, in meters.
+    ///   - params: which terrain; see `ProceduralTerrainParameters`.
+    /// - Returns: `samplesPerSide * samplesPerSide` heights in meters, stored row by row
+    ///   ("row-major"): the sample in row `row` and column `column` is element
+    ///   `row * samplesPerSide + column`. Columns run along +X and rows along +Z. Column
+    ///   `column` holds the samples with X index `firstSampleIndexX + column`, and row `row`
+    ///   holds the samples with Z index `firstSampleIndexZ + row`.
+    ///
+    /// The position of a sample is always its whole-number index times the spacing, computed
+    /// in Double. It is never "the position of the grid's corner plus a number of steps". Two
+    /// bakes that cover the same sample therefore compute it from the same inputs and store
+    /// the same bits, wherever each grid starts. The terrain can then move by whole samples
+    /// without the ground changing shape.
+    ///
+    /// `toFloat()` rounds the Double height to the nearest Float. For heights up to 600 m
+    /// that moves a height by at most 0.03 mm, half the gap between neighbouring Floats there.
+    ///
+    /// Plan: Milestone 2.
+    static func bakeHeightSamples(firstSampleIndexX: Int,
+                                  firstSampleIndexZ: Int,
+                                  samplesPerSide: Int,
+                                  sampleSpacing: Double,
+                                  params: ProceduralTerrainParameters) -> [Float] {
+        var heightSamples = Array<Float>(repeating: 0, count: samplesPerSide * samplesPerSide)
+        for row in 0..<samplesPerSide {
+            // The whole-number sample index first, then one multiply in Double: the same
+            // sample index gives the same position in every bake.
+            let zInOriginalFrame = Double(firstSampleIndexZ + row) * sampleSpacing
+            for column in 0..<samplesPerSide {
+                let xInOriginalFrame = Double(firstSampleIndexX + column) * sampleSpacing
+                let height = heightInMeters(xInOriginalFrame: xInOriginalFrame,
+                                            zInOriginalFrame: zInOriginalFrame,
+                                            params: params)
+                // Row-major: row 0 fills the first `samplesPerSide` elements, row 1 the next
+                // `samplesPerSide`, and so on.
+                heightSamples[row * samplesPerSide + column] = height.toFloat()
+            }
+        }
+        return heightSamples
     }
 }

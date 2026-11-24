@@ -4,8 +4,9 @@
 //
 //  The procedural terrain height function, one step at a time: the bit scrambler, the hash
 //  of a lattice point, the lattice value, the fade curve, value noise, the sum of octaves and
-//  the height in meters. Every function is pure (no engine state, no Metal), so each test
-//  calls it directly.
+//  the height in meters. Then the bake: the same function evaluated on a grid of samples and
+//  stored as Floats. Every function is pure (no engine state, no Metal), so each test calls
+//  it directly.
 //
 //  No expected number is copied from the output of the code under test. Each one comes from
 //  the worked example in plans/claude/procedural_terrain_generation_2026-11-22.md, which two
@@ -15,11 +16,17 @@
 //  point is (0.3125, -0.15625). The negative z is on purpose: it is where "floor" and "cut off
 //  toward zero" give different lattice cells.
 //
+//  The bake tests use the grid the terrain is drawn with: 129 samples per side, 100 m apart.
+//  Centred on the origin, that grid starts at sample index -64 on both axes, which is
+//  (-6400, -6400) m. Its two new expected numbers (the first sample and the middle sample, as
+//  Floats) are from the plan's Milestone 2 and were recomputed with a third script written
+//  from the plan's pseudocode.
+//
 
 import Testing
 @testable import ToyFlightSimulator
 
-@Suite("ProceduralTerrain: the height function", .tags(.gameObjects))
+@Suite("ProceduralTerrain: the height function and the baked grid", .tags(.gameObjects))
 struct ProceduralTerrainTests {
 
     /// The seed of the worked example. It is also the default seed.
@@ -339,5 +346,237 @@ struct ProceduralTerrainTests {
         #expect(height.isFinite)
         #expect(height != heightOneMillimeterOn)
         #expect(abs(height - heightOneMillimeterOn) < 0.01)
+    }
+
+    // MARK: - bakeHeightSamples
+
+    /// Samples along one side of the grid the terrain is drawn with: 32 patches of 4 cells,
+    /// plus 1, because 128 cells in a row have 129 corners.
+    private let terrainSamplesPerSide = 129
+
+    /// Distance between neighbouring samples of that grid, in meters.
+    private let terrainSampleSpacing = 100.0
+
+    /// Bakes the 129 x 129 grid with 100 m spacing and the default parameters, starting at
+    /// the given sample indices.
+    private func bakeTerrainGrid(firstSampleIndexX: Int, firstSampleIndexZ: Int) -> [Float] {
+        ProceduralTerrain.bakeHeightSamples(firstSampleIndexX: firstSampleIndexX,
+                                            firstSampleIndexZ: firstSampleIndexZ,
+                                            samplesPerSide: terrainSamplesPerSide,
+                                            sampleSpacing: terrainSampleSpacing,
+                                            params: ProceduralTerrainParameters())
+    }
+
+    @Test("a bake holds one height for every sample of the grid")
+    func bakeHasOneFloatPerSample() {
+        let heightSamples = bakeTerrainGrid(firstSampleIndexX: -64, firstSampleIndexZ: -64)
+        #expect(heightSamples.count == 16_641)  // 129 x 129
+        #expect(heightSamples.allSatisfy { $0.isFinite })
+    }
+
+    // Nothing in this test is symmetric, so that each of these mistakes fails it: rows and
+    // columns swapped, the two first indices swapped, the spacing ignored, the parameters
+    // ignored. The X indices are -3 ... 5 and the Z indices are 5 ... 13; the spacing is not
+    // the terrain's 100 m; the seed is not the default.
+    @Test("every baked sample is the height function at that sample's position, as a Float")
+    func bakeMatchesTheHeightFunction() throws {
+        let samplesPerSide = 9
+        let firstSampleIndexX = -3
+        let firstSampleIndexZ = 5
+        let sampleSpacing = 250.0  // meters
+        let parameters = ProceduralTerrainParameters(seed: 7)
+        let heightSamples = ProceduralTerrain.bakeHeightSamples(firstSampleIndexX: firstSampleIndexX,
+                                                                firstSampleIndexZ: firstSampleIndexZ,
+                                                                samplesPerSide: samplesPerSide,
+                                                                sampleSpacing: sampleSpacing,
+                                                                params: parameters)
+        try #require(heightSamples.count == samplesPerSide * samplesPerSide)
+
+        var wrongSamples: [String] = []
+        for row in 0..<samplesPerSide {
+            for column in 0..<samplesPerSide {
+                // Meters in the original frame: x runs from -750 to 1,250, z from 1,250 to 3,250.
+                let x = Double(firstSampleIndexX + column) * sampleSpacing
+                let z = Double(firstSampleIndexZ + row) * sampleSpacing
+                let expectedSample = Float(ProceduralTerrain.heightInMeters(xInOriginalFrame: x,
+                                                                            zInOriginalFrame: z,
+                                                                            params: parameters))
+                let bakedSample = heightSamples[row * samplesPerSide + column]
+                if bakedSample != expectedSample {
+                    wrongSamples.append("row \(row), column \(column): \(bakedSample), expected \(expectedSample)")
+                }
+            }
+        }
+        #expect(wrongSamples.isEmpty, "\(wrongSamples.count) wrong samples, the first: \(wrongSamples.first ?? "")")
+    }
+
+    @Test("a bake is stored row by row: columns run along +X, rows along +Z")
+    func bakeLayoutIsRowsAlongZColumnsAlongX() throws {
+        let samplesPerSide = terrainSamplesPerSide
+        let heightSamples = bakeTerrainGrid(firstSampleIndexX: -64, firstSampleIndexZ: -64)
+        try #require(heightSamples.count == samplesPerSide * samplesPerSide)
+
+        // The grid starts at (-6400, -6400) m, so the sample at (x, z) meters is in column
+        // x / 100 + 64 and row z / 100 + 64. The first two heights are the plan's Milestone 2
+        // numbers (Floats). The other three are heights of the worked example, which
+        // heightMatchesWorkedExample checks on the function itself. Two of them have x
+        // different from z. With rows and columns swapped, the sample read for (1000, -500)
+        // would be the one at (-500, 1000), which is -12.1 m, and the sample read for
+        // (3200, 6400) would be the one at (6400, 3200), which is -138.6 m.
+        let expectedSamples: [(column: Int, row: Int, height: Float, place: String)] = [
+            (0,     0, -328.78198, "(-6400, -6400) m, the first sample"),
+            (64,   64, -172.99075, "(0, 0) m, the middle sample"),
+            (74,   59, -172.6609,  "(1000, -500) m, the point of the worked example"),
+            (96,  128,  533.9311,  "(3200, 6400) m, in the last row"),
+            (128, 128, -110.4141,  "(6400, 6400) m, the last sample"),
+        ]
+        for expected in expectedSamples {
+            let bakedSample = heightSamples[expected.row * samplesPerSide + expected.column]
+            #expect(abs(bakedSample - expected.height) <= 1e-3,
+                    "the sample at \(expected.place) was \(bakedSample) m")
+        }
+
+        // Element 1 is the next sample along X. The next sample along Z is one whole row
+        // further on, at element 129.
+        let parameters = ProceduralTerrainParameters()
+        #expect(heightSamples[1] == Float(ProceduralTerrain.heightInMeters(xInOriginalFrame: -6_300,
+                                                                           zInOriginalFrame: -6_400,
+                                                                           params: parameters)))
+        #expect(heightSamples[samplesPerSide] == Float(ProceduralTerrain.heightInMeters(xInOriginalFrame: -6_400,
+                                                                                        zInOriginalFrame: -6_300,
+                                                                                        params: parameters)))
+    }
+
+    @Test("the spacing sets how far apart the samples are: twice the spacing gives every second sample")
+    func bakeUsesTheSampleSpacing() throws {
+        // Both grids cover the same square: x from -1,600 m to 0 and z from 1,200 m to 2,800 m.
+        // Sample index i with 200 m spacing and sample index 2 x i with 100 m spacing are the
+        // same position, and both products are whole numbers of meters, so they are exactly
+        // equal in Double.
+        let parameters = ProceduralTerrainParameters()
+        let coarseSamplesPerSide = 9
+        let fineSamplesPerSide = 17
+        let coarseSamples = ProceduralTerrain.bakeHeightSamples(firstSampleIndexX: -8, firstSampleIndexZ: 6,
+                                                                samplesPerSide: coarseSamplesPerSide,
+                                                                sampleSpacing: 200, params: parameters)
+        let fineSamples = ProceduralTerrain.bakeHeightSamples(firstSampleIndexX: -16, firstSampleIndexZ: 12,
+                                                              samplesPerSide: fineSamplesPerSide,
+                                                              sampleSpacing: 100, params: parameters)
+        try #require(coarseSamples.count == coarseSamplesPerSide * coarseSamplesPerSide)
+        try #require(fineSamples.count == fineSamplesPerSide * fineSamplesPerSide)
+
+        var everySecondFineSample: [Float] = []
+        for coarseRow in 0..<coarseSamplesPerSide {
+            for coarseColumn in 0..<coarseSamplesPerSide {
+                everySecondFineSample.append(fineSamples[(2 * coarseRow) * fineSamplesPerSide + 2 * coarseColumn])
+            }
+        }
+        #expect(coarseSamples == everySecondFineSample)
+    }
+
+    @Test("storing a height as a Float moves it by at most half a float gap, 0.03 mm")
+    func bakeStoresEachHeightWithinHalfAFloatGap() throws {
+        // A Float between 512 and 1,024 is a multiple of 2^-14 m, about 0.061 mm. That is the
+        // float gap there, and `ulp` returns it. Rounding to the nearest Float moves a value
+        // by at most half the gap. Heights are at most 600 m, and below 512 m the gap is
+        // smaller, so half the gap at 600 m is the limit for every sample.
+        let halfFloatGapAt600Meters = Double(Float(600).ulp) / 2
+        #expect(halfFloatGapAt600Meters == 0.000030517578125)
+
+        let samplesPerSide = terrainSamplesPerSide
+        let heightSamples = bakeTerrainGrid(firstSampleIndexX: -64, firstSampleIndexZ: -64)
+        try #require(heightSamples.count == samplesPerSide * samplesPerSide)
+
+        var largestChange = 0.0  // meters
+        for row in 0..<samplesPerSide {
+            for column in 0..<samplesPerSide {
+                let height = ProceduralTerrain.heightInMeters(
+                    xInOriginalFrame: Double(-64 + column) * terrainSampleSpacing,
+                    zInOriginalFrame: Double(-64 + row) * terrainSampleSpacing,
+                    params: ProceduralTerrainParameters())
+                largestChange = max(largestChange, abs(Double(heightSamples[row * samplesPerSide + column]) - height))
+            }
+        }
+        #expect(largestChange <= halfFloatGapAt600Meters, "the largest change was \(largestChange) m")
+    }
+
+    @Test("two bakes next to each other hold the same values on the border they share")
+    func neighbouringBakesShareTheirBorderExactly() throws {
+        let samplesPerSide = terrainSamplesPerSide
+        let lastIndexOnASide = samplesPerSide - 1  // 128
+
+        // Three bakes: one that starts at sample index (0, 0), its neighbour along +X and its
+        // neighbour along +Z. Each neighbour starts on the last sample index of the first
+        // bake, 128, so the two grids have that one line of samples in common.
+        let bakeStartingAtZero = bakeTerrainGrid(firstSampleIndexX: 0, firstSampleIndexZ: 0)
+        let neighbourAlongX = bakeTerrainGrid(firstSampleIndexX: lastIndexOnASide, firstSampleIndexZ: 0)
+        let neighbourAlongZ = bakeTerrainGrid(firstSampleIndexX: 0, firstSampleIndexZ: lastIndexOnASide)
+        try #require(bakeStartingAtZero.count == samplesPerSide * samplesPerSide)
+        try #require(neighbourAlongX.count == samplesPerSide * samplesPerSide)
+        try #require(neighbourAlongZ.count == samplesPerSide * samplesPerSide)
+
+        // Along X: the last column of the first bake is the first column of its neighbour.
+        // A column is one element out of every row.
+        let lastColumnOfFirstBake = (0..<samplesPerSide).map { row in
+            bakeStartingAtZero[row * samplesPerSide + lastIndexOnASide]
+        }
+        let firstColumnOfNeighbourAlongX = (0..<samplesPerSide).map { row in
+            neighbourAlongX[row * samplesPerSide]
+        }
+        #expect(lastColumnOfFirstBake == firstColumnOfNeighbourAlongX)
+
+        // Along Z: the last row of the first bake is the first row of its neighbour. A row is
+        // 129 neighbouring elements of the array.
+        let lastRowOfFirstBake = Array(bakeStartingAtZero[(lastIndexOnASide * samplesPerSide)...])
+        let firstRowOfNeighbourAlongZ = Array(neighbourAlongZ[..<samplesPerSide])
+        #expect(lastRowOfFirstBake == firstRowOfNeighbourAlongZ)
+    }
+
+    // This is the property the terrain relies on when it follows the aircraft: it moves by
+    // whole samples, and every sample that was on the old grid keeps its exact value.
+    @Test("a bake moved by whole samples has the same bits as the old bake wherever the two overlap")
+    func overlapOfTwoBakesIsBitEqual() throws {
+        let samplesPerSide = terrainSamplesPerSide
+        let oldFirstSampleIndexX = -64
+        let oldFirstSampleIndexZ = -64
+        let oldBake = bakeTerrainGrid(firstSampleIndexX: oldFirstSampleIndexX, firstSampleIndexZ: oldFirstSampleIndexZ)
+        try #require(oldBake.count == samplesPerSide * samplesPerSide)
+
+        // Moves in samples. 4 samples is one patch, the step the terrain will move by. The
+        // first move is the plan's: 4 samples along X leaves 125 of the 129 columns shared.
+        let moves: [(alongX: Int, alongZ: Int, sharedSampleCount: Int)] = [
+            ( 4, 0, 125 * 129),
+            ( 0, 4, 129 * 125),
+            (-4, 8, 125 * 121),
+        ]
+        for move in moves {
+            let newBake = bakeTerrainGrid(firstSampleIndexX: oldFirstSampleIndexX + move.alongX,
+                                          firstSampleIndexZ: oldFirstSampleIndexZ + move.alongZ)
+            try #require(newBake.count == samplesPerSide * samplesPerSide)
+            // The new grid holds other samples than the old one: it did move.
+            #expect(newBake != oldBake, "move (\(move.alongX), \(move.alongZ))")
+
+            var sharedSampleCount = 0
+            var differingSampleCount = 0
+            for newRow in 0..<samplesPerSide {
+                for newColumn in 0..<samplesPerSide {
+                    // The same sample of the world sits this many rows and columns further on
+                    // in the old grid, because the old grid starts that many samples earlier.
+                    let oldRow = newRow + move.alongZ
+                    let oldColumn = newColumn + move.alongX
+                    guard (0..<samplesPerSide).contains(oldRow), (0..<samplesPerSide).contains(oldColumn) else {
+                        continue  // this sample was not on the old grid
+                    }
+                    sharedSampleCount += 1
+                    let oldSample = oldBake[oldRow * samplesPerSide + oldColumn]
+                    let newSample = newBake[newRow * samplesPerSide + newColumn]
+                    if oldSample.bitPattern != newSample.bitPattern {
+                        differingSampleCount += 1
+                    }
+                }
+            }
+            #expect(sharedSampleCount == move.sharedSampleCount, "move (\(move.alongX), \(move.alongZ))")
+            #expect(differingSampleCount == 0, "move (\(move.alongX), \(move.alongZ))")
+        }
     }
 }
