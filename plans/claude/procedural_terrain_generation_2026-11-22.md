@@ -5,7 +5,7 @@
 here are in 1.2.8 ("Fully procedural": fBm, value noise, the limit of noise), 1.2.9 (rules 1, 2, 5
 and 6: one source of truth, interpolation, sample format), 2.1 (what the current terrain is) and
 2.2 ("Is procedural generation a good fit?" and steps 1 to 3 of the simple version).
-**Status:** in progress (Milestone 1 landed)
+**Status:** in progress (Milestones 1 and 2 landed)
 **Related plans:** `plans/claude/tessellation_terrain_fix.md` (out of date; its struct listings no
 longer match the source). No other plan covers terrain.
 
@@ -21,6 +21,19 @@ longer match the source). No other plan covers terrain.
 
 ## Changelog
 
+- **2026-11-24** — Milestone 2 landed (49680b6) and was edited to match the code: the names the
+  code uses are listed, the five listed tests check more than first listed, and two tests were
+  added (7 in all; the suite now has 29). The review before landing found no defect in
+  `bakeHeightSamples`; it added the doc comment and the tests. Checks run: the macOS build and
+  test bundle, the full test suite one test at a time (589 Swift Testing tests and the 20
+  XCTest tests), and the iOS build. The numbers of the tests were recomputed with a new scratch
+  script written from the pseudocode, `bake_crosscheck.py` (default parameters, the 129 × 129
+  grid that starts at sample index (−64, −64)): 16,641 samples; −328.78198 and −172.99075; a
+  move of 4 samples shares 125 columns and no shared sample differs; storing a Float changes a
+  height by at most 0.000026 m in this grid; its lowest sample is −329.05 m and its highest
+  533.93 m, as Milestone 3 says. The test file was also run against eight deliberately broken
+  copies of the bake (rows and columns swapped, the first indices swapped, the spacing
+  ignored, the parameters ignored, and four more); each failed at least one test.
 - **2026-11-24** — Milestone 1 landed (c795cb6) and was edited to match the code: `octaveCount`
   is `UInt32`, the parameter fields are `let` behind an initializer that checks `octaveCount`,
   the names the code uses are listed, and twelve tests were added to the list (22 in all). The
@@ -622,13 +635,20 @@ to Float only when it is stored (Milestone 2).
   - Very large coordinates → the lattice index wraps after 2³² cells. For the narrowest octave
     (400 m) that is 1.7 × 10¹² m. The world repeats after 1.7 billion km.
 
-### Milestone 2 — Baking a grid of height samples
+### Milestone 2 — Baking a grid of height samples ✅ (landed 2026-11-24, 49680b6)
 
 - **Learning objective:** how to sample a continuous function onto a grid so that any two grids
   agree exactly where they overlap, and how the memory layout of the grid is defined.
 - **Prerequisites:** Milestone 1.
 - **Engine integration points:** one more static function in `ProceduralTerrain`, below
   `heightInMeters`. More tests in `ProceduralTerrainTests`.
+- **Names in the code.** As in Milestone 1, the code drops the unit suffix. Where the
+  pseudocode says `sampleSpacing_m`, `parameters`, `xInOriginalFrame_m`, `zInOriginalFrame_m`
+  and `height_m`, the code says `sampleSpacing`, `params`, `xInOriginalFrame`,
+  `zInOriginalFrame` and `height`. The units are the same (meters) and are stated in the doc
+  comment. `narrowToFloat` is `toFloat()`, the extension on Double in
+  `Core/Types/MetalTypes.swift`: it is `Float(value)`, which rounds to the nearest Float. The
+  two first sample indices and `samplesPerSide` are `Int`.
 - **Algorithm:**
 
 ```pseudocode
@@ -654,21 +674,38 @@ A grid centred on sample (`centerSampleIndexX`, `centerSampleIndexZ`) starts at
 `center − (samplesPerSide − 1) / 2`. With 129 samples that is `center − 64`.
 
 - **Tests** (Metal-free):
-  - [ ] `bakeHasOneFloatPerSample` — 129 samples per side gives 16,641 values.
-  - [ ] `bakeMatchesTheHeightFunction` — on a 9 × 9 grid, every sample equals
-    `heightInMeters` at its position, narrowed to Float.
-  - [ ] `bakeLayoutIsRowsAlongZColumnsAlongX` — first index (−64, −64), 129 per side, spacing
+  - [x] `bakeHasOneFloatPerSample` — 129 samples per side gives 16,641 values, all finite.
+  - [x] `bakeMatchesTheHeightFunction` — on a 9 × 9 grid, every sample equals
+    `heightInMeters` at its position, narrowed to Float. Nothing in this grid is symmetric: it
+    starts at sample index (−3, 5), the spacing is 250 m and the seed is 7. Swapped rows and
+    columns, swapped first indices, an ignored spacing and ignored parameters each fail it.
+  - [x] `bakeLayoutIsRowsAlongZColumnsAlongX` — first index (−64, −64), 129 per side, spacing
     100 m: element 0 is −328.78198 (the sample at (−6400, −6400) m); element 64 × 129 + 64 is
-    −172.99075 (the sample at the origin); element 1 equals the height at (−6300, −6400) m.
-  - [ ] `neighbouringBakesShareTheirBorderExactly` — the last column of a bake starting at X
-    index 0 equals, with `==`, the first column of a bake starting at X index 128.
-  - [ ] `overlapOfTwoBakesIsBitEqual` — a bake starting 4 samples further along X equals the old
-    one on all 125 shared columns.
+    −172.99075 (the sample at the origin); element 1 equals the height at (−6300, −6400) m and
+    element 129 equals the height at (−6400, −6300) m. Three heights of the worked example are
+    read at their places, each within 1e-3 m: −172.6609 in column 74 of row 59 (the sample at
+    (1000, −500) m), 533.9311 in column 96 of row 128 ((3200, 6400) m) and −110.4141 in the
+    last element ((6400, 6400) m). With rows and columns swapped the second of these would be
+    −138.6.
+  - [x] `neighbouringBakesShareTheirBorderExactly` — the last column of a bake starting at X
+    index 0 equals, with `==`, the first column of a bake starting at X index 128. The same
+    for its last row and the first row of a bake starting at Z index 128.
+  - [x] `overlapOfTwoBakesIsBitEqual` — a bake starting 4 samples further along X equals the old
+    one on all 125 shared columns. The same for a move of 4 samples along Z and for a move of
+    (−4, 8) samples. The comparison is of the bits (`bitPattern`).
+
+  Two more tests were added with the code (review of 2026-11-24):
+  - [x] `bakeUsesTheSampleSpacing` — a 9 × 9 bake with 200 m spacing equals, with `==`, every
+    second sample of a 17 × 17 bake with 100 m spacing that covers the same square.
+  - [x] `bakeStoresEachHeightWithinHalfAFloatGap` — over the 129 × 129 grid, a stored Float
+    differs from the Double height by at most 0.0000305 m, half the float gap at 600 m.
 - **Observable completion criteria:** the suite passes. Nothing changes in the app yet.
 - **Edge cases and expected results:**
   - Negative sample indices → positions left of or behind the origin; no special case.
   - An even `samplesPerSide` → the grid has no centre sample. Use an odd count (129).
   - Narrowing to Float → at most half a float gap: 0.03 mm for heights up to 600 m.
+  - `samplesPerSide` 0 → an empty array. A negative `samplesPerSide` → the program stops at
+    the range `0..<samplesPerSide`. The function has no check of its own.
 
 ### Milestone 3 — Drawing the baked samples with the existing terrain
 
