@@ -5,7 +5,7 @@
 here are in 1.2.8 ("Fully procedural": fBm, value noise, the limit of noise), 1.2.9 (rules 1, 2, 5
 and 6: one source of truth, interpolation, sample format), 2.1 (what the current terrain is) and
 2.2 ("Is procedural generation a good fit?" and steps 1 to 3 of the simple version).
-**Status:** draft
+**Status:** in progress (Milestone 1 landed)
 **Related plans:** `plans/claude/tessellation_terrain_fix.md` (out of date; its struct listings no
 longer match the source). No other plan covers terrain.
 
@@ -21,6 +21,21 @@ longer match the source). No other plan covers terrain.
 
 ## Changelog
 
+- **2026-11-24** — Milestone 1 landed (c795cb6) and was edited to match the code: `octaveCount`
+  is `UInt32`, the parameter fields are `let` behind an initializer that checks `octaveCount`,
+  the names the code uses are listed, and twelve tests were added to the list (22 in all). The
+  review before landing found two defects, both fixed by the owner: `latticeValue` divided and
+  subtracted in `UInt32` before converting to Double, and `valueNoise` computed the Z fraction
+  from x. Checks run: the macOS build and test bundle, the full test suite (582 Swift Testing
+  tests and the XCTest suites), and the iOS build. No number of the worked example changed. The
+  thresholds of the new tests were checked with a scratch sweep over a corrected copy of the
+  code (fade curve at 0.001: 9.985e-9; lattice values −1 to 0.99998; heights −489.6 m to
+  509.8 m; the 1 mm step at 5,000 km: 0.00005 m).
+- **2026-11-24** — Milestone 1, after a question from the owner: said that `low32Bits` is
+  Swift's `UInt32(truncatingIfNeeded:)`, how the floor becomes an `Int` lattice index, and which
+  types the parameter fields have (and that they are `var`). The conversions were run in a
+  scratch script, `low32bits_check.swift` (−1 → 4,294,967,295; 4,294,967,297 → 1;
+  `UInt32(clamping: -1)` → 0). No number in the plan changed.
 - **2026-11-22** — Plan created from the research document and the current source. Every number
   was reproduced with one of two scratch scripts: `procedural_terrain_scratch.swift` (compiled
   twice, with and without optimization: the worked example, statistics, the gap to the drawn
@@ -426,7 +441,7 @@ best of 20 bakes on an Apple M1 Max, compiled with `swiftc -O` and with `swiftc 
 
 ## Milestones
 
-### Milestone 1 — The height function
+### Milestone 1 — The height function ✅ (landed 2026-11-24, c795cb6)
 
 - **Learning objective:** how a hash, a blend and a sum of octaves make a deterministic terrain
   height, and how to test such a function without drawing anything.
@@ -435,14 +450,39 @@ best of 20 bakes on an Apple M1 Max, compiled with `swiftc -O` and with `swiftc 
   holds a struct `ProceduralTerrainParameters` (the six fields of the table above, with the
   defaults seed 2026, 3,200 m, 600 m, 4, 2, 0.5) and a caseless enum `ProceduralTerrain` whose
   static functions are the ones below. Write it like `Managers/FloatingOrigin.swift`: no stored
-  state, everything passed in. New test file
+  state, everything passed in. Field types: `seed` and `octaveCount` are `UInt32` (so the seed
+  of an octave is `seed &+ octaveIndex` with no conversion), and the other four are `Double`, so
+  that no step of the height function is narrower than Double. The fields are `let`. The struct
+  has a hand-written initializer whose six arguments carry the defaults, so a caller names only
+  what it changes (the tests pass a different seed), and which stops the program with a
+  `precondition` when `octaveCount` is 0. A parameters value that exists is therefore valid.
+  This is the pattern of `ValueCurve.init(keys:)` in `Utils/ValueCurve.swift`. New test file
   `ToyFlightSimulatorTests/GameObjects/ProceduralTerrainTests.swift`, tagged `.gameObjects`.
+- **Names in the code.** The owner's code drops the unit suffix and shortens three names. Where
+  the pseudocode of this plan says `baseCellSize_m`, `heightAmplitude_m`, `parameters`,
+  `octaveIndex`, `xInOriginalFrame_m` and `zInOriginalFrame_m`, the code says `baseCellSize`,
+  `heightAmplitude`, `params`, `octaveIdx`, `xInOriginalFrame` and `zInOriginalFrame`. The
+  units are the same (meters) and are stated in the doc comments. `linearBlend` takes `start`,
+  `end` and `weight`; `fadeCurve` takes `t`.
 - **Algorithm:**
 
-Two details are easy to get wrong in Swift. First, the two multiplies and the two adds in the
+Three details are easy to get wrong in Swift. First, the two multiplies and the two adds in the
 hash must *wrap*: keep the low 32 bits and discard the rest. A plain `*` or `+` on `UInt32` traps
 on overflow; the wrapping operators are `&*` and `&+`. Second, a lattice index is the *floor* of
 the coordinate, not the coordinate truncated toward zero. They differ for every negative value.
+In Swift the floor of a Double is still a Double (`x.rounded(.down)`): convert it to `Int` for the
+lattice index, and keep the Double for the subtraction that gives the fraction.
+
+Third, `low32Bits` is not a function you have to write. It is this plan's name for a conversion
+the Swift standard library already has: the initializer `UInt32(truncatingIfNeeded:)`, which
+every whole-number type provides. A signed whole number is stored in *two's complement*, where −1
+is "all bits set". The initializer copies the lowest 32 of those bits and drops the rest, so −1
+becomes 4,294,967,295, −2 becomes 4,294,967,294, and 4,294,967,297 (2³² + 1) becomes 1. Keep the
+lattice index as an `Int` (64 bits) and convert it only inside `hashOfLatticePoint`. The other
+conversions are wrong here: `UInt32(latticeX)` traps on a negative index, and
+`UInt32(clamping: latticeX)` turns every negative index into 0, so all lattice points with a
+negative index would share one value. (`UInt32(bitPattern:)` does the same job as
+`truncatingIfNeeded`, but only accepts an `Int32`.)
 
 ```pseudocode
 // Scrambles the 32 bits of a number so that inputs differing in one bit give unrelated outputs.
@@ -461,7 +501,8 @@ function scrambleBits(value) -> unsigned32
 // One pseudo-random number per lattice point and seed. Nesting the hash makes the result depend
 // on all three inputs: change any one of them and the output changes completely.
 function hashOfLatticePoint(latticeX, latticeZ, seed) -> unsigned32
-    // low32Bits reinterprets a signed whole number as unsigned, so -1 becomes 4,294,967,295
+    // low32Bits keeps the lowest 32 bits of a signed whole number and reads them as unsigned,
+    // so -1 becomes 4,294,967,295. In Swift: UInt32(truncatingIfNeeded:), see the note above.
     seedHash = scrambleBits(seed)
     zHash = scrambleBits(wrappingAdd(low32Bits(latticeZ), seedHash))
     return scrambleBits(wrappingAdd(low32Bits(latticeX), zHash))
@@ -521,24 +562,52 @@ is still exact to far below a millimeter; there is nothing to think about. The r
 to Float only when it is stored (Milestone 2).
 
 - **Tests** (all Metal-free; values from the worked example and the scratch script):
-  - [ ] `ProceduralTerrainTests.scrambleBitsMatchesReferenceValues` — `scrambleBits(0)` is 0,
+  - [x] `ProceduralTerrainTests.scrambleBitsMatchesReferenceValues` — `scrambleBits(0)` is 0,
     `scrambleBits(1)` is 0x688990c0, `scrambleBits(2026)` is 0x41cfd7c2,
     `scrambleBits(0xffffffff)` is 0x6768824a.
-  - [ ] `latticeHashMatchesWorkedExample` — the four hashes of the worked example's table, for
+  - [x] `latticeHashMatchesWorkedExample` — the four hashes of the worked example's table, for
     seed 2026. This is the test that catches a missing wrap or a wrong nesting order.
-  - [ ] `latticeValueStaysInRange` — for a sweep of lattice points and seeds, −1 ≤ value < 1.
-  - [ ] `fadeCurveValues` — 0 at 0, 1 at 1, 0.5 at 0.5, 0.103515625 at 0.25, 0.896484375 at 0.75.
-  - [ ] `valueNoiseEqualsLatticeValueAtLatticePoints` — `valueNoise(1, 2, seed 2026)` is
-    0.964206 and equals `latticeValue(1, 2, 2026)`.
-  - [ ] `valueNoiseUsesFloorForNegativeCoordinates` — `valueNoise(0.3125, −0.15625, 2026)` is
+  - [x] `latticeValueStaysInRange` — for 41 × 41 lattice points and 5 seeds, −1 ≤ value < 1,
+    and the values reach below −0.99 and above 0.99.
+  - [x] `fadeCurveValues` — 0 at 0, 1 at 1, 0.5 at 0.5, 0.103515625 at 0.25, 0.896484375 at 0.75.
+  - [x] `valueNoiseEqualsLatticeValueAtLatticePoints` — `valueNoise(1, 2, seed 2026)` is
+    0.964206 and equals `latticeValue(1, 2, 2026)`; the same equality at four more lattice
+    points, three of them with a negative index.
+  - [x] `valueNoiseUsesFloorForNegativeCoordinates` — `valueNoise(0.3125, −0.15625, 2026)` is
     −0.153138 within 1e-6.
-  - [ ] `valueNoiseIsContinuousAcrossCellEdges` — values 1e-9 on either side of x = 1, x = 0 and
-    x = −1 differ by less than 1e-6.
-  - [ ] `heightMatchesWorkedExample` — −172.6609 m at (1000, −500), −172.9908 m at (0, 0),
-    533.9311 m at (3200, 6400), each within 1e-3 m, default parameters.
-  - [ ] `heightIsDeterministicAndDependsOnTheSeed` — two calls agree exactly; seed 7 gives a
+  - [x] `valueNoiseIsContinuousAcrossCellEdges` — values 1e-9 on either side of the edges at
+    −1, 0 and 1 differ by less than 1e-6, crossing along X and crossing along Z.
+  - [x] `heightMatchesWorkedExample` — −172.6609 m at (1000, −500), −172.9908 m at (0, 0),
+    533.9311 m at (3200, 6400), −110.4141 m at (6400, 6400), each within 1e-3 m, default
+    parameters.
+  - [x] `heightIsDeterministicAndDependsOnTheSeed` — two calls agree exactly; seed 7 gives a
     different height at (1000, −500).
-  - [ ] `heightStaysWithinTheAmplitude` — over a sweep, |height| ≤ 600 m.
+  - [x] `heightStaysWithinTheAmplitude` — over 73 × 73 points 1,370 m apart, |height| ≤ 600 m,
+    and the terrain is not flat: some point is below −300 m and some point above 300 m.
+
+  Twelve more tests were added with the code (review of 2026-11-24):
+  - [x] `latticeHashDependsOnEveryInput` — the hash of (1, 0) differs from the hash of (0, 1),
+    and from the hash of (1, 0) with seed 2027.
+  - [x] `latticeHashRepeatsEveryTwoToThe32Cells` — a lattice index and the same index plus or
+    minus 2³² give the same hash.
+  - [x] `latticeValueMatchesWorkedExample` — the four values of the worked example's table,
+    each within 1e-6.
+  - [x] `latticeValueOfTheAllZeroInput` — seed 0 at lattice point (0, 0) gives exactly −1.
+  - [x] `fadeCurveIsFlatAtBothEnds` — the curve moves less than 1e-7 in the first and in the
+    last thousandth of the cell. A straight line or the curve 3t² − 2t³ fails this.
+  - [x] `linearBlendValues` — from −2 to 6: −2 at weight 0, 0 at 0.25, 2 at 0.5, 6 at 1.
+  - [x] `valueNoiseMatchesWorkedExampleOctaves` — the four noise values of the worked example's
+    octave table, each within 1e-6.
+  - [x] `valueNoiseStaysInRange` — over 61 × 61 points between the lattice points, the noise
+    stays between −1 and +1.
+  - [x] `fractalNoiseWithOneOctaveIsValueNoise` — with `octaveCount` 1 the two are equal.
+  - [x] `fractalNoiseMatchesWorkedExample` — −0.287768 within 1e-6.
+  - [x] `heightScalesWithAmplitudeAndBaseCellSize` — twice the amplitude gives exactly twice
+    the height; twice the base cell size gives the same height at twice the distance.
+  - [x] `heightIsSmoothFarFromTheOrigin` — 5,000 km from the origin, a step of 1 mm changes the
+    height by less than 1 cm (a Float there can only hold multiples of 0.5 m).
+
+  The `precondition` on `octaveCount` has no test: a failed precondition stops the test process.
 - **Observable completion criteria:** the suite passes. Nothing changes in the app yet.
 - **Edge cases and expected results:**
   - A negative coordinate → the cell to its left or below, fraction between 0 and 1 (worked
@@ -547,8 +616,9 @@ to Float only when it is stored (Milestone 2).
     that lattice point's value.
   - Seed 0 at lattice point (0, 0) → `scrambleBits(0)` is 0, so the hash is 0 and the value is
     exactly −1. Harmless: it is one lattice point of one octave.
-  - `octaveCount` 0 → division by zero. Require at least 1 (a precondition in the parameter
-    struct's initializer).
+  - `octaveCount` 0 → the initializer of `ProceduralTerrainParameters` stops the program
+    (`precondition`). Without the check, `fractalNoise` would divide zero by zero and every
+    height would be NaN.
   - Very large coordinates → the lattice index wraps after 2³² cells. For the narrowest octave
     (400 m) that is 1.7 × 10¹² m. The world repeats after 1.7 billion km.
 
