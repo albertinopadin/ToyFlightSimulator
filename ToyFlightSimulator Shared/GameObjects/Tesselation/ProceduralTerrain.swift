@@ -76,6 +76,24 @@ struct ProceduralTerrainParameters {
 /// Plan, worked example and references:
 /// plans/claude/procedural_terrain_generation_2026-11-22.md (Milestones 1, 2 and 4).
 enum ProceduralTerrain {
+    /// The farthest a focus may be from sample 0 on one axis, in samples, for
+    /// `recenteredCenterSampleIndex` to act on it: 2^53, which is 9,007,199,254,740,992. A
+    /// focus farther away than this is not treated as a position, and the terrain stays
+    /// where it is.
+    ///
+    /// Why 2^53: up to that number a Double holds every whole number. Above it the gap
+    /// between neighbouring Doubles is 2, so a Double can no longer tell one sample from the
+    /// next, and "the sample nearest the focus" has no meaning. The limit is also far inside
+    /// the range of an `Int` (about 9.2 x 10^18), so a focus that passes it can be converted
+    /// to a sample index without stopping the program.
+    ///
+    /// With 100 m spacing the limit is 9 x 10^17 m, about 95 light-years. No flight gets
+    /// there. A broken position can: a number that is diverging passes through huge finite
+    /// values before it becomes infinity.
+    ///
+    /// `0x1p53` is a hexadecimal floating-point literal: 1 times 2 to the power 53.
+    static let maxFocusDistanceFromOriginInSamples: Double = 0x1p53
+
     /// Scrambles the 32 bits of `value`, so that two inputs that differ in one bit give
     /// unrelated outputs. This is the "lowbias32" hash (Chris Wellons, "Prospecting for Hash
     /// Functions", 2018).
@@ -325,9 +343,9 @@ enum ProceduralTerrain {
     ///     the scene's original frame: a stored position plus
     ///     `SceneManager.floatingOriginOffset`, added in Double.
     ///   - sampleSpacing: the distance between neighbouring samples, in meters.
-    ///   - snapStepInSamples: the centre is a multiple of this many samples. An `Int`, because
-    ///     a centre is a sample index and a step with a fraction could not land on one. It is
-    ///     converted to Double for the one division.
+    ///   - snapStepInSamples: the centre is a multiple of this many samples. An `Int` of at
+    ///     least 1, because a centre is a sample index and a step with a fraction could not
+    ///     land on one. It is converted to Double for the one division.
     ///   - recenterThresholdInSamples: how far the focus may be from the centre, in samples,
     ///     before a recentre is due. It must be at least half the snap step. Below that, a
     ///     focus can be past the threshold while the nearest multiple is still the current
@@ -336,16 +354,16 @@ enum ProceduralTerrain {
     ///     between recentres, so a focus that crosses a halfway line back and forth causes a
     ///     bake per crossing.
     /// - Returns: the new centre sample index, a multiple of the snap step, or nil when the
-    ///   focus is within the threshold or is not a finite number.
+    ///   focus is within the threshold or is not a usable position.
     ///
-    /// A focus that is NaN (not a number) or infinite gives nil: the terrain stays where it
-    /// is. The `guard` is needed because the threshold check does not stop such a focus. NaN
-    /// compares false with everything, so it would get past the check, and the conversion to
-    /// `Int` below stops the program for NaN and for infinity.
-    ///
-    /// A finite focus must still be a possible position. With 100 m spacing, one beyond
-    /// about 9 x 10^20 m gives a sample index that does not fit in an `Int`, and the program
-    /// stops. There is no check for that.
+    /// Three kinds of focus are not a usable position, and each gives nil, so the terrain
+    /// stays where it is: NaN (not a number), infinity, and a finite focus more than
+    /// `maxFocusDistanceFromOriginInSamples` (2^53) samples from sample 0. The `guard` is
+    /// needed because the threshold check does not stop any of them. NaN compares false with
+    /// everything, so it would get past the check, and the other two are simply "past the
+    /// threshold". The lines after the check would then stop the program: the conversion to
+    /// `Int` for NaN, for infinity and for a number too large for an `Int`, and the multiply
+    /// by the snap step for a number that only just fits.
     ///
     /// Plan: Milestone 4.
     static func recenteredCenterSampleIndex(currentCenterSampleIndex: Int,
@@ -355,8 +373,10 @@ enum ProceduralTerrain {
                                             recenterThresholdInSamples: Double) -> Int? {
         // Meters to samples. A whole number here means the focus is exactly on a sample.
         let focusInSamples = focusPositionInOriginalFrame / sampleSpacing
-        // NaN or infinity: there is nothing to centre on, so the terrain stays where it is.
-        guard focusInSamples.isFinite else { return nil }
+        // Not a usable position: NaN, infinity, or farther from sample 0 than a Double can
+        // count samples. There is nothing to centre on, so the terrain stays where it is.
+        // One comparison covers all three, because a comparison with NaN is false.
+        guard abs(focusInSamples) <= maxFocusDistanceFromOriginInSamples else { return nil }
         if abs(focusInSamples - Double(currentCenterSampleIndex)) <= recenterThresholdInSamples {
             return nil
         }

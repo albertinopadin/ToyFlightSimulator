@@ -654,6 +654,46 @@ struct ProceduralTerrainTests {
         #expect(recenteredCenter(from: 0, focusInMeters: -.infinity) == nil)
     }
 
+    @Test("the largest focus distance is 2^53, the last number up to which a Double holds every whole number")
+    func maxFocusDistanceIsTheLastExactWholeNumber() {
+        let maxDistanceInSamples = ProceduralTerrain.maxFocusDistanceFromOriginInSamples
+        #expect(maxDistanceInSamples == 9_007_199_254_740_992)
+        #expect(maxDistanceInSamples == Double(1 << 53))
+        // Below the limit, neighbouring whole numbers are different Doubles.
+        #expect(maxDistanceInSamples - 1 != maxDistanceInSamples)
+        // Above it the gap between neighbouring Doubles is 2. 2^53 + 1 does not exist as a
+        // Double, so the sum rounds back to 2^53: a sample and its neighbour look the same.
+        #expect(maxDistanceInSamples + 1 == maxDistanceInSamples)
+        #expect(maxDistanceInSamples.ulp == 2)
+    }
+
+    // As in focusThatIsNotFiniteDoesNotRecentre: if the guard only checked for NaN and
+    // infinity, the first four focus values here would not fail this test, they would end the
+    // test process. A sample index that is too large for an Int stops the program at the
+    // conversion or at the multiply after it.
+    @Test("a finite focus more than 2^53 samples from sample 0 never recentres, and one exactly there still does")
+    func focusBeyondTheMaxDistanceDoesNotRecentre() {
+        // 10^21 m is 10^19 samples: its number of snap steps fits in an Int, but the centre
+        // (steps x 4) does not. 10^300 m does not fit at all. The third is the largest value
+        // a Float position can hold, 3.4 x 10^38: where a diverging position ends up just
+        // before it becomes infinity.
+        #expect(recenteredCenter(from: 0, focusInMeters: 1e21) == nil)
+        #expect(recenteredCenter(from: 0, focusInMeters: 1e300) == nil)
+        #expect(recenteredCenter(from: 0, focusInMeters: Double(Float.greatestFiniteMagnitude)) == nil)
+        #expect(recenteredCenter(from: 0, focusInMeters: -1e30) == nil)
+
+        // Exactly at the limit the focus is still a position. 2^53 samples of 100 m is
+        // 2^55 x 25 m, which a Double holds exactly, and dividing it by 100 gives 2^53 again.
+        // 2^53 is a multiple of 4, so it is its own nearest multiple.
+        let maxDistanceInMeters = ProceduralTerrain.maxFocusDistanceFromOriginInSamples * terrainSampleSpacing
+        #expect(recenteredCenter(from: 0, focusInMeters: maxDistanceInMeters) == 9_007_199_254_740_992)
+        #expect(recenteredCenter(from: 0, focusInMeters: -maxDistanceInMeters) == -9_007_199_254_740_992)
+        // The next Double after that position is 128 m further on. In samples that is
+        // 2^53 + 1.28, which rounds to the next Double there, 2^53 + 2: past the limit.
+        #expect(recenteredCenter(from: 0, focusInMeters: maxDistanceInMeters.nextUp) == nil)
+        #expect(recenteredCenter(from: 0, focusInMeters: -maxDistanceInMeters.nextUp) == nil)
+    }
+
     @Test("a recentre goes to the multiple of 4 samples nearest the focus, and a tie goes to the even multiple")
     func recentreSnapsToTheNearestPatch() {
         // The comment on each line is the focus in samples divided by 4, and what it rounds
