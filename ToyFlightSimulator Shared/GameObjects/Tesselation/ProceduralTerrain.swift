@@ -343,9 +343,10 @@ enum ProceduralTerrain {
     ///     the scene's original frame: a stored position plus
     ///     `SceneManager.floatingOriginOffset`, added in Double.
     ///   - sampleSpacing: the distance between neighbouring samples, in meters.
-    ///   - snapStepInSamples: the centre is a multiple of this many samples. An `Int` of at
-    ///     least 1, because a centre is a sample index and a step with a fraction could not
-    ///     land on one. It is converted to Double for the one division.
+    ///   - snapStepInSamples: the centre is a multiple of this many samples. An `Int`, because
+    ///     a centre is a sample index and a step with a fraction could not land on one. It is
+    ///     converted to Double for the one division. It must be at least 1: the
+    ///     `precondition` stops the program for 0 or less (see below).
     ///   - recenterThresholdInSamples: how far the focus may be from the centre, in samples,
     ///     before a recentre is due. It must be at least half the snap step. Below that, a
     ///     focus can be past the threshold while the nearest multiple is still the current
@@ -365,12 +366,27 @@ enum ProceduralTerrain {
     /// `Int` for NaN, for infinity and for a number too large for an `Int`, and the multiply
     /// by the snap step for a number that only just fits.
     ///
+    /// A snap step of 0 or less is not answered with nil. The `precondition` stops the
+    /// program, in Debug and in Release builds. (A Debug build prints the message. An
+    /// optimized build stops without printing it.) The difference is where the bad value
+    /// comes from. A bad focus is data from the running simulation, and leaving the terrain where
+    /// it is answers it. A bad step is a mistake in the code that calls this function, and
+    /// nil would hide it: the terrain would never follow the aircraft, with nothing to say
+    /// why. Without the `precondition` a step of 0 would stop the program too, but only at
+    /// the first recentre, at the conversion to `Int` (the division gives infinity), and with
+    /// a message that does not name the step. A negative step would give the same centres as
+    /// the positive one. It is rejected because it has no meaning.
+    ///
     /// Plan: Milestone 4.
     static func recenteredCenterSampleIndex(currentCenterSampleIndex: Int,
                                             focusPositionInOriginalFrame: Double,
                                             sampleSpacing: Double,
                                             snapStepInSamples: Int,
                                             recenterThresholdInSamples: Double) -> Int? {
+        // A step below 1 is a mistake in the calling code, not data: stop on the first call.
+        // A Debug build prints the message, which names the step.
+        precondition(snapStepInSamples > 0,
+                     "[ProceduralTerrain recenteredCenterSampleIndex] snapStepInSamples must be at least 1; got \(snapStepInSamples)")
         // Meters to samples. A whole number here means the focus is exactly on a sample.
         let focusInSamples = focusPositionInOriginalFrame / sampleSpacing
         // Not a usable position: NaN, infinity, or farther from sample 0 than a Double can
