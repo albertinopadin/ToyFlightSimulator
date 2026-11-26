@@ -312,13 +312,13 @@ final class TerrainObject: GameObject, Tessellatable {
                         currentCenterSampleIndex: centerSampleIndexX,
                         focusPositionInOriginalFrame: focusPositionInOriginalFrame.x,
                         sampleSpacing: sampleSpacing,
-                        snapStepInSamples: Double(snapStepInSamples),
+                        snapStepInSamples: snapStepInSamples,
                         recenterThresholdInSamples: Double(recenterThresholdInSamples))
                     let newCenterZ = ProceduralTerrain.recenteredCenterSampleIndex(
                         currentCenterSampleIndex: centerSampleIndexZ,
                         focusPositionInOriginalFrame: focusPositionInOriginalFrame.z,
                         sampleSpacing: sampleSpacing,
-                        snapStepInSamples: Double(snapStepInSamples),
+                        snapStepInSamples: snapStepInSamples,
                         recenterThresholdInSamples: Double(recenterThresholdInSamples))
                     
                     // The usual case: the focus is within the threshold on both axes.
@@ -349,15 +349,15 @@ final class TerrainObject: GameObject, Tessellatable {
                     // The centre is a place in the original frame. The node stores positions
                     // in the current frame, so the offset is subtracted.
                     let newTerrainCenter = ProceduralTerrain.storedPositionOfTerrainCenter(
-                        centerSampleIndexX: Double(centerSampleIndexX),
-                        centerSampleIndexZ: Double(centerSampleIndexZ),
+                        centerSampleIndexX: centerSampleIndexX,
+                        centerSampleIndexZ: centerSampleIndexZ,
                         sampleSpacing: sampleSpacing,
                         floatingOriginOffset: floatingOriginOffset)
                     setPosition(newTerrainCenter)
 
                     // 1 nanosecond is 1e-6 milliseconds.
                     let timeInMilliseconds = Double(bakeTime) * 1e-6
-                    DebugLog("Terrain recentred on sample (x: \(centerSampleIndexX), z: \(centerSampleIndexZ), bake took \(timeInMilliseconds) ms", DEBUG_PROCEDURAL_TERRAIN)
+                    DebugLog("Terrain recentred on sample (x: \(centerSampleIndexX), z: \(centerSampleIndexZ)), bake took \(timeInMilliseconds) ms", DEBUG_PROCEDURAL_TERRAIN)
                 }
         }
     }

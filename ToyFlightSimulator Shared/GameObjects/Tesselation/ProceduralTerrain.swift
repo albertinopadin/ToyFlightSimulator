@@ -325,10 +325,9 @@ enum ProceduralTerrain {
     ///     the scene's original frame: a stored position plus
     ///     `SceneManager.floatingOriginOffset`, added in Double.
     ///   - sampleSpacing: the distance between neighbouring samples, in meters.
-    ///   - snapStepInSamples: the centre is a multiple of this many samples. It is a Double
-    ///     because the focus is divided by it, but it must hold a whole number: the rounded
-    ///     quotient is multiplied by `Int(snapStepInSamples)`, and `Int(_:)` drops a fraction.
-    ///     A step of 2.5 would divide by 2.5 and multiply by 2.
+    ///   - snapStepInSamples: the centre is a multiple of this many samples. An `Int`, because
+    ///     a centre is a sample index and a step with a fraction could not land on one. It is
+    ///     converted to Double for the one division.
     ///   - recenterThresholdInSamples: how far the focus may be from the centre, in samples,
     ///     before a recentre is due. It must be at least half the snap step. Below that, a
     ///     focus can be past the threshold while the nearest multiple is still the current
@@ -337,28 +336,35 @@ enum ProceduralTerrain {
     ///     between recentres, so a focus that crosses a halfway line back and forth causes a
     ///     bake per crossing.
     /// - Returns: the new centre sample index, a multiple of the snap step, or nil when the
-    ///   focus is within the threshold.
+    ///   focus is within the threshold or is not a finite number.
     ///
-    /// The focus must be a finite number. NaN (not a number) compares false with everything,
-    /// so it gets past the threshold check, and the conversion to `Int` then stops the
-    /// program. An infinite focus stops it at the same line.
+    /// A focus that is NaN (not a number) or infinite gives nil: the terrain stays where it
+    /// is. The `guard` is needed because the threshold check does not stop such a focus. NaN
+    /// compares false with everything, so it would get past the check, and the conversion to
+    /// `Int` below stops the program for NaN and for infinity.
+    ///
+    /// A finite focus must still be a possible position. With 100 m spacing, one beyond
+    /// about 9 x 10^20 m gives a sample index that does not fit in an `Int`, and the program
+    /// stops. There is no check for that.
     ///
     /// Plan: Milestone 4.
     static func recenteredCenterSampleIndex(currentCenterSampleIndex: Int,
                                             focusPositionInOriginalFrame: Double,
                                             sampleSpacing: Double,
-                                            snapStepInSamples: Double,
+                                            snapStepInSamples: Int,
                                             recenterThresholdInSamples: Double) -> Int? {
         // Meters to samples. A whole number here means the focus is exactly on a sample.
         let focusInSamples = focusPositionInOriginalFrame / sampleSpacing
+        // NaN or infinity: there is nothing to centre on, so the terrain stays where it is.
+        guard focusInSamples.isFinite else { return nil }
         if abs(focusInSamples - Double(currentCenterSampleIndex)) <= recenterThresholdInSamples {
             return nil
         }
 
         // How many snap steps from sample 0 the focus is, rounded to a whole number of steps.
         // Times the step, that is the multiple of the step nearest the focus.
-        let nearestStep = Int((focusInSamples / snapStepInSamples).rounded(.toNearestOrEven))
-        return nearestStep * Int(snapStepInSamples)
+        let nearestStep = Int((focusInSamples / Double(snapStepInSamples)).rounded(.toNearestOrEven))
+        return nearestStep * snapStepInSamples
     }
 
     /// Where the terrain node must be stored so that its middle sits on the given sample.
@@ -384,19 +390,21 @@ enum ProceduralTerrain {
     /// neighbouring Floats is 8 m.
     ///
     /// - Parameters:
-    ///   - centerSampleIndexX: the X sample index of the terrain's middle. A Double here, so
-    ///     the caller converts its whole-number index: `Double(centerSampleIndexX)`.
+    ///   - centerSampleIndexX: the X sample index of the terrain's middle. A whole number, as
+    ///     everywhere else; it is converted to Double here, for the multiply.
     ///   - centerSampleIndexZ: the same along Z.
     ///   - sampleSpacing: the distance between neighbouring samples, in meters.
     ///   - floatingOriginOffset: `SceneManager.floatingOriginOffset`, in meters.
     /// - Returns: the position to hand to `setPosition`, in meters, in the current frame.
     ///
     /// Plan: Milestone 4.
-    static func storedPositionOfTerrainCenter(centerSampleIndexX: Double,
-                                              centerSampleIndexZ: Double,
+    static func storedPositionOfTerrainCenter(centerSampleIndexX: Int,
+                                              centerSampleIndexZ: Int,
                                               sampleSpacing: Double,
                                               floatingOriginOffset: double3) -> float3 {
-        let centerInOriginalFrame: double3 = [centerSampleIndexX * sampleSpacing, 0, centerSampleIndexZ * sampleSpacing]
+        let centerInOriginalFrame: double3 = [Double(centerSampleIndexX) * sampleSpacing,
+                                              0,
+                                              Double(centerSampleIndexZ) * sampleSpacing]
         return (centerInOriginalFrame - floatingOriginOffset).toFloat3()
     }
 }

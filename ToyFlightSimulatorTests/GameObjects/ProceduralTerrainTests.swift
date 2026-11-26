@@ -642,6 +642,18 @@ struct ProceduralTerrainTests {
         #expect(recenteredCenter(from: 0, focusInMeters: -400.5) == -4)
     }
 
+    // If the guard in recenteredCenterSampleIndex is removed, this test does not fail: it
+    // ends the test process, because converting NaN or infinity to Int stops the program.
+    @Test("a focus that is NaN or infinite never recentres")
+    func focusThatIsNotFiniteDoesNotRecentre() {
+        // NaN (not a number) compares false with everything, so the threshold check alone
+        // would let it through as "past the threshold".
+        #expect(recenteredCenter(from: 0, focusInMeters: .nan) == nil)
+        #expect(recenteredCenter(from: 520, focusInMeters: .nan) == nil)
+        #expect(recenteredCenter(from: 0, focusInMeters: .infinity) == nil)
+        #expect(recenteredCenter(from: 0, focusInMeters: -.infinity) == nil)
+    }
+
     @Test("a recentre goes to the multiple of 4 samples nearest the focus, and a tie goes to the even multiple")
     func recentreSnapsToTheNearestPatch() {
         // The comment on each line is the focus in samples divided by 4, and what it rounds
