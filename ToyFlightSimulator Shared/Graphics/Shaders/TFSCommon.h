@@ -236,7 +236,6 @@ typedef struct {
 
 struct Particle {
     vector_float3 position;
-//    float direction;
     vector_float3 direction;
     float speed;
     vector_float4 color;
@@ -249,11 +248,24 @@ struct Particle {
     vector_float3 startPosition;
 };
 
-// Temporary:
+// The numbers the terrain shaders need (Tessellation.metal). TerrainObject fills them in and
+// binds them to the compute, vertex and fragment stages at TFSBufferIndexTerrain.
+// "Local" means the terrain object's own space, before its model matrix is applied.
 typedef struct {
+    // Width along local X and depth along local Z. The terrain is centred on its own origin.
     vector_float2 size;
-    float height;
+    // A patch edge's tessellation factor is maxTessellation / (its distance to the camera),
+    // and never less than 4.
     uint32_t maxTessellation;
+    // The height decode: local height = heightOffset + texel * heightScale.
+    float heightScale;
+    float heightOffset;
+    // The colour bands, in local height units: grass below grassBelowHeight, snow at and
+    // above snowAboveHeight, rock between.
+    float grassBelowHeight;
+    float snowAboveHeight;
+    // How many times the grass, rock and snow textures repeat across the terrain.
+    float colorTextureRepeatCount;
 } Terrain;
 
 #endif /* TFSCommon_h */

@@ -6,6 +6,14 @@
 //
 
 final class FlightboxWithTerrain: GameScene {
+    static let proceduralTerrainParams = ProceduralTerrainParameters()
+    /// Which terrain this scene builds. `.heightMapImage` gives the older terrain, made from
+    /// the image `mountain.png`.
+    let terrainHeightSource: TerrainHeightSource = .procedural(params: proceduralTerrainParams)
+    /// The terrain, set by `addTerrain`. Kept as a property so that the scene can reach it
+    /// after `buildScene` (Milestone 4 of the terrain plan moves it with the aircraft).
+    var ground: TerrainObject!
+    
     var attachedCamera = AttachedCamera(fieldOfView: 75.0,
                                         near: 0.01,
                                         far: 1000000.0)
@@ -14,32 +22,60 @@ final class FlightboxWithTerrain: GameScene {
     var capsule = CapsuleObject()
     let pointLight = PointLightObject()
     
-//        let jet = F35()
     let jet = F22()
-//        let jet = F22_CGTrader()
-//        let jet = CollidableF22()
-//        let jet = F18()
     
-    private func addTerrain() {
-        let groundColor = float4(0.3, 0.7, 0.1, 1.0)
-        let ground = TerrainObject(size: [8, 8])
-        ground.setColor(groundColor)
-        ground.rotateX(Float(-20).toRadians)
-        ground.setScale(100)
-        addChild(ground)
+    private func addTerrain(heightSource: TerrainHeightSource) {
+        switch heightSource {
+            case .heightMapImage:
+                let groundColor = float4(0.3, 0.7, 0.1, 1.0)
+                ground = TerrainObject(size: [8, 8])
+                ground.setColor(groundColor)
+                ground.rotateX(Float(-20).toRadians)
+                ground.setScale(100)
+                addChild(ground)
+            case .procedural(params: let params):
+                // No scale and no rotation here. The heights are already meters, so a scale
+                // would multiply them, and on a tilted terrain the height is no longer a
+                // function of world x and z.
+                //
+                // 12,800 m on a side. With 129 samples per side that is one sample every
+                // 100 m, the spacing the terrain's default parameters are chosen for: the
+                // narrowest of the 4 octaves has cells 400 m wide, which is 4 samples.
+                ground = TerrainObject.makeProceduralTerrain(params: params, sideLength: 12_800)
+                addChild(ground)
+        }
     }
 
     override func buildScene() {
-        addTerrain()
+        addTerrain(heightSource: terrainHeightSource)
         
         addCamera(attachedCamera)
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)
         jet.chaseCamera = attachedCamera
-        jet.setPosition(0, 100, 0)
-        // A flat floor at the terrain's centre height, in the frame this scene is built in.
-        // The terrain is tilted and displaced on the GPU, so the jet can still pass under its
-        // high side and stops above its low side; the floor only keeps it from falling forever.
-        jet.kinematicFloorHeightInOriginalFrame = 0
+        
+        // The height the jet starts at and the height of its flat floor, both in meters in the
+        // frame this scene is built in.
+        let jetHeight: Float
+        let kinematicFloorHeightInOriginalFrame: Float
+        switch terrainHeightSource {
+            case .procedural(params: let params):
+                // Procedural heights lie between -heightAmplitude and +heightAmplitude. The jet
+                // starts 200 m above the highest ground there can be, and the floor is at the
+                // lowest: a floor at 0 would stop the jet in mid-air above every valley.
+                jetHeight = (params.heightAmplitude + 200).toFloat()
+                kinematicFloorHeightInOriginalFrame = -params.heightAmplitude.toFloat()
+            case .heightMapImage:
+                // The floor is at the height of the terrain's centre. This terrain is tilted,
+                // so the jet can pass under its high side and stops above its low side.
+                jetHeight = 100
+                kinematicFloorHeightInOriginalFrame = 0
+        }
+
+        jet.setPosition(0, jetHeight, 0)
+        // The floor is not ground contact. The terrain is displaced on the GPU and the jet
+        // knows nothing about its shape, so the jet can still fly through a hill. The floor
+        // only keeps it from falling forever.
+        jet.kinematicFloorHeightInOriginalFrame = kinematicFloorHeightInOriginalFrame
         addChild(jet)
         let jetPos = jet.getPosition()
         
