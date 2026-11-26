@@ -21,6 +21,13 @@ longer match the source). No other plan covers terrain.
 
 ## Changelog
 
+- **2026-11-25** — Milestone 4, after two requests from the owner: the `follow` pseudocode used
+  `samplesPerSide` and `parameters` without defining them. `samplesPerSide` was a local variable
+  of `makeProceduralTerrain` in Milestone 3 and is not a property of `TerrainObject`; the line
+  `samplesPerSide = TerrainObject.proceduralSamplesPerSide` was added above `halfSideInSamples`.
+  `parameters` is the `ProceduralTerrainParameters` value that the `procedural` case of
+  `heightSource` carries; a line after the source check now reads it out. No number changed:
+  129 and 64 were already in the plan. Nothing was compiled or run for this entry.
 - **2026-11-25** — Milestone 3 landed (a889b83) and was edited to match the code: the names the
   code uses are listed (`sampleSpacing` is a `Double?`, nil for the image source;
   `makeProceduralTerrain` is a static function; the scene's terrain property is `ground`);
@@ -1173,6 +1180,9 @@ function storedPositionOfTerrainCenter(centerSampleIndexX, centerSampleIndexZ, s
 function follow(focusPositionInOriginalFrame, floatingOriginOffset)
     if heightSource is not procedural
         return
+    // The `procedural` case carries the ProceduralTerrainParameters the terrain was built with.
+    // In the code the check and this line are one step: `case .procedural(params: let params)`.
+    parameters = the value carried by the `procedural` case of heightSource
     // In the code `sampleSpacing` is a Double? (nil for the image source). Unwrap it in the
     // same guard that checks the source.
     snapStepInSamples = TerrainObject.cellsPerPatchEdgeAtLowestTessellation     // 4 samples = one patch
@@ -1185,6 +1195,8 @@ function follow(focusPositionInOriginalFrame, floatingOriginOffset)
         return                                             // the usual case: one division and one compare per axis
     centerSampleIndexX = newCenterX, or the old value if nothing
     centerSampleIndexZ = newCenterZ, or the old value if nothing
+    // the same constant makeProceduralTerrain reads: the bake and the texture keep their size
+    samplesPerSide = TerrainObject.proceduralSamplesPerSide // 129
     halfSideInSamples = (samplesPerSide - 1) / 2            // 64
     heightSamples = ProceduralTerrain.bakeHeightSamples(centerSampleIndexX - halfSideInSamples,
                                                         centerSampleIndexZ - halfSideInSamples,
