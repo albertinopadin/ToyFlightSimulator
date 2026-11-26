@@ -11,7 +11,7 @@ final class FlightboxWithTerrain: GameScene {
     /// the image `mountain.png`.
     let terrainHeightSource: TerrainHeightSource = .procedural(params: proceduralTerrainParams)
     /// The terrain, set by `addTerrain`. Kept as a property so that the scene can reach it
-    /// after `buildScene` (Milestone 4 of the terrain plan moves it with the aircraft).
+    /// after `buildScene`: `doUpdate` asks it to follow the jet on every tick.
     var ground: TerrainObject!
     
     var attachedCamera = AttachedCamera(fieldOfView: 75.0,
@@ -150,6 +150,28 @@ final class FlightboxWithTerrain: GameScene {
     
     override func doUpdate() {
         super.doUpdate()
+
+        // The terrain follows the jet. The call is here because a scene's doUpdate runs
+        // before its children update: when the terrain recentres, its own update() caches the
+        // new position later in this same tick, so the new texture and the new position reach
+        // the same frame.
+        //
+        // The focus is the jet's position in the scene's original frame: its stored position
+        // plus the offset total, added in Double. The jet is a direct child of the scene, so
+        // a floating-origin shift subtracts from its stored position exactly what it adds to
+        // the total, and the sum does not change. The camera's world position would not do:
+        // the camera is parented to the jet, and on the tick after a shift it is still about
+        // 1 km off until the jet has updated.
+        //
+        // The jet moves later in this tick, in its own doUpdate, so the focus is one tick
+        // old. That is a few meters at most, against a threshold of 400 m.
+        //
+        // The offset is read once, so the focus and the position `follow` stores are computed
+        // from the same value.
+        let floatingOriginOffset = SceneManager.floatingOriginOffset
+        let focusPositionInOriginalFrame = jet.getPosition().toDouble3() + floatingOriginOffset
+        ground.follow(focusPositionInOriginalFrame: focusPositionInOriginalFrame,
+                      floatingOriginOffset: floatingOriginOffset)
         
 //        InputManager.HasDiscreteCommandDebounced(command: .Pause) {
 //            paused.toggle()

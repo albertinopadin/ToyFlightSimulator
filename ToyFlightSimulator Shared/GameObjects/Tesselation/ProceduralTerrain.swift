@@ -62,6 +62,11 @@ struct ProceduralTerrainParameters {
 /// samples and returns the heights as an array of Floats. That array is what a height texture
 /// is later made from.
 ///
+/// The last two functions are for a terrain that follows the aircraft (`TerrainObject.follow`).
+/// `recenteredCenterSampleIndex` decides, for one axis, whether the baked grid must move and
+/// which sample it is then centred on. `storedPositionOfTerrainCenter` says where the terrain
+/// node is stored so that its middle sits on that sample.
+///
 /// Every function is pure: the result depends only on the arguments. The same position and
 /// seed give the same height on every call, in any order, with no state to keep. Positions are
 /// Double, in meters, in the scene's original frame (a stored position plus
@@ -69,7 +74,7 @@ struct ProceduralTerrainParameters {
 /// shifts. There is no engine state and no Metal here: a test can call every function.
 ///
 /// Plan, worked example and references:
-/// plans/claude/procedural_terrain_generation_2026-11-22.md (Milestones 1 and 2).
+/// plans/claude/procedural_terrain_generation_2026-11-22.md (Milestones 1, 2 and 4).
 enum ProceduralTerrain {
     /// Scrambles the 32 bits of `value`, so that two inputs that differ in one bit give
     /// unrelated outputs. This is the "lowbias32" hash (Chris Wellons, "Prospecting for Hash
@@ -272,5 +277,126 @@ enum ProceduralTerrain {
             }
         }
         return heightSamples
+    }
+
+    /// Decides, for one axis, whether a terrain that follows a moving point must be
+    /// recentred: moved so that the point is near its middle again. Returns the sample index
+    /// the terrain is centred on from now on, or nil when it can stay where it is.
+    /// `TerrainObject.follow` calls this once for X and once for Z.
+    ///
+    /// A baked grid is a window of fixed size onto a world that has no edge (see
+    /// `bakeHeightSamples`). The point the window is kept around is called the focus: the
+    /// aircraft. Two rules decide when the window moves and where it moves to.
+    ///
+    /// **When: only once the focus is more than `recenterThresholdInSamples` from the
+    /// centre.** A focus exactly at the threshold does not recentre. nil is the usual
+    /// result, and it costs one division and one comparison. (`FloatingOrigin.getOffset`
+    /// has the same shape: it returns nil when no shift is due.)
+    ///
+    /// **Where: to the multiple of `snapStepInSamples` nearest the focus**, not to the focus
+    /// itself. The centre therefore only ever moves by whole snap steps. `follow` passes a
+    /// step of 4 samples, which is one patch at the lowest tessellation factor. Every sample
+    /// and every vertex of the moved terrain then lands on a point of the world that had one
+    /// before, and `bakeHeightSamples` gives such a sample the same bits in every bake. The
+    /// ground that was already on screen keeps its shape. A terrain centred on the focus
+    /// itself would slide its vertices over the ground on every tick, and the hills would
+    /// seem to swim.
+    ///
+    /// Together the two rules keep the terrain from being baked again and again. Right after
+    /// a recentre the focus is at most half a snap step from the new centre. With a threshold
+    /// of one whole snap step, which is what `follow` passes (4 and 4), the focus must travel
+    /// at least another half step (200 m) before the next recentre. A focus that goes back
+    /// and forth across one line causes one bake, not one per crossing.
+    ///
+    /// A focus exactly halfway between two multiples goes to the even one
+    /// (`.toNearestOrEven`). With a step of 4, a focus at sample 10 is 2 samples from both 8
+    /// and 12. 10 / 4 is 2.5, which rounds to the even 2, so the result is 8. `round()` sends
+    /// a tie away from zero and would give 12. Either answer gives a correct terrain. The
+    /// rule is the one `FloatingOrigin.getOffset` uses for its whole meters.
+    ///
+    /// Example with 100 m spacing, a step of 4 and a threshold of 4, from centre 0: a focus at
+    /// 400 m gives nil, 400.5 m gives 4, and 1,000.5 m gives 12 (10.005 / 4 = 2.50125, which
+    /// rounds to 3).
+    ///
+    /// - Parameters:
+    ///   - currentCenterSampleIndex: the sample index the terrain is centred on now, on this
+    ///     axis.
+    ///   - focusPositionInOriginalFrame: the focus's coordinate on this axis, in meters, in
+    ///     the scene's original frame: a stored position plus
+    ///     `SceneManager.floatingOriginOffset`, added in Double.
+    ///   - sampleSpacing: the distance between neighbouring samples, in meters.
+    ///   - snapStepInSamples: the centre is a multiple of this many samples. It is a Double
+    ///     because the focus is divided by it, but it must hold a whole number: the rounded
+    ///     quotient is multiplied by `Int(snapStepInSamples)`, and `Int(_:)` drops a fraction.
+    ///     A step of 2.5 would divide by 2.5 and multiply by 2.
+    ///   - recenterThresholdInSamples: how far the focus may be from the centre, in samples,
+    ///     before a recentre is due. It must be at least half the snap step. Below that, a
+    ///     focus can be past the threshold while the nearest multiple is still the current
+    ///     centre; the function then returns the centre it was given, on every call, and
+    ///     `follow` would bake on every tick. At exactly half a step there is no travel left
+    ///     between recentres, so a focus that crosses a halfway line back and forth causes a
+    ///     bake per crossing.
+    /// - Returns: the new centre sample index, a multiple of the snap step, or nil when the
+    ///   focus is within the threshold.
+    ///
+    /// The focus must be a finite number. NaN (not a number) compares false with everything,
+    /// so it gets past the threshold check, and the conversion to `Int` then stops the
+    /// program. An infinite focus stops it at the same line.
+    ///
+    /// Plan: Milestone 4.
+    static func recenteredCenterSampleIndex(currentCenterSampleIndex: Int,
+                                            focusPositionInOriginalFrame: Double,
+                                            sampleSpacing: Double,
+                                            snapStepInSamples: Double,
+                                            recenterThresholdInSamples: Double) -> Int? {
+        // Meters to samples. A whole number here means the focus is exactly on a sample.
+        let focusInSamples = focusPositionInOriginalFrame / sampleSpacing
+        if abs(focusInSamples - Double(currentCenterSampleIndex)) <= recenterThresholdInSamples {
+            return nil
+        }
+
+        // How many snap steps from sample 0 the focus is, rounded to a whole number of steps.
+        // Times the step, that is the multiple of the step nearest the focus.
+        let nearestStep = Int((focusInSamples / snapStepInSamples).rounded(.toNearestOrEven))
+        return nearestStep * Int(snapStepInSamples)
+    }
+
+    /// Where the terrain node must be stored so that its middle sits on the given sample.
+    ///
+    /// The centre sample is a place in the scene's original frame: its sample index times the
+    /// spacing, the rule `bakeHeightSamples` uses for every sample. A node's stored position
+    /// is in the current frame, the one the floating origin has shifted to.
+    /// `floatingOriginOffset` is the position of the current origin in the original frame, so
+    /// the stored position is the centre minus that offset.
+    ///
+    /// y is the height of the terrain's base. The base is at height 0 in the original frame,
+    /// so it is stored at `-floatingOriginOffset.y`.
+    ///
+    /// Example: with 100 m spacing, centre sample (520, -172) is at (52,000, 0, -17,200) m in
+    /// the original frame. With an offset of (52,812, 432, -17,640) the stored position is
+    /// (-812, -432, 440). The stored y is -432 because the origin has moved 432 m up.
+    ///
+    /// The subtraction is done in Double, and only the result is narrowed to Float. Far from
+    /// the original origin the centre and the offset are both large and their difference is
+    /// small. A Float holds every whole number only up to 16,777,216 (2^24). Beyond
+    /// 16,777 km, or with a spacing that is not a whole number of meters, narrowing the two
+    /// first would round each of them before the subtraction: at 123,456 km the gap between
+    /// neighbouring Floats is 8 m.
+    ///
+    /// - Parameters:
+    ///   - centerSampleIndexX: the X sample index of the terrain's middle. A Double here, so
+    ///     the caller converts its whole-number index: `Double(centerSampleIndexX)`.
+    ///   - centerSampleIndexZ: the same along Z.
+    ///   - sampleSpacing: the distance between neighbouring samples, in meters.
+    ///   - floatingOriginOffset: `SceneManager.floatingOriginOffset`, in meters.
+    /// - Returns: the position to hand to `setPosition`, in meters, in the current frame.
+    ///
+    /// Plan: Milestone 4.
+    static func storedPositionOfTerrainCenter(centerSampleIndexX: Double,
+                                              centerSampleIndexZ: Double,
+                                              sampleSpacing: Double,
+                                              floatingOriginOffset: double3) -> float3 {
+        let centerInOriginalFrame: double3 = [centerSampleIndexX * sampleSpacing, 0, centerSampleIndexZ * sampleSpacing]
+        return (centerInOriginalFrame - floatingOriginOffset).toFloat3()
     }
 }

@@ -22,11 +22,20 @@
 //  Floats) are from the plan's Milestone 2 and were recomputed with a third script written
 //  from the plan's pseudocode.
 //
+//  The last tests are the plan's Milestone 4, the terrain that follows the aircraft: the rule
+//  that says when the baked grid moves and which sample it is then centred on
+//  (`recenteredCenterSampleIndex`), and where the terrain node is stored
+//  (`storedPositionOfTerrainCenter`). They use the numbers `TerrainObject.follow` passes:
+//  samples 100 m apart, a snap step of 4 samples (one patch, 400 m) and a threshold of 4
+//  samples. Their expected values were computed with a Python script written from the plan's
+//  pseudocode. `TerrainObject.follow` itself needs Metal and is tested in
+//  TerrainHeightTextureTests.
+//
 
 import Testing
 @testable import ToyFlightSimulator
 
-@Suite("ProceduralTerrain: the height function and the baked grid", .tags(.gameObjects))
+@Suite("ProceduralTerrain: the height function, the baked grid and the recentre rule", .tags(.gameObjects))
 struct ProceduralTerrainTests {
 
     /// The seed of the worked example. It is also the default seed.
@@ -578,5 +587,240 @@ struct ProceduralTerrainTests {
             #expect(sharedSampleCount == move.sharedSampleCount, "move (\(move.alongX), \(move.alongZ))")
             #expect(differingSampleCount == 0, "move (\(move.alongX), \(move.alongZ))")
         }
+    }
+
+    // MARK: - recenteredCenterSampleIndex
+
+    /// The recentre rule with the numbers `TerrainObject.follow` passes: samples 100 m apart,
+    /// a snap step of 4 samples and a threshold of 4 samples. Returns the new centre sample
+    /// index, or nil when the terrain stays where it is.
+    private func recenteredCenter(from currentCenterSampleIndex: Int, focusInMeters: Double) -> Int? {
+        ProceduralTerrain.recenteredCenterSampleIndex(currentCenterSampleIndex: currentCenterSampleIndex,
+                                                      focusPositionInOriginalFrame: focusInMeters,
+                                                      sampleSpacing: terrainSampleSpacing,
+                                                      snapStepInSamples: 4,
+                                                      recenterThresholdInSamples: 4)
+    }
+
+    /// Moves the focus through `focusPositionsInMeters`, one position per tick. At each one it
+    /// asks the recentre rule and feeds a new centre back in for the next tick, the way
+    /// `TerrainObject.follow` does. Returns where each recentre happened, the centre each one
+    /// chose, and the centre at the end.
+    private func fly(throughFocusPositions focusPositionsInMeters: [Double],
+                     startingAtCenterSampleIndex: Int)
+        -> (focusAtEachRecentre: [Double], centerAfterEachRecentre: [Int], finalCenterSampleIndex: Int) {
+        var centerSampleIndex = startingAtCenterSampleIndex
+        var focusAtEachRecentre: [Double] = []
+        var centerAfterEachRecentre: [Int] = []
+        for focusInMeters in focusPositionsInMeters {
+            if let newCenterSampleIndex = recenteredCenter(from: centerSampleIndex, focusInMeters: focusInMeters) {
+                focusAtEachRecentre.append(focusInMeters)
+                centerAfterEachRecentre.append(newCenterSampleIndex)
+                centerSampleIndex = newCenterSampleIndex
+            }
+        }
+        return (focusAtEachRecentre, centerAfterEachRecentre, centerSampleIndex)
+    }
+
+    @Test("no recentre while the focus is within the threshold, and none exactly at it")
+    func noRecentreAtExactlyTheThreshold() {
+        // 400 m is 4 samples, exactly the threshold. 400 / 100 is exactly 4 in Double, so
+        // this tests the comparison (`<=`, not `<`) and not a rounding error.
+        #expect(recenteredCenter(from: 0, focusInMeters: 0) == nil)
+        #expect(recenteredCenter(from: 0, focusInMeters: 399) == nil)
+        #expect(recenteredCenter(from: 0, focusInMeters: 400) == nil)
+        #expect(recenteredCenter(from: 0, focusInMeters: -400) == nil)
+        // The distance is measured from the current centre, not from sample 0. Centre 4 is
+        // at 400 m, so 0 m and 800 m are both exactly 4 samples away from it.
+        #expect(recenteredCenter(from: 4, focusInMeters: 0) == nil)
+        #expect(recenteredCenter(from: 4, focusInMeters: 800) == nil)
+    }
+
+    @Test("half a meter past the threshold, the terrain recentres one patch on")
+    func recentreJustPastTheThreshold() {
+        #expect(recenteredCenter(from: 0, focusInMeters: 400.5) == 4)
+        #expect(recenteredCenter(from: 0, focusInMeters: -400.5) == -4)
+    }
+
+    @Test("a recentre goes to the multiple of 4 samples nearest the focus, and a tie goes to the even multiple")
+    func recentreSnapsToTheNearestPatch() {
+        // The comment on each line is the focus in samples divided by 4, and what it rounds
+        // to. The result is that whole number times 4.
+        #expect(recenteredCenter(from: 0, focusInMeters: 600.5) == 8)        // 1.50125 -> 2
+        #expect(recenteredCenter(from: 0, focusInMeters: 1000.5) == 12)      // 2.50125 -> 3
+        // A jump of 123 km, as after a teleport: one recentre, straight to the nearest patch.
+        #expect(recenteredCenter(from: 0, focusInMeters: 123_456) == 1236)   // 308.64 -> 309
+        #expect(recenteredCenter(from: 0, focusInMeters: -123_456) == -1236) // -308.64 -> -309
+
+        // Ties: the focus is exactly halfway between two multiples of 4. The result is the
+        // even number of steps. round() sends a tie away from zero instead, and fails the
+        // last three lines.
+        #expect(recenteredCenter(from: 0, focusInMeters: 600) == 8)          // 1.5 -> 2; round() agrees
+        #expect(recenteredCenter(from: 4, focusInMeters: 1000) == 8)         // 2.5 -> 2; round() gives 12
+        #expect(recenteredCenter(from: 12, focusInMeters: 1800) == 16)       // 4.5 -> 4; round() gives 20
+        #expect(recenteredCenter(from: -4, focusInMeters: -1000) == -8)      // -2.5 -> -2; round() gives -12
+    }
+
+    @Test("flying straight recentres once per patch")
+    func flyingStraightRecentresOncePerPatch() {
+        // 0 m to 2,000 m in steps of half a meter. Every position is a multiple of 0.5, which
+        // a Double holds exactly.
+        let focusPositionsInMeters = (0...4000).map { Double($0) * 0.5 }
+        let flight = fly(throughFocusPositions: focusPositionsInMeters, startingAtCenterSampleIndex: 0)
+
+        // Each recentre happens on the first position more than 400 m past the centre, and
+        // moves the centre 4 samples (400 m) on. At 2,000 m the focus is exactly 400 m past
+        // centre 16, which is not yet a recentre.
+        #expect(flight.focusAtEachRecentre == [400.5, 800.5, 1200.5, 1600.5])
+        #expect(flight.centerAfterEachRecentre == [4, 8, 12, 16])
+        #expect(flight.finalCenterSampleIndex == 16)
+    }
+
+    @Test("flying back the same way recentres once per patch too, and the centre lags behind the focus")
+    func flyingBackRecentresOncePerPatch() {
+        // 2,000 m back to 0 m, starting from the centre the outward flight ended on.
+        let focusPositionsInMeters = (0...4000).reversed().map { Double($0) * 0.5 }
+        let flight = fly(throughFocusPositions: focusPositionsInMeters, startingAtCenterSampleIndex: 16)
+
+        // The first recentre comes after 800 m, not 400 m: the focus started 400 m ahead of
+        // the centre and must get more than 400 m behind it. The flight ends with the focus
+        // at 0 m and the centre on sample 4, not on sample 0 where the outward flight began:
+        // 0 m is exactly 400 m from sample 4, which is not past the threshold.
+        #expect(flight.focusAtEachRecentre == [1199.5, 799.5, 399.5])
+        #expect(flight.centerAfterEachRecentre == [12, 8, 4])
+        #expect(flight.finalCenterSampleIndex == 4)
+    }
+
+    // The plan's edge case "hovering on a boundary -> no repeated bakes".
+    @Test("a focus that goes back and forth across one line recentres once, not at every crossing")
+    func hoveringOnABoundaryRecentresOnce() {
+        // 100 crossings of the 400 m line, which is where the first recentre happens.
+        let focusPositionsInMeters = (0..<100).map { $0.isMultiple(of: 2) ? 400.5 : 399.5 }
+        let flight = fly(throughFocusPositions: focusPositionsInMeters, startingAtCenterSampleIndex: 0)
+
+        // After the one recentre the centre is on sample 4, at 400 m. Both positions are
+        // half a meter from it.
+        #expect(flight.focusAtEachRecentre == [400.5])
+        #expect(flight.centerAfterEachRecentre == [4])
+    }
+
+    @Test("after a recentre the centre is a multiple of 4 samples within 2 samples of the focus, and no second recentre is due")
+    func afterARecentreTheFocusIsWithinHalfAPatch() {
+        // -100 km to +100 km in steps of 12.5 m (exact in Double), from four centres. One of
+        // them is negative, and one (4) is an odd number of steps.
+        var recentreCount = 0
+        var centersThatAreNotAMultipleOfFour = 0
+        var largestDistanceInSamples = 0.0
+        var secondRecentreCount = 0
+        for startingCenterSampleIndex in [-8, 0, 4, 12] {
+            for step in -8000...8000 {
+                let focusInMeters = Double(step) * 12.5
+                guard let newCenterSampleIndex = recenteredCenter(from: startingCenterSampleIndex,
+                                                                  focusInMeters: focusInMeters) else {
+                    continue  // within the threshold of the starting centre
+                }
+                recentreCount += 1
+                if !newCenterSampleIndex.isMultiple(of: 4) {
+                    centersThatAreNotAMultipleOfFour += 1
+                }
+                let distanceInSamples = abs(focusInMeters / terrainSampleSpacing - Double(newCenterSampleIndex))
+                largestDistanceInSamples = max(largestDistanceInSamples, distanceInSamples)
+                if recenteredCenter(from: newCenterSampleIndex, focusInMeters: focusInMeters) != nil {
+                    secondRecentreCount += 1
+                }
+            }
+        }
+        // 4 x 16,001 positions, less the 4 x 65 that lie within 400 m of their centre.
+        #expect(recentreCount == 63_744)
+        #expect(centersThatAreNotAMultipleOfFour == 0)
+        // Half a snap step. A focus exactly between two multiples is exactly this far away.
+        #expect(largestDistanceInSamples == 2)
+        #expect(secondRecentreCount == 0)
+    }
+
+    // MARK: - The focus and the floating origin
+
+    // Why TerrainObject.follow needs no code for a floating-origin shift: the focus is asked
+    // for in the original frame, and a shift does not change it there.
+    @Test("a floating-origin shift does not change the focus in the original frame")
+    func focusInOriginalFrameIsUnchangedByAFloatingOriginShift() throws {
+        // The jet as a plain Node: a shift only needs something with a stored position.
+        let jet = Node(name: "jet")
+        jet.setPosition(812.375, 431.5, -640.25)
+        var floatingOriginOffset = double3(52_000, 0, -17_000)
+        // What FlightboxWithTerrain.doUpdate hands to follow.
+        let focusBeforeTheShift = jet.getPosition().toDouble3() + floatingOriginOffset
+        #expect(focusBeforeTheShift == double3(52_812.375, 431.5, -17_640.25))
+
+        // The shift, as SceneManager.updateFloatingOrigin does it. The jet's position stands
+        // in for the camera's, which rides on the jet. It is 1,120.7 m from the origin, so a
+        // shift is due. The offset is that position in whole meters; 431.5 is a tie and goes
+        // to the even 432.
+        let offset = try #require(FloatingOrigin.getOffset(cameraWorldPosition: jet.getPosition()))
+        #expect(offset == float3(812, 432, -640))
+        FloatingOrigin.applyOffset(offset, directChildrenOfScene: [jet], cameras: [], directionalLights: [])
+        floatingOriginOffset += offset.toDouble3()
+        #expect(jet.getPosition() == float3(0.375, -0.5, -0.25))
+        #expect(floatingOriginOffset == double3(52_812, 432, -17_640))
+
+        // `==` on purpose, not a tolerance. Every number here is a multiple of 0.125, so each
+        // subtraction and addition is exact.
+        let focusAfterTheShift = jet.getPosition().toDouble3() + floatingOriginOffset
+        #expect(focusAfterTheShift == focusBeforeTheShift)
+
+        // The same focus gives the same answer from the recentre rule, so the centre sample
+        // and the bake do not depend on whether the shift has happened. From centre
+        // (520, -172) the focus is 8.12 and 4.40 samples away, past the threshold on both
+        // axes: 528.12 / 4 rounds to 132 and -176.40 / 4 rounds to -44.
+        for focus in [focusBeforeTheShift, focusAfterTheShift] {
+            #expect(recenteredCenter(from: 520, focusInMeters: focus.x) == 528)
+            #expect(recenteredCenter(from: -172, focusInMeters: focus.z) == -176)
+        }
+    }
+
+    // MARK: - storedPositionOfTerrainCenter
+
+    @Test("the terrain is stored at its centre sample's position minus the floating-origin offset")
+    func storedPositionOfTerrainCenterSubtractsTheOffset() {
+        // The plan's small example. Centre sample (520, -172) is at (52,000, 0, -17,200) m in
+        // the original frame. The current origin is at (52,812, 432, -17,640) in that frame.
+        let storedPosition = ProceduralTerrain.storedPositionOfTerrainCenter(
+            centerSampleIndexX: 520,
+            centerSampleIndexZ: -172,
+            sampleSpacing: terrainSampleSpacing,
+            floatingOriginOffset: [52_812, 432, -17_640])
+        // y is -432: the terrain's base is at height 0 in the original frame, and the origin
+        // has moved 432 m up.
+        #expect(storedPosition == float3(-812, -432, 440))
+
+        // Before the first shift the offset is zero and the two frames are the same. The X
+        // and Z indices differ, so swapping them fails.
+        let storedPositionBeforeAnyShift = ProceduralTerrain.storedPositionOfTerrainCenter(
+            centerSampleIndexX: 12,
+            centerSampleIndexZ: -4,
+            sampleSpacing: terrainSampleSpacing,
+            floatingOriginOffset: .zero)
+        #expect(storedPositionBeforeAnyShift == float3(1200, 0, -400))
+    }
+
+    @Test("the offset is subtracted in Double, before the result is narrowed to Float")
+    func storedPositionIsSubtractedInDouble() {
+        // 123,456.8 km from the original origin, where the gap between neighbouring Floats is
+        // 8 m. Sample index 1,234,568 is a multiple of 4 and is at 123,456,800 m. The current
+        // origin is 10.75 m short of it.
+        let floatingOriginOffsetX = 123_456_789.25
+        let storedPosition = ProceduralTerrain.storedPositionOfTerrainCenter(
+            centerSampleIndexX: 1_234_568,
+            centerSampleIndexZ: 0,
+            sampleSpacing: terrainSampleSpacing,
+            floatingOriginOffset: [floatingOriginOffsetX, 0, 0])
+        #expect(storedPosition == float3(10.75, 0, 0))
+
+        // What narrowing first would give. The centre is a multiple of 8 and survives; the
+        // offset becomes 123,456,792; the difference is 8 m, not 10.75 m.
+        let centerNarrowedFirst = Float(123_456_800.0)
+        let offsetNarrowedFirst = Float(floatingOriginOffsetX)
+        #expect(offsetNarrowedFirst == 123_456_792)
+        #expect(centerNarrowedFirst - offsetNarrowedFirst == 8)
     }
 }

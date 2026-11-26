@@ -40,8 +40,9 @@ final class TerrainObject: GameObject, Tessellatable {
     /// The numbers the shaders need: the size, the height decode and the colour thresholds
     /// (see `Terrain` in TFSCommon.h). Bound to the compute, vertex and fragment stages.
     var terrain: Terrain
-    /// One texel per height sample. `var`, so that a later bake can put a new texture in its
-    /// place (Milestone 4 of the plan).
+    /// One texel per height sample. `var`, because `follow` puts a new texture in its place
+    /// at every recentre. Written on the update thread only. The render thread reads it
+    /// after the update handshake, when the update thread is waiting.
     private(set) var heightMap: MTLTexture
     let grassTexture: MTLTexture
     let cliffTexture: MTLTexture
@@ -57,11 +58,13 @@ final class TerrainObject: GameObject, Tessellatable {
     let sampleSpacing: Double?
     /// The sample the middle of the terrain sits on, as indices on the world-wide sample grid
     /// (see `ProceduralTerrain.bakeHeightSamples`). Sample (0, 0) is at the origin of the
-    /// scene's original frame.
+    /// scene's original frame. Both start at 0 and only `follow` changes them, always to a
+    /// multiple of 4 samples (one patch). A floating-origin shift does not change them: an
+    /// index names a place in the original frame.
     var centerSampleIndexX: Int = 0
     var centerSampleIndexZ: Int = 0
     /// The baked heights in meters, row by row: the same numbers the height texture holds.
-    /// Empty for the image source.
+    /// Empty for the image source. `follow` replaces the array at every recentre.
     var heightSamples: [Float] = []
 
     static func createControlPoints(patches: (horizontal: Int, vertical: Int),
@@ -243,6 +246,121 @@ final class TerrainObject: GameObject, Tessellatable {
         return Engine.Device.makeBuffer(length: size, options: .storageModePrivate)
     }
     //
+
+    /// Keeps a procedural terrain under the point it follows, the focus. Call it once per
+    /// tick, on the update thread, before the scene traversal reaches this object's
+    /// `update()`. Does nothing for the image source.
+    ///
+    /// - Parameters:
+    ///   - focusPositionInOriginalFrame: the point to stay under (the aircraft), in meters,
+    ///     in the scene's original frame. Only x and z are used.
+    ///   - floatingOriginOffset: `SceneManager.floatingOriginOffset` as it is in this tick.
+    ///     It is a parameter, not read in here, so that the caller hands over a focus and an
+    ///     offset that belong together, and so that a test can call `follow` without a scene.
+    ///
+    /// On most ticks nothing happens: the focus is within 4 samples (400 m) of the centre on
+    /// both axes, and the cost is one division and one comparison per axis
+    /// (`ProceduralTerrain.recenteredCenterSampleIndex`). When the focus is farther than
+    /// that on either axis, the terrain is recentred in four steps:
+    ///
+    /// 1. The centre moves to the multiple of one patch (4 samples) nearest the focus, on
+    ///    each axis that is past the threshold. The other axis keeps its centre.
+    /// 2. All 129 x 129 samples are baked again around the new centre. A sample that was on
+    ///    the old grid comes out with the same bits as before (see `bakeHeightSamples`), so
+    ///    the ground that stays on screen keeps its shape.
+    /// 3. A new texture is made from the samples and takes the place of the old one. The old
+    ///    texture is not written to. Frames that were encoded earlier and have not finished
+    ///    on the GPU still use it, and a command buffer keeps the textures it uses alive
+    ///    until it is done. Overwriting the old texture in place would let those frames draw
+    ///    the new heights at the old position: a jump of one patch for a frame.
+    /// 4. The node moves to the new centre, written in the current frame
+    ///    (`ProceduralTerrain.storedPositionOfTerrainCenter`).
+    ///
+    /// The texture and the position must change in the same frame. That is why the scene
+    /// calls `follow` from its `doUpdate`, which runs before its children's `update()`: this
+    /// object's `update()` then caches the new position in `modelConstants` in the same tick,
+    /// and the frame drawn after this tick uses the new texture with the new position.
+    /// Called after `update()`, the new texture would be drawn at the old position for one
+    /// frame.
+    ///
+    /// A floating-origin shift needs nothing from this function. The shift subtracts its
+    /// offset from this node's stored position, as it does for every direct child of the
+    /// scene, and adds the same offset to the total. The centre's place in the original
+    /// frame does not change, so the centre sample indices and the texture stay valid.
+    ///
+    /// This is the simple version: every recentre bakes all 16,641 samples on the update
+    /// thread. The plan measured that at 15.7 ms in an unoptimized build and 0.47 ms in an
+    /// optimized one (Apple M1 Max). Its optimized version copies the samples the old grid
+    /// already holds and bakes only the new strip.
+    ///
+    /// Plan: Milestone 4 of plans/claude/procedural_terrain_generation_2026-11-22.md.
+    func follow(focusPositionInOriginalFrame: double3, floatingOriginOffset: double3) {
+        switch heightSource {
+            case .heightMapImage:
+                return
+            case .procedural(params: let params):
+                // `sampleSpacing` is nil only for the image source, which returned above.
+                // `makeProceduralTerrain` always stores one.
+                if let sampleSpacing {
+                    // 4 samples: one patch, which is 400 m with 100 m spacing. The threshold
+                    // is the same distance. Why these two numbers work together is in the
+                    // comment of `recenteredCenterSampleIndex`.
+                    let snapStepInSamples = TerrainObject.cellsPerPatchEdgeAtLowestTessellation
+                    let recenterThresholdInSamples = snapStepInSamples
+                    // Each axis is asked by itself. nil means "this axis stays".
+                    let newCenterX = ProceduralTerrain.recenteredCenterSampleIndex(
+                        currentCenterSampleIndex: centerSampleIndexX,
+                        focusPositionInOriginalFrame: focusPositionInOriginalFrame.x,
+                        sampleSpacing: sampleSpacing,
+                        snapStepInSamples: Double(snapStepInSamples),
+                        recenterThresholdInSamples: Double(recenterThresholdInSamples))
+                    let newCenterZ = ProceduralTerrain.recenteredCenterSampleIndex(
+                        currentCenterSampleIndex: centerSampleIndexZ,
+                        focusPositionInOriginalFrame: focusPositionInOriginalFrame.z,
+                        sampleSpacing: sampleSpacing,
+                        snapStepInSamples: Double(snapStepInSamples),
+                        recenterThresholdInSamples: Double(recenterThresholdInSamples))
+                    
+                    // The usual case: the focus is within the threshold on both axes.
+                    if newCenterX == nil && newCenterZ == nil { return }
+
+                    // An axis that answered nil keeps its centre.
+                    centerSampleIndexX = newCenterX ?? centerSampleIndexX
+                    centerSampleIndexZ = newCenterZ ?? centerSampleIndexZ
+                    // The same constant `makeProceduralTerrain` reads, so the bake and the
+                    // texture keep their size. 64 samples lie on each side of the centre, so
+                    // the grid starts 64 sample indices before it on both axes.
+                    let samplesPerSide = TerrainObject.proceduralSamplesPerSide
+                    let halfSideInSamples = (samplesPerSide - 1) / 2
+
+                    // `timeit` returns how long the closure ran, in nanoseconds. Only the
+                    // bake is timed, not the texture.
+                    let bakeTime = timeit {
+                        heightSamples = ProceduralTerrain.bakeHeightSamples(
+                            firstSampleIndexX: centerSampleIndexX - halfSideInSamples,
+                            firstSampleIndexZ: centerSampleIndexZ - halfSideInSamples,
+                            samplesPerSide: samplesPerSide,
+                            sampleSpacing: sampleSpacing,
+                            params: params)
+                    }
+
+                    // A new texture, not `replace` on the old one: see step 3 above.
+                    heightMap = Self.makeHeightTexture(heightSamples: heightSamples, samplesPerSide: samplesPerSide)
+                    // The centre is a place in the original frame. The node stores positions
+                    // in the current frame, so the offset is subtracted.
+                    let newTerrainCenter = ProceduralTerrain.storedPositionOfTerrainCenter(
+                        centerSampleIndexX: Double(centerSampleIndexX),
+                        centerSampleIndexZ: Double(centerSampleIndexZ),
+                        sampleSpacing: sampleSpacing,
+                        floatingOriginOffset: floatingOriginOffset)
+                    setPosition(newTerrainCenter)
+
+                    // 1 nanosecond is 1e-6 milliseconds.
+                    let timeInMilliseconds = Double(bakeTime) * 1e-6
+                    DebugLog("Terrain recentred on sample (x: \(centerSampleIndexX), z: \(centerSampleIndexZ), bake took \(timeInMilliseconds) ms", DEBUG_PROCEDURAL_TERRAIN)
+                }
+        }
+    }
     
     func computeUpdate(_ computeEncoder: any MTLComputeCommandEncoder) {
         computeEncoder.setBuffer(tessellationFactorsBuffer, offset: 0, index: 2)
