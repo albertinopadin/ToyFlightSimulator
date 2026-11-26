@@ -21,6 +21,25 @@ longer match the source). No other plan covers terrain.
 
 ## Changelog
 
+- **2026-11-26** — Milestone 4, a `precondition` for the snap step, after a question from the
+  owner (should the focus guard also cover a step of 0?). The answer was "not the guard": a
+  bad focus is data and is answered with nothing, a bad step is a mistake in the calling code
+  and nothing would hide it. The owner added `precondition(snapStepInSamples > 0, …)` as the
+  first line of `recenteredCenterSampleIndex`. Edited to match: the pseudocode, "Names in the
+  code", and the edge case for a snap step of 0, which now covers 0 or less. No test was
+  added: a failed `precondition` ends the test process. Checked with scratch builds of the
+  real `ProceduralTerrain.swift`, unoptimized and optimized: a step of 0 and a step of −4
+  stop the program on the first call, with the focus still inside the threshold (exit status
+  133); the unoptimized build prints the message with the step in it and the optimized build
+  prints nothing; a step of 4 answers as before and a step of 1 is accepted. Checked on the
+  file as it was before the `precondition`: a step of 0 answered nothing inside the threshold
+  and stopped the program at the first recentre, and a step of −4 gave the same centres as 4
+  in eleven cases. Checks
+  run, each in a build folder of its own: the macOS build and test bundle (the log lists
+  `ProceduralTerrain.swift` under the test target; no new warning); the two terrain suites
+  (52 tests); the full suite one test at a time (612 Swift Testing tests in 80 suites and the
+  20 XCTest tests); the iOS simulator build. Not run: the flight of the completion criteria.
+  tvOS was not built.
 - **2026-11-26** — Milestone 4, a range check for the focus, after a question from the owner
   (is the finite focus that still stopped the program worth fixing?). The answer was "only as
   one line": `recenteredCenterSampleIndex` now answers nothing for every focus that is not a
@@ -1249,7 +1268,9 @@ touches `Engine.Device` but not `Engine.renderer`, so the host-app launch race d
   `recenteredCenterSampleIndex` returns an `Int?`, nil for "nothing". Its `snapStepInSamples`
   is an `Int`, because a centre is a sample index and a step with a fraction could not land on
   one; the function converts it to Double for the one division. `recenterThresholdInSamples`
-  is a `Double`, and `follow` converts its `Int` constant in the call. The check for a focus
+  is a `Double`, and `follow` converts its `Int` constant in the call. "Stop the program
+  unless" is `precondition(snapStepInSamples > 0, …)`, the first line of the function; a
+  `precondition` is checked in Debug and in Release builds. The check for a focus
   that is not a usable position is
   `guard abs(focusInSamples) <= maxFocusDistanceFromOriginInSamples else { return nil }`. The
   limit is a static constant at the top of `ProceduralTerrain`, a `Double` written `0x1p53`
@@ -1270,6 +1291,8 @@ touches `Engine.Device` but not `Engine.renderer`, so the host-app launch race d
 function recenteredCenterSampleIndex(currentCenterSampleIndex, focusPositionInOriginalFrame_m,
                                      sampleSpacing_m, snapStepInSamples,
                                      recenterThresholdInSamples) -> whole number, or nothing
+    // a step below 1 is a mistake in the calling code, not data: no "nothing" for it
+    stop the program unless snapStepInSamples > 0
     focusInSamples = focusPositionInOriginalFrame_m / sampleSpacing_m           // Double
     // Not a usable position: NaN, infinite, or more than 2^53 samples from sample 0 (beyond
     // 2^53 a Double cannot tell one sample from the next). The threshold check below would
@@ -1445,8 +1468,14 @@ other debug flag there is `false`.
     does this. No flight gets there, but a diverging position passes through huge finite
     values before it becomes infinity, and without the check a sample index too large for an
     `Int` stops the program (from about 9 × 10^20 m).
-  - A snap step of 0 → the program stops: the division gives infinity. Not handled; the step
-    is the constant 4.
+  - A snap step of 0 or less → the `precondition` at the top of `recenteredCenterSampleIndex`
+    stops the program on the first call. A Debug build prints its message, which names the
+    step; an optimized build stops without printing it. It is not answered
+    with nothing, as a bad focus is: a bad focus is data from the running simulation, and a
+    bad step is a mistake in the calling code, which nothing would hide (the terrain would
+    never follow the aircraft). Without the `precondition`, a step of 0 stops the program only
+    at the first recentre, at the conversion to `Int`, and a step of −4 gives the same centres
+    as 4. No test exercises it: a failed `precondition` ends the test process.
   - A jump of many kilometers (a scene reset or a teleport) → one recentre directly to the
     nearest patch; the bake covers a completely new area.
   - A recentre and a floating-origin shift in the same tick → correct. `follow` runs first with
