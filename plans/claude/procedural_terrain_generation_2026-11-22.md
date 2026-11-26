@@ -5,7 +5,7 @@
 here are in 1.2.8 ("Fully procedural": fBm, value noise, the limit of noise), 1.2.9 (rules 1, 2, 5
 and 6: one source of truth, interpolation, sample format), 2.1 (what the current terrain is) and
 2.2 ("Is procedural generation a good fit?" and steps 1 to 3 of the simple version).
-**Status:** in progress (Milestones 1 and 2 landed)
+**Status:** in progress (Milestones 1, 2 and 3 landed)
 **Related plans:** `plans/claude/tessellation_terrain_fix.md` (out of date; its struct listings no
 longer match the source). No other plan covers terrain.
 
@@ -21,6 +21,65 @@ longer match the source). No other plan covers terrain.
 
 ## Changelog
 
+- **2026-11-25** — Milestone 3 landed (a889b83) and was edited to match the code: the names the
+  code uses are listed (`sampleSpacing` is a `Double?`, nil for the image source;
+  `makeProceduralTerrain` is a static function; the scene's terrain property is `ground`);
+  `makeHeightTexture` checks the array's length with a `precondition`; the listed test is
+  ticked and four tests were added (5 in `TerrainHeightTextureTests`); two rows were added to
+  Pitfalls. One correction to part A: the image source's two thresholds are the old shader's
+  literals, −0.5 and 0.3, not "× height" (the old shader compared them with the decoded height
+  whatever `height` was). The review before landing found two defects, which the owner fixed
+  before the commit. (1) The scene passed the side length as `12_8000`, which is 128,000 m:
+  the sample spacing was 1,000 m and the narrowest octave's 400 m cells were 0.4 samples wide.
+  (2) The image source had `heightScale: height, heightOffset: 0`, so its heights ran
+  0 … height and nothing was below the grass threshold. Numbers from scratch scripts run for
+  the review: with the real `ProceduralTerrain.swift`, a 129 × 129 bake centred on the origin
+  has its lowest sample at −329.05 m, its highest at 533.93 m and its middle sample at
+  −172.99 m with 100 m spacing; the gap between the height function and two flat triangles per
+  cell, taken at the centres of a 10 × 10 sub-grid in each of the 128 × 128 cells, is at most
+  9.1 m (1.3 m root-mean-square) with 100 m spacing and at most 247 m (41 m) with 1,000 m
+  spacing, cells split along the 00–11 diagonal (8.7 m and 216 m along the other; the 9.2 m in
+  Design decisions used its own sub-grid and was not re-run); on `mountain.png` the old decode
+  gives 76.7 % grass, 19.2 % rock and 4.1 % snow, and the defect gave 0 %, 80.0 % and 20.0 %.
+  Checks run: the macOS build and test bundle; the full suite one test at a time (594 Swift
+  Testing tests in 80 suites and the 20 XCTest tests); the iOS simulator build;
+  `readHeightBetweenSamples` and `decodedLocalHeight`, cut out of the source file, on the GPU
+  of an Apple M1 Max against a 129 × 129 `r32Float` texture (22.5 for the small example, the
+  exact texel on a sample, at both edges and one sample outside them, 102,060 coordinates
+  within 2.4e-7, relative, of a CPU version); the `Terrain` struct is 32 bytes with the same
+  field offsets in Metal and in C; the two texture tests fail against three deliberately broken
+  copies of `makeHeightTexture` (rows reversed, rows and columns swapped, and each row starting
+  one sample early, which imitates a wrong `bytesPerRow`); screenshots of the app with the
+  TiledMSAATessellated renderer for both height sources. The image terrain was judged on its
+  own, not against a build of the commit before. Not tested: the side length the scene passes
+  (a scene builds itself when it is created), and the `precondition`. tvOS was not built.
+  This commit also carries the part B revision of the entry below, which was not yet
+  committed.
+- **2026-11-25** — Milestone 3 part B, after a request from the owner: every variable, parameter
+  and return value of the shader pseudocode now carries its Metal type, with a table of the
+  types and seven rules where Metal differs from Swift. Three lines of the old pseudocode could
+  not be typed as written and were changed: `heightMap.read(lowerColumn, lowerRow)` compiles but
+  reads texel (lowerColumn, lowerColumn) of mip level lowerRow, and is now
+  `read(uint2(lowerColumn, lowerRow)).r`; `min(floor(…), lastColumn - 1)` mixes `float` and
+  `uint` ("call to 'min' is ambiguous") and now converts first; the clamp bounds and the
+  (width − 1, height − 1) factor are built as `float2`. `.color` of the output struct receives
+  `float4(localHeight)`, because the variable it was filled from is gone. Added: two edge cases
+  and one Pitfalls row. No number changed. Checks run, all on scratch files outside the repo
+  (Metal compiler 32023.922, against the real `ShaderDefinitions.h` and `TFSCommon.h`):
+  `type_probe.metal` asserts the type of 19 expressions; `run_probes.sh` compiles 24 one-line
+  shaders, 14 accepted and 10 refused, which is where the quoted error messages come from; a
+  hand transcription of all of part B into a copy of `Tessellation.metal`,
+  `part_b_transcribed.metal`, compiles without warnings for macOS, iOS and the iOS simulator;
+  `plan_to_metal.py` reads the three functions and the vertex-function lines out of this file
+  and turns them into Metal by mechanical rewriting (each type moved in front of its name,
+  braces and semicolons added, the vertex-function lines wrapped in a function), and the result
+  compiles for macOS and iOS; `run_helper_on_gpu.swift` ran the two helpers from both
+  transcriptions on an Apple M1 Max against a 129 × 129 `r32Float` texture: 22.5 for the small
+  example, the exact texel on a sample, at both edges and one sample outside them, and 102,060
+  coordinates within 2.4e-7 (relative) of a CPU version written from the pseudocode;
+  `texel_components.swift` confirmed (stored number, 0, 0, 1), `uint(2.9)` = 2 and the
+  wrap-around. Not executed: the engine build and the app, because the working tree holds part
+  B half-written.
 - **2026-11-24** — Milestone 2 landed (49680b6) and was edited to match the code: the names the
   code uses are listed, the five listed tests check more than first listed, and two tests were
   added (7 in all; the suite now has 29). The review before landing found no defect in
@@ -707,7 +766,7 @@ A grid centred on sample (`centerSampleIndexX`, `centerSampleIndexZ`) starts at
   - `samplesPerSide` 0 → an empty array. A negative `samplesPerSide` → the program stops at
     the range `0..<samplesPerSide`. The function has no check of its own.
 
-### Milestone 3 — Drawing the baked samples with the existing terrain
+### Milestone 3 — Drawing the baked samples with the existing terrain ✅ (landed 2026-11-25, a889b83)
 
 - **Learning objective:** how a grid of numbers on the CPU becomes the height of GPU vertices:
   the texture upload, the mapping from a vertex to its sample, and bilinear interpolation
@@ -716,6 +775,16 @@ A grid centred on sample (`centerSampleIndexX`, `centerSampleIndexZ`) starts at
   first; this milestone changes both.
 - **Engine integration points:** `TFSCommon.h`, `Tessellation.metal`, `TerrainObject.swift`,
   `FlightboxWithTerrain.swift`, one new app-hosted test file.
+- **Names in the code.** As in Milestones 1 and 2, the code drops the unit suffix. Where the
+  pseudocode says `sampleSpacing_m`, `sideLength_m`, `parameters` and `heightAmplitude_m`, the
+  code says `sampleSpacing`, `sideLength`, `params` and `heightAmplitude`. `sampleSpacing` is a
+  `let` of type `Double?`: it is nil for the image source, which has no grid of samples in
+  meters. Optional and not a default number, so that code that needs the spacing must first
+  deal with a terrain that has none. `makeProceduralTerrain(params:sideLength:)` is a static
+  function that returns a `TerrainObject`, not a convenience initializer. The designated
+  initializer is `init(terrain:heightTexture:heightSource:sampleSpacing:heightSamples:)`; its
+  last two parameters default to nil. The scene's terrain property is `ground`, a
+  `TerrainObject!`.
 - **Algorithm:** in five parts, A to E, below. Parts A to C change the code that both height
   sources share, so after part C the old terrain should look as it did (slightly smoother).
   Check that before doing part D.
@@ -723,17 +792,21 @@ A grid centred on sample (`centerSampleIndexX`, `centerSampleIndexZ`) starts at
 **Part A — the `Terrain` struct** (`TFSCommon.h`, the struct marked "Temporary" at the end).
 Delete the field `height`. Add five `float` fields:
 
-| Field | Meaning | Image source (`height` = 1) | Procedural source |
+| Field | Meaning | Image source | Procedural source |
 |---|---|---|---|
 | `heightScale` | local height = `heightOffset` + texel × `heightScale` | 2 × height | 1 |
 | `heightOffset` | see above | −height | 0 |
-| `grassBelowHeight` | local height below which grass is drawn | −0.5 × height | −50 |
-| `snowAboveHeight` | local height at and above which snow is drawn | 0.3 × height | 200 |
+| `grassBelowHeight` | local height below which grass is drawn | −0.5 | −50 |
+| `snowAboveHeight` | local height at and above which snow is drawn | 0.3 | 200 |
 | `colorTextureRepeatCount` | repeats of the colour textures across the terrain | 1 | 128 |
 
 The image values reproduce today's behaviour exactly: −height + r × 2 × height is the old
-(r × 2 − 1) × height. With the procedural values and seed 2026, a survey of a 102 km square puts
-39.9 % of the ground in grass, 47.5 % in rock and 12.5 % in snow.
+(r × 2 − 1) × height. The two thresholds are the old shader's literals. It compared them with
+the decoded height whatever `height` was, so they are not multiplied by `height` (an earlier
+version of this table said "× height", which agrees only when `height` is 1). With these
+values, 76.7 % of the texels of `mountain.png` are grass, 19.2 % rock and 4.1 % snow. With the
+procedural values and seed 2026, a survey of a 102 km square puts 39.9 % of the ground in
+grass, 47.5 % in rock and 12.5 % in snow.
 
 **Part B — the shader** (`Tessellation.metal`).
 
@@ -743,37 +816,121 @@ sample the image with a default sampler (nearest texel, no filtering) and decode
 below; keep `xy`, because the fragment functions still use it as the texture coordinate. Put the
 helpers above `compute_tessellation`, next to `SampleTerrainLayer`.
 
+Line by line: `float2 xy = …` stays. It is the variable the pseudocode below calls
+`positionAcrossTerrain`; keep the name `xy` or rename it, but declare it once. Three lines are
+deleted: `constexpr sampler sample;`, `float4 color = heightMap.sample(sample, xy);` and
+`float height = (color.r * 2 - 1) * terrain.height;`. `position.y = height;` becomes the last
+line of the pseudocode, `position.y = localHeight;`.
+
+*Metal types used in this part.* The pseudocode in part B gives every variable, parameter and
+return value its type in the Metal Shading Language (MSL). The type is written after the name,
+`name: type`, as Swift writes it. In the file the type comes first, as in C:
+`uint lastColumn = …;`. Conversions and texture calls are spelled the way Metal spells them, so
+this part is closer to source than the rest of the plan. That is on purpose: the names of the
+types and calls are what cannot be guessed.
+
+| Metal type | What it holds | Swift type on the CPU side |
+|---|---|---|
+| `float` | one 32-bit floating-point number | `Float` |
+| `uint` | one unsigned 32-bit whole number; it cannot be negative | `UInt32` |
+| `float2`, `float3`, `float4` | 2, 3 or 4 floats. The components are `.x .y .z .w`; `.r .g .b .a` are other names for the same four | `SIMD2<Float>`, `SIMD3<Float>`, `SIMD4<Float>` |
+| `uint2` | two `uint`s. Here: the (column, row) of a texel | `SIMD2<UInt32>` |
+| `texture2d<float>` | a handle to a 2-D texture. `<float>` says how a texel arrives in the shader, not how it is stored: an `r8Unorm` texel (the image) arrives as 0 … 1, an `r32Float` texel (the bake) arrives as the stored number | `MTLTexture` |
+| `sampler` | the filtering and addressing rules that `sample` uses | `MTLSamplerState` |
+| `Terrain` | the struct from `TFSCommon.h`. In a shader its `size` is a `float2`, `maxTessellation` is a `uint`, and the five fields of part A are `float` | `Terrain` (the same struct, imported from the header) |
+
+Seven places where Metal's rules differ from Swift's. Each was checked with the Metal compiler,
+and the quoted text is the compiler's error message. The comments in the pseudocode refer to
+these rules by number.
+
+1. *One number converts to another kind of number by itself.* `float fraction = someUint;`
+   compiles. Swift never allows that. The pseudocode writes every conversion anyway, as Swift
+   would, so that none is hidden. A conversion looks like a Swift initializer with a lower-case
+   name: `float(lowerColumn)`, `uint(someFloat)`, `float2(a, b)`. `uint(someFloat)` drops the
+   fraction: `uint(2.9)` is 2. Unlike Swift's `UInt32(…)` it does not stop the program when the
+   float is negative, and the result is then not a value to rely on. So clamp first and convert
+   afterwards.
+2. *A vector does not convert to another kind of vector by itself.* `float2 * uint2` is an
+   error: "implicit conversions between vector types … are not permitted". Build a `float2`
+   first.
+3. *One number does turn into a vector by itself, by filling every component.*
+   `float4(localHeight)` is (h, h, h, h). This rule hides a trap:
+   `heightMap.read(lowerColumn, lowerRow)` compiles. The function is
+   `read(uint2 coord, uint lod = 0)`, where `lod` is the mip level (a mip level is one of the
+   smaller copies of a texture; level 0 is the full-size one). Given two numbers, it takes the
+   first as both column and row and the second as the mip level: "texel
+   (lowerColumn, lowerColumn) of mip level lowerRow". Always pass one `uint2`:
+   `heightMap.read(uint2(lowerColumn, lowerRow))`.
+4. *`min`, `max`, `clamp` and `mix` do not accept a float next to a whole number, or an `int`
+   next to a `uint`.* `min(floor(x), lastColumn - 1)` has a `float` and a `uint`: "call to 'min'
+   is ambiguous". An `int` with a `uint` fails the same way, and a `uint2` bound given to a
+   `clamp` of a `float2` is "no matching function for call to 'clamp'". One `float` next to
+   `float2`s is fine: `tessellation_vertex` already calls `mix(float2, float2, float)`, which
+   blends both components by the same amount.
+5. *`read` and `sample` on a `texture2d<float>` always return a `float4`,* even when the texture
+   stores one number per texel. An `r32Float` texel arrives as (stored number, 0, 0, 1). Take
+   `.r`. Putting the `float4` into a `float` is an error.
+6. *Texel positions and texture sizes are `uint`, not `int`.* `get_width()` and `get_height()`
+   return `uint`, and `read` refuses an `int2` ("no matching member function for call to
+   'read'"). `int lastColumn = heightMap.get_width() - 1;` does compile, by rule 1, but an `int`
+   next to a `uint` then fails at `min` (rule 4). With `uint` for every index no conversion is
+   needed between `get_width()`, `min` and `read`. A `uint` wraps around below zero and the
+   program carries on: `uint(0) - 1` is 4,294,967,295.
+7. *A helper function takes a struct by value:* `Terrain terrain`, the way `getCameraDistance`
+   in the same file takes `float4x4 modelMatrix`. The entry point's own argument stays
+   `constant Terrain &terrain [[ buffer(TFSBufferIndexTerrain) ]]`, and passing it on copies the
+   struct. `constant` is an address space: it says the data lives in read-only buffer memory. A
+   plain C++ `const Terrain &` parameter does not compile, because a reference without an
+   address space cannot point into that memory. `constant Terrain &` as a helper parameter does
+   compile; by value is simpler.
+
 ```pseudocode
 // Reads the height texture at a position between samples. sampleCoordinate is measured in
 // samples: (2.0, 7.0) is exactly the texel in column 2, row 7; (2.5, 7.0) is halfway to column 3.
 // Uses exact texel reads (read, not sample), so it works for a 32-bit float texture on every GPU.
-function readHeightBetweenSamples(heightMap, sampleCoordinate) -> texelValue
-    lastColumn = heightMap.width - 1
-    lastRow = heightMap.height - 1
-    // keep the position on the grid, so a caller may ask one sample past the edge
-    clampedCoordinate = clamp(sampleCoordinate, (0, 0), (lastColumn, lastRow))
-    // the lower-index corner of the cell; never the last column or row, so "+ 1" stays inside
-    lowerColumn = min(floor(clampedCoordinate.x), lastColumn - 1)
-    lowerRow = min(floor(clampedCoordinate.y), lastRow - 1)
-    fractionAlongColumns = clampedCoordinate.x - lowerColumn        // 0 … 1
-    fractionAlongRows = clampedCoordinate.y - lowerRow
-    valueAtLowColumnLowRow   = heightMap.read(lowerColumn,     lowerRow)
-    valueAtHighColumnLowRow  = heightMap.read(lowerColumn + 1, lowerRow)
-    valueAtLowColumnHighRow  = heightMap.read(lowerColumn,     lowerRow + 1)
-    valueAtHighColumnHighRow = heightMap.read(lowerColumn + 1, lowerRow + 1)
-    alongLowRow  = mix(valueAtLowColumnLowRow,  valueAtHighColumnLowRow,  fractionAlongColumns)
-    alongHighRow = mix(valueAtLowColumnHighRow, valueAtHighColumnHighRow, fractionAlongColumns)
+function readHeightBetweenSamples(heightMap: texture2d<float>, sampleCoordinate: float2) -> float
+    lastColumn: uint = heightMap.get_width() - 1            // 128 for the bake; get_width() returns a uint
+    lastRow: uint = heightMap.get_height() - 1
+    // the same two numbers as floats: clamp refuses a uint2 bound next to a float2 (rules 2 and 4)
+    lastSampleCoordinate: float2 = float2(lastColumn, lastRow)
+    // keep the position on the grid, so a caller may ask one sample past the edge. This happens
+    // while the value is still a float: a coordinate below 0 must become 0 before it becomes a
+    // uint (rule 1)
+    clampedCoordinate: float2 = clamp(sampleCoordinate, float2(0, 0), lastSampleCoordinate)
+    // the lower-index corner of the cell; never the last column or row, so "+ 1" stays inside.
+    // floor returns a float, uint(…) converts it, and min then compares two uints (rule 4)
+    lowerColumn: uint = min(uint(floor(clampedCoordinate.x)), lastColumn - 1)
+    lowerRow: uint = min(uint(floor(clampedCoordinate.y)), lastRow - 1)
+    fractionAlongColumns: float = clampedCoordinate.x - float(lowerColumn)        // 0 … 1
+    fractionAlongRows: float = clampedCoordinate.y - float(lowerRow)
+    // read takes one uint2 (column, row) and returns a float4; .r is the texel's value (rules 3 and 5)
+    valueAtLowColumnLowRow: float   = heightMap.read(uint2(lowerColumn,     lowerRow    )).r
+    valueAtHighColumnLowRow: float  = heightMap.read(uint2(lowerColumn + 1, lowerRow    )).r
+    valueAtLowColumnHighRow: float  = heightMap.read(uint2(lowerColumn,     lowerRow + 1)).r
+    valueAtHighColumnHighRow: float = heightMap.read(uint2(lowerColumn + 1, lowerRow + 1)).r
+    // mix(a, b, t) is a + (b - a) * t; all three arguments are float here
+    alongLowRow: float  = mix(valueAtLowColumnLowRow,  valueAtHighColumnLowRow,  fractionAlongColumns)
+    alongHighRow: float = mix(valueAtLowColumnHighRow, valueAtHighColumnHighRow, fractionAlongColumns)
     return mix(alongLowRow, alongHighRow, fractionAlongRows)
 
 // The terrain's height in local units at a position on the sample grid.
-function decodedLocalHeight(heightMap, sampleCoordinate, terrain) -> localHeight
-    return terrain.heightOffset + readHeightBetweenSamples(heightMap, sampleCoordinate) * terrain.heightScale
+// terrain is taken by value (rule 7).
+function decodedLocalHeight(heightMap: texture2d<float>, sampleCoordinate: float2, terrain: Terrain) -> float
+    texelValue: float = readHeightBetweenSamples(heightMap, sampleCoordinate)
+    return terrain.heightOffset + texelValue * terrain.heightScale          // float + float * float
 
-// Inside tessellation_vertex, after `position` holds the interpolated local x and z:
-    positionAcrossTerrain = (position.xz + terrain.size / 2) / terrain.size     // 0 … 1; this is today's `xy`
-    // N samples span N - 1 cells, so the far edge of the terrain is sample N - 1, not N
-    sampleCoordinate = positionAcrossTerrain * (heightMap.width - 1, heightMap.height - 1)
-    position.y = decodedLocalHeight(heightMap, sampleCoordinate, terrain)
+// Inside tessellation_vertex, after `position` (a float4) holds the interpolated local x and z.
+// heightMap and terrain are the function's existing arguments.
+    // position.xz is a float2 made of the x and z components; terrain.size is a float2.
+    // The result runs 0 … 1 across the terrain; this is today's `xy`
+    positionAcrossTerrain: float2 = (position.xz + terrain.size / 2.0) / terrain.size
+    // N samples span N - 1 cells, so the far edge of the terrain is sample N - 1, not N.
+    // Built as a float2 so that it can multiply a float2 (rule 2)
+    lastSampleCoordinate: float2 = float2(heightMap.get_width() - 1, heightMap.get_height() - 1)
+    // float2 * float2 multiplies component by component; 0 … 128 for the bake
+    sampleCoordinate: float2 = positionAcrossTerrain * lastSampleCoordinate
+    localHeight: float = decodedLocalHeight(heightMap, sampleCoordinate, terrain)
+    position.y = localHeight
 ```
 
 Small example of the mapping and the blend: the terrain is 12,800 m wide with 129 samples. A
@@ -782,9 +939,14 @@ vertex at local x = −6,150 m is 250 m from the left edge: 250 / 12800 = 0.0195
 (2.5, 7.25) are 10 and 20 in row 7 and 30 and 60 in row 8, the blend along the columns gives 15
 and 45, and the blend along the rows gives 15 + (45 − 15) × 0.25 = 22.5.
 
-In the output struct, `.height` keeps receiving the local height and `.uv` keeps receiving
-`positionAcrossTerrain`. `.color` can receive the raw texel value as before; no fragment function
-reads it.
+The output struct is `TessellationVertexOut`: `position` and `color` are `float4`, `height` is
+`float`, `uv` is `float2` and `worldPosition` is `float3`. The local variables `height` and
+`color` that two of its fields were filled from no longer exist, so:
+
+- `.height` receives `localHeight` (`float`).
+- `.uv` receives `positionAcrossTerrain` (`float2`).
+- `.color` receives `float4(localHeight)`: the height copied into all four components (rule 3).
+  No fragment function reads `.color`; the line only has to compile.
 
 `SampleTerrainLayer` and its two callers (`tessellation_fragment` and
 `tessellation_gbuffer_fragment`):
@@ -792,22 +954,38 @@ reads it.
 ```pseudocode
 // Picks the ground texture by height. Thresholds come from the Terrain struct, in the same
 // local units as the height the vertex function wrote.
-function SampleTerrainLayer(localHeight, textureCoordinate, terrain, grass, cliff, snow, repeatingSampler) -> colour
-    repeatedCoordinate = textureCoordinate * terrain.colorTextureRepeatCount
-    if localHeight < terrain.grassBelowHeight
-        return grass.sample(repeatingSampler, repeatedCoordinate)
+// `terrain: Terrain` (by value, rule 7) takes the place of today's third parameter, `float tiling`.
+function SampleTerrainLayer(localHeight: float, textureCoordinate: float2, terrain: Terrain,
+                            grass: texture2d<float>, cliff: texture2d<float>, snow: texture2d<float>,
+                            repeatingSampler: sampler) -> float4
+    // float2 * float multiplies each component by the float
+    repeatedCoordinate: float2 = textureCoordinate * terrain.colorTextureRepeatCount
+    if localHeight < terrain.grassBelowHeight                                // float < float
+        return grass.sample(repeatingSampler, repeatedCoordinate)            // float4: red, green, blue, alpha
     if localHeight < terrain.snowAboveHeight
         return cliff.sample(repeatingSampler, repeatedCoordinate)
     return snow.sample(repeatingSampler, repeatedCoordinate)
 ```
 
 - Both fragment functions gain one argument: the `Terrain` struct at buffer index
-  `TFSBufferIndexTerrain`, the same index the vertex function uses.
+  `TFSBufferIndexTerrain`, the same index the vertex function uses. Its declaration is the
+  vertex function's line, word for word:
+  `constant Terrain &terrain [[ buffer(TFSBufferIndexTerrain) ]]`. `&` makes it a reference to
+  the bytes bound at that index (rule 7 explains `constant`). Metal matches an argument to its
+  binding by the `[[ … ]]` attribute, so its place in the argument list does not matter.
+- Both pass `in.height` (`float`), `in.uv` (`float2`), `terrain`, the three textures and the
+  sampler to `SampleTerrainLayer`, and receive a `float4` as today.
 - Both declare the sampler they pass with linear filtering, linear mip filtering and *repeat*
-  addressing. The default sampler they declare today clamps to the edge, which would smear the
-  last texel over every repeat after the first. Delete the two `float tiling = 1.0;` lines; the
-  struct field replaces them. The engine's shared linear sampler cannot be used here: it clamps
-  too.
+  addressing. A sampler declared inside a shader has the type `sampler` and is written
+  `constexpr sampler repeatingSampler(filter::linear, mip_filter::linear, address::repeat);`.
+  `constexpr` means "fixed when the shader is compiled": the sampler is part of the shader, and
+  no `MTLSamplerState` is bound from Swift. `filter::linear` sets the filter for both shrinking
+  and enlarging. `Skybox.metal` declares its `linearSampler` the same way. This line replaces
+  `constexpr sampler sample;`. The default sampler they declare today clamps to the edge, which
+  would smear the last texel over every repeat after the first. In
+  `tessellation_gbuffer_fragment` the line `normalTexture.sample(sample, in.uv)` uses the old
+  sampler's name; give it the new name. Delete the two `float tiling = 1.0;` lines; the struct
+  field replaces them. The engine's shared linear sampler cannot be used here: it clamps too.
 
 **Part C — `TerrainObject.swift`.**
 
@@ -820,15 +998,16 @@ function SampleTerrainLayer(localHeight, textureCoordinate, terrain, grass, clif
   change together.
 - `heightMap` changes from `let` to `private(set) var`, because Milestone 4 replaces it.
 - New stored properties: `heightSource`, and for the procedural source `sampleSpacing_m`
-  (Double), `centerSampleIndexX` and `centerSampleIndexZ` (Int, both 0 at first) and
+  (an optional Double: the image source has none), `centerSampleIndexX` and `centerSampleIndexZ` (Int, both 0 at first) and
   `heightSamples` (the baked array, kept for Milestone 4's optimized version and for a later CPU
   height query).
 - `init(terrain:)` currently looks up `Assets.Textures[.MountainHeightMap]` in its `guard`. Take
   that lookup out: the designated initializer receives the height texture and the height source
   as parameters. The existing `convenience init(size:height:)` passes the image texture and
   fills the five new struct fields from the "Image source" column of the table in part A.
-- Add a second convenience initializer for the procedural source. It takes the parameters and
-  the side length in meters, and does this:
+- Add a way to build the procedural source: in the code, the static function
+  `makeProceduralTerrain`. It takes the parameters and the side length in meters, and does
+  this:
 
 ```pseudocode
 function makeProceduralTerrain(parameters, sideLength_m) -> TerrainObject
@@ -848,6 +1027,9 @@ function makeProceduralTerrain(parameters, sideLength_m) -> TerrainObject
 
 // One texel per sample, 32-bit float, single channel. Static, so a test can call it.
 function makeHeightTexture(heightSamples, samplesPerSide) -> texture
+    // replace (below) reads samplesPerSide * samplesPerSide Floats and does not check the
+    // array's length, so a shorter array would be read past its end
+    stop the program unless count(heightSamples) == samplesPerSide * samplesPerSide
     descriptor = 2-D texture, pixel format r32Float, width and height samplesPerSide,
                  one mip level, usage shaderRead
     engine: texture = Engine.Device.makeTexture(descriptor)
@@ -886,11 +1068,33 @@ device. The header comment of `AfterburnerEmitterTests.swift` describes the patt
 touches `Engine.Device` but not `Engine.renderer`, so the host-app launch race does not apply.
 
 - **Tests:**
-  - [ ] `TerrainHeightTextureTests.textureHoldsTheSamplesInRowOrder` (app-hosted) — bake a 9 × 9
+  - [x] `TerrainHeightTextureTests.textureHoldsTheSamplesInRowOrder` (app-hosted) — bake a 9 × 9
     grid, make the texture, read it back with `getBytes`, and compare with the array using `==`.
-    Also check the pixel format (`r32Float`) and the size (9 × 9). This catches a wrong
-    `bytesPerRow` and a flipped row order.
-  - [ ] All suites of Milestones 1 and 2 still pass.
+    Also check the pixel format (`r32Float`), the size (9 × 9) and the mip level count (1).
+    This catches a wrong `bytesPerRow` and a flipped row order. The test first requires the
+    first and the last row of the bake to differ, because otherwise it could not notice rows
+    in the wrong order.
+  - [x] All suites of Milestones 1 and 2 still pass.
+
+  Four more tests were added with the code (review of 2026-11-25), all app-hosted, in the same
+  file:
+  - [x] `texelAtColumnAndRowIsTheMatchingElement` — a 9 × 9 texture whose element in row `row`
+    and column `column` is 1000 × row + column. Six single texels are read back at
+    (column, row), the way the shader's `read(uint2(column, row))` addresses them: texel (2, 7)
+    is 7002 and texel (7, 2) is 2007.
+  - [x] `samplesPerSideMatchesThePatchGrid` — `proceduralSamplesPerSide` is 129, equals
+    `patchesPerSide` × `cellsPerPatchEdgeAtLowestTessellation` + 1, and is odd.
+  - [x] `proceduralTerrainIsABakeCentredOnTheOrigin` — `makeProceduralTerrain` with a side of
+    12,800 m: the spacing is 100, the centre is sample (0, 0), the source is procedural; three
+    of Milestone 2's heights are at their places within 1e-3 m (−328.78198 first, −172.99075
+    in the middle, 533.9311 in column 96 of row 128); the texture is `r32Float`, 129 × 129, and
+    reads back equal (`==`) to `heightSamples`; the struct has size (12800, 12800), scale 1
+    and offset 0.
+  - [x] `imageSourceKeepsTheOldHeightDecode` — `TerrainObject(size: [8, 8], height: 3)`: for
+    the texel values 0, 0.25, 0.5, 0.65 and 1, `heightOffset` + r × `heightScale` equals
+    (r × 2 − 1) × 3 within 1e-5; the thresholds are −0.5 and 0.3; the repeat count is 1;
+    `sampleSpacing` is nil and `heightSamples` is empty. A height of 3 is used because with 1
+    a missing or a wrong "× height" would still pass.
 - **Observable completion criteria:**
   - After parts A to C, with the source set to `heightMapImage`: the old tilted terrain looks as
     before, with smoother slopes (the heights are now interpolated between texels).
@@ -902,6 +1106,10 @@ touches `Engine.Device` but not `Engine.renderer`, so the host-app launch race d
   - Expected and not a bug: the slopes are not shaded (the normal is still a constant; Milestone
     5), the square's edge is visible, the jet can fly through a hill, and flying 6.4 km in any
     direction leaves the terrain behind (Milestone 4).
+  - Checked by screenshot on 2026-11-25, with the jet at its start position: the procedural
+    source shows hills with grass low, rock in the middle and one snow top, and the edge of
+    the square; the image source shows the tilted square, grass with one mountain of rock and
+    snow. The image terrain was judged on its own, not against a build of the commit before.
 - **Edge cases and expected results:**
   - A vertex exactly on a sample (every vertex at tessellation factor 4) → both fractions are 0,
     and the vertex gets that sample's value exactly.
@@ -910,7 +1118,23 @@ touches `Engine.Device` but not `Engine.renderer`, so the host-app launch race d
     4 occur only within 16 m of the terrain's base plane. Those vertices get the bilinear blend.
   - A vertex on the far edge → sample coordinate 128; the lower corner is clamped to 127 and the
     fraction is 1, so the last texel is returned and no read goes outside the texture.
+  - A sample coordinate below 0 (Milestone 5 asks for one sample before the edge) → the clamp
+    makes it 0 while it is still a `float`, and the edge texel is returned. Converting to `uint`
+    before clamping would convert a negative number, which has no dependable result.
+  - A height texture only one texel wide or tall → `lastColumn - 1` wraps around to
+    4,294,967,295 (a `uint` has no −1), `min` then limits nothing, and the "+ 1" read leaves the
+    texture. Not handled: the bake is 129 × 129 and `mountain.png` is 512 × 512.
   - A device that cannot filter 32-bit float textures → no effect; the shader never filters.
+  - A `heightSamples` array that does not hold `samplesPerSide` × `samplesPerSide` values →
+    the `precondition` in `makeHeightTexture` stops the program, in Debug and in Release
+    builds. No test exercises it: a failed `precondition` ends the test process.
+  - A side length other than 12,800 m → the sample spacing is side length / 128, no longer
+    100 m. The default parameters are chosen for 100 m (design decision "the narrowest
+    octave's cells must be at least 4 samples wide"). With 128,000 m the spacing is 1,000 m,
+    the narrowest cells are 0.4 samples wide, and the drawn surface misses the height
+    function by up to 247 m. No test covers the side length the scene passes: a scene builds
+    itself when it is created (`GameScene.init` calls `buildScene`), so a test that made one
+    would register a second scene's objects with the `SceneManager` of the running host app.
 
 ### Milestone 4 — The terrain follows the aircraft
 
@@ -949,6 +1173,8 @@ function storedPositionOfTerrainCenter(centerSampleIndexX, centerSampleIndexZ, s
 function follow(focusPositionInOriginalFrame, floatingOriginOffset)
     if heightSource is not procedural
         return
+    // In the code `sampleSpacing` is a Double? (nil for the image source). Unwrap it in the
+    // same guard that checks the source.
     snapStepInSamples = TerrainObject.cellsPerPatchEdgeAtLowestTessellation     // 4 samples = one patch
     recenterThresholdInSamples = snapStepInSamples                              // 4 samples = 400 m
     newCenterX = recenteredCenterSampleIndex(centerSampleIndexX, focusPositionInOriginalFrame.x,
@@ -1146,6 +1372,8 @@ to 25°); raising the noise to a power to flatten valleys (Patel, "Redistributio
 | One huge peak or pit at the world's origin | All octaves share one seed | Compare the height at (0, 0) with −172.99 m |
 | Terrain is a wall of spikes, 100 times too tall | `setScale(100)` kept on the procedural terrain | Part D: no scale, no rotation |
 | Everything is one colour | Thresholds still in the image's units, or `Terrain` not bound to the fragment stage | Part A table; the `setFragmentBytes` line in `setRenderState` |
+| The colour bands are straight-edged polygons about 1 km across | The side length is not 12,800 m, so the samples are not 100 m apart (`12_8000` is 128,000: Swift ignores where the underscore is) | Part D; `proceduralTerrain.sampleSpacing` should be 100 |
+| The image terrain has no grass and half its old relief | The image source's decode is not scale 2 × height, offset −height | Part A table; `imageSourceKeepsTheOldHeightDecode` |
 | Colour is correct in one strip and smeared elsewhere | The colour sampler still clamps to the edge | Part B: repeat addressing |
 | Terrain looks sheared or mirrored | Rows and columns swapped, or a wrong `bytesPerRow` | `textureHoldsTheSamplesInRowOrder`, `bakeLayoutIsRowsAlongZColumnsAlongX` |
 | Hills change shape slightly at every recentre | The snap step is not a whole number of patches, or sample positions are not computed from whole-number indices | `overlapOfTwoBakesIsBitEqual`; snap step 4 |
@@ -1153,6 +1381,7 @@ to 25°); raising the noise to a power to flatten valleys (Patel, "Redistributio
 | The whole terrain jumps 400 m for one frame | The texture was overwritten in place, or `follow` runs after `TerrainObject.update()` | A new texture per bake; `follow` in the scene's `doUpdate` |
 | The terrain jumps about 1 km for one tick after an origin shift | The focus was read from a camera parented to the aircraft | Use the aircraft's stored position plus the offset total |
 | Terrain looks blocky near the camera and steps between texels | The old default sampler is still used for the height | Part B: `readHeightBetweenSamples` |
+| Terrain is flat except for a strip along one edge | `heightMap.read(column, row)` was given two numbers, so the row was taken as the mip level (on an M1 Max a missing mip level read as 0) | Part B, rule 3: `read(uint2(column, row))` |
 | A small regular hitch in Debug builds | The 15.7 ms bake | Build Release, or turn on `reusesOverlapOnRecenter` |
 | Faint ridges running exactly along X and Z | Value noise. Its hills line up with the lattice | Expected. Gradient noise removes most of it; a later change to one function |
 | Very rough ground that looks random at vertex scale | Too many octaves for the sample spacing | Narrowest cell ≥ 4 samples: 4 octaves at 100 m and a 3,200 m base cell |
