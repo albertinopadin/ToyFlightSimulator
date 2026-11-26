@@ -32,8 +32,8 @@ longer match the source). No other plan covers terrain.
   original frame, such as the terrain's centre sample index, is not shifted. Numbers from a
   scratch build of the real `ProceduralTerrain.swift`: a focus of NaN, +infinity or −infinity
   gives nothing; a focus of 9 × 10^20 m still gives a centre (sample index 9 × 10^18) and
-  10^21 m stops the program (exit status 133); the three examples of the doc comment and the
-  small example are unchanged. With the `guard` taken out, the new test ends the test process
+  10^21 m stops the program (exit status 133); a focus at 400 m, at 400.5 m and on a tie, and
+  the small example, give the same answers as before. With the `guard` taken out, the new test ends the test process
   ("cannot be converted to Int because it is either infinite or NaN"). Checks run, each in a
   build folder of its own (`-derivedDataPath`): the macOS build and test bundle (no new
   warning); the two terrain suites (50 tests); the full suite one test at a time (610 Swift
