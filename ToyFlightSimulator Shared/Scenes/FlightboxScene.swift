@@ -29,24 +29,11 @@ final class FlightboxScene: GameScene {
         attachedCamera.attach(to: jet, offset: jet.cameraOffset)
         jet.chaseCamera = attachedCamera
         jet.setPosition(0, 10, 4)
+        addChild(jet)
         
         capsule.setPosition(-8, 10, -10)
         capsule.rotateZ(Float(90).toRadians)
         addChild(capsule)
-        
-//        let fire = Fire(name: "Fire")
-//        fire.setPosition(8, 1, -10)
-//        addChild(fire)
-        
-//        let f16Sphere = Sphere()
-//        var f16SphereMaterial = Material()
-//        f16SphereMaterial.color = GRABBER_BLUE_COLOR
-//        f16SphereMaterial.diffuse = float3(1,1,1)
-//        f16SphereMaterial.specular = float3(1,1,1)
-//        f16Sphere.useMaterial(f16SphereMaterial)
-//        f16Sphere.setPosition(1.5, 0, 0)
-//        f16Sphere.setScale(0.5)
-//        f16.addChild(f16Sphere)
         
         setupDefaultSky()
         
@@ -57,11 +44,9 @@ final class FlightboxScene: GameScene {
         // drawn (sunBall is its visible marker). Must come after setPosition: it reads the position.
         sun.setLightDirection(sun.getPosition())
         sun.setLightBrightness(1.0)
-//        sun.setLightBrightness(0.2)
         sun.setLightColor(1, 1, 1)
-        sun.setLightAmbientIntensity(0.04)
-//        sun.setLightDiffuseIntensity(0.15)
-        sun.setLightDiffuseIntensity(0)
+        sun.setLightAmbientIntensity(0.4)
+        sun.setLightDiffuseIntensity(0.5)
         addLight(sun)
         
         let sunBall = Sphere()
@@ -183,6 +168,7 @@ final class FlightboxScene: GameScene {
         
         let testTri = Triangle()
 //        testTri.useMaterial(testCubeMaterial)
+        testTri.setColor(GRABBER_BLUE_COLOR)
         testTri.setPosition(jetPos.x, 1, jetPos.z - 12)
         addChild(testTri)
         
