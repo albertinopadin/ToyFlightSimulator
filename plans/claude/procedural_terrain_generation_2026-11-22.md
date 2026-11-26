@@ -5,7 +5,7 @@
 here are in 1.2.8 ("Fully procedural": fBm, value noise, the limit of noise), 1.2.9 (rules 1, 2, 5
 and 6: one source of truth, interpolation, sample format), 2.1 (what the current terrain is) and
 2.2 ("Is procedural generation a good fit?" and steps 1 to 3 of the simple version).
-**Status:** in progress (Milestones 1, 2 and 3 landed)
+**Status:** in progress (Milestones 1, 2, 3 and 4 landed)
 **Related plans:** `plans/claude/tessellation_terrain_fix.md` (out of date; its struct listings no
 longer match the source). No other plan covers terrain.
 
@@ -21,6 +21,50 @@ longer match the source). No other plan covers terrain.
 
 ## Changelog
 
+- **2026-11-25** — Milestone 4 landed (6bcc16c) and was edited to match the code: the names and
+  types the code uses are listed (the snap step, the threshold and the centre indices are
+  passed as `Double`; the rounding is `.rounded(.toNearestOrEven)`; `follow` uses a `switch`
+  over the height source; the scene reads the offset once and calls its terrain `ground`); the
+  six listed tests are ticked with what each now checks; nine tests were added (4 Metal-free,
+  5 app-hosted tests of `follow`); three edge cases were added; the debug flag is `true` in the
+  commit. The review before landing found no defect in the code as committed. One defect was
+  found and fixed by the owner earlier the same day, while the code was being written: the
+  first draft rounded with `round()`, which sends a tie away from zero (centre 4, focus
+  1000 m gave 12, not 8). The review added the doc comments and the tests and changed no line
+  of code: with comments and blank lines removed, the five source files are identical to the
+  owner's. Readability notes went to the owner and were not applied: the debug flag is on, the
+  log line lacks a closing parenthesis, and whole numbers of samples are passed as `Double`.
+  A second commit (2f6a686) raises `Aircraft._moveSpeed` from 25 to 50; it is not part of this
+  plan. Numbers from scratch scripts: every expected value of the new tests came from a Python
+  script written from the pseudocode, `m4_crosscheck.py` (Python's `round` sends a tie to the
+  even number): the single cases; the flight out and back (7 recentres, ending on centre 4);
+  63,744 recentres in the sweep, the focus at most 2.0 samples from the new centre and no
+  second recentre; (−812, −432, 440); 10.75 against 8 when narrowed first; the shift example;
+  and the centres the `follow` tests expect. The statements of the new doc comments were run
+  against the real `ProceduralTerrain.swift`: with a threshold of 1 the rule answers the
+  centre it was given; a hundred crossings of a line cause 100 recentres with a threshold of 2
+  and one with a threshold of 4; a step of 2.5 gives 8 where the multiple is 10; a NaN or an
+  infinite focus stops the program (exit status 133); the float gap at 123,456,800 is 8. The
+  real `ProceduralTerrainTests.swift` was run in a scratch SwiftPM package against 13
+  deliberately broken copies of the two new functions (a tie away from zero, floor, cut off
+  toward zero, `<` for `<=`, the distance measured from sample 0, the spacing ignored in
+  either function, the step not multiplied back, one patch at a time, the offset added, X and
+  Z swapped, y left at 0, narrowed before the subtraction). Each failed at least one test; the
+  tie away from zero failed only `recentreSnapsToTheNearestPatch`. `TerrainHeightTextureTests`
+  was run in the test host against 10 deliberately broken copies of `follow`, each made from
+  the committed file and undone afterwards (the bake's X start taken from the Z centre, the
+  new texture not stored, the old texture overwritten in place, the offset ignored, Z asked
+  with the focus's x, a recentre only when both axes are past the threshold, the grid one
+  sample late, the node not moved, the new Z centre not stored, the new samples not stored).
+  Each failed at least one test; overwriting the old texture in place failed only
+  `followRecentresAndBakesANewTexture`. The unbroken code was then built and run again.
+  Checks run: the macOS build and test bundle (no new warning); the two terrain suites (49
+  tests); the full suite one test at a time (609 Swift Testing tests in 80 suites and the 20
+  XCTest tests); the iOS simulator build. The twelve bakes of three runs of the unbroken tests
+  took 17.4 to 19.4 ms each (Debug build, Apple M1 Max; the scratch figure under "Simple
+  version, then optimized version" is 15.7 ms). Not run: the flight of the completion criteria, because key presses
+  cannot be sent to the app from the command line. The scene's call in `doUpdate` and the
+  picture on screen were therefore read, not executed. tvOS was not built.
 - **2026-11-25** — Milestone 4, after two requests from the owner: the `follow` pseudocode used
   `samplesPerSide` and `parameters` without defining them. `samplesPerSide` was a local variable
   of `makeProceduralTerrain` in Milestone 3 and is not a property of `TerrainObject`; the line
@@ -327,7 +371,8 @@ New files:
   functions and the parameter struct. No Metal, no engine state, so tests can call it directly
   (the same shape as `Managers/FloatingOrigin.swift`).
 - `ToyFlightSimulatorTests/GameObjects/ProceduralTerrainTests.swift` — Metal-free tests.
-- `ToyFlightSimulatorTests/GameObjects/TerrainHeightTextureTests.swift` — one app-hosted test.
+- `ToyFlightSimulatorTests/GameObjects/TerrainHeightTextureTests.swift` — the app-hosted tests
+  (Milestones 3 and 4).
 
 Changed files:
 - `Graphics/Shaders/TFSCommon.h` — the `Terrain` struct (Milestone 3).
@@ -1143,13 +1188,28 @@ touches `Engine.Device` but not `Engine.renderer`, so the host-app launch race d
     itself when it is created (`GameScene.init` calls `buildScene`), so a test that made one
     would register a second scene's objects with the `SceneManager` of the running host app.
 
-### Milestone 4 — The terrain follows the aircraft
+### Milestone 4 — The terrain follows the aircraft ✅ (landed 2026-11-25, 6bcc16c)
 
 - **Learning objective:** how an endless world is made from a finite grid, why the grid must move
   in whole steps, and how absolute and relative coordinates meet at the floating origin.
 - **Prerequisites:** Milestone 3, and the floating-origin section of CLAUDE.md.
 - **Engine integration points:** two more static functions in `ProceduralTerrain`; one method on
   `TerrainObject`; one call in `FlightboxWithTerrain.doUpdate()`; one flag in `Preferences.swift`.
+- **Names in the code.** As in Milestones 1 to 3, the code drops the unit suffix. Where the
+  pseudocode says `sampleSpacing_m`, `parameters` and `focusPositionInOriginalFrame_m`, the code
+  says `sampleSpacing`, `params` and `focusPositionInOriginalFrame`.
+  `recenteredCenterSampleIndex` returns an `Int?`, nil for "nothing". Its `snapStepInSamples`
+  and `recenterThresholdInSamples` parameters are `Double`: `follow` holds the two numbers as
+  `Int` and converts them in the call, and the function turns the step back into a whole
+  number with `Int(snapStepInSamples)`. A step with a fraction therefore does not work (2.5
+  divides by 2.5 and multiplies by 2). `roundToNearestWholeNumber` is
+  `.rounded(.toNearestOrEven)`. `round()` sends a tie away from zero and fails
+  `recentreSnapsToTheNearestPatch`. `storedPositionOfTerrainCenter` takes the two centre
+  indices as `Double`, so `follow` converts its `Int` properties in the call; `narrowToFloat3`
+  is `toFloat3()`. `follow` checks the source with a `switch` over `heightSource`, whose
+  `procedural` case also hands over `params`, and unwraps `sampleSpacing` with `if let` inside
+  that case. The bake alone is timed, with `timeit` (`Utils/TimeIt.swift`, nanoseconds). In the
+  scene the terrain is `ground`.
 - **Algorithm:**
 
 ```pseudocode
@@ -1211,11 +1271,16 @@ function follow(focusPositionInOriginalFrame, floatingOriginOffset)
 ```pseudocode
 // FlightboxWithTerrain.doUpdate(), after super.doUpdate(). The scene's doUpdate runs before
 // its children update, so the terrain's new position is cached in this same tick.
+    // read once, so the focus and the position follow stores are computed from the same value
+    floatingOriginOffset = SceneManager.floatingOriginOffset
     // the jet is a direct child of the scene: its stored position and the offset total are
     // always shifted together, so their sum is the jet's position in the original frame
-    focusPositionInOriginalFrame = toDouble3(jet.getPosition()) + SceneManager.floatingOriginOffset
-    engine: terrain.follow(focusPositionInOriginalFrame, SceneManager.floatingOriginOffset)
+    focusPositionInOriginalFrame = toDouble3(jet.getPosition()) + floatingOriginOffset
+    engine: ground.follow(focusPositionInOriginalFrame, floatingOriginOffset)
 ```
+
+The jet moves later in the same tick, in its own `doUpdate`, so the focus is one tick old. That
+is a few meters at most, against a threshold of 400 m.
 
 Why the floating origin needs no change. When the origin shifts, `FloatingOrigin.applyOffset`
 subtracts the offset from the terrain's stored position (it is a direct child of the scene) and
@@ -1229,31 +1294,84 @@ frame. The offset total is (52,812, 432, −17,640). The stored position is the 
 frame and the origin has moved 432 m up.
 
 Add `DEBUG_PROCEDURAL_TERRAIN` to `Core/Preferences.swift`, on the line after
-`DEBUG_FLOATING_ORIGIN`.
+`DEBUG_FLOATING_ORIGIN`. In the landing commit the flag is `true`, so the log line prints; every
+other debug flag there is `false`.
 
 - **Tests** (Metal-free, in `ProceduralTerrainTests`; spacing 100 m, snap step 4, threshold 4):
-  - [ ] `noRecentreAtExactlyTheThreshold` — centre 0, focus 400.0 m → nothing; focus 399 m →
-    nothing.
-  - [ ] `recentreJustPastTheThreshold` — centre 0, focus 400.5 m → 4; focus −400.5 m → −4.
-  - [ ] `recentreSnapsToTheNearestPatch` — centre 0: focus 600.5 m → 8, focus 1000.5 m → 12,
-    focus 123,456 m → 1236, focus −123,456 m → −1236; centre 4: focus 1000 m → 8.
-  - [ ] `flyingStraightRecentresOncePerPatch` — move the focus from 0 to 2,000 m in 0.5 m steps
+  - [x] `noRecentreAtExactlyTheThreshold` — centre 0: focus 0, 399, 400 and −400 m → nothing;
+    centre 4 (at 400 m): focus 0 and 800 m → nothing, because the distance is measured from the
+    centre and not from sample 0.
+  - [x] `recentreJustPastTheThreshold` — centre 0, focus 400.5 m → 4; focus −400.5 m → −4.
+  - [x] `recentreSnapsToTheNearestPatch` — centre 0: focus 600.5 m → 8, focus 1000.5 m → 12,
+    focus 123,456 m → 1236, focus −123,456 m → −1236. Ties: centre 0, focus 600 m → 8;
+    centre 4, focus 1000 m → 8; centre 12, focus 1800 m → 16; centre −4, focus −1000 m → −8.
+    `round()` gives 12, 20 and −12 for the last three.
+  - [x] `flyingStraightRecentresOncePerPatch` — move the focus from 0 to 2,000 m in 0.5 m steps
     and feed each result back in: exactly four recentres, at 400.5, 800.5, 1200.5 and 1600.5 m,
     to 4, 8, 12 and 16.
-  - [ ] `focusInOriginalFrameIsUnchangedByAFloatingOriginShift` — stored (812.375, 431.5,
-    −640.25) with offset total (52000, 0, −17000); shift by the whole-meter offset (812, 432,
-    −640) as `FloatingOrigin.applyOffset` would. The sum is (52812.375, 431.5, −17640.25) before
-    and after, compared with `==`, so the centre sample and the bake are the same.
-  - [ ] `storedPositionOfTerrainCenterSubtractsTheOffset` — the small example above.
+  - [x] `focusInOriginalFrameIsUnchangedByAFloatingOriginShift` — a plain `Node` stored at
+    (812.375, 431.5, −640.25) with offset total (52000, 0, −17000). `FloatingOrigin.getOffset`
+    returns the whole-meter offset (812, 432, −640) and `FloatingOrigin.applyOffset` applies
+    it. The sum is (52812.375, 431.5, −17640.25) before and after, compared with `==`, and from
+    centre (520, −172) the recentre rule answers (528, −176) both times.
+  - [x] `storedPositionOfTerrainCenterSubtractsTheOffset` — the small example above, and centre
+    (12, −4) with a zero offset → (1200, 0, −400).
+
+  Four more Metal-free tests were added with the code (review of 2026-11-25):
+  - [x] `flyingBackRecentresOncePerPatch` — from centre 16, the focus goes from 2,000 m back to
+    0 m in 0.5 m steps: three recentres, at 1199.5, 799.5 and 399.5 m, to 12, 8 and 4. The
+    flight ends on centre 4, not on centre 0 where the outward flight began: 0 m is exactly
+    400 m from sample 4.
+  - [x] `hoveringOnABoundaryRecentresOnce` — the focus alternates between 400.5 m and 399.5 m a
+    hundred times: one recentre, to 4.
+  - [x] `afterARecentreTheFocusIsWithinHalfAPatch` — the focus at every 12.5 m from −100 km to
+    +100 km, from centres −8, 0, 4 and 12: 63,744 recentres; every new centre is a multiple of
+    4; the focus is at most 2 samples from it; asked again from the new centre, the rule
+    answers nothing every time.
+  - [x] `storedPositionIsSubtractedInDouble` — centre sample 1,234,568 (123,456,800 m) with an
+    offset of 123,456,789.25 m → 10.75. Narrowed to Float before the subtraction, the offset
+    becomes 123,456,792 and the result is 8.
+
+  Five app-hosted tests of `follow` itself were added to `TerrainHeightTextureTests`. Each
+  builds a `TerrainObject` and hands `follow` a focus and an offset; no scene is needed:
+  - [x] `followDoesNothingWithinTheThreshold` — focus (400, 750, −400): the centre, the
+    position, the samples and the texture object (`===`) are unchanged.
+  - [x] `followRecentresAndBakesANewTexture` — focus (1000.5, 750, −450): centre (12, −4),
+    stored position (1200, 0, −400), the samples equal the bake that starts at sample index
+    (−52, −68), and the sample at the world's origin (−172.99075 m) has the same bits at
+    column 52 of row 68 as it had in the middle of the old grid. The texture is a new object
+    that holds the new samples, and the old texture still holds the old ones. A second call
+    with the same focus keeps the same texture object.
+  - [x] `followRecentresOnlyTheAxisPastTheThreshold` — focus (1000.5, 0, 399) → centre (12, 0);
+    focus (−399, 0, −1000.5) → centre (0, −12).
+  - [x] `followStoresThePositionInTheCurrentFrame` — focus (52010, 1200, −17190) with offset
+    (52812, 432, −17640): centre (520, −172), stored position (−812, −432, 440), and the
+    samples equal the bake around that centre, whatever the offset.
+  - [x] `followDoesNothingForTheImageSource` — an image terrain 100 km from the focus keeps its
+    texture object and its position.
 - **Observable completion criteria:** fly in a straight line for a minute. There is ground below
   the whole time. With the debug flag on, the log shows one recentre per 400 m flown. Hills
   already on screen do not change shape when a recentre happens; only the far edge moves outward
   by one patch and the near edge moves in. Turn around and fly back: the same hills are in the
   same places. The floating origin's own log line (`DEBUG_FLOATING_ORIGIN`) appears about once
   per kilometer, and nothing visible happens to the terrain when it does.
+  - Not checked by the review of 2026-11-25: the flight needs key presses, which cannot be sent
+    to the app from the command line. The tests above check each step of a recentre, but not
+    the scene's call or what is on screen.
 - **Edge cases and expected results:**
   - Hovering on a boundary → no repeated bakes. After a recentre the focus is at most 200 m from
     the centre and the threshold is 400 m.
+  - Flying out and back → the centre does not end where it started. After 2 km out and 2 km
+    back the terrain is centred on sample 4, with the focus at sample 0. The ground is the same
+    either way: heights belong to sample indices, not to the centre.
+  - A threshold below half the snap step → not usable. With a threshold of 1 sample and a step
+    of 4, a focus 1.5 samples from centre 0 is past the threshold, but the nearest multiple of
+    4 is still 0: the rule answers 0 on every tick and `follow` bakes on every tick. With a
+    threshold of exactly half a step (2), a focus that crosses the 200 m line a hundred times
+    causes a hundred bakes.
+  - A focus that is NaN or infinite → the program stops in `recenteredCenterSampleIndex`, at the
+    conversion to `Int`. NaN compares false with everything, so it gets past the threshold
+    check. Not handled, and no test exercises it: a stopped program ends the test process.
   - A jump of many kilometers (a scene reset or a teleport) → one recentre directly to the
     nearest patch; the bake covers a completely new area.
   - A recentre and a floating-origin shift in the same tick → correct. `follow` runs first with
@@ -1362,7 +1480,9 @@ function bakeHeightSamplesReusingOverlap(oldHeightSamples, oldFirstSampleIndexX,
 
   A frame at 60 Hz is 16.7 ms. In a Debug build the simple version therefore uses almost a whole
   frame once per 400 m flown (every 1.6 s at 250 m/s), which can show as a small, regular hitch.
-  In a Release build neither version is noticeable. A test compares the two functions' outputs
+  In a Release build neither version is noticeable. Measured in the engine on 2026-11-25, from
+  the `DebugLog` line of `follow` in a Debug build of the test host (Apple M1 Max, twelve
+  recentres in three test runs): 17.4 to 19.4 ms per full bake, a little more than one frame. A test compares the two functions' outputs
   with `==` for moves of (4, 0), (4, 4), (−4, 8) and (200, 0) samples; the last has no overlap and
   bakes everything.
 - **Fidelity note:** speed only. The two versions return identical arrays.
