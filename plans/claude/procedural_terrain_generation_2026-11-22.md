@@ -21,6 +21,31 @@ longer match the source). No other plan covers terrain.
 
 ## Changelog
 
+- **2026-11-26** — Milestone 4, a range check for the focus, after a question from the owner
+  (is the finite focus that still stopped the program worth fixing?). The answer was "only as
+  one line": `recenteredCenterSampleIndex` now answers nothing for every focus that is not a
+  usable position, which is NaN, infinite, or more than 2^53 samples from sample 0. The owner
+  replaced the `isFinite` guard with one comparison, and the limit became the static constant
+  `ProceduralTerrain.maxFocusDistanceFromOriginInSamples` (`0x1p53`). Edited to match: one row
+  in the data table, "Names in the code", the pseudocode, two tests added
+  (`maxFocusDistanceIsTheLastExactWholeNumber`, `focusBeyondTheMaxDistanceDoesNotRecentre`),
+  one edge case rewritten and one added (a snap step of 0). Numbers from scratch builds of the
+  real `ProceduralTerrain.swift`: 2^53 is 9,007,199,254,740,992 samples, which is
+  9.007 × 10^17 m with 100 m spacing, or 95.2 light-years; the gap between neighbouring
+  Doubles is 1 just below 2^53 and 2 at it; NaN, both infinities, 10^21 m, 10^300 m, the
+  largest Float and −10^30 m give nothing; a focus exactly at the limit gives centre 2^53 and
+  the next Double after it gives nothing; 400 m, 400.5 m, a tie and 123,456 m give the same
+  answers as before; a snap step of 0 stops the program (exit status 133). The real
+  `ProceduralTerrainTests.swift` was run in the scratch SwiftPM package against six broken
+  copies of the guard. Three ended the test process (only NaN and infinity checked, the guard
+  removed, `abs` left out); `<` for `<=` failed `focusBeyondTheMaxDistanceDoesNotRecentre`;
+  a constant of 2^52 and one of 2^54 each failed that test and
+  `maxFocusDistanceIsTheLastExactWholeNumber`. Checks run, each in a build folder of its own:
+  the macOS build and test bundle (the log lists `ProceduralTerrain.swift` and
+  `ProceduralTerrainTests.swift` under the test target; no new warning); the two terrain
+  suites (52 tests); the full suite one test at a time (612 Swift Testing tests in 80 suites
+  and the 20 XCTest tests); the iOS simulator build. Not run: the flight of the completion
+  criteria. tvOS was not built.
 - **2026-11-26** — Milestone 4, after the review notes of 2026-11-25: the owner applied four of
   the five, and the plan was edited to match. `snapStepInSamples` is an `Int`;
   `storedPositionOfTerrainCenter` takes the two centre indices as `Int`; the log line has its
@@ -355,6 +380,7 @@ at (6400, 6400) it is −110.4141 m.
 | Sample the terrain is centred on | — | `centerSampleIndexX`, `centerSampleIndexZ` | — | original frame | a multiple of `snapStepInSamples` |
 | Recentre step | — | `snapStepInSamples` | samples | — | 4 = one patch = 400 m |
 | Distance that triggers a recentre | — | `recenterThresholdInSamples` | samples | — | 4 = 400 m |
+| Farthest a focus may be from sample 0 | — | `maxFocusDistanceFromOriginInSamples` | samples | original frame | 2^53; a focus beyond it, NaN or infinite → no recentre |
 | Baked heights | — | `heightSamples` | m | original frame | row-major: index = row × N + column; column runs along +X, row along +Z |
 | Place of a vertex on the sample grid | — | `sampleCoordinate` | samples | terrain-local | 0 … N − 1; whole numbers are samples |
 
@@ -1224,8 +1250,10 @@ touches `Engine.Device` but not `Engine.renderer`, so the host-app launch race d
   is an `Int`, because a centre is a sample index and a step with a fraction could not land on
   one; the function converts it to Double for the one division. `recenterThresholdInSamples`
   is a `Double`, and `follow` converts its `Int` constant in the call. The check for a focus
-  that is NaN or infinite is `guard focusInSamples.isFinite else { return nil }`.
-  `roundToNearestWholeNumber` is `.rounded(.toNearestOrEven)`. `round()` sends a tie
+  that is not a usable position is
+  `guard abs(focusInSamples) <= maxFocusDistanceFromOriginInSamples else { return nil }`. The
+  limit is a static constant at the top of `ProceduralTerrain`, a `Double` written `0x1p53`
+  (a hexadecimal floating-point literal: 1 × 2^53). `roundToNearestWholeNumber` is `.rounded(.toNearestOrEven)`. `round()` sends a tie
   away from zero and fails `recentreSnapsToTheNearestPatch`. `storedPositionOfTerrainCenter`
   takes the two centre indices as `Int` and converts them to Double for the multiply;
   `narrowToFloat3` is `toFloat3()`. (Until 2026-11-26 the step and the two centre indices were
@@ -1243,8 +1271,10 @@ function recenteredCenterSampleIndex(currentCenterSampleIndex, focusPositionInOr
                                      sampleSpacing_m, snapStepInSamples,
                                      recenterThresholdInSamples) -> whole number, or nothing
     focusInSamples = focusPositionInOriginalFrame_m / sampleSpacing_m           // Double
-    // NaN compares false with everything, so the threshold check below would not stop it
-    if focusInSamples is NaN or infinite
+    // Not a usable position: NaN, infinite, or more than 2^53 samples from sample 0 (beyond
+    // 2^53 a Double cannot tell one sample from the next). The threshold check below would
+    // not stop any of the three. One comparison covers them: a comparison with NaN is false.
+    if not (absoluteValue(focusInSamples) <= maxFocusDistanceFromOriginInSamples)   // 2^53
         return nothing                                      // nothing to centre on: the terrain stays
     if absoluteValue(focusInSamples - currentCenterSampleIndex) <= recenterThresholdInSamples
         return nothing
@@ -1360,6 +1390,14 @@ other debug flag there is `false`.
   - [x] `focusThatIsNotFiniteDoesNotRecentre` (added 2026-11-26 with the `guard`) — a focus of
     NaN, +infinity or −infinity → nothing, from centre 0 and from centre 520. Without the
     `guard` this test does not fail: it ends the test process.
+  - [x] `maxFocusDistanceIsTheLastExactWholeNumber` (added 2026-11-26 with the constant) — the
+    constant is 9,007,199,254,740,992 = 2^53; one less is a different Double; one more rounds
+    back to the same Double; the gap to the next Double is 2.
+  - [x] `focusBeyondTheMaxDistanceDoesNotRecentre` (added 2026-11-26 with the range check) — a
+    focus of 10^21 m, 10^300 m, 3.4 × 10^38 m (the largest Float) or −10^30 m → nothing. A
+    focus exactly 2^53 samples from sample 0 (2^53 × 100 m) → centre 2^53, and the same with a
+    minus sign. The next Double after that position → nothing. With a guard that checks only
+    for NaN and infinity, this test ends the test process.
 
   Five app-hosted tests of `follow` itself were added to `TerrainHeightTextureTests`. Each
   builds a `TerrainObject` and hands `follow` a focus and an offset; no scene is needed:
@@ -1402,8 +1440,13 @@ other debug flag there is `false`.
     (`focusThatIsNotFiniteDoesNotRecentre`). The `guard` in `recenteredCenterSampleIndex` does
     this. Without it, NaN gets past the threshold check, because NaN compares false with
     everything, and the conversion to `Int` stops the program.
-  - A finite focus beyond about 9 × 10^20 m (with 100 m spacing) → the program stops: the
-    sample index no longer fits in an `Int`. Not handled; no aircraft gets there.
+  - A finite focus more than 2^53 samples from sample 0 (9 × 10^17 m with 100 m spacing, about
+    95 light-years) → nothing (`focusBeyondTheMaxDistanceDoesNotRecentre`). The same `guard`
+    does this. No flight gets there, but a diverging position passes through huge finite
+    values before it becomes infinity, and without the check a sample index too large for an
+    `Int` stops the program (from about 9 × 10^20 m).
+  - A snap step of 0 → the program stops: the division gives infinity. Not handled; the step
+    is the constant 4.
   - A jump of many kilometers (a scene reset or a teleport) → one recentre directly to the
     nearest patch; the bake covers a completely new area.
   - A recentre and a floating-origin shift in the same tick → correct. `follow` runs first with
