@@ -34,6 +34,12 @@ struct Material: sizeable {
         return opacityTexture != nil || properties.opacity < 1.0 || properties.color.w < 1.0
     }
     
+    /// The default material: `MaterialProperties()` (PINK_DEBUG_COLOR, specular 0.25, exponent 32,
+    /// no emission), identity UV transforms and no textures. `DrawManager` binds it for a draw
+    /// that has no material of its own (a hand-built `Submesh(indices:)`, a `Line`). Written out
+    /// because the Model I/O initializer below removes the one Swift would otherwise generate.
+    init() { }
+
     /// `sourceFileFormat` (OBJ, USDC, USDZ) decides whether the `.emission` semantic is read at
     /// all (see `readsEmission`); nil (procedural meshes, hand-built materials) reads no emission.
     init(_ mdlMaterial: MDLMaterial, sourceFileFormat: ModelExtension? = nil) {

@@ -16,7 +16,8 @@ enum SceneType: String, CaseIterable, Identifiable {
     case FlightboxWithPhysics   = "FlightboxWithPhysics"
     case BallPhysics            = "BallPhysics"
     case PhysicsStressTest      = "PhysicsStressTest"
-    
+    case Debug                  = "Debug"
+
     var id: String { rawValue }
 }
 
@@ -169,6 +170,8 @@ final class SceneManager {
                 CurrentScene = PhysicsStressTestScene(name: "PhysicsStressTest", rendererType: rendererType)
             case .FlightboxWithPhysics:
                 CurrentScene = FlightboxWithPhysics(name: "Flightbox with Physics", rendererType: rendererType)
+            case .Debug:
+                CurrentScene = DebugScene(name: "Debug", rendererType: rendererType)
         }
     }
     

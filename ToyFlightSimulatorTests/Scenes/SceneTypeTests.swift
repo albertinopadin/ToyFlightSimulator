@@ -15,16 +15,17 @@ import Testing
 @Suite("SceneType", .tags(.scenes))
 struct SceneTypeTests {
 
-    @Test("Exposes exactly the seven expected cases via CaseIterable")
+    @Test("Exposes exactly the eight expected cases via CaseIterable")
     func allCasesArePresent() {
-        #expect(SceneType.allCases.count == 7)
+        #expect(SceneType.allCases.count == 8)
         #expect(Set(SceneType.allCases) == [.Sandbox,
                                             .Flightbox,
                                             .FreeCamFlightbox,
                                             .FlightboxWithTerrain,
                                             .FlightboxWithPhysics,
                                             .BallPhysics,
-                                            .PhysicsStressTest])
+                                            .PhysicsStressTest,
+                                            .Debug])
     }
 
     @Test("Identifiable id is the raw value (drives the SwiftUI Picker tag/ForEach)")

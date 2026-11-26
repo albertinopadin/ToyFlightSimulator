@@ -431,6 +431,11 @@ final class DrawManager {
         if !SceneManager.lines.isEmpty {
             EncodeRender(using: renderEncoder, label: "Rendering Lines") {
                 bindLinearSampler(renderEncoder)
+                // Lines draw with the pass pipeline, whose fragment function reads the material
+                // slots, and a Line has no submesh to take a material from. Without this the
+                // lines reuse the material of the last opaque submesh, or fail Metal validation
+                // in a scene that has lines and no opaque model.
+                applyMaterial(Material(), with: renderEncoder)
 
                 for line in SceneManager.lines {
                     renderEncoder.setVertexBytes(&line.modelConstants,  // !!!!!!!
@@ -576,12 +581,12 @@ final class DrawManager {
                   let vertexBuffer = parentMesh.vertexBuffer else { continue }
             renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
-            if applyMaterials, let material = submesh.material {
-                applyMaterialTextures(material, with: renderEncoder)
-                var materialProps = material.properties
-                renderEncoder.setFragmentBytes(&materialProps,
-                                               length: MaterialProperties.stride,
-                                               index: TFSBufferIndexMaterial.index)
+            if applyMaterials {
+                // A hand-built submesh (Submesh.init(indices:), e.g. ProgrammaticTriangleMesh) has
+                // no material. It still binds one: the material fragment functions read these
+                // slots on every draw, and a draw that binds nothing reuses whatever the previous
+                // draw left on the encoder, or fails Metal validation when it is the first draw.
+                applyMaterial(submesh.material ?? Material(), with: renderEncoder)
             }
 
             renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
@@ -598,6 +603,18 @@ final class DrawManager {
     /// the Draw* entry points bind it once per pass instead of per submesh.
     private static func bindLinearSampler(_ renderEncoder: MTLRenderCommandEncoder) {
         renderEncoder.setFragmentSamplerState(Graphics.SamplerStates.currentLinearSamplerState, index: 0)
+    }
+
+    /// Binds everything a material fragment function reads for one draw: the four texture
+    /// slots and `MaterialTextureTransforms` (through `applyMaterialTextures`), then
+    /// `MaterialProperties` at `TFSBufferIndexMaterial`. A draw with no material of its own
+    /// passes `Material()`, which also clears the texture slots of the previous draw.
+    private static func applyMaterial(_ material: Material, with renderEncoder: MTLRenderCommandEncoder) {
+        applyMaterialTextures(material, with: renderEncoder)
+        var materialProperties = material.properties
+        renderEncoder.setFragmentBytes(&materialProperties,
+                                       length: MaterialProperties.stride,
+                                       index: TFSBufferIndexMaterial.index)
     }
 
     /// Per-submesh material state. The linear sampler is NOT bound here — it's pass-wide

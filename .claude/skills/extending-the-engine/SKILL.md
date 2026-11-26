@@ -46,6 +46,7 @@ touchpoints — missing one typically compiles but silently does nothing at runt
 2. Override `buildScene()` to add objects, cameras, lights
 3. Add `SceneType` enum case
 4. Register in `SceneManager.SetScene()` switch
+5. Add the case to `SceneTypeTests.allCasesArePresent` (the expected count and the expected set are both written out)
 
 ## Adding New Renderers
 
