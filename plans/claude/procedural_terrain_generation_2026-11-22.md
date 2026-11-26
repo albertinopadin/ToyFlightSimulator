@@ -21,6 +21,28 @@ longer match the source). No other plan covers terrain.
 
 ## Changelog
 
+- **2026-11-26** — Milestone 4, after the review notes of 2026-11-25: the owner applied four of
+  the five, and the plan was edited to match. `snapStepInSamples` is an `Int`;
+  `storedPositionOfTerrainCenter` takes the two centre indices as `Int`; the log line has its
+  closing parenthesis; `recenteredCenterSampleIndex` answers nothing for a focus that is NaN or
+  infinite (a `guard`, now in the pseudocode too). The debug flag stays `true`. With the code:
+  the doc comments that described the old types were rewritten, and one test was added,
+  `focusThatIsNotFiniteDoesNotRecentre`. In the plan: "Names in the code", one edge case
+  rewritten and one added. CLAUDE.md gained a floating-origin rule: a value kept in the
+  original frame, such as the terrain's centre sample index, is not shifted. Numbers from a
+  scratch build of the real `ProceduralTerrain.swift`: a focus of NaN, +infinity or −infinity
+  gives nothing; a focus of 9 × 10^20 m still gives a centre (sample index 9 × 10^18) and
+  10^21 m stops the program (exit status 133); the three examples of the doc comment and the
+  small example are unchanged. With the `guard` taken out, the new test ends the test process
+  ("cannot be converted to Int because it is either infinite or NaN"). Checks run, each in a
+  build folder of its own (`-derivedDataPath`): the macOS build and test bundle (no new
+  warning); the two terrain suites (50 tests); the full suite one test at a time (610 Swift
+  Testing tests in 80 suites and the 20 XCTest tests); the iOS simulator build. A first run in
+  the shared DerivedData folder was discarded: `build-for-testing` there linked the test
+  bundle without compiling the test target's Swift files, so the old 49 and 609 tests ran and
+  the log line still lacked its parenthesis. The cause was not found; Xcode was open on the
+  project. Not run again: the broken copies of 2026-11-25 (the tests they ran against are
+  unchanged) and the flight of the completion criteria. tvOS was not built.
 - **2026-11-25** — Milestone 4 landed (6bcc16c) and was edited to match the code: the names and
   types the code uses are listed (the snap step, the threshold and the centre indices are
   passed as `Double`; the rounding is `.rounded(.toNearestOrEven)`; `follow` uses a `switch`
@@ -1199,14 +1221,15 @@ touches `Engine.Device` but not `Engine.renderer`, so the host-app launch race d
   pseudocode says `sampleSpacing_m`, `parameters` and `focusPositionInOriginalFrame_m`, the code
   says `sampleSpacing`, `params` and `focusPositionInOriginalFrame`.
   `recenteredCenterSampleIndex` returns an `Int?`, nil for "nothing". Its `snapStepInSamples`
-  and `recenterThresholdInSamples` parameters are `Double`: `follow` holds the two numbers as
-  `Int` and converts them in the call, and the function turns the step back into a whole
-  number with `Int(snapStepInSamples)`. A step with a fraction therefore does not work (2.5
-  divides by 2.5 and multiplies by 2). `roundToNearestWholeNumber` is
-  `.rounded(.toNearestOrEven)`. `round()` sends a tie away from zero and fails
-  `recentreSnapsToTheNearestPatch`. `storedPositionOfTerrainCenter` takes the two centre
-  indices as `Double`, so `follow` converts its `Int` properties in the call; `narrowToFloat3`
-  is `toFloat3()`. `follow` checks the source with a `switch` over `heightSource`, whose
+  is an `Int`, because a centre is a sample index and a step with a fraction could not land on
+  one; the function converts it to Double for the one division. `recenterThresholdInSamples`
+  is a `Double`, and `follow` converts its `Int` constant in the call. The check for a focus
+  that is NaN or infinite is `guard focusInSamples.isFinite else { return nil }`.
+  `roundToNearestWholeNumber` is `.rounded(.toNearestOrEven)`. `round()` sends a tie
+  away from zero and fails `recentreSnapsToTheNearestPatch`. `storedPositionOfTerrainCenter`
+  takes the two centre indices as `Int` and converts them to Double for the multiply;
+  `narrowToFloat3` is `toFloat3()`. (Until 2026-11-26 the step and the two centre indices were
+  passed as `Double`; see the changelog.) `follow` checks the source with a `switch` over `heightSource`, whose
   `procedural` case also hands over `params`, and unwraps `sampleSpacing` with `if let` inside
   that case. The bake alone is timed, with `timeit` (`Utils/TimeIt.swift`, nanoseconds). In the
   scene the terrain is `ground`.
@@ -1220,6 +1243,9 @@ function recenteredCenterSampleIndex(currentCenterSampleIndex, focusPositionInOr
                                      sampleSpacing_m, snapStepInSamples,
                                      recenterThresholdInSamples) -> whole number, or nothing
     focusInSamples = focusPositionInOriginalFrame_m / sampleSpacing_m           // Double
+    // NaN compares false with everything, so the threshold check below would not stop it
+    if focusInSamples is NaN or infinite
+        return nothing                                      // nothing to centre on: the terrain stays
     if absoluteValue(focusInSamples - currentCenterSampleIndex) <= recenterThresholdInSamples
         return nothing
     // the nearest multiple of the snap step; a tie goes to the even multiple
@@ -1331,6 +1357,9 @@ other debug flag there is `false`.
   - [x] `storedPositionIsSubtractedInDouble` — centre sample 1,234,568 (123,456,800 m) with an
     offset of 123,456,789.25 m → 10.75. Narrowed to Float before the subtraction, the offset
     becomes 123,456,792 and the result is 8.
+  - [x] `focusThatIsNotFiniteDoesNotRecentre` (added 2026-11-26 with the `guard`) — a focus of
+    NaN, +infinity or −infinity → nothing, from centre 0 and from centre 520. Without the
+    `guard` this test does not fail: it ends the test process.
 
   Five app-hosted tests of `follow` itself were added to `TerrainHeightTextureTests`. Each
   builds a `TerrainObject` and hands `follow` a focus and an offset; no scene is needed:
@@ -1369,9 +1398,12 @@ other debug flag there is `false`.
     4 is still 0: the rule answers 0 on every tick and `follow` bakes on every tick. With a
     threshold of exactly half a step (2), a focus that crosses the 200 m line a hundred times
     causes a hundred bakes.
-  - A focus that is NaN or infinite → the program stops in `recenteredCenterSampleIndex`, at the
-    conversion to `Int`. NaN compares false with everything, so it gets past the threshold
-    check. Not handled, and no test exercises it: a stopped program ends the test process.
+  - A focus that is NaN or infinite → nothing, so the terrain stays where it is
+    (`focusThatIsNotFiniteDoesNotRecentre`). The `guard` in `recenteredCenterSampleIndex` does
+    this. Without it, NaN gets past the threshold check, because NaN compares false with
+    everything, and the conversion to `Int` stops the program.
+  - A finite focus beyond about 9 × 10^20 m (with 100 m spacing) → the program stops: the
+    sample index no longer fits in an `Int`. Not handled; no aircraft gets there.
   - A jump of many kilometers (a scene reset or a teleport) → one recentre directly to the
     nearest patch; the bake covers a completely new area.
   - A recentre and a floating-origin shift in the same tick → correct. `follow` runs first with
