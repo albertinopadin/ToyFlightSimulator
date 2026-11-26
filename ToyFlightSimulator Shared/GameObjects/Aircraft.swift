@@ -30,7 +30,7 @@ class Aircraft: GameObject {
 
     public var shouldUpdateOnPlayerInput: Bool
 
-    internal var _moveSpeed: Float = 25.0
+    internal var _moveSpeed: Float = 50.0
     /// Retained for `applyPlayerAttitudeInputImmediate`, the pre-damping
     /// snap-to-target rotation path kept for debugging. Not consumed by the
     /// default update path, which uses `attitudeDynamics` instead.
@@ -240,13 +240,14 @@ class Aircraft: GameObject {
 
         if shouldUpdateOnPlayerInput && hasFocus {
             let controlInput = getControlInput()
-            let deltaMove = dt * _moveSpeed
             
             // Flight forces and the attitude torque are computed in
             // generateForces, inside the physics step. Here we only refresh
             // the input it reads.
             latestControlInput = controlInput
             if !hasFlightPhysics {
+                let deltaMove = dt * _moveSpeed
+                
                 // Kinematic path: the F-16 wingman, and a jet without a flight
                 // model. Throttle moves the node and the stick turns it
                 // through the damped rate filter.
